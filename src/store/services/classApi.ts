@@ -1,0 +1,378 @@
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import type { RootState } from '../index'
+import type {
+  BaseQueryFn,
+  FetchArgs,
+  FetchBaseQueryError,
+  FetchBaseQueryMeta,
+} from '@reduxjs/toolkit/query'
+
+// Types based on backend ClassListItemDTO
+export interface ClassListItemDTO {
+  id: number
+  code: string
+  name: string
+  courseName: string
+  courseCode: string
+  branchName: string
+  branchCode: string
+  modality: 'ONLINE' | 'OFFLINE' | 'HYBRID'
+  startDate: string // LocalDate from backend
+  plannedEndDate: string // LocalDate from backend
+  status: 'SCHEDULED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'SUSPENDED'
+  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
+  maxCapacity: number
+  currentEnrolled: number
+  availableSlots: number
+  utilizationRate: number
+  teacherName?: string
+  scheduleSummary?: string
+  canEnrollStudents: boolean
+  enrollmentRestrictionReason?: string
+}
+
+export interface Branch {
+  id: number
+  name: string
+  address: string
+  phone: string
+  email: string
+  status: 'ACTIVE' | 'INACTIVE'
+}
+
+export interface Subject {
+  id: number
+  name: string
+  code: string
+  description: string
+  status: 'ACTIVE' | 'INACTIVE'
+}
+
+export interface Teacher {
+  id: number
+  fullName: string
+  email: string
+  phone: string
+  specializations: string[]
+  status: 'ACTIVE' | 'INACTIVE'
+}
+
+export interface ClassSession {
+  id: number
+  date: string
+  startTime: string
+  endTime: string
+  room: string
+  topic: string
+  status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED'
+}
+
+export interface Student {
+  id: number
+  fullName: string
+  email: string
+  phone: string
+  status: 'ACTIVE' | 'INACTIVE' | 'GRADUATED' | 'DROPPED'
+  enrollDate: string
+}
+
+export interface Class {
+  id: number
+  name: string
+  code: string
+  subject: Subject
+  teacher: Teacher
+  branch: Branch
+  room: string
+  schedule: string
+  startDate: string
+  endDate: string
+  maxStudents: number
+  currentStudents: number
+  status: 'SCHEDULED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED'
+  sessions: ClassSession[]
+  students: Student[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ClassListRequest {
+  page?: number
+  size?: number // Backend uses 'size' instead of 'limit'
+  branchIds?: number[] // Backend expects list of branch IDs
+  courseId?: number // Backend uses courseId instead of subjectId
+  modality?: 'ONLINE' | 'OFFLINE' | 'HYBRID'
+  search?: string
+  sort?: string // Sort field
+  sortDir?: 'asc' | 'desc'
+}
+
+export interface PaginationInfo {
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+  first: boolean
+  last: boolean
+  numberOfElements: number
+  empty: boolean
+}
+
+export interface ClassListResponse {
+  success: boolean
+  message: string
+  data: PaginationInfo & {
+    content: ClassListItemDTO[] // Backend Spring Data Page uses 'content' instead of 'classes'
+  }
+}
+
+export interface ClassDetailResponse {
+  success: boolean
+  message: string
+  data: ClassDetailDTO
+}
+
+export interface ClassDetailDTO {
+  id: number
+  code: string
+  name: string
+  course: CourseDTO
+  branch: BranchDTO
+  modality: 'ONLINE' | 'OFFLINE' | 'HYBRID'
+  startDate: string // LocalDate from backend
+  plannedEndDate: string // LocalDate from backend
+  actualEndDate?: string // LocalDate from backend
+  scheduleDays: number[]
+  maxCapacity: number
+  status: 'SCHEDULED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'SUSPENDED'
+  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
+  rejectionReason?: string
+  submittedAt: string // LocalDate from backend
+  decidedAt?: string // LocalDate from backend
+  decidedByName?: string
+  room: string
+  teacherName: string
+  scheduleSummary: string
+  enrollmentSummary: EnrollmentSummary
+  upcomingSessions: SessionDTO[]
+}
+
+export interface CourseDTO {
+  id: number
+  code: string
+  name: string
+  description: string
+  totalHours: number
+  durationWeeks: number
+  sessionPerWeek: number
+}
+
+export interface BranchDTO {
+  id: number
+  code: string
+  name: string
+  address: string
+  phone: string
+  email: string
+}
+
+export interface EnrollmentSummary {
+  currentEnrolled: number
+  maxCapacity: number
+  availableSlots: number
+  utilizationRate: number
+  canEnrollStudents: boolean
+  enrollmentRestrictionReason?: string
+}
+
+export interface SessionDTO {
+  id: number
+  date: string // LocalDate from backend
+  startTime: string
+  endTime: string
+  teacherName: string
+  room: string
+  status: string
+  type: string
+}
+
+export interface ClassStudentDTO {
+  id: number
+  studentId: number
+  studentCode: string
+  fullName: string
+  email: string
+  phone: string
+  level: string
+  branchName: string
+  enrolledAt: string // OffsetDateTime from backend
+  enrolledBy: string
+  enrolledById: number
+  status: string // EnrollmentStatus enum
+  joinSessionId?: number
+  joinSessionDate?: string
+  capacityOverride?: boolean
+  overrideReason?: string
+}
+
+export interface ClassStudentsResponse {
+  success: boolean
+  message: string
+  data: PaginationInfo & {
+    content: ClassStudentDTO[]
+  }
+}
+
+// Available student for enrollment
+export interface AvailableStudentDTO {
+  id: number
+  studentCode: string
+  fullName: string
+  email: string
+  phone: string
+  level: string
+  branchName: string
+  lastAssessmentDate?: string
+  lastAssessmentSubject?: string
+  lastAssessmentLevel?: string
+  matchPriority: number // 1=Perfect, 2=Partial, 3=None
+  matchReason: string
+}
+
+export interface AvailableStudentsResponse {
+  success: boolean
+  message: string
+  data: PaginationInfo & {
+    content: AvailableStudentDTO[]
+  }
+}
+
+export interface ApiResponse<T = unknown> {
+  success: boolean
+  message: string
+  data: T
+}
+
+// Reuse the same base query with token injection and refresh logic from authApi
+const baseQuery = fetchBaseQuery({
+  baseUrl: '/api/v1',
+  prepareHeaders: (headers, { getState }) => {
+    const token = (getState() as RootState).auth.accessToken
+    if (token) {
+      headers.set('authorization', `Bearer ${token}`)
+    }
+    return headers
+  },
+})
+
+// Base query with token refresh logic (same as authApi)
+const baseQueryWithReauth: BaseQueryFn<
+  string | FetchArgs,
+  unknown,
+  FetchBaseQueryError,
+  object,
+  FetchBaseQueryMeta
+> = async (args, api, extraOptions) => {
+  let result = await baseQuery(args, api, extraOptions)
+
+  // Handle 401 Unauthorized - try to refresh token
+  if (result.error && result.error.status === 401) {
+    const refreshResult = await baseQuery(
+      {
+        url: '/auth/refresh',
+        method: 'POST',
+        body: {
+          refreshToken: (api.getState() as RootState).auth.refreshToken,
+        },
+      },
+      api,
+      extraOptions
+    )
+
+    if (refreshResult.data) {
+      // Update auth state with new tokens
+      const authData = refreshResult.data as { data?: { accessToken: string; refreshToken: string; userId: number; email: string; fullName: string; roles: string[] } }
+      if (authData?.data) {
+        api.dispatch({
+          type: 'auth/setCredentials',
+          payload: {
+            accessToken: authData.data.accessToken,
+            refreshToken: authData.data.refreshToken,
+            user: {
+              id: authData.data.userId,
+              email: authData.data.email,
+              fullName: authData.data.fullName,
+              roles: authData.data.roles,
+            },
+          },
+        })
+      }
+
+      // Retry the original request with new token
+      result = await baseQuery(args, api, extraOptions)
+    } else {
+      // Refresh failed, logout user
+      api.dispatch({ type: 'auth/logout' })
+    }
+  }
+
+  return result
+}
+
+export const classApi = createApi({
+  reducerPath: 'classApi',
+  baseQuery: baseQueryWithReauth,
+  endpoints: (builder) => ({
+    // Get classes with filtering and pagination
+    getClasses: builder.query<ClassListResponse, ClassListRequest>({
+      query: (params) => ({
+        url: '/classes',
+        method: 'GET',
+        params: {
+          page: params.page || 0,
+          size: params.size || 20,
+          branchIds: params.branchIds,
+          courseId: params.courseId,
+          modality: params.modality,
+          search: params.search,
+          sort: params.sort || 'startDate',
+          sortDir: params.sortDir || 'asc',
+        },
+      }),
+    }),
+
+    // Get class details by ID
+    getClassById: builder.query<ClassDetailResponse, number>({
+      query: (id) => ({
+        url: `/classes/${id}`,
+        method: 'GET',
+      }),
+    }),
+
+    // Get students in a class
+    getClassStudents: builder.query<ClassStudentsResponse, { classId: number; search?: string; page?: number; size?: number; sort?: string; sortDir?: string }>({
+      query: ({ classId, search, page = 0, size = 20, sort = 'enrolledAt', sortDir = 'desc' }) => ({
+        url: `/classes/${classId}/students`,
+        method: 'GET',
+        params: { search, page, size, sort, sortDir },
+      }),
+    }),
+
+    // Get available students for enrollment in a class
+    getAvailableStudents: builder.query<AvailableStudentsResponse, { classId: number; search?: string; page?: number; size?: number; sort?: string; sortDir?: string }>({
+      query: ({ classId, search, page = 0, size = 20, sort = 'matchPriority', sortDir = 'asc' }) => ({
+        url: `/classes/${classId}/available-students`,
+        method: 'GET',
+        params: { search, page, size, sort, sortDir },
+      }),
+    }),
+  }),
+})
+
+// Export hooks for usage in components
+export const {
+  useGetClassesQuery,
+  useGetClassByIdQuery,
+  useGetClassStudentsQuery,
+  useGetAvailableStudentsQuery,
+} = classApi

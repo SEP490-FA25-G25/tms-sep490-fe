@@ -1,5 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { authApi } from './services/authApi'
+import { classApi } from './services/classApi'
+import { studentApi } from './services/studentApi'
+import { enrollmentApi } from './services/enrollmentApi'
 import authSlice, {
   setCredentials,
   logout,
@@ -16,6 +19,9 @@ export const store = configureStore({
   reducer: {
     auth: authSlice,
     [authApi.reducerPath]: authApi.reducer,
+    [classApi.reducerPath]: classApi.reducer,
+    [studentApi.reducerPath]: studentApi.reducer,
+    [enrollmentApi.reducerPath]: enrollmentApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -23,7 +29,10 @@ export const store = configureStore({
         ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
       },
     })
-    .concat(authApi.middleware),
+    .concat(authApi.middleware)
+    .concat(classApi.middleware)
+    .concat(studentApi.middleware)
+    .concat(enrollmentApi.middleware),
 })
 
 export type RootState = ReturnType<typeof store.getState>

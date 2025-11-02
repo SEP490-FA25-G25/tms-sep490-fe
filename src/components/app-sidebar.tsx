@@ -245,6 +245,11 @@ const roleBasedNav = {
         icon: HomeIcon,
       },
       {
+        title: "Class Management",
+        url: "/academic/classes",
+        icon: CalendarIcon,
+      },
+      {
         title: "Student Records",
         url: "/academic/students",
         icon: UsersIcon,

@@ -2,68 +2,91 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AuthRedirect } from '@/components/AuthRedirect'
+import { ApiSetup } from '@/components/ApiSetup'
 import DashboardPage from './app/dashboard/page'
 import LoginPage from './app/login/page'
 import AdminUsersPage from './app/admin/users/page'
 import TeacherClassesPage from './app/teacher/classes/page'
 import StudentCoursesPage from './app/student/courses/page'
+import AcademicClassesPage from './app/academic/classes/page'
+import AcademicClassDetailPage from './app/academic/classes/[id]/page'
 import { Toaster } from '@/components/ui/sonner'
 
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
+      <ApiSetup>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
 
-          {/* Dashboard */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
+            {/* Dashboard */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Admin routes */}
-          <Route
-            path="/admin/users"
-            element={
-              <ProtectedRoute requiredRoles={['ADMIN']}>
-                <AdminUsersPage />
-              </ProtectedRoute>
-            }
-          />
+            {/* Admin routes */}
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedRoute requiredRoles={['ADMIN']}>
+                  <AdminUsersPage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Teacher routes */}
-          <Route
-            path="/teacher/classes"
-            element={
-              <ProtectedRoute requiredRoles={['TEACHER', 'ADMIN', 'MANAGER', 'CENTER_HEAD', 'SUBJECT_LEADER']}>
-                <TeacherClassesPage />
-              </ProtectedRoute>
-            }
-          />
+            {/* Teacher routes */}
+            <Route
+              path="/teacher/classes"
+              element={
+                <ProtectedRoute requiredRoles={['TEACHER', 'ADMIN', 'MANAGER', 'CENTER_HEAD', 'SUBJECT_LEADER']}>
+                  <TeacherClassesPage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Student routes */}
-          <Route
-            path="/student/courses"
-            element={
-              <ProtectedRoute requiredRoles={['STUDENT']}>
-                <StudentCoursesPage />
-              </ProtectedRoute>
-            }
-          />
+            {/* Student routes */}
+            <Route
+              path="/student/courses"
+              element={
+                <ProtectedRoute requiredRoles={['STUDENT']}>
+                  <StudentCoursesPage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Root route - redirect based on auth state */}
-          <Route path="/" element={<AuthRedirect />} />
+            {/* Academic Affairs routes */}
+            <Route
+              path="/academic/classes"
+              element={
+                <ProtectedRoute requiredRoles={['ACADEMIC_STAFF', 'ADMIN', 'MANAGER', 'CENTER_HEAD']}>
+                  <AcademicClassesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academic/classes/:id"
+              element={
+                <ProtectedRoute requiredRoles={['ACADEMIC_STAFF', 'ADMIN', 'MANAGER', 'CENTER_HEAD']}>
+                  <AcademicClassDetailPage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Catch all route - redirect based on auth state */}
-          <Route path="*" element={<AuthRedirect />} />
-        </Routes>
-        <Toaster />
-      </AuthProvider>
+            {/* Root route - redirect based on auth state */}
+            <Route path="/" element={<AuthRedirect />} />
+
+            {/* Catch all route - redirect based on auth state */}
+            <Route path="*" element={<AuthRedirect />} />
+          </Routes>
+          <Toaster />
+        </AuthProvider>
+      </ApiSetup>
     </BrowserRouter>
   )
 }
