@@ -97,3 +97,26 @@ The project follows a modern minimal design philosophy inspired by shadcn/ui, Op
 - Tailwind CSS v4 with Vite plugin for optimal performance
 - Component library follows accessibility best practices via Radix UI
 - Design system documented in `docs/uiux-design.md` with comprehensive guidelines
+
+## Implementation Plan: Core Principles
+
+**1. Code Quality & Structure:**
+
+- **Clean Implementation:** The implementation must be clean, avoiding unnecessary code, complexity, and "code smells." Adhere strictly to established coding standards and best practices (e.g., SOLID, DRY).
+- **No Redundancy (DRY - Don't Repeat Yourself):** Actively prevent code duplication. Abstract and reuse components, functions, and logic wherever possible.
+- **Logical Soundness & Correct Algorithms:** Ensure all logic is correct and the algorithms used are efficient and appropriate for the given problem.
+
+**2. System Integrity & Performance:**
+
+- **Prevent Race Conditions:** Proactively identify and prevent potential race conditions to ensure data integrity and system stability, especially in concurrent operations.
+- **Avoid Over-engineering:** The solution must not be over-engineered. Implement what is necessary to meet the current requirements without adding speculative features or unnecessary complexity.
+
+**3. Development Approach:**
+
+- **Adhere to Best Practices:** Always follow the best and most current industry-standard approaches for the technologies and patterns being used.
+- **Maintain a Holistic View:** Always consider the overall architecture and the impact of your changes on the entire system. Ensure new implementations integrate seamlessly.
+- **Focus on the Story & Scope:** Concentrate on delivering the user story at hand. Ensure the implementation directly serves the story's requirements and stays within the defined scope for the MVP (Minimum Viable Product). The primary goal is a functional, demonstrable feature that meets the story's acceptance criteria.
+
+**4. Final Deliverable:**
+
+- **Solid & Maintainable Code:** The final code must be robust, reliable, well-documented, and easy for other developers to understand, modify, and maintain in the future.

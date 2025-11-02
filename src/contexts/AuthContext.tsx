@@ -1,86 +1,100 @@
-import { createContext, useState, useEffect } from 'react'
+import { createContext, useContext } from 'react'
 import type { ReactNode } from 'react'
-
-interface User {
-  id: string
-  email: string
-  name: string
-}
+import { useSelector, useDispatch } from 'react-redux'
+import { useLoginMutation, useLogoutMutation } from '@/store/services/authApi'
+import { setCredentials, logout as logoutAction, selectAuth } from '@/store'
+import { useAuthVerification } from '@/hooks/useAuthVerification'
+import type { User } from '@/store/slices/authSlice'
+import type { RootState } from '@/store'
 
 interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
-  login: (email: string, password: string) => Promise<boolean>
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => void
   isLoading: boolean
+  error: string | null
+  clearError: () => void
 }
 
+/* eslint-disable react-refresh/only-export-components */
 export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Mock users for testing
-const MOCK_USERS = [
-  {
-    id: '1',
-    email: 'admin@example.com',
-    password: 'admin123',
-    name: 'Admin User'
-  },
-  {
-    id: '2',
-    email: 'user@example.com',
-    password: 'user123',
-    name: 'Test User'
-  }
-]
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const dispatch = useDispatch()
+  const auth = useSelector((state: RootState) => selectAuth(state))
+  const { isLoading: isVerifying } = useAuthVerification()
+  const [loginMutation, { isLoading: isLoginLoading }] = useLoginMutation()
+  const [logoutMutation] = useLogoutMutation()
 
-  useEffect(() => {
-    // Check if user is already logged in (from localStorage)
-    const storedUser = localStorage.getItem('user')
-    if (storedUser) {
-      setUser(JSON.parse(storedUser))
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const result = await loginMutation({ email, password }).unwrap()
+
+      // Backend returns response with wrapper: {success, message, data}
+      if (result?.success && result?.data) {
+        dispatch(setCredentials({
+          accessToken: result.data.accessToken,
+          refreshToken: result.data.refreshToken,
+          user: {
+            id: result.data.userId,
+            email: result.data.email,
+            fullName: result.data.fullName,
+            roles: result.data.roles,
+          },
+        }))
+        return { success: true }
+      }
+
+      return { success: false, error: result?.message || 'Invalid response from server' }
+    } catch (error: unknown) {
+      let errorMessage = 'Login failed'
+      if (error && typeof error === 'object' && 'data' in error) {
+        const errorData = (error as { data?: { message?: string; error?: string } }).data
+        errorMessage = errorData?.message || errorData?.error || 'Login failed'
+      } else if (error && typeof error === 'object' && 'message' in error) {
+        errorMessage = (error as { message?: string }).message || 'Login failed'
+      }
+
+      return { success: false, error: errorMessage }
     }
-    setIsLoading(false)
-  }, [])
-
-  const login = async (email: string, password: string): Promise<boolean> => {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500))
-
-    const mockUser = MOCK_USERS.find(
-      u => u.email === email && u.password === password
-    )
-
-    if (mockUser) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password: _, ...userWithoutPassword } = mockUser
-      setUser(userWithoutPassword)
-      localStorage.setItem('user', JSON.stringify(userWithoutPassword))
-      return true
-    }
-
-    return false
   }
 
-  const logout = () => {
-    setUser(null)
-    localStorage.removeItem('user')
+  const logout = async () => {
+    try {
+      await logoutMutation().unwrap()
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      dispatch(logoutAction())
+    }
+  }
+
+  const clearError = () => {
+    dispatch({ type: 'auth/clearError' })
+  }
+
+  const value: AuthContextType = {
+    user: auth.user,
+    isAuthenticated: auth.isAuthenticated,
+    login,
+    logout,
+    isLoading: isLoginLoading || auth.isLoading || isVerifying,
+    error: auth.error,
+    clearError,
   }
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        login,
-        logout,
-        isLoading
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   )
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider')
+  }
+  return context
 }

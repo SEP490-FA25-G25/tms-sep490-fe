@@ -106,6 +106,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 
+/* eslint-disable react-refresh/only-export-components */
 export const schema = z.object({
   id: z.number(),
   header: z.string(),

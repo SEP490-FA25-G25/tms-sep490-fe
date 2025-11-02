@@ -31,6 +31,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
   )
 }
 
+/* eslint-disable react-refresh/only-export-components */
 export { toast, Toaster }
 
 

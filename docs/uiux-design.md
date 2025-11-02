@@ -106,5 +106,3 @@ Năm 2025 chứng kiến sự chuyển dịch về minimalism có chủ đích, 
 8. **Responsive**: Mobile-first approach
 9. **Dark mode**: Support theme switching
 10. **Icons**: Outlined style, monochromatic
-
-Bạn muốn tôi tạo một React component hoặc thiết kế cụ thể theo phong cách này không?
