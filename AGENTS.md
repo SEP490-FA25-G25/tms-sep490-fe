@@ -17,13 +17,18 @@ This is a React + TypeScript + Vite frontend application for a TMS (Tutor Manage
 ### Build Process
 The build process runs `tsc -b && vite build`, ensuring type checking before bundling.
 
+### Backend Integration
+- **API Proxy**: Vite dev server proxies `/api/*` requests to `http://localhost:8080`
+- **CORS Handling**: Backend API configured to handle frontend requests
+- **Environment**: Development connects to local backend, production can be configured via environment variables
+
 ## Technology Stack
 
 - **Frontend Framework**: React 19.1+ with TypeScript
 - **Build Tool**: Vite with SWC plugin for fast refresh
 - **Styling**: Tailwind CSS v4 with shadcn/ui components
 - **Routing**: React Router DOM v7
-- **State Management**: React Context (AuthContext)
+- **State Management**: Redux Toolkit with RTK Query + React Context (AuthContext)
 - **UI Components**: Radix UI primitives with shadcn/ui
 - **Charts**: Recharts
 - **Icons**: Lucide React and Tabler Icons
@@ -33,19 +38,24 @@ The build process runs `tsc -b && vite build`, ensuring type checking before bun
 ## Project Structure
 
 ### Key Directories
-- `src/app/` - Page components organized by route (dashboard, login)
+- `src/app/` - Page components organized by route (dashboard, login, admin, teacher, student, academic)
 - `src/components/` - Reusable components
   - `ui/` - shadcn/ui component library
+  - `dashboard/` - Role-specific dashboard components
   - Feature-specific components (app-sidebar, site-header, etc.)
 - `src/contexts/` - React contexts (AuthContext)
-- `src/hooks/` - Custom hooks (useAuth, use-mobile)
+- `src/hooks/` - Custom hooks (useAuth, use-mobile, useAuthVerification, useRoleBasedAccess)
 - `src/lib/` - Utility functions (utils.ts with cn() helper)
+- `src/store/` - Redux store configuration
+  - `slices/` - Redux slices (authSlice)
+  - `services/` - RTK Query API services (authApi, classApi, studentApi, enrollmentApi)
 
 ### Component Architecture
 - **Pages**: Located in `src/app/[route]/page.tsx` following Next.js-style conventions
 - **Layout Components**: Dashboard uses `SidebarProvider` with `AppSidebar` and `SidebarInset`
-- **Authentication**: Mock authentication system with localStorage persistence
-- **Protected Routes**: `ProtectedRoute` component wraps authenticated pages
+- **Authentication**: JWT-based authentication with Redux state management
+- **Protected Routes**: `ProtectedRoute` component with role-based access control
+- **Role-Based Dashboards**: Separate dashboard components for different user types (Admin, Teacher, Student, Academic Affairs, etc.)
 
 ### UI Component System
 Uses shadcn/ui with consistent patterns:
@@ -54,13 +64,27 @@ Uses shadcn/ui with consistent patterns:
 - Consistent design tokens via Tailwind CSS variables
 - Responsive design with container queries (`@container/main`)
 
-## Authentication System
+## State Management & Architecture
 
-Currently implements mock authentication with hardcoded users:
-- Admin: `admin@example.com` / `admin123`
-- User: `user@example.com` / `user123`
+The application uses a hybrid state management approach:
 
-Authentication state is managed through `AuthContext` and persisted to localStorage. The system is designed to be easily replaced with real API calls.
+### Redux Store (Primary)
+- **RTK Query** for API calls with auto-caching and background updates
+- **Auth slice** for authentication state management
+- **Multiple API services**: `authApi`, `classApi`, `studentApi`, `enrollmentApi`
+
+### Authentication Flow
+- **Redux Toolkit Query** handles login/logout API calls
+- **AuthContext** provides a clean interface for components
+- **JWT tokens** stored in Redux state (access and refresh tokens)
+- **Automatic token verification** on app load via `useAuthVerification`
+- **Role-based access control** with multiple user roles (ADMIN, TEACHER, STUDENT, ACADEMIC_AFFAIR, etc.)
+
+### Current Authentication State
+The system is connected to a real backend API (localhost:8080) and no longer uses mock authentication. The backend API handles:
+- User authentication with JWT tokens
+- Role-based authorization
+- Multiple user types and permissions
 
 ## Path Aliases
 
@@ -82,6 +106,12 @@ The project follows a modern minimal design philosophy inspired by shadcn/ui, Op
 - System fonts (Inter/SF Pro/Roboto) with clear hierarchy
 - Subtle, purposeful animations only
 - Mobile-first responsive design
+- AVOID excessive card component usage - Only use cards when necessary for visual grouping, avoid overusing
+
+### Language & Localization
+- **100% Vietnamese language** for all UI text, labels, buttons, and user-facing content
+- Code comments and technical documentation can remain in English
+- All user interface elements must be localized to Vietnamese
 
 ### Color Usage
 - Neutral base colors dominate (white, gray tones)
@@ -97,6 +127,7 @@ The project follows a modern minimal design philosophy inspired by shadcn/ui, Op
 - Tailwind CSS v4 with Vite plugin for optimal performance
 - Component library follows accessibility best practices via Radix UI
 - Design system documented in `docs/uiux-design.md` with comprehensive guidelines
+- Product requirements documented in `docs/prd.md` for TMS system context
 
 ## Implementation Plan: Core Principles
 
@@ -120,3 +151,10 @@ The project follows a modern minimal design philosophy inspired by shadcn/ui, Op
 **4. Final Deliverable:**
 
 - **Solid & Maintainable Code:** The final code must be robust, reliable, well-documented, and easy for other developers to understand, modify, and maintain in the future.
+
+**5. UI/UX Requirements:**
+
+- **Vietnamese Language**: All user interface text, labels, buttons, messages, and user-facing content must be in Vietnamese 100%
+- **Padding Usage**: Use padding purposefully and avoid excessive whitespace that makes the interface feel disconnected
+- **Card Component Limitations**: Only use card components when absolutely necessary for visual grouping of related content. Avoid wrapping everything in cards unnecessarily
+- **Clean Interface**: Prioritize direct content presentation over unnecessary container elements
