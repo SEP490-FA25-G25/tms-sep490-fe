@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/table'
 import { Search, UserPlus, Info } from 'lucide-react'
 import { useGetAvailableStudentsQuery } from '@/store/services/classApi'
+import { useEnrollExistingStudentsMutation } from '@/store/services/enrollmentApi'
 import type { AvailableStudentDTO } from '@/store/services/classApi'
 import { toast } from 'sonner'
 
@@ -45,6 +46,8 @@ export function StudentSelectionDialog({
     data: response,
     isLoading,
   } = useGetAvailableStudentsQuery({ classId, search, page, size: 20 })
+
+  const [enrollStudents, { isLoading: isEnrolling }] = useEnrollExistingStudentsMutation()
 
   const students = response?.data?.content || []
   const pagination = response?.data
@@ -75,10 +78,31 @@ export function StudentSelectionDialog({
       return
     }
 
-    // TODO: Call enrollment API
-    toast.success(`Enrolling ${selectedStudents.size} students...`)
-    onSuccess()
-    handleClose()
+    try {
+      const result = await enrollStudents({
+        classId,
+        studentIds: Array.from(selectedStudents),
+      }).unwrap()
+
+      toast.success(
+        `Successfully enrolled ${result.data.enrolledCount} students. Created ${result.data.totalStudentSessionsCreated} session records.`
+      )
+      
+      // Show warnings if any
+      if (result.data.warnings && result.data.warnings.length > 0) {
+        result.data.warnings.forEach(warning => {
+          toast.warning(warning)
+        })
+      }
+
+      handleClose()
+      onSuccess()
+    } catch (error: unknown) {
+      console.error('Enrollment error:', error)
+      const err = error as { data?: { message?: string } }
+      const errorMessage = err?.data?.message || 'Failed to enroll students'
+      toast.error(errorMessage)
+    }
   }
 
   const handleClose = () => {
@@ -266,9 +290,9 @@ export function StudentSelectionDialog({
           </Button>
           <Button
             onClick={handleEnroll}
-            disabled={selectedStudents.size === 0}
+            disabled={selectedStudents.size === 0 || isEnrolling}
           >
-            Enroll {selectedStudents.size > 0 && `(${selectedStudents.size})`} Students
+            {isEnrolling ? 'Enrolling...' : `Enroll ${selectedStudents.size > 0 ? `(${selectedStudents.size})` : ''} Students`}
           </Button>
         </FullScreenModalFooter>
       </FullScreenModalContent>

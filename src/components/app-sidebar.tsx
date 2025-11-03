@@ -237,7 +237,7 @@ const roleBasedNav = {
       },
     ],
   },
-  [ROLES.ACADEMIC_STAFF]: {
+  [ROLES.ACADEMIC_AFFAIR]: {
     navMain: [
       {
         title: "Dashboard",
@@ -301,7 +301,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       [ROLES.MANAGER]: 7,
       [ROLES.CENTER_HEAD]: 6,
       [ROLES.SUBJECT_LEADER]: 5,
-      [ROLES.ACADEMIC_STAFF]: 4,
+      [ROLES.ACADEMIC_AFFAIR]: 4,
       [ROLES.QA]: 3,
       [ROLES.TEACHER]: 2,
       [ROLES.STUDENT]: 1,

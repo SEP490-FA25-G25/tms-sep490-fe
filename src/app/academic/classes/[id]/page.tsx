@@ -371,7 +371,7 @@ export default function ClassDetailPage() {
           open={studentSelectionOpen}
           onOpenChange={setStudentSelectionOpen}
           onSuccess={() => {
-            window.location.reload()
+            // API will auto-refresh via cache invalidation
           }}
         />
 
@@ -389,7 +389,7 @@ export default function ClassDetailPage() {
           open={enrollmentDialogOpen}
           onOpenChange={setEnrollmentDialogOpen}
           onSuccess={() => {
-            window.location.reload()
+            // API will auto-refresh via cache invalidation
           }}
         />
       </div>

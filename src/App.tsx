@@ -64,7 +64,7 @@ function App() {
             <Route
               path="/academic/classes"
               element={
-                <ProtectedRoute requiredRoles={['ACADEMIC_STAFF', 'ADMIN', 'MANAGER', 'CENTER_HEAD']}>
+                <ProtectedRoute requiredRoles={['ACADEMIC_AFFAIR', 'ADMIN', 'MANAGER', 'CENTER_HEAD']}>
                   <AcademicClassesPage />
                 </ProtectedRoute>
               }
@@ -72,7 +72,7 @@ function App() {
             <Route
               path="/academic/classes/:id"
               element={
-                <ProtectedRoute requiredRoles={['ACADEMIC_STAFF', 'ADMIN', 'MANAGER', 'CENTER_HEAD']}>
+                <ProtectedRoute requiredRoles={['ACADEMIC_AFFAIR', 'ADMIN', 'MANAGER', 'CENTER_HEAD']}>
                   <AcademicClassDetailPage />
                 </ProtectedRoute>
               }

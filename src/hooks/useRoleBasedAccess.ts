@@ -8,7 +8,7 @@ export const ROLES = {
   MANAGER: 'MANAGER',
   CENTER_HEAD: 'CENTER_HEAD',
   SUBJECT_LEADER: 'SUBJECT_LEADER',
-  ACADEMIC_STAFF: 'ACADEMIC_STAFF',
+  ACADEMIC_AFFAIR: 'ACADEMIC_AFFAIR',
   TEACHER: 'TEACHER',
   STUDENT: 'STUDENT',
   QA: 'QA',
@@ -22,7 +22,7 @@ export const ROLE_BASED_ROUTES = {
   [ROLES.MANAGER]: ['/manager', '/courses/approve'],
   [ROLES.CENTER_HEAD]: ['/center', '/classes/approve'],
   [ROLES.SUBJECT_LEADER]: ['/subject', '/courses/manage'],
-  [ROLES.ACADEMIC_STAFF]: ['/academic', '/students'],
+  [ROLES.ACADEMIC_AFFAIR]: ['/academic', '/students'],
   [ROLES.TEACHER]: ['/teacher', '/my-classes', '/assignments'],
   [ROLES.STUDENT]: ['/student', '/my-courses', '/grades'],
   [ROLES.QA]: ['/qa', '/reports', '/audits'],
@@ -70,8 +70,8 @@ export function useIsSubjectLeader() {
   return useHasRole(ROLES.SUBJECT_LEADER)
 }
 
-export function useIsAcademicStaff() {
-  return useHasRole(ROLES.ACADEMIC_STAFF)
+export function useIsAcademicAffair() {
+  return useHasRole(ROLES.ACADEMIC_AFFAIR)
 }
 
 export function useIsQA() {
@@ -110,7 +110,7 @@ export function getRolePriority(role: Role): number {
     [ROLES.MANAGER]: 7,
     [ROLES.CENTER_HEAD]: 6,
     [ROLES.SUBJECT_LEADER]: 5,
-    [ROLES.ACADEMIC_STAFF]: 4,
+    [ROLES.ACADEMIC_AFFAIR]: 4,
     [ROLES.QA]: 3,
     [ROLES.TEACHER]: 2,
     [ROLES.STUDENT]: 1,

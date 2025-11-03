@@ -62,6 +62,14 @@ export interface EnrollmentResult {
   warnings: string[]
 }
 
+// Enroll existing students request
+export interface EnrollExistingStudentsRequest {
+  classId: number
+  studentIds: number[]
+  overrideCapacity?: boolean
+  overrideReason?: string
+}
+
 export interface ApiResponse<T = unknown> {
   success: boolean
   message: string
@@ -132,6 +140,7 @@ const baseQueryWithReauth: BaseQueryFn<
 export const enrollmentApi = createApi({
   reducerPath: 'enrollmentApi',
   baseQuery: baseQueryWithReauth,
+  tagTypes: ['ClassStudents'],
   endpoints: (builder) => ({
     // Preview Excel import for class enrollment
     previewClassEnrollmentImport: builder.mutation<ApiResponse<ClassEnrollmentImportPreview>, { classId: number; file: File }>({
@@ -154,6 +163,17 @@ export const enrollmentApi = createApi({
         method: 'POST',
         body: request,
       }),
+      invalidatesTags: ['ClassStudents'],
+    }),
+
+    // Enroll existing students (Tab 1: Select Existing Students)
+    enrollExistingStudents: builder.mutation<ApiResponse<EnrollmentResult>, EnrollExistingStudentsRequest>({
+      query: (request) => ({
+        url: `/enrollments/classes/${request.classId}/students`,
+        method: 'POST',
+        body: request,
+      }),
+      invalidatesTags: ['ClassStudents'],
     }),
   }),
 })
@@ -161,4 +181,5 @@ export const enrollmentApi = createApi({
 export const {
   usePreviewClassEnrollmentImportMutation,
   useExecuteClassEnrollmentImportMutation,
+  useEnrollExistingStudentsMutation,
 } = enrollmentApi

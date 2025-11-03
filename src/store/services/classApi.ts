@@ -334,6 +334,7 @@ const baseQueryWithReauth: BaseQueryFn<
 export const classApi = createApi({
   reducerPath: 'classApi',
   baseQuery: baseQueryWithReauth,
+  tagTypes: ['ClassStudents'],
   endpoints: (builder) => ({
     // Get classes with filtering and pagination
     getClasses: builder.query<ClassListResponse, ClassListRequest>({
@@ -361,6 +362,7 @@ export const classApi = createApi({
         url: `/classes/${id}`,
         method: 'GET',
       }),
+      providesTags: ['ClassStudents'],
     }),
 
     // Get students in a class
@@ -370,6 +372,7 @@ export const classApi = createApi({
         method: 'GET',
         params: { search, page, size, sort, sortDir },
       }),
+      providesTags: ['ClassStudents'],
     }),
 
     // Get available students for enrollment in a class

@@ -26,7 +26,7 @@ export default function DashboardPage() {
       [ROLES.MANAGER]: 7,
       [ROLES.CENTER_HEAD]: 6,
       [ROLES.SUBJECT_LEADER]: 5,
-      [ROLES.ACADEMIC_STAFF]: 4,
+      [ROLES.ACADEMIC_AFFAIR]: 4,
       [ROLES.QA]: 3,
       [ROLES.TEACHER]: 2,
       [ROLES.STUDENT]: 1,
@@ -52,7 +52,7 @@ export default function DashboardPage() {
         return <StudentDashboardContent />
       case ROLES.QA:
         return <QADashboardContent />
-      case ROLES.ACADEMIC_STAFF:
+      case ROLES.ACADEMIC_AFFAIR:
         return <AcademicStaffDashboardContent />
       default:
         return <div className="p-6">No dashboard content available for your role.</div>
