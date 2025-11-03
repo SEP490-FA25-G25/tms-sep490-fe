@@ -30,7 +30,7 @@ import {
   ArrowLeft
 } from 'lucide-react'
 import { useGetClassByIdQuery, useGetClassStudentsQuery } from '@/store/services/classApi'
-import type { ClassStudentDTO } from '@/store/services/classApi'
+import type { ClassStudentDTO, TeacherSummaryDTO } from '@/store/services/classApi'
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { Link } from 'react-router-dom'
 import { EnrollmentImportDialog } from './EnrollmentImportDialog'
@@ -60,7 +60,9 @@ export default function ClassDetailPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'ACTIVE':
+      case 'DRAFT':
+        return 'bg-slate-100 text-slate-800 border-slate-200'
+      case 'ONGOING':
         return 'bg-green-100 text-green-800 border-green-200'
       case 'SCHEDULED':
         return 'bg-blue-100 text-blue-800 border-blue-200'
@@ -68,8 +70,6 @@ export default function ClassDetailPage() {
         return 'bg-gray-100 text-gray-800 border-gray-200'
       case 'CANCELLED':
         return 'bg-red-100 text-red-800 border-red-200'
-      case 'SUSPENDED':
-        return 'bg-orange-100 text-orange-800 border-orange-200'
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200'
     }
@@ -215,9 +215,25 @@ export default function ClassDetailPage() {
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <User className="h-4 w-4" />
-              Teacher
+              Teachers ({classData.teachers?.length || 0})
             </div>
-            <div className="font-medium">{classData.teacherName}</div>
+            <div className="space-y-2">
+              {classData.teachers && classData.teachers.length > 0 ? (
+                classData.teachers.map((teacher: TeacherSummaryDTO) => (
+                  <div key={teacher.id} className="flex items-start justify-between p-2 rounded-md bg-muted/50">
+                    <div>
+                      <div className="font-medium">{teacher.fullName}</div>
+                      <div className="text-xs text-muted-foreground">{teacher.email}</div>
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      {teacher.sessionCount} sessions
+                    </Badge>
+                  </div>
+                ))
+              ) : (
+                <div className="text-sm text-muted-foreground">No teachers assigned</div>
+              )}
+            </div>
           </div>
 
           {/* Room Info */}

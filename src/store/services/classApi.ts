@@ -7,6 +7,17 @@ import type {
   FetchBaseQueryMeta,
 } from '@reduxjs/toolkit/query'
 
+// Teacher summary DTO for classes
+export interface TeacherSummaryDTO {
+  id: number // User account ID
+  teacherId: number // Teacher entity ID
+  fullName: string
+  email: string
+  phone: string
+  employeeCode: string
+  sessionCount: number // Number of sessions this teacher teaches
+}
+
 // Types based on backend ClassListItemDTO
 export interface ClassListItemDTO {
   id: number
@@ -19,13 +30,13 @@ export interface ClassListItemDTO {
   modality: 'ONLINE' | 'OFFLINE' | 'HYBRID'
   startDate: string // LocalDate from backend
   plannedEndDate: string // LocalDate from backend
-  status: 'SCHEDULED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'SUSPENDED'
+  status: 'DRAFT' | 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
   approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
   maxCapacity: number
   currentEnrolled: number
   availableSlots: number
   utilizationRate: number
-  teacherName?: string
+  teachers: TeacherSummaryDTO[] // Changed from teacherName to teachers array
   scheduleSummary?: string
   canEnrollStudents: boolean
   enrollmentRestrictionReason?: string
@@ -101,6 +112,8 @@ export interface ClassListRequest {
   size?: number // Backend uses 'size' instead of 'limit'
   branchIds?: number[] // Backend expects list of branch IDs
   courseId?: number // Backend uses courseId instead of subjectId
+  status?: 'DRAFT' | 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED' // NEW: Filter by class status
+  approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' // NEW: Filter by approval status
   modality?: 'ONLINE' | 'OFFLINE' | 'HYBRID'
   search?: string
   sort?: string // Sort field
@@ -132,31 +145,7 @@ export interface ClassDetailResponse {
   data: ClassDetailDTO
 }
 
-export interface ClassDetailDTO {
-  id: number
-  code: string
-  name: string
-  course: CourseDTO
-  branch: BranchDTO
-  modality: 'ONLINE' | 'OFFLINE' | 'HYBRID'
-  startDate: string // LocalDate from backend
-  plannedEndDate: string // LocalDate from backend
-  actualEndDate?: string // LocalDate from backend
-  scheduleDays: number[]
-  maxCapacity: number
-  status: 'SCHEDULED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'SUSPENDED'
-  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
-  rejectionReason?: string
-  submittedAt: string // LocalDate from backend
-  decidedAt?: string // LocalDate from backend
-  decidedByName?: string
-  room: string
-  teacherName: string
-  scheduleSummary: string
-  enrollmentSummary: EnrollmentSummary
-  upcomingSessions: SessionDTO[]
-}
-
+// Nested interfaces for ClassDetailDTO
 export interface CourseDTO {
   id: number
   code: string
@@ -190,10 +179,35 @@ export interface SessionDTO {
   date: string // LocalDate from backend
   startTime: string
   endTime: string
-  teacherName: string
+  teachers: TeacherSummaryDTO[] // List of teachers for this session
   room: string
   status: string
   type: string
+}
+
+export interface ClassDetailDTO {
+  id: number
+  code: string
+  name: string
+  course: CourseDTO
+  branch: BranchDTO
+  modality: 'ONLINE' | 'OFFLINE' | 'HYBRID'
+  startDate: string // LocalDate from backend
+  plannedEndDate: string // LocalDate from backend
+  actualEndDate?: string // LocalDate from backend
+  scheduleDays: number[] // Short[] from backend
+  maxCapacity: number
+  status: 'DRAFT' | 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
+  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
+  rejectionReason?: string
+  submittedAt: string // LocalDate from backend
+  decidedAt?: string // LocalDate from backend
+  decidedByName?: string
+  room: string
+  teachers: TeacherSummaryDTO[] // List of all teachers teaching this class
+  scheduleSummary: string
+  enrollmentSummary: EnrollmentSummary
+  upcomingSessions: SessionDTO[]
 }
 
 export interface ClassStudentDTO {
@@ -333,6 +347,8 @@ export const classApi = createApi({
           size: params.size || 20,
           branchIds: params.branchIds,
           courseId: params.courseId,
+          status: params.status, // NEW: Class status filter
+          approvalStatus: params.approvalStatus, // NEW: Approval status filter
           modality: params.modality,
           search: params.search,
           sort: params.sort || 'startDate',

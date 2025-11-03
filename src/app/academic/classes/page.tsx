@@ -18,6 +18,12 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import {
   Search,
   Plus,
   Users,
@@ -27,7 +33,7 @@ import {
   ChevronRight
 } from 'lucide-react'
 import { useGetClassesQuery } from '@/store/services/classApi'
-import type { ClassListItemDTO, ClassListRequest } from '@/store/services/classApi'
+import type { ClassListItemDTO, ClassListRequest, TeacherSummaryDTO } from '@/store/services/classApi'
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { useNavigate } from 'react-router-dom'
 
@@ -38,6 +44,8 @@ export default function ClassListPage() {
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     courseId: undefined,
+    status: undefined,
+    approvalStatus: undefined,
     modality: undefined,
     sort: 'startDate',
     sortDir: 'asc',
@@ -52,6 +60,8 @@ export default function ClassListPage() {
     ...filters,
     ...pagination,
     courseId: filters.courseId || undefined,
+    status: filters.status || undefined,
+    approvalStatus: filters.approvalStatus || undefined,
     modality: filters.modality || undefined,
   }), [filters, pagination])
 
@@ -79,7 +89,9 @@ export default function ClassListPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'ACTIVE':
+      case 'DRAFT':
+        return 'bg-slate-100 text-slate-800 border-slate-200'
+      case 'ONGOING':
         return 'bg-green-100 text-green-800 border-green-200'
       case 'SCHEDULED':
         return 'bg-blue-100 text-blue-800 border-blue-200'
@@ -87,11 +99,60 @@ export default function ClassListPage() {
         return 'bg-gray-100 text-gray-800 border-gray-200'
       case 'CANCELLED':
         return 'bg-red-100 text-red-800 border-red-200'
-      case 'SUSPENDED':
-        return 'bg-orange-100 text-orange-800 border-orange-200'
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200'
     }
+  }
+
+  const renderTeachers = (teachers: TeacherSummaryDTO[]) => {
+    if (!teachers || teachers.length === 0) {
+      return (
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <User className="h-4 w-4" />
+          <span>Not assigned</span>
+        </div>
+      )
+    }
+
+    const displayTeachers = teachers.slice(0, 3)
+    const remainingCount = teachers.length - 3
+
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center gap-2 cursor-help">
+              <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <div className="flex flex-col gap-0.5">
+                {displayTeachers.map((teacher) => (
+                  <span key={teacher.id} className="text-sm">
+                    {teacher.fullName}
+                  </span>
+                ))}
+                {remainingCount > 0 && (
+                  <span className="text-sm text-muted-foreground">
+                    +{remainingCount} more...
+                  </span>
+                )}
+              </div>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="max-w-xs">
+            <div className="space-y-2">
+              <p className="font-semibold text-sm mb-2">All Teachers</p>
+              {teachers.map((teacher) => (
+                <div key={teacher.id} className="text-sm">
+                  <div className="font-medium">{teacher.fullName}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {teacher.email} • {teacher.sessionCount} sessions
+                  </div>
+                </div>
+              ))}
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    )
   }
 
   if (error) {
@@ -128,6 +189,40 @@ export default function ClassListPage() {
                 className="pl-9"
               />
             </div>
+
+            {/* Status Filter */}
+            <Select
+              value={filters.status || 'all'}
+              onValueChange={(value) => handleFilterChange('status', value === 'all' ? undefined : value)}
+            >
+              <SelectTrigger className="w-full md:w-[180px]">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="DRAFT">Draft</SelectItem>
+                <SelectItem value="SCHEDULED">Scheduled</SelectItem>
+                <SelectItem value="ONGOING">Ongoing</SelectItem>
+                <SelectItem value="COMPLETED">Completed</SelectItem>
+                <SelectItem value="CANCELLED">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Approval Status Filter */}
+            <Select
+              value={filters.approvalStatus || 'all'}
+              onValueChange={(value) => handleFilterChange('approvalStatus', value === 'all' ? undefined : value)}
+            >
+              <SelectTrigger className="w-full md:w-[180px]">
+                <SelectValue placeholder="All Approvals" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Approvals</SelectItem>
+                <SelectItem value="PENDING">Pending</SelectItem>
+                <SelectItem value="APPROVED">Approved</SelectItem>
+                <SelectItem value="REJECTED">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
 
             {/* Modality Filter */}
             <Select
@@ -238,10 +333,7 @@ export default function ClassListPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          <span>{classItem.teacherName || 'Not assigned'}</span>
-                        </div>
+                        {renderTeachers(classItem.teachers)}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
