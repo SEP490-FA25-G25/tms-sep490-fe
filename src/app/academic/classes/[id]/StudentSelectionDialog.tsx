@@ -172,7 +172,6 @@ export function StudentSelectionDialog({
                       <TableHead className="min-w-[200px] sticky top-0 bg-background">Student</TableHead>
                       <TableHead className="min-w-[250px] sticky top-0 bg-background">Email</TableHead>
                       <TableHead className="min-w-[150px] sticky top-0 bg-background">Phone</TableHead>
-                      <TableHead className="min-w-[120px] sticky top-0 bg-background">Level</TableHead>
                       <TableHead className="min-w-[200px] sticky top-0 bg-background">Last Assessment</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -204,9 +203,6 @@ export function StudentSelectionDialog({
                         </TableCell>
                         <TableCell>{student.email}</TableCell>
                         <TableCell>{student.phone}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{student.level}</Badge>
-                        </TableCell>
                         <TableCell>
                           {student.lastAssessmentDate ? (
                             <div className="text-sm">

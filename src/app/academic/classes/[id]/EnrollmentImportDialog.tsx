@@ -195,7 +195,7 @@ export function EnrollmentImportDialog({
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Upload .xlsx file with columns: Student Code, Full Name, Email, Phone, Level
+              Upload .xlsx file with columns: Student Code, Full Name, Email, Phone
             </p>
           </div>
 
@@ -330,7 +330,6 @@ export function EnrollmentImportDialog({
                         <TableHead>Full Name</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Phone</TableHead>
-                        <TableHead>Level</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -360,7 +359,6 @@ export function EnrollmentImportDialog({
                           <TableCell>{student.fullName}</TableCell>
                           <TableCell>{student.email}</TableCell>
                           <TableCell>{student.phone}</TableCell>
-                          <TableCell>{student.level || '-'}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

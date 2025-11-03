@@ -217,7 +217,6 @@ export interface ClassStudentDTO {
   fullName: string
   email: string
   phone: string
-  level: string
   branchName: string
   enrolledAt: string // OffsetDateTime from backend
   enrolledBy: string
@@ -244,7 +243,6 @@ export interface AvailableStudentDTO {
   fullName: string
   email: string
   phone: string
-  level: string
   branchName: string
   lastAssessmentDate?: string
   lastAssessmentSubject?: string

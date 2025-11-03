@@ -14,7 +14,6 @@ export interface StudentListItemDTO {
   fullName: string
   email: string
   phone: string
-  level: string
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
   branchName: string
   totalEnrollments: number
@@ -31,7 +30,6 @@ export interface StudentDetailDTO {
   address: string
   gender: string
   dateOfBirth: string
-  level: string
   status: string
   lastLoginAt?: string
   branchName: string

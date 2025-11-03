@@ -29,7 +29,10 @@ interface StudentFormData {
   fullName: string
   email: string
   phone: string
-  level: string
+  facebookUrl: string
+  address: string
+  gender: string
+  dob: string
 }
 
 export function CreateStudentDialog({
@@ -42,7 +45,10 @@ export function CreateStudentDialog({
     fullName: '',
     email: '',
     phone: '',
-    level: '',
+    facebookUrl: '',
+    address: '',
+    gender: '',
+    dob: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -51,10 +57,6 @@ export function CreateStudentDialog({
   }
 
   const validateForm = () => {
-    if (!formData.studentCode.trim()) {
-      toast.error('Student code is required')
-      return false
-    }
     if (!formData.fullName.trim()) {
       toast.error('Full name is required')
       return false
@@ -63,12 +65,8 @@ export function CreateStudentDialog({
       toast.error('Email is required')
       return false
     }
-    if (!formData.phone.trim()) {
-      toast.error('Phone is required')
-      return false
-    }
-    if (!formData.level) {
-      toast.error('Level is required')
+    if (!formData.gender) {
+      toast.error('Gender is required')
       return false
     }
 
@@ -79,11 +77,23 @@ export function CreateStudentDialog({
       return false
     }
 
-    // Phone validation (basic)
-    const phoneRegex = /^[0-9]{10,15}$/
-    if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
-      toast.error('Phone must be 10-15 digits')
-      return false
+    // Phone validation (optional - only validate if provided)
+    if (formData.phone.trim()) {
+      const phoneRegex = /^[0-9\-\+\s()]{10,15}$/
+      if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
+        toast.error('Phone must be 10-15 digits')
+        return false
+      }
+    }
+
+    // Facebook URL validation (optional - only validate if provided)
+    if (formData.facebookUrl.trim()) {
+      try {
+        new URL(formData.facebookUrl)
+      } catch {
+        toast.error('Invalid Facebook URL format')
+        return false
+      }
     }
 
     return true
@@ -94,9 +104,21 @@ export function CreateStudentDialog({
 
     setIsSubmitting(true)
     try {
-      // TODO: Call API to create student
-      // await createStudent(formData)
+      // Prepare data for API call according to new format (no level field)
+      const studentData = {
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone || null,
+        facebookUrl: formData.facebookUrl || null,
+        address: formData.address || null,
+        gender: formData.gender,
+        dob: formData.dob ? new Date(formData.dob).toISOString().split('T')[0] : null,
+      }
 
+      // TODO: Call API to create student
+      // await createStudent(studentData)
+
+      console.log('Student data to be sent:', studentData)
       toast.success('Student created successfully')
       onSuccess()
       handleClose()
@@ -114,14 +136,17 @@ export function CreateStudentDialog({
       fullName: '',
       email: '',
       phone: '',
-      level: '',
+      facebookUrl: '',
+      address: '',
+      gender: '',
+      dob: '',
     })
     onOpenChange(false)
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Create New Student</DialogTitle>
           <DialogDescription>
@@ -129,16 +154,18 @@ export function CreateStudentDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Student Code */}
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+          {/* Student Code - Auto-generated (read-only) */}
           <div className="space-y-2">
-            <Label htmlFor="student-code">Student Code *</Label>
+            <Label htmlFor="student-code">Student Code</Label>
             <Input
               id="student-code"
-              placeholder="e.g., STU2024001"
+              placeholder="Auto-generated"
               value={formData.studentCode}
-              onChange={(e) => handleChange('studentCode', e.target.value)}
+              disabled
+              className="bg-muted"
             />
+            <p className="text-xs text-muted-foreground">Student code will be automatically generated</p>
           </div>
 
           {/* Full Name */}
@@ -166,7 +193,7 @@ export function CreateStudentDialog({
 
           {/* Phone */}
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone *</Label>
+            <Label htmlFor="phone">Phone</Label>
             <Input
               id="phone"
               type="tel"
@@ -176,24 +203,56 @@ export function CreateStudentDialog({
             />
           </div>
 
-          {/* Level */}
+          {/* Gender */}
           <div className="space-y-2">
-            <Label htmlFor="level">Level *</Label>
-            <Select value={formData.level} onValueChange={(value) => handleChange('level', value)}>
+            <Label htmlFor="gender">Gender *</Label>
+            <Select value={formData.gender} onValueChange={(value) => handleChange('gender', value)}>
               <SelectTrigger>
-                <SelectValue placeholder="Select level" />
+                <SelectValue placeholder="Select gender" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="BEGINNER">Beginner</SelectItem>
-                <SelectItem value="ELEMENTARY">Elementary</SelectItem>
-                <SelectItem value="PRE_INTERMEDIATE">Pre-Intermediate</SelectItem>
-                <SelectItem value="INTERMEDIATE">Intermediate</SelectItem>
-                <SelectItem value="UPPER_INTERMEDIATE">Upper Intermediate</SelectItem>
-                <SelectItem value="ADVANCED">Advanced</SelectItem>
+                <SelectItem value="MALE">Male</SelectItem>
+                <SelectItem value="FEMALE">Female</SelectItem>
+                <SelectItem value="OTHER">Other</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
+          {/* Date of Birth */}
+          <div className="space-y-2">
+            <Label htmlFor="dob">Date of Birth</Label>
+            <Input
+              id="dob"
+              type="date"
+              value={formData.dob}
+              onChange={(e) => handleChange('dob', e.target.value)}
+            />
+          </div>
+
+          {/* Facebook URL */}
+          <div className="space-y-2">
+            <Label htmlFor="facebook-url">Facebook URL</Label>
+            <Input
+              id="facebook-url"
+              type="url"
+              placeholder="https://facebook.com/username"
+              value={formData.facebookUrl}
+              onChange={(e) => handleChange('facebookUrl', e.target.value)}
+            />
+          </div>
+
+          {/* Address */}
+          <div className="space-y-2">
+            <Label htmlFor="address">Address</Label>
+            <Input
+              id="address"
+              placeholder="e.g., 123 Main St, City"
+              value={formData.address}
+              onChange={(e) => handleChange('address', e.target.value)}
+            />
+          </div>
+
+          
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t">
             <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>

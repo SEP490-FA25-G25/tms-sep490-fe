@@ -13,7 +13,6 @@ export interface StudentEnrollmentData {
   fullName: string
   email: string
   phone: string
-  level?: string
   status: 'FOUND' | 'CREATE' | 'ERROR'
   existingStudentId?: number
   validationErrors?: string[]
