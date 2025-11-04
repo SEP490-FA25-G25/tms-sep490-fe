@@ -24,6 +24,7 @@ import { useGetAvailableStudentsQuery } from '@/store/services/classApi'
 import { useEnrollExistingStudentsMutation } from '@/store/services/enrollmentApi'
 import type { AvailableStudentDTO } from '@/store/services/classApi'
 import { toast } from 'sonner'
+import { ReplacementAssessmentsPopover } from '@/components/ReplacementAssessmentsPopover'
 
 interface StudentSelectionDialogProps {
   classId: number
@@ -196,7 +197,7 @@ export function StudentSelectionDialog({
                       <TableHead className="min-w-[200px] sticky top-0 bg-background">Student</TableHead>
                       <TableHead className="min-w-[250px] sticky top-0 bg-background">Email</TableHead>
                       <TableHead className="min-w-[150px] sticky top-0 bg-background">Phone</TableHead>
-                      <TableHead className="min-w-[200px] sticky top-0 bg-background">Last Assessment</TableHead>
+                      <TableHead className="min-w-[200px] sticky top-0 bg-background">Bài kiểm tra đánh giá</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -215,8 +216,7 @@ export function StudentSelectionDialog({
                         </TableCell>
                         <TableCell>
                           <div className="space-y-1">
-                            {getMatchPriorityBadge(student.matchPriority)}
-                            <p className="text-xs text-muted-foreground">{student.matchReason}</p>
+                            {getMatchPriorityBadge(student.classMatchInfo?.matchPriority || student.matchPriority)}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -228,16 +228,9 @@ export function StudentSelectionDialog({
                         <TableCell>{student.email}</TableCell>
                         <TableCell>{student.phone}</TableCell>
                         <TableCell>
-                          {student.lastAssessmentDate ? (
-                            <div className="text-sm">
-                              <div>{student.lastAssessmentSubject}</div>
-                              <div className="text-muted-foreground">
-                                {student.lastAssessmentLevel} • {new Date(student.lastAssessmentDate).toLocaleDateString()}
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">No assessment</span>
-                          )}
+                          <ReplacementAssessmentsPopover
+                            assessments={student.replacementSkillAssessments || []}
+                          />
                         </TableCell>
                       </TableRow>
                     ))}

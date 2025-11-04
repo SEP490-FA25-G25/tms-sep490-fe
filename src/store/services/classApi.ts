@@ -236,6 +236,48 @@ export interface ClassStudentsResponse {
   }
 }
 
+// New nested DTOs for enhanced assessment data
+export interface SkillAssessmentDTO {
+  id: number
+  skill: 'READING' | 'WRITING' | 'SPEAKING' | 'LISTENING' | 'GENERAL'
+  level: LevelInfoDTO
+  score: number
+  assessmentDate: string
+  assessmentType: string
+  note?: string
+  assessedBy: AssessorDTO
+}
+
+export interface LevelInfoDTO {
+  id: number
+  code: string
+  name: string
+  subject: SubjectInfoDTO
+  expectedDurationHours: number
+  description: string
+}
+
+export interface SubjectInfoDTO {
+  id: number
+  name: string
+}
+
+export interface AssessorDTO {
+  id: number
+  fullName: string
+}
+
+export interface ClassMatchInfoDTO {
+  matchPriority: number
+  matchingSkill: string
+  matchingLevel: {
+    id: number
+    code: string
+    name: string
+  }
+  matchReason: string
+}
+
 // Available student for enrollment
 export interface AvailableStudentDTO {
   id: number
@@ -243,7 +285,14 @@ export interface AvailableStudentDTO {
   fullName: string
   email: string
   phone: string
+  branchId: number
   branchName: string
+  activeEnrollments: number
+  canEnroll: boolean
+  replacementSkillAssessments: SkillAssessmentDTO[]
+  classMatchInfo: ClassMatchInfoDTO
+
+  // Legacy fields for backward compatibility
   lastAssessmentDate?: string
   lastAssessmentSubject?: string
   lastAssessmentLevel?: string
