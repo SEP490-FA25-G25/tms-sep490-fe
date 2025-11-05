@@ -9,10 +9,10 @@ This is a React + TypeScript + Vite frontend application for a TMS (Tutor Manage
 ## Development Commands
 
 ### Core Commands
-- `npm run dev` - Start development server with hot reload
-- `npm run build` - Build for production (runs TypeScript check then Vite build)
-- `npm run lint` - Run ESLint to check code quality
-- `npm run preview` - Preview production build locally
+- `pnpm dev` - Start development server with hot reload
+- `pnpm build` - Build for production (runs TypeScript check then Vite build)
+- `pnpm lint` - Run ESLint to check code quality
+- `pnpm preview` - Preview production build locally
 
 ### Build Process
 The build process runs `tsc -b && vite build`, ensuring type checking before bundling.
