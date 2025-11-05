@@ -31,11 +31,14 @@ import {
 } from 'lucide-react'
 import { useGetClassByIdQuery, useGetClassStudentsQuery } from '@/store/services/classApi'
 import type { ClassStudentDTO, TeacherSummaryDTO } from '@/store/services/classApi'
+import type { CreateStudentResponse } from '@/store/services/studentApi'
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { Link } from 'react-router-dom'
 import { EnrollmentImportDialog } from './EnrollmentImportDialog'
 import { StudentSelectionDialog } from './StudentSelectionDialog'
 import { CreateStudentDialog } from './CreateStudentDialog'
+import { StudentCreatedSuccessDialog } from './StudentCreatedSuccessDialog'
+import { toast } from 'sonner'
 
 export default function ClassDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -43,6 +46,8 @@ export default function ClassDetailPage() {
   const [enrollmentDialogOpen, setEnrollmentDialogOpen] = useState(false)
   const [studentSelectionOpen, setStudentSelectionOpen] = useState(false)
   const [createStudentOpen, setCreateStudentOpen] = useState(false)
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false)
+  const [createdStudentData, setCreatedStudentData] = useState<CreateStudentResponse | null>(null)
 
   const {
     data: classResponse,
@@ -376,11 +381,28 @@ export default function ClassDetailPage() {
         />
 
         <CreateStudentDialog
+          classId={classId}
+          branchId={classData.branch.id}
           open={createStudentOpen}
           onOpenChange={setCreateStudentOpen}
-          onSuccess={() => {
-            // After creating student, open student selection dialog
-            setStudentSelectionOpen(true)
+          onSuccess={(studentData) => {
+            // Store student data and show success dialog
+            setCreatedStudentData(studentData)
+            setSuccessDialogOpen(true)
+          }}
+        />
+
+        <StudentCreatedSuccessDialog
+          open={successDialogOpen}
+          onOpenChange={setSuccessDialogOpen}
+          studentData={createdStudentData}
+          onEnrollNow={(studentId) => {
+            // TODO: Implement enrollment API call when backend is ready
+            console.log('Enroll student', studentId, 'to class', classId)
+            toast.info('Tính năng ghi danh sẽ được triển khai sau')
+          }}
+          onAddLater={() => {
+            toast.success('Học viên đã được tạo thành công')
           }}
         />
 

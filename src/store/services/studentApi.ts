@@ -105,6 +105,47 @@ export interface StudentListRequest {
   sortDir?: 'asc' | 'desc'
 }
 
+// Create Student types
+export interface SkillAssessmentInput {
+  skill: 'GENERAL' | 'READING' | 'WRITING' | 'SPEAKING' | 'LISTENING'
+  levelId: number
+  score: number
+  note?: string
+}
+
+export interface CreateStudentRequest {
+  email: string
+  fullName: string
+  phone?: string
+  facebookUrl?: string
+  address?: string
+  gender: 'MALE' | 'FEMALE' | 'OTHER'
+  dob?: string
+  branchId: number
+  skillAssessments?: SkillAssessmentInput[]
+}
+
+export interface CreateStudentResponse {
+  studentId: number
+  studentCode: string
+  userAccountId: number
+  email: string
+  fullName: string
+  phone?: string
+  gender: string
+  dob?: string
+  branchId: number
+  branchName: string
+  status: string
+  defaultPassword: string
+  skillAssessmentsCreated: number
+  createdAt: string
+  createdBy: {
+    userId: number
+    fullName: string
+  }
+}
+
 // Base query with auth
 const baseQuery = fetchBaseQuery({
   baseUrl: '/api/v1',
@@ -169,6 +210,7 @@ const baseQueryWithReauth: BaseQueryFn<
 export const studentApi = createApi({
   reducerPath: 'studentApi',
   baseQuery: baseQueryWithReauth,
+  tagTypes: ['Student'],
   endpoints: (builder) => ({
     // Get students list
     getStudents: builder.query<ApiResponse<PaginationInfo & { content: StudentListItemDTO[] }>, StudentListRequest>({
@@ -186,6 +228,7 @@ export const studentApi = createApi({
           sortDir: params.sortDir || 'asc',
         },
       }),
+      providesTags: ['Student'],
     }),
 
     // Get student detail
@@ -194,6 +237,7 @@ export const studentApi = createApi({
         url: `/students/${studentId}`,
         method: 'GET',
       }),
+      providesTags: ['Student'],
     }),
 
     // Get student enrollment history
@@ -204,6 +248,16 @@ export const studentApi = createApi({
         params: { branchIds, page, size, sort, sortDir },
       }),
     }),
+
+    // Create student
+    createStudent: builder.mutation<ApiResponse<CreateStudentResponse>, CreateStudentRequest>({
+      query: (body) => ({
+        url: '/students',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Student'],
+    }),
   }),
 })
 
@@ -211,4 +265,5 @@ export const {
   useGetStudentsQuery,
   useGetStudentDetailQuery,
   useGetStudentEnrollmentHistoryQuery,
+  useCreateStudentMutation,
 } = studentApi
