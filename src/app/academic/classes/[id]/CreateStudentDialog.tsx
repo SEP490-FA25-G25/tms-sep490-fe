@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useDispatch } from 'react-redux'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -28,8 +29,19 @@ import { vi } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { useCreateStudentMutation } from '@/store/services/studentApi'
 import { useGetSubjectsWithLevelsQuery } from '@/store/services/curriculumApi'
+import { invalidateClassApiTags } from '@/store/services/classApi'
 import type { SkillAssessmentInput, CreateStudentResponse } from '@/store/services/studentApi'
 import { cn } from '@/lib/utils'
+import {
+  isValidEmail,
+  isValidPhone,
+  isValidDob,
+  isValidUrl,
+  isValidScore,
+  getAvailableSkills,
+  assessmentCategoryOptions,
+} from '@/lib/validations'
+import { getScorePlaceholder, getScoreRange } from '@/lib/formatScore'
 
 interface CreateStudentDialogProps {
   classId: number
@@ -49,18 +61,25 @@ interface StudentFormData {
   dob: string
 }
 
-// Extended skill assessment with subject selection
-interface SkillAssessmentFormData extends SkillAssessmentInput {
+// Extended skill assessment with UI-specific fields
+interface SkillAssessmentFormData {
+  skill: string
+  levelId: number
+  rawScore?: number
+  scaledScore?: number
+  scoreScale?: string
+  assessmentCategory?: string
+  note?: string
   subjectId?: number // For UI tracking which subject was selected
 }
 
 export function CreateStudentDialog({
-  classId: _classId,
   branchId,
   open,
   onOpenChange,
   onSuccess,
 }: CreateStudentDialogProps) {
+  const dispatch = useDispatch()
   const [formData, setFormData] = useState<StudentFormData>({
     fullName: '',
     email: '',
@@ -78,6 +97,30 @@ export function CreateStudentDialog({
 
   const subjects = subjectsResponse?.data || []
 
+  // Auto-detect score scale from subject name/code
+  const detectScoreScaleFromSubject = (subject: { name: string; code?: string } | undefined): string => {
+    if (!subject) return '0-100'
+    
+    const name = subject.name.toLowerCase()
+    const code = subject.code?.toLowerCase() || ''
+    
+    // IELTS detection
+    if (name.includes('ielts')) return '0-9'
+    
+    // TOEIC detection
+    if (name.includes('toeic')) return '0-990'
+    
+    // JLPT detection
+    if (name.includes('n5') || code.includes('n5')) return 'N5'
+    if (name.includes('n4') || code.includes('n4')) return 'N4'
+    if (name.includes('n3') || code.includes('n3')) return 'N3'
+    if (name.includes('n2') || code.includes('n2')) return 'N2'
+    if (name.includes('n1') || code.includes('n1')) return 'N1'
+    
+    // Default to custom scale
+    return '0-100'
+  }
+
   // Get levels for a specific subject
   const getLevelsForSubject = (subjectId: number | undefined) => {
     if (!subjectId) return []
@@ -92,7 +135,16 @@ export function CreateStudentDialog({
   const handleAddSkillAssessment = () => {
     setSkillAssessments(prev => [
       ...prev,
-      { skill: 'GENERAL', levelId: 0, score: 0, note: '', subjectId: undefined }
+      {
+        skill: 'GENERAL',
+        levelId: 0,
+        scaledScore: undefined,
+        rawScore: undefined,
+        scoreScale: '0-100',
+        assessmentCategory: 'PLACEMENT',
+        note: '',
+        subjectId: undefined,
+      },
     ])
   }
 
@@ -103,14 +155,22 @@ export function CreateStudentDialog({
   const handleSkillAssessmentChange = (
     index: number,
     field: keyof SkillAssessmentFormData,
-    value: string | number
+    value: string | number | undefined
   ) => {
     setSkillAssessments(prev => {
       const updated = [...prev]
       
-      // If changing subject, reset levelId
+      // If changing subject, reset levelId and auto-detect scoreScale
       if (field === 'subjectId') {
-        updated[index] = { ...updated[index], subjectId: value as number, levelId: 0 }
+        const selectedSubject = subjects.find(s => s.id === value)
+        const detectedScale = detectScoreScaleFromSubject(selectedSubject)
+        
+        updated[index] = { 
+          ...updated[index], 
+          subjectId: value as number, 
+          levelId: 0,
+          scoreScale: detectedScale // Auto-set score scale based on subject
+        }
       } else {
         updated[index] = { ...updated[index], [field]: value }
       }
@@ -135,39 +195,27 @@ export function CreateStudentDialog({
     }
 
     // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(formData.email)) {
+    if (!isValidEmail(formData.email)) {
       toast.error('Email không hợp lệ')
       return false
     }
 
     // Phone validation (optional - only validate if provided)
-    if (formData.phone.trim()) {
-      const phoneRegex = /^[0-9]{10,11}$/
-      if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
-        toast.error('Số điện thoại phải có 10-11 chữ số')
-        return false
-      }
+    if (!isValidPhone(formData.phone)) {
+      toast.error('Số điện thoại phải có 10-11 chữ số')
+      return false
     }
 
     // Facebook URL validation (optional - only validate if provided)
-    if (formData.facebookUrl.trim()) {
-      try {
-        new URL(formData.facebookUrl)
-      } catch {
-        toast.error('URL Facebook không hợp lệ')
-        return false
-      }
+    if (!isValidUrl(formData.facebookUrl)) {
+      toast.error('URL Facebook không hợp lệ')
+      return false
     }
 
     // DOB validation (optional - must be past date if provided)
-    if (formData.dob) {
-      const dobDate = new Date(formData.dob)
-      const today = new Date()
-      if (dobDate >= today) {
-        toast.error('Ngày sinh phải là ngày trong quá khứ')
-        return false
-      }
+    if (!isValidDob(formData.dob)) {
+      toast.error('Ngày sinh phải là ngày trong quá khứ')
+      return false
     }
 
     // Skill assessments validation
@@ -181,9 +229,12 @@ export function CreateStudentDialog({
         toast.error(`Đánh giá kỹ năng ${i + 1}: Vui lòng chọn trình độ`)
         return false
       }
-      if (assessment.score < 0 || assessment.score > 100) {
-        toast.error(`Đánh giá kỹ năng ${i + 1}: Điểm số phải từ 0-100`)
-        return false
+      // Validate scaledScore if provided
+      if (assessment.scaledScore !== undefined && assessment.scoreScale) {
+        if (!isValidScore(assessment.scaledScore, assessment.scoreScale)) {
+          toast.error(`Đánh giá kỹ năng ${i + 1}: Điểm số không hợp lệ cho thang điểm ${assessment.scoreScale}`)
+          return false
+        }
       }
     }
 
@@ -194,9 +245,14 @@ export function CreateStudentDialog({
     if (!validateForm()) return
 
     try {
-      // Remove subjectId before sending to API (only used for UI)
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const assessmentsToSubmit: SkillAssessmentInput[] = skillAssessments.map(({ subjectId, ...rest }) => rest)
+      // Transform form data to API format: remove subjectId, ensure correct types
+      const assessmentsToSubmit: SkillAssessmentInput[] = skillAssessments.map(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        ({ subjectId, ...rest }) => ({
+          ...rest,
+          skill: rest.skill as SkillAssessmentInput['skill'], // Type assertion
+        })
+      )
 
       const result = await createStudent({
         fullName: formData.fullName,
@@ -211,6 +267,9 @@ export function CreateStudentDialog({
       }).unwrap()
 
       const studentData = result.data
+
+      // Invalidate available students cache to refresh the list
+      dispatch(invalidateClassApiTags(['AvailableStudents']))
 
       // Close the dialog
       handleClose()
@@ -441,6 +500,9 @@ export function CreateStudentDialog({
                 ) : (
                   skillAssessments.map((assessment, index) => {
                     const availableLevels = getLevelsForSubject(assessment.subjectId)
+                    const selectedSubject = subjects.find(s => s.id === assessment.subjectId)
+                    const availableSkills = getAvailableSkills(selectedSubject?.name, selectedSubject?.code)
+                    const scoreRange = getScoreRange(assessment.scoreScale)
                     
                     return (
                       <div key={index} className="border rounded-lg p-4 space-y-3">
@@ -510,8 +572,8 @@ export function CreateStudentDialog({
                             </Select>
                           </div>
 
-                          {/* Skill Type */}
-                          <div className="space-y-2">
+                          {/* Skill Type - Dynamic based on subject */}
+                          <div className="space-y-2 col-span-2">
                             <Label>Kỹ năng</Label>
                             <Select
                               value={assessment.skill}
@@ -520,30 +582,75 @@ export function CreateStudentDialog({
                               }
                             >
                               <SelectTrigger className="w-full">
-                                <SelectValue />
+                                <SelectValue placeholder="Chọn kỹ năng" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="GENERAL">Tổng quát</SelectItem>
-                                <SelectItem value="READING">Đọc</SelectItem>
-                                <SelectItem value="WRITING">Viết</SelectItem>
-                                <SelectItem value="SPEAKING">Nói</SelectItem>
-                                <SelectItem value="LISTENING">Nghe</SelectItem>
+                                {availableSkills.map((skill) => (
+                                  <SelectItem key={skill.value} value={skill.value}>
+                                    {skill.label}
+                                  </SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                           </div>
 
-                          {/* Score */}
+                          {/* Score Inputs - In same row */}
                           <div className="space-y-2">
-                            <Label>Điểm (0-100)</Label>
+                            <Label>Điểm chuẩn hóa</Label>
+                            <Input
+                              type="number"
+                              min={scoreRange.min}
+                              max={scoreRange.max}
+                              step={assessment.scoreScale === '0-9' ? '0.5' : '0.1'}
+                              placeholder={getScorePlaceholder(assessment.scoreScale)}
+                              value={assessment.scaledScore ?? ''}
+                              onChange={(e) =>
+                                handleSkillAssessmentChange(
+                                  index,
+                                  'scaledScore',
+                                  e.target.value ? parseFloat(e.target.value) : undefined
+                                )
+                              }
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Điểm thô</Label>
                             <Input
                               type="number"
                               min="0"
-                              max="100"
-                              value={assessment.score}
+                              placeholder="VD: 32/40"
+                              value={assessment.rawScore ?? ''}
                               onChange={(e) =>
-                                handleSkillAssessmentChange(index, 'score', parseInt(e.target.value) || 0)
+                                handleSkillAssessmentChange(
+                                  index,
+                                  'rawScore',
+                                  e.target.value ? parseFloat(e.target.value) : undefined
+                                )
                               }
                             />
+                          </div>
+
+                          {/* Assessment Category */}
+                          <div className="space-y-2 col-span-2">
+                            <Label>Loại đánh giá</Label>
+                            <Select
+                              value={assessment.assessmentCategory || 'PLACEMENT'}
+                              onValueChange={(value) =>
+                                handleSkillAssessmentChange(index, 'assessmentCategory', value)
+                              }
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {assessmentCategoryOptions.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
 
                           {/* Note */}

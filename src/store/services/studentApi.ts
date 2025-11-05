@@ -40,6 +40,25 @@ export interface StudentDetailDTO {
   firstEnrollmentDate?: string
   lastEnrollmentDate?: string
   currentClasses: StudentActiveClassDTO[]
+  skillAssessments?: SkillAssessmentDetailDTO[]
+}
+
+export interface SkillAssessmentDetailDTO {
+  id: number
+  skill: string
+  levelCode: string
+  levelName: string
+  rawScore?: number
+  scaledScore?: number
+  scoreScale?: string
+  assessmentCategory?: string
+  assessmentDate: string
+  assessmentType?: string
+  note?: string
+  assessedBy: {
+    userId: number
+    fullName: string
+  }
 }
 
 export interface StudentActiveClassDTO {
@@ -107,9 +126,12 @@ export interface StudentListRequest {
 
 // Create Student types
 export interface SkillAssessmentInput {
-  skill: 'GENERAL' | 'READING' | 'WRITING' | 'SPEAKING' | 'LISTENING'
+  skill: 'GENERAL' | 'READING' | 'WRITING' | 'SPEAKING' | 'LISTENING' | 'VOCABULARY' | 'GRAMMAR' | 'KANJI'
   levelId: number
-  score: number
+  rawScore?: number // Optional - raw score from test (e.g., 32 out of 40)
+  scaledScore?: number // Optional but recommended - standardized score (e.g., 7.5 for IELTS)
+  scoreScale?: string // Optional - score scale type (e.g., '0-9', '0-990', 'N1-N5')
+  assessmentCategory?: string // Optional - e.g., 'PLACEMENT', 'MOCK', 'OFFICIAL', 'PRACTICE'
   note?: string
 }
 
@@ -138,7 +160,7 @@ export interface CreateStudentResponse {
   branchName: string
   status: string
   defaultPassword: string
-  skillAssessmentsCreated: number
+  skillAssessmentCount: number // Fixed: changed from skillAssessmentsCreated to match API response
   createdAt: string
   createdBy: {
     userId: number

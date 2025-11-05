@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useDispatch } from 'react-redux'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -27,6 +28,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Upload, AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
+import { invalidateClassApiTags } from '@/store/services/classApi'
 import {
   usePreviewClassEnrollmentImportMutation,
   useExecuteClassEnrollmentImportMutation,
@@ -48,6 +50,7 @@ export function EnrollmentImportDialog({
   onOpenChange,
   onSuccess,
 }: EnrollmentImportDialogProps) {
+  const dispatch = useDispatch()
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<ClassEnrollmentImportPreview | null>(null)
   const [strategy, setStrategy] = useState<EnrollmentStrategy>('ALL')
@@ -109,6 +112,10 @@ export function EnrollmentImportDialog({
       toast.success(
         `Successfully enrolled ${result.data.enrolledCount} students. Created ${result.data.totalStudentSessionsCreated} session records.`
       )
+      
+      // Invalidate cache to refresh class students list
+      dispatch(invalidateClassApiTags(['ClassStudents', 'AvailableStudents']))
+      
       onSuccess()
       handleClose()
     } catch (error) {

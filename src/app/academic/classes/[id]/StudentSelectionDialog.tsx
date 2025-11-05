@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useDispatch } from 'react-redux'
 import { Button } from '@/components/ui/button'
 import {
   FullScreenModal,
@@ -20,7 +21,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Search, UserPlus, Info } from 'lucide-react'
-import { useGetAvailableStudentsQuery } from '@/store/services/classApi'
+import { useGetAvailableStudentsQuery, invalidateClassApiTags } from '@/store/services/classApi'
 import { useEnrollExistingStudentsMutation } from '@/store/services/enrollmentApi'
 import type { AvailableStudentDTO } from '@/store/services/classApi'
 import { toast } from 'sonner'
@@ -39,6 +40,7 @@ export function StudentSelectionDialog({
   onOpenChange,
   onSuccess,
 }: StudentSelectionDialogProps) {
+  const dispatch = useDispatch()
   const [search, setSearch] = useState('')
   const [selectedStudents, setSelectedStudents] = useState<Set<number>>(new Set())
   const [page, setPage] = useState(0)
@@ -95,6 +97,9 @@ export function StudentSelectionDialog({
           toast.warning(warning)
         })
       }
+
+      // Invalidate cache to refresh both ClassStudents and AvailableStudents lists
+      dispatch(invalidateClassApiTags(['ClassStudents', 'AvailableStudents']))
 
       handleClose()
       onSuccess()
