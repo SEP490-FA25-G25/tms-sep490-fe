@@ -63,7 +63,7 @@ export function StudentSelectionDialog({
   }, [open])
 
   const students = response?.data?.content || []
-  const pagination = response?.data
+  const pagination = response?.data?.page
 
   const toggleStudent = (studentId: number) => {
     const newSet = new Set(selectedStudents)
@@ -252,26 +252,26 @@ export function StudentSelectionDialog({
 
               {/* Pagination */}
               {pagination && pagination.totalPages > 1 && (
-                <div className="flex items-center justify-between pt-4">
+                <div className="flex items-center justify-between pt-4 pb-4">
                   <div className="text-sm text-muted-foreground">
-                    Showing {pagination.numberOfElements} of {pagination.totalElements} students
+                    Showing {students.length} of {pagination.totalElements} students
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={pagination.first}
+                      disabled={pagination.number === 0}
                       onClick={() => setPage(page - 1)}
                     >
                       Previous
                     </Button>
                     <span className="text-sm text-muted-foreground">
-                      Page {(pagination.number ?? 0) + 1} of {pagination.totalPages}
+                      Page {pagination.number + 1} of {pagination.totalPages}
                     </span>
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={pagination.last}
+                      disabled={pagination.number >= pagination.totalPages - 1}
                       onClick={() => setPage(page + 1)}
                     >
                       Next

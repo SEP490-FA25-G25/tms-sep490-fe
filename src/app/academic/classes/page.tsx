@@ -282,7 +282,7 @@ export default function ClassListPage() {
       <div>
         <div className="mb-4 text-sm text-muted-foreground">
           {response?.data ?
-            `Showing ${response.data.numberOfElements} of ${response.data.totalElements} classes` :
+            `Showing ${response.data.content.length} of ${response.data.page.totalElements} classes` :
             'Loading classes...'
           }
         </div>
@@ -379,16 +379,16 @@ export default function ClassListPage() {
         </div>
 
         {/* Pagination */}
-        {response?.data && response.data.totalPages > 1 && (
+        {response?.data?.page && response.data.page.totalPages > 1 && (
           <div className="flex items-center justify-between pt-4 border-t">
             <div className="text-sm text-muted-foreground">
-              Page {(response.data.number ?? 0) + 1} of {response.data.totalPages}
+              Page {response.data.page.number + 1} of {response.data.page.totalPages}
             </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                disabled={response.data.first}
+                disabled={response.data.page.number === 0}
                 onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
               >
                 Previous
@@ -396,7 +396,7 @@ export default function ClassListPage() {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={response.data.last}
+                disabled={response.data.page.number >= response.data.page.totalPages - 1}
                 onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
               >
                 Next

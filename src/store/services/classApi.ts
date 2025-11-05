@@ -121,22 +121,21 @@ export interface ClassListRequest {
 }
 
 export interface PaginationInfo {
-  number: number // Current page number (0-indexed) - Spring Data Page uses 'number' not 'page'
   size: number
+  number: number // Current page number (0-indexed)
   totalElements: number
   totalPages: number
-  first: boolean
-  last: boolean
-  numberOfElements: number
-  empty: boolean
+}
+
+export interface PagedResponse<T> {
+  content: T[]
+  page: PaginationInfo
 }
 
 export interface ClassListResponse {
   success: boolean
   message: string
-  data: PaginationInfo & {
-    content: ClassListItemDTO[] // Backend Spring Data Page uses 'content' instead of 'classes'
-  }
+  data: PagedResponse<ClassListItemDTO>
 }
 
 export interface ClassDetailResponse {
@@ -231,9 +230,7 @@ export interface ClassStudentDTO {
 export interface ClassStudentsResponse {
   success: boolean
   message: string
-  data: PaginationInfo & {
-    content: ClassStudentDTO[]
-  }
+  data: PagedResponse<ClassStudentDTO>
 }
 
 // New nested DTOs for enhanced assessment data
@@ -303,9 +300,7 @@ export interface AvailableStudentDTO {
 export interface AvailableStudentsResponse {
   success: boolean
   message: string
-  data: PaginationInfo & {
-    content: AvailableStudentDTO[]
-  }
+  data: PagedResponse<AvailableStudentDTO>
 }
 
 export interface ApiResponse<T = unknown> {
