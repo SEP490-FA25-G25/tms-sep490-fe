@@ -121,7 +121,7 @@ export interface ClassListRequest {
 }
 
 export interface PaginationInfo {
-  page: number
+  number: number // Current page number (0-indexed) - Spring Data Page uses 'number' not 'page'
   size: number
   totalElements: number
   totalPages: number

@@ -6,6 +6,7 @@ import type {
   FetchBaseQueryError,
   FetchBaseQueryMeta,
 } from '@reduxjs/toolkit/query'
+import { classApi } from './classApi' // Import classApi to invalidate its tags
 
 // Enrollment types based on backend DTOs
 export interface StudentEnrollmentData {
@@ -140,7 +141,7 @@ const baseQueryWithReauth: BaseQueryFn<
 export const enrollmentApi = createApi({
   reducerPath: 'enrollmentApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['ClassStudents'],
+  tagTypes: [], // No tags - we invalidate classApi tags via onQueryStarted
   endpoints: (builder) => ({
     // Preview Excel import for class enrollment
     previewClassEnrollmentImport: builder.mutation<ApiResponse<ClassEnrollmentImportPreview>, { classId: number; file: File }>({
@@ -163,7 +164,16 @@ export const enrollmentApi = createApi({
         method: 'POST',
         body: request,
       }),
-      invalidatesTags: ['ClassStudents'],
+      // Invalidate classApi tags after successful enrollment
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled
+          // Invalidate both ClassStudents and AvailableStudents in classApi
+          dispatch(classApi.util.invalidateTags(['ClassStudents', 'AvailableStudents']))
+        } catch {
+          // Do nothing on error
+        }
+      },
     }),
 
     // Enroll existing students (Tab 1: Select Existing Students)
@@ -173,7 +183,16 @@ export const enrollmentApi = createApi({
         method: 'POST',
         body: request,
       }),
-      invalidatesTags: ['ClassStudents'],
+      // Invalidate classApi tags after successful enrollment
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled
+          // Invalidate both ClassStudents and AvailableStudents in classApi
+          dispatch(classApi.util.invalidateTags(['ClassStudents', 'AvailableStudents']))
+        } catch {
+          // Do nothing on error
+        }
+      },
     }),
   }),
 })

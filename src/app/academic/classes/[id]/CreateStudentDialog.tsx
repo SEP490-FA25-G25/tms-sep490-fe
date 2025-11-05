@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useDispatch } from 'react-redux'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -29,7 +28,6 @@ import { vi } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { useCreateStudentMutation } from '@/store/services/studentApi'
 import { useGetSubjectsWithLevelsQuery } from '@/store/services/curriculumApi'
-import { invalidateClassApiTags } from '@/store/services/classApi'
 import type { SkillAssessmentInput, CreateStudentResponse } from '@/store/services/studentApi'
 import { cn } from '@/lib/utils'
 import {
@@ -79,7 +77,6 @@ export function CreateStudentDialog({
   onOpenChange,
   onSuccess,
 }: CreateStudentDialogProps) {
-  const dispatch = useDispatch()
   const [formData, setFormData] = useState<StudentFormData>({
     fullName: '',
     email: '',
@@ -267,9 +264,6 @@ export function CreateStudentDialog({
       }).unwrap()
 
       const studentData = result.data
-
-      // Invalidate available students cache to refresh the list
-      dispatch(invalidateClassApiTags(['AvailableStudents']))
 
       // Close the dialog
       handleClose()

@@ -6,6 +6,7 @@ import type {
   FetchBaseQueryError,
   FetchBaseQueryMeta,
 } from '@reduxjs/toolkit/query'
+import { classApi } from './classApi' // Import classApi to invalidate its tags
 
 // Student types based on backend DTOs
 export interface StudentListItemDTO {
@@ -279,6 +280,16 @@ export const studentApi = createApi({
         body,
       }),
       invalidatesTags: ['Student'],
+      // When student is created, available students list in ALL classes should be updated
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled
+          // Invalidate AvailableStudents in classApi after successful student creation
+          dispatch(classApi.util.invalidateTags(['AvailableStudents']))
+        } catch {
+          // Do nothing on error
+        }
+      },
     }),
   }),
 })

@@ -382,7 +382,7 @@ export default function ClassListPage() {
         {response?.data && response.data.totalPages > 1 && (
           <div className="flex items-center justify-between pt-4 border-t">
             <div className="text-sm text-muted-foreground">
-              Page {response.data.page + 1} of {response.data.totalPages}
+              Page {(response.data.number ?? 0) + 1} of {response.data.totalPages}
             </div>
             <div className="flex items-center gap-2">
               <Button
