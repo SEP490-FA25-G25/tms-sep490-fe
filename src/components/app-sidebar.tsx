@@ -37,27 +37,27 @@ const roleBasedNav = {
   [ROLES.ADMIN]: {
     navMain: [
       {
-        title: "Dashboard",
+        title: "Bảng điều khiển",
         url: "/dashboard",
         icon: HomeIcon,
       },
       {
-        title: "User Management",
+        title: "Quản lý người dùng",
         url: "/admin/users",
         icon: UsersIcon,
       },
       {
-        title: "System Analytics",
+        title: "Phân tích hệ thống",
         url: "/admin/analytics",
         icon: BarChartIcon,
       },
       {
-        title: "Center Management",
+        title: "Quản lý trung tâm",
         url: "/admin/centers",
         icon: BuildingIcon,
       },
       {
-        title: "Subject Management",
+        title: "Quản lý môn học",
         url: "/admin/subjects",
         icon: BookOpenIcon,
       },
@@ -66,27 +66,27 @@ const roleBasedNav = {
   [ROLES.MANAGER]: {
     navMain: [
       {
-        title: "Dashboard",
+        title: "Bảng điều khiển",
         url: "/dashboard",
         icon: HomeIcon,
       },
       {
-        title: "Course Approval",
+        title: "Phê duyệt khóa học",
         url: "/manager/courses/approve",
         icon: CheckCircleIcon,
       },
       {
-        title: "Teacher Management",
+        title: "Quản lý giáo viên",
         url: "/manager/teachers",
         icon: GraduationCapIcon,
       },
       {
-        title: "Reports",
+        title: "Báo cáo",
         url: "/manager/reports",
         icon: FileTextIcon,
       },
       {
-        title: "Analytics",
+        title: "Phân tích",
         url: "/manager/analytics",
         icon: BarChartIcon,
       },
@@ -95,27 +95,27 @@ const roleBasedNav = {
   [ROLES.CENTER_HEAD]: {
     navMain: [
       {
-        title: "Dashboard",
+        title: "Bảng điều khiển",
         url: "/dashboard",
         icon: HomeIcon,
       },
       {
-        title: "Class Management",
+        title: "Quản lý lớp học",
         url: "/center/classes",
         icon: CalendarIcon,
       },
       {
-        title: "Student Management",
+        title: "Quản lý học sinh",
         url: "/center/students",
         icon: UsersIcon,
       },
       {
-        title: "Teacher Assignment",
+        title: "Phân công giáo viên",
         url: "/center/teachers",
         icon: GraduationCapIcon,
       },
       {
-        title: "Center Reports",
+        title: "Báo cáo trung tâm",
         url: "/center/reports",
         icon: FileTextIcon,
       },
@@ -124,27 +124,27 @@ const roleBasedNav = {
   [ROLES.SUBJECT_LEADER]: {
     navMain: [
       {
-        title: "Dashboard",
+        title: "Bảng điều khiển",
         url: "/dashboard",
         icon: HomeIcon,
       },
       {
-        title: "Subject Management",
+        title: "Quản lý môn học",
         url: "/subject/courses",
         icon: BookOpenIcon,
       },
       {
-        title: "Teacher Assignment",
+        title: "Phân công giáo viên",
         url: "/subject/teachers",
         icon: GraduationCapIcon,
       },
       {
-        title: "Curriculum Planning",
+        title: "Lập kế hoạch giảng dạy",
         url: "/subject/curriculum",
         icon: FileTextIcon,
       },
       {
-        title: "Performance Tracking",
+        title: "Theo dõi kết quả",
         url: "/subject/performance",
         icon: BarChartIcon,
       },
@@ -153,27 +153,27 @@ const roleBasedNav = {
   [ROLES.TEACHER]: {
     navMain: [
       {
-        title: "Dashboard",
+        title: "Bảng điều khiển",
         url: "/dashboard",
         icon: HomeIcon,
       },
       {
-        title: "My Classes",
+        title: "Lớp học của tôi",
         url: "/teacher/classes",
         icon: CalendarIcon,
       },
       {
-        title: "Assignments",
+        title: "Bài tập",
         url: "/teacher/assignments",
         icon: FileTextIcon,
       },
       {
-        title: "Grade Management",
+        title: "Quản lý điểm",
         url: "/teacher/grades",
         icon: AwardIcon,
       },
       {
-        title: "Student Progress",
+        title: "Tiến độ học sinh",
         url: "/teacher/students",
         icon: UsersIcon,
       },
@@ -182,27 +182,27 @@ const roleBasedNav = {
   [ROLES.STUDENT]: {
     navMain: [
       {
-        title: "Dashboard",
+        title: "Bảng điều khiển",
         url: "/dashboard",
         icon: HomeIcon,
       },
       {
-        title: "My Courses",
+        title: "Khóa học của tôi",
         url: "/student/courses",
         icon: BookOpenIcon,
       },
       {
-        title: "Assignments",
+        title: "Bài tập",
         url: "/student/assignments",
         icon: FileTextIcon,
       },
       {
-        title: "Grades",
+        title: "Điểm số",
         url: "/student/grades",
         icon: AwardIcon,
       },
       {
-        title: "Schedule",
+        title: "Thời khóa biểu",
         url: "/student/schedule",
         icon: CalendarIcon,
       },
@@ -211,27 +211,27 @@ const roleBasedNav = {
   [ROLES.QA]: {
     navMain: [
       {
-        title: "Dashboard",
+        title: "Bảng điều khiển",
         url: "/dashboard",
         icon: HomeIcon,
       },
       {
-        title: "Quality Audits",
+        title: "Kiểm tra chất lượng",
         url: "/qa/audits",
         icon: ClipboardCheckIcon,
       },
       {
-        title: "Course Review",
+        title: "Đánh giá khóa học",
         url: "/qa/courses",
         icon: BookOpenIcon,
       },
       {
-        title: "Teacher Evaluation",
+        title: "Đánh giá giáo viên",
         url: "/qa/teachers",
         icon: GraduationCapIcon,
       },
       {
-        title: "Reports",
+        title: "Báo cáo",
         url: "/qa/reports",
         icon: FileTextIcon,
       },
@@ -240,27 +240,27 @@ const roleBasedNav = {
   [ROLES.ACADEMIC_AFFAIR]: {
     navMain: [
       {
-        title: "Dashboard",
+        title: "Bảng điều khiển",
         url: "/dashboard",
         icon: HomeIcon,
       },
       {
-        title: "Class Management",
+        title: "Quản lý lớp học",
         url: "/academic/classes",
         icon: CalendarIcon,
       },
       {
-        title: "Student Records",
+        title: "Hồ sơ học sinh",
         url: "/academic/students",
         icon: UsersIcon,
       },
       {
-        title: "Academic Support",
+        title: "Hỗ trợ học thuật",
         url: "/academic/support",
         icon: HelpCircleIcon,
       },
       {
-        title: "Documentation",
+        title: "Tài liệu",
         url: "/academic/docs",
         icon: FileTextIcon,
       },
@@ -270,17 +270,17 @@ const roleBasedNav = {
 
 const navSecondary = [
   {
-    title: "Settings",
+    title: "Cài đặt",
     url: "/settings",
     icon: SettingsIcon,
   },
   {
-    title: "Get Help",
+    title: "Trợ giúp",
     url: "/help",
     icon: HelpCircleIcon,
   },
   {
-    title: "Search",
+    title: "Tìm kiếm",
     url: "/search",
     icon: SearchIcon,
   },
@@ -340,7 +340,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={{
-          name: user?.fullName || 'User',
+          name: user?.fullName || 'Người dùng',
           email: user?.email || '',
           avatar: '/avatars/default.jpg',
         }} />

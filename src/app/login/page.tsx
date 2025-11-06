@@ -12,7 +12,7 @@ export default function LoginPage() {
             <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
               <GalleryVerticalEnd className="size-4" />
             </div>
-           Trainning Management System
+           Hệ Thống Quản Lý Đào Tạo
           </a>
         </div>
         <div className="flex flex-1 items-center justify-center">

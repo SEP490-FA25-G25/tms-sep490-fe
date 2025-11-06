@@ -107,12 +107,12 @@ export default function ClassDetailPage() {
           <Link to="/academic/classes">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Classes
+              Quay lại Lớp học
             </Button>
           </Link>
         </div>
         <div className="text-center py-12">
-          <p className="text-destructive">Failed to load class details. Please try again.</p>
+          <p className="text-destructive">Không thể tải chi tiết lớp học. Vui lòng thử lại.</p>
         </div>
       </DashboardLayout>
     )
@@ -134,7 +134,7 @@ export default function ClassDetailPage() {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
-          <p>Class not found.</p>
+          <p>Không tìm thấy lớp học.</p>
         </div>
       </DashboardLayout>
     )
@@ -149,7 +149,7 @@ export default function ClassDetailPage() {
             <Link to="/academic/classes">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Classes
+                Quay lại Lớp học
               </Button>
             </Link>
             <div>
@@ -160,22 +160,22 @@ export default function ClassDetailPage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button>
-                Enroll Students
+                Ghi danh Học viên
                 <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem onClick={() => setStudentSelectionOpen(true)}>
                 <Users className="mr-2 h-4 w-4" />
-                Select from Available
+                Chọn từ học viên có sẵn
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setCreateStudentOpen(true)}>
                 <UserPlus className="mr-2 h-4 w-4" />
-                Create New Student
+                Tạo học viên mới
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setEnrollmentDialogOpen(true)}>
                 <FileUp className="mr-2 h-4 w-4" />
-                Import from Excel
+                Nhập từ Excel
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -200,7 +200,7 @@ export default function ClassDetailPage() {
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <BookOpen className="h-4 w-4" />
-              Course
+              Khóa học
             </div>
             <div className="font-medium">{classData.course.name}</div>
             <div className="text-sm text-muted-foreground">{classData.course.code}</div>
@@ -210,7 +210,7 @@ export default function ClassDetailPage() {
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Building className="h-4 w-4" />
-              Branch
+              Chi nhánh
             </div>
             <div className="font-medium">{classData.branch.name}</div>
             <div className="text-sm text-muted-foreground">{classData.branch.address}</div>
@@ -220,7 +220,7 @@ export default function ClassDetailPage() {
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <User className="h-4 w-4" />
-              Teachers ({classData.teachers?.length || 0})
+              Giảng viên ({classData.teachers?.length || 0})
             </div>
             <div className="space-y-2">
               {classData.teachers && classData.teachers.length > 0 ? (
@@ -231,12 +231,12 @@ export default function ClassDetailPage() {
                       <div className="text-xs text-muted-foreground">{teacher.email}</div>
                     </div>
                     <Badge variant="outline" className="text-xs">
-                      {teacher.sessionCount} sessions
+                      {teacher.sessionCount} buổi học
                     </Badge>
                   </div>
                 ))
               ) : (
-                <div className="text-sm text-muted-foreground">No teachers assigned</div>
+                <div className="text-sm text-muted-foreground">Chưa có giảng viên được phân công</div>
               )}
             </div>
           </div>
@@ -245,7 +245,7 @@ export default function ClassDetailPage() {
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <MapPin className="h-4 w-4" />
-              Room
+              Phòng học
             </div>
             <div className="font-medium">{classData.room}</div>
           </div>
@@ -255,7 +255,7 @@ export default function ClassDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Schedule */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Schedule</h3>
+            <h3 className="text-lg font-semibold mb-4">Lịch học</h3>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -271,22 +271,22 @@ export default function ClassDetailPage() {
 
           {/* Capacity */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Enrollment</h3>
+            <h3 className="text-lg font-semibold mb-4">Ghi danh</h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Current Enrolled</span>
+                <span className="text-muted-foreground">Đã ghi danh</span>
                 <span className="font-medium">{classData.enrollmentSummary.currentEnrolled}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Max Capacity</span>
+                <span className="text-muted-foreground">Sức chứa tối đa</span>
                 <span className="font-medium">{classData.enrollmentSummary.maxCapacity}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Available Slots</span>
+                <span className="text-muted-foreground">Còn trống</span>
                 <span className="font-medium">{classData.enrollmentSummary.availableSlots}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Utilization Rate</span>
+                <span className="text-muted-foreground">Tỷ lệ lấp đầy</span>
                 <Badge variant="outline" className={getCapacityColor(classData.enrollmentSummary.currentEnrolled, classData.enrollmentSummary.maxCapacity)}>
                   {classData.enrollmentSummary.utilizationRate.toFixed(1)}%
                 </Badge>
@@ -298,7 +298,7 @@ export default function ClassDetailPage() {
         {/* Upcoming Sessions */}
         {classData.upcomingSessions && classData.upcomingSessions.length > 0 && (
           <div>
-            <h3 className="text-lg font-semibold mb-4">Upcoming Sessions</h3>
+            <h3 className="text-lg font-semibold mb-4">Buổi học sắp tới</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {classData.upcomingSessions.slice(0, 6).map((session) => (
                 <div key={session.id} className="p-4 border rounded-lg">
@@ -320,9 +320,9 @@ export default function ClassDetailPage() {
         {/* Students */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Enrolled Students</h3>
+            <h3 className="text-lg font-semibold">Học viên đã ghi danh</h3>
             <Button variant="outline" size="sm">
-              View All Students
+              Xem tất cả học viên
             </Button>
           </div>
 
@@ -337,11 +337,11 @@ export default function ClassDetailPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Student</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Branch</TableHead>
-                    <TableHead>Enrolled Date</TableHead>
+                    <TableHead>Học viên</TableHead>
+                    <TableHead>Thư điện tử</TableHead>
+                    <TableHead>Điện thoại</TableHead>
+                    <TableHead>Chi nhánh</TableHead>
+                    <TableHead>Ngày ghi danh</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -365,7 +365,7 @@ export default function ClassDetailPage() {
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No students enrolled yet.</p>
+              <p>Chưa có học viên nào ghi danh.</p>
             </div>
           )}
         </div>

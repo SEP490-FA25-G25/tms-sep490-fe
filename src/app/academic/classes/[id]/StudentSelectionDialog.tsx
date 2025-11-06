@@ -87,7 +87,7 @@ export function StudentSelectionDialog({
 
   const handleEnroll = async () => {
     if (selectedStudents.size === 0) {
-      toast.error('Please select at least one student')
+      toast.error('Vui lòng chọn ít nhất một học sinh')
       return
     }
 
@@ -98,7 +98,7 @@ export function StudentSelectionDialog({
       }).unwrap()
 
       toast.success(
-        `Successfully enrolled ${result.data.successfulEnrollments} out of ${result.data.totalAttempted} students into ${result.data.className}`
+        `Đã ghi danh thành công ${result.data.successfulEnrollments} trên ${result.data.totalAttempted} học sinh vào lớp ${result.data.className}`
       )
 
       handleClose()
@@ -106,7 +106,7 @@ export function StudentSelectionDialog({
     } catch (error: unknown) {
       console.error('Enrollment error:', error)
       const err = error as { data?: { message?: string } }
-      const errorMessage = err?.data?.message || 'Failed to enroll students'
+      const errorMessage = err?.data?.message || 'Ghi danh học sinh thất bại'
       toast.error(errorMessage)
     }
   }
@@ -123,19 +123,19 @@ export function StudentSelectionDialog({
       case 1:
         return (
           <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
-            Perfect Match
+            Phù hợp hoàn hảo
           </Badge>
         )
       case 2:
         return (
           <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">
-            Partial Match
+            Phù hợp một phần
           </Badge>
         )
       default:
         return (
           <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">
-            No Match
+            Không phù hợp
           </Badge>
         )
     }
@@ -145,9 +145,9 @@ export function StudentSelectionDialog({
     <FullScreenModal open={open} onOpenChange={onOpenChange}>
       <FullScreenModalContent>
         <FullScreenModalHeader>
-          <FullScreenModalTitle>Select Students to Enroll</FullScreenModalTitle>
+          <FullScreenModalTitle>Chọn học sinh để ghi danh</FullScreenModalTitle>
           <FullScreenModalDescription>
-            Students are sorted by skill assessment match. Perfect matches appear first.
+            Học sinh được sắp xếp theo mức độ phù hợp của bài kiểm tra kỹ năng. Các học sinh phù hợp hoàn hảo sẽ xuất hiện đầu tiên.
           </FullScreenModalDescription>
         </FullScreenModalHeader>
 
@@ -157,7 +157,7 @@ export function StudentSelectionDialog({
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name, email, phone, or student code..."
+                placeholder="Tìm kiếm theo tên, email, điện thoại, hoặc mã học sinh..."
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value)
@@ -167,10 +167,10 @@ export function StudentSelectionDialog({
               />
             </div>
             <Button variant="outline" size="sm" onClick={selectAll}>
-              Select All
+              Chọn tất cả
             </Button>
             <Button variant="outline" size="sm" onClick={clearSelection}>
-              Clear
+              Xóa lựa chọn
             </Button>
           </div>
 
@@ -179,7 +179,7 @@ export function StudentSelectionDialog({
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 mx-6">
               <div className="flex items-center gap-2 text-sm text-blue-900">
                 <Info className="h-4 w-4" />
-                <span className="font-medium">{selectedStudents.size} students selected</span>
+                <span className="font-medium">Đã chọn {selectedStudents.size} học sinh</span>
               </div>
             </div>
           )}
@@ -198,10 +198,10 @@ export function StudentSelectionDialog({
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[50px] sticky top-0 bg-background"></TableHead>
-                      <TableHead className="min-w-[200px] sticky top-0 bg-background">Match</TableHead>
-                      <TableHead className="min-w-[200px] sticky top-0 bg-background">Student</TableHead>
+                      <TableHead className="min-w-[200px] sticky top-0 bg-background">Mức độ phù hợp</TableHead>
+                      <TableHead className="min-w-[200px] sticky top-0 bg-background">Học sinh</TableHead>
                       <TableHead className="min-w-[250px] sticky top-0 bg-background">Email</TableHead>
-                      <TableHead className="min-w-[150px] sticky top-0 bg-background">Phone</TableHead>
+                      <TableHead className="min-w-[150px] sticky top-0 bg-background">Điện thoại</TableHead>
                       <TableHead className="min-w-[200px] sticky top-0 bg-background">Bài kiểm tra đánh giá</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -247,7 +247,7 @@ export function StudentSelectionDialog({
               {pagination && pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between pt-4 pb-4">
                   <div className="text-sm text-muted-foreground">
-                    Showing {students.length} of {pagination.totalElements} students
+                    Hiển thị {students.length} trên {pagination.totalElements} học sinh
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
@@ -256,10 +256,10 @@ export function StudentSelectionDialog({
                       disabled={pagination.number === 0}
                       onClick={() => setPage(page - 1)}
                     >
-                      Previous
+                      Trang trước
                     </Button>
                     <span className="text-sm text-muted-foreground">
-                      Page {pagination.number + 1} of {pagination.totalPages}
+                      Trang {pagination.number + 1} trên {pagination.totalPages}
                     </span>
                     <Button
                       variant="outline"
@@ -267,7 +267,7 @@ export function StudentSelectionDialog({
                       disabled={pagination.number >= pagination.totalPages - 1}
                       onClick={() => setPage(page + 1)}
                     >
-                      Next
+                      Trang sau
                     </Button>
                   </div>
                 </div>
@@ -276,21 +276,21 @@ export function StudentSelectionDialog({
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <UserPlus className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No available students found.</p>
-              {search && <p className="text-sm mt-2">Try adjusting your search criteria.</p>}
+              <p>Không tìm thấy học sinh nào phù hợp.</p>
+              {search && <p className="text-sm mt-2">Thử điều chỉnh tiêu chí tìm kiếm của bạn.</p>}
             </div>
           )}
         </FullScreenModalBody>
 
         <FullScreenModalFooter>
           <Button variant="outline" onClick={handleClose}>
-            Cancel
+            Hủy bỏ
           </Button>
           <Button
             onClick={handleEnroll}
             disabled={selectedStudents.size === 0 || isEnrolling}
           >
-            {isEnrolling ? 'Enrolling...' : `Enroll ${selectedStudents.size > 0 ? `(${selectedStudents.size})` : ''} Students`}
+            {isEnrolling ? 'Đang ghi danh...' : `Ghi danh ${selectedStudents.size > 0 ? `(${selectedStudents.size})` : ''} học sinh`}
           </Button>
         </FullScreenModalFooter>
       </FullScreenModalContent>

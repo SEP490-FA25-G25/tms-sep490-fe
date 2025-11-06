@@ -7,28 +7,28 @@ import { Users, UserPlus, Building, BookOpen } from 'lucide-react'
 const adminData = [
   {
     id: 1,
-    name: "Total Users",
+    name: "Tổng số người dùng",
     value: "1,234",
     change: "+12.3%",
     icon: Users,
   },
   {
     id: 2,
-    name: "New Users",
+    name: "Người dùng mới",
     value: "45",
     change: "+8.1%",
     icon: UserPlus,
   },
   {
     id: 3,
-    name: "Total Centers",
+    name: "Tổng số trung tâm",
     value: "12",
     change: "+2.0%",
     icon: Building,
   },
   {
     id: 4,
-    name: "Active Courses",
+    name: "Khóa học hoạt động",
     value: "89",
     change: "+15.2%",
     icon: BookOpen,
@@ -52,7 +52,7 @@ export function AdminDashboardContent() {
               <CardContent>
                 <div className="text-2xl font-bold">{stat.value}</div>
                 <p className="text-xs text-muted-foreground">
-                  <span className="text-green-600">{stat.change}</span> from last month
+                  <span className="text-green-600">{stat.change}</span> so với tháng trước
                 </p>
               </CardContent>
             </Card>
@@ -67,9 +67,9 @@ export function AdminDashboardContent() {
       <div className="px-4 lg:px-6">
         <Card>
           <CardHeader>
-            <CardTitle>Recent System Activity</CardTitle>
+            <CardTitle>Hoạt động hệ thống gần đây</CardTitle>
             <CardDescription>
-              Latest user registrations and system events
+              Các đăng ký người dùng và sự kiện hệ thống mới nhất
             </CardDescription>
           </CardHeader>
           <CardContent>

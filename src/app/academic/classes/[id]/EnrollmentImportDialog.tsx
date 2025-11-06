@@ -70,7 +70,7 @@ export function EnrollmentImportDialog({
     if (selectedFile) {
       // Validate file size (10MB limit)
       if (selectedFile.size > 10 * 1024 * 1024) {
-        toast.error('File size must be less than 10MB')
+        toast.error('Kích thước tệp phải nhỏ hơn 10MB')
         return
       }
       setFile(selectedFile)
@@ -88,12 +88,12 @@ export function EnrollmentImportDialog({
       const url = window.URL.createObjectURL(result)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'student-enrollment-template.xlsx'
+      a.download = 'mau-danh-sach-sinh-vien.xlsx'
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
-    } catch (error) {
+    } catch {
       // Silent fail - user can retry
     }
   }
@@ -106,12 +106,12 @@ export function EnrollmentImportDialog({
       const url = window.URL.createObjectURL(result)
       const a = document.createElement('a')
       a.href = url
-      a.download = `class-${classId}-enrollment-template.xlsx`
+      a.download = `lop-${classId}-mau-danh-sach.xlsx`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
-    } catch (error) {
+    } catch {
       // Silent fail - user can retry
     }
   }
@@ -143,7 +143,7 @@ export function EnrollmentImportDialog({
     } catch (error) {
       const errorMessage = error && typeof error === 'object' && 'data' in error && error.data && typeof error.data === 'object' && 'message' in error.data
         ? String(error.data.message)
-        : 'Failed to preview import'
+        : 'Xem trước dữ liệu thất bại'
       toast.error(errorMessage)
     }
   }
@@ -153,12 +153,12 @@ export function EnrollmentImportDialog({
 
     // Validate strategy requirements
     if (strategy === 'PARTIAL' && selectedStudents.size === 0) {
-      toast.error('Please select at least one student for partial enrollment')
+      toast.error('Vui lòng chọn ít nhất một sinh viên để đăng ký')
       return
     }
 
     if (strategy === 'OVERRIDE' && overrideReason.trim().length < 20) {
-      toast.error('Override reason must be at least 20 characters')
+      toast.error('Lý do ghi đè phải có ít nhất 20 ký tự')
       return
     }
 
@@ -177,7 +177,7 @@ export function EnrollmentImportDialog({
       }).unwrap()
 
       toast.success(
-        `Successfully enrolled ${result.data.successfulEnrollments} out of ${result.data.totalAttempted} students into ${result.data.className}`
+        `Đã đăng ký thành công ${result.data.successfulEnrollments} trên ${result.data.totalAttempted} sinh viên vào lớp ${result.data.className}`
       )
 
       onSuccess()
@@ -185,7 +185,7 @@ export function EnrollmentImportDialog({
     } catch (error) {
       const errorMessage = error && typeof error === 'object' && 'data' in error && error.data && typeof error.data === 'object' && 'message' in error.data
         ? String(error.data.message)
-        : 'Failed to execute enrollment'
+        : 'Thực hiện đăng ký thất bại'
       toast.error(errorMessage)
     }
   }
@@ -229,9 +229,9 @@ export function EnrollmentImportDialog({
     <FullScreenModal open={open} onOpenChange={onOpenChange}>
       <FullScreenModalContent>
         <FullScreenModalHeader>
-          <FullScreenModalTitle>Import Students via Excel</FullScreenModalTitle>
+          <FullScreenModalTitle>Nhập sinh viên qua Excel</FullScreenModalTitle>
           <FullScreenModalDescription>
-            Upload an Excel file to enroll multiple students at once
+            Tải lên tệp Excel để đăng ký nhiều sinh viên cùng lúc
           </FullScreenModalDescription>
         </FullScreenModalHeader>
 
@@ -240,9 +240,9 @@ export function EnrollmentImportDialog({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="excel-file" className="text-base font-medium">Excel File Upload</Label>
+                <Label htmlFor="excel-file" className="text-base font-medium">Tải lên tệp Excel</Label>
                 <p className="text-sm text-muted-foreground mt-1">
-                  7 columns: full_name, email, phone, facebook_url, address, gender, dob
+                  7 cột: full_name, email, phone, facebook_url, address, gender, dob
                 </p>
               </div>
               <div className="flex gap-2">
@@ -253,7 +253,7 @@ export function EnrollmentImportDialog({
                   disabled={genericTemplateQuery.isLoading}
                 >
                   <Download className="mr-2 h-4 w-4" />
-                  Template
+                  Mẫu
                 </Button>
                 <Button
                   variant="ghost"
@@ -262,7 +262,7 @@ export function EnrollmentImportDialog({
                   disabled={classTemplateQuery.isLoading}
                 >
                   <Download className="mr-2 h-4 w-4" />
-                  Class Template
+                  Mẫu lớp
                 </Button>
               </div>
             </div>
@@ -283,12 +283,12 @@ export function EnrollmentImportDialog({
                 {isPreviewing ? (
                   <>
                     <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    Processing
+                    Đang xử lý
                   </>
                 ) : (
                   <>
                     <Upload className="mr-2 h-4 w-4" />
-                    Preview
+                    Xem trước
                   </>
                 )}
               </Button>
@@ -302,22 +302,22 @@ export function EnrollmentImportDialog({
               <div className="flex items-center justify-between py-3 border-b">
                 <div className="flex items-center gap-8">
                   <div>
-                    <span className="text-sm text-muted-foreground">Total Students</span>
+                    <span className="text-sm text-muted-foreground">Tổng sinh viên</span>
                     <p className="text-lg font-semibold">{preview.totalStudents}</p>
                   </div>
                   <div>
-                    <span className="text-sm text-muted-foreground">Valid</span>
+                    <span className="text-sm text-muted-foreground">Hợp lệ</span>
                     <p className="text-lg font-semibold">{preview.totalValid}</p>
                   </div>
                   <div>
-                    <span className="text-sm text-muted-foreground">New</span>
+                    <span className="text-sm text-muted-foreground">Mới</span>
                     <p className="text-lg font-semibold text-blue-600">
                       {preview.students.filter(s => s.status === 'CREATE').length}
                     </p>
                   </div>
                   {preview.errorCount > 0 && (
                     <div>
-                      <span className="text-sm text-muted-foreground">Errors</span>
+                      <span className="text-sm text-muted-foreground">Lỗi</span>
                       <p className="text-lg font-semibold text-red-600">{preview.errorCount}</p>
                     </div>
                   )}
@@ -325,11 +325,11 @@ export function EnrollmentImportDialog({
 
                 {/* Capacity Status Inline */}
                 <div className="text-right">
-                  <span className="text-sm text-muted-foreground">Class Capacity</span>
+                  <span className="text-sm text-muted-foreground">Sức chứa lớp</span>
                   <p className="text-sm font-medium">
                     {preview.currentEnrolled}/{preview.maxCapacity}
                     <span className="ml-2 text-muted-foreground">
-                      ({preview.availableSlots} slots available)
+                      ({preview.availableSlots} chỗ còn trống)
                     </span>
                   </p>
                 </div>
@@ -340,13 +340,13 @@ export function EnrollmentImportDialog({
                 <div className="space-y-2">
                   {preview.errors.length > 0 && (
                     <div className="text-sm p-3 rounded-md bg-red-50 text-red-800 border border-red-200">
-                      <span className="font-medium">Errors:</span> {preview.errors.join(', ')}
+                      <span className="font-medium">Lỗi:</span> {preview.errors.join(', ')}
                     </div>
                   )}
 
                   {preview.warnings.length > 0 && (
                     <div className="text-sm p-3 rounded-md bg-yellow-50 text-yellow-800 border border-yellow-200">
-                      <span className="font-medium">Warning:</span> {preview.warnings.join(', ')}
+                      <span className="font-medium">Cảnh báo:</span> {preview.warnings.join(', ')}
                     </div>
                   )}
                 </div>
@@ -354,15 +354,15 @@ export function EnrollmentImportDialog({
 
               {/* Strategy Selection */}
               <div className="space-y-2">
-                <Label htmlFor="strategy">Enrollment Strategy</Label>
+                <Label htmlFor="strategy">Chiến lược đăng ký</Label>
                 <Select value={strategy} onValueChange={(value) => setStrategy(value as EnrollmentStrategy)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ALL">Enroll All Valid Students</SelectItem>
-                    <SelectItem value="PARTIAL">Enroll Selected Students Only</SelectItem>
-                    <SelectItem value="OVERRIDE">Override Capacity (Requires Reason)</SelectItem>
+                    <SelectItem value="ALL">Đăng ký tất cả sinh viên hợp lệ</SelectItem>
+                    <SelectItem value="PARTIAL">Chỉ đăng ký sinh viên đã chọn</SelectItem>
+                    <SelectItem value="OVERRIDE">Ghi đề sức chứa (Cần lý do)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -371,18 +371,18 @@ export function EnrollmentImportDialog({
               {strategy === 'OVERRIDE' && (
                 <div className="border-t pt-4">
                   <Label htmlFor="override-reason" className="text-sm font-medium">
-                    Override Reason (required)
+                    Lý do ghi đè (bắt buộc)
                   </Label>
                   <Textarea
                     id="override-reason"
                     value={overrideReason}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setOverrideReason(e.target.value)}
-                    placeholder="Explain why capacity override is necessary..."
+                    placeholder="Giải thích tại sao cần ghi đè sức chứa..."
                     rows={2}
                     className="mt-2"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    {overrideReason.length} / 20 characters
+                    {overrideReason.length} / 20 ký tự
                   </p>
                 </div>
               )}
@@ -390,10 +390,10 @@ export function EnrollmentImportDialog({
               {/* Students Table - Clean Design */}
               <div className="border-t pt-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium">Students ({preview.students.length})</h3>
+                  <h3 className="text-sm font-medium">Sinh viên ({preview.students.length})</h3>
                   {strategy === 'PARTIAL' && (
                     <span className="text-xs text-muted-foreground">
-                      {selectedStudents.size} selected
+                      {selectedStudents.size} đã chọn
                     </span>
                   )}
                 </div>
@@ -402,15 +402,15 @@ export function EnrollmentImportDialog({
                     <TableHeader>
                       <TableRow className="bg-muted/30">
                         {strategy === 'PARTIAL' && <TableHead className="w-12"></TableHead>}
-                        <TableHead className="text-xs font-medium">Status</TableHead>
-                        <TableHead className="text-xs font-medium">Full Name</TableHead>
+                        <TableHead className="text-xs font-medium">Trạng thái</TableHead>
+                        <TableHead className="text-xs font-medium">Họ và tên</TableHead>
                         <TableHead className="text-xs font-medium">Email</TableHead>
-                        <TableHead className="text-xs font-medium">Phone</TableHead>
+                        <TableHead className="text-xs font-medium">Điện thoại</TableHead>
                         <TableHead className="text-xs font-medium">Facebook</TableHead>
-                        <TableHead className="text-xs font-medium">Address</TableHead>
-                        <TableHead className="text-xs font-medium">Gender</TableHead>
-                        <TableHead className="text-xs font-medium">DOB</TableHead>
-                        <TableHead className="text-xs font-medium">Error</TableHead>
+                        <TableHead className="text-xs font-medium">Địa chỉ</TableHead>
+                        <TableHead className="text-xs font-medium">Giới tính</TableHead>
+                        <TableHead className="text-xs font-medium">Ngày sinh</TableHead>
+                        <TableHead className="text-xs font-medium">Lỗi</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -452,7 +452,7 @@ export function EnrollmentImportDialog({
                                 rel="noopener noreferrer"
                                 className="text-blue-600 hover:underline text-xs"
                               >
-                                Profile
+                                Hồ sơ
                               </a>
                             ) : (
                               <span className="text-muted-foreground text-xs">-</span>
@@ -477,11 +477,11 @@ export function EnrollmentImportDialog({
         <FullScreenModalFooter>
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={handleClose} disabled={isExecuting}>
-              Cancel
+              Hủy
             </Button>
             {preview && (
               <Button onClick={handleExecute} disabled={isExecuting || (strategy === 'PARTIAL' && selectedStudents.size === 0)}>
-                {isExecuting ? 'Enrolling...' : 'Confirm Enrollment'}
+                {isExecuting ? 'Đang đăng ký...' : 'Xác nhận đăng ký'}
               </Button>
             )}
           </div>

@@ -26,15 +26,15 @@ export function LoginForm({
     const newErrors: { email?: string; password?: string } = {}
 
     if (!email) {
-      newErrors.email = "Email is required"
+      newErrors.email = "Vui lòng nhập email"
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "Please enter a valid email"
+      newErrors.email = "Vui lòng nhập email hợp lệ"
     }
 
     if (!password) {
-      newErrors.password = "Password is required"
+      newErrors.password = "Vui lòng nhập mật khẩu"
     } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters"
+      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự"
     }
 
     setErrors(newErrors)
@@ -55,7 +55,7 @@ export function LoginForm({
         setErrors({ email: result.error })
       }
     } catch {
-      setErrors({ email: "Login failed. Please try again." })
+      setErrors({ email: "Đăng nhập thất bại. Vui lòng thử lại." })
     }
   }
 
@@ -63,9 +63,9 @@ export function LoginForm({
     <form className={cn("flex flex-col gap-6", className)} onSubmit={handleSubmit} {...props}>
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold">Login to your account</h1>
+          <h1 className="text-2xl font-bold">Đăng nhập vào tài khoản của bạn</h1>
           <p className="text-muted-foreground text-sm text-balance">
-            Enter your email below to login to your account
+            Nhập email bên dưới để đăng nhập vào tài khoản của bạn
           </p>
         </div>
 
@@ -98,17 +98,17 @@ export function LoginForm({
 
         <Field>
           <div className="flex items-center">
-            <FieldLabel htmlFor="password">Password</FieldLabel>
+            <FieldLabel htmlFor="password">Mật khẩu</FieldLabel>
             <a
               href="#"
               className="ml-auto text-sm underline-offset-4 hover:underline"
               onClick={(e) => {
                 e.preventDefault()
                 // TODO: Implement forgot password functionality
-                alert("Forgot password functionality will be implemented")
+                alert("Tính năng quên mật khẩu sẽ được triển khai")
               }}
             >
-              Forgot your password?
+              Quên mật khẩu?
             </a>
           </div>
           <Input
@@ -136,7 +136,7 @@ export function LoginForm({
             disabled={isLoading}
             className="w-full"
           >
-            {isLoading ? "Logging in..." : "Login"}
+            {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
           </Button>
         </Field>
       </FieldGroup>

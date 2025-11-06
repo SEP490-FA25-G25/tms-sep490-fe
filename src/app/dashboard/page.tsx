@@ -17,7 +17,7 @@ export default function DashboardPage() {
 
   const getDashboardContent = () => {
     if (!user?.roles || user.roles.length === 0) {
-      return <div className="p-6">No dashboard content available for your role.</div>
+      return <div className="p-6">Không có nội dung dashboard cho vai trò của bạn.</div>
     }
 
     // Get highest priority role
@@ -55,7 +55,7 @@ export default function DashboardPage() {
       case ROLES.ACADEMIC_AFFAIR:
         return <AcademicStaffDashboardContent />
       default:
-        return <div className="p-6">No dashboard content available for your role.</div>
+        return <div className="p-6">Không có nội dung dashboard cho vai trò của bạn.</div>
     }
   }
 
@@ -77,10 +77,10 @@ export default function DashboardPage() {
               <div className="px-4 lg:px-6">
                 <div className="flex flex-col gap-1">
                   <h1 className="text-3xl font-bold tracking-tight">
-                    Welcome back, {user?.fullName || 'User'}!
+                    Chào mừng trở lại, {user?.fullName || 'Người dùng'}!
                   </h1>
                   <p className="text-muted-foreground">
-                    Here's what's happening with your account today.
+                    Đây là những gì đang diễn ra với tài khoản của bạn hôm nay.
                   </p>
                 </div>
               </div>

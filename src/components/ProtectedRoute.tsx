@@ -34,7 +34,7 @@ export function ProtectedRoute({
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-          <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
+          <p className="mt-2 text-sm text-muted-foreground">Đang tải...</p>
         </div>
       </div>
     )
@@ -48,15 +48,15 @@ export function ProtectedRoute({
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Truy cập bị từ chối</h1>
           <p className="text-gray-600 mb-6">
-            You don't have permission to access this page.
+            Bạn không có quyền truy cập trang này.
           </p>
           <button
             onClick={() => window.history.back()}
             className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
           >
-            Go Back
+            Quay lại
           </button>
         </div>
       </div>

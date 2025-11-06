@@ -21,9 +21,9 @@ export default function TeacherClassesPage() {
               <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
                 <div className="px-4 lg:px-6">
                   <div className="flex flex-col gap-1">
-                    <h1 className="text-3xl font-bold tracking-tight">My Classes</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Lớp học của tôi</h1>
                     <p className="text-muted-foreground">
-                      Manage your class schedules, students, and course materials
+                      Quản lý lịch trình lớp học, học sinh và tài liệu khóa học
                     </p>
                   </div>
                 </div>
@@ -31,23 +31,23 @@ export default function TeacherClassesPage() {
                 <div className="px-4 lg:px-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle>Class Schedule</CardTitle>
+                      <CardTitle>Lịch trình lớp học</CardTitle>
                       <CardDescription>
-                        View and manage your teaching schedule and class assignments
+                        Xem và quản lý lịch dạy và phân công lớp học của bạn
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
                         <p className="text-muted-foreground">
-                          Teacher class management interface will include:
+                          Giao diện quản lý lớp học của giáo viên sẽ bao gồm:
                         </p>
                         <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                          <li>Weekly/monthly class schedule view</li>
-                          <li>Class roster and student management</li>
-                          <li>Attendance tracking and reporting</li>
-                          <li>Assignment creation and grading</li>
-                          <li>Course material upload and sharing</li>
-                          <li>Communication with students and parents</li>
+                          <li>Xem lịch trình lớp học hàng tuần/tháng</li>
+                          <li>Quản lý danh sách lớp và học sinh</li>
+                          <li>Theo dõi và báo cáo điểm danh</li>
+                          <li>Tạo và chấm điểm bài tập</li>
+                          <li>Tải lên và chia sẻ tài liệu khóa học</li>
+                          <li>Giao tiếp với học sinh và phụ huynh</li>
                         </ul>
                       </div>
                     </CardContent>

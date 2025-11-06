@@ -5,30 +5,30 @@ import { Users, Calendar, FileText, Award } from 'lucide-react'
 const teacherData = [
   {
     id: 1,
-    name: "My Classes",
+    name: "Lớp học của tôi",
     value: "5",
-    change: "+1 this semester",
+    change: "+1 học kỳ này",
     icon: Calendar,
   },
   {
     id: 2,
-    name: "Total Students",
+    name: "Tổng số sinh viên",
     value: "156",
-    change: "+12 new students",
+    change: "+12 sinh viên mới",
     icon: Users,
   },
   {
     id: 3,
-    name: "Pending Assignments",
+    name: "Bài tập chờ duyệt",
     value: "23",
-    change: "8 due this week",
+    change: "8 bài hạn tuần này",
     icon: FileText,
   },
   {
     id: 4,
-    name: "Average Grade",
+    name: "Điểm trung bình",
     value: "B+",
-    change: "+0.3 from last semester",
+    change: "+0.3 so với học kỳ trước",
     icon: Award,
   },
 ]
@@ -62,9 +62,9 @@ export function TeacherDashboardContent() {
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle>Upcoming Classes</CardTitle>
+              <CardTitle>Lớp học sắp tới</CardTitle>
               <CardDescription>
-                Your schedule for today
+                Lịch giảng dạy của bạn hôm nay
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -72,15 +72,15 @@ export function TeacherDashboardContent() {
                 <div className="flex items-center space-x-4">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   <div>
-                    <p className="text-sm font-medium">Mathematics 101</p>
-                    <p className="text-xs text-muted-foreground">9:00 AM - Room 201</p>
+                    <p className="text-sm font-medium">Toán cao cấp 101</p>
+                    <p className="text-xs text-muted-foreground">9:00 Sáng - Phòng 201</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                   <div>
-                    <p className="text-sm font-medium">Calculus II</p>
-                    <p className="text-xs text-muted-foreground">2:00 PM - Room 305</p>
+                    <p className="text-sm font-medium">Giải tích II</p>
+                    <p className="text-xs text-muted-foreground">2:00 Chiều - Phòng 305</p>
                   </div>
                 </div>
               </div>
@@ -89,26 +89,26 @@ export function TeacherDashboardContent() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Recent Submissions</CardTitle>
+              <CardTitle>Bài nộp gần đây</CardTitle>
               <CardDescription>
-                Latest assignment submissions
+                Các bài tập mới nhất được nộp
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium">Assignment 3</p>
-                    <p className="text-xs text-muted-foreground">15 submissions</p>
+                    <p className="text-sm font-medium">Bài tập 3</p>
+                    <p className="text-xs text-muted-foreground">15 bài đã nộp</p>
                   </div>
-                  <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Pending</span>
+                  <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Chờ duyệt</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium">Quiz 2</p>
-                    <p className="text-xs text-muted-foreground">42 submissions</p>
+                    <p className="text-sm font-medium">Bài kiểm tra 2</p>
+                    <p className="text-xs text-muted-foreground">42 bài đã nộp</p>
                   </div>
-                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Graded</span>
+                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Đã chấm điểm</span>
                 </div>
               </div>
             </CardContent>

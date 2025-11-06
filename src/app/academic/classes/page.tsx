@@ -109,7 +109,7 @@ export default function ClassListPage() {
       return (
         <div className="flex items-center gap-2 text-muted-foreground">
           <User className="h-4 w-4" />
-          <span>Not assigned</span>
+          <span>Chưa phân công</span>
         </div>
       )
     }
@@ -131,7 +131,7 @@ export default function ClassListPage() {
                 ))}
                 {remainingCount > 0 && (
                   <span className="text-sm text-muted-foreground">
-                    +{remainingCount} more...
+                    +{remainingCount} giáo viên nữa...
                   </span>
                 )}
               </div>
@@ -139,12 +139,12 @@ export default function ClassListPage() {
           </TooltipTrigger>
           <TooltipContent side="right" className="max-w-xs">
             <div className="space-y-2">
-              <p className="font-semibold text-sm mb-2">All Teachers</p>
+              <p className="font-semibold text-sm mb-2">Tất cả giáo viên</p>
               {teachers.map((teacher) => (
                 <div key={teacher.id} className="text-sm">
                   <div className="font-medium">{teacher.fullName}</div>
                   <div className="text-xs text-muted-foreground">
-                    {teacher.email} • {teacher.sessionCount} sessions
+                    {teacher.email} • {teacher.sessionCount} buổi học
                   </div>
                 </div>
               ))}
@@ -158,12 +158,12 @@ export default function ClassListPage() {
   if (error) {
     return (
       <DashboardLayout
-        title="Class Management"
-        description="Manage and view all classes in your branches"
+        title="Quản lý Lớp học"
+        description="Quản lý và xem tất cả các lớp học trong chi nhánh của bạn"
       >
         <div className="rounded-lg border bg-card p-6">
           <div className="text-center text-destructive">
-            <p>Failed to load classes. Please try again.</p>
+            <p>Không thể tải lớp học. Vui lòng thử lại.</p>
           </div>
         </div>
       </DashboardLayout>
@@ -172,8 +172,8 @@ export default function ClassListPage() {
 
   return (
     <DashboardLayout
-      title="Class Management"
-      description="Manage and view all classes in your branches"
+      title="Quản lý Lớp học"
+      description="Quản lý và xem tất cả các lớp học trong chi nhánh của bạn"
     >
       <div className="flex flex-col gap-6">
         {/* Filters & Action */}
@@ -183,7 +183,7 @@ export default function ClassListPage() {
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search classes..."
+                placeholder="Tìm kiếm lớp học..."
                 value={filters.search}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="pl-9"
@@ -196,15 +196,15 @@ export default function ClassListPage() {
               onValueChange={(value) => handleFilterChange('status', value === 'all' ? undefined : value)}
             >
               <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="All Status" />
+                <SelectValue placeholder="Tất cả trạng thái" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="DRAFT">Draft</SelectItem>
-                <SelectItem value="SCHEDULED">Scheduled</SelectItem>
-                <SelectItem value="ONGOING">Ongoing</SelectItem>
-                <SelectItem value="COMPLETED">Completed</SelectItem>
-                <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                <SelectItem value="DRAFT">Bản nháp</SelectItem>
+                <SelectItem value="SCHEDULED">Đã lên lịch</SelectItem>
+                <SelectItem value="ONGOING">Đang diễn ra</SelectItem>
+                <SelectItem value="COMPLETED">Đã kết thúc</SelectItem>
+                <SelectItem value="CANCELLED">Đã hủy</SelectItem>
               </SelectContent>
             </Select>
 
@@ -214,13 +214,13 @@ export default function ClassListPage() {
               onValueChange={(value) => handleFilterChange('approvalStatus', value === 'all' ? undefined : value)}
             >
               <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="All Approvals" />
+                <SelectValue placeholder="Tất cả duyệt" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Approvals</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="APPROVED">Approved</SelectItem>
-                <SelectItem value="REJECTED">Rejected</SelectItem>
+                <SelectItem value="all">Tất cả duyệt</SelectItem>
+                <SelectItem value="PENDING">Chờ duyệt</SelectItem>
+                <SelectItem value="APPROVED">Đã duyệt</SelectItem>
+                <SelectItem value="REJECTED">Đã từ chối</SelectItem>
               </SelectContent>
             </Select>
 
@@ -230,13 +230,13 @@ export default function ClassListPage() {
               onValueChange={(value) => handleFilterChange('modality', value === 'all' ? undefined : value)}
             >
               <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="All Modalities" />
+                <SelectValue placeholder="Tất cả hình thức" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Modalities</SelectItem>
-                <SelectItem value="ONLINE">Online</SelectItem>
-                <SelectItem value="OFFLINE">Offline</SelectItem>
-                <SelectItem value="HYBRID">Hybrid</SelectItem>
+                <SelectItem value="all">Tất cả hình thức</SelectItem>
+                <SelectItem value="ONLINE">Trực tuyến</SelectItem>
+                <SelectItem value="OFFLINE">Trực tiếp</SelectItem>
+                <SelectItem value="HYBRID">Kết hợp</SelectItem>
               </SelectContent>
             </Select>
 
@@ -246,14 +246,14 @@ export default function ClassListPage() {
               onValueChange={(value) => handleFilterChange('sort', value)}
             >
               <SelectTrigger className="w-full md:w-[160px]">
-                <SelectValue placeholder="Sort by" />
+                <SelectValue placeholder="Sắp xếp theo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="startDate">Start Date</SelectItem>
-                <SelectItem value="name">Name</SelectItem>
-                <SelectItem value="code">Code</SelectItem>
-                <SelectItem value="currentEnrolled">Students</SelectItem>
-                <SelectItem value="status">Status</SelectItem>
+                <SelectItem value="startDate">Ngày bắt đầu</SelectItem>
+                <SelectItem value="name">Tên</SelectItem>
+                <SelectItem value="code">Mã</SelectItem>
+                <SelectItem value="currentEnrolled">Học viên</SelectItem>
+                <SelectItem value="status">Trạng thái</SelectItem>
               </SelectContent>
             </Select>
 
@@ -263,18 +263,18 @@ export default function ClassListPage() {
               onValueChange={(value) => handleFilterChange('sortDir', value)}
             >
               <SelectTrigger className="w-full md:w-[140px]">
-                <SelectValue placeholder="Order" />
+                <SelectValue placeholder="Thứ tự" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="asc">Ascending</SelectItem>
-                <SelectItem value="desc">Descending</SelectItem>
+                <SelectItem value="asc">Tăng dần</SelectItem>
+                <SelectItem value="desc">Giảm dần</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            New Class
+            Lớp học mới
           </Button>
         </div>
 
@@ -282,8 +282,8 @@ export default function ClassListPage() {
       <div>
         <div className="mb-4 text-sm text-muted-foreground">
           {response?.data ?
-            `Showing ${response.data.content.length} of ${response.data.page.totalElements} classes` :
-            'Loading classes...'
+            `Hiển thị ${response.data.content.length} của ${response.data.page.totalElements} lớp học` :
+            'Đang tải lớp học...'
           }
         </div>
 
@@ -298,12 +298,12 @@ export default function ClassListPage() {
             <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Class</TableHead>
-                    <TableHead>Course</TableHead>
-                    <TableHead>Teacher</TableHead>
-                    <TableHead>Branch</TableHead>
-                    <TableHead>Capacity</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Lớp học</TableHead>
+                    <TableHead>Khóa học</TableHead>
+                    <TableHead>Giáo viên</TableHead>
+                    <TableHead>Chi nhánh</TableHead>
+                    <TableHead>Sĩ số</TableHead>
+                    <TableHead>Trạng thái</TableHead>
                     <TableHead className="w-[70px]"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -373,7 +373,7 @@ export default function ClassListPage() {
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No classes found matching your criteria.</p>
+              <p>Không tìm thấy lớp học nào phù hợp với tiêu chí của bạn.</p>
             </div>
           )}
         </div>
@@ -382,7 +382,7 @@ export default function ClassListPage() {
         {response?.data?.page && response.data.page.totalPages > 1 && (
           <div className="flex items-center justify-between pt-4 border-t">
             <div className="text-sm text-muted-foreground">
-              Page {response.data.page.number + 1} of {response.data.page.totalPages}
+              Trang {response.data.page.number + 1} của {response.data.page.totalPages}
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -391,7 +391,7 @@ export default function ClassListPage() {
                 disabled={response.data.page.number === 0}
                 onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
               >
-                Previous
+                Trang trước
               </Button>
               <Button
                 variant="outline"
@@ -399,7 +399,7 @@ export default function ClassListPage() {
                 disabled={response.data.page.number >= response.data.page.totalPages - 1}
                 onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
               >
-                Next
+                Trang sau
               </Button>
             </div>
           </div>

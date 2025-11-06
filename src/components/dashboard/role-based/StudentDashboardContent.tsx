@@ -5,30 +5,30 @@ import { BookOpen, Calendar, FileText, Award } from 'lucide-react'
 const studentData = [
   {
     id: 1,
-    name: "Enrolled Courses",
+    name: "Khóa học đã đăng ký",
     value: "5",
-    change: "Active this semester",
+    change: "Đang học học kỳ này",
     icon: BookOpen,
   },
   {
     id: 2,
-    name: "Upcoming Classes",
+    name: "Lớp học sắp tới",
     value: "3",
-    change: "Today",
+    change: "Hôm nay",
     icon: Calendar,
   },
   {
     id: 3,
-    name: "Pending Assignments",
+    name: "Bài tập chờ nộp",
     value: "8",
-    change: "2 due this week",
+    change: "2 bài hạn tuần này",
     icon: FileText,
   },
   {
     id: 4,
-    name: "Current GPA",
+    name: "GPA hiện tại",
     value: "3.7",
-    change: "Above average",
+    change: "Trên trung bình",
     icon: Award,
   },
 ]
@@ -62,9 +62,9 @@ export function StudentDashboardContent() {
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle>Today's Schedule</CardTitle>
+              <CardTitle>Lịch học hôm nay</CardTitle>
               <CardDescription>
-                Your classes for today
+                Các lớp học của bạn hôm nay
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -72,22 +72,22 @@ export function StudentDashboardContent() {
                 <div className="flex items-center space-x-4">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   <div>
-                    <p className="text-sm font-medium">Mathematics 101</p>
-                    <p className="text-xs text-muted-foreground">9:00 AM - Room 201</p>
+                    <p className="text-sm font-medium">Toán cao cấp 101</p>
+                    <p className="text-xs text-muted-foreground">9:00 Sáng - Phòng 201</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                   <div>
-                    <p className="text-sm font-medium">Physics Lab</p>
-                    <p className="text-xs text-muted-foreground">2:00 PM - Lab 3</p>
+                    <p className="text-sm font-medium">Thực hành Vật lý</p>
+                    <p className="text-xs text-muted-foreground">2:00 Chiều - Phòng Lab 3</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                   <div>
-                    <p className="text-sm font-medium">English Literature</p>
-                    <p className="text-xs text-muted-foreground">4:00 PM - Room 105</p>
+                    <p className="text-sm font-medium">Văn học Anh</p>
+                    <p className="text-xs text-muted-foreground">4:00 Chiều - Phòng 105</p>
                   </div>
                 </div>
               </div>
@@ -96,33 +96,33 @@ export function StudentDashboardContent() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Recent Assignments</CardTitle>
+              <CardTitle>Bài tập gần đây</CardTitle>
               <CardDescription>
-                Latest assignments and their status
+                Các bài tập mới nhất và tình trạng của chúng
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium">Math Problem Set 5</p>
-                    <p className="text-xs text-muted-foreground">Due in 2 days</p>
+                    <p className="text-sm font-medium">Bài tập Toán tập 5</p>
+                    <p className="text-xs text-muted-foreground">Hạn trong 2 ngày</p>
                   </div>
-                  <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Due Soon</span>
+                  <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Sắp đến hạn</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium">Physics Lab Report</p>
-                    <p className="text-xs text-muted-foreground">Due in 5 days</p>
+                    <p className="text-sm font-medium">Báo cáo Thực hành Vật lý</p>
+                    <p className="text-xs text-muted-foreground">Hạn trong 5 ngày</p>
                   </div>
-                  <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">In Progress</span>
+                  <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Đang thực hiện</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium">English Essay</p>
-                    <p className="text-xs text-muted-foreground">Submitted</p>
+                    <p className="text-sm font-medium">Bài luận Anh</p>
+                    <p className="text-xs text-muted-foreground">Đã nộp</p>
                   </div>
-                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Completed</span>
+                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Hoàn thành</span>
                 </div>
               </div>
             </CardContent>
