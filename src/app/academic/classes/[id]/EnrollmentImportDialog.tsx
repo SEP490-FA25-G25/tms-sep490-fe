@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/full-screen-modal'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
@@ -83,11 +82,9 @@ export function EnrollmentImportDialog({
 
   const handleDownloadGenericTemplate = async () => {
     try {
-      const result = await genericTemplateQuery.data
-      if (!result) {
-        toast.error('Template not available')
-        return
-      }
+      const result = genericTemplateQuery.data
+      if (!result) return
+
       const url = window.URL.createObjectURL(result)
       const a = document.createElement('a')
       a.href = url
@@ -96,19 +93,16 @@ export function EnrollmentImportDialog({
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
-      toast.success('Generic template downloaded')
     } catch (error) {
-      toast.error('Failed to download generic template')
+      // Silent fail - user can retry
     }
   }
 
   const handleDownloadClassTemplate = async () => {
     try {
-      const result = await classTemplateQuery.data
-      if (!result) {
-        toast.error('Template not available')
-        return
-      }
+      const result = classTemplateQuery.data
+      if (!result) return
+
       const url = window.URL.createObjectURL(result)
       const a = document.createElement('a')
       a.href = url
@@ -117,9 +111,8 @@ export function EnrollmentImportDialog({
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
-      toast.success('Class-specific template downloaded')
     } catch (error) {
-      toast.error('Failed to download class template')
+      // Silent fail - user can retry
     }
   }
 
@@ -146,7 +139,7 @@ export function EnrollmentImportDialog({
           setStrategy('ALL')
       }
 
-      toast.success('Preview loaded successfully')
+      // Preview loaded silently - user can see results immediately
     } catch (error) {
       const errorMessage = error && typeof error === 'object' && 'data' in error && error.data && typeof error.data === 'object' && 'message' in error.data
         ? String(error.data.message)
@@ -216,21 +209,7 @@ export function EnrollmentImportDialog({
     setSelectedStudents(newSet)
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'FOUND':
-        return 'bg-green-100 text-green-800 border-green-200'
-      case 'CREATE':
-        return 'bg-blue-100 text-blue-800 border-blue-200'
-      case 'DUPLICATE':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'ERROR':
-        return 'bg-red-100 text-red-800 border-red-200'
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200'
-    }
-  }
-
+  
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'FOUND':
@@ -257,35 +236,37 @@ export function EnrollmentImportDialog({
         </FullScreenModalHeader>
 
         <FullScreenModalBody className="space-y-6">
-          {/* Template Download */}
-          <div className="space-y-2">
-            <Label>Download Excel Template</Label>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={handleDownloadGenericTemplate}
-                disabled={genericTemplateQuery.isLoading}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Generic Template
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleDownloadClassTemplate}
-                disabled={classTemplateQuery.isLoading}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Class-Specific Template
-              </Button>
+          {/* File Upload - Simplified */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="excel-file" className="text-base font-medium">Excel File Upload</Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  7 columns: full_name, email, phone, facebook_url, address, gender, dob
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDownloadGenericTemplate}
+                  disabled={genericTemplateQuery.isLoading}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Template
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDownloadClassTemplate}
+                  disabled={classTemplateQuery.isLoading}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Class Template
+                </Button>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Download template with required columns: full_name, email, phone, facebook_url, address, gender, dob
-            </p>
-          </div>
 
-          {/* File Upload */}
-          <div className="space-y-2">
-            <Label htmlFor="excel-file">Excel File</Label>
             <div className="flex gap-3">
               <Input
                 id="excel-file"
@@ -293,6 +274,7 @@ export function EnrollmentImportDialog({
                 accept=".xlsx"
                 onChange={handleFileChange}
                 disabled={isPreviewing || isExecuting}
+                className="flex-1"
               />
               <Button
                 onClick={handlePreview}
@@ -301,7 +283,7 @@ export function EnrollmentImportDialog({
                 {isPreviewing ? (
                   <>
                     <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    Processing...
+                    Processing
                   </>
                 ) : (
                   <>
@@ -311,108 +293,64 @@ export function EnrollmentImportDialog({
                 )}
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Upload .xlsx file with 7 columns: full_name, email, phone, facebook_url, address, gender, dob. Max file size: 10MB
-            </p>
           </div>
 
           {/* Preview Results */}
           {preview && (
             <>
-              {/* Summary Stats */}
-              <div className="grid grid-cols-4 gap-4">
-                <div className="space-y-1">
-                  <div className="text-sm text-muted-foreground">Total Students</div>
-                  <div className="text-2xl font-semibold">{preview.totalStudents}</div>
-                </div>
-                <div className="space-y-1">
-                  <div className="text-sm text-muted-foreground">Total Valid</div>
-                  <div className="text-2xl font-semibold">{preview.totalValid}</div>
-                </div>
-                <div className="space-y-1">
-                  <div className="text-sm text-muted-foreground">New Students</div>
-                  <div className="text-2xl font-semibold text-blue-600">
-                    {preview.students.filter(s => s.status === 'CREATE').length}
+              {/* Summary Stats - Minimal Design */}
+              <div className="flex items-center justify-between py-3 border-b">
+                <div className="flex items-center gap-8">
+                  <div>
+                    <span className="text-sm text-muted-foreground">Total Students</span>
+                    <p className="text-lg font-semibold">{preview.totalStudents}</p>
                   </div>
-                </div>
-                <div className="space-y-1">
-                  <div className="text-sm text-muted-foreground">Errors</div>
-                  <div className="text-2xl font-semibold text-red-600">{preview.errorCount}</div>
-                </div>
-              </div>
-
-              {/* Capacity Info */}
-              <div className="rounded-lg border p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium">Capacity Status</span>
-                  {preview.availableSlots >= preview.totalValid ? (
-                    <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
-                      Available: {preview.availableSlots}
-                    </Badge>
-                  ) : preview.availableSlots > 0 ? (
-                    <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">
-                      Partial Fit: {preview.availableSlots}
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
-                      Class Full
-                    </Badge>
+                  <div>
+                    <span className="text-sm text-muted-foreground">Valid</span>
+                    <p className="text-lg font-semibold">{preview.totalValid}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-muted-foreground">New</span>
+                    <p className="text-lg font-semibold text-blue-600">
+                      {preview.students.filter(s => s.status === 'CREATE').length}
+                    </p>
+                  </div>
+                  {preview.errorCount > 0 && (
+                    <div>
+                      <span className="text-sm text-muted-foreground">Errors</span>
+                      <p className="text-lg font-semibold text-red-600">{preview.errorCount}</p>
+                    </div>
                   )}
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  Current: {preview.currentEnrolled} / Max: {preview.maxCapacity} / Available: {preview.availableSlots}
-                </div>
-              </div>
 
-              {/* Warnings & Errors */}
-              {preview.warnings.length > 0 && (
-                <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3">
-                  <div className="font-medium text-yellow-900 mb-1">Warnings</div>
-                  <ul className="text-sm text-yellow-800 space-y-1">
-                    {preview.warnings.map((warning, idx) => (
-                      <li key={idx}>• {warning}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {preview.errors.length > 0 && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-3">
-                  <div className="font-medium text-red-900 mb-1">Errors</div>
-                  <ul className="text-sm text-red-800 space-y-1">
-                    {preview.errors.map((error, idx) => (
-                      <li key={idx}>• {error}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Recommendation */}
-              <div className={`rounded-lg border p-4 ${
-                preview.recommendation.type === 'PROCEED' ? 'border-green-200 bg-green-50' :
-                preview.recommendation.type === 'PARTIAL' ? 'border-yellow-200 bg-yellow-50' :
-                'border-red-200 bg-red-50'
-              }`}>
-                <div className={`font-medium mb-1 ${
-                  preview.recommendation.type === 'PROCEED' ? 'text-green-900' :
-                  preview.recommendation.type === 'PARTIAL' ? 'text-yellow-900' :
-                  'text-red-900'
-                }`}>
-                  Recommendation: {preview.recommendation.type}
-                </div>
-                <p className={`text-sm ${
-                  preview.recommendation.type === 'PROCEED' ? 'text-green-800' :
-                  preview.recommendation.type === 'PARTIAL' ? 'text-yellow-800' :
-                  'text-red-800'
-                }`}>
-                  {preview.recommendation.message}
-                </p>
-                {preview.recommendation.suggestedEnrollCount && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Suggested enrollment count: {preview.recommendation.suggestedEnrollCount}
+                {/* Capacity Status Inline */}
+                <div className="text-right">
+                  <span className="text-sm text-muted-foreground">Class Capacity</span>
+                  <p className="text-sm font-medium">
+                    {preview.currentEnrolled}/{preview.maxCapacity}
+                    <span className="ml-2 text-muted-foreground">
+                      ({preview.availableSlots} slots available)
+                    </span>
                   </p>
-                )}
+                </div>
               </div>
+
+              {/* Warnings & Errors - Only show when needed */}
+              {(preview.errors.length > 0 || preview.warnings.length > 0) && (
+                <div className="space-y-2">
+                  {preview.errors.length > 0 && (
+                    <div className="text-sm p-3 rounded-md bg-red-50 text-red-800 border border-red-200">
+                      <span className="font-medium">Errors:</span> {preview.errors.join(', ')}
+                    </div>
+                  )}
+
+                  {preview.warnings.length > 0 && (
+                    <div className="text-sm p-3 rounded-md bg-yellow-50 text-yellow-800 border border-yellow-200">
+                      <span className="font-medium">Warning:</span> {preview.warnings.join(', ')}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Strategy Selection */}
               <div className="space-y-2">
@@ -429,52 +367,55 @@ export function EnrollmentImportDialog({
                 </Select>
               </div>
 
-              {/* Override Reason */}
+              {/* Override Reason - Simplified */}
               {strategy === 'OVERRIDE' && (
-                <div className="space-y-2">
-                  <Label htmlFor="override-reason">Override Reason (min 20 characters)</Label>
+                <div className="border-t pt-4">
+                  <Label htmlFor="override-reason" className="text-sm font-medium">
+                    Override Reason (required)
+                  </Label>
                   <Textarea
                     id="override-reason"
                     value={overrideReason}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setOverrideReason(e.target.value)}
                     placeholder="Explain why capacity override is necessary..."
-                    rows={3}
+                    rows={2}
+                    className="mt-2"
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {overrideReason.length} / 20 characters
                   </p>
                 </div>
               )}
 
-              {/* Students Table */}
-              <div>
+              {/* Students Table - Clean Design */}
+              <div className="border-t pt-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-medium">Students ({preview.students.length})</h4>
+                  <h3 className="text-sm font-medium">Students ({preview.students.length})</h3>
                   {strategy === 'PARTIAL' && (
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-xs text-muted-foreground">
                       {selectedStudents.size} selected
                     </span>
                   )}
                 </div>
-                <div className="rounded-lg border overflow-x-auto">
+                <div className="border rounded-md overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        {strategy === 'PARTIAL' && <TableHead className="w-[50px]"></TableHead>}
-                        <TableHead>Status</TableHead>
-                        <TableHead>Full Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Phone</TableHead>
-                        <TableHead>Facebook URL</TableHead>
-                        <TableHead>Address</TableHead>
-                        <TableHead>Gender</TableHead>
-                        <TableHead>Date of Birth</TableHead>
-                        <TableHead>Error</TableHead>
+                      <TableRow className="bg-muted/30">
+                        {strategy === 'PARTIAL' && <TableHead className="w-12"></TableHead>}
+                        <TableHead className="text-xs font-medium">Status</TableHead>
+                        <TableHead className="text-xs font-medium">Full Name</TableHead>
+                        <TableHead className="text-xs font-medium">Email</TableHead>
+                        <TableHead className="text-xs font-medium">Phone</TableHead>
+                        <TableHead className="text-xs font-medium">Facebook</TableHead>
+                        <TableHead className="text-xs font-medium">Address</TableHead>
+                        <TableHead className="text-xs font-medium">Gender</TableHead>
+                        <TableHead className="text-xs font-medium">DOB</TableHead>
+                        <TableHead className="text-xs font-medium">Error</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {preview.students.map((student, idx) => (
-                        <TableRow key={idx} className={student.status === 'ERROR' ? 'bg-red-50' : undefined}>
+                        <TableRow key={idx} className="border-b">
                           {strategy === 'PARTIAL' && (
                             <TableCell>
                               {student.status !== 'ERROR' && student.status !== 'DUPLICATE' && (
@@ -488,38 +429,41 @@ export function EnrollmentImportDialog({
                             </TableCell>
                           )}
                           <TableCell>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
                               {getStatusIcon(student.status)}
-                              <Badge variant="outline" className={getStatusColor(student.status)}>
+                              <span className={`text-xs px-1.5 py-0.5 rounded ${
+                                student.status === 'FOUND' ? 'bg-green-100 text-green-700' :
+                                student.status === 'CREATE' ? 'bg-blue-100 text-blue-700' :
+                                student.status === 'DUPLICATE' ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-red-100 text-red-700'
+                              }`}>
                                 {student.status}
-                              </Badge>
+                              </span>
                             </div>
                           </TableCell>
-                          <TableCell className="font-medium">{student.fullName}</TableCell>
-                          <TableCell>{student.email}</TableCell>
-                          <TableCell>{student.phone}</TableCell>
-                          <TableCell>
+                          <TableCell className="text-sm font-medium">{student.fullName}</TableCell>
+                          <TableCell className="text-sm">{student.email}</TableCell>
+                          <TableCell className="text-sm">{student.phone}</TableCell>
+                          <TableCell className="text-sm">
                             {student.facebookUrl ? (
                               <a
                                 href={student.facebookUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline"
+                                className="text-blue-600 hover:underline text-xs"
                               >
                                 Profile
                               </a>
                             ) : (
-                              <span className="text-muted-foreground">-</span>
+                              <span className="text-muted-foreground text-xs">-</span>
                             )}
                           </TableCell>
-                          <TableCell className="max-w-xs truncate">{student.address || '-'}</TableCell>
-                          <TableCell>{student.gender}</TableCell>
-                          <TableCell>{student.dob}</TableCell>
-                          {student.status === 'ERROR' && (
-                            <TableCell className="text-red-600 text-sm max-w-xs">
-                              {student.errorMessage}
-                            </TableCell>
-                          )}
+                          <TableCell className="text-sm max-w-xs truncate">{student.address || '-'}</TableCell>
+                          <TableCell className="text-sm">{student.gender}</TableCell>
+                          <TableCell className="text-sm">{student.dob}</TableCell>
+                          <TableCell className="text-xs text-red-600 max-w-xs">
+                            {student.errorMessage || ''}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
