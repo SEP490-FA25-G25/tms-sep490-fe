@@ -10,39 +10,37 @@ import { classApi } from './classApi' // Import classApi to invalidate its tags
 
 // Enrollment types based on backend DTOs
 export interface StudentEnrollmentData {
-  studentCode: string
   fullName: string
   email: string
   phone: string
-  status: 'FOUND' | 'CREATE' | 'ERROR'
-  existingStudentId?: number
-  validationErrors?: string[]
+  facebookUrl: string
+  address: string
+  gender: 'MALE' | 'FEMALE' | 'OTHER'
+  dob: string
+  status: 'FOUND' | 'CREATE' | 'DUPLICATE' | 'ERROR'
+  resolvedStudentId?: number
+  errorMessage?: string
 }
 
 export interface EnrollmentRecommendation {
-  canProceed: boolean
-  recommendedStrategy: 'ALL' | 'PARTIAL' | 'OVERRIDE'
+  type: 'PROCEED' | 'PARTIAL' | 'OVERFLOW' | 'BLOCKED'
   message: string
-  requiresOverrideReason: boolean
+  suggestedEnrollCount?: number
 }
 
 export interface ClassEnrollmentImportPreview {
   classId: number
-  classCode: string
   className: string
-  students: StudentEnrollmentData[]
-  foundCount: number
-  createCount: number
-  errorCount: number
+  totalStudents: number
   totalValid: number
+  errorCount: number
   currentEnrolled: number
   maxCapacity: number
   availableSlots: number
-  exceedsCapacity: boolean
-  exceededBy: number
+  students: StudentEnrollmentData[]
+  recommendation: EnrollmentRecommendation
   warnings: string[]
   errors: string[]
-  recommendation: EnrollmentRecommendation
 }
 
 export type EnrollmentStrategy = 'ALL' | 'PARTIAL' | 'OVERRIDE'
@@ -56,11 +54,14 @@ export interface ClassEnrollmentImportExecuteRequest {
 }
 
 export interface EnrollmentResult {
-  enrolledCount: number
-  studentsCreated: number
-  sessionsGeneratedPerStudent: number
-  totalStudentSessionsCreated: number
-  warnings: string[]
+  classId: number
+  className: string
+  totalAttempted: number
+  successfulEnrollments: number
+  failedEnrollments: number
+  capacityOverride: boolean
+  enrolledBy: number
+  enrolledAt: string
 }
 
 // Enroll existing students request
@@ -143,6 +144,24 @@ export const enrollmentApi = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: [], // No tags - we invalidate classApi tags via onQueryStarted
   endpoints: (builder) => ({
+    // Download generic Excel template
+    downloadEnrollmentTemplate: builder.query<Blob, void>({
+      query: () => ({
+        url: '/enrollments/template',
+        method: 'GET',
+        responseHandler: (response) => response.blob(),
+      }),
+    }),
+
+    // Download class-specific Excel template
+    downloadClassEnrollmentTemplate: builder.query<Blob, { classId: number }>({
+      query: ({ classId }) => ({
+        url: `/enrollments/classes/${classId}/template`,
+        method: 'GET',
+        responseHandler: (response) => response.blob(),
+      }),
+    }),
+
     // Preview Excel import for class enrollment
     previewClassEnrollmentImport: builder.mutation<ApiResponse<ClassEnrollmentImportPreview>, { classId: number; file: File }>({
       query: ({ classId, file }) => {
@@ -198,6 +217,8 @@ export const enrollmentApi = createApi({
 })
 
 export const {
+  useDownloadEnrollmentTemplateQuery,
+  useDownloadClassEnrollmentTemplateQuery,
   usePreviewClassEnrollmentImportMutation,
   useExecuteClassEnrollmentImportMutation,
   useEnrollExistingStudentsMutation,

@@ -98,15 +98,8 @@ export function StudentSelectionDialog({
       }).unwrap()
 
       toast.success(
-        `Successfully enrolled ${result.data.enrolledCount} students. Created ${result.data.totalStudentSessionsCreated} session records.`
+        `Successfully enrolled ${result.data.successfulEnrollments} out of ${result.data.totalAttempted} students into ${result.data.className}`
       )
-      
-      // Show warnings if any
-      if (result.data.warnings && result.data.warnings.length > 0) {
-        result.data.warnings.forEach(warning => {
-          toast.warning(warning)
-        })
-      }
 
       handleClose()
       onSuccess()
