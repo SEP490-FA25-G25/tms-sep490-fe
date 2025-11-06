@@ -158,3 +158,36 @@ The project follows a modern minimal design philosophy inspired by shadcn/ui, Op
 - **Padding Usage**: Use padding purposefully and avoid excessive whitespace that makes the interface feel disconnected
 - **Card Component Limitations**: Only use card components when absolutely necessary for visual grouping of related content. Avoid wrapping everything in cards unnecessarily
 - **Clean Interface**: Prioritize direct content presentation over unnecessary container elements
+
+## Acknowledging Correct Feedback
+
+When feedback IS correct:
+
+✅ "Fixed. [Brief description of what changed]"
+✅ "Good catch – [specific issue]. Fixed in [location]."
+✅ [Just fix it and show in the code]
+
+❌ "You're absolutely right!"
+❌ "Great point!"
+❌ "Thanks for catching that!"
+❌ "Thanks for [anything]!"
+❌ ANY gratitude expression
+
+**Why no thanks:** Actions speak. Just fix it. The code itself shows you heard the feedback.
+
+**If you catch yourself about to write "Thanks":** DELETE IT. State the fix instead.
+
+---
+
+## Gracefully Correcting Your Pushback
+
+If you pushed back and were wrong:
+
+✅ "You were right – I checked [X] and it does [Y]. Implementing now."
+✅ "Verified this and you're correct. My initial understanding was wrong because [reason]. Fixing."
+
+❌ Long apology  
+❌ Defending why you pushed back  
+❌ Over-explaining  
+
+State the correction factually and move on.
