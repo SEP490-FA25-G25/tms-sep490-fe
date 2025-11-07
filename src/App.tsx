@@ -8,6 +8,7 @@ import LoginPage from './app/login/page'
 import AdminUsersPage from './app/admin/users/page'
 import TeacherClassesPage from './app/teacher/classes/page'
 import StudentCoursesPage from './app/student/courses/page'
+import StudentSchedulePage from './app/student/schedule/page'
 import AcademicClassesPage from './app/academic/classes/page'
 import AcademicClassDetailPage from './app/academic/classes/[id]/page'
 import { Toaster } from '@/components/ui/sonner'
@@ -59,6 +60,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/student/schedule"
+              element={
+                <ProtectedRoute requiredRoles={['STUDENT']}>
+                  <StudentSchedulePage />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Academic Affairs routes */}
             <Route
@@ -92,4 +101,3 @@ function App() {
 }
 
 export default App
-
