@@ -15,6 +15,7 @@ import {
   BuildingIcon,
   AwardIcon,
   ClipboardCheckIcon,
+  NotebookPenIcon,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -206,6 +207,11 @@ const roleBasedNav = {
         url: "/student/schedule",
         icon: CalendarIcon,
       },
+      {
+        title: "Xin nghỉ buổi học",
+        url: "/student/absence",
+        icon: NotebookPenIcon,
+      },
     ],
   },
   [ROLES.QA]: {
@@ -263,6 +269,11 @@ const roleBasedNav = {
         title: "Tài liệu",
         url: "/academic/docs",
         icon: FileTextIcon,
+      },
+      {
+        title: "Đơn xin nghỉ",
+        url: "/academic/absence-requests",
+        icon: ClipboardCheckIcon,
       },
     ],
   },

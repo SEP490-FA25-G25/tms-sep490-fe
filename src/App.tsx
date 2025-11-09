@@ -9,8 +9,10 @@ import AdminUsersPage from './app/admin/users/page'
 import TeacherClassesPage from './app/teacher/classes/page'
 import StudentCoursesPage from './app/student/courses/page'
 import StudentSchedulePage from './app/student/schedule/page'
+import StudentAbsencePage from './app/student/absence/page'
 import AcademicClassesPage from './app/academic/classes/page'
 import AcademicClassDetailPage from './app/academic/classes/[id]/page'
+import AcademicAbsenceRequestsPage from './app/academic/absence-requests/page'
 import { Toaster } from '@/components/ui/sonner'
 
 function App() {
@@ -68,6 +70,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/student/absence"
+              element={
+                <ProtectedRoute requiredRoles={['STUDENT']}>
+                  <StudentAbsencePage />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Academic Affairs routes */}
             <Route
@@ -83,6 +93,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={['ACADEMIC_AFFAIR', 'ADMIN', 'MANAGER', 'CENTER_HEAD']}>
                   <AcademicClassDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academic/absence-requests"
+              element={
+                <ProtectedRoute requiredRoles={['ACADEMIC_AFFAIR', 'ADMIN', 'MANAGER', 'CENTER_HEAD']}>
+                  <AcademicAbsenceRequestsPage />
                 </ProtectedRoute>
               }
             />
