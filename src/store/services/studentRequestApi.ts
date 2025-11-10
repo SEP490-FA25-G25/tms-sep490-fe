@@ -74,12 +74,81 @@ export interface SessionSummary {
   teacher?: string | null
 }
 
-export interface StudentAbsenceRequest {
+export interface ClassMeta {
+  classId: number
+  classCode: string
+  className?: string
+  branchId?: number
+  branchName?: string
+  modality?: SessionModality
+}
+
+export interface TimeSlotInfo extends TimeSlotRange {
+  slotId?: number
+  slotName?: string
+}
+
+export interface MissedSession {
+  sessionId: number
+  date: string
+  daysAgo: number
+  courseSessionNumber: number
+  courseSessionTitle: string
+  courseSessionId: number
+  classInfo: ClassMeta
+  timeSlotInfo: TimeSlotInfo
+  attendanceStatus: string
+  hasExistingMakeupRequest: boolean
+  isExcusedAbsence: boolean
+  absenceRequestId?: number
+  absenceRequestStatus?: RequestStatus
+}
+
+export interface MissedSessionsResponse {
+  studentId?: number
+  totalCount: number
+  missedSessions: MissedSession[]
+}
+
+export type MakeupPriority = 'HIGH' | 'MEDIUM' | 'LOW'
+
+export interface MakeupMatchScore {
+  branchMatch: boolean
+  modalityMatch: boolean
+  capacityOk?: boolean
+  dateProximityScore?: number
+  totalScore: number
+  priority: MakeupPriority
+}
+
+export interface MakeupOption {
+  sessionId: number
+  date: string
+  dayOfWeek?: string
+  classInfo: ClassMeta
+  timeSlotInfo: TimeSlotInfo
+  availableSlots: number
+  maxCapacity: number
+  teacher?: string | null
+  warnings?: string[]
+  conflict?: boolean
+  matchScore: MakeupMatchScore
+}
+
+export interface MakeupOptionsResponse {
+  targetSessionId: number
+  targetSession: MissedSession
+  makeupOptions: MakeupOption[]
+  totalOptions: number
+}
+
+export interface StudentRequest {
   id: number
   requestType: RequestType
   status: RequestStatus
   currentClass: ClassSummary
   targetSession: SessionSummary
+  makeupSession?: (SessionSummary & { classInfo?: ClassMeta }) | null
   requestReason: string
   note: string | null
   submittedAt: string
@@ -90,7 +159,7 @@ export interface StudentAbsenceRequest {
 }
 
 export interface StudentPaginatedRequests {
-  content: StudentAbsenceRequest[]
+  content: StudentRequest[]
   page: {
     size: number
     number: number
@@ -117,7 +186,7 @@ export interface AcademicStudentInfo {
   phone: string
 }
 
-export interface AcademicAbsenceRequest extends StudentAbsenceRequest {
+export interface AcademicStudentRequest extends StudentRequest {
   student: AcademicStudentInfo
   daysUntilSession?: number
   studentAbsenceRate?: number
@@ -132,7 +201,7 @@ export interface PendingRequestsSummary {
 }
 
 export interface PendingRequestsResponse {
-  content: AcademicAbsenceRequest[]
+  content: AcademicStudentRequest[]
   pageable: {
     pageNumber: number
     pageSize: number
@@ -145,7 +214,7 @@ export interface PendingRequestsResponse {
 }
 
 export interface AcademicRequestsResponse {
-  content: AcademicAbsenceRequest[]
+  content: AcademicStudentRequest[]
   page: {
     size: number
     number: number
@@ -181,6 +250,7 @@ export interface PendingRequestsQuery {
 }
 
 export interface AcademicHistoryQuery {
+  requestType?: RequestType
   status?: RequestStatus
   studentName?: string
   classCode?: string
@@ -191,12 +261,35 @@ export interface AcademicHistoryQuery {
   sort?: string
 }
 
-export interface SubmitAbsenceRequestPayload {
+export interface MissedSessionsQuery {
+  weeksBack?: number
+  excludeRequested?: boolean
+}
+
+export interface AcademicMissedSessionsQuery extends MissedSessionsQuery {
+  studentId: number
+}
+
+export interface MakeupOptionsQuery {
+  targetSessionId: number
+}
+
+export interface AcademicMakeupOptionsQuery extends MakeupOptionsQuery {
+  studentId: number
+}
+
+export interface SubmitStudentRequestPayload {
   requestType: RequestType
   currentClassId: number
   targetSessionId: number
+  makeupSessionId?: number
   requestReason: string
   note?: string
+  studentId?: number
+}
+
+export interface SubmitOnBehalfRequestPayload extends SubmitStudentRequestPayload {
+  studentId: number
 }
 
 export interface ApproveRequestPayload {
@@ -281,8 +374,8 @@ const baseQueryWithReauth: BaseQueryFn<
   return result
 }
 
-export const studentAbsenceRequestApi = createApi({
-  reducerPath: 'studentAbsenceRequestApi',
+export const studentRequestApi = createApi({
+  reducerPath: 'studentRequestApi',
   baseQuery: baseQueryWithReauth,
   tagTypes: ['StudentRequests', 'PendingRequests', 'RequestDetail'],
   endpoints: (builder) => ({
@@ -290,6 +383,23 @@ export const studentAbsenceRequestApi = createApi({
       query: ({ date, requestType = 'ABSENCE' }) => ({
         url: '/students/me/classes/sessions',
         params: { date, requestType },
+      }),
+    }),
+    getMissedSessions: builder.query<ApiResponse<MissedSessionsResponse>, MissedSessionsQuery | void>({
+      query: (params) => {
+        if (!params) {
+          return '/students/me/missed-sessions'
+        }
+        return {
+          url: '/students/me/missed-sessions',
+          params,
+        }
+      },
+    }),
+    getMakeupOptions: builder.query<ApiResponse<MakeupOptionsResponse>, MakeupOptionsQuery>({
+      query: ({ targetSessionId }) => ({
+        url: '/students/me/makeup-options',
+        params: { targetSessionId },
       }),
     }),
     getMyRequests: builder.query<ApiResponse<StudentPaginatedRequests>, StudentRequestsQuery | void>({
@@ -304,13 +414,13 @@ export const studentAbsenceRequestApi = createApi({
       },
       providesTags: ['StudentRequests'],
     }),
-    getMyRequestById: builder.query<ApiResponse<StudentAbsenceRequest>, number>({
+    getMyRequestById: builder.query<ApiResponse<StudentRequest>, number>({
       query: (id) => ({
         url: `/students/me/requests/${id}`,
       }),
       providesTags: (result) => (result?.data ? [{ type: 'RequestDetail', id: result.data.id }] : []),
     }),
-    submitAbsenceRequest: builder.mutation<ApiResponse<StudentAbsenceRequest>, SubmitAbsenceRequestPayload>({
+    submitStudentRequest: builder.mutation<ApiResponse<StudentRequest>, SubmitStudentRequestPayload>({
       query: (body) => ({
         url: '/student-requests',
         method: 'POST',
@@ -318,7 +428,7 @@ export const studentAbsenceRequestApi = createApi({
       }),
       invalidatesTags: ['StudentRequests'],
     }),
-    cancelRequest: builder.mutation<ApiResponse<StudentAbsenceRequest>, number>({
+    cancelRequest: builder.mutation<ApiResponse<StudentRequest>, number>({
       query: (id) => ({
         url: `/students/me/requests/${id}/cancel`,
         method: 'POST',
@@ -337,6 +447,18 @@ export const studentAbsenceRequestApi = createApi({
       },
       providesTags: ['PendingRequests'],
     }),
+    getStudentMissedSessions: builder.query<ApiResponse<MissedSessionsResponse>, AcademicMissedSessionsQuery>({
+      query: ({ studentId, ...params }) => ({
+        url: `/students/${studentId}/missed-sessions`,
+        params,
+      }),
+    }),
+    getStudentMakeupOptions: builder.query<ApiResponse<MakeupOptionsResponse>, AcademicMakeupOptionsQuery>({
+      query: ({ studentId, targetSessionId }) => ({
+        url: `/students/${studentId}/makeup-options`,
+        params: { targetSessionId },
+      }),
+    }),
     getAcademicRequests: builder.query<ApiResponse<AcademicRequestsResponse>, AcademicHistoryQuery | void>({
       query: (params) => {
         if (!params) {
@@ -349,7 +471,7 @@ export const studentAbsenceRequestApi = createApi({
       },
       providesTags: ['PendingRequests'],
     }),
-    getRequestDetail: builder.query<ApiResponse<AcademicAbsenceRequest>, number>({
+    getRequestDetail: builder.query<ApiResponse<AcademicStudentRequest>, number>({
       query: (id) => ({
         url: `/student-requests/${id}`,
       }),
@@ -357,7 +479,7 @@ export const studentAbsenceRequestApi = createApi({
         { type: 'RequestDetail', id },
       ],
     }),
-    approveRequest: builder.mutation<ApiResponse<AcademicAbsenceRequest>, ApproveRequestPayload>({
+    approveRequest: builder.mutation<ApiResponse<AcademicStudentRequest>, ApproveRequestPayload>({
       query: ({ id, note }) => ({
         url: `/student-requests/${id}/approve`,
         method: 'PUT',
@@ -369,7 +491,7 @@ export const studentAbsenceRequestApi = createApi({
         { type: 'RequestDetail', id },
       ],
     }),
-    rejectRequest: builder.mutation<ApiResponse<AcademicAbsenceRequest>, RejectRequestPayload>({
+    rejectRequest: builder.mutation<ApiResponse<AcademicStudentRequest>, RejectRequestPayload>({
       query: ({ id, rejectionReason }) => ({
         url: `/student-requests/${id}/reject`,
         method: 'PUT',
@@ -381,16 +503,33 @@ export const studentAbsenceRequestApi = createApi({
         { type: 'RequestDetail', id },
       ],
     }),
+    createOnBehalfRequest: builder.mutation<
+      ApiResponse<AcademicStudentRequest>,
+      SubmitOnBehalfRequestPayload
+    >({
+      query: (body) => ({
+        url: '/student-requests/on-behalf',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['PendingRequests', 'StudentRequests'],
+    }),
   }),
 })
 
 export const {
   useGetAvailableSessionsQuery,
+  useGetMissedSessionsQuery,
+  useLazyGetMissedSessionsQuery,
+  useGetMakeupOptionsQuery,
+  useLazyGetMakeupOptionsQuery,
   useGetMyRequestsQuery,
   useLazyGetMyRequestsQuery,
   useGetMyRequestByIdQuery,
-  useSubmitAbsenceRequestMutation,
+  useSubmitStudentRequestMutation,
   useCancelRequestMutation,
+  useGetStudentMissedSessionsQuery,
+  useGetStudentMakeupOptionsQuery,
   useGetPendingRequestsQuery,
   useLazyGetPendingRequestsQuery,
   useGetAcademicRequestsQuery,
@@ -398,4 +537,5 @@ export const {
   useGetRequestDetailQuery,
   useApproveRequestMutation,
   useRejectRequestMutation,
-} = studentAbsenceRequestApi
+  useCreateOnBehalfRequestMutation,
+} = studentRequestApi

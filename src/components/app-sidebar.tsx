@@ -208,8 +208,8 @@ const roleBasedNav = {
         icon: CalendarIcon,
       },
       {
-        title: "Xin nghỉ buổi học",
-        url: "/student/absence",
+        title: "Yêu cầu của tôi",
+        url: "/student/requests",
         icon: NotebookPenIcon,
       },
     ],
@@ -271,8 +271,8 @@ const roleBasedNav = {
         icon: FileTextIcon,
       },
       {
-        title: "Đơn xin nghỉ",
-        url: "/academic/absence-requests",
+        title: "Quản lý yêu cầu",
+        url: "/academic/requests",
         icon: ClipboardCheckIcon,
       },
     ],
@@ -335,7 +335,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
+              className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
               <a href="/dashboard">
                 <ArrowUpCircleIcon className="h-5 w-5" />
