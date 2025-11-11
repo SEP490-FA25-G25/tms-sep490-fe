@@ -272,7 +272,7 @@ export default function ClassListPage() {
             </Select>
           </div>
 
-          <Button>
+          <Button onClick={() => navigate('/academic/classes/create')}>
             <Plus className="mr-2 h-4 w-4" />
             Lớp học mới
           </Button>

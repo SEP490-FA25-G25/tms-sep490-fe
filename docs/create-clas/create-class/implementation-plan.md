@@ -15,7 +15,7 @@
 4. [Component Breakdown](#4-component-breakdown)
 5. [API Integration](#5-api-integration)
 6. [State Management Strategy](#6-state-management-strategy)
-7. [Testing Strategy](#7-testing-strategy)
+7. [Quality Assurance Strategy](#7-quality-assurance-strategy)
 8. [Deployment Checklist](#8-deployment-checklist)
 
 ---
@@ -143,13 +143,13 @@ src/
 **Goal:** Setup cơ bản, STEP 1 hoạt động end-to-end
 
 **Tasks:**
-- [ ] Tạo API service (`classCreationApi.ts`)
-- [ ] Tạo type definitions (`classCreation.ts`)
-- [ ] Implement Progress Indicator component
-- [ ] Implement Wizard container với routing
-- [ ] Implement STEP 1 form với validation
-- [ ] Implement Wizard Footer với navigation
-- [ ] Test: User có thể tạo class (STEP 1) và navigate
+- [x] Tạo API service (`classCreationApi.ts`)
+- [x] Tạo type definitions (`classCreation.ts`)
+- [x] Implement Progress Indicator component
+- [x] Implement Wizard container với routing
+- [x] Implement STEP 1 form với validation
+- [x] Implement Wizard Footer với navigation
+- [x] Test: User có thể tạo class (STEP 1) và navigate
 
 **Deliverable:** STEP 1 working, progress indicator hiển thị, có thể navigate giữa steps
 
@@ -160,11 +160,11 @@ src/
 **Goal:** Implement STEP 3, 4, 5 (core assignment steps)
 
 **Tasks:**
-- [ ] Implement STEP 3: Time Slots assignment
-- [ ] Implement STEP 4: Resources assignment với conflict detection
-- [ ] Implement Conflict Dialog
-- [ ] Implement STEP 5A: Teacher selection table
-- [ ] Implement STEP 5B: Teacher confirmation
+- [x] Implement STEP 3: Time Slots assignment
+- [x] Implement STEP 4: Resources assignment với conflict detection
+- [x] Implement Conflict Dialog
+- [x] Implement STEP 5A: Teacher selection table
+- [x] Implement STEP 5B: Teacher confirmation
 - [ ] Test: User có thể assign time slots, resources, teachers
 
 **Deliverable:** STEP 3, 4, 5 working, conflict dialog hoạt động
@@ -179,7 +179,7 @@ src/
 - [ ] Implement STEP 6: Validation summary
 - [ ] Implement STEP 7: Final submission
 - [ ] Implement Success Dialog
-- [ ] Implement STEP 2: Review sessions (optional)
+- [x] Implement STEP 2: Review sessions (optional)
 - [ ] Test: Complete workflow STEP 1 → 7
 
 **Deliverable:** Full workflow working, validation complete
@@ -818,40 +818,9 @@ const useDraftPersistence = (classId: number | null, formData: any) => {
 
 ---
 
-## 7. Testing Strategy
+## 7. Quality Assurance Strategy
 
-### 7.1 Unit Tests (Vitest)
-
-**Components to Test:**
-- `ProgressIndicator`: Renders correct states
-- `useWizardNavigation`: Navigation logic
-- `useDraftPersistence`: Save/load draft
-- Form validation schemas (Zod)
-
-**Example:**
-```typescript
-describe('ProgressIndicator', () => {
-  it('renders 7 steps', () => {
-    render(<ProgressIndicator currentStep={1} completedSteps={[]} />)
-    expect(screen.getAllByRole('listitem')).toHaveLength(7)
-  })
-
-  it('highlights active step', () => {
-    render(<ProgressIndicator currentStep={3} completedSteps={[1, 2]} />)
-    expect(screen.getByText('Bước 3')).toHaveClass('active')
-  })
-})
-```
-
-### 7.2 Integration Tests
-
-**Scenarios:**
-1. **Happy Path**: STEP 1 → 7 without errors
-2. **Conflict Path**: STEP 4 với resource conflicts → resolve → continue
-3. **Validation Error**: STEP 1 với invalid data → fix → retry
-4. **Partial Teacher**: STEP 5B với partial assignment → assign 2nd teacher
-
-### 7.3 Manual Testing Checklist
+### 7.1 Manual Testing Checklist
 
 **STEP 1:**
 - [ ] Form validation works (inline + submit)
@@ -898,19 +867,129 @@ describe('ProgressIndicator', () => {
 - [ ] Keyboard navigation
 - [ ] Screen reader accessible
 
+### 7.2 Code Review Checklist
+
+**Before Pull Request:**
+- [ ] Code follows project conventions (TypeScript, ESLint)
+- [ ] No hardcoded values (use constants or config)
+- [ ] Error handling implemented (try-catch, error boundaries)
+- [ ] Loading states handled (suspense, skeletons)
+- [ ] Vietnamese language for all UI text
+- [ ] No console.log statements remaining
+- [ ] Components properly typed with TypeScript
+- [ ] Zod schemas validate all edge cases
+- [ ] RTK Query hooks handle errors correctly
+
+**Peer Review Focus Areas:**
+- [ ] Form validation logic is complete
+- [ ] API integration follows existing patterns
+- [ ] State management is sound (no race conditions)
+- [ ] UI matches UX design specifications
+- [ ] Accessibility requirements met (ARIA labels, keyboard nav)
+- [ ] No code duplication (DRY principle)
+- [ ] Performance considerations (memoization, lazy loading)
+
+### 7.3 User Acceptance Testing (UAT)
+
+**Test Users:** Academic Affairs staff (role: ACADEMIC_AFFAIR)
+
+**UAT Scenarios:**
+
+1. **Scenario: Tạo lớp học mới thành công**
+   - Điều kiện: User có quyền tạo lớp
+   - Bước thực hiện: Hoàn thành STEP 1 → 7 với dữ liệu hợp lệ
+   - Kết quả mong đợi: Lớp học được tạo, hiển thị success dialog, redirect về danh sách lớp
+
+2. **Scenario: Xử lý xung đột tài nguyên**
+   - Điều kiện: Phòng học đã được đặt trong time slot
+   - Bước thực hiện: STEP 4 assign resource → conflict dialog hiển thị
+   - Kết quả mong đợi: Có thể chọn phòng khác hoặc thay đổi time slot
+
+3. **Scenario: Chọn giáo viên dựa trên availability**
+   - Điều kiện: Có ít nhất 2 giáo viên trong hệ thống
+   - Bước thực hiện: STEP 5A xem bảng availability → select teacher
+   - Kết quả mong đợi: Badge màu hiển thị đúng (xanh/vàng/đỏ), expand conflicts works
+
+4. **Scenario: Lưu và phục hồi draft**
+   - Điều kiện: Đang ở giữa workflow
+   - Bước thực hiện: Điền STEP 1 → reload page
+   - Kết quả mong đợi: Form data được restore từ localStorage
+
+5. **Scenario: Validation errors**
+   - Điều kiện: Nhập dữ liệu không hợp lệ
+   - Bước thực hiện: Submit STEP 1 với mã lớp trùng
+   - Kết quả mong đợi: Error message hiển thị inline, không navigate
+
+**UAT Sign-off Criteria:**
+- 100% scenarios pass
+- No critical bugs found
+- User feedback incorporated
+- Performance acceptable (< 3s load time)
+
+### 7.4 Browser DevTools Testing
+
+**Chrome DevTools:**
+- [ ] Network tab: Check API calls (status 200, correct payloads)
+- [ ] Console: No errors or warnings
+- [ ] Performance tab: Lighthouse score > 90 (Performance, Accessibility)
+- [ ] Application tab: localStorage draft saves correctly
+- [ ] Responsive mode: Test mobile (375px), tablet (768px), desktop (1440px)
+
+**React DevTools:**
+- [ ] Component tree structure clean (no unnecessary re-renders)
+- [ ] State updates correctly in Redux store
+- [ ] No memory leaks (check Profiler)
+
+**Accessibility DevTools:**
+- [ ] axe DevTools: 0 violations
+- [ ] Color contrast ratio meets WCAG AA
+- [ ] All interactive elements keyboard accessible
+
+### 7.5 Production Monitoring Setup
+
+**Error Tracking (Sentry hoặc tương tự):**
+```typescript
+// Cấu hình error tracking
+Sentry.init({
+  dsn: import.meta.env.VITE_SENTRY_DSN,
+  environment: import.meta.env.MODE,
+  beforeSend(event) {
+    // Filter sensitive data
+    if (event.request?.data) {
+      delete event.request.data.password
+    }
+    return event
+  }
+})
+```
+
+**Metrics to Track:**
+- Create Class completion rate (STEP 1 → 7)
+- Average time to complete workflow
+- Most common error at each step
+- Drop-off rate at each step
+- API error rate by endpoint
+
+**Alerts to Configure:**
+- Error rate > 5% in 5 minutes
+- API latency > 3 seconds
+- Draft save failures > 10 in 1 hour
+
 ---
 
 ## 8. Deployment Checklist
 
 ### 8.1 Pre-deployment
 
-- [ ] All unit tests pass
-- [ ] Manual testing complete (all scenarios)
-- [ ] Code review completed
-- [ ] Performance check (bundle size, load time)
-- [ ] Accessibility audit (WCAG AA)
+- [ ] Manual testing complete (all scenarios from section 7.1)
+- [ ] Code review completed (checklist from section 7.2)
+- [ ] UAT sign-off from Academic Affairs staff (section 7.3)
+- [ ] Browser DevTools testing complete (section 7.4)
+- [ ] Performance check (bundle size < 500KB, load time < 3s)
+- [ ] Accessibility audit (WCAG AA, axe DevTools 0 violations)
 - [ ] Cross-browser testing (Chrome, Firefox, Safari, Edge)
-- [ ] Mobile testing (iOS, Android)
+- [ ] Mobile testing (iOS Safari, Android Chrome)
+- [ ] Error tracking configured (section 7.5)
 
 ### 8.2 Backend Coordination
 
@@ -930,20 +1009,25 @@ const FEATURE_CREATE_CLASS_ENABLED = import.meta.env.VITE_FEATURE_CREATE_CLASS =
 )}
 ```
 
-### 8.4 Monitoring
+### 8.4 Post-deployment Monitoring
 
-**Metrics to Track:**
+**Week 1 Daily Checks:**
+- [ ] Error rate < 5% (check Sentry dashboard)
+- [ ] Completion rate > 80% (STEP 1 → 7)
+- [ ] API latency < 3 seconds (check network logs)
+- [ ] No critical bugs reported by users
+
+**Ongoing Monitoring (refer to section 7.5):**
 - Task completion rate (% users finish STEP 1 → 7)
 - Average time per step
 - Error rate by step
 - Conflict resolution success rate
 - API response times (track `processingTimeMs`)
 
-**Error Tracking:**
-- Sentry/LogRocket integration
-- Track validation errors
-- Track API errors (400, 500)
-- Track browser/device for errors
+**User Feedback Collection:**
+- [ ] Set up feedback form link in STEP 7 success dialog
+- [ ] Weekly review of user feedback
+- [ ] Track most requested features/improvements
 
 ---
 
@@ -997,4 +1081,3 @@ const FEATURE_CREATE_CLASS_ENABLED = import.meta.env.VITE_FEATURE_CREATE_CLASS =
 **Ready to Start:** ✅
 **Estimated Completion:** 5-7 days
 **Next:** Create GitHub issue + start coding
-

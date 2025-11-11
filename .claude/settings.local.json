@@ -8,7 +8,9 @@
       "Bash(npx shadcn@latest add:*)",
       "Bash(npx eslint:*)",
       "Bash(pnpm lint:*)",
-      "Bash(pnpm build:*)"
+      "Bash(pnpm build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

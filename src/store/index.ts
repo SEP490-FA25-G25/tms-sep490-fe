@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { authApi } from './services/authApi'
 import { classApi } from './services/classApi'
+import { classCreationApi } from './services/classCreationApi'
 import { studentApi } from './services/studentApi'
 import { enrollmentApi } from './services/enrollmentApi'
 import { curriculumApi } from './services/curriculumApi'
@@ -23,6 +24,7 @@ export const store = configureStore({
     auth: authSlice,
     [authApi.reducerPath]: authApi.reducer,
     [classApi.reducerPath]: classApi.reducer,
+    [classCreationApi.reducerPath]: classCreationApi.reducer,
     [studentApi.reducerPath]: studentApi.reducer,
     [enrollmentApi.reducerPath]: enrollmentApi.reducer,
     [curriculumApi.reducerPath]: curriculumApi.reducer,
@@ -37,6 +39,7 @@ export const store = configureStore({
     })
     .concat(authApi.middleware)
     .concat(classApi.middleware)
+    .concat(classCreationApi.middleware)
     .concat(studentApi.middleware)
     .concat(enrollmentApi.middleware)
     .concat(curriculumApi.middleware)

@@ -106,6 +106,9 @@ const baseQueryWithReauth: BaseQueryFn<
   return result
 }
 
+// Export baseQueryWithReauth for use in other API services
+export { baseQueryWithReauth }
+
 export const authApi = createApi({
   reducerPath: 'authApi',
   baseQuery: baseQueryWithReauth,
