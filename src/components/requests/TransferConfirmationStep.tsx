@@ -6,7 +6,7 @@ import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { format, isBefore, startOfDay, addDays, parseISO, isValid } from 'date-fns'
+import { format, isBefore, startOfDay, parseISO, isValid } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { CalendarIcon, CheckCircle, AlertTriangle, ArrowRight, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -39,6 +39,15 @@ export default function TransferConfirmationStep({
   const [contentGapAcknowledged, setContentGapAcknowledged] = useState(false)
 
   const [submitTransfer, { isLoading, error }] = useSubmitTransferRequestMutation()
+
+  const sessionOptions = useMemo(
+    () => selectedClass.upcomingSessions ?? [],
+    [selectedClass.upcomingSessions]
+  )
+  const allowedDateSet = useMemo(() => {
+    return new Set(sessionOptions.map((session) => session.date))
+  }, [sessionOptions])
+  const selectedSession = sessionOptions.find((session) => session.date === effectiveDate)
 
   const handleSubmit = async () => {
     if (!isFormValid) return
@@ -90,64 +99,70 @@ export default function TransferConfirmationStep({
     }
   }
 
-  const contentGapInfo = getContentGapSeverity(selectedClass.contentGap.severity)
-  const ContentGapIcon = contentGapInfo.icon
-
-  // Validate effective date against class schedule
-  const dateValidation = useMemo(() => {
-    if (!effectiveDate) return { valid: false, message: 'Vui lòng chọn ngày hiệu lực' }
-
-    const parsedDate = parseISO(effectiveDate)
-    if (!isValid(parsedDate)) return { valid: false, message: 'Ngày không hợp lệ' }
-
-    // Check if date is in the future
-    if (isBefore(parsedDate, startOfDay(new Date()))) {
-      return { valid: false, message: 'Ngày hiệu lực phải là ngày trong tương lai' }
+  const normalizedContentGap = useMemo(() => {
+    if (selectedClass.contentGap) {
+      return selectedClass.contentGap
     }
 
-    // Mock schedule validation - in real implementation, this should check against actual class sessions
-    // For now, we'll assume the class has sessions on specific weekdays
-    const classScheduleDays = selectedClass.scheduleDays.toLowerCase()
-    const dayOfWeek = parsedDate.getDay() // 0=Sunday, 1=Monday, etc.
-
-    let isValidDay = false
-    if (classScheduleDays.includes('thứ 2') || classScheduleDays.includes('mon') || classScheduleDays.includes('t2')) {
-      isValidDay = isValidDay || dayOfWeek === 1
-    }
-    if (classScheduleDays.includes('thứ 3') || classScheduleDays.includes('tue') || classScheduleDays.includes('t3')) {
-      isValidDay = isValidDay || dayOfWeek === 2
-    }
-    if (classScheduleDays.includes('thứ 4') || classScheduleDays.includes('wed') || classScheduleDays.includes('t4')) {
-      isValidDay = isValidDay || dayOfWeek === 3
-    }
-    if (classScheduleDays.includes('thứ 5') || classScheduleDays.includes('thu') || classScheduleDays.includes('t5')) {
-      isValidDay = isValidDay || dayOfWeek === 4
-    }
-    if (classScheduleDays.includes('thứ 6') || classScheduleDays.includes('fri') || classScheduleDays.includes('t6')) {
-      isValidDay = isValidDay || dayOfWeek === 5
-    }
-    if (classScheduleDays.includes('thứ 7') || classScheduleDays.includes('sat') || classScheduleDays.includes('t7')) {
-      isValidDay = isValidDay || dayOfWeek === 6
-    }
-    if (classScheduleDays.includes('chủ nhật') || classScheduleDays.includes('sun') || classScheduleDays.includes('cn')) {
-      isValidDay = isValidDay || dayOfWeek === 0
-    }
-
-    if (!isValidDay) {
+    if (selectedClass.contentGapAnalysis) {
       return {
-        valid: false,
-        message: `Ngày ${format(parsedDate, 'EEEE', { locale: vi })} không phải là ngày học của lớp. Lớp học vào ${selectedClass.scheduleDays}`
+        severity: selectedClass.contentGapAnalysis.gapLevel,
+        missedSessions: selectedClass.contentGapAnalysis.missedSessions,
+        gapSessions: selectedClass.contentGapAnalysis.gapSessions,
+        recommendation:
+          selectedClass.contentGapAnalysis.impactDescription ??
+          selectedClass.contentGapAnalysis.recommendedActions?.join('. ') ??
+          'Tiến độ tương đương, không thiếu nội dung',
       }
     }
 
-    // Check if date is too far in the future (more than 2 months)
-    const twoMonthsFromNow = addDays(new Date(), 60)
-    if (parsedDate > twoMonthsFromNow) {
-      return { valid: false, message: 'Ngày hiệu lực không được quá 2 tháng kể từ ngày hiện tại' }
+    return {
+      severity: 'NONE',
+      missedSessions: 0,
+      gapSessions: [],
+      recommendation: 'Tiến độ tương đương, không thiếu nội dung',
+    }
+  }, [selectedClass])
+
+  const contentGapInfo = getContentGapSeverity(normalizedContentGap.severity)
+  const ContentGapIcon = contentGapInfo.icon
+
+  const parseTimeSlot = (timeSlot?: string) => {
+    if (!timeSlot) {
+      return { start: 'TBD', end: 'TBD' }
+    }
+    const [start, end] = timeSlot.split('-').map((value) => value.trim())
+    return {
+      start: start || 'TBD',
+      end: end || 'TBD',
+    }
+  }
+
+  // Validate effective date against actual sessions
+  const dateValidation = useMemo(() => {
+    if (!effectiveDate) {
+      return { valid: false, message: 'Vui lòng chọn ngày hiệu lực' }
     }
 
-    return { valid: true, message: 'Ngày hiệu lực hợp lệ' }
-  }, [effectiveDate, selectedClass.scheduleDays])
+    const parsedDate = parseISO(effectiveDate)
+    if (!isValid(parsedDate)) {
+      return { valid: false, message: 'Ngày không hợp lệ' }
+    }
+
+    if (isBefore(parsedDate, startOfDay(new Date()))) {
+      return { valid: false, message: 'Ngày hiệu lực phải từ hôm nay trở đi' }
+    }
+
+    if (allowedDateSet.size === 0) {
+      return { valid: false, message: 'Lớp chưa có lịch học khả dụng. Vui lòng thử lại sau.' }
+    }
+
+    if (!allowedDateSet.has(effectiveDate)) {
+      return { valid: false, message: 'Chỉ chọn ngày thuộc lịch học của lớp đích' }
+    }
+
+    return { valid: true, message: 'Ngày hợp lệ, bạn sẽ tham gia từ buổi này' }
+  }, [allowedDateSet, effectiveDate])
 
   const isFormValid =
     effectiveDate &&
@@ -155,7 +170,8 @@ export default function TransferConfirmationStep({
     agreed &&
     quotaAcknowledged &&
     contentGapAcknowledged &&
-    dateValidation.valid
+    dateValidation.valid &&
+    Boolean(selectedSession)
 
   return (
     <div className="space-y-8">
@@ -204,27 +220,27 @@ export default function TransferConfirmationStep({
           <div className="flex items-center gap-2">
             <ContentGapIcon className={cn("w-4 h-4", contentGapInfo.color)} />
             <span className={cn("text-sm font-medium", contentGapInfo.color)}>
-              {contentGapInfo.text}: {selectedClass.contentGap.missedSessions} buổi
+              {contentGapInfo.text}: {normalizedContentGap.missedSessions} buổi
             </span>
           </div>
 
-          {selectedClass.contentGap.missedSessions > 0 && (
+          {normalizedContentGap.missedSessions > 0 && (
             <div className="space-y-2 text-sm">
               <div className="text-muted-foreground">
-                {selectedClass.contentGap.recommendation}
+                {normalizedContentGap.recommendation}
               </div>
 
-              {selectedClass.contentGap.gapSessions.length > 0 && (
+              {normalizedContentGap.gapSessions.length > 0 && (
                 <div className="bg-muted/50 p-3 rounded-lg">
                   <div className="text-xs space-y-1">
-                    {selectedClass.contentGap.gapSessions.slice(0, 2).map((session, index) => (
+                    {normalizedContentGap.gapSessions.slice(0, 2).map((session, index) => (
                       <div key={index}>
                         Buổi {session.courseSessionNumber}: {session.courseSessionTitle}
                       </div>
                     ))}
-                    {selectedClass.contentGap.gapSessions.length > 2 && (
+                    {normalizedContentGap.gapSessions.length > 2 && (
                       <div className="text-muted-foreground">
-                        ... và {selectedClass.contentGap.gapSessions.length - 2} buổi khác
+                        ... và {normalizedContentGap.gapSessions.length - 2} buổi khác
                       </div>
                     )}
                   </div>
@@ -233,7 +249,7 @@ export default function TransferConfirmationStep({
             </div>
           )}
 
-          {selectedClass.contentGap.missedSessions === 0 && (
+          {normalizedContentGap.missedSessions === 0 && (
             <div className="text-sm text-green-700 bg-green-50 p-3 rounded-lg border border-green-200">
               Tiến độ tương đương, không thiếu nội dung
             </div>
@@ -270,12 +286,40 @@ export default function TransferConfirmationStep({
                   onEffectiveDateChange(format(date, 'yyyy-MM-dd'))
                 }
               }}
-              disabled={(date) => isBefore(date, startOfDay(new Date()))}
+              disabled={(date) => {
+                const dateKey = format(date, 'yyyy-MM-dd')
+                return isBefore(date, startOfDay(new Date())) || !allowedDateSet.has(dateKey)
+              }}
               initialFocus
               locale={vi}
             />
           </PopoverContent>
         </Popover>
+
+        <div className="min-h-[48px]">
+          {sessionOptions.length > 0 ? (
+            <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+              {sessionOptions.slice(0, 4).map((session) => {
+                const times = parseTimeSlot(session.timeSlot)
+                return (
+                  <span
+                    key={session.sessionId}
+                    className="rounded-full bg-muted px-3 py-1"
+                  >
+                    {format(parseISO(session.date), 'dd/MM', { locale: vi })} • {times.start}-{times.end}
+                  </span>
+                )
+              })}
+              {sessionOptions.length > 4 && (
+                <span>+{sessionOptions.length - 4} buổi khác</span>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Lớp chưa có lịch học mở cho chuyển lớp. Vui lòng thử lại sau hoặc liên hệ Học vụ.
+            </p>
+          )}
+        </div>
 
         {/* Date validation message */}
         {effectiveDate && (
@@ -289,9 +333,12 @@ export default function TransferConfirmationStep({
           </div>
         )}
 
-        {effectiveDate && !dateValidation.valid && (
+        {selectedSession && (
           <div className="text-xs text-muted-foreground">
-            Lớp học lịch: {selectedClass.scheduleDays}
+            {(() => {
+              const times = parseTimeSlot(selectedSession.timeSlot)
+              return `Thời gian: ${times.start} - ${times.end}`
+            })()}
           </div>
         )}
       </div>

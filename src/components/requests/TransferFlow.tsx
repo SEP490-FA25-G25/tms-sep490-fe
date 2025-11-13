@@ -30,6 +30,8 @@ export default function TransferFlow({ open, onOpenChange }: TransferFlowProps) 
   const [requestReason, setRequestReason] = useState<string>('')
   const [isSuccessOpen, setIsSuccessOpen] = useState(false)
   const [submittedRequest, setSubmittedRequest] = useState<TransferRequestResponse | null>(null)
+  const [transferType, setTransferType] = useState<'schedule' | 'branch-modality'>('schedule')
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false)
 
   const totalSteps = 4
 
@@ -41,7 +43,18 @@ export default function TransferFlow({ open, onOpenChange }: TransferFlowProps) 
 
   const handlePrevious = () => {
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
+      const previousStep = currentStep - 1
+      setCurrentStep(previousStep)
+
+      if (previousStep === 1) {
+        setSelectedEnrollment(null)
+        setSelectedClass(null)
+        setTransferType('schedule')
+      }
+
+      if (previousStep === 2) {
+        setSelectedClass(null)
+      }
     }
   }
 
@@ -61,7 +74,21 @@ export default function TransferFlow({ open, onOpenChange }: TransferFlowProps) 
     setSelectedClass(null)
     setEffectiveDate('')
     setRequestReason('')
+    setTransferType('schedule')
   }
+
+  const handleFooterNext = () => {
+    if (currentStep === 2) {
+      if (transferType === 'branch-modality') {
+        setIsContactModalOpen(true)
+        return
+      }
+    }
+
+    handleNext()
+  }
+
+  const shouldRenderFooterNext = currentStep < totalSteps && currentStep !== 1 && currentStep !== 3
 
   const renderStep = () => {
     switch (currentStep) {
@@ -77,8 +104,18 @@ export default function TransferFlow({ open, onOpenChange }: TransferFlowProps) 
         return (
           <TransferTypeStep
             currentEnrollment={selectedEnrollment!}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
+            selectedType={transferType}
+            onTypeChange={setTransferType}
+            contactModalOpen={isContactModalOpen}
+            onContactModalChange={(open) => {
+              setIsContactModalOpen(open)
+              if (!open) {
+                setCurrentStep(1)
+                setSelectedEnrollment(null)
+                setSelectedClass(null)
+                setTransferType('schedule')
+              }
+            }}
           />
         )
       case 3:
@@ -142,13 +179,9 @@ export default function TransferFlow({ open, onOpenChange }: TransferFlowProps) 
               Quay lại
             </Button>
 
-            {currentStep < totalSteps && (
+            {shouldRenderFooterNext && (
               <Button
-                onClick={handleNext}
-                disabled={
-                  (currentStep === 1 && !selectedEnrollment) ||
-                  (currentStep === 3 && !selectedClass)
-                }
+                onClick={handleFooterNext}
                 className="flex items-center gap-2"
               >
                 Tiếp theo
