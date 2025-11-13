@@ -1,8 +1,8 @@
-import { useGetTransferOptionsQuery } from '@/store/services/studentRequestApi'
+import { useMemo } from 'react'
+import { useGetTransferOptionsQuery, type TransferEligibility, type TransferOption, type TransferOptionsResponse } from '@/store/services/studentRequestApi'
 import { Badge } from '@/components/ui/badge'
 import { Loader2, Users, Calendar, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { TransferEligibility, TransferOption } from '@/store/services/studentRequestApi'
 import TransferErrorDisplay from './TransferErrorDisplay'
 
 interface TransferClassSelectionStepProps {
@@ -22,6 +22,11 @@ export default function TransferClassSelectionStep({
   const { data: optionsData, isLoading, error, refetch } = useGetTransferOptionsQuery({
     currentClassId: currentEnrollment.classId,
   })
+  const optionPayload = optionsData?.data as TransferOptionsResponse | TransferOption[] | undefined
+  const availableClasses = useMemo<TransferOption[]>(() => {
+    if (!optionPayload) return []
+    return Array.isArray(optionPayload) ? optionPayload : optionPayload.availableClasses ?? []
+  }, [optionPayload])
 
   if (isLoading) {
     return (
@@ -44,15 +49,13 @@ export default function TransferClassSelectionStep({
     )
   }
 
-  if (!optionsData?.data || optionsData.data.availableClasses.length === 0) {
+  if (availableClasses.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">Không có lớp nào phù hợp để chuyển. Vui lòng liên hệ Phòng Học vụ để được hỗ trợ.</p>
+        <p className="text-muted-foreground">Hiện không có lớp nào cùng khóa và cùng cơ sở/hình thức. Liên hệ Phòng Học vụ nếu cần thêm lựa chọn.</p>
       </div>
     )
   }
-
-  const { currentClass, availableClasses } = optionsData.data
 
   const handleSelectClass = (classOption: TransferOption) => {
     onSelectClass(classOption)
@@ -74,13 +77,6 @@ export default function TransferClassSelectionStep({
     }
   }
 
-  const getCapacityWarning = (availableSlots: number) => {
-    if (availableSlots < 3) {
-      return <Badge className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100">Còn {availableSlots} chỗ</Badge>
-    }
-    return null
-  }
-
   const getModalityText = (modality: string) => {
     switch (modality) {
       case 'OFFLINE': return 'Tại lớp'
@@ -90,19 +86,52 @@ export default function TransferClassSelectionStep({
     }
   }
 
+  const resolveSeverity = (classOption: TransferOption) => {
+    const severity = classOption.contentGap?.severity ?? classOption.contentGapAnalysis?.gapLevel ?? 'NONE'
+    const missed = classOption.contentGap?.missedSessions ?? classOption.contentGapAnalysis?.missedSessions ?? 0
+    const recommendation =
+      classOption.contentGap?.recommendation ??
+      classOption.contentGapAnalysis?.impactDescription ??
+      classOption.contentGapAnalysis?.recommendedActions?.[0]
+
+    return { severity, missed, recommendation }
+  }
+
+  const getCapacityBadge = (availableSlots: number) => {
+    if (availableSlots <= 0) {
+      return <Badge variant="destructive">Đã đủ chỗ</Badge>
+    }
+    if (availableSlots < 3) {
+      return <Badge className="bg-rose-50 text-rose-700">Còn {availableSlots} chỗ</Badge>
+    }
+    return null
+  }
+
+  const buildScheduleLine = (classOption: TransferOption) => {
+    if (classOption.scheduleDays || classOption.scheduleTime) {
+      return `${classOption.scheduleDays ?? ''} ${classOption.scheduleTime ?? ''}`.trim()
+    }
+    if (classOption.scheduleInfo) {
+      return classOption.scheduleInfo
+    }
+    if (classOption.startDate && classOption.endDate) {
+      return `${classOption.startDate} → ${classOption.endDate}`
+    }
+    return 'Chưa cập nhật lịch'
+  }
+
   return (
     <div className="space-y-8">
       {/* Current Class Info */}
-      <div className="p-4 bg-muted/30 rounded-lg">
-        <div className="space-y-1">
-          <h3 className="font-medium mb-3">Từ lớp:</h3>
-          <div className="text-sm space-y-1">
-            <div><span className="font-medium">{currentClass.code}</span> - {currentClass.name}</div>
-            <div className="text-muted-foreground">
-              {currentClass.branchName} • {getModalityText(currentClass.modality)}
-            </div>
-          </div>
-        </div>
+      <div className="rounded-2xl bg-muted/30 p-4">
+        <p className="text-xs uppercase text-muted-foreground">Từ lớp</p>
+        <p className="mt-1 text-sm text-foreground">
+          <span className="font-semibold">{currentEnrollment.classCode}</span> · {currentEnrollment.className}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {currentEnrollment.branchName} • {getModalityText(currentEnrollment.modality)}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">Chỉ hiển thị lớp cùng cơ sở và cùng hình thức để đảm bảo tự duyệt trong 4-8 giờ.</p>
       </div>
 
       {/* Available Classes Header */}
@@ -112,104 +141,64 @@ export default function TransferClassSelectionStep({
       </div>
 
       {/* Available Classes */}
-      <div className="space-y-4">
-        {availableClasses.map((classOption) => (
-          <div
-            key={classOption.classId}
-            className={cn(
-              "p-4 border rounded-lg cursor-pointer transition-all hover:border-primary/50 hover:shadow-sm",
-              selectedClass?.classId === classOption.classId && "border-primary bg-primary/5"
-            )}
-            onClick={() => handleSelectClass(classOption)}
-          >
-            <div className="space-y-4">
-              {/* Class Header */}
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-3">
-                    <h4 className="font-medium">{classOption.classCode}</h4>
-                    {classOption.classId === currentClass.id && (
-                      <Badge variant="outline" className="text-xs">Lớp hiện tại</Badge>
-                    )}
-                    {getCapacityWarning(classOption.availableSlots)}
-                  </div>
-                  <div className="text-sm text-muted-foreground">{classOption.className}</div>
+      <div className="space-y-3">
+        {availableClasses.map((classOption) => {
+          const { severity, missed, recommendation } = resolveSeverity(classOption)
+          const capacityBadge = getCapacityBadge(classOption.availableSlots)
+          const scheduleLine = buildScheduleLine(classOption)
+          const enrolledCount = classOption.enrolledCount ?? classOption.currentEnrollment ?? 0
+          const startDate = classOption.startDate ?? classOption.scheduleInfo?.split(' to ')?.[0]
+          const endDate = classOption.endDate ?? classOption.scheduleInfo?.split(' to ')?.[1]
+
+          return (
+            <button
+              key={classOption.classId}
+              type="button"
+              className={cn(
+                'w-full rounded-2xl border border-transparent bg-white/80 p-4 text-left shadow-sm ring-1 ring-muted/40 transition hover:ring-primary/40',
+                selectedClass?.classId === classOption.classId && 'ring-2 ring-primary'
+              )}
+              onClick={() => handleSelectClass(classOption)}
+              disabled={!classOption.canTransfer}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-foreground">{classOption.classCode}</p>
+                  <p className="text-sm text-muted-foreground">{classOption.className}</p>
                 </div>
+                {capacityBadge}
               </div>
 
-              {/* Class Schedule */}
-              <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <span>{classOption.scheduleDays}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  <span>{classOption.scheduleTime}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  <span>{classOption.enrolledCount}/{classOption.maxCapacity}</span>
-                </div>
+              <div className="mt-3 grid gap-3 text-sm text-muted-foreground md:grid-cols-3">
+                <span className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  {scheduleLine}
+                </span>
+                <span className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  {startDate && endDate ? `${startDate} → ${endDate}` : classOption.scheduleTime ?? 'Đang học'}
+                </span>
+                <span className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  {enrolledCount}/{classOption.maxCapacity} • {classOption.availableSlots} chỗ trống
+                </span>
               </div>
 
-              {/* Content Gap Analysis */}
-              <div className="pt-3 border-t border-dashed">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    {getSeverityBadge(classOption.contentGap.severity, classOption.contentGap.missedSessions)}
-                  </div>
-
-                  {classOption.contentGap.missedSessions > 0 && (
-                    <div className="space-y-2">
-                      <div className="text-sm text-muted-foreground">
-                        <span>Bạn sẽ bỏ lỡ </span>
-                        <span className="font-medium">{classOption.contentGap.missedSessions} buổi học</span>
-                      </div>
-
-                      {classOption.contentGap.gapSessions.length > 0 && (
-                        <div className="bg-muted/50 p-3 rounded-lg">
-                          <div className="text-xs space-y-1">
-                            {classOption.contentGap.gapSessions.slice(0, 2).map((session, index) => (
-                              <div key={index}>
-                                Buổi {session.courseSessionNumber}: {session.courseSessionTitle}
-                              </div>
-                            ))}
-                            {classOption.contentGap.gapSessions.length > 2 && (
-                              <div className="text-muted-foreground">
-                                ... và {classOption.contentGap.gapSessions.length - 2} buổi khác
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="text-xs bg-yellow-50 text-yellow-800 p-3 rounded-lg border border-yellow-200">
-                        <span className="font-medium">Khuyến nghị:</span> {classOption.contentGap.recommendation}
-                      </div>
-                    </div>
-                  )}
-
-                  {classOption.contentGap.missedSessions === 0 && (
-                    <div className="text-sm text-green-700 bg-green-50 p-3 rounded-lg border border-green-200">
-                      Tiến độ tương đương, không thiếu nội dung
-                    </div>
-                  )}
-                </div>
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
+                {getSeverityBadge(severity, missed)}
               </div>
-            </div>
-          </div>
-        ))}
+
+              {missed > 0 && (
+                <p className="mt-2 text-sm text-muted-foreground">{recommendation}</p>
+              )}
+            </button>
+          )
+        })}
       </div>
 
-      {/* Help Info */}
-      <div className="text-center py-4">
-        <p className="text-sm text-muted-foreground">
-          Cần chuyển cơ sở hoặc hình thức học?
-          <br />
-          <span className="font-medium">Liên hệ Phòng Học vụ để được hỗ trợ</span>
-        </p>
-      </div>
+      <p className="text-center text-sm text-muted-foreground">
+        Tự phục vụ chỉ hỗ trợ đổi lịch. Cần đổi cơ sở/hình thức? Hãy quay lại bước trước để liên hệ Học vụ.
+      </p>
     </div>
   )
 }

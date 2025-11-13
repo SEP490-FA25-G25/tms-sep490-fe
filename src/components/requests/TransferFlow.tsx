@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/dialog'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
 import type { TransferEligibility, TransferOption } from '@/store/services/studentRequestApi'
 import type { TransferRequestResponse } from '@/types/academicTransfer'
 
@@ -32,6 +32,11 @@ export default function TransferFlow({ open, onOpenChange }: TransferFlowProps) 
   const [submittedRequest, setSubmittedRequest] = useState<TransferRequestResponse | null>(null)
   const [transferType, setTransferType] = useState<'schedule' | 'branch-modality'>('schedule')
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
+  const [confirmationState, setConfirmationState] = useState<{
+    canSubmit: boolean
+    isLoading: boolean
+    submit: () => Promise<void>
+  } | null>(null)
 
   const totalSteps = 4
 
@@ -57,6 +62,11 @@ export default function TransferFlow({ open, onOpenChange }: TransferFlowProps) 
       }
     }
   }
+  useEffect(() => {
+    if (currentStep !== 4) {
+      setConfirmationState(null)
+    }
+  }, [currentStep])
 
   const handleClose = () => {
     if (currentStep === 1) {
@@ -75,6 +85,7 @@ export default function TransferFlow({ open, onOpenChange }: TransferFlowProps) 
     setEffectiveDate('')
     setRequestReason('')
     setTransferType('schedule')
+    setConfirmationState(null)
   }
 
   const handleFooterNext = () => {
@@ -89,6 +100,24 @@ export default function TransferFlow({ open, onOpenChange }: TransferFlowProps) 
   }
 
   const shouldRenderFooterNext = currentStep < totalSteps && currentStep !== 1 && currentStep !== 3
+
+  const handleSubmitStateChange = useCallback((nextState: {
+    canSubmit: boolean
+    isLoading: boolean
+    submit: () => Promise<void>
+  }) => {
+    setConfirmationState((prev) => {
+      if (
+        !prev ||
+        prev.canSubmit !== nextState.canSubmit ||
+        prev.isLoading !== nextState.isLoading ||
+        prev.submit !== nextState.submit
+      ) {
+        return nextState
+      }
+      return prev
+    })
+  }, [])
 
   const renderStep = () => {
     switch (currentStep) {
@@ -137,8 +166,8 @@ export default function TransferFlow({ open, onOpenChange }: TransferFlowProps) 
             requestReason={requestReason}
             onEffectiveDateChange={setEffectiveDate}
             onRequestReasonChange={setRequestReason}
-            onPrevious={handlePrevious}
             onSuccess={handleSuccess}
+            onSubmitStateChange={handleSubmitStateChange}
           />
         )
       default:
@@ -179,7 +208,22 @@ export default function TransferFlow({ open, onOpenChange }: TransferFlowProps) 
               Quay lại
             </Button>
 
-            {shouldRenderFooterNext && (
+            {currentStep === 4 ? (
+              <Button
+                onClick={() => confirmationState?.submit()}
+                disabled={!confirmationState?.canSubmit || confirmationState?.isLoading}
+                className="flex items-center gap-2"
+              >
+                {confirmationState?.isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Đang xử lý...
+                  </>
+                ) : (
+                  'Nộp yêu cầu'
+                )}
+              </Button>
+            ) : shouldRenderFooterNext ? (
               <Button
                 onClick={handleFooterNext}
                 className="flex items-center gap-2"
@@ -187,7 +231,7 @@ export default function TransferFlow({ open, onOpenChange }: TransferFlowProps) 
                 Tiếp theo
                 <ArrowRight className="w-4 h-4" />
               </Button>
-            )}
+            ) : null}
           </div>
         </DialogContent>
       </Dialog>

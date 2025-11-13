@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { useGetTransferEligibilityQuery, type TransferEligibility } from '@/store/services/studentRequestApi'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Loader2, Users, Clock, CheckCircle2, X } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -134,16 +133,26 @@ export default function TransferEligibilityStep({
             const disabled = !enrollment.canTransfer || enrollment.hasPendingTransfer
 
             return (
-              <button
-                key={enrollment.enrollmentId}
-                type="button"
+              <div
+                key={enrollment.enrollmentId ?? `${enrollment.classId}-${enrollment.branchId}`}
+                role="button"
+                tabIndex={disabled ? -1 : 0}
                 className={cn(
-                  'w-full rounded-2xl border border-transparent bg-white/70 p-4 text-left shadow-sm ring-1 ring-muted/40 transition hover:ring-muted/80',
+                  'w-full rounded-2xl border border-transparent bg-white/70 p-4 text-left shadow-sm ring-1 ring-muted/40 transition hover:ring-muted/80 focus:outline-none focus:ring-2 focus:ring-primary',
                   disabled && 'cursor-not-allowed opacity-60',
                   selectedEnrollment?.enrollmentId === enrollment.enrollmentId && 'ring-2 ring-primary'
                 )}
-                onClick={() => handleSelectEnrollment(enrollment)}
-                disabled={disabled}
+                onClick={() => {
+                  if (!disabled) {
+                    handleSelectEnrollment(enrollment)
+                  }
+                }}
+                onKeyDown={(event) => {
+                  if (!disabled && (event.key === 'Enter' || event.key === ' ')) {
+                    event.preventDefault()
+                    handleSelectEnrollment(enrollment)
+                  }
+                }}
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
@@ -177,21 +186,7 @@ export default function TransferEligibilityStep({
                   </div>
                 </div>
 
-                {!disabled && (
-                  <div className="mt-4 flex justify-end">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={(event) => {
-                        event.preventDefault()
-                        handleSelectEnrollment(enrollment)
-                      }}
-                    >
-                      Chọn
-                    </Button>
-                  </div>
-                )}
-              </button>
+              </div>
             )
           })}
         </div>

@@ -391,7 +391,24 @@ interface CreateDialogProps {
   onOpenTransferFlow: () => void
 }
 
-function CreateRequestDialog({ open, onOpenChange, activeType, onSelectType, onSuccess, onOpenTransferFlow }: CreateDialogProps) {
+function CreateRequestDialog({
+  open,
+  onOpenChange,
+  activeType,
+  onSelectType,
+  onSuccess,
+  onOpenTransferFlow,
+}: CreateDialogProps) {
+  const handleTypeSelect = (type: RequestType) => {
+    if (type === 'TRANSFER') {
+      onOpenChange(false)
+      onSelectType(null)
+      onOpenTransferFlow()
+      return
+    }
+    onSelectType(type)
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl rounded-2xl">
@@ -399,7 +416,7 @@ function CreateRequestDialog({ open, onOpenChange, activeType, onSelectType, onS
           <DialogTitle>Tạo yêu cầu mới</DialogTitle>
         </DialogHeader>
         {activeType === null ? (
-          <TypeSelection onSelect={onSelectType} />
+          <TypeSelection onSelect={handleTypeSelect} />
         ) : (
           <div className="space-y-3">
             <div className="flex items-center justify-between border-b pb-2">
@@ -414,20 +431,6 @@ function CreateRequestDialog({ open, onOpenChange, activeType, onSelectType, onS
 
             {activeType === 'ABSENCE' && <AbsenceFlow onSuccess={onSuccess} />}
             {activeType === 'MAKEUP' && <MakeupFlow onSuccess={onSuccess} />}
-            {activeType === 'TRANSFER' && (
-              <div className="text-center py-8">
-                <p className="text-sm text-muted-foreground mb-4">
-                  Hệ thống sẽ hướng dẫn bạn qua các bước để chuyển lớp
-                </p>
-                <Button onClick={() => {
-                  onOpenChange(false)
-                  onOpenTransferFlow()
-                  onSelectType(null)
-                }}>
-                  Bắt đầu chuyển lớp
-                </Button>
-              </div>
-            )}
           </div>
         )}
       </DialogContent>

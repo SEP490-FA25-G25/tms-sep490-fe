@@ -6,6 +6,7 @@ import type {
   FetchBaseQueryMeta,
 } from '@reduxjs/toolkit/query'
 import type { RootState } from '../index'
+import type { StudentClassDTO } from '@/types/academicTransfer'
 
 // Re-export StudentSearchResult from academicTransfer
 export type { StudentSearchResult } from '@/types/academicTransfer'
@@ -345,27 +346,35 @@ export interface TransferEligibility {
   branchId: number
   branchName: string
   modality: SessionModality
+  learningMode?: SessionModality
   enrollmentStatus: string
   transferQuota: TransferQuota
   hasPendingTransfer: boolean
   canTransfer: boolean
+  scheduleInfo?: string
 }
 
 export interface PolicyInfo {
   maxTransfersPerCourse: number
-  autoApprovalConditions: string
+  usedTransfers?: number
+  remainingTransfers?: number
+  autoApprovalConditions?: string
+  requiresAAApproval?: boolean
+  policyDescription?: string
 }
 
 export interface TransferEligibilityResponse {
   eligibleForTransfer: boolean
   ineligibilityReason: string | null
-  currentClasses: TransferEligibility[]
+  currentClasses?: TransferEligibility[]
+  currentEnrollments?: TransferEligibility[]
   policyInfo: PolicyInfo
 }
 
 export interface ContentGapSession {
   courseSessionNumber: number
   courseSessionTitle: string
+  scheduledDate?: string
 }
 
 export interface ContentGap {
@@ -373,6 +382,18 @@ export interface ContentGap {
   gapSessions: ContentGapSession[]
   severity: 'NONE' | 'MINOR' | 'MODERATE' | 'MAJOR'
   recommendation: string
+  totalSessions?: number
+  recommendedActions?: string[]
+  impactDescription?: string
+}
+
+export interface ContentGapAnalysis {
+  gapLevel: 'NONE' | 'MINOR' | 'MODERATE' | 'MAJOR'
+  missedSessions: number
+  totalSessions: number
+  gapSessions: ContentGapSession[]
+  recommendedActions?: string[]
+  impactDescription?: string
 }
 
 export interface TransferOption {
@@ -384,13 +405,25 @@ export interface TransferOption {
   modality: SessionModality
   scheduleDays: string
   scheduleTime: string
+  scheduleInfo?: string
+  startDate?: string
+  endDate?: string
   currentSession: number
   maxCapacity: number
   enrolledCount: number
+  currentEnrollment?: number
   availableSlots: number
   classStatus: string
-  contentGap: ContentGap
+  contentGap?: ContentGap
   canTransfer: boolean
+  contentGapAnalysis?: ContentGapAnalysis
+  upcomingSessions?: Array<{
+    sessionId: number
+    date: string
+    courseSessionNumber: number
+    courseSessionTitle: string
+    timeSlot: string
+  }>
   changes?: {
     branch?: string
     modality?: string

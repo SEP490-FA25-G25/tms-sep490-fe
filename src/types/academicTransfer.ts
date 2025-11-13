@@ -52,6 +52,7 @@ export interface StudentSearchResult {
 export interface ContentGapSession {
   courseSessionNumber: number
   courseSessionTitle: string
+  scheduledDate?: string
 }
 
 export interface ContentGap {
@@ -59,6 +60,9 @@ export interface ContentGap {
   gapSessions: ContentGapSession[]
   severity: 'NONE' | 'MINOR' | 'MODERATE' | 'MAJOR'
   recommendation: string
+  totalSessions?: number
+  recommendedActions?: string[]
+  impactDescription?: string
 }
 
 export interface TransferQuota {
@@ -77,10 +81,12 @@ export interface TransferEligibility {
   branchId: number
   branchName: string
   modality: 'ONLINE' | 'OFFLINE' | 'HYBRID'
+  learningMode?: 'ONLINE' | 'OFFLINE' | 'HYBRID'
   enrollmentStatus: string
   transferQuota: TransferQuota
   hasPendingTransfer: boolean
   canTransfer: boolean
+  scheduleInfo?: string
 }
 
 export interface PolicyInfo {
@@ -88,12 +94,15 @@ export interface PolicyInfo {
   usedTransfers?: number
   remainingTransfers?: number
   autoApprovalConditions?: string
+  requiresAAApproval?: boolean
+  policyDescription?: string
 }
 
 export interface TransferEligibilityResponse {
   eligibleForTransfer: boolean
   ineligibilityReason: string | null
-  currentClasses: TransferEligibility[]
+  currentClasses?: TransferEligibility[]
+  currentEnrollments?: TransferEligibility[]
   policyInfo: PolicyInfo
 }
 
@@ -106,13 +115,32 @@ export interface TransferOption {
   modality: 'ONLINE' | 'OFFLINE' | 'HYBRID'
   scheduleDays: string
   scheduleTime: string
+  scheduleInfo?: string
+  startDate?: string
+  endDate?: string
   currentSession: number
   maxCapacity: number
   enrolledCount: number
+  currentEnrollment?: number
   availableSlots: number
   classStatus: string
-  contentGap: ContentGap
+  contentGap?: ContentGap
   canTransfer: boolean
+  contentGapAnalysis?: {
+    gapLevel: 'NONE' | 'MINOR' | 'MODERATE' | 'MAJOR'
+    missedSessions: number
+    totalSessions: number
+    gapSessions: Array<ContentGapSession & { scheduledDate?: string }>
+    recommendedActions?: string[]
+    impactDescription?: string
+  }
+  upcomingSessions?: Array<{
+    sessionId: number
+    date: string
+    courseSessionNumber: number
+    courseSessionTitle: string
+    timeSlot: string
+  }>
   changes?: {
     branch?: string
     modality?: string

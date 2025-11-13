@@ -1,14 +1,14 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useSubmitTransferRequestMutation } from '@/store/services/studentRequestApi'
-import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
 import { format, isBefore, startOfDay, parseISO, isValid } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { CalendarIcon, CheckCircle, AlertTriangle, ArrowRight, Loader2 } from 'lucide-react'
+import { CalendarIcon, CheckCircle, AlertTriangle, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { TransferEligibility, TransferOption, TransferRequestResponse } from '@/store/services/studentRequestApi'
 import TransferErrorDisplay from './TransferErrorDisplay'
@@ -20,8 +20,8 @@ interface TransferConfirmationStepProps {
   requestReason: string
   onEffectiveDateChange: (date: string) => void
   onRequestReasonChange: (reason: string) => void
-  onPrevious: () => void
   onSuccess: (request: TransferRequestResponse) => void
+  onSubmitStateChange?: (state: { canSubmit: boolean; isLoading: boolean; submit: () => Promise<void> }) => void
 }
 
 export default function TransferConfirmationStep({
@@ -31,14 +31,22 @@ export default function TransferConfirmationStep({
   requestReason,
   onEffectiveDateChange,
   onRequestReasonChange,
-  onPrevious,
   onSuccess,
+  onSubmitStateChange,
 }: TransferConfirmationStepProps) {
   const [agreed, setAgreed] = useState(false)
   const [quotaAcknowledged, setQuotaAcknowledged] = useState(false)
   const [contentGapAcknowledged, setContentGapAcknowledged] = useState(false)
 
   const [submitTransfer, { isLoading, error }] = useSubmitTransferRequestMutation()
+  const latestStateRef = useRef({
+    isFormValid: false,
+    currentClassId: currentEnrollment.classId,
+    targetClassId: selectedClass.classId,
+    effectiveDate,
+    requestReason,
+  })
+  const latestSuccessRef = useRef(onSuccess)
 
   const sessionOptions = useMemo(
     () => selectedClass.upcomingSessions ?? [],
@@ -48,26 +56,6 @@ export default function TransferConfirmationStep({
     return new Set(sessionOptions.map((session) => session.date))
   }, [sessionOptions])
   const selectedSession = sessionOptions.find((session) => session.date === effectiveDate)
-
-  const handleSubmit = async () => {
-    if (!isFormValid) return
-
-    try {
-      const result = await submitTransfer({
-        currentClassId: currentEnrollment.classId,
-        targetClassId: selectedClass.classId,
-        effectiveDate,
-        requestReason: requestReason.trim(),
-        note: '',
-      }).unwrap()
-
-      if (result.success) {
-        onSuccess(result.data)
-      }
-    } catch {
-      // Error is handled by the mutation and displayed below
-    }
-  }
 
   const handleErrorContact = () => {
     // Navigate to contact or show contact modal
@@ -165,13 +153,57 @@ export default function TransferConfirmationStep({
   }, [allowedDateSet, effectiveDate])
 
   const isFormValid =
-    effectiveDate &&
+    Boolean(effectiveDate) &&
     requestReason.trim().length >= 10 &&
     agreed &&
     quotaAcknowledged &&
     contentGapAcknowledged &&
     dateValidation.valid &&
     Boolean(selectedSession)
+
+  useEffect(() => {
+    latestStateRef.current = {
+      isFormValid,
+      currentClassId: currentEnrollment.classId,
+      targetClassId: selectedClass.classId,
+      effectiveDate,
+      requestReason,
+    }
+  }, [isFormValid, currentEnrollment.classId, selectedClass.classId, effectiveDate, requestReason])
+
+  useEffect(() => {
+    latestSuccessRef.current = onSuccess
+  }, [onSuccess])
+
+  const handleSubmit = useCallback(async () => {
+    const state = latestStateRef.current
+    if (!state.isFormValid) return
+
+    try {
+      const result = await submitTransfer({
+        currentClassId: state.currentClassId,
+        targetClassId: state.targetClassId,
+        effectiveDate: state.effectiveDate,
+        requestReason: state.requestReason.trim(),
+        note: '',
+      }).unwrap()
+
+      if (result.success) {
+        latestSuccessRef.current(result.data)
+      }
+    } catch {
+      // Error is handled by the mutation and displayed below
+    }
+  }, [submitTransfer])
+
+  useEffect(() => {
+    if (typeof onSubmitStateChange !== 'function') return
+    onSubmitStateChange({
+      canSubmit: isFormValid,
+      isLoading,
+      submit: handleSubmit,
+    })
+  }, [handleSubmit, isFormValid, isLoading, onSubmitStateChange])
 
   return (
     <div className="space-y-8">
@@ -413,27 +445,6 @@ export default function TransferConfirmationStep({
         />
       )}
 
-      {/* Action Buttons */}
-      <div className="flex justify-between pt-4 border-t">
-        <Button variant="outline" onClick={onPrevious}>
-          Quay lại
-        </Button>
-
-        <Button
-          onClick={handleSubmit}
-          disabled={!isFormValid || isLoading}
-          className="flex items-center gap-2"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Đang xử lý...
-            </>
-          ) : (
-            'Nộp yêu cầu'
-          )}
-        </Button>
-      </div>
     </div>
   )
 }

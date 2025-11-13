@@ -1,8 +1,6 @@
-import React from 'react'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { cn } from "@/lib/utils"
+import { cn } from '@/lib/utils'
 import { Label } from '@/components/ui/label'
 import { Clock, CheckCircle, XCircle, ArrowRight } from 'lucide-react'
 import AAContactModal from './AAContactModal'
@@ -10,31 +8,19 @@ import type { TransferEligibility } from '@/store/services/studentRequestApi'
 
 interface TransferTypeStepProps {
   currentEnrollment: TransferEligibility
-  onNext: () => void
-  onPrevious: () => void
+  selectedType: 'schedule' | 'branch-modality'
+  onTypeChange: (value: 'schedule' | 'branch-modality') => void
+  contactModalOpen: boolean
+  onContactModalChange: (open: boolean) => void
 }
 
 export default function TransferTypeStep({
   currentEnrollment,
-  onNext,
-  onPrevious,
+  selectedType,
+  onTypeChange,
+  contactModalOpen,
+  onContactModalChange,
 }: TransferTypeStepProps) {
-  const [selectedType, setSelectedType] = React.useState<'schedule' | 'branch-modality'>('schedule')
-  const [showContactModal, setShowContactModal] = React.useState(false)
-
-  const handleNext = () => {
-    if (selectedType === 'schedule') {
-      onNext()
-    } else {
-      // For branch/modality changes, show contact modal
-      setShowContactModal(true)
-    }
-  }
-
-  const handleContactModalClose = () => {
-    setShowContactModal(false)
-    onPrevious() // Go back to previous step when modal closes
-  }
 
   const getModalityText = (modality: string) => {
     switch (modality) {
@@ -64,7 +50,7 @@ export default function TransferTypeStep({
       <div className="space-y-4">
         <h3 className="font-medium">Chọn loại chuyển lớp:</h3>
 
-        <RadioGroup value={selectedType} onValueChange={(value: 'schedule' | 'branch-modality') => setSelectedType(value)}>
+        <RadioGroup value={selectedType} onValueChange={(value: 'schedule' | 'branch-modality') => onTypeChange(value)}>
           {/* Schedule Only Option */}
           <div className={cn(
             "p-4 border rounded-lg cursor-pointer transition-all",
@@ -137,29 +123,10 @@ export default function TransferTypeStep({
         </RadioGroup>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex justify-between pt-4 border-t">
-        <Button variant="outline" onClick={onPrevious}>
-          Quay lại
-        </Button>
-
-        {selectedType === 'schedule' && (
-          <Button onClick={onNext}>
-            Tiếp theo
-          </Button>
-        )}
-
-        {selectedType === 'branch-modality' && (
-          <Button onClick={handleNext}>
-            Liên hệ Phòng Học vụ
-          </Button>
-        )}
-      </div>
-
       {/* Contact Modal */}
       <AAContactModal
-        open={showContactModal}
-        onOpenChange={handleContactModalClose}
+        open={contactModalOpen}
+        onOpenChange={onContactModalChange}
         currentEnrollment={currentEnrollment}
       />
     </div>
