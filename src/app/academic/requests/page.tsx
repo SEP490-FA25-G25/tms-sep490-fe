@@ -1,20 +1,38 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
+import { skipToken } from '@reduxjs/toolkit/query'
+import {
+  useSearchStudentsQuery,
+  useGetPendingRequestsQuery,
+  useGetAcademicRequestsQuery,
+  useGetRequestDetailQuery,
+  useApproveRequestMutation,
+  useRejectRequestMutation,
+  useGetStudentMissedSessionsQuery,
+  useGetStudentMakeupOptionsQuery,
+  useCreateOnBehalfRequestMutation,
+  useSubmitTransferOnBehalfMutation,
+  type StudentSearchResult,
+  type TransferOption,
+} from '@/store/services/studentRequestApi'
+import type { TransferEligibility, TransferRequestResponse } from '@/types/academicTransfer'
+import StudentSearchStep from '@/components/requests/wizard/StudentSearchStep'
+import CurrentClassSelectionStep from '@/components/requests/wizard/CurrentClassSelectionStep'
+import TargetClassSelectionStep from '@/components/requests/wizard/TargetClassSelectionStep'
+import AAConfirmationStep from '@/components/requests/wizard/AAConfirmationStep'
+import TransferSuccessDialog from '@/components/requests/TransferSuccessDialog'
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import type { DateRange } from 'react-day-picker'
-import { 
-  CalendarIcon, 
-  FilterIcon, 
-  HourglassIcon, 
-  PlusCircleIcon, 
-  SearchIcon, 
+import {
+  CalendarIcon,
+  FilterIcon,
+  HourglassIcon,
+  PlusCircleIcon,
+  SearchIcon,
   UserIcon,
-  RefreshCcwIcon,
-  ShieldCheckIcon,
-  SparklesIcon,
+  ArrowRightIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { skipToken } from '@reduxjs/toolkit/query'
 
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { Button } from '@/components/ui/button'
@@ -26,6 +44,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { cn } from '@/lib/utils'
+// import các academic requests endpoints khi có trong backend
+import { REQUEST_STATUS_META } from '@/constants/absence'
 import {
   Table,
   TableBody,
@@ -34,37 +56,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { cn } from '@/lib/utils'
-import {
-  useGetPendingRequestsQuery,
-  useGetAcademicRequestsQuery,
-  useGetRequestDetailQuery,
-  useApproveRequestMutation,
-  useRejectRequestMutation,
-  useGetStudentMissedSessionsQuery,
-  useGetStudentMakeupOptionsQuery,
-  useCreateOnBehalfRequestMutation,
-} from '@/store/services/studentRequestApi'
-import { useGetStudentsQuery, type StudentListItemDTO } from '@/store/services/studentApi'
-import { REQUEST_STATUS_META } from '@/constants/absence'
 
 type RequestType = 'ABSENCE' | 'MAKEUP' | 'TRANSFER' | 'ALL'
 type HistoryFilter = 'ALL' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
 
 const PENDING_PAGE_SIZE = 6
 const HISTORY_PAGE_SIZE = 8
-const WEEKS_OPTIONS = [
-  { value: 2, label: '2 tuần' },
-  { value: 4, label: '4 tuần' },
-  { value: 6, label: '6 tuần' },
-]
 
 export default function AcademicRequestsPage() {
   // Filter states
@@ -87,14 +84,9 @@ export default function AcademicRequestsPage() {
 
   // On-behalf creation states
   const [showOnBehalfDialog, setShowOnBehalfDialog] = useState(false)
-  const [studentSearch, setStudentSearch] = useState('')
-  const [selectedStudent, setSelectedStudent] = useState<StudentListItemDTO | null>(null)
-  const [weeksBack, setWeeksBack] = useState(4)
-  const [selectedMissedId, setSelectedMissedId] = useState<number | null>(null)
-  const [selectedMakeupId, setSelectedMakeupId] = useState<number | null>(null)
-  const [onBehalfReason, setOnBehalfReason] = useState('')
-  const [onBehalfNote, setOnBehalfNote] = useState('')
+  const [activeRequestType, setActiveRequestType] = useState<'ABSENCE' | 'MAKEUP' | 'TRANSFER' | null>(null)
 
+  
   // Fetch pending requests
   const {
     data: pendingResponse,
@@ -206,114 +198,9 @@ export default function AcademicRequestsPage() {
     }
   }
 
-  // On-behalf request logic
-  const shouldSearchStudents = studentSearch.trim().length >= 2
-  const studentQueryResult = useGetStudentsQuery(
-    shouldSearchStudents
-      ? {
-          search: studentSearch.trim(),
-          size: 5,
-          page: 0,
-        }
-      : skipToken,
-    {
-      skip: !shouldSearchStudents,
-    }
-  )
+  // Note: On-behalf request logic moved to inline components for better UX
 
-  const isSearchingStudents = shouldSearchStudents && studentQueryResult.isFetching
-  const studentOptions = (studentQueryResult.data as { data?: { content: StudentListItemDTO[] } })?.data?.content ?? []
-
-  const {
-    data: missedResponse,
-    isFetching: isLoadingStudentMissed,
-  } = useGetStudentMissedSessionsQuery(
-    selectedStudent
-      ? {
-          studentId: selectedStudent.id,
-          weeksBack,
-          excludeRequested: true,
-        }
-      : skipToken,
-    {
-      skip: !selectedStudent,
-    }
-  )
-
-  const missedSessions = useMemo(
-    () => missedResponse?.data?.missedSessions ?? [],
-    [missedResponse?.data?.missedSessions]
-  )
-  const selectedMissedSession = useMemo(
-    () => missedSessions.find((session) => session.sessionId === selectedMissedId),
-    [missedSessions, selectedMissedId]
-  )
-
-  useEffect(() => {
-    setSelectedMakeupId(null)
-  }, [selectedMissedId])
-
-  const {
-    data: optionsResponse,
-    isFetching: isLoadingStudentOptions,
-  } = useGetStudentMakeupOptionsQuery(
-    selectedStudent && selectedMissedId
-      ? {
-          studentId: selectedStudent.id,
-          targetSessionId: selectedMissedId,
-        }
-      : skipToken,
-    {
-      skip: !selectedStudent || !selectedMissedId,
-    }
-  )
-
-  const makeupOptions = useMemo(
-    () => optionsResponse?.data?.makeupOptions ?? [],
-    [optionsResponse?.data?.makeupOptions]
-  )
-  const selectedMakeupOption = useMemo(
-    () => makeupOptions.find((option) => option.sessionId === selectedMakeupId),
-    [makeupOptions, selectedMakeupId]
-  )
-
-  const [createOnBehalf, { isLoading: isCreatingOnBehalf }] = useCreateOnBehalfRequestMutation()
-
-  const canSubmitOnBehalf =
-    selectedStudent &&
-    selectedMissedSession &&
-    selectedMakeupOption &&
-    onBehalfReason.trim().length >= 10
-
-  const handleCreateOnBehalf = async () => {
-    if (!canSubmitOnBehalf) return
-
-    try {
-      await createOnBehalf({
-        requestType: 'MAKEUP',
-        currentClassId: selectedMissedSession.classInfo.classId,
-        targetSessionId: selectedMissedId!,
-        makeupSessionId: selectedMakeupId!,
-        requestReason: onBehalfReason.trim(),
-        note: onBehalfNote.trim() || undefined,
-        studentId: selectedStudent.id,
-      }).unwrap()
-
-      toast.success('Đã tạo và tự động duyệt yêu cầu học bù')
-      setShowOnBehalfDialog(false)
-      setSelectedStudent(null)
-      setStudentSearch('')
-      setSelectedMissedId(null)
-      setSelectedMakeupId(null)
-      setOnBehalfReason('')
-      setOnBehalfNote('')
-    } catch (error: unknown) {
-      const message =
-        (error as { data?: { message?: string } })?.data?.message ?? 'Không thể tạo yêu cầu thay học viên.'
-      toast.error(message)
-    }
-  }
-
+  
   const summaryItems = [
     {
       label: 'Đang chờ duyệt',
@@ -904,205 +791,570 @@ export default function AcademicRequestsPage() {
 
       {/* On-Behalf Creation Dialog */}
       <Dialog open={showOnBehalfDialog} onOpenChange={setShowOnBehalfDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-lg">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Tạo yêu cầu học bù thay học viên</DialogTitle>
+            <DialogTitle>Tạo yêu cầu thay học viên</DialogTitle>
             <p className="text-sm text-muted-foreground">
-              Hệ thống sẽ tự động phê duyệt ngay sau khi chọn lớp và lý do phù hợp.
+              Hệ thống sẽ tự động phê duyệt ngay sau khi chọn thông tin phù hợp.
             </p>
           </DialogHeader>
 
-          <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
-            <div className="space-y-3 rounded-lg border p-4">
-              <label className="text-sm font-medium">Tìm học viên</label>
-              <Input
-                placeholder="Nhập tên hoặc mã học viên"
-                value={studentSearch}
-                onChange={(event) => setStudentSearch(event.target.value)}
-              />
-              {studentSearch.trim().length > 0 && (
-                <div className="space-y-2">
-                  {isSearchingStudents ? (
-                    <Skeleton className="h-10 w-full rounded-lg" />
-                  ) : studentOptions.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Không tìm thấy học viên phù hợp.</p>
-                  ) : (
-                    <ul className="space-y-1">
-                      {studentOptions.map((student) => (
-                        <li key={student.id}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedStudent(student)
-                              setStudentSearch('')
-                              setSelectedMissedId(null)
-                              setSelectedMakeupId(null)
-                            }}
-                            className="flex w-full flex-col rounded-lg border p-3 text-left text-sm hover:border-primary/40"
-                          >
-                            <span className="font-medium">{student.fullName}</span>
-                            <span className="text-xs text-muted-foreground">{student.studentCode} · {student.email}</span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+          {activeRequestType === null ? (
+            <TypeSelection onSelect={setActiveRequestType} />
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b pb-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Loại yêu cầu</p>
+                  <h3 className="text-base font-semibold">
+                    {activeRequestType === 'ABSENCE' && 'Xin nghỉ'}
+                    {activeRequestType === 'MAKEUP' && 'Học bù'}
+                    {activeRequestType === 'TRANSFER' && 'Chuyển lớp'}
+                  </h3>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setActiveRequestType(null)}
+                >
+                  Chọn loại khác
+                </Button>
+              </div>
+
+              {activeRequestType === 'ABSENCE' && (
+                <div className="space-y-4">
+                  <p className="text-center text-sm text-muted-foreground py-8">
+                    Tính năng xin nghỉ thay học viên sẽ được phát triển trong phiên bản tới.
+                  </p>
                 </div>
               )}
-              {selectedStudent && (
-                <div className="rounded-lg bg-muted/50 p-3 text-sm">
-                  <p className="font-semibold">{selectedStudent.fullName}</p>
-                  <p className="text-muted-foreground">{selectedStudent.studentCode}</p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="mt-2"
-                    onClick={() => {
-                      setSelectedStudent(null)
-                      setSelectedMissedId(null)
-                      setSelectedMakeupId(null)
-                    }}
-                  >
-                    Chọn học viên khác
-                  </Button>
-                </div>
+
+              {activeRequestType === 'MAKEUP' && (
+                <MakeupFlow
+                  onSuccess={() => {
+                    setActiveRequestType(null)
+                    setShowOnBehalfDialog(false)
+                    toast.success('Đã tạo yêu cầu học bù thành công')
+                  }}
+                />
+              )}
+
+              {activeRequestType === 'TRANSFER' && (
+                <AAInlineTransferWizard
+                  onSuccess={() => {
+                    setActiveRequestType(null)
+                    setShowOnBehalfDialog(false)
+                    toast.success('Đã tạo yêu cầu chuyển lớp thành công')
+                  }}
+                />
               )}
             </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </DashboardLayout>
+  )
+}
 
-            <div className="space-y-4">
+// Type Selection Component - Similar to student flow
+function TypeSelection({ onSelect }: { onSelect: (type: 'ABSENCE' | 'MAKEUP' | 'TRANSFER') => void }) {
+  const types = [
+    {
+      type: 'ABSENCE' as const,
+      title: 'Xin nghỉ thay học viên',
+      description: 'Tạo đơn xin nghỉ cho học viên với lý do cụ thể.',
+      bullets: ['Chỉ cho buổi chưa diễn ra', 'AA có quyền duyệt trực tiếp', 'Ghi chú cho phụ huynh'],
+    },
+    {
+      type: 'MAKEUP' as const,
+      title: 'Xin học bù thay học viên',
+      description: 'Gợi ý buổi học bù phù hợp theo lịch và chuyên môn.',
+      bullets: ['Hiển thị buổi đã vắng', 'Ưu tiên gợi ý thông minh', 'Tự động duyệt ngay'],
+    },
+    {
+      type: 'TRANSFER' as const,
+      title: 'Chuyển lớp thay học viên',
+      description: 'Phân tích nội dung và chuyển lớp với quy trình 4 bước.',
+      bullets: ['Kiểm tra điều kiện chuyển', 'Phân tích nội dung bị thiếu', 'AA duyệt ngay lập tức'],
+    },
+  ]
+
+  return (
+    <div className="space-y-3">
+      {types.map((item) => (
+        <button
+          key={item.type}
+          type="button"
+          onClick={() => onSelect(item.type)}
+          className="w-full rounded-lg border border-border/60 p-4 text-left transition hover:border-primary/60 hover:bg-primary/5"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                {item.type === 'ABSENCE' && 'Xin nghỉ'}
+                {item.type === 'MAKEUP' && 'Học bù'}
+                {item.type === 'TRANSFER' && 'Chuyển lớp'}
+              </p>
+              <h3 className="mt-1 text-base font-semibold text-foreground">{item.title}</h3>
+              <p className="mt-1 text-xs text-muted-foreground">{item.description}</p>
+            </div>
+            <ArrowRightIcon className="mt-1 h-5 w-5 shrink-0 text-muted-foreground" />
+          </div>
+          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
+            {item.bullets.map((bullet) => (
+              <li key={bullet} className="flex items-center gap-1">
+                <span className="text-primary">→</span>
+                <span>{bullet}</span>
+              </li>
+            ))}
+          </ul>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// Makeup Flow Component
+interface MakeupFlowProps {
+  onSuccess: () => void
+}
+
+function MakeupFlow({ onSuccess }: MakeupFlowProps) {
+  const [weeksBack, setWeeksBack] = useState(4)
+  const [selectedStudent, setSelectedStudent] = useState<StudentSearchResult | null>(null)
+  const [studentSearch, setStudentSearch] = useState('')
+  const [selectedMissedId, setSelectedMissedId] = useState<number | null>(null)
+  const [selectedMakeupId, setSelectedMakeupId] = useState<number | null>(null)
+  const [onBehalfReason, setOnBehalfReason] = useState('')
+  const [onBehalfNote, setOnBehalfNote] = useState('')
+
+  const shouldSearchStudents = studentSearch.trim().length >= 2
+  const studentQueryResult = useSearchStudentsQuery(
+    shouldSearchStudents
+      ? { search: studentSearch.trim(), size: 5, page: 0 }
+      : skipToken,
+    { skip: !shouldSearchStudents }
+  )
+
+  const studentOptions = studentQueryResult.data?.data?.content ?? []
+  const isSearchingStudents = shouldSearchStudents && studentQueryResult.isFetching
+
+  const {
+    data: missedResponse,
+    isFetching: isLoadingStudentMissed,
+  } = useGetStudentMissedSessionsQuery(
+    selectedStudent
+      ? { studentId: selectedStudent.id, weeksBack, excludeRequested: true }
+      : skipToken,
+    { skip: !selectedStudent }
+  )
+
+  const missedSessions = useMemo(() => missedResponse?.data?.missedSessions ?? [], [missedResponse?.data?.missedSessions])
+  const selectedMissedSession = useMemo(
+    () => missedSessions.find((session) => session.sessionId === selectedMissedId),
+    [missedSessions, selectedMissedId]
+  )
+
+  const {
+    data: optionsResponse,
+    isFetching: isLoadingStudentOptions,
+  } = useGetStudentMakeupOptionsQuery(
+    selectedStudent && selectedMissedId
+      ? { studentId: selectedStudent.id, targetSessionId: selectedMissedId }
+      : skipToken,
+    { skip: !selectedStudent || !selectedMissedId }
+  )
+
+  const makeupOptions = useMemo(() => optionsResponse?.data?.makeupOptions ?? [], [optionsResponse?.data?.makeupOptions])
+  const selectedMakeupOption = useMemo(
+    () => makeupOptions.find((option) => option.sessionId === selectedMakeupId),
+    [makeupOptions, selectedMakeupId]
+  )
+
+  const [createOnBehalf, { isLoading: isCreatingOnBehalf }] = useCreateOnBehalfRequestMutation()
+
+  const canSubmitOnBehalf =
+    selectedStudent &&
+    selectedMissedSession &&
+    selectedMakeupOption &&
+    onBehalfReason.trim().length >= 10
+
+  const handleCreateOnBehalf = async () => {
+    if (!canSubmitOnBehalf) return
+
+    try {
+      await createOnBehalf({
+        requestType: 'MAKEUP',
+        currentClassId: selectedMissedSession.classInfo.classId,
+        targetSessionId: selectedMissedId!,
+        makeupSessionId: selectedMakeupId!,
+        requestReason: onBehalfReason.trim(),
+        note: onBehalfNote.trim() || undefined,
+        studentId: selectedStudent.id,
+      }).unwrap()
+
+      onSuccess()
+    } catch (error: unknown) {
+      const errorMessage =
+        (error as { data?: { message?: string } })?.data?.message ?? 'Không thể tạo yêu cầu thay học viên.'
+      console.error(errorMessage)
+    }
+  }
+
+  useEffect(() => {
+    setSelectedMissedId(null)
+    setSelectedMakeupId(null)
+  }, [selectedStudent])
+
+  return (
+    <div className="space-y-4">
+      {/* Student Search Section */}
+      <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="space-y-3 rounded-lg border p-4">
+          <label className="text-sm font-medium">Tìm học viên</label>
+          <Input
+            placeholder="Nhập tên hoặc mã học viên"
+            value={studentSearch}
+            onChange={(event) => setStudentSearch(event.target.value)}
+          />
+          {studentSearch.trim().length > 0 && (
+            <div className="space-y-2">
+              {isSearchingStudents ? (
+                <Skeleton className="h-10 w-full rounded-lg" />
+              ) : studentOptions.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Không tìm thấy học viên phù hợp.</p>
+              ) : (
+                <ul className="space-y-1">
+                  {studentOptions.map((student) => (
+                    <li key={student.id}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedStudent(student)
+                          setStudentSearch('')
+                          setSelectedMissedId(null)
+                          setSelectedMakeupId(null)
+                        }}
+                        className="flex w-full flex-col rounded-lg border p-3 text-left text-sm hover:border-primary/40"
+                      >
+                        <span className="font-medium">{student.fullName}</span>
+                        <span className="text-xs text-muted-foreground">{student.studentCode} · {student.email}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+          {selectedStudent && (
+            <div className="rounded-lg bg-muted/50 p-3 text-sm">
+              <p className="font-semibold">{selectedStudent.fullName}</p>
+              <p className="text-muted-foreground">{selectedStudent.studentCode}</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-2"
+                onClick={() => {
+                  setSelectedStudent(null)
+                  setSelectedMissedId(null)
+                  setSelectedMakeupId(null)
+                }}
+              >
+                Chọn học viên khác
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          {selectedStudent && (
+            <>
               <div className="flex flex-wrap items-center gap-3">
                 <Select value={weeksBack.toString()} onValueChange={(value) => setWeeksBack(Number(value))}>
                   <SelectTrigger className="w-[140px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {WEEKS_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value.toString()}>
-                        {option.label}
+                    {[2, 4, 6].map((week) => (
+                      <SelectItem key={week} value={week.toString()}>
+                        {week} tuần
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <Button
-                  variant="outline"
-                  disabled={!selectedStudent}
-                  onClick={() => {
-                    setSelectedMissedId(null)
-                    setSelectedMakeupId(null)
-                  }}
-                >
-                  <RefreshCcwIcon className="mr-2 h-4 w-4" />
-                  Tải lại
-                </Button>
               </div>
 
-              {selectedStudent && (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold">Chọn buổi đã vắng ({missedSessions.length})</p>
+                {isLoadingStudentMissed ? (
+                  <Skeleton className="h-24 w-full rounded-lg" />
+                ) : missedSessions.length === 0 ? (
+                  <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                    Không tìm thấy buổi vắng nào trong {weeksBack} tuần gần nhất.
+                  </div>
+                ) : (
+                  <ul className="space-y-2">
+                    {missedSessions.map((session) => (
+                      <li key={session.sessionId}>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedMissedId(session.sessionId)}
+                          className={cn(
+                            'w-full rounded-lg border p-3 text-left transition hover:border-primary/40',
+                            selectedMissedId === session.sessionId && 'border-primary bg-primary/5'
+                          )}
+                        >
+                          <p className="text-sm font-semibold">
+                            {format(parseISO(session.date), 'dd/MM/yyyy', { locale: vi })} · Buổi {session.courseSessionNumber}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {session.classInfo.classCode} · {session.timeSlotInfo.startTime} - {session.timeSlotInfo.endTime}
+                          </p>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {selectedMissedSession && (
                 <div className="space-y-3">
-                  <p className="text-sm font-semibold">Chọn buổi đã vắng ({missedSessions.length})</p>
-                  {isLoadingStudentMissed ? (
+                  <p className="text-sm font-semibold">Gợi ý buổi học bù</p>
+                  {isLoadingStudentOptions ? (
                     <Skeleton className="h-24 w-full rounded-lg" />
-                  ) : missedSessions.length === 0 ? (
+                  ) : makeupOptions.length === 0 ? (
                     <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                      Không tìm thấy buổi vắng nào trong {weeksBack} tuần gần nhất.
+                      Không có buổi học bù khả dụng cho buổi này.
                     </div>
                   ) : (
                     <ul className="space-y-2">
-                      {missedSessions.map((session) => (
-                        <li key={session.sessionId}>
+                      {makeupOptions.map((option) => (
+                        <li key={option.sessionId}>
                           <button
                             type="button"
-                            onClick={() => setSelectedMissedId(session.sessionId)}
+                            onClick={() => setSelectedMakeupId((prev) => (prev === option.sessionId ? null : option.sessionId))}
                             className={cn(
                               'w-full rounded-lg border p-3 text-left transition hover:border-primary/40',
-                              selectedMissedId === session.sessionId && 'border-primary bg-primary/5'
+                              selectedMakeupId === option.sessionId && 'border-primary bg-primary/5'
                             )}
                           >
                             <p className="text-sm font-semibold">
-                              {format(parseISO(session.date), 'dd/MM/yyyy', { locale: vi })} · Buổi {session.courseSessionNumber}
+                              {format(parseISO(option.date), 'dd/MM/yyyy', { locale: vi })} · {option.classInfo.classCode}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {session.classInfo.classCode} · {session.timeSlotInfo.startTime} - {session.timeSlotInfo.endTime}
+                              {option.timeSlotInfo.startTime} - {option.timeSlotInfo.endTime} · {option.availableSlots}/{option.maxCapacity} chỗ
                             </p>
                           </button>
                         </li>
                       ))}
                     </ul>
                   )}
-
-                  {selectedMissedSession && (
-                    <div className="space-y-3">
-                      <p className="text-sm font-semibold">Gợi ý buổi học bù</p>
-                      {isLoadingStudentOptions ? (
-                        <Skeleton className="h-24 w-full rounded-lg" />
-                      ) : makeupOptions.length === 0 ? (
-                        <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                          Không có buổi học bù khả dụng cho buổi này.
-                        </div>
-                      ) : (
-                        <ul className="space-y-2">
-                          {makeupOptions.map((option) => (
-                            <li key={option.sessionId}>
-                              <button
-                                type="button"
-                                onClick={() => setSelectedMakeupId((prev) => (prev === option.sessionId ? null : option.sessionId))}
-                                className={cn(
-                                  'w-full rounded-lg border p-3 text-left transition hover:border-primary/40',
-                                  selectedMakeupId === option.sessionId && 'border-primary bg-primary/5'
-                                )}
-                              >
-                                <p className="text-sm font-semibold">
-                                  {format(parseISO(option.date), 'dd/MM/yyyy', { locale: vi })} · {option.classInfo.classCode}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {option.timeSlotInfo.startTime} - {option.timeSlotInfo.endTime} · {option.availableSlots}/{option.maxCapacity} chỗ
-                                </p>
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="space-y-3 rounded-lg border p-4">
-                    <label className="text-sm font-medium" htmlFor="onbehalf-reason">
-                      Lý do học bù<span className="text-rose-500">*</span>
-                    </label>
-                    <Textarea
-                      id="onbehalf-reason"
-                      rows={4}
-                      placeholder="Ví dụ: Nghỉ theo quyết định chuyên môn, yêu cầu từ phụ huynh..."
-                      value={onBehalfReason}
-                      onChange={(event) => setOnBehalfReason(event.target.value)}
-                      disabled={!selectedMakeupOption}
-                    />
-                    <Input
-                      placeholder="Ghi chú (tuỳ chọn)"
-                      value={onBehalfNote}
-                      onChange={(event) => setOnBehalfNote(event.target.value)}
-                      disabled={!selectedMakeupOption}
-                    />
-                    <Button onClick={handleCreateOnBehalf} disabled={!canSubmitOnBehalf} className="w-full">
-                      {isCreatingOnBehalf ? 'Đang tạo yêu cầu...' : (
-                        <>
-                          <ShieldCheckIcon className="mr-2 h-4 w-4" />
-                          Tạo & tự động duyệt
-                        </>
-                      )}
-                    </Button>
-                    {selectedMakeupOption && (
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <SparklesIcon className="h-3 w-3" />
-                        Yêu cầu sẽ được phê duyệt tự động ngay lập tức
-                      </p>
-                    )}
-                  </div>
                 </div>
               )}
+
+              <div className="space-y-3 rounded-lg border p-4">
+                <label className="text-sm font-medium" htmlFor="onbehalf-reason">
+                  Lý do học bù<span className="text-rose-500">*</span>
+                </label>
+                <Textarea
+                  id="onbehalf-reason"
+                  rows={4}
+                  placeholder="Ví dụ: Nghỉ theo quyết định chuyên môn, yêu cầu từ phụ huynh..."
+                  value={onBehalfReason}
+                  onChange={(event) => setOnBehalfReason(event.target.value)}
+                  disabled={!selectedMakeupOption}
+                />
+                <Input
+                  placeholder="Ghi chú (tuỳ chọn)"
+                  value={onBehalfNote}
+                  onChange={(event) => setOnBehalfNote(event.target.value)}
+                  disabled={!selectedMakeupOption}
+                />
+                <Button onClick={handleCreateOnBehalf} disabled={!canSubmitOnBehalf} className="w-full">
+                  {isCreatingOnBehalf ? 'Đang tạo yêu cầu...' : 'Tạo & tự động duyệt'}
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Inline AA Transfer Wizard Component
+interface AAInlineTransferWizardProps {
+  onSuccess: () => void
+}
+
+function AAInlineTransferWizard({ onSuccess }: AAInlineTransferWizardProps) {
+  const [currentStep, setCurrentStep] = useState<'student-search' | 'current-class' | 'target-class' | 'confirmation'>('student-search')
+  const createInitialWizardState = () => ({
+    selectedStudent: null as StudentSearchResult | null,
+    selectedCurrentClass: null as TransferEligibility | null,
+    selectedTargetClass: null as TransferOption | null,
+    effectiveDate: '',
+    requestReason: '',
+    note: '',
+  })
+  const [wizardData, setWizardData] = useState(createInitialWizardState)
+  const [successRequest, setSuccessRequest] = useState<TransferRequestResponse | null>(null)
+
+  const [submitTransferOnBehalf, { isLoading: isSubmitting }] = useSubmitTransferOnBehalfMutation()
+
+  const handleStudentSelect = (student: StudentSearchResult) => {
+    setWizardData(prev => ({ ...prev, selectedStudent: student }))
+    setCurrentStep('current-class')
+  }
+
+  const handleCurrentClassSelect = (classData: TransferEligibility) => {
+    setWizardData(prev => ({ ...prev, selectedCurrentClass: classData }))
+    setCurrentStep('target-class')
+  }
+
+  const handleTargetClassSelect = (classData: TransferOption) => {
+    setWizardData(prev => ({ ...prev, selectedTargetClass: classData, effectiveDate: '' }))
+    setCurrentStep('confirmation')
+  }
+
+  const handleConfirm = async (effectiveDate: string, requestReason: string, note: string) => {
+    if (!wizardData.selectedStudent || !wizardData.selectedCurrentClass || !wizardData.selectedTargetClass) {
+      return
+    }
+
+    try {
+      const result = await submitTransferOnBehalf({
+        studentId: wizardData.selectedStudent.id,
+        currentClassId: wizardData.selectedCurrentClass.classId,
+        targetClassId: wizardData.selectedTargetClass.classId,
+        effectiveDate,
+        requestReason,
+        note,
+      }).unwrap()
+
+      if (result?.data) {
+        setSuccessRequest(result.data)
+      }
+    } catch (error) {
+      console.error('Failed to submit transfer request:', error)
+    }
+  }
+
+  const handleBack = () => {
+    if (currentStep === 'current-class') {
+      setCurrentStep('student-search')
+    } else if (currentStep === 'target-class') {
+      setCurrentStep('current-class')
+    } else if (currentStep === 'confirmation') {
+      setCurrentStep('target-class')
+    }
+  }
+
+  return (
+    <>
+      <div className="space-y-6">
+      {/* Progress indicator */}
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <div className="flex items-center">
+            {['student-search', 'current-class', 'target-class', 'confirmation'].map((step, index) => (
+              <div key={step} className="flex items-center flex-1">
+                <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
+                  currentStep === step ? 'border-primary bg-primary text-primary-foreground' :
+                  ['student-search', 'current-class', 'target-class', 'confirmation'].indexOf(currentStep) > index
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-muted bg-background'
+                }`}>
+                  {index + 1}
+                </div>
+                {index < 3 && (
+                  <div className={`flex-1 h-0.5 mx-2 ${
+                    ['student-search', 'current-class', 'target-class', 'confirmation'].indexOf(currentStep) > index
+                      ? 'bg-primary'
+                      : 'bg-muted'
+                  }`} />
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-xs">Sinh viên</span>
+            <span className="text-xs">Lớp hiện tại</span>
+            <span className="text-xs">Lớp mục tiêu</span>
+            <span className="text-xs">Xác nhận</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Wizard steps */}
+      <div className="mt-6">
+        {currentStep === 'student-search' && (
+          <StudentSearchStep
+            selectedStudent={wizardData.selectedStudent}
+            onSelectStudent={handleStudentSelect}
+          />
+        )}
+
+        {currentStep === 'current-class' && wizardData.selectedStudent && (
+          <div className="space-y-4">
+            <CurrentClassSelectionStep
+              studentId={wizardData.selectedStudent.id}
+              selectedClass={wizardData.selectedCurrentClass}
+              onSelectClass={handleCurrentClassSelect}
+            />
+            <div className="flex justify-start pt-4 border-t">
+              <Button variant="outline" onClick={handleBack}>
+                Quay lại
+              </Button>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
-    </DashboardLayout>
+        )}
+
+        {currentStep === 'target-class' && wizardData.selectedCurrentClass && (
+          <div className="space-y-4">
+            <TargetClassSelectionStep
+              currentClass={wizardData.selectedCurrentClass}
+              selectedClass={wizardData.selectedTargetClass}
+              onSelectClass={handleTargetClassSelect}
+            />
+            <div className="flex justify-start pt-4 border-t">
+              <Button variant="outline" onClick={handleBack}>
+                Quay lại
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 'confirmation' && wizardData.selectedStudent && wizardData.selectedCurrentClass && wizardData.selectedTargetClass && (
+          <AAConfirmationStep
+            wizardData={wizardData}
+            onEffectiveDateChange={(date) => setWizardData(prev => ({ ...prev, effectiveDate: date }))}
+            onRequestReasonChange={(reason) => setWizardData(prev => ({ ...prev, requestReason: reason }))}
+            onNoteChange={(note) => setWizardData(prev => ({ ...prev, note }))}
+            onPrevious={handleBack}
+            onSubmit={async () => {
+              await handleConfirm(wizardData.effectiveDate, wizardData.requestReason, wizardData.note)
+            }}
+            isLoading={isSubmitting}
+            error={undefined}
+          />
+        )}
+      </div>
+      </div>
+
+      <TransferSuccessDialog
+        open={!!successRequest}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setSuccessRequest(null)
+            setWizardData(createInitialWizardState())
+            setCurrentStep('student-search')
+            onSuccess()
+          }
+        }}
+        request={successRequest}
+        userType="aa"
+      />
+    </>
   )
 }

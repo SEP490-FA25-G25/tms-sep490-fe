@@ -8,7 +8,6 @@ import {
   NotebookPenIcon,
   PlusIcon,
   RefreshCcwIcon,
-  ShieldCheckIcon,
   SparklesIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -26,6 +25,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import TransferFlow from '@/components/requests/TransferFlow'
 import {
   useGetMyRequestsQuery,
   useGetMyRequestByIdQuery,
@@ -72,6 +72,7 @@ export default function StudentRequestsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
   const [page, setPage] = useState(0)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isTransferFlowOpen, setIsTransferFlowOpen] = useState(false)
   const [activeType, setActiveType] = useState<RequestType | null>(null)
   const [detailId, setDetailId] = useState<number | null>(null)
   const [cancelingId, setCancelingId] = useState<number | null>(null)
@@ -348,6 +349,7 @@ export default function StudentRequestsPage() {
           handleModalClose()
           refetchRequests()
         }}
+        onOpenTransferFlow={() => setIsTransferFlowOpen(true)}
       />
 
       <Dialog
@@ -371,6 +373,12 @@ export default function StudentRequestsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Transfer Flow Dialog */}
+      <TransferFlow
+        open={isTransferFlowOpen}
+        onOpenChange={setIsTransferFlowOpen}
+      />
     </StudentRoute>
   )
 }
@@ -380,9 +388,10 @@ interface CreateDialogProps {
   activeType: RequestType | null
   onSelectType: (type: RequestType | null) => void
   onSuccess: () => void
+  onOpenTransferFlow: () => void
 }
 
-function CreateRequestDialog({ open, onOpenChange, activeType, onSelectType, onSuccess }: CreateDialogProps) {
+function CreateRequestDialog({ open, onOpenChange, activeType, onSelectType, onSuccess, onOpenTransferFlow }: CreateDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl rounded-2xl">
@@ -406,12 +415,17 @@ function CreateRequestDialog({ open, onOpenChange, activeType, onSelectType, onS
             {activeType === 'ABSENCE' && <AbsenceFlow onSuccess={onSuccess} />}
             {activeType === 'MAKEUP' && <MakeupFlow onSuccess={onSuccess} />}
             {activeType === 'TRANSFER' && (
-              <div className="rounded-lg border border-dashed py-8 text-center">
-                <ShieldCheckIcon className="mx-auto h-9 w-9 text-muted-foreground" />
-                <p className="mt-2 text-sm font-semibold">Tính năng đang được xây dựng</p>
-                <p className="text-xs text-muted-foreground">
-                  Vui lòng liên hệ Học vụ để được hỗ trợ chuyển lớp.
+              <div className="text-center py-8">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Hệ thống sẽ hướng dẫn bạn qua các bước để chuyển lớp
                 </p>
+                <Button onClick={() => {
+                  onOpenChange(false)
+                  onOpenTransferFlow()
+                  onSelectType(null)
+                }}>
+                  Bắt đầu chuyển lớp
+                </Button>
               </div>
             )}
           </div>
@@ -438,8 +452,8 @@ function TypeSelection({ onSelect }: { onSelect: (type: RequestType) => void }) 
     {
       type: 'TRANSFER',
       title: 'Chuyển lớp',
-      description: 'Đang phát triển – dự kiến cho phép chuyển lớp nhanh.',
-      bullets: ['Theo dõi tiến độ', 'Đồng bộ lịch học mới', 'Thông báo giáo vụ'],
+      description: 'Chuyển giữa các lớp cùng khóa học với hướng dẫn từng bước.',
+      bullets: ['Kiểm tra điều kiện chuyển', 'Phân tích nội dung bị thiếu', 'Xử lý nhanh 4-8 giờ'],
     },
   ]
 
