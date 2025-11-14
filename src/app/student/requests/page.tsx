@@ -251,73 +251,186 @@ export default function StudentRequestsPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {requests.map((request) => (
-                  <div
-                    key={request.id}
-                    className="rounded-lg border bg-card p-4 transition-colors hover:bg-muted/30"
-                  >
-                    {/* Request Header */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="secondary" className="font-medium">
-                        {REQUEST_TYPE_LABELS[request.requestType]}
-                      </Badge>
-                      <Badge
-                        className={cn(
-                          'font-semibold',
-                          REQUEST_STATUS_META[request.status].badgeClass
+                {requests.map((request) => {
+                  const submittedAtLabel = format(parseISO(request.submittedAt), 'HH:mm dd/MM/yyyy', { locale: vi })
+                  const decidedAtLabel = request.decidedAt
+                    ? format(parseISO(request.decidedAt), 'HH:mm dd/MM/yyyy', { locale: vi })
+                    : null
+                  return (
+                    <div
+                      key={request.id}
+                      className="rounded-lg border bg-card p-4 transition-colors hover:bg-muted/30"
+                    >
+                      {/* Request Header */}
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="secondary" className="font-medium">
+                            {REQUEST_TYPE_LABELS[request.requestType]}
+                          </Badge>
+                          <Badge
+                            className={cn(
+                              'font-semibold',
+                              REQUEST_STATUS_META[request.status].badgeClass
+                            )}
+                          >
+                            {REQUEST_STATUS_META[request.status].label}
+                          </Badge>
+                          <span className="text-xs font-semibold text-muted-foreground">#{request.id}</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          Gửi {submittedAtLabel}
+                          {request.submittedBy?.fullName ? ` • ${request.submittedBy.fullName}` : ''}
+                        </span>
+                      </div>
+
+                      {/* Request Content */}
+                      <div className="mt-3 grid gap-4 md:grid-cols-3">
+                        {request.requestType === 'MAKEUP' ? (
+                          <>
+                            <div>
+                              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                Buổi đã vắng ({request.currentClass.code})
+                              </p>
+                              <p className="mt-1 font-medium">
+                                {format(parseISO(request.targetSession.date), 'EEEE, dd/MM', { locale: vi })}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Buổi {request.targetSession.courseSessionNumber}: {request.targetSession.courseSessionTitle}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {request.targetSession.timeSlot.startTime} - {request.targetSession.timeSlot.endTime}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                Buổi học bù
+                              </p>
+                              {request.makeupSession ? (
+                                <>
+                                  <p className="mt-1 font-medium">
+                                    {request.makeupSession.classInfo?.classCode
+                                      ? `${request.makeupSession.classInfo.classCode} · ${format(
+                                          parseISO(request.makeupSession.date),
+                                          'dd/MM',
+                                          { locale: vi }
+                                        )}`
+                                      : format(parseISO(request.makeupSession.date), 'EEEE, dd/MM', { locale: vi })}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">
+                                    Buổi {request.makeupSession.courseSessionNumber}:{' '}
+                                    {request.makeupSession.courseSessionTitle}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {request.makeupSession.timeSlot.startTime} - {request.makeupSession.timeSlot.endTime}
+                                  </p>
+                                </>
+                              ) : (
+                                <p className="mt-1 text-sm text-muted-foreground">Chưa có buổi học bù</p>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="space-y-3">
+                              <div>
+                                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                  Lớp hiện tại
+                                </p>
+                                <p className="mt-1 font-medium">{request.currentClass.code}</p>
+                                {request.currentClass.name && (
+                                  <p className="text-xs text-muted-foreground">{request.currentClass.name}</p>
+                                )}
+                              </div>
+                              {request.targetClass && (
+                                <div>
+                                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                    Lớp mục tiêu
+                                  </p>
+                                  <p className="mt-1 text-sm font-medium">{request.targetClass.code}</p>
+                                  {request.targetClass.name && (
+                                    <p className="text-xs text-muted-foreground">{request.targetClass.name}</p>
+                                  )}
+                                  {request.effectiveDate && (
+                                    <p className="text-xs text-muted-foreground">
+                                      Hiệu lực: {format(parseISO(request.effectiveDate), 'dd/MM/yyyy', { locale: vi })}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                Buổi học
+                              </p>
+                              <p className="mt-1 font-medium">
+                                {request.currentClass.code} · {format(parseISO(request.targetSession.date), 'dd/MM', {
+                                  locale: vi,
+                                })}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Buổi {request.targetSession.courseSessionNumber}: {request.targetSession.courseSessionTitle}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {request.targetSession.timeSlot.startTime} - {request.targetSession.timeSlot.endTime}
+                              </p>
+                            </div>
+                          </>
                         )}
-                      >
-                        {REQUEST_STATUS_META[request.status].label}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {format(parseISO(request.submittedAt), 'HH:mm dd/MM/yyyy', { locale: vi })}
-                      </span>
-                    </div>
 
-                    {/* Request Content - NO NESTED BORDERS */}
-                    <div className="mt-3 grid gap-4 md:grid-cols-2">
-                      <div>
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                          Buổi học
-                        </p>
-                        <p className="mt-1 font-medium">
-                          {request.currentClass.code} · {format(parseISO(request.targetSession.date), 'dd/MM', {
-                            locale: vi,
-                          })}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Buổi {request.targetSession.courseSessionNumber}: {request.targetSession.courseSessionTitle}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {request.targetSession.timeSlot.startTime} - {request.targetSession.timeSlot.endTime}
-                        </p>
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                              Lý do
+                            </p>
+                            <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">
+                              {request.requestReason}
+                            </p>
+                          </div>
+                          {request.note && (
+                            <div>
+                              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                Ghi chú
+                              </p>
+                              <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{request.note}</p>
+                            </div>
+                          )}
+                          {request.rejectionReason && (
+                            <div>
+                              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground text-rose-500">
+                                Lý do từ chối
+                              </p>
+                              <p className="mt-1 line-clamp-2 text-sm text-rose-500">{request.rejectionReason}</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                          Lý do
-                        </p>
-                        <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">{request.requestReason}</p>
-                      </div>
-                    </div>
 
-                    {/* Actions */}
-                    <div className="mt-3 flex items-center gap-2 border-t pt-3">
-                      {request.status === 'PENDING' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleCancel(request)}
-                          disabled={isCancelling && cancelingId === request.id}
-                        >
-                          {isCancelling && cancelingId === request.id ? 'Đang hủy...' : 'Hủy yêu cầu'}
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="sm" onClick={() => setDetailId(request.id)}>
-                        Chi tiết
-                      </Button>
+                      {/* Actions */}
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t pt-3">
+                        <span className="text-xs text-muted-foreground">
+                          {decidedAtLabel
+                            ? `Cập nhật ${decidedAtLabel}${request.decidedBy?.fullName ? ` • ${request.decidedBy.fullName}` : ''}`
+                            : 'Chưa được xử lý'}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {request.status === 'PENDING' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleCancel(request)}
+                              disabled={isCancelling && cancelingId === request.id}
+                            >
+                              {isCancelling && cancelingId === request.id ? 'Đang hủy...' : 'Hủy yêu cầu'}
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="sm" onClick={() => setDetailId(request.id)}>
+                            Chi tiết
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
 
@@ -1378,6 +1491,13 @@ function MakeupFlow({ onSuccess }: FlowProps) {
   )
 }
 function RequestDetail({ request }: { request: StudentRequest }) {
+  const submittedLabel = request.submittedAt
+    ? format(parseISO(request.submittedAt), 'HH:mm dd/MM/yyyy', { locale: vi })
+    : null
+  const decidedLabel = request.decidedAt
+    ? format(parseISO(request.decidedAt), 'HH:mm dd/MM/yyyy', { locale: vi })
+    : null
+
   return (
     <div className="space-y-4">
       <div>
@@ -1392,18 +1512,79 @@ function RequestDetail({ request }: { request: StudentRequest }) {
 
       <div className="h-px bg-border" />
 
-      <div>
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Buổi học</p>
-        <p className="mt-1 font-medium">
-          {request.currentClass.code} · {format(parseISO(request.targetSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Buổi {request.targetSession.courseSessionNumber}: {request.targetSession.courseSessionTitle}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          {request.targetSession.timeSlot.startTime} - {request.targetSession.timeSlot.endTime}
-        </p>
-      </div>
+      {request.requestType !== 'MAKEUP' && (
+        <>
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Lớp hiện tại</p>
+            <p className="mt-1 font-semibold">{request.currentClass.code}</p>
+            {request.currentClass.name && (
+              <p className="text-sm text-muted-foreground">{request.currentClass.name}</p>
+            )}
+            {request.currentClass.branch?.name && (
+              <p className="text-xs text-muted-foreground">Chi nhánh: {request.currentClass.branch.name}</p>
+            )}
+          </div>
+
+          <div className="h-px bg-border" />
+        </>
+      )}
+
+      {request.requestType === 'MAKEUP' ? (
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Buổi đã vắng ({request.currentClass.code})</p>
+          <p className="mt-1 font-medium">
+            {format(parseISO(request.targetSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Buổi {request.targetSession.courseSessionNumber}: {request.targetSession.courseSessionTitle}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {request.targetSession.timeSlot.startTime} - {request.targetSession.timeSlot.endTime}
+          </p>
+        </div>
+      ) : (
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Buổi học</p>
+          <p className="mt-1 font-medium">
+            {request.currentClass.code} · {format(parseISO(request.targetSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Buổi {request.targetSession.courseSessionNumber}: {request.targetSession.courseSessionTitle}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {request.targetSession.timeSlot.startTime} - {request.targetSession.timeSlot.endTime}
+          </p>
+        </div>
+      )}
+
+      {request.makeupSession && (
+        <>
+          <div className="h-px bg-border" />
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Buổi học bù</p>
+            <p className="mt-1 font-medium">
+              {request.makeupSession.classInfo?.classCode
+                ? `${request.makeupSession.classInfo.classCode} · ${format(
+                    parseISO(request.makeupSession.date),
+                    'EEEE, dd/MM/yyyy',
+                    { locale: vi }
+                  )}`
+                : format(parseISO(request.makeupSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Buổi {request.makeupSession.courseSessionNumber}: {request.makeupSession.courseSessionTitle}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {request.makeupSession.timeSlot.startTime} - {request.makeupSession.timeSlot.endTime}
+            </p>
+            {request.makeupSession.classInfo?.branchName && (
+              <p className="text-xs text-muted-foreground">
+                Chi nhánh: {request.makeupSession.classInfo.branchName}
+              </p>
+            )}
+          </div>
+        </>
+      )}
 
       <div className="h-px bg-border" />
 
@@ -1422,15 +1603,33 @@ function RequestDetail({ request }: { request: StudentRequest }) {
         </>
       )}
 
+      {request.rejectionReason && (
+        <>
+          <div className="h-px bg-border" />
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Lý do từ chối</p>
+            <p className="mt-1 text-sm text-muted-foreground">{request.rejectionReason}</p>
+          </div>
+        </>
+      )}
+
       <div className="h-px bg-border" />
 
-      <div>
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Trạng thái xử lý</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {request.decidedAt
-            ? `Cập nhật ${format(parseISO(request.decidedAt), 'HH:mm dd/MM/yyyy', { locale: vi })}`
-            : 'Chưa được xử lý'}
-        </p>
+      <div className="space-y-2 text-sm text-muted-foreground">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Thời gian gửi</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {submittedLabel ? submittedLabel : 'Đang cập nhật'}{' '}
+            {request.submittedBy?.fullName ? `• ${request.submittedBy.fullName}` : ''}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Trạng thái xử lý</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {decidedLabel ? `Cập nhật ${decidedLabel}` : 'Chưa được xử lý'}
+            {request.decidedBy?.fullName ? ` • ${request.decidedBy.fullName}` : ''}
+          </p>
+        </div>
       </div>
     </div>
   )

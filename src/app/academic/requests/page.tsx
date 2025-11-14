@@ -736,7 +736,7 @@ const detailClassTeacherName =
 
               <div className="h-px bg-border" />
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground">Lớp học</p>
@@ -750,27 +750,72 @@ const detailClassTeacherName =
                       <p className="text-xs text-muted-foreground">Giảng viên: {detailClassTeacherName}</p>
                     )}
                   </div>
-                  <div className="text-right text-sm text-muted-foreground">
+                  <div className="text-xs text-muted-foreground text-right">
+                    Người gửi: {detailRequest.submittedBy?.fullName ?? '—'}
+                  </div>
+                </div>
+
+                <div
+                  className={cn(
+                    'grid gap-3',
+                    detailRequest.requestType === 'MAKEUP' && detailRequest.makeupSession ? 'md:grid-cols-2' : 'md:grid-cols-1'
+                  )}
+                >
+                  <div className="rounded-xl border border-border/60 bg-card/30 p-3 text-sm">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {detailRequest.requestType === 'MAKEUP' ? 'Buổi đã vắng' : 'Buổi học'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{detailRequest.currentClass.code}</p>
                     {detailRequest.targetSession ? (
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold text-foreground">
+                      <>
+                        <p className="mt-1 font-medium">
+                          {format(parseISO(detailRequest.targetSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })}
+                        </p>
+                        <p className="text-muted-foreground">
                           Buổi {detailRequest.targetSession.courseSessionNumber}:{' '}
                           {detailRequest.targetSession.courseSessionTitle}
                         </p>
-                        <p>
-                          {format(parseISO(detailRequest.targetSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })} ·{' '}
+                        <p className="text-muted-foreground">
                           {detailRequest.targetSession.timeSlot.startTime} - {detailRequest.targetSession.timeSlot.endTime}
                         </p>
-                        <p>
-                          {detailDaysUntilSession != null
-                            ? `Còn ${detailDaysUntilSession} ngày`
-                            : 'Chưa cập nhật thời gian'}
-                        </p>
-                      </div>
+                        {detailDaysUntilSession != null && (
+                          <p className="text-xs text-muted-foreground">
+                            {detailDaysUntilSession >= 0
+                              ? `Còn ${detailDaysUntilSession} ngày`
+                              : `Đã qua ${Math.abs(detailDaysUntilSession)} ngày`}
+                          </p>
+                        )}
+                      </>
                     ) : (
-                      <p>Chưa chọn buổi học</p>
+                      <p className="mt-1 text-muted-foreground">Chưa chọn buổi học</p>
                     )}
                   </div>
+
+                  {detailRequest.makeupSession && (
+                    <div className="rounded-xl border border-border/60 bg-card/30 p-3 text-sm">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Buổi học bù</p>
+                      {detailRequest.makeupSession.classInfo?.classCode ? (
+                        <p className="mt-1 text-sm font-semibold">
+                          {detailRequest.makeupSession.classInfo.classCode}
+                        </p>
+                      ) : null}
+                      <p className="mt-1 font-medium">
+                        {format(parseISO(detailRequest.makeupSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })}
+                      </p>
+                      <p className="text-muted-foreground">
+                        Buổi {detailRequest.makeupSession.courseSessionNumber}:{' '}
+                        {detailRequest.makeupSession.courseSessionTitle}
+                      </p>
+                      <p className="text-muted-foreground">
+                        {detailRequest.makeupSession.timeSlot.startTime} - {detailRequest.makeupSession.timeSlot.endTime}
+                      </p>
+                      {detailRequest.makeupSession.classInfo?.branchName && (
+                        <p className="text-xs text-muted-foreground">
+                          Chi nhánh: {detailRequest.makeupSession.classInfo.branchName}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -823,22 +868,6 @@ const detailClassTeacherName =
                         <p className="font-semibold text-muted-foreground">{detailPreviousRequests.cancelledRequests}</p>
                       </div>
                     </div>
-                  </div>
-                </>
-              )}
-
-              {detailRequest.requestType === 'MAKEUP' && detailRequest.makeupSession && (
-                <>
-                  <div className="h-px bg-border" />
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Buổi học bù được chọn</p>
-                    <p className="text-sm font-semibold">
-                      {format(parseISO(detailRequest.makeupSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {detailRequest.makeupSession.classInfo?.classCode ?? 'Đang cập nhật'} ·{' '}
-                      {detailRequest.makeupSession.timeSlot.startTime} - {detailRequest.makeupSession.timeSlot.endTime}
-                    </p>
                   </div>
                 </>
               )}
