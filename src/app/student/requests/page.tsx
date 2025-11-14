@@ -19,7 +19,6 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -829,7 +828,7 @@ function AbsenceFlow({ onSuccess }: FlowProps) {
                                     {session.classCode} · {session.startTime} - {session.endTime}
                                   </p>
                                   <p className="text-xs text-muted-foreground">
-                                    Buổi {session.courseSessionNumber}: {session.topic}
+                                    {session.topic}
                                   </p>
                                   <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                                     <span>{session.className}</span>
@@ -899,7 +898,7 @@ function AbsenceFlow({ onSuccess }: FlowProps) {
                       {format(parseISO(selectedSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Buổi {selectedSession.courseSessionNumber}: {selectedSession.topic}
+                      {selectedSession.topic}
                     </p>
                     <div className="mt-2 space-y-1 text-xs text-muted-foreground">
                       <p>

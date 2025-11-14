@@ -7,6 +7,7 @@ import type {
 } from '@reduxjs/toolkit/query'
 import type { RootState } from '../index'
 import type { StudentClassDTO } from '@/types/academicTransfer'
+import type { WeeklyScheduleData } from '@/store/services/studentScheduleApi'
 
 // Re-export StudentSearchResult from academicTransfer
 export type { StudentSearchResult } from '@/types/academicTransfer'
@@ -332,6 +333,12 @@ export interface MakeupOptionsQuery {
 
 export interface AcademicMakeupOptionsQuery extends MakeupOptionsQuery {
   studentId: number
+}
+
+export interface AcademicWeeklyScheduleQuery {
+  studentId: number
+  weekStart?: string
+  classId?: number
 }
 
 export interface SubmitStudentRequestPayload {
@@ -701,6 +708,21 @@ export const studentRequestApi = createApi({
         params: { studentId, targetSessionId },
       }),
     }),
+    getAcademicWeeklySchedule: builder.query<ApiResponse<WeeklyScheduleData>, AcademicWeeklyScheduleQuery>({
+      query: ({ studentId, weekStart, classId }) => {
+        const params: Record<string, string | number> = {}
+        if (weekStart) {
+          params.weekStart = weekStart
+        }
+        if (typeof classId === 'number') {
+          params.classId = classId
+        }
+        return {
+          url: `/academic-requests/students/${studentId}/schedule`,
+          params: Object.keys(params).length ? params : undefined,
+        }
+      },
+    }),
     getAcademicRequests: builder.query<ApiResponse<AcademicRequestsResponse>, AcademicHistoryQuery | void>({
       query: (params) => {
         if (!params) {
@@ -751,6 +773,14 @@ export const studentRequestApi = createApi({
     >({
       query: (body) => ({
         url: '/academic-requests/on-behalf',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['PendingRequests', 'StudentRequests'],
+    }),
+    submitAbsenceOnBehalf: builder.mutation<ApiResponse<StudentRequest>, SubmitOnBehalfRequestPayload>({
+      query: (body) => ({
+        url: '/academic-requests/absence/on-behalf',
         method: 'POST',
         body,
       }),
@@ -832,12 +862,14 @@ export const {
   useLazyGetPendingRequestsQuery,
   useGetStudentMissedSessionsQuery,
   useGetStudentMakeupOptionsQuery,
+  useGetAcademicWeeklyScheduleQuery,
   useGetAcademicRequestsQuery,
   useLazyGetAcademicRequestsQuery,
   useGetRequestDetailQuery,
   useApproveRequestMutation,
   useRejectRequestMutation,
   useCreateOnBehalfRequestMutation,
+  useSubmitAbsenceOnBehalfMutation,
   // Transfer Request Hooks
   useGetTransferEligibilityQuery,
   useGetTransferOptionsQuery,
