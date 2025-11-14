@@ -58,6 +58,12 @@ import {
 } from '@/components/ui/table'
 
 type RequestType = 'ABSENCE' | 'MAKEUP' | 'TRANSFER' | 'ALL'
+
+const REQUEST_TYPE_LABELS: Record<'ABSENCE' | 'MAKEUP' | 'TRANSFER', string> = {
+  ABSENCE: 'Xin nghỉ',
+  MAKEUP: 'Học bù',
+  TRANSFER: 'Chuyển lớp',
+}
 type HistoryFilter = 'ALL' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
 
 const PENDING_PAGE_SIZE = 6
@@ -159,7 +165,20 @@ export default function AcademicRequestsPage() {
     skip: selectedRequestId === null,
   })
 
-  const detailRequest = detailResponse?.data
+const detailRequest = detailResponse?.data
+const detailAbsenceStats = detailRequest?.additionalInfo?.studentAbsenceStats
+const detailPreviousRequests = detailRequest?.additionalInfo?.previousRequests
+const detailDaysUntilSession =
+  detailRequest?.additionalInfo?.daysUntilSession ?? detailRequest?.daysUntilSession
+const detailAbsenceRate =
+  detailAbsenceStats?.absenceRate ?? detailRequest?.studentAbsenceRate ?? 0
+const detailAbsenceRateDisplay = Number(detailAbsenceRate.toFixed(1))
+const detailStatusMeta =
+  detailRequest && REQUEST_STATUS_META[detailRequest.status as keyof typeof REQUEST_STATUS_META]
+const detailClassTeacherName =
+  typeof detailRequest?.currentClass?.teacher === 'string'
+    ? detailRequest?.currentClass?.teacher
+    : detailRequest?.currentClass?.teacher?.fullName
 
   // Mutations
   const [approveRequest, { isLoading: isApproving }] = useApproveRequestMutation()
@@ -647,7 +666,7 @@ export default function AcademicRequestsPage() {
           }
         }}
       >
-        <DialogContent className="max-w-2xl rounded-lg">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl">
           <DialogHeader>
             <DialogTitle>Chi tiết yêu cầu</DialogTitle>
           </DialogHeader>
@@ -659,60 +678,138 @@ export default function AcademicRequestsPage() {
               <Skeleton className="h-48 w-full" />
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-5">
+              <div className="rounded-2xl border border-border/60 bg-muted/20 p-4 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Mã yêu cầu</p>
+                    <p className="mt-1 text-base font-semibold">#{detailRequest.id}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Gửi lúc{' '}
+                      {format(parseISO(detailRequest.submittedAt), 'HH:mm dd/MM/yyyy', {
+                        locale: vi,
+                      })}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="secondary">
+                      {REQUEST_TYPE_LABELS[detailRequest.requestType as 'ABSENCE' | 'MAKEUP' | 'TRANSFER']}
+                    </Badge>
+                    <Badge className={cn('font-semibold', detailStatusMeta?.badgeClass ?? 'bg-muted text-foreground')}>
+                      {detailStatusMeta?.label ?? detailRequest.status}
+                    </Badge>
+                  </div>
+                </div>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Người gửi: {detailRequest.submittedBy?.fullName ?? '—'} · {detailRequest.submittedBy?.email ?? '—'}
+                </p>
+              </div>
+
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Học viên</p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-start gap-2">
                   <UserIcon className="h-4 w-4 text-muted-foreground" />
-                  <div>
+                  <div className="space-y-1 text-sm">
                     <p className="font-semibold">{detailRequest.student.fullName}</p>
-                    <p className="text-sm text-muted-foreground">{detailRequest.student.email}</p>
+                    <p className="text-muted-foreground">{detailRequest.student.email}</p>
+                    <p className="text-muted-foreground">Mã: {detailRequest.student.studentCode}</p>
+                    <p className="text-muted-foreground">SĐT: {detailRequest.student.phone}</p>
                   </div>
                 </div>
               </div>
 
               <div className="h-px bg-border" />
 
-              <div>
-                <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-                  <div>
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="space-y-1">
                     <p className="text-xs text-muted-foreground">Lớp học</p>
-                    <p className="font-semibold">{detailRequest.currentClass.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {detailRequest.currentClass.branch?.name ?? '—'}
+                    <p className="font-semibold">
+                      {detailRequest.currentClass.code} · {detailRequest.currentClass.name}
                     </p>
+                    <p className="text-sm text-muted-foreground">
+                      {detailRequest.currentClass.branch?.name ?? 'Chưa rõ chi nhánh'}
+                    </p>
+                    {detailClassTeacherName && (
+                      <p className="text-xs text-muted-foreground">Giảng viên: {detailClassTeacherName}</p>
+                    )}
                   </div>
-                  {detailRequest.targetSession ? (
-                    <div className="text-right text-sm text-muted-foreground">
-                      <p>
-                        {format(parseISO(detailRequest.targetSession.date), "dd/MM/yyyy", { locale: vi })} ·{' '}
-                        {detailRequest.targetSession.timeSlot.startTime}-
-                        {detailRequest.targetSession.timeSlot.endTime}
-                      </p>
-                      <p>Còn {detailRequest.daysUntilSession ?? '-'} ngày</p>
-                    </div>
-                  ) : (
-                    <div className="text-right text-sm text-muted-foreground">
-                      <p>—</p>
-                    </div>
-                  )}
+                  <div className="text-right text-sm text-muted-foreground">
+                    {detailRequest.targetSession ? (
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-foreground">
+                          Buổi {detailRequest.targetSession.courseSessionNumber}:{' '}
+                          {detailRequest.targetSession.courseSessionTitle}
+                        </p>
+                        <p>
+                          {format(parseISO(detailRequest.targetSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })} ·{' '}
+                          {detailRequest.targetSession.timeSlot.startTime} - {detailRequest.targetSession.timeSlot.endTime}
+                        </p>
+                        <p>
+                          {detailDaysUntilSession != null
+                            ? `Còn ${detailDaysUntilSession} ngày`
+                            : 'Chưa cập nhật thời gian'}
+                        </p>
+                      </div>
+                    ) : (
+                      <p>Chưa chọn buổi học</p>
+                    )}
+                  </div>
                 </div>
+
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Tỉ lệ nghỉ</p>
                   <div className="h-2 w-full rounded-full bg-muted/40">
                     <div
                       className={cn(
                         'h-full rounded-full',
-                        (detailRequest.studentAbsenceRate ?? 0) > 20 ? 'bg-rose-500' : 'bg-primary'
+                        detailAbsenceRate >= 20 ? 'bg-rose-500' : 'bg-primary'
                       )}
-                      style={{ width: `${Math.min(detailRequest.studentAbsenceRate ?? 0, 100)}%` }}
+                      style={{ width: `${Math.min(detailAbsenceRate, 100)}%` }}
                     ></div>
                   </div>
                   <p className="mt-1 text-sm font-semibold">
-                    {detailRequest.studentAbsenceRate ?? 0}% tổng số buổi bị nghỉ
+                    {detailAbsenceRateDisplay}% tổng số buổi bị nghỉ
+                    {detailAbsenceStats
+                      ? ` (${detailAbsenceStats.totalAbsences}/${detailAbsenceStats.totalSessions} buổi)`
+                      : ''}
                   </p>
+                  {detailAbsenceStats ? (
+                    <p className="text-xs text-muted-foreground">
+                      Có phép: {detailAbsenceStats.excusedAbsences} · Không phép: {detailAbsenceStats.unexcusedAbsences}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Chưa có dữ liệu chi tiết</p>
+                  )}
                 </div>
               </div>
+
+              {detailPreviousRequests && (
+                <>
+                  <div className="h-px bg-border" />
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-2">Lịch sử yêu cầu gần đây</p>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Tổng số</p>
+                        <p className="font-semibold">{detailPreviousRequests.totalRequests}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Đã chấp thuận</p>
+                        <p className="font-semibold text-emerald-600">{detailPreviousRequests.approvedRequests}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Đã từ chối</p>
+                        <p className="font-semibold text-rose-600">{detailPreviousRequests.rejectedRequests}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Đã hủy</p>
+                        <p className="font-semibold text-muted-foreground">{detailPreviousRequests.cancelledRequests}</p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
 
               {detailRequest.requestType === 'MAKEUP' && detailRequest.makeupSession && (
                 <>
@@ -720,10 +817,11 @@ export default function AcademicRequestsPage() {
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Buổi học bù được chọn</p>
                     <p className="text-sm font-semibold">
-                      {format(parseISO(detailRequest.makeupSession.date), "EEEE, dd/MM/yyyy", { locale: vi })}
+                      {format(parseISO(detailRequest.makeupSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {detailRequest.makeupSession.classInfo?.classCode ?? 'Đang cập nhật'} · {detailRequest.makeupSession.timeSlot.startTime} - {detailRequest.makeupSession.timeSlot.endTime}
+                      {detailRequest.makeupSession.classInfo?.classCode ?? 'Đang cập nhật'} ·{' '}
+                      {detailRequest.makeupSession.timeSlot.startTime} - {detailRequest.makeupSession.timeSlot.endTime}
                     </p>
                   </div>
                 </>
@@ -731,14 +829,16 @@ export default function AcademicRequestsPage() {
 
               <div className="h-px bg-border" />
 
-              <div>
-                <p className="text-sm font-semibold mb-1">Lý do</p>
-                <p className="text-sm text-muted-foreground">{detailRequest.requestReason}</p>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <p className="font-semibold mb-1">Lý do xin nghỉ</p>
+                  <p className="text-muted-foreground">{detailRequest.requestReason}</p>
+                </div>
                 {detailRequest.note && (
-                  <>
-                    <p className="mt-3 text-sm font-semibold">Ghi chú thêm</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{detailRequest.note}</p>
-                  </>
+                  <div>
+                    <p className="font-semibold mb-1">Ghi chú thêm</p>
+                    <p className="text-muted-foreground">{detailRequest.note}</p>
+                  </div>
                 )}
               </div>
 
@@ -747,15 +847,6 @@ export default function AcademicRequestsPage() {
                   <div className="h-px bg-border" />
 
                   <div className="space-y-3">
-                    <label className="flex flex-col gap-2">
-                      <span className="text-sm font-semibold">Ghi chú phê duyệt (nếu có)</span>
-                      <Textarea
-                        value={decisionNote}
-                        onChange={(event) => setDecisionNote(event.target.value)}
-                        placeholder="Ví dụ: Chấp thuận do có giấy hẹn khám bệnh..."
-                      />
-                    </label>
-
                     <label className="flex flex-col gap-2">
                       <span className="text-sm font-semibold">Lý do từ chối</span>
                       <Textarea

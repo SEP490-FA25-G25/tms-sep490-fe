@@ -1,6 +1,6 @@
 
 import { useEffect, useMemo, useState } from 'react'
-import { format, parseISO, startOfToday } from 'date-fns'
+import { addDays, addMonths, format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { skipToken } from '@reduxjs/toolkit/query'
 import {
@@ -19,7 +19,6 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Calendar } from '@/components/ui/calendar'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -31,15 +30,19 @@ import {
   useGetMyRequestByIdQuery,
   useCancelRequestMutation,
   useSubmitStudentRequestMutation,
-  useGetAvailableSessionsQuery,
   useGetMissedSessionsQuery,
   useGetMakeupOptionsQuery,
   type StudentRequest,
   type RequestStatus,
   type RequestType,
-  type StudentClassSessions,
-  type StudentSessionOption,
 } from '@/store/services/studentRequestApi'
+import {
+  type DayOfWeek,
+  type SessionSummaryDTO,
+  useGetCurrentWeekQuery,
+  useGetSessionDetailQuery,
+  useGetWeeklyScheduleQuery,
+} from '@/store/services/studentScheduleApi'
 import { REQUEST_STATUS_META } from '@/constants/absence'
 const REQUEST_TYPE_LABELS: Record<RequestType, string> = {
   ABSENCE: 'Xin nghỉ',
@@ -64,6 +67,18 @@ const TYPE_FILTERS: Array<{ label: string; value: 'ALL' | RequestType }> = [
 
 const REQUEST_PAGE_SIZE = 8
 
+const WEEK_DAYS: DayOfWeek[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
+
+const WEEK_DAY_LABELS: Record<DayOfWeek, string> = {
+  MONDAY: 'Thứ 2',
+  TUESDAY: 'Thứ 3',
+  WEDNESDAY: 'Thứ 4',
+  THURSDAY: 'Thứ 5',
+  FRIDAY: 'Thứ 6',
+  SATURDAY: 'Thứ 7',
+  SUNDAY: 'Chủ nhật',
+}
+
 type TypeFilter = 'ALL' | RequestType
 
 type StatusFilter = 'ALL' | RequestStatus
@@ -76,6 +91,7 @@ export default function StudentRequestsPage() {
   const [activeType, setActiveType] = useState<RequestType | null>(null)
   const [detailId, setDetailId] = useState<number | null>(null)
   const [cancelingId, setCancelingId] = useState<number | null>(null)
+  const [successRequest, setSuccessRequest] = useState<StudentRequest | null>(null)
 
   const {
     data: requestsResponse,
@@ -345,9 +361,12 @@ export default function StudentRequestsPage() {
         }}
         activeType={activeType}
         onSelectType={(type) => setActiveType(type)}
-        onSuccess={() => {
+        onSuccess={(request) => {
           handleModalClose()
           refetchRequests()
+          if (request) {
+            setSuccessRequest(request)
+          }
         }}
         onOpenTransferFlow={() => setIsTransferFlowOpen(true)}
       />
@@ -375,10 +394,52 @@ export default function StudentRequestsPage() {
       </Dialog>
 
       {/* Transfer Flow Dialog */}
-      <TransferFlow
-        open={isTransferFlowOpen}
-        onOpenChange={setIsTransferFlowOpen}
-      />
+      <TransferFlow open={isTransferFlowOpen} onOpenChange={setIsTransferFlowOpen} />
+
+      <Dialog
+        open={!!successRequest}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSuccessRequest(null)
+          }
+        }}
+      >
+        <DialogContent className="max-w-sm rounded-3xl">
+          <DialogHeader>
+            <DialogTitle>Đã gửi yêu cầu xin nghỉ</DialogTitle>
+          </DialogHeader>
+          {successRequest && (
+            <div className="space-y-4 text-sm">
+              <p className="text-muted-foreground">
+                Mã yêu cầu <span className="font-semibold text-foreground">#{successRequest.id}</span> • Trạng thái:{' '}
+                <span className="font-semibold text-foreground">Đang chờ duyệt</span>
+              </p>
+              <div className="rounded-2xl border border-border/60 bg-muted/20 p-3">
+                <p className="text-sm font-semibold">
+                  {successRequest.currentClass.code} → Buổi {successRequest.targetSession.courseSessionNumber}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {format(parseISO(successRequest.targetSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })} •{' '}
+                  {successRequest.targetSession.timeSlot.startTime} - {successRequest.targetSession.timeSlot.endTime}
+                </p>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Button onClick={() => setSuccessRequest(null)}>Xem danh sách yêu cầu</Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setSuccessRequest(null)
+                    setActiveType(null)
+                    setIsCreateOpen(true)
+                  }}
+                >
+                  Tạo yêu cầu khác
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </StudentRoute>
   )
 }
@@ -387,7 +448,7 @@ interface CreateDialogProps {
   onOpenChange: (open: boolean) => void
   activeType: RequestType | null
   onSelectType: (type: RequestType | null) => void
-  onSuccess: () => void
+  onSuccess: (request?: StudentRequest | null) => void
   onOpenTransferFlow: () => void
 }
 
@@ -411,7 +472,7 @@ function CreateRequestDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl rounded-2xl">
+      <DialogContent className="max-w-3xl rounded-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Tạo yêu cầu mới</DialogTitle>
         </DialogHeader>
@@ -491,45 +552,125 @@ function TypeSelection({ onSelect }: { onSelect: (type: RequestType) => void }) 
   )
 }
 interface FlowProps {
-  onSuccess: () => void
+  onSuccess: (request?: StudentRequest | null) => void
+}
+
+interface SessionWithAvailability extends SessionSummaryDTO {
+  isSelectable: boolean
+  disabledReason: string | null
+}
+
+function parseSessionDateTime(dateStr: string, timeStr?: string) {
+  if (!timeStr) {
+    return parseISO(dateStr)
+  }
+  const normalizedTime =
+    timeStr.length === 5 ? `${timeStr}:00` : timeStr.length === 8 ? timeStr : `${timeStr}:00`
+  return parseISO(`${dateStr}T${normalizedTime}`)
+}
+
+function getSessionAvailability(session: SessionSummaryDTO, futureLimit: Date) {
+  const sessionDateTime = parseSessionDateTime(session.date, session.startTime)
+  const now = new Date()
+  const isPast = sessionDateTime.getTime() <= now.getTime()
+  const isTooFar = sessionDateTime.getTime() > futureLimit.getTime()
+  const hasAttendanceRecord = session.attendanceStatus && session.attendanceStatus !== 'PLANNED'
+  const isInactiveStatus = session.sessionStatus !== 'PLANNED'
+
+  let disabledReason: string | null = null
+  if (isPast) {
+    disabledReason = 'Buổi đã diễn ra'
+  } else if (isTooFar) {
+    disabledReason = 'Chỉ có thể xin nghỉ trong 30 ngày tới'
+  } else if (hasAttendanceRecord) {
+    disabledReason = 'Đã điểm danh'
+  } else if (isInactiveStatus) {
+    disabledReason = 'Buổi không khả dụng'
+  }
+
+  return {
+    isSelectable: !isPast && !isTooFar && !hasAttendanceRecord && !isInactiveStatus,
+    disabledReason,
+  }
 }
 
 function AbsenceFlow({ onSuccess }: FlowProps) {
-  const today = startOfToday()
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
+  const [weekStart, setWeekStart] = useState<string | null>(null)
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null)
   const [reason, setReason] = useState('')
   const [note, setNote] = useState('')
+  const futureLimitDate = useMemo(() => addMonths(new Date(), 1), [])
 
-  const formattedDate = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null
-
-  const { data: sessionsResponse, isFetching: isLoadingSessions } = useGetAvailableSessionsQuery(
-    formattedDate
-      ? {
-          date: formattedDate,
-          requestType: 'ABSENCE',
-        }
-      : skipToken,
+  const { data: currentWeekResponse, isFetching: isLoadingCurrentWeek } = useGetCurrentWeekQuery()
+  const {
+    data: weeklyScheduleResponse,
+    isFetching: isLoadingSchedule,
+  } = useGetWeeklyScheduleQuery(weekStart ?? '', {
+    skip: !weekStart,
+  })
+  const { data: sessionDetailResponse, isFetching: isLoadingSessionDetail } = useGetSessionDetailQuery(
+    selectedSessionId ?? skipToken,
     {
-      skip: !formattedDate,
+      skip: !selectedSessionId,
     }
   )
-
-  const availableClasses = useMemo(() => sessionsResponse?.data ?? [], [sessionsResponse?.data])
-  const sessionOptions: Array<{
-    classInfo: StudentClassSessions
-    session: StudentSessionOption
-  }> = useMemo(() => {
-    return availableClasses.flatMap((cls) => cls.sessions.map((session) => ({ classInfo: cls, session })))
-  }, [availableClasses])
-
-  const selectedSession = sessionOptions.find((option) => option.session.sessionId === selectedSessionId) ?? null
   const [submitRequest, { isLoading }] = useSubmitStudentRequestMutation()
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (!date || date < today) return
-    setSelectedDate(date)
+  useEffect(() => {
+    if (!weekStart && currentWeekResponse?.data) {
+      setWeekStart(currentWeekResponse.data)
+    }
+  }, [currentWeekResponse?.data, weekStart])
+
+  useEffect(() => {
     setSelectedSessionId(null)
+  }, [weekStart])
+
+  const weekData = weeklyScheduleResponse?.data
+  const groupedSessions = useMemo(() => {
+    if (!weekData) return []
+    const startDate = parseISO(weekData.weekStart)
+    return WEEK_DAYS.map((day, index) => {
+      const dayDate = addDays(startDate, index)
+      const sessions: SessionWithAvailability[] = (weekData.schedule?.[day] ?? []).map((session) => {
+        const { isSelectable, disabledReason } = getSessionAvailability(session, futureLimitDate)
+        return {
+          ...session,
+          isSelectable,
+          disabledReason,
+        }
+      })
+      return {
+        day,
+        date: dayDate,
+        sessions,
+      }
+    })
+  }, [weekData, futureLimitDate])
+
+  const allSessions = useMemo(
+    () => groupedSessions.flatMap((group) => group.sessions),
+    [groupedSessions]
+  )
+  const displayedGroups = groupedSessions.filter((group) => group.sessions.length > 0)
+  const selectedSession = allSessions.find((session) => session.sessionId === selectedSessionId) ?? null
+  const selectedSessionDetail = sessionDetailResponse?.data ?? null
+  const selectedClassId = selectedSessionDetail?.classInfo.classId ?? null
+  const hasSelectableSessions = allSessions.some((session) => session.isSelectable)
+  const weekRangeLabel = weekData
+    ? `${format(parseISO(weekData.weekStart), 'dd/MM', { locale: vi })} - ${format(parseISO(weekData.weekEnd), 'dd/MM', { locale: vi })}`
+    : 'Đang tải tuần...'
+
+  const handleChangeWeek = (direction: 'prev' | 'next') => {
+    if (!weekStart) return
+    const nextStart = addDays(parseISO(weekStart), direction === 'next' ? 7 : -7)
+    setWeekStart(format(nextStart, 'yyyy-MM-dd'))
+  }
+
+  const handleReset = () => {
+    setSelectedSessionId(null)
+    setReason('')
+    setNote('')
   }
 
   const handleSubmit = async () => {
@@ -543,21 +684,28 @@ function AbsenceFlow({ onSuccess }: FlowProps) {
       return
     }
 
+    if (!selectedClassId) {
+      toast.error('Không thể xác định lớp học của buổi này. Vui lòng thử lại.')
+      return
+    }
+
     try {
-      await submitRequest({
+      const response = await submitRequest({
         requestType: 'ABSENCE',
-        currentClassId: selectedSession.classInfo.classId,
-        targetSessionId: selectedSession.session.sessionId,
+        currentClassId: selectedClassId,
+        targetSessionId: selectedSession.sessionId,
         requestReason: reason.trim(),
         note: note.trim() || undefined,
       }).unwrap()
 
+      const createdRequest = response?.data
+      handleReset()
+      if (createdRequest) {
+        onSuccess(createdRequest)
+      } else {
+        onSuccess()
+      }
       toast.success('Đã gửi yêu cầu xin nghỉ')
-      setReason('')
-      setNote('')
-      setSelectedDate(undefined)
-      setSelectedSessionId(null)
-      onSuccess()
     } catch (error: unknown) {
       const message =
         (error as { data?: { message?: string } })?.data?.message ?? 'Không thể gửi yêu cầu. Vui lòng thử lại.'
@@ -565,193 +713,247 @@ function AbsenceFlow({ onSuccess }: FlowProps) {
     }
   }
 
-  const step1Complete = !!selectedDate
-  const step2Complete = !!selectedSession
-  const step3Complete = step2Complete && reason.trim().length >= 10
+  const step1Complete = !!selectedSession
+  const step2Complete = step1Complete && reason.trim().length >= 10
 
   return (
-    <div className="space-y-4">
-      {/* Step 1: Chọn ngày */}
-      <div className="space-y-2">
-        <button
-          type="button"
-          onClick={() => {
-            // Allow re-opening step 1 to change date
-          }}
-          className="flex w-full items-center gap-2 text-left"
-        >
-          <div
-            className={cn(
-              'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
-              step1Complete ? 'bg-primary text-primary-foreground' : 'border-2 border-primary text-primary'
-            )}
-          >
-            {step1Complete ? '✓' : '1'}
-          </div>
-          <h3 className="text-sm font-semibold">Chọn ngày học</h3>
-        </button>
-
-        <div className="pl-8">
-          {!step1Complete ? (
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={handleDateSelect}
-              disabled={(date) => date < today}
-              locale={vi}
-              className="rounded-lg border"
-            />
-          ) : (
-            <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
-              <p className="text-sm">
-                <span className="font-medium">{format(selectedDate, 'EEEE, dd/MM/yyyy', { locale: vi })}</span>
+    <>
+      <div className="space-y-6">
+        {/* Step 1: Chọn buổi */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div
+              className={cn(
+                'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
+                step1Complete ? 'bg-primary text-primary-foreground' : 'border-2 border-primary text-primary'
+              )}
+            >
+              {step1Complete ? '✓' : '1'}
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold">Chọn buổi muốn xin nghỉ</h3>
+              <p className="text-xs text-muted-foreground">
+                Chỉ hiển thị buổi chưa diễn ra, trong 30 ngày tới và chưa điểm danh
               </p>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSelectedDate(undefined)
-                  setSelectedSessionId(null)
-                }}
-              >
-                Thay đổi
-              </Button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border/60 pl-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/80 px-6 py-3">
+              <div>
+                <p className="text-xs text-muted-foreground">Tuần đang xem</p>
+                <p className="text-sm font-semibold">{weekRangeLabel}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleChangeWeek('prev')}
+                  disabled={!weekStart}
+                >
+                  <ArrowRightIcon className="h-4 w-4 rotate-180" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (currentWeekResponse?.data) {
+                      setWeekStart(currentWeekResponse.data)
+                    }
+                  }}
+                  disabled={!currentWeekResponse?.data}
+                >
+                  Tuần hiện tại
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleChangeWeek('next')}
+                  disabled={!weekStart}
+                >
+                  <ArrowRightIcon className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-4 px-6 py-4">
+              {isLoadingCurrentWeek || isLoadingSchedule || !weekData ? (
+                <div className="space-y-3">
+                  {[...Array(4)].map((_, index) => (
+                    <Skeleton key={index} className="h-16 w-full rounded-xl" />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {displayedGroups.length > 0 ? (
+                    displayedGroups.map((group) => (
+                      <div key={group.day} className="space-y-2">
+                        <p className="text-xs font-medium text-muted-foreground">
+                          {WEEK_DAY_LABELS[group.day]} · {format(group.date, 'dd/MM', { locale: vi })}
+                        </p>
+                        <div className="space-y-2">
+                          {group.sessions.map((session) => {
+                            const isActive = selectedSessionId === session.sessionId
+                            return (
+                              <label
+                                key={session.sessionId}
+                                className={cn(
+                                  'flex gap-3 rounded-2xl border px-3 py-3 transition',
+                                  session.isSelectable
+                                    ? 'cursor-pointer border-border/70 hover:border-primary/50 hover:bg-primary/5'
+                                    : 'cursor-not-allowed border-dashed border-border/70 opacity-60',
+                                  isActive && 'border-primary bg-primary/5'
+                                )}
+                              >
+                                <input
+                                  type="radio"
+                                  className="sr-only"
+                                  disabled={!session.isSelectable}
+                                  checked={isActive}
+                                  onChange={() => {
+                                    if (session.isSelectable) {
+                                      setSelectedSessionId(session.sessionId)
+                                    }
+                                  }}
+                                />
+                                <div className="flex h-5 w-5 items-center justify-center">
+                                  <span
+                                    className={cn(
+                                      'h-4 w-4 rounded-full border-2',
+                                      isActive ? 'border-primary bg-primary' : 'border-muted-foreground/40'
+                                    )}
+                                  />
+                                </div>
+                                <div className="flex flex-1 flex-col gap-1 text-sm">
+                                  <p className="font-semibold">
+                                    {session.classCode} · {session.startTime} - {session.endTime}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Buổi {session.courseSessionNumber}: {session.topic}
+                                  </p>
+                                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                    <span>{session.className}</span>
+                                    <span>•</span>
+                                    <span>{session.branchName}</span>
+                                    <span>•</span>
+                                    <span>{session.modality === 'ONLINE' ? 'Trực tuyến' : 'Tại trung tâm'}</span>
+                                  </div>
+                                  {!session.isSelectable && session.disabledReason && (
+                                    <p className="text-xs font-medium text-rose-500">{session.disabledReason}</p>
+                                  )}
+                                </div>
+                              </label>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-xl border border-dashed border-border/70 px-3 py-4 text-sm text-muted-foreground">
+                      Tuần này chưa có buổi học nào trong lịch cá nhân.
+                    </div>
+                  )}
+
+                  {!hasSelectableSessions && displayedGroups.length > 0 && (
+                    <div className="rounded-xl border border-dashed border-amber-200 bg-amber-50/60 px-3 py-3 text-sm text-amber-800">
+                      Tuần này chưa có buổi nào đủ điều kiện để xin nghỉ. Hãy chuyển sang tuần khác.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Step 2: Điền lý do */}
+        <div className={cn('space-y-3', !step1Complete && 'opacity-50')}>
+          <div className="flex items-center gap-2">
+            <div
+              className={cn(
+                'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
+                step2Complete
+                  ? 'bg-primary text-primary-foreground'
+                  : step1Complete
+                    ? 'border-2 border-primary text-primary'
+                    : 'border-2 border-muted-foreground/30 text-muted-foreground'
+              )}
+            >
+              {step2Complete ? '✓' : '2'}
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold">Điền lý do xin nghỉ</h3>
+              <p className="text-xs text-muted-foreground">Kiểm tra lại thông tin buổi học trước khi gửi</p>
+            </div>
+          </div>
+
+          {selectedSession && (
+            <div className="space-y-4 pl-8">
+              <div className="rounded-2xl border border-border/60 bg-muted/20 p-4 text-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Buổi đã chọn</p>
+                    <p className="mt-1 font-semibold">
+                      {selectedSession.classCode} · {selectedSession.startTime} - {selectedSession.endTime}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(parseISO(selectedSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Buổi {selectedSession.courseSessionNumber}: {selectedSession.topic}
+                    </p>
+                    <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                      <p>
+                        Giảng viên:{' '}
+                        <span className="text-foreground">
+                          {selectedSessionDetail?.classInfo.teacherName ?? 'Đang cập nhật'}
+                        </span>
+                      </p>
+                      <p>
+                        Hình thức:{' '}
+                        <span className="text-foreground">
+                          {selectedSessionDetail?.classInfo.modality === 'ONLINE'
+                            ? 'Trực tuyến'
+                            : selectedSessionDetail?.classInfo.modality === 'HYBRID'
+                              ? 'Kết hợp'
+                              : 'Tại trung tâm'}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedSessionId(null)}>
+                    Chọn buổi khác
+                  </Button>
+                </div>
+                {isLoadingSessionDetail && (
+                  <p className="mt-2 text-xs text-muted-foreground">Đang tải chi tiết lớp học...</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Textarea
+                  placeholder="Chia sẻ lý do cụ thể để Học vụ duyệt nhanh hơn..."
+                  value={reason}
+                  onChange={(event) => setReason(event.target.value)}
+                  rows={4}
+                  className="resize-none text-sm"
+                />
+                <p className="text-xs text-muted-foreground">Tối thiểu 10 ký tự · {reason.trim().length}/10</p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={handleSubmit} disabled={!step2Complete || isLoading} size="sm">
+                  {isLoading ? 'Đang gửi...' : 'Gửi yêu cầu'}
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleReset}>
+                  Làm lại
+                </Button>
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Step 2: Chọn buổi học */}
-      <div className={cn('space-y-2', !step1Complete && 'opacity-50')}>
-        <div className="flex items-center gap-2">
-          <div
-            className={cn(
-              'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
-              step2Complete
-                ? 'bg-primary text-primary-foreground'
-                : step1Complete
-                  ? 'border-2 border-primary text-primary'
-                  : 'border-2 border-muted-foreground/30 text-muted-foreground'
-            )}
-          >
-            {step2Complete ? '✓' : '2'}
-          </div>
-          <h3 className="text-sm font-semibold">Chọn buổi học cụ thể</h3>
-        </div>
-
-        {step1Complete && (
-          <div className="pl-8">
-            {!step2Complete ? (
-              isLoadingSessions ? (
-                <div className="space-y-2">
-                  {[...Array(2)].map((_, index) => (
-                    <Skeleton key={index} className="h-14 w-full rounded-lg" />
-                  ))}
-                </div>
-              ) : sessionOptions.length === 0 ? (
-                <div className="rounded-lg border border-dashed py-4 text-center text-sm text-muted-foreground">
-                  Không có buổi học nào trong ngày đã chọn
-                </div>
-              ) : (
-                <ul className="space-y-2">
-                  {sessionOptions.map((option) => (
-                    <li key={option.session.sessionId}>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedSessionId(option.session.sessionId)}
-                        className="w-full rounded-lg border border-border/60 px-3 py-2 text-left transition hover:border-primary/60 hover:bg-primary/5"
-                      >
-                        <p className="text-sm font-medium">
-                          {option.classInfo.classCode} · {option.session.timeSlot.startTime} -{' '}
-                          {option.session.timeSlot.endTime}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Buổi {option.session.courseSessionNumber}: {option.session.courseSessionTitle}
-                        </p>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )
-            ) : (
-              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
-                <div>
-                  <p className="text-sm font-medium">
-                    {selectedSession.classInfo.classCode} · {selectedSession.session.timeSlot.startTime} -{' '}
-                    {selectedSession.session.timeSlot.endTime}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Buổi {selectedSession.session.courseSessionNumber}: {selectedSession.session.courseSessionTitle}
-                  </p>
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedSessionId(null)}>
-                  Thay đổi
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Step 3: Điền lý do */}
-      <div className={cn('space-y-2', !step2Complete && 'opacity-50')}>
-        <div className="flex items-center gap-2">
-          <div
-            className={cn(
-              'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
-              step3Complete
-                ? 'bg-primary text-primary-foreground'
-                : step2Complete
-                  ? 'border-2 border-primary text-primary'
-                  : 'border-2 border-muted-foreground/30 text-muted-foreground'
-            )}
-          >
-            {step3Complete ? '✓' : '3'}
-          </div>
-          <h3 className="text-sm font-semibold">Điền lý do xin nghỉ</h3>
-        </div>
-
-        {step2Complete && (
-          <div className="space-y-3 pl-8">
-            <div className="space-y-1.5">
-              <Textarea
-                placeholder="Chia sẻ lý do cụ thể để Học vụ duyệt nhanh hơn..."
-                value={reason}
-                onChange={(event) => setReason(event.target.value)}
-                rows={3}
-                className="resize-none text-sm"
-              />
-              <p className="text-xs text-muted-foreground">Tối thiểu 10 ký tự · {reason.trim().length}/10</p>
-            </div>
-
-            <Input
-              placeholder="Ghi chú bổ sung (không bắt buộc)"
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              className="text-sm"
-            />
-
-            <div className="flex gap-2">
-              <Button onClick={handleSubmit} disabled={!step3Complete || isLoading} size="sm">
-                {isLoading ? 'Đang gửi...' : 'Gửi yêu cầu'}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setSelectedDate(undefined)
-                  setSelectedSessionId(null)
-                  setReason('')
-                  setNote('')
-                }}
-              >
-                Làm lại
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+    </>
   )
 }
 function MakeupFlow({ onSuccess }: FlowProps) {
@@ -1050,13 +1252,6 @@ function MakeupFlow({ onSuccess }: FlowProps) {
               />
               <p className="text-xs text-muted-foreground">Tối thiểu 10 ký tự · {reason.trim().length}/10</p>
             </div>
-
-            <Input
-              placeholder="Ghi chú bổ sung (không bắt buộc)"
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              className="text-sm"
-            />
 
             <div className="flex gap-2">
               <Button onClick={handleSubmit} disabled={!step3Complete || isLoading} size="sm">

@@ -79,6 +79,12 @@ export interface UserSummary {
   email: string
 }
 
+export interface TeacherSummary {
+  id?: number
+  fullName?: string
+  email?: string
+}
+
 export interface ClassSummary {
   id: number
   code: string
@@ -87,6 +93,7 @@ export interface ClassSummary {
     id: number
     name: string
   }
+  teacher?: TeacherSummary | null
 }
 
 export interface SessionSummary {
@@ -213,10 +220,32 @@ export interface AcademicStudentInfo {
   phone: string
 }
 
+export interface StudentAbsenceStats {
+  totalAbsences: number
+  totalSessions: number
+  absenceRate: number
+  excusedAbsences: number
+  unexcusedAbsences: number
+}
+
+export interface PreviousRequestStats {
+  totalRequests: number
+  approvedRequests: number
+  rejectedRequests: number
+  cancelledRequests: number
+}
+
+export interface AcademicRequestAdditionalInfo {
+  daysUntilSession?: number
+  studentAbsenceStats?: StudentAbsenceStats
+  previousRequests?: PreviousRequestStats
+}
+
 export interface AcademicStudentRequest extends StudentRequest {
   student: AcademicStudentInfo
   daysUntilSession?: number
   studentAbsenceRate?: number
+  additionalInfo?: AcademicRequestAdditionalInfo
 }
 
 export interface PendingRequestsSummary {
