@@ -164,6 +164,11 @@ const roleBasedNav = {
         icon: CalendarIcon,
       },
       {
+        title: "Yêu cầu của tôi",
+        url: "/teacher/requests",
+        icon: ClipboardCheckIcon,
+      },
+      {
         title: "Bài tập",
         url: "/teacher/assignments",
         icon: FileTextIcon,
@@ -271,8 +276,13 @@ const roleBasedNav = {
         icon: FileTextIcon,
       },
       {
-        title: "Quản lý yêu cầu",
+        title: "Quản lý yêu cầu học viên",
         url: "/academic/requests",
+        icon: ClipboardCheckIcon,
+      },
+      {
+        title: "Quản lý yêu cầu giáo viên",
+        url: "/academic/teacher-requests",
         icon: ClipboardCheckIcon,
       },
     ],
