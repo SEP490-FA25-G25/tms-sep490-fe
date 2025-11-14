@@ -187,8 +187,10 @@ export interface StudentRequest {
   requestType: RequestType
   status: RequestStatus
   currentClass: ClassSummary
+  targetClass?: ClassSummary | null // For TRANSFER requests only
   targetSession: SessionSummary
   makeupSession?: (SessionSummary & { classInfo?: ClassMeta }) | null
+  effectiveDate?: string | null // For TRANSFER requests - date when transfer takes effect
   requestReason: string
   note: string | null
   submittedAt: string

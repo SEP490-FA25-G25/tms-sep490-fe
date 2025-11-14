@@ -16,6 +16,7 @@ import {
   useSubmitAbsenceOnBehalfMutation,
   type StudentSearchResult,
   type TransferOption,
+  type SessionModality,
 } from '@/store/services/studentRequestApi'
 import type { TransferEligibility, TransferRequestResponse } from '@/types/academicTransfer'
 import type { DayOfWeek, SessionSummaryDTO } from '@/store/services/studentScheduleApi'
@@ -79,6 +80,19 @@ const WEEK_DAY_LABELS: Record<DayOfWeek, string> = {
   FRIDAY: 'Thứ 6',
   SATURDAY: 'Thứ 7',
   SUNDAY: 'Chủ nhật',
+}
+
+const MAKEUP_LOOKBACK_WEEKS = 2
+
+function useDebouncedValue<T>(value: T, delay = 800) {
+  const [debouncedValue, setDebouncedValue] = useState(value)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay)
+    return () => clearTimeout(timer)
+  }, [value, delay])
+
+  return debouncedValue
 }
 type HistoryFilter = 'ALL' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
 
@@ -1100,11 +1114,13 @@ function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
   const [reason, setReason] = useState('')
   const [note, setNote] = useState('')
 
-  const shouldSearchStudents = studentSearch.trim().length >= 2
+  const debouncedStudentSearch = useDebouncedValue(studentSearch)
+  const trimmedSearch = debouncedStudentSearch.trim()
+  const shouldSearchStudents = trimmedSearch.length >= 2
   const studentQueryResult = useSearchStudentsQuery(
     shouldSearchStudents
       ? {
-          search: studentSearch.trim(),
+          search: trimmedSearch,
           size: 5,
           page: 0,
         }
@@ -1539,18 +1555,20 @@ interface MakeupFlowProps {
 }
 
 function MakeupFlow({ onSuccess }: MakeupFlowProps) {
-  const [weeksBack, setWeeksBack] = useState(4)
-  const [selectedStudent, setSelectedStudent] = useState<StudentSearchResult | null>(null)
   const [studentSearch, setStudentSearch] = useState('')
+  const [selectedStudent, setSelectedStudent] = useState<StudentSearchResult | null>(null)
   const [selectedMissedId, setSelectedMissedId] = useState<number | null>(null)
   const [selectedMakeupId, setSelectedMakeupId] = useState<number | null>(null)
-  const [onBehalfReason, setOnBehalfReason] = useState('')
-  const [onBehalfNote, setOnBehalfNote] = useState('')
+  const [excludeRequested, setExcludeRequested] = useState(true)
+  const [reason, setReason] = useState('')
+  const [note, setNote] = useState('')
 
-  const shouldSearchStudents = studentSearch.trim().length >= 2
+  const debouncedStudentSearch = useDebouncedValue(studentSearch)
+  const trimmedSearch = debouncedStudentSearch.trim()
+  const shouldSearchStudents = trimmedSearch.length >= 2
   const studentQueryResult = useSearchStudentsQuery(
     shouldSearchStudents
-      ? { search: studentSearch.trim(), size: 5, page: 0 }
+      ? { search: trimmedSearch, size: 5, page: 0 }
       : skipToken,
     { skip: !shouldSearchStudents }
   )
@@ -1560,18 +1578,21 @@ function MakeupFlow({ onSuccess }: MakeupFlowProps) {
 
   const {
     data: missedResponse,
-    isFetching: isLoadingStudentMissed,
+    isFetching: isLoadingMissed,
   } = useGetStudentMissedSessionsQuery(
     selectedStudent
-      ? { studentId: selectedStudent.id, weeksBack, excludeRequested: true }
+      ? { studentId: selectedStudent.id, weeksBack: MAKEUP_LOOKBACK_WEEKS, excludeRequested }
       : skipToken,
     { skip: !selectedStudent }
   )
 
-  const missedSessions = useMemo(
-    () => missedResponse?.data?.missedSessions ?? missedResponse?.data?.sessions ?? [],
-    [missedResponse?.data]
-  )
+  const missedSessions = useMemo(() => {
+    const sessions = missedResponse?.data?.missedSessions ?? missedResponse?.data?.sessions ?? []
+    if (excludeRequested) {
+      return sessions.filter((session) => !session.hasExistingMakeupRequest)
+    }
+    return sessions
+  }, [missedResponse?.data, excludeRequested])
   const selectedMissedSession = useMemo(
     () => missedSessions.find((session) => session.sessionId === selectedMissedId),
     [missedSessions, selectedMissedId]
@@ -1593,215 +1614,459 @@ function MakeupFlow({ onSuccess }: MakeupFlowProps) {
     [makeupOptions, selectedMakeupId]
   )
 
-  const [createOnBehalf, { isLoading: isCreatingOnBehalf }] = useCreateOnBehalfRequestMutation()
-
-  const canSubmitOnBehalf =
-    selectedStudent &&
-    selectedMissedSession &&
-    selectedMakeupOption &&
-    onBehalfReason.trim().length >= 10
-
-  const handleCreateOnBehalf = async () => {
-    if (!canSubmitOnBehalf) return
-
-    try {
-      await createOnBehalf({
-        requestType: 'MAKEUP',
-        currentClassId: selectedMissedSession.classInfo.classId,
-        targetSessionId: selectedMissedId!,
-        makeupSessionId: selectedMakeupId!,
-        requestReason: onBehalfReason.trim(),
-        note: onBehalfNote.trim() || undefined,
-        studentId: selectedStudent.id,
-      }).unwrap()
-
-      onSuccess()
-    } catch (error: unknown) {
-      const errorMessage =
-        (error as { data?: { message?: string } })?.data?.message ?? 'Không thể tạo yêu cầu thay học viên.'
-      console.error(errorMessage)
-    }
-  }
+  const [createOnBehalf, { isLoading: isCreating }] = useCreateOnBehalfRequestMutation()
 
   useEffect(() => {
     setSelectedMissedId(null)
     setSelectedMakeupId(null)
+    setReason('')
+    setNote('')
   }, [selectedStudent])
 
+  useEffect(() => {
+    if (!selectedMissedSession) {
+      setSelectedMakeupId(null)
+    }
+  }, [selectedMissedSession])
+
+  const formatModality = (modality?: SessionModality) => {
+    switch (modality) {
+      case 'ONLINE':
+        return 'Trực tuyến'
+      case 'HYBRID':
+        return 'Kết hợp'
+      default:
+        return 'Tại trung tâm'
+    }
+  }
+
+  const getCapacityText = (option: { availableSlots?: number | null; maxCapacity?: number | null; classInfo?: { availableSlots?: number | null; maxCapacity?: number | null } }) => {
+    const available = option.availableSlots ?? option.classInfo?.availableSlots
+    const max = option.maxCapacity ?? option.classInfo?.maxCapacity
+    const hasAvailable = typeof available === 'number'
+    const hasMax = typeof max === 'number'
+    if (hasAvailable && hasMax) {
+      return `${available}/${max} chỗ trống`
+    }
+    if (hasAvailable) {
+      return `Còn ${available} chỗ trống`
+    }
+    if (hasMax) {
+      return `Tối đa ${max} chỗ`
+    }
+    return 'Sức chứa đang cập nhật'
+  }
+
+  const getClassDisplayName = (classInfo?: { className?: string; name?: string }) =>
+    classInfo?.className ?? classInfo?.name ?? 'Tên lớp đang cập nhật'
+
+  const getClassId = (classInfo?: { classId?: number; id?: number }) => classInfo?.classId ?? classInfo?.id ?? null
+
+  const getPriorityBadge = (priority: string) => {
+    switch (priority) {
+      case 'HIGH':
+        return <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20">Ưu tiên cao</Badge>
+      case 'MEDIUM':
+        return <Badge className="bg-amber-500/10 text-amber-600 hover:bg-amber-500/20">Ưu tiên TB</Badge>
+      case 'LOW':
+        return <Badge className="bg-slate-500/10 text-slate-600 hover:bg-slate-500/20">Ưu tiên thấp</Badge>
+      default:
+        return null
+    }
+  }
+
+  const canSubmit =
+    !!selectedStudent && !!selectedMissedSession && !!selectedMakeupOption && reason.trim().length >= 10 && !isCreating
+
+  const handleSubmit = async () => {
+    if (!selectedStudent || !selectedMissedSession || !selectedMakeupOption) {
+      toast.error('Vui lòng chọn học viên, buổi vắng và buổi học bù phù hợp')
+      return
+    }
+    if (reason.trim().length < 10) {
+      toast.error('Lý do học bù phải có tối thiểu 10 ký tự')
+      return
+    }
+    const currentClassId = getClassId(selectedMissedSession.classInfo)
+    if (!currentClassId) {
+      toast.error('Không thể xác định lớp của buổi đã chọn')
+      return
+    }
+    try {
+      await createOnBehalf({
+        requestType: 'MAKEUP',
+        currentClassId,
+        targetSessionId: selectedMissedSession.sessionId,
+        makeupSessionId: selectedMakeupOption.sessionId,
+        requestReason: reason.trim(),
+        note: note.trim() || undefined,
+        studentId: selectedStudent.id,
+      }).unwrap()
+      onSuccess()
+    } catch (error: unknown) {
+      const errorMessage =
+        (error as { data?: { message?: string } })?.data?.message ?? 'Không thể tạo yêu cầu thay học viên.'
+      toast.error(errorMessage)
+    }
+  }
+
+  const handleReset = () => {
+    setSelectedMissedId(null)
+    setSelectedMakeupId(null)
+    setReason('')
+    setNote('')
+  }
+
+  const step1Complete = !!selectedMissedSession
+  const step2Complete = !!selectedMakeupOption
+  const step3Complete = step2Complete && reason.trim().length >= 10
+
   return (
-    <div className="space-y-4">
-      {/* Student Search Section */}
-      <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <div className="space-y-3 rounded-lg border p-4">
-          <label className="text-sm font-medium">Tìm học viên</label>
-          <Input
-            placeholder="Nhập tên hoặc mã học viên"
-            value={studentSearch}
-            onChange={(event) => setStudentSearch(event.target.value)}
-          />
-          {studentSearch.trim().length > 0 && (
-            <div className="space-y-2">
-              {isSearchingStudents ? (
-                <Skeleton className="h-10 w-full rounded-lg" />
-              ) : studentOptions.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Không tìm thấy học viên phù hợp.</p>
-              ) : (
-                <ul className="space-y-1">
-                  {studentOptions.map((student) => (
-                    <li key={student.id}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedStudent(student)
-                          setStudentSearch('')
-                          setSelectedMissedId(null)
-                          setSelectedMakeupId(null)
-                        }}
-                        className="flex w-full flex-col rounded-lg border p-3 text-left text-sm hover:border-primary/40"
-                      >
-                        <span className="font-medium">{student.fullName}</span>
-                        <span className="text-xs text-muted-foreground">{student.studentCode} · {student.email}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
+    <div className="space-y-5">
+      <div className="space-y-3 rounded-2xl bg-muted/30 p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Bước 1</p>
+            <h3 className="text-base font-semibold">Chọn học viên</h3>
+          </div>
           {selectedStudent && (
-            <div className="rounded-lg bg-muted/50 p-3 text-sm">
-              <p className="font-semibold">{selectedStudent.fullName}</p>
-              <p className="text-muted-foreground">{selectedStudent.studentCode}</p>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mt-2"
-                onClick={() => {
-                  setSelectedStudent(null)
-                  setSelectedMissedId(null)
-                  setSelectedMakeupId(null)
-                }}
-              >
-                Chọn học viên khác
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSelectedStudent(null)
+                setStudentSearch('')
+                handleReset()
+              }}
+            >
+              Chọn học viên khác
+            </Button>
           )}
         </div>
+        <Input
+          placeholder="Nhập tên hoặc mã học viên"
+          value={studentSearch}
+          onChange={(event) => setStudentSearch(event.target.value)}
+        />
+        {studentSearch.trim().length > 0 && (
+          <div className="max-h-48 space-y-2 overflow-y-auto rounded-xl bg-background p-3 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
+            {isSearchingStudents ? (
+              <Skeleton className="h-10 w-full rounded-lg" />
+            ) : studentOptions.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Không tìm thấy học viên phù hợp.</p>
+            ) : (
+              <ul className="space-y-1">
+                {studentOptions.map((student) => (
+                  <li key={student.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedStudent(student)
+                        setStudentSearch('')
+                      }}
+                      className={cn(
+                        'w-full rounded-lg border px-3 py-2 text-left text-sm transition hover:border-primary/60 hover:bg-primary/5',
+                        selectedStudent?.id === student.id && 'border-primary bg-primary/5'
+                      )}
+                    >
+                      <p className="font-semibold">
+                        {student.fullName}{' '}
+                        <span className="font-medium text-muted-foreground">({student.studentCode})</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {student.email} · {student.phone}
+                      </p>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+        {selectedStudent && (
+          <div className="rounded-xl border border-dashed bg-background/80 p-3 text-sm">
+            <p className="font-semibold">{selectedStudent.fullName}</p>
+            <p className="text-muted-foreground">{selectedStudent.studentCode}</p>
+            <p className="text-xs text-muted-foreground">
+              {selectedStudent.email} · {selectedStudent.phone}
+            </p>
+          </div>
+        )}
+      </div>
 
-        <div className="space-y-4">
-          {selectedStudent && (
-            <>
-              <div className="flex flex-wrap items-center gap-3">
-                <Select value={weeksBack.toString()} onValueChange={(value) => setWeeksBack(Number(value))}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[2, 4, 6].map((week) => (
-                      <SelectItem key={week} value={week.toString()}>
-                        {week} tuần
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+      {!selectedStudent ? (
+        <div className="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">
+          Chọn học viên để xem lịch sử vắng và gợi ý buổi học bù.
+        </div>
+      ) : (
+        <div className="space-y-4 rounded-2xl border p-4">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Bước 2</p>
+            <h3 className="text-base font-semibold">Chọn buổi học bù</h3>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <div
+                  className={cn(
+                    'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
+                    step1Complete ? 'bg-primary text-primary-foreground' : 'border-2 border-primary text-primary'
+                  )}
+                >
+                  {step1Complete ? '✓' : '1'}
+                </div>
+                <h3 className="text-sm font-semibold">Chọn buổi đã vắng</h3>
               </div>
 
-              <div className="space-y-3">
-                <p className="text-sm font-semibold">Chọn buổi đã vắng ({missedSessions.length})</p>
-                {isLoadingStudentMissed ? (
-                  <Skeleton className="h-24 w-full rounded-lg" />
-                ) : missedSessions.length === 0 ? (
-                  <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                    Không tìm thấy buổi vắng nào trong {weeksBack} tuần gần nhất.
+              <div className="pl-8">
+                {!step1Complete ? (
+                  <>
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs text-muted-foreground">
+                        Hiển thị buổi vắng trong {MAKEUP_LOOKBACK_WEEKS} tuần gần nhất
+                      </p>
+                      <Button
+                        variant={excludeRequested ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setExcludeRequested((prev) => !prev)}
+                        className="h-8 text-xs"
+                      >
+                        {excludeRequested ? 'Ẩn đã gửi' : 'Hiện tất cả'}
+                      </Button>
+                    </div>
+
+                    {isLoadingMissed ? (
+                      <div className="space-y-2">
+                        {[...Array(2)].map((_, index) => (
+                          <Skeleton key={index} className="h-14 w-full rounded-lg" />
+                        ))}
+                      </div>
+                    ) : missedSessions.length === 0 ? (
+                      <div className="rounded-lg border border-dashed py-4 text-center text-sm text-muted-foreground">
+                        Không có buổi vắng hợp lệ trong {MAKEUP_LOOKBACK_WEEKS} tuần gần nhất
+                      </div>
+                    ) : (
+                      <ul className="space-y-2">
+                        {missedSessions.map((session) => (
+                          <li key={session.sessionId}>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedMissedId(session.sessionId)}
+                              className="w-full rounded-lg border border-border/60 px-3 py-2 text-left transition hover:border-primary/60 hover:bg-primary/5"
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="space-y-1">
+                                  <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                                    <span>{format(parseISO(session.date), 'EEEE, dd/MM', { locale: vi })}</span>
+                                    <span className="text-muted-foreground">·</span>
+                                    <span>{session.classInfo.classCode}</span>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">{getClassDisplayName(session.classInfo)}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Buổi {session.courseSessionNumber}: {session.courseSessionTitle}
+                                  </p>
+                                  {typeof session.daysAgo === 'number' && (
+                                    <p className="text-[11px] text-muted-foreground">
+                                      {session.daysAgo === 0
+                                        ? 'Vắng hôm nay'
+                                        : session.daysAgo === 1
+                                          ? 'Cách đây 1 ngày'
+                                          : `Cách đây ${session.daysAgo} ngày`}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex flex-col items-end gap-1">
+                                  <Badge
+                                    className={cn(
+                                      'border-0 text-xs',
+                                      session.isExcusedAbsence
+                                        ? 'bg-emerald-500/10 text-emerald-600'
+                                        : 'bg-amber-500/10 text-amber-600'
+                                    )}
+                                  >
+                                    {session.isExcusedAbsence ? 'Đã xin nghỉ' : 'Vắng không phép'}
+                                  </Badge>
+                                  {session.hasExistingMakeupRequest && (
+                                    <Badge variant="outline" className="text-xs">
+                                      Đã gửi
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
+                    <div>
+                      <p className="text-sm font-medium">
+                        {format(parseISO(selectedMissedSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })} ·{' '}
+                        {selectedMissedSession.classInfo.classCode}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{getClassDisplayName(selectedMissedSession.classInfo)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Buổi {selectedMissedSession.courseSessionNumber}: {selectedMissedSession.courseSessionTitle}
+                      </p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                        {typeof selectedMissedSession.daysAgo === 'number' && (
+                          <span>
+                            {selectedMissedSession.daysAgo === 0
+                              ? 'Vắng hôm nay'
+                              : selectedMissedSession.daysAgo === 1
+                                ? 'Cách đây 1 ngày'
+                                : `Cách đây ${selectedMissedSession.daysAgo} ngày`}
+                          </span>
+                        )}
+                        <Badge
+                          className={cn(
+                            'border-0 px-2 py-0 text-[11px]',
+                            selectedMissedSession.isExcusedAbsence
+                              ? 'bg-emerald-500/10 text-emerald-600'
+                              : 'bg-amber-500/10 text-amber-600'
+                          )}
+                        >
+                          {selectedMissedSession.isExcusedAbsence ? 'Đã xin nghỉ' : 'Vắng không phép'}
+                        </Badge>
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedMissedId(null)}>
+                      Thay đổi
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <div
+                  className={cn(
+                    'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
+                    step2Complete ? 'bg-primary text-primary-foreground' : 'border-2 border-primary text-primary'
+                  )}
+                >
+                  {step2Complete ? '✓' : '2'}
+                </div>
+                <h3 className="text-sm font-semibold">Chọn buổi học bù</h3>
+              </div>
+              <div className="pl-8">
+                {!selectedMissedSession ? (
+                  <div className="rounded-lg border border-dashed py-4 text-center text-sm text-muted-foreground">
+                    Chọn buổi đã vắng trước để xem gợi ý học bù.
+                  </div>
+                ) : isLoadingStudentOptions ? (
+                  <div className="space-y-2">
+                    {[...Array(2)].map((_, index) => (
+                      <Skeleton key={index} className="h-16 w-full rounded-lg" />
+                    ))}
+                  </div>
+                ) : makeupOptions.length === 0 ? (
+                  <div className="rounded-lg border border-dashed py-4 text-center text-sm text-muted-foreground">
+                    Không có buổi học bù khả dụng cho buổi này.
                   </div>
                 ) : (
                   <ul className="space-y-2">
-                    {missedSessions.map((session) => (
-                      <li key={session.sessionId}>
+                    {makeupOptions.map((option) => (
+                      <li key={option.sessionId}>
                         <button
                           type="button"
-                          onClick={() => setSelectedMissedId(session.sessionId)}
+                          onClick={() => setSelectedMakeupId(option.sessionId)}
                           className={cn(
-                            'w-full rounded-lg border p-3 text-left transition hover:border-primary/40',
-                            selectedMissedId === session.sessionId && 'border-primary bg-primary/5'
+                            'w-full rounded-lg border border-border/60 px-3 py-2 text-left transition hover:border-primary/60 hover:bg-primary/5',
+                            selectedMakeupId === option.sessionId && 'border-primary bg-primary/5'
                           )}
                         >
-                          <p className="text-sm font-semibold">
-                            {format(parseISO(session.date), 'dd/MM/yyyy', { locale: vi })} · Buổi {session.courseSessionNumber}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {session.classInfo.classCode} · {session.timeSlotInfo.startTime} - {session.timeSlotInfo.endTime}
-                          </p>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="space-y-1">
+                              <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                                <span>{format(parseISO(option.date), 'EEEE, dd/MM', { locale: vi })}</span>
+                                <span className="text-muted-foreground">·</span>
+                                <span>{option.classInfo.classCode}</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground">{getClassDisplayName(option.classInfo)}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {option.timeSlotInfo.startTime} - {option.timeSlotInfo.endTime} · {formatModality(option.classInfo.modality)}
+                              </p>
+                              <p className="text-xs font-medium text-primary">{getCapacityText(option)}</p>
+                              {option.warnings?.length ? (
+                                <ul className="text-[11px] text-amber-600">
+                                  {option.warnings.map((warning) => (
+                                    <li key={warning}>• {warning}</li>
+                                  ))}
+                                </ul>
+                              ) : null}
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                              {getPriorityBadge(option.matchScore.priority)}
+                              {option.conflict && (
+                                <Badge variant="destructive" className="text-xs">
+                                  Trùng lịch
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
                         </button>
                       </li>
                     ))}
                   </ul>
                 )}
               </div>
+            </div>
 
-              {selectedMissedSession && (
-                <div className="space-y-3">
-                  <p className="text-sm font-semibold">Gợi ý buổi học bù</p>
-                  {isLoadingStudentOptions ? (
-                    <Skeleton className="h-24 w-full rounded-lg" />
-                  ) : makeupOptions.length === 0 ? (
-                    <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                      Không có buổi học bù khả dụng cho buổi này.
-                    </div>
-                  ) : (
-                    <ul className="space-y-2">
-                      {makeupOptions.map((option) => (
-                        <li key={option.sessionId}>
-                          <button
-                            type="button"
-                            onClick={() => setSelectedMakeupId((prev) => (prev === option.sessionId ? null : option.sessionId))}
-                            className={cn(
-                              'w-full rounded-lg border p-3 text-left transition hover:border-primary/40',
-                              selectedMakeupId === option.sessionId && 'border-primary bg-primary/5'
-                            )}
-                          >
-                            <p className="text-sm font-semibold">
-                              {format(parseISO(option.date), 'dd/MM/yyyy', { locale: vi })} · {option.classInfo.classCode}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {option.timeSlotInfo.startTime} - {option.timeSlotInfo.endTime} · {option.availableSlots}/{option.maxCapacity} chỗ
-                            </p>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <div
+                  className={cn(
+                    'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
+                    step3Complete ? 'bg-primary text-primary-foreground' : 'border-2 border-primary text-primary'
                   )}
+                >
+                  {step3Complete ? '✓' : '3'}
                 </div>
-              )}
+                <h3 className="text-sm font-semibold">Lý do & ghi chú</h3>
+              </div>
 
-              <div className="space-y-3 rounded-lg border p-4">
-                <label className="text-sm font-medium" htmlFor="onbehalf-reason">
-                  Lý do học bù<span className="text-rose-500">*</span>
-                </label>
+              <div className="space-y-1.5 pl-8">
                 <Textarea
-                  id="onbehalf-reason"
+                  placeholder="Chia sẻ lý do cụ thể để hệ thống duyệt nhanh hơn..."
+                  value={reason}
+                  onChange={(event) => setReason(event.target.value)}
                   rows={4}
-                  placeholder="Ví dụ: Nghỉ theo quyết định chuyên môn, yêu cầu từ phụ huynh..."
-                  value={onBehalfReason}
-                  onChange={(event) => setOnBehalfReason(event.target.value)}
+                  className="resize-none text-sm"
                   disabled={!selectedMakeupOption}
                 />
+                <p className="text-xs text-muted-foreground">Tối thiểu 10 ký tự · {reason.trim().length}/10</p>
                 <Input
                   placeholder="Ghi chú (tuỳ chọn)"
-                  value={onBehalfNote}
-                  onChange={(event) => setOnBehalfNote(event.target.value)}
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  className="text-sm"
                   disabled={!selectedMakeupOption}
                 />
-                <Button onClick={handleCreateOnBehalf} disabled={!canSubmitOnBehalf} className="w-full">
-                  {isCreatingOnBehalf ? 'Đang tạo yêu cầu...' : 'Tạo & tự động duyệt'}
-                </Button>
+
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={handleSubmit} disabled={!canSubmit} size="sm">
+                    {isCreating ? 'Đang tạo...' : 'Tạo & tự động duyệt'}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleReset}>
+                    Làm lại
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Yêu cầu được duyệt ngay và hệ thống sẽ cập nhật lịch học cho học viên.
+                </p>
               </div>
-            </>
-          )}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
+
 }
 
 // Inline AA Transfer Wizard Component
