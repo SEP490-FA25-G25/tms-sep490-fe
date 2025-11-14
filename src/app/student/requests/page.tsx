@@ -34,6 +34,7 @@ import {
   type StudentRequest,
   type RequestStatus,
   type RequestType,
+  type SessionModality,
 } from '@/store/services/studentRequestApi'
 import {
   type DayOfWeek,
@@ -79,8 +80,8 @@ const WEEK_DAY_LABELS: Record<DayOfWeek, string> = {
 }
 
 type TypeFilter = 'ALL' | RequestType
-
 type StatusFilter = 'ALL' | RequestStatus
+const MAKEUP_LOOKBACK_WEEKS = 2
 export default function StudentRequestsPage() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('ALL')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
@@ -660,7 +661,6 @@ function AbsenceFlow({ onSuccess }: FlowProps) {
   const selectedSession = allSessions.find((session) => session.sessionId === selectedSessionId) ?? null
   const selectedSessionDetail = sessionDetailResponse?.data ?? null
   const selectedClassId = selectedSessionDetail?.classInfo.classId ?? null
-  const hasSelectableSessions = allSessions.some((session) => session.isSelectable)
   const weekRangeLabel = weekData
     ? `${format(parseISO(weekData.weekStart), 'dd/MM', { locale: vi })} - ${format(parseISO(weekData.weekEnd), 'dd/MM', { locale: vi })}`
     : 'Đang tải tuần...'
@@ -857,12 +857,6 @@ function AbsenceFlow({ onSuccess }: FlowProps) {
                       Tuần này chưa có buổi học nào trong lịch cá nhân.
                     </div>
                   )}
-
-                  {!hasSelectableSessions && displayedGroups.length > 0 && (
-                    <div className="rounded-xl border border-dashed border-amber-200 bg-amber-50/60 px-3 py-3 text-sm text-amber-800">
-                      Tuần này chưa có buổi nào đủ điều kiện để xin nghỉ. Hãy chuyển sang tuần khác.
-                    </div>
-                  )}
                 </div>
               )}
             </div>
@@ -961,7 +955,6 @@ function AbsenceFlow({ onSuccess }: FlowProps) {
   )
 }
 function MakeupFlow({ onSuccess }: FlowProps) {
-  const [weeksBack, setWeeksBack] = useState(4)
   const [excludeRequested, setExcludeRequested] = useState(true)
   const [selectedMissedId, setSelectedMissedId] = useState<number | null>(null)
   const [selectedMakeupId, setSelectedMakeupId] = useState<number | null>(null)
@@ -969,13 +962,13 @@ function MakeupFlow({ onSuccess }: FlowProps) {
   const [note, setNote] = useState('')
 
   const { data: missedResponse, isFetching: isLoadingMissed } = useGetMissedSessionsQuery({
-    weeksBack,
+    weeksBack: MAKEUP_LOOKBACK_WEEKS,
     excludeRequested,
   })
 
   const missedSessions = useMemo(
-    () => missedResponse?.data?.missedSessions ?? [],
-    [missedResponse?.data?.missedSessions]
+    () => missedResponse?.data?.missedSessions ?? missedResponse?.data?.sessions ?? [],
+    [missedResponse?.data]
   )
   const selectedMissedSession = useMemo(
     () => missedSessions.find((session) => session.sessionId === selectedMissedId) ?? null,
@@ -997,9 +990,47 @@ function MakeupFlow({ onSuccess }: FlowProps) {
 
   const [submitRequest, { isLoading }] = useSubmitStudentRequestMutation()
 
+  const getClassId = (classInfo?: { classId?: number; id?: number }) =>
+    classInfo?.classId ?? classInfo?.id ?? null
+
+  const formatModality = (modality?: SessionModality) => {
+    switch (modality) {
+      case 'ONLINE':
+        return 'Trực tuyến'
+      case 'HYBRID':
+        return 'Kết hợp'
+      default:
+        return 'Tại trung tâm'
+    }
+  }
+
+  const getCapacityText = (available?: number | null, max?: number | null) => {
+    const hasAvailable = typeof available === 'number'
+    const hasMax = typeof max === 'number'
+    if (hasAvailable && hasMax) {
+      return `${available}/${max} chỗ trống`
+    }
+    if (hasAvailable) {
+      return `Còn ${available} chỗ trống`
+    }
+    if (hasMax) {
+      return `Tối đa ${max} chỗ`
+    }
+    return 'Sức chứa đang cập nhật'
+  }
+
+  const getClassDisplayName = (classInfo?: { className?: string; name?: string }) =>
+    classInfo?.className ?? classInfo?.name ?? 'Tên lớp đang cập nhật'
+
   const handleSubmit = async () => {
     if (!selectedMissedSession || !selectedMakeupOption) {
       toast.error('Vui lòng chọn đủ buổi đã vắng và buổi học bù')
+      return
+    }
+
+    const currentClassId = getClassId(selectedMissedSession.classInfo)
+    if (!currentClassId) {
+      toast.error('Không thể xác định lớp của buổi đã chọn. Vui lòng thử lại.')
       return
     }
 
@@ -1011,7 +1042,7 @@ function MakeupFlow({ onSuccess }: FlowProps) {
     try {
       await submitRequest({
         requestType: 'MAKEUP',
-        currentClassId: selectedMissedSession.classInfo.classId,
+        currentClassId,
         targetSessionId: selectedMissedSession.sessionId,
         makeupSessionId: selectedMakeupOption.sessionId,
         requestReason: reason.trim(),
@@ -1067,24 +1098,15 @@ function MakeupFlow({ onSuccess }: FlowProps) {
         <div className="pl-8">
           {!step1Complete ? (
             <>
-              <div className="mb-2 flex items-center gap-2">
-                <Select value={weeksBack.toString()} onValueChange={(value) => setWeeksBack(Number(value))}>
-                  <SelectTrigger className="h-8 w-[110px] text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[2, 4, 6].map((week) => (
-                      <SelectItem key={week} value={week.toString()}>
-                        {week} tuần
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  variant={excludeRequested ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setExcludeRequested((prev) => !prev)}
-                  className="h-8 text-xs"
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs text-muted-foreground">
+                    Hiển thị buổi vắng trong {MAKEUP_LOOKBACK_WEEKS} tuần gần nhất
+                  </p>
+                  <Button
+                    variant={excludeRequested ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setExcludeRequested((prev) => !prev)}
+                    className="h-8 text-xs"
                 >
                   {excludeRequested ? 'Ẩn đã gửi' : 'Hiện tất cả'}
                 </Button>
@@ -1098,7 +1120,7 @@ function MakeupFlow({ onSuccess }: FlowProps) {
                 </div>
               ) : missedSessions.length === 0 ? (
                 <div className="rounded-lg border border-dashed py-4 text-center text-sm text-muted-foreground">
-                  Không có buổi vắng hợp lệ trong {weeksBack} tuần
+                  Không có buổi vắng hợp lệ trong {MAKEUP_LOOKBACK_WEEKS} tuần gần nhất
                 </div>
               ) : (
                 <ul className="space-y-2">
@@ -1109,20 +1131,44 @@ function MakeupFlow({ onSuccess }: FlowProps) {
                         onClick={() => setSelectedMissedId(session.sessionId)}
                         className="w-full rounded-lg border border-border/60 px-3 py-2 text-left transition hover:border-primary/60 hover:bg-primary/5"
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <div>
-                            <p className="text-sm font-medium">
-                              {format(parseISO(session.date), 'dd/MM', { locale: vi })} · {session.classInfo.classCode}
-                            </p>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                              <span>{format(parseISO(session.date), 'dd/MM', { locale: vi })}</span>
+                              <span className="text-muted-foreground">·</span>
+                              <span>{session.classInfo.classCode}</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">{getClassDisplayName(session.classInfo)}</p>
                             <p className="text-xs text-muted-foreground">
                               Buổi {session.courseSessionNumber}: {session.courseSessionTitle}
                             </p>
+                            {typeof session.daysAgo === 'number' && (
+                              <p className="text-[11px] text-muted-foreground">
+                                {session.daysAgo === 0
+                                  ? 'Vắng hôm nay'
+                                  : session.daysAgo === 1
+                                    ? 'Cách đây 1 ngày'
+                                    : `Cách đây ${session.daysAgo} ngày`}
+                              </p>
+                            )}
                           </div>
-                          {session.hasExistingMakeupRequest && (
-                            <Badge variant="outline" className="text-xs">
-                              Đã gửi
+                          <div className="flex flex-col items-end gap-1">
+                            <Badge
+                              className={cn(
+                                'border-0 text-xs',
+                                session.isExcusedAbsence
+                                  ? 'bg-emerald-500/10 text-emerald-600'
+                                  : 'bg-amber-500/10 text-amber-600'
+                              )}
+                            >
+                              {session.isExcusedAbsence ? 'Đã xin nghỉ' : 'Vắng không phép'}
                             </Badge>
-                          )}
+                            {session.hasExistingMakeupRequest && (
+                              <Badge variant="outline" className="text-xs">
+                                Đã gửi
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </button>
                     </li>
@@ -1137,9 +1183,31 @@ function MakeupFlow({ onSuccess }: FlowProps) {
                   {format(parseISO(selectedMissedSession.date), 'dd/MM/yyyy', { locale: vi })} ·{' '}
                   {selectedMissedSession.classInfo.classCode}
                 </p>
+                <p className="text-xs text-muted-foreground">{getClassDisplayName(selectedMissedSession.classInfo)}</p>
                 <p className="text-xs text-muted-foreground">
                   Buổi {selectedMissedSession.courseSessionNumber}: {selectedMissedSession.courseSessionTitle}
                 </p>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                  {typeof selectedMissedSession.daysAgo === 'number' && (
+                    <span>
+                      {selectedMissedSession.daysAgo === 0
+                        ? 'Vắng hôm nay'
+                        : selectedMissedSession.daysAgo === 1
+                          ? 'Cách đây 1 ngày'
+                          : `Cách đây ${selectedMissedSession.daysAgo} ngày`}
+                    </span>
+                  )}
+                  <Badge
+                    className={cn(
+                      'border-0 px-2 py-0 text-[11px]',
+                      selectedMissedSession.isExcusedAbsence
+                        ? 'bg-emerald-500/10 text-emerald-600'
+                        : 'bg-amber-500/10 text-amber-600'
+                    )}
+                  >
+                    {selectedMissedSession.isExcusedAbsence ? 'Đã xin nghỉ' : 'Vắng không phép'}
+                  </Badge>
+                </div>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setSelectedMissedId(null)}>
                 Thay đổi
@@ -1182,28 +1250,44 @@ function MakeupFlow({ onSuccess }: FlowProps) {
                 </div>
               ) : (
                 <ul className="space-y-2">
-                  {makeupOptions.map((option) => (
-                    <li key={option.sessionId}>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedMakeupId(option.sessionId)}
-                        className="w-full rounded-lg border border-border/60 px-3 py-2 text-left transition hover:border-primary/60 hover:bg-primary/5"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <p className="text-sm font-medium">
-                              {format(parseISO(option.date), 'dd/MM', { locale: vi })} · {option.classInfo.classCode}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {option.timeSlotInfo.startTime} - {option.timeSlotInfo.endTime} · {option.availableSlots}/
-                              {option.maxCapacity} chỗ
-                            </p>
+                  {makeupOptions.map((option) => {
+                    const availableSlots =
+                      option.availableSlots ??
+                      option.classInfo?.availableSlots ??
+                      null
+                    const maxCapacity =
+                      option.maxCapacity ??
+                      option.classInfo?.maxCapacity ??
+                      null
+                    const branchLabel = option.classInfo.branchName ?? 'Chi nhánh đang cập nhật'
+                    const modalityLabel = formatModality(option.classInfo.modality)
+                    return (
+                      <li key={option.sessionId}>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedMakeupId(option.sessionId)}
+                          className="w-full rounded-lg border border-border/60 px-3 py-2 text-left transition hover:border-primary/60 hover:bg-primary/5"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 space-y-1">
+                              <p className="text-sm font-medium">
+                                {format(parseISO(option.date), 'dd/MM', { locale: vi })} · {option.classInfo.classCode}
+                              </p>
+                              <p className="text-xs text-muted-foreground">{getClassDisplayName(option.classInfo)}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {branchLabel} · {modalityLabel}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {option.timeSlotInfo.startTime} - {option.timeSlotInfo.endTime} ·{' '}
+                                {getCapacityText(availableSlots, maxCapacity)}
+                              </p>
+                            </div>
+                            {getPriorityBadge(option.matchScore.priority)}
                           </div>
-                          {getPriorityBadge(option.matchScore.priority)}
-                        </div>
-                      </button>
-                    </li>
-                  ))}
+                        </button>
+                      </li>
+                    )
+                  })}
                 </ul>
               )
             ) : (
@@ -1213,8 +1297,21 @@ function MakeupFlow({ onSuccess }: FlowProps) {
                     {format(parseISO(selectedMakeupOption.date), 'dd/MM/yyyy', { locale: vi })} ·{' '}
                     {selectedMakeupOption.classInfo.classCode}
                   </p>
+                  <p className="text-xs text-muted-foreground">{getClassDisplayName(selectedMakeupOption.classInfo)}</p>
                   <p className="text-xs text-muted-foreground">
-                    {selectedMakeupOption.timeSlotInfo.startTime} - {selectedMakeupOption.timeSlotInfo.endTime}
+                    {selectedMakeupOption.classInfo.branchName ?? 'Chi nhánh đang cập nhật'} ·{' '}
+                    {formatModality(selectedMakeupOption.classInfo.modality)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedMakeupOption.timeSlotInfo.startTime} - {selectedMakeupOption.timeSlotInfo.endTime} ·{' '}
+                    {getCapacityText(
+                      selectedMakeupOption.availableSlots ??
+                        selectedMakeupOption.classInfo?.availableSlots ??
+                        null,
+                      selectedMakeupOption.maxCapacity ??
+                        selectedMakeupOption.classInfo?.maxCapacity ??
+                        null
+                    )}
                   </p>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => setSelectedMakeupId(null)}>

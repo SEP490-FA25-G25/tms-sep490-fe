@@ -110,12 +110,16 @@ export interface SessionSummary {
 }
 
 export interface ClassMeta {
+  id?: number
   classId: number
   classCode: string
   className?: string
+  name?: string
   branchId?: number
   branchName?: string
   modality?: SessionModality
+  availableSlots?: number
+  maxCapacity?: number
 }
 
 export interface TimeSlotInfo extends TimeSlotRange {
@@ -142,7 +146,8 @@ export interface MissedSession {
 export interface MissedSessionsResponse {
   studentId?: number
   totalCount: number
-  missedSessions: MissedSession[]
+  missedSessions?: MissedSession[]
+  sessions?: MissedSession[]
 }
 
 export type MakeupPriority = 'HIGH' | 'MEDIUM' | 'LOW'

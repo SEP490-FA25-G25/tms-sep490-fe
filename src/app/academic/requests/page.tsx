@@ -1128,8 +1128,6 @@ function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
   const displayedGroups = groupedSessions.filter((group) => group.sessions.length > 0)
   const allSessions = groupedSessions.flatMap((group) => group.sessions)
   const selectedSession = allSessions.find((session) => session.sessionId === selectedSessionId) ?? null
-  const hasSelectableSessions = allSessions.some((session) => session.isSelectable)
-
   const [submitAbsence, { isLoading: isSubmitting }] = useSubmitAbsenceOnBehalfMutation()
 
   const baseWeekStart = weekCursor ?? weekData?.weekStart ?? null
@@ -1446,12 +1444,6 @@ function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
                   </div>
                 ))
               )}
-
-              {!hasSelectableSessions && displayedGroups.length > 0 && (
-                <div className="rounded-xl border border-dashed border-amber-200 bg-amber-50/60 px-3 py-3 text-sm text-amber-800">
-                  Tuần này chưa có buổi nào đủ điều kiện để xin nghỉ. Hãy chuyển sang tuần khác.
-                </div>
-              )}
             </div>
           </div>
 
@@ -1547,7 +1539,10 @@ function MakeupFlow({ onSuccess }: MakeupFlowProps) {
     { skip: !selectedStudent }
   )
 
-  const missedSessions = useMemo(() => missedResponse?.data?.missedSessions ?? [], [missedResponse?.data?.missedSessions])
+  const missedSessions = useMemo(
+    () => missedResponse?.data?.missedSessions ?? missedResponse?.data?.sessions ?? [],
+    [missedResponse?.data]
+  )
   const selectedMissedSession = useMemo(
     () => missedSessions.find((session) => session.sessionId === selectedMissedId),
     [missedSessions, selectedMissedId]
