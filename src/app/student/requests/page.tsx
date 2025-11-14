@@ -604,9 +604,14 @@ function AbsenceFlow({ onSuccess }: FlowProps) {
   const {
     data: weeklyScheduleResponse,
     isFetching: isLoadingSchedule,
-  } = useGetWeeklyScheduleQuery(weekStart ?? '', {
-    skip: !weekStart,
-  })
+  } = useGetWeeklyScheduleQuery(
+    {
+      weekStart: weekStart ?? '',
+    },
+    {
+      skip: !weekStart,
+    }
+  )
   const { data: sessionDetailResponse, isFetching: isLoadingSessionDetail } = useGetSessionDetailQuery(
     selectedSessionId ?? skipToken,
     {

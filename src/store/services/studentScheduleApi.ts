@@ -30,8 +30,10 @@ export interface ApiResponse<T = unknown> {
 }
 
 export interface TimeSlotDTO {
-  timeSlotTemplateId: number
-  name: string
+  id?: number
+  timeSlotTemplateId?: number
+  name?: string
+  displayName?: string
   startTime: string
   endTime: string
 }
@@ -139,6 +141,11 @@ export interface SessionDetailDTO {
   makeupInfo: MakeupInfoDTO | null
 }
 
+export interface WeeklyScheduleQuery {
+  weekStart: string
+  classId?: number
+}
+
 const baseQuery = fetchBaseQuery({
   baseUrl: '/api/v1',
   prepareHeaders: (headers, { getState }) => {
@@ -221,12 +228,17 @@ export const studentScheduleApi = createApi({
         url: '/students/me/current-week',
       }),
     }),
-    getWeeklySchedule: builder.query<ApiResponse<WeeklyScheduleData>, string>({
-      query: (weekStart) => ({
+    getWeeklySchedule: builder.query<ApiResponse<WeeklyScheduleData>, WeeklyScheduleQuery>({
+      query: ({ weekStart, classId }) => ({
         url: '/students/me/schedule',
-        params: { weekStart },
+        params: {
+          weekStart,
+          ...(typeof classId === 'number' ? { classId } : {}),
+        },
       }),
-      providesTags: (_result, _error, weekStart) => [{ type: 'WeeklySchedule', id: weekStart }],
+      providesTags: (_result, _error, { weekStart, classId }) => [
+        { type: 'WeeklySchedule', id: classId ? `${weekStart}-${classId}` : weekStart },
+      ],
     }),
     getSessionDetail: builder.query<ApiResponse<SessionDetailDTO>, number>({
       query: (sessionId) => ({
