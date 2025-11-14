@@ -121,22 +121,21 @@ export default function TransferClassSelectionStep({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Current Class Info */}
-      <div className="rounded-2xl bg-muted/30 p-4">
-        <p className="text-xs uppercase text-muted-foreground">Từ lớp</p>
-        <p className="mt-1 text-sm text-foreground">
-          <span className="font-semibold">{currentEnrollment.classCode}</span> · {currentEnrollment.className}
-        </p>
+      <div className="space-y-2 border-b pb-4">
+        <p className="text-xs text-muted-foreground">Từ lớp</p>
+        <p className="font-semibold">{currentEnrollment.classCode}</p>
+        <p className="text-sm text-muted-foreground">{currentEnrollment.className}</p>
         <p className="text-sm text-muted-foreground">
-          {currentEnrollment.branchName} • {getModalityText(currentEnrollment.modality)}
+          {currentEnrollment.branchName} · {getModalityText(currentEnrollment.modality)}
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">Chỉ hiển thị lớp cùng cơ sở và cùng hình thức để đảm bảo tự duyệt trong 4-8 giờ.</p>
+        <p className="text-xs text-muted-foreground">Chỉ hiển thị lớp cùng cơ sở và hình thức để tự duyệt trong 4-8 giờ</p>
       </div>
 
       {/* Available Classes Header */}
       <div className="space-y-1">
-        <h3 className="font-medium">Chọn lớp đích:</h3>
+        <h3 className="font-medium">Chọn lớp đích</h3>
         <p className="text-sm text-muted-foreground">Chỉ hiển thị lớp cùng cơ sở và hình thức học</p>
       </div>
 
@@ -144,7 +143,6 @@ export default function TransferClassSelectionStep({
       <div className="space-y-3">
         {availableClasses.map((classOption) => {
           const { severity, missed, recommendation } = resolveSeverity(classOption)
-          const capacityBadge = getCapacityBadge(classOption.availableSlots)
           const scheduleLine = buildScheduleLine(classOption)
           const enrolledCount = classOption.enrolledCount ?? classOption.currentEnrollment ?? 0
           const startDate = classOption.startDate ?? classOption.scheduleInfo?.split(' to ')?.[0]
@@ -155,41 +153,38 @@ export default function TransferClassSelectionStep({
               key={classOption.classId}
               type="button"
               className={cn(
-                'w-full rounded-2xl border border-transparent bg-white/80 p-4 text-left shadow-sm ring-1 ring-muted/40 transition hover:ring-primary/40',
-                selectedClass?.classId === classOption.classId && 'ring-2 ring-primary'
+                'w-full rounded-lg border p-4 text-left transition',
+                'hover:border-primary/50 hover:bg-muted/30',
+                selectedClass?.classId === classOption.classId && 'border-primary bg-primary/5'
               )}
               onClick={() => handleSelectClass(classOption)}
               disabled={!classOption.canTransfer}
             >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-foreground">{classOption.classCode}</p>
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <p className="font-semibold">{classOption.classCode}</p>
                   <p className="text-sm text-muted-foreground">{classOption.className}</p>
                 </div>
-                {capacityBadge}
+                {classOption.availableSlots <= 0 && (
+                  <span className="text-xs font-medium text-rose-600">Hết chỗ</span>
+                )}
+                {classOption.availableSlots > 0 && classOption.availableSlots < 3 && (
+                  <span className="text-xs font-medium text-amber-600">Còn {classOption.availableSlots} chỗ</span>
+                )}
               </div>
 
-              <div className="mt-3 grid gap-3 text-sm text-muted-foreground md:grid-cols-3">
-                <span className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  {scheduleLine}
-                </span>
-                <span className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  {startDate && endDate ? `${startDate} → ${endDate}` : classOption.scheduleTime ?? 'Đang học'}
-                </span>
-                <span className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  {enrolledCount}/{classOption.maxCapacity} • {classOption.availableSlots} chỗ trống
-                </span>
-              </div>
-
-              <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
-                {getSeverityBadge(severity, missed)}
+              <div className="mt-3 space-y-1 text-sm text-muted-foreground">
+                <p>{scheduleLine}</p>
+                <p>
+                  {startDate && endDate ? `${startDate} → ${endDate}` : classOption.scheduleTime ?? 'Đang học'} · {enrolledCount}/{classOption.maxCapacity} ({classOption.availableSlots} trống)
+                </p>
               </div>
 
               {missed > 0 && (
-                <p className="mt-2 text-sm text-muted-foreground">{recommendation}</p>
+                <div className="mt-3 border-t pt-3 text-sm">
+                  <p className="font-medium text-amber-600">Thiếu {missed} buổi</p>
+                  <p className="text-muted-foreground">{recommendation}</p>
+                </div>
               )}
             </button>
           )
@@ -197,7 +192,7 @@ export default function TransferClassSelectionStep({
       </div>
 
       <p className="text-center text-sm text-muted-foreground">
-        Tự phục vụ chỉ hỗ trợ đổi lịch. Cần đổi cơ sở/hình thức? Hãy quay lại bước trước để liên hệ Học vụ.
+        Tự phục vụ chỉ hỗ trợ đổi lịch. Cần đổi cơ sở/hình thức? Quay lại bước trước để liên hệ Học vụ
       </p>
     </div>
   )

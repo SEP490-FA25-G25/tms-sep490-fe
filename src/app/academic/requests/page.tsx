@@ -1235,99 +1235,119 @@ function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
   const canSubmit = !!(selectedStudent && selectedClass && selectedSession && reason.trim().length >= 10 && !isSubmitting)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       {/* Step 1: Student selection */}
-      <div className="space-y-3 rounded-2xl bg-muted/30 p-4">
-        <div>
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Bước 1</p>
-          <h3 className="text-base font-semibold">Chọn học viên</h3>
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div
+            className={cn(
+              'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
+              selectedStudent ? 'bg-primary text-primary-foreground' : 'border-2 border-primary text-primary'
+            )}
+          >
+            {selectedStudent ? '✓' : '1'}
+          </div>
+          <div>
+            <h3 className="font-semibold">Chọn học viên</h3>
+            <p className="text-sm text-muted-foreground">Tìm kiếm học viên để tạo yêu cầu thay</p>
+          </div>
         </div>
-        <div className="space-y-2">
+
+        <div className="space-y-3">
           <Input
             placeholder="Nhập tên hoặc mã học viên (tối thiểu 2 ký tự)"
             value={studentSearch}
             onChange={(event) => setStudentSearch(event.target.value)}
           />
-          {studentSearch.trim().length > 0 && (
-            <div className="max-h-48 space-y-2 overflow-y-auto rounded-xl bg-background p-3 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
+          {studentSearch.trim().length > 0 && studentOptions.length > 0 && (
+            <div className="space-y-2">
               {isSearchingStudents ? (
-                <Skeleton className="h-10 w-full rounded-lg" />
-              ) : studentOptions.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Không tìm thấy học viên phù hợp.</p>
+                <Skeleton className="h-20 w-full" />
               ) : (
-                <ul className="space-y-1">
-                  {studentOptions.map((student) => (
-                    <li key={student.id}>
-                      <button
-                        type="button"
-                        onClick={() => handleSelectStudent(student)}
-                        className={cn(
-                          'w-full rounded-lg border px-3 py-2 text-left transition hover:border-primary/60 hover:bg-primary/5',
-                          selectedStudent?.id === student.id && 'border-primary bg-primary/5'
-                        )}
-                      >
-                        <p className="text-sm font-semibold">
-                          {student.fullName}{' '}
-                          <span className="font-medium text-muted-foreground">({student.studentCode})</span>
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {student.email} · {student.phone}
-                        </p>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                studentOptions.map((student) => (
+                  <button
+                    key={student.id}
+                    type="button"
+                    onClick={() => handleSelectStudent(student)}
+                    className="w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30"
+                  >
+                    <p className="font-medium">
+                      {student.fullName} <span className="text-muted-foreground">({student.studentCode})</span>
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {student.email} · {student.phone}
+                    </p>
+                  </button>
+                ))
               )}
             </div>
           )}
-        </div>
-        {selectedStudent && (
-          <div className="rounded-xl bg-background p-3 text-sm shadow-inner shadow-primary/10">
-            <p className="font-semibold">{selectedStudent.fullName}</p>
-            <p className="text-muted-foreground">
-              {selectedStudent.studentCode} · {selectedStudent.email}
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
-              <span>Chi nhánh: {selectedStudent.branchName}</span>
-              <span>•</span>
-              <span>Đang học: {selectedStudent.activeEnrollments} lớp</span>
+          {selectedStudent && (
+            <div className="border-t pt-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Học viên đã chọn</p>
+                  <p className="font-semibold">{selectedStudent.fullName}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedStudent.studentCode} · {selectedStudent.email}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Chi nhánh: {selectedStudent.branchName} · Đang học: {selectedStudent.activeEnrollments} lớp
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedStudent(null)
+                    setStudentSearch('')
+                    setSelectedClassId(null)
+                    setSelectedSessionId(null)
+                    setWeekCursor(null)
+                    setReason('')
+                    setNote('')
+                  }}
+                >
+                  Đổi
+                </Button>
+              </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="mt-3"
-              onClick={() => {
-                setSelectedStudent(null)
-                setStudentSearch('')
-                setSelectedClassId(null)
-                setSelectedSessionId(null)
-                setWeekCursor(null)
-                setReason('')
-                setNote('')
-              }}
-            >
-              Chọn học viên khác
-            </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Step 2: Class selection */}
       {selectedStudent && (
-        <div className="space-y-3 rounded-2xl bg-muted/30 p-4">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Bước 2</p>
-            <h3 className="text-base font-semibold">Chọn lớp hiện tại</h3>
-            <p className="text-xs text-muted-foreground">Chỉ hiển thị các lớp mà học viên đang theo học.</p>
+        <div className={cn('space-y-4', !selectedStudent && 'opacity-50')}>
+          <div className="flex items-center gap-3">
+            <div
+              className={cn(
+                'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
+                selectedClass
+                  ? 'bg-primary text-primary-foreground'
+                  : selectedStudent
+                    ? 'border-2 border-primary text-primary'
+                    : 'border-2 border-muted-foreground/30 text-muted-foreground'
+              )}
+            >
+              {selectedClass ? '✓' : '2'}
+            </div>
+            <div>
+              <h3 className="font-semibold">Chọn lớp học</h3>
+              <p className="text-sm text-muted-foreground">Chọn lớp để xem lịch học</p>
+            </div>
           </div>
+
           {isLoadingClasses ? (
             <div className="space-y-2">
               {[...Array(2)].map((_, index) => (
-                <Skeleton key={index} className="h-16 w-full rounded-xl" />
+                <Skeleton key={index} className="h-20 w-full" />
               ))}
             </div>
           ) : classOptions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Học viên chưa đăng ký lớp nào.</p>
+            <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
+              Học viên chưa đăng ký lớp nào
+            </div>
           ) : (
             <div className="space-y-2">
               {classOptions.map((cls) => (
@@ -1340,14 +1360,14 @@ function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
                     setWeekCursor(null)
                   }}
                   className={cn(
-                    'w-full rounded-xl border px-3 py-3 text-left transition hover:border-primary/50 hover:bg-primary/5',
+                    'w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30',
                     selectedClassId === cls.classId && 'border-primary bg-primary/5'
                   )}
                 >
-                  <p className="text-sm font-semibold">
+                  <p className="font-medium">
                     {cls.classCode} · {cls.className}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     {cls.branchName} · {cls.scheduleSummary}
                   </p>
                 </button>
@@ -1359,67 +1379,73 @@ function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
 
       {/* Step 3: Weekly schedule + reason */}
       {selectedStudent && selectedClass && (
-        <div className="space-y-4 rounded-2xl bg-muted/30 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Bước 3</p>
-              <h3 className="text-base font-semibold">Chọn buổi muốn xin nghỉ</h3>
-              <p className="text-xs text-muted-foreground">
-                Chỉ chọn được buổi chưa diễn ra và chưa điểm danh · Tự động duyệt ngay sau khi gửi
-              </p>
+        <div className={cn('space-y-4', !selectedClass && 'opacity-50')}>
+          <div className="flex items-center gap-3">
+            <div
+              className={cn(
+                'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
+                selectedSession && reason.trim().length >= 10
+                  ? 'bg-primary text-primary-foreground'
+                  : selectedClass
+                    ? 'border-2 border-primary text-primary'
+                    : 'border-2 border-muted-foreground/30 text-muted-foreground'
+              )}
+            >
+              {selectedSession && reason.trim().length >= 10 ? '✓' : '3'}
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleWeekChange('prev')}
-                disabled={!baseWeekStart}
-              >
-                <ArrowRightIcon className="h-4 w-4 rotate-180" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setWeekCursor(null)
-                  setSelectedSessionId(null)
-                }}
-                disabled={!weekData}
-              >
-                Tuần hiện tại
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleWeekChange('next')}
-                disabled={!baseWeekStart}
-              >
-                <ArrowRightIcon className="h-4 w-4" />
-              </Button>
+            <div>
+              <h3 className="font-semibold">Chọn buổi học và điền lý do</h3>
+              <p className="text-sm text-muted-foreground">Chỉ chọn buổi chưa diễn ra và chưa điểm danh</p>
             </div>
           </div>
 
-          <div className="rounded-2xl bg-background shadow-sm">
-            <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-3">
               <div>
                 <p className="text-xs text-muted-foreground">Tuần đang xem</p>
-                <p className="text-sm font-semibold">{weekRangeLabel}</p>
+                <p className="font-medium">{weekRangeLabel}</p>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Lớp: {selectedClass.classCode} · {selectedClass.className}
-              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleWeekChange('prev')}
+                  disabled={!baseWeekStart}
+                >
+                  <ArrowRightIcon className="h-4 w-4 rotate-180" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setWeekCursor(null)
+                    setSelectedSessionId(null)
+                  }}
+                  disabled={!weekData}
+                >
+                  Tuần hiện tại
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleWeekChange('next')}
+                  disabled={!baseWeekStart}
+                >
+                  <ArrowRightIcon className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
-            <div className="space-y-3 p-4">
+            <div className="space-y-4">
               {isLoadingSchedule ? (
                 <div className="space-y-2">
                   {[...Array(3)].map((_, index) => (
-                    <Skeleton key={index} className="h-16 w-full rounded-xl" />
+                    <Skeleton key={index} className="h-20 w-full" />
                   ))}
                 </div>
               ) : displayedGroups.length === 0 ? (
-                <div className="rounded-xl border border-dashed px-3 py-4 text-sm text-muted-foreground">
-                  Tuần này không có buổi học nào cho lớp đã chọn.
+                <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
+                  Tuần này chưa có buổi học nào trong lịch
                 </div>
               ) : (
                 displayedGroups.map((group) => (
@@ -1434,10 +1460,10 @@ function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
                           <label
                             key={session.sessionId}
                             className={cn(
-                              'flex gap-3 rounded-2xl border px-3 py-3 transition',
+                              'flex gap-3 rounded-lg border px-4 py-3 transition',
                               session.isSelectable
-                                ? 'cursor-pointer border-border/70 hover:border-primary/50 hover:bg-primary/5'
-                                : 'cursor-not-allowed border-dashed border-border/70 opacity-60',
+                                ? 'cursor-pointer hover:border-primary/50 hover:bg-muted/30'
+                                : 'cursor-not-allowed border-dashed opacity-50',
                               isActive && 'border-primary bg-primary/5'
                             )}
                           >
@@ -1460,26 +1486,16 @@ function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
                                 )}
                               />
                             </div>
-                            <div className="flex flex-1 flex-col gap-1 text-sm">
-                              <p className="font-semibold">
+                            <div className="flex-1 space-y-1">
+                              <p className="font-medium">
                                 {session.classCode} · {session.startTime} - {session.endTime}
                               </p>
+                              <p className="text-sm text-muted-foreground">{session.topic}</p>
                               <p className="text-xs text-muted-foreground">
-                                {session.topic}
+                                {session.branchName} · {session.modality === 'ONLINE' ? 'Trực tuyến' : 'Tại trung tâm'}
                               </p>
-                              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                                <span>{session.branchName}</span>
-                                <span>•</span>
-                                <span>{session.modality === 'ONLINE' ? 'Trực tuyến' : 'Tại trung tâm'}</span>
-                                {session.location && (
-                                  <>
-                                    <span>•</span>
-                                    <span>{session.location}</span>
-                                  </>
-                                )}
-                              </div>
                               {!session.isSelectable && session.disabledReason && (
-                                <p className="text-xs font-medium text-rose-500">{session.disabledReason}</p>
+                                <p className="text-xs font-medium text-rose-600">{session.disabledReason}</p>
                               )}
                             </div>
                           </label>
@@ -1490,59 +1506,47 @@ function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
                 ))
               )}
             </div>
-          </div>
 
-          {selectedSession && (
-            <div className="space-y-4 rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-4 text-sm">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Buổi đã chọn</p>
-                  <p className="mt-1 font-semibold">
-                    {selectedSession.classCode} · {selectedSession.startTime} - {selectedSession.endTime}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {format(parseISO(selectedSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {selectedSession.topic}
-                  </p>
+            {selectedSession && (
+              <div className="border-t pt-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">Buổi đã chọn</p>
+                    <p className="font-semibold">
+                      {selectedSession.classCode} · {selectedSession.startTime} - {selectedSession.endTime}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {format(parseISO(selectedSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{selectedSession.topic}</p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedSessionId(null)}>
+                    Đổi buổi
+                  </Button>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedSessionId(null)}>
-                  Chọn buổi khác
-                </Button>
-              </div>
 
-              <div className="space-y-1.5">
-                <Textarea
-                  placeholder="Ghi rõ lý do xin nghỉ để lưu vào hồ sơ..."
-                  value={reason}
-                  onChange={(event) => setReason(event.target.value)}
-                  rows={4}
-                  className="resize-none text-sm"
-                />
-                <p className="text-xs text-muted-foreground">Tối thiểu 10 ký tự · {reason.trim().length}/10</p>
-              </div>
+                <div className="mt-3 space-y-2">
+                  <Textarea
+                    placeholder="Chia sẻ lý do cụ thể để lưu vào hồ sơ..."
+                    value={reason}
+                    onChange={(event) => setReason(event.target.value)}
+                    rows={4}
+                    className="resize-none"
+                  />
+                  <p className="text-xs text-muted-foreground">Tối thiểu 10 ký tự · {reason.trim().length}/10</p>
+                </div>
 
-              <Input
-                placeholder="Ghi chú cho AA hoặc phụ huynh (không bắt buộc)"
-                value={note}
-                onChange={(event) => setNote(event.target.value)}
-                className="text-sm"
-              />
-
-              <div className="flex flex-wrap gap-2">
-                <Button onClick={handleSubmit} disabled={!canSubmit} size="sm">
-                  {isSubmitting ? 'Đang tạo...' : 'Tạo yêu cầu'}
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleResetForm}>
-                  Làm lại
-                </Button>
+                <div className="mt-3 flex gap-2">
+                  <Button onClick={handleSubmit} disabled={!canSubmit}>
+                    {isSubmitting ? 'Đang tạo...' : 'Tạo yêu cầu'}
+                  </Button>
+                  <Button variant="outline" onClick={handleResetForm}>
+                    Làm lại
+                  </Button>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Yêu cầu được duyệt ngay và hệ thống sẽ cập nhật trạng thái điểm danh thành Vắng có phép.
-              </p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -1722,345 +1726,271 @@ function MakeupFlow({ onSuccess }: MakeupFlowProps) {
   const step3Complete = step2Complete && reason.trim().length >= 10
 
   return (
-    <div className="space-y-5">
-      <div className="space-y-3 rounded-2xl bg-muted/30 p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Bước 1</p>
-            <h3 className="text-base font-semibold">Chọn học viên</h3>
+    <div className="space-y-8">
+      {/* Step 1: Student selection */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div
+            className={cn(
+              'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
+              selectedStudent ? 'bg-primary text-primary-foreground' : 'border-2 border-primary text-primary'
+            )}
+          >
+            {selectedStudent ? '✓' : '1'}
           </div>
+          <div>
+            <h3 className="font-semibold">Chọn học viên</h3>
+            <p className="text-sm text-muted-foreground">Tìm kiếm học viên để tạo yêu cầu học bù</p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <Input
+            placeholder="Nhập tên hoặc mã học viên (tối thiểu 2 ký tự)"
+            value={studentSearch}
+            onChange={(event) => setStudentSearch(event.target.value)}
+          />
+          {studentSearch.trim().length > 0 && studentOptions.length > 0 && (
+            <div className="space-y-2">
+              {isSearchingStudents ? (
+                <Skeleton className="h-20 w-full" />
+              ) : (
+                studentOptions.map((student) => (
+                  <button
+                    key={student.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedStudent(student)
+                      setStudentSearch('')
+                    }}
+                    className="w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30"
+                  >
+                    <p className="font-medium">
+                      {student.fullName} <span className="text-muted-foreground">({student.studentCode})</span>
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {student.email} · {student.phone}
+                    </p>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
           {selectedStudent && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setSelectedStudent(null)
-                setStudentSearch('')
-                handleReset()
-              }}
-            >
-              Chọn học viên khác
-            </Button>
+            <div className="border-t pt-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Học viên đã chọn</p>
+                  <p className="font-semibold">{selectedStudent.fullName}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedStudent.studentCode} · {selectedStudent.email}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedStudent(null)
+                    setStudentSearch('')
+                    handleReset()
+                  }}
+                >
+                  Đổi
+                </Button>
+              </div>
+            </div>
           )}
         </div>
-        <Input
-          placeholder="Nhập tên hoặc mã học viên"
-          value={studentSearch}
-          onChange={(event) => setStudentSearch(event.target.value)}
-        />
-        {studentSearch.trim().length > 0 && (
-          <div className="max-h-48 space-y-2 overflow-y-auto rounded-xl bg-background p-3 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
-            {isSearchingStudents ? (
-              <Skeleton className="h-10 w-full rounded-lg" />
-            ) : studentOptions.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Không tìm thấy học viên phù hợp.</p>
-            ) : (
-              <ul className="space-y-1">
-                {studentOptions.map((student) => (
-                  <li key={student.id}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedStudent(student)
-                        setStudentSearch('')
-                      }}
-                      className={cn(
-                        'w-full rounded-lg border px-3 py-2 text-left text-sm transition hover:border-primary/60 hover:bg-primary/5',
-                        selectedStudent?.id === student.id && 'border-primary bg-primary/5'
-                      )}
-                    >
-                      <p className="font-semibold">
-                        {student.fullName}{' '}
-                        <span className="font-medium text-muted-foreground">({student.studentCode})</span>
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {student.email} · {student.phone}
-                      </p>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-        {selectedStudent && (
-          <div className="rounded-xl border border-dashed bg-background/80 p-3 text-sm">
-            <p className="font-semibold">{selectedStudent.fullName}</p>
-            <p className="text-muted-foreground">{selectedStudent.studentCode}</p>
-            <p className="text-xs text-muted-foreground">
-              {selectedStudent.email} · {selectedStudent.phone}
-            </p>
-          </div>
-        )}
       </div>
 
+      {/* Step 2 & 3: Missed sessions and makeup options */}
       {!selectedStudent ? (
-        <div className="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">
-          Chọn học viên để xem lịch sử vắng và gợi ý buổi học bù.
+        <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
+          Chọn học viên để xem lịch sử vắng và gợi ý buổi học bù
         </div>
       ) : (
-        <div className="space-y-4 rounded-2xl border p-4">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Bước 2</p>
-            <h3 className="text-base font-semibold">Chọn buổi học bù</h3>
-          </div>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div
-                  className={cn(
-                    'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
-                    step1Complete ? 'bg-primary text-primary-foreground' : 'border-2 border-primary text-primary'
-                  )}
-                >
-                  {step1Complete ? '✓' : '1'}
-                </div>
-                <h3 className="text-sm font-semibold">Chọn buổi đã vắng</h3>
-              </div>
-
-              <div className="pl-8">
-                {!step1Complete ? (
-                  <>
-                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-xs text-muted-foreground">
-                        Hiển thị buổi vắng trong {MAKEUP_LOOKBACK_WEEKS} tuần gần nhất
-                      </p>
-                      <Button
-                        variant={excludeRequested ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setExcludeRequested((prev) => !prev)}
-                        className="h-8 text-xs"
-                      >
-                        {excludeRequested ? 'Ẩn đã gửi' : 'Hiện tất cả'}
-                      </Button>
-                    </div>
-
-                    {isLoadingMissed ? (
-                      <div className="space-y-2">
-                        {[...Array(2)].map((_, index) => (
-                          <Skeleton key={index} className="h-14 w-full rounded-lg" />
-                        ))}
-                      </div>
-                    ) : missedSessions.length === 0 ? (
-                      <div className="rounded-lg border border-dashed py-4 text-center text-sm text-muted-foreground">
-                        Không có buổi vắng hợp lệ trong {MAKEUP_LOOKBACK_WEEKS} tuần gần nhất
-                      </div>
-                    ) : (
-                      <ul className="space-y-2">
-                        {missedSessions.map((session) => (
-                          <li key={session.sessionId}>
-                            <button
-                              type="button"
-                              onClick={() => setSelectedMissedId(session.sessionId)}
-                              className="w-full rounded-lg border border-border/60 px-3 py-2 text-left transition hover:border-primary/60 hover:bg-primary/5"
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="space-y-1">
-                                  <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
-                                    <span>{format(parseISO(session.date), 'EEEE, dd/MM', { locale: vi })}</span>
-                                    <span className="text-muted-foreground">·</span>
-                                    <span>{session.classInfo.classCode}</span>
-                                  </div>
-                                  <p className="text-xs text-muted-foreground">{getClassDisplayName(session.classInfo)}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    Buổi {session.courseSessionNumber}: {session.courseSessionTitle}
-                                  </p>
-                                  {typeof session.daysAgo === 'number' && (
-                                    <p className="text-[11px] text-muted-foreground">
-                                      {session.daysAgo === 0
-                                        ? 'Vắng hôm nay'
-                                        : session.daysAgo === 1
-                                          ? 'Cách đây 1 ngày'
-                                          : `Cách đây ${session.daysAgo} ngày`}
-                                    </p>
-                                  )}
-                                </div>
-                                <div className="flex flex-col items-end gap-1">
-                                  <Badge
-                                    className={cn(
-                                      'border-0 text-xs',
-                                      session.isExcusedAbsence
-                                        ? 'bg-emerald-500/10 text-emerald-600'
-                                        : 'bg-amber-500/10 text-amber-600'
-                                    )}
-                                  >
-                                    {session.isExcusedAbsence ? 'Đã xin nghỉ' : 'Vắng không phép'}
-                                  </Badge>
-                                  {session.hasExistingMakeupRequest && (
-                                    <Badge variant="outline" className="text-xs">
-                                      Đã gửi
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
-                    <div>
-                      <p className="text-sm font-medium">
-                        {format(parseISO(selectedMissedSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })} ·{' '}
-                        {selectedMissedSession.classInfo.classCode}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{getClassDisplayName(selectedMissedSession.classInfo)}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Buổi {selectedMissedSession.courseSessionNumber}: {selectedMissedSession.courseSessionTitle}
-                      </p>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                        {typeof selectedMissedSession.daysAgo === 'number' && (
-                          <span>
-                            {selectedMissedSession.daysAgo === 0
-                              ? 'Vắng hôm nay'
-                              : selectedMissedSession.daysAgo === 1
-                                ? 'Cách đây 1 ngày'
-                                : `Cách đây ${selectedMissedSession.daysAgo} ngày`}
-                          </span>
-                        )}
-                        <Badge
-                          className={cn(
-                            'border-0 px-2 py-0 text-[11px]',
-                            selectedMissedSession.isExcusedAbsence
-                              ? 'bg-emerald-500/10 text-emerald-600'
-                              : 'bg-amber-500/10 text-amber-600'
-                          )}
-                        >
-                          {selectedMissedSession.isExcusedAbsence ? 'Đã xin nghỉ' : 'Vắng không phép'}
-                        </Badge>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedMissedId(null)}>
-                      Thay đổi
-                    </Button>
-                  </div>
+        <div className="space-y-8">
+          {/* Step 2: Missed session selection */}
+          <div className={cn('space-y-4', !selectedStudent && 'opacity-50')}>
+            <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
+                  step1Complete
+                    ? 'bg-primary text-primary-foreground'
+                    : selectedStudent
+                      ? 'border-2 border-primary text-primary'
+                      : 'border-2 border-muted-foreground/30 text-muted-foreground'
                 )}
+              >
+                {step1Complete ? '✓' : '2'}
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div
-                  className={cn(
-                    'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
-                    step2Complete ? 'bg-primary text-primary-foreground' : 'border-2 border-primary text-primary'
-                  )}
-                >
-                  {step2Complete ? '✓' : '2'}
-                </div>
-                <h3 className="text-sm font-semibold">Chọn buổi học bù</h3>
-              </div>
-              <div className="pl-8">
-                {!selectedMissedSession ? (
-                  <div className="rounded-lg border border-dashed py-4 text-center text-sm text-muted-foreground">
-                    Chọn buổi đã vắng trước để xem gợi ý học bù.
-                  </div>
-                ) : isLoadingStudentOptions ? (
-                  <div className="space-y-2">
-                    {[...Array(2)].map((_, index) => (
-                      <Skeleton key={index} className="h-16 w-full rounded-lg" />
-                    ))}
-                  </div>
-                ) : makeupOptions.length === 0 ? (
-                  <div className="rounded-lg border border-dashed py-4 text-center text-sm text-muted-foreground">
-                    Không có buổi học bù khả dụng cho buổi này.
-                  </div>
-                ) : (
-                  <ul className="space-y-2">
-                    {makeupOptions.map((option) => (
-                      <li key={option.sessionId}>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedMakeupId(option.sessionId)}
-                          className={cn(
-                            'w-full rounded-lg border border-border/60 px-3 py-2 text-left transition hover:border-primary/60 hover:bg-primary/5',
-                            selectedMakeupId === option.sessionId && 'border-primary bg-primary/5'
-                          )}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="space-y-1">
-                              <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
-                                <span>{format(parseISO(option.date), 'EEEE, dd/MM', { locale: vi })}</span>
-                                <span className="text-muted-foreground">·</span>
-                                <span>{option.classInfo.classCode}</span>
-                              </div>
-                              <p className="text-xs text-muted-foreground">{getClassDisplayName(option.classInfo)}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {option.timeSlotInfo.startTime} - {option.timeSlotInfo.endTime} · {formatModality(option.classInfo.modality)}
-                              </p>
-                              <p className="text-xs font-medium text-primary">{getCapacityText(option)}</p>
-                              {option.warnings?.length ? (
-                                <ul className="text-[11px] text-amber-600">
-                                  {option.warnings.map((warning) => (
-                                    <li key={warning}>• {warning}</li>
-                                  ))}
-                                </ul>
-                              ) : null}
-                            </div>
-                            <div className="flex flex-col items-end gap-1">
-                              {getPriorityBadge(option.matchScore.priority)}
-                              {option.conflict && (
-                                <Badge variant="destructive" className="text-xs">
-                                  Trùng lịch
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div
-                  className={cn(
-                    'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
-                    step3Complete ? 'bg-primary text-primary-foreground' : 'border-2 border-primary text-primary'
-                  )}
-                >
-                  {step3Complete ? '✓' : '3'}
-                </div>
-                <h3 className="text-sm font-semibold">Lý do & ghi chú</h3>
-              </div>
-
-              <div className="space-y-1.5 pl-8">
-                <Textarea
-                  placeholder="Chia sẻ lý do cụ thể để hệ thống duyệt nhanh hơn..."
-                  value={reason}
-                  onChange={(event) => setReason(event.target.value)}
-                  rows={4}
-                  className="resize-none text-sm"
-                  disabled={!selectedMakeupOption}
-                />
-                <p className="text-xs text-muted-foreground">Tối thiểu 10 ký tự · {reason.trim().length}/10</p>
-                <Input
-                  placeholder="Ghi chú (tuỳ chọn)"
-                  value={note}
-                  onChange={(event) => setNote(event.target.value)}
-                  className="text-sm"
-                  disabled={!selectedMakeupOption}
-                />
-
-                <div className="flex flex-wrap gap-2">
-                  <Button onClick={handleSubmit} disabled={!canSubmit} size="sm">
-                    {isCreating ? 'Đang tạo...' : 'Tạo & tự động duyệt'}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handleReset}>
-                    Làm lại
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Yêu cầu được duyệt ngay và hệ thống sẽ cập nhật lịch học cho học viên.
+              <div>
+                <h3 className="font-semibold">Chọn buổi đã vắng</h3>
+                <p className="text-sm text-muted-foreground">
+                  Buổi vắng trong {MAKEUP_LOOKBACK_WEEKS} tuần gần nhất
                 </p>
               </div>
             </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  {missedSessions.length} buổi vắng tìm thấy
+                </p>
+                <Button
+                  variant={excludeRequested ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setExcludeRequested((prev) => !prev)}
+                >
+                  {excludeRequested ? 'Ẩn đã gửi' : 'Hiện tất cả'}
+                </Button>
+              </div>
+
+              {isLoadingMissed ? (
+                <div className="space-y-2">
+                  {[...Array(2)].map((_, index) => (
+                    <Skeleton key={index} className="h-20 w-full" />
+                  ))}
+                </div>
+              ) : missedSessions.length === 0 ? (
+                <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
+                  Không có buổi vắng hợp lệ trong {MAKEUP_LOOKBACK_WEEKS} tuần gần nhất
+                </div>
+              ) : selectedMissedSession ? (
+                <div className="border-t pt-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">Buổi đã chọn</p>
+                      <p className="font-medium">
+                        {format(parseISO(selectedMissedSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })} ·{' '}
+                        {selectedMissedSession.classInfo.classCode}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Buổi {selectedMissedSession.courseSessionNumber}: {selectedMissedSession.courseSessionTitle}
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedMissedId(null)}>
+                      Đổi
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {missedSessions.map((session) => (
+                    <button
+                      key={session.sessionId}
+                      type="button"
+                      onClick={() => setSelectedMissedId(session.sessionId)}
+                      className="w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-1">
+                          <p className="font-medium">
+                            {format(parseISO(session.date), 'EEEE, dd/MM', { locale: vi })} · {session.classInfo.classCode}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Buổi {session.courseSessionNumber}: {session.courseSessionTitle}
+                          </p>
+                        </div>
+                        <Badge className={cn(session.isExcusedAbsence ? 'bg-emerald-500/10 text-emerald-600' : 'bg-amber-500/10 text-amber-600')}>
+                          {session.isExcusedAbsence ? 'Có phép' : 'Không phép'}
+                        </Badge>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Step 3: Makeup session selection */}
+          <div className={cn('space-y-4', !step1Complete && 'opacity-50')}>
+            <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
+                  step2Complete
+                    ? 'bg-primary text-primary-foreground'
+                    : step1Complete
+                      ? 'border-2 border-primary text-primary'
+                      : 'border-2 border-muted-foreground/30 text-muted-foreground'
+                )}
+              >
+                {step2Complete ? '✓' : '3'}
+              </div>
+              <div>
+                <h3 className="font-semibold">Chọn buổi học bù</h3>
+                <p className="text-sm text-muted-foreground">Gợi ý buổi học phù hợp</p>
+              </div>
+            </div>
+
+            {!selectedMissedSession ? (
+              <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
+                Chọn buổi đã vắng trước để xem gợi ý học bù
+              </div>
+            ) : isLoadingStudentOptions ? (
+              <div className="space-y-2">
+                {[...Array(2)].map((_, index) => (
+                  <Skeleton key={index} className="h-20 w-full" />
+                ))}
+              </div>
+            ) : makeupOptions.length === 0 ? (
+              <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
+                Không có buổi học bù khả dụng
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {makeupOptions.map((option) => (
+                  <button
+                    key={option.sessionId}
+                    type="button"
+                    onClick={() => setSelectedMakeupId(option.sessionId)}
+                    className={cn(
+                      'w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30',
+                      selectedMakeupId === option.sessionId && 'border-primary bg-primary/5'
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-1">
+                        <p className="font-medium">
+                          {format(parseISO(option.date), 'EEEE, dd/MM', { locale: vi })} · {option.classInfo.classCode}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {option.timeSlotInfo.startTime} - {option.timeSlotInfo.endTime} · {formatModality(option.classInfo.modality)}
+                        </p>
+                        <p className="text-xs text-primary">{getCapacityText(option)}</p>
+                      </div>
+                      {getPriorityBadge(option.matchScore.priority)}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {selectedMakeupOption && (
+              <div className="border-t pt-4">
+                <div className="space-y-3">
+                  <Textarea
+                    placeholder="Chia sẻ lý do cụ thể..."
+                    value={reason}
+                    onChange={(event) => setReason(event.target.value)}
+                    rows={4}
+                    className="resize-none"
+                  />
+                  <p className="text-xs text-muted-foreground">Tối thiểu 10 ký tự · {reason.trim().length}/10</p>
+
+                  <div className="flex gap-2">
+                    <Button onClick={handleSubmit} disabled={!canSubmit}>
+                      {isCreating ? 'Đang tạo...' : 'Tạo yêu cầu'}
+                    </Button>
+                    <Button variant="outline" onClick={handleReset}>
+                      Làm lại
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

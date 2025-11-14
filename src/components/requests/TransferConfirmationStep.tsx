@@ -206,92 +206,66 @@ export default function TransferConfirmationStep({
   }, [handleSubmit, isFormValid, isLoading, onSubmitStateChange])
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Transfer Summary */}
-      <div className="p-4 bg-muted/30 rounded-lg">
-        <div className="space-y-3">
-          <h3 className="font-medium">THÔNG TIN YÊU CẦU CHUYỂN LỚP</h3>
+      <div className="space-y-4 border-b pb-6">
+        <h3 className="font-medium">Thông tin yêu cầu chuyển lớp</h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Current Class */}
-            <div>
-              <div className="text-xs text-muted-foreground mb-1">Từ lớp:</div>
-              <div className="space-y-1 text-sm">
-                <div><span className="font-medium">{currentEnrollment.classCode}</span> - {currentEnrollment.className}</div>
-                <div className="text-muted-foreground">
-                  {currentEnrollment.branchName} • {getModalityText(currentEnrollment.modality)}
-                </div>
-              </div>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Current Class */}
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">Từ lớp</p>
+            <p className="font-semibold">{currentEnrollment.classCode}</p>
+            <p className="text-sm text-muted-foreground">{currentEnrollment.className}</p>
+            <p className="text-sm text-muted-foreground">
+              {currentEnrollment.branchName} · {getModalityText(currentEnrollment.modality)}
+            </p>
+          </div>
 
-            {/* Target Class */}
-            <div>
-              <div className="text-xs text-muted-foreground mb-1">Đến lớp:</div>
-              <div className="space-y-1 text-sm">
-                <div className="flex items-center gap-1">
-                  <ArrowRight className="w-4 h-4 text-primary" />
-                  <span className="font-medium">{selectedClass.classCode}</span> - {selectedClass.className}
-                </div>
-                <div className="text-muted-foreground">
-                  {selectedClass.branchName} • {getModalityText(selectedClass.modality)}
-                </div>
-                <div className="text-muted-foreground">
-                  {selectedClass.scheduleDays} • {selectedClass.scheduleTime}
-                </div>
-              </div>
-            </div>
+          {/* Target Class */}
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">Đến lớp</p>
+            <p className="font-semibold">{selectedClass.classCode}</p>
+            <p className="text-sm text-muted-foreground">{selectedClass.className}</p>
+            <p className="text-sm text-muted-foreground">
+              {selectedClass.branchName} · {getModalityText(selectedClass.modality)}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {selectedClass.scheduleDays} · {selectedClass.scheduleTime}
+            </p>
           </div>
         </div>
-      </div>
 
-      {/* Content Gap Analysis */}
-      <div className="p-4 bg-muted/30 rounded-lg">
-        <div className="space-y-3">
-          <h3 className="font-medium">PHÂN TÍCH NỘI DUNG</h3>
-
-          <div className="flex items-center gap-2">
-            <ContentGapIcon className={cn("w-4 h-4", contentGapInfo.color)} />
-            <span className={cn("text-sm font-medium", contentGapInfo.color)}>
+        {/* Content Gap - Inline */}
+        {normalizedContentGap.missedSessions > 0 ? (
+          <div className="space-y-2 border-t pt-4">
+            <p className={cn("font-medium", contentGapInfo.color)}>
               {contentGapInfo.text}: {normalizedContentGap.missedSessions} buổi
-            </span>
-          </div>
-
-          {normalizedContentGap.missedSessions > 0 && (
-            <div className="space-y-2 text-sm">
-              <div className="text-muted-foreground">
-                {normalizedContentGap.recommendation}
+            </p>
+            <p className="text-sm text-muted-foreground">{normalizedContentGap.recommendation}</p>
+            {normalizedContentGap.gapSessions.length > 0 && (
+              <div className="text-xs text-muted-foreground">
+                {normalizedContentGap.gapSessions.slice(0, 2).map((session, index) => (
+                  <p key={index}>
+                    Buổi {session.courseSessionNumber}: {session.courseSessionTitle}
+                  </p>
+                ))}
+                {normalizedContentGap.gapSessions.length > 2 && (
+                  <p>... và {normalizedContentGap.gapSessions.length - 2} buổi khác</p>
+                )}
               </div>
-
-              {normalizedContentGap.gapSessions.length > 0 && (
-                <div className="bg-muted/50 p-3 rounded-lg">
-                  <div className="text-xs space-y-1">
-                    {normalizedContentGap.gapSessions.slice(0, 2).map((session, index) => (
-                      <div key={index}>
-                        Buổi {session.courseSessionNumber}: {session.courseSessionTitle}
-                      </div>
-                    ))}
-                    {normalizedContentGap.gapSessions.length > 2 && (
-                      <div className="text-muted-foreground">
-                        ... và {normalizedContentGap.gapSessions.length - 2} buổi khác
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {normalizedContentGap.missedSessions === 0 && (
-            <div className="text-sm text-green-700 bg-green-50 p-3 rounded-lg border border-green-200">
-              Tiến độ tương đương, không thiếu nội dung
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        ) : (
+          <div className="border-t pt-4">
+            <p className="text-sm text-emerald-600">Tiến độ tương đương, không thiếu nội dung</p>
+          </div>
+        )}
       </div>
 
       {/* Effective Date */}
       <div className="space-y-3">
-        <Label className="text-sm font-medium">NGÀY HIỆU LỰC</Label>
+        <Label className="font-medium">Ngày hiệu lực</Label>
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -355,29 +329,27 @@ export default function TransferConfirmationStep({
 
         {/* Date validation message */}
         {effectiveDate && (
-          <div className={cn(
-            "text-sm p-3 rounded-lg border",
-            dateValidation.valid
-              ? "text-green-700 bg-green-50 border-green-200"
-              : "text-red-700 bg-red-50 border-red-200"
+          <p className={cn(
+            "text-sm",
+            dateValidation.valid ? "text-emerald-600" : "text-rose-600"
           )}>
             {dateValidation.message}
-          </div>
+          </p>
         )}
 
         {selectedSession && (
-          <div className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {(() => {
               const times = parseTimeSlot(selectedSession.timeSlot)
               return `Thời gian: ${times.start} - ${times.end}`
             })()}
-          </div>
+          </p>
         )}
       </div>
 
       {/* Request Reason */}
       <div className="space-y-3">
-        <Label className="text-sm font-medium">LÝ DO CHUYỂN LỚP</Label>
+        <Label className="font-medium">Lý do chuyển lớp</Label>
         <Textarea
           placeholder="Nhập lý do chuyển lớp (tối thiểu 10 ký tự)..."
           value={requestReason}
@@ -395,39 +367,39 @@ export default function TransferConfirmationStep({
       </div>
 
       {/* Confirmations */}
-      <div className="p-4 bg-muted/30 rounded-lg space-y-3">
-        <h3 className="font-medium">XÁC NHẬN CUỐI CÙNG</h3>
+      <div className="space-y-3 border-t pt-6">
+        <h3 className="font-medium">Xác nhận cuối cùng</h3>
 
         <div className="space-y-3">
-          <div className="flex items-start space-x-3">
+          <div className="flex items-start gap-3">
             <Checkbox
               id="agreed"
               checked={agreed}
               onCheckedChange={(checked) => setAgreed(checked as boolean)}
             />
-            <Label htmlFor="agreed" className="text-sm leading-relaxed">
+            <Label htmlFor="agreed" className="text-sm leading-relaxed cursor-pointer">
               Tôi đã kiểm tra thông tin và đồng ý với các điều khoản chuyển lớp
             </Label>
           </div>
 
-          <div className="flex items-start space-x-3">
+          <div className="flex items-start gap-3">
             <Checkbox
               id="quota"
               checked={quotaAcknowledged}
               onCheckedChange={(checked) => setQuotaAcknowledged(checked as boolean)}
             />
-            <Label htmlFor="quota" className="text-sm leading-relaxed">
+            <Label htmlFor="quota" className="text-sm leading-relaxed cursor-pointer">
               Tôi hiểu hạn mức chuyển ({currentEnrollment.transferQuota.used}/{currentEnrollment.transferQuota.limit}) sẽ bị trừ
             </Label>
           </div>
 
-          <div className="flex items-start space-x-3">
+          <div className="flex items-start gap-3">
             <Checkbox
               id="content-gap"
               checked={contentGapAcknowledged}
               onCheckedChange={(checked) => setContentGapAcknowledged(checked as boolean)}
             />
-            <Label htmlFor="content-gap" className="text-sm leading-relaxed">
+            <Label htmlFor="content-gap" className="text-sm leading-relaxed cursor-pointer">
               Tôi đã đọc và hiểu phân tích nội dung bị thiếu (nếu có)
             </Label>
           </div>

@@ -113,87 +113,81 @@ export default function TransferEligibilityStep({
   }
 
   return (
-    <div className="space-y-7">
-      <div className="rounded-2xl bg-muted/30 p-4 text-sm leading-relaxed">
-        <div className="flex items-center justify-between text-xs uppercase tracking-wide text-muted-foreground">
+    <div className="space-y-6">
+      <div className="space-y-2 border-b pb-4">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>Chính sách chuyển lớp</span>
           <span>Tối đa {policyInfo?.maxTransfersPerCourse ?? 1} lần/khóa</span>
         </div>
-        <p className="mt-2 text-foreground">{policyInfo?.policyDescription ?? 'Chỉ hỗ trợ đổi lịch trong cùng cơ sở & hình thức. Liên hệ Phòng Học vụ nếu cần đổi cơ sở hoặc modality.'}</p>
-        <p className="mt-1 text-muted-foreground">
-          {eligibilitySummary}
-        </p>
+        <p className="text-sm leading-relaxed">{policyInfo?.policyDescription ?? 'Chỉ hỗ trợ đổi lịch trong cùng cơ sở & hình thức. Liên hệ Phòng Học vụ nếu cần đổi cơ sở hoặc modality.'}</p>
+        <p className="text-sm text-muted-foreground">{eligibilitySummary}</p>
       </div>
 
       <div className="space-y-3">
-        <div className="text-sm font-medium text-foreground">Chọn lớp muốn chuyển:</div>
+        <h3 className="font-medium">Chọn lớp muốn chuyển</h3>
         <div className="space-y-3">
           {normalizedEnrollments.map((enrollment) => {
             const status = getStatusTone(enrollment)
             const disabled = !enrollment.canTransfer || enrollment.hasPendingTransfer
 
             return (
-              <div
+              <button
                 key={enrollment.enrollmentId ?? `${enrollment.classId}-${enrollment.branchId}`}
-                role="button"
-                tabIndex={disabled ? -1 : 0}
+                type="button"
+                disabled={disabled}
                 className={cn(
-                  'w-full rounded-2xl border border-transparent bg-white/70 p-4 text-left shadow-sm ring-1 ring-muted/40 transition hover:ring-muted/80 focus:outline-none focus:ring-2 focus:ring-primary',
-                  disabled && 'cursor-not-allowed opacity-60',
-                  selectedEnrollment?.enrollmentId === enrollment.enrollmentId && 'ring-2 ring-primary'
+                  'w-full rounded-lg border p-4 text-left transition',
+                  disabled ? 'cursor-not-allowed opacity-50' : 'hover:border-primary/50 hover:bg-muted/30',
+                  selectedEnrollment?.enrollmentId === enrollment.enrollmentId && 'border-primary bg-primary/5'
                 )}
                 onClick={() => {
                   if (!disabled) {
                     handleSelectEnrollment(enrollment)
                   }
                 }}
-                onKeyDown={(event) => {
-                  if (!disabled && (event.key === 'Enter' || event.key === ' ')) {
-                    event.preventDefault()
-                    handleSelectEnrollment(enrollment)
-                  }
-                }}
               >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-foreground">{enrollment.classCode}</p>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <p className="font-semibold">{enrollment.classCode}</p>
                     <p className="text-sm text-muted-foreground">{enrollment.className}</p>
                     <p className="text-xs text-muted-foreground">{enrollment.courseName}</p>
                   </div>
-                  <Badge className={cn('flex items-center gap-1 border-none text-xs', status.tone)}>
-                    {status.icon}
+                  <span className={cn('text-xs font-medium', status.tone.replace('bg-', 'text-').replace('-50', '-600'))}>
                     {status.label}
-                  </Badge>
-                </div>
-
-                <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    {enrollment.branchName}
                   </span>
-                  <span>{modalityLabel(enrollment.modality)}</span>
-                  {enrollment.scheduleInfo && <span>{enrollment.scheduleInfo}</span>}
                 </div>
 
-                <div className="mt-3 rounded-xl bg-muted/20 p-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Hạn mức: <strong>{enrollment.transferQuota.used}/{enrollment.transferQuota.limit}</strong></span>
-                    <span className="text-muted-foreground">
-                      {enrollment.transferQuota.remaining > 0
-                        ? `Còn ${enrollment.transferQuota.remaining} lượt`
-                        : 'Đã dùng hết'}
+                <div className="mt-3 flex flex-wrap gap-3 text-sm text-muted-foreground">
+                  <span>{enrollment.branchName}</span>
+                  <span>·</span>
+                  <span>{modalityLabel(enrollment.modality)}</span>
+                  {enrollment.scheduleInfo && (
+                    <>
+                      <span>·</span>
+                      <span>{enrollment.scheduleInfo}</span>
+                    </>
+                  )}
+                </div>
+
+                <div className="mt-3 border-t pt-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Hạn mức chuyển</span>
+                    <span className="font-medium">
+                      {enrollment.transferQuota.used}/{enrollment.transferQuota.limit}
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        ({enrollment.transferQuota.remaining > 0 ? `còn ${enrollment.transferQuota.remaining}` : 'hết'})
+                      </span>
                     </span>
                   </div>
                 </div>
-
-              </div>
+              </button>
             )
           })}
         </div>
       </div>
 
       <p className="text-center text-sm text-muted-foreground">
-        Cần đổi cơ sở/hình thức? <span className="font-semibold text-foreground">Liên hệ Phòng Học vụ để được hỗ trợ.</span>
+        Cần đổi cơ sở/hình thức? <span className="font-medium text-foreground">Liên hệ Phòng Học vụ</span>
       </p>
     </div>
   )
