@@ -8,12 +8,19 @@ import DashboardPage from './app/dashboard/page'
 import LoginPage from './app/login/page'
 import AdminUsersPage from './app/admin/users/page'
 import TeacherClassesPage from './app/teacher/classes/page'
+import TeacherRequestsPage from './app/teacher/requests/page'
+import SelectRequestTypePage from './app/teacher/requests/create/select-type/page'
+import SelectSessionPage from './app/teacher/requests/create/select-session/page'
+import SelectResourcePage from './app/teacher/requests/create/select-resource/page'
+import RequestFormPage from './app/teacher/requests/create/form/page'
+import RequestDetailPage from './app/teacher/requests/[id]/page'
 import StudentCoursesPage from './app/student/courses/page'
 import StudentSchedulePage from './app/student/schedule/page'
 import StudentRequestsPage from './app/student/requests/page'
 import AcademicClassesPage from './app/academic/classes/page'
 import AcademicClassDetailPage from './app/academic/classes/[id]/page'
 import AcademicRequestsPage from './app/academic/requests/page'
+import AcademicTeacherRequestsPage from './app/academic/teacher-requests/page'
 import { Toaster } from '@/components/ui/sonner'
 
 function App() {
@@ -51,6 +58,54 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={['TEACHER', 'ADMIN', 'MANAGER', 'CENTER_HEAD', 'SUBJECT_LEADER']}>
                   <TeacherClassesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/teacher/requests"
+              element={
+                <ProtectedRoute requiredRoles={['TEACHER', 'ADMIN', 'MANAGER', 'CENTER_HEAD', 'SUBJECT_LEADER']}>
+                  <TeacherRequestsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/teacher/requests/create/select-type"
+              element={
+                <ProtectedRoute requiredRoles={['TEACHER', 'ADMIN', 'MANAGER', 'CENTER_HEAD', 'SUBJECT_LEADER']}>
+                  <SelectRequestTypePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/teacher/requests/create/select-session"
+              element={
+                <ProtectedRoute requiredRoles={['TEACHER', 'ADMIN', 'MANAGER', 'CENTER_HEAD', 'SUBJECT_LEADER']}>
+                  <SelectSessionPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/teacher/requests/create/select-resource"
+              element={
+                <ProtectedRoute requiredRoles={['TEACHER', 'ADMIN', 'MANAGER', 'CENTER_HEAD', 'SUBJECT_LEADER']}>
+                  <SelectResourcePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/teacher/requests/create/form"
+              element={
+                <ProtectedRoute requiredRoles={['TEACHER', 'ADMIN', 'MANAGER', 'CENTER_HEAD', 'SUBJECT_LEADER']}>
+                  <RequestFormPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/teacher/requests/:id"
+              element={
+                <ProtectedRoute requiredRoles={['TEACHER', 'ADMIN', 'MANAGER', 'CENTER_HEAD', 'SUBJECT_LEADER']}>
+                  <RequestDetailPage />
                 </ProtectedRoute>
               }
             />
@@ -103,6 +158,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={['ACADEMIC_AFFAIR', 'ADMIN', 'MANAGER', 'CENTER_HEAD']}>
                   <AcademicRequestsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academic/teacher-requests"
+              element={
+                <ProtectedRoute requiredRoles={['ACADEMIC_AFFAIR', 'ADMIN', 'MANAGER', 'CENTER_HEAD']}>
+                  <AcademicTeacherRequestsPage />
                 </ProtectedRoute>
               }
             />

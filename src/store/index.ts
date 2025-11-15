@@ -1,11 +1,12 @@
-import { configureStore } from '@reduxjs/toolkit'
-import { authApi } from './services/authApi'
-import { classApi } from './services/classApi'
-import { studentApi } from './services/studentApi'
-import { enrollmentApi } from './services/enrollmentApi'
-import { curriculumApi } from './services/curriculumApi'
-import { studentScheduleApi } from './services/studentScheduleApi'
-import { studentRequestApi } from './services/studentRequestApi'
+import { configureStore } from "@reduxjs/toolkit";
+import { authApi } from "./services/authApi";
+import { classApi } from "./services/classApi";
+import { studentApi } from "./services/studentApi";
+import { enrollmentApi } from "./services/enrollmentApi";
+import { curriculumApi } from "./services/curriculumApi";
+import { studentScheduleApi } from "./services/studentScheduleApi";
+import { studentRequestApi } from "./services/studentRequestApi";
+import { teacherRequestApi } from "./services/teacherRequestApi";
 import authSlice, {
   setCredentials,
   logout,
@@ -16,7 +17,7 @@ import authSlice, {
   selectHasRole,
   selectHasAnyRole,
   selectHasAllRoles,
-} from './slices/authSlice'
+} from "./slices/authSlice";
 
 export const store = configureStore({
   reducer: {
@@ -28,11 +29,12 @@ export const store = configureStore({
     [curriculumApi.reducerPath]: curriculumApi.reducer,
     [studentScheduleApi.reducerPath]: studentScheduleApi.reducer,
     [studentRequestApi.reducerPath]: studentRequestApi.reducer,
+    [teacherRequestApi.reducerPath]: teacherRequestApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
+        ignoredActions: ["persist/PERSIST", "persist/REHYDRATE"],
       },
     })
     .concat(authApi.middleware)
@@ -41,11 +43,12 @@ export const store = configureStore({
     .concat(enrollmentApi.middleware)
     .concat(curriculumApi.middleware)
     .concat(studentScheduleApi.middleware)
-    .concat(studentRequestApi.middleware),
-})
+    .concat(studentRequestApi.middleware)
+    .concat(teacherRequestApi.middleware),
+});
 
-export type RootState = ReturnType<typeof store.getState>
-export type AppDispatch = typeof store.dispatch
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
 
 // Export auth slice actions and selectors
 export {
@@ -58,4 +61,4 @@ export {
   selectHasRole,
   selectHasAnyRole,
   selectHasAllRoles,
-}
+};
