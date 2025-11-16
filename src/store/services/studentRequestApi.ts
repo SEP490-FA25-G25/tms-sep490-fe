@@ -6,10 +6,38 @@ import type {
   FetchBaseQueryMeta,
 } from '@reduxjs/toolkit/query'
 import type { RootState } from '../index'
+import type { StudentClassDTO } from '@/types/academicTransfer'
+import type { WeeklyScheduleData } from '@/store/services/studentScheduleApi'
+
+// Re-export StudentSearchResult from academicTransfer
+export type { StudentSearchResult } from '@/types/academicTransfer'
+
+// Student search response interface
+interface StudentSearchResponse {
+  content: import('@/types/academicTransfer').StudentSearchResult[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  pageable: any
+  totalElements: number
+}
+
+// Student search parameters interface
+interface StudentSearchParams {
+  search?: string
+  status?: string
+  page?: number
+  size?: number
+}
 
 export type RequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
 export type RequestType = 'ABSENCE' | 'MAKEUP' | 'TRANSFER'
 export type SessionModality = 'ONLINE' | 'OFFLINE' | 'HYBRID'
+
+export interface BranchOption {
+  id: number
+  name: string
+  code?: string
+  city?: string
+}
 
 export interface ApiResponse<T> {
   success: boolean
@@ -52,6 +80,12 @@ export interface UserSummary {
   email: string
 }
 
+export interface TeacherSummary {
+  id?: number
+  fullName?: string
+  email?: string
+}
+
 export interface ClassSummary {
   id: number
   code: string
@@ -60,6 +94,7 @@ export interface ClassSummary {
     id: number
     name: string
   }
+  teacher?: TeacherSummary | null
 }
 
 export interface SessionSummary {
@@ -75,12 +110,16 @@ export interface SessionSummary {
 }
 
 export interface ClassMeta {
+  id?: number
   classId: number
   classCode: string
   className?: string
+  name?: string
   branchId?: number
   branchName?: string
   modality?: SessionModality
+  availableSlots?: number
+  maxCapacity?: number
 }
 
 export interface TimeSlotInfo extends TimeSlotRange {
@@ -107,7 +146,8 @@ export interface MissedSession {
 export interface MissedSessionsResponse {
   studentId?: number
   totalCount: number
-  missedSessions: MissedSession[]
+  missedSessions?: MissedSession[]
+  sessions?: MissedSession[]
 }
 
 export type MakeupPriority = 'HIGH' | 'MEDIUM' | 'LOW'
@@ -147,8 +187,10 @@ export interface StudentRequest {
   requestType: RequestType
   status: RequestStatus
   currentClass: ClassSummary
+  targetClass?: ClassSummary | null // For TRANSFER requests only
   targetSession: SessionSummary
   makeupSession?: (SessionSummary & { classInfo?: ClassMeta }) | null
+  effectiveDate?: string | null // For TRANSFER requests - date when transfer takes effect
   requestReason: string
   note: string | null
   submittedAt: string
@@ -186,10 +228,32 @@ export interface AcademicStudentInfo {
   phone: string
 }
 
+export interface StudentAbsenceStats {
+  totalAbsences: number
+  totalSessions: number
+  absenceRate: number
+  excusedAbsences: number
+  unexcusedAbsences: number
+}
+
+export interface PreviousRequestStats {
+  totalRequests: number
+  approvedRequests: number
+  rejectedRequests: number
+  cancelledRequests: number
+}
+
+export interface AcademicRequestAdditionalInfo {
+  daysUntilSession?: number
+  studentAbsenceStats?: StudentAbsenceStats
+  previousRequests?: PreviousRequestStats
+}
+
 export interface AcademicStudentRequest extends StudentRequest {
   student: AcademicStudentInfo
   daysUntilSession?: number
   studentAbsenceRate?: number
+  additionalInfo?: AcademicRequestAdditionalInfo
 }
 
 export interface PendingRequestsSummary {
@@ -278,6 +342,12 @@ export interface AcademicMakeupOptionsQuery extends MakeupOptionsQuery {
   studentId: number
 }
 
+export interface AcademicWeeklyScheduleQuery {
+  studentId: number
+  weekStart?: string
+  classId?: number
+}
+
 export interface SubmitStudentRequestPayload {
   requestType: RequestType
   currentClassId: number
@@ -300,6 +370,172 @@ export interface ApproveRequestPayload {
 export interface RejectRequestPayload {
   id: number
   rejectionReason: string
+}
+
+// Transfer Request Types
+export interface TransferQuota {
+  used: number
+  limit: number
+  remaining: number
+}
+
+export interface TransferEligibility {
+  enrollmentId: number
+  classId: number
+  classCode: string
+  className: string
+  courseId: number
+  courseName: string
+  branchId?: number
+  branchName: string
+  modality?: SessionModality
+  learningMode?: SessionModality
+  enrollmentStatus?: string
+  enrollmentDate?: string
+  transferQuota: TransferQuota
+  hasPendingTransfer: boolean
+  canTransfer: boolean
+  scheduleInfo?: string
+}
+
+export interface PolicyInfo {
+  maxTransfersPerCourse: number
+  usedTransfers?: number
+  remainingTransfers?: number
+  autoApprovalConditions?: string
+  requiresAAApproval?: boolean
+  policyDescription?: string
+}
+
+export interface TransferEligibilityResponse {
+  eligibleForTransfer: boolean
+  ineligibilityReason: string | null
+  currentClasses?: TransferEligibility[]
+  currentEnrollments?: TransferEligibility[]
+  policyInfo: PolicyInfo
+}
+
+export interface ContentGapSession {
+  courseSessionNumber: number
+  courseSessionTitle: string
+  scheduledDate?: string
+}
+
+export interface ContentGap {
+  missedSessions: number
+  gapSessions: ContentGapSession[]
+  severity: 'NONE' | 'MINOR' | 'MODERATE' | 'MAJOR'
+  recommendation: string
+  totalSessions?: number
+  recommendedActions?: string[]
+  impactDescription?: string
+}
+
+export interface ContentGapAnalysis {
+  gapLevel: 'NONE' | 'MINOR' | 'MODERATE' | 'MAJOR'
+  missedSessions: number
+  totalSessions: number
+  gapSessions: ContentGapSession[]
+  recommendedActions?: string[]
+  impactDescription?: string
+}
+
+export interface TransferOption {
+  classId: number
+  classCode: string
+  className: string
+  branchId: number
+  branchName: string
+  modality: SessionModality
+  scheduleDays: string
+  scheduleTime: string
+  scheduleInfo?: string
+  startDate?: string
+  endDate?: string
+  currentSession: number
+  maxCapacity: number
+  enrolledCount: number
+  currentEnrollment?: number
+  availableSlots: number
+  classStatus: string
+  contentGap?: ContentGap
+  canTransfer: boolean
+  contentGapAnalysis?: ContentGapAnalysis
+  upcomingSessions?: Array<{
+    sessionId: number
+    date: string
+    courseSessionNumber: number
+    courseSessionTitle: string
+    timeSlot: string
+  }>
+  changes?: {
+    branch?: string
+    modality?: string
+    schedule?: string
+  }
+}
+
+export interface CurrentClassInfo {
+  id: number
+  code: string
+  name: string
+  courseId: number
+  branchId: number
+  branchName: string
+  modality: SessionModality
+  currentSession: number
+}
+
+export interface TransferCriteriaSummary {
+  branchChange: boolean
+  modalityChange: boolean
+  scheduleChange: boolean
+}
+
+export interface TransferOptionsResponse {
+  currentClass: CurrentClassInfo
+  transferCriteria?: TransferCriteriaSummary
+  availableClasses: TransferOption[]
+}
+
+export interface TransferSession {
+  sessionId: number
+  courseSessionNumber: number
+}
+
+export interface TransferRequestPayload {
+  currentClassId: number
+  targetClassId: number
+  effectiveDate: string
+  requestReason: string
+  note?: string
+}
+
+export interface TransferOnBehalfPayload extends TransferRequestPayload {
+  studentId: number
+}
+
+export interface TransferRequestResponse {
+  id: number
+  student: UserSummary
+  requestType: RequestType
+  currentClass: ClassSummary
+  targetClass: ClassSummary
+  effectiveDate: string
+  effectiveSession: TransferSession
+  requestReason: string
+  status: RequestStatus
+  submittedAt: string
+  submittedBy: UserSummary
+  decidedAt?: string
+  decidedBy?: UserSummary
+}
+
+export interface AcademicTransferOptionsQuery {
+  currentClassId: number
+  targetBranchId?: number
+  targetModality?: SessionModality
+  scheduleOnly?: boolean
 }
 
 const baseQuery = fetchBaseQuery({
@@ -379,36 +615,37 @@ export const studentRequestApi = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: ['StudentRequests', 'PendingRequests', 'RequestDetail'],
   endpoints: (builder) => ({
+    // Student-specific endpoints - /api/v1/students-request
     getAvailableSessions: builder.query<ApiResponse<StudentClassSessions[]>, StudentSessionQuery>({
       query: ({ date, requestType = 'ABSENCE' }) => ({
-        url: '/students/me/classes/sessions',
+        url: '/students-request/classes/sessions',
         params: { date, requestType },
       }),
     }),
     getMissedSessions: builder.query<ApiResponse<MissedSessionsResponse>, MissedSessionsQuery | void>({
       query: (params) => {
         if (!params) {
-          return '/students/me/missed-sessions'
+          return '/students-request/missed-sessions'
         }
         return {
-          url: '/students/me/missed-sessions',
+          url: '/students-request/missed-sessions',
           params,
         }
       },
     }),
     getMakeupOptions: builder.query<ApiResponse<MakeupOptionsResponse>, MakeupOptionsQuery>({
       query: ({ targetSessionId }) => ({
-        url: '/students/me/makeup-options',
+        url: '/students-request/makeup-options',
         params: { targetSessionId },
       }),
     }),
     getMyRequests: builder.query<ApiResponse<StudentPaginatedRequests>, StudentRequestsQuery | void>({
       query: (params) => {
         if (!params) {
-          return '/students/me/requests'
+          return '/students-request/requests'
         }
         return {
-          url: '/students/me/requests',
+          url: '/students-request/requests',
           params,
         }
       },
@@ -416,13 +653,13 @@ export const studentRequestApi = createApi({
     }),
     getMyRequestById: builder.query<ApiResponse<StudentRequest>, number>({
       query: (id) => ({
-        url: `/students/me/requests/${id}`,
+        url: `/students-request/requests/${id}`,
       }),
       providesTags: (result) => (result?.data ? [{ type: 'RequestDetail', id: result.data.id }] : []),
     }),
     submitStudentRequest: builder.mutation<ApiResponse<StudentRequest>, SubmitStudentRequestPayload>({
       query: (body) => ({
-        url: '/student-requests',
+        url: '/student-requests-submission',
         method: 'POST',
         body,
       }),
@@ -430,18 +667,38 @@ export const studentRequestApi = createApi({
     }),
     cancelRequest: builder.mutation<ApiResponse<StudentRequest>, number>({
       query: (id) => ({
-        url: `/students/me/requests/${id}/cancel`,
+        url: `/students-request/requests/${id}/cancel`,
         method: 'POST',
       }),
       invalidatesTags: ['StudentRequests'],
     }),
+    // Transfer Request Endpoints (Student)
+    getTransferEligibility: builder.query<ApiResponse<TransferEligibilityResponse>, void>({
+      query: () => '/students-request/transfer-eligibility',
+    }),
+    getTransferOptions: builder.query<ApiResponse<TransferOptionsResponse>, { currentClassId: number }>({
+      query: ({ currentClassId }) => ({
+        url: '/students-request/transfer-options',
+        params: { currentClassId },
+      }),
+    }),
+    submitTransferRequest: builder.mutation<ApiResponse<TransferRequestResponse>, TransferRequestPayload>({
+      query: (body) => ({
+        url: '/students-request/transfer-requests',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['StudentRequests'],
+    }),
+
+    // Academic Affairs endpoints - /api/v1/academic-requests
     getPendingRequests: builder.query<ApiResponse<PendingRequestsResponse>, PendingRequestsQuery | void>({
       query: (params) => {
         if (!params) {
-          return '/student-requests/pending'
+          return '/academic-requests/pending'
         }
         return {
-          url: '/student-requests/pending',
+          url: '/academic-requests/pending',
           params,
         }
       },
@@ -449,23 +706,38 @@ export const studentRequestApi = createApi({
     }),
     getStudentMissedSessions: builder.query<ApiResponse<MissedSessionsResponse>, AcademicMissedSessionsQuery>({
       query: ({ studentId, ...params }) => ({
-        url: `/students/${studentId}/missed-sessions`,
+        url: `/academic-requests/students/${studentId}/missed-sessions`,
         params,
       }),
     }),
     getStudentMakeupOptions: builder.query<ApiResponse<MakeupOptionsResponse>, AcademicMakeupOptionsQuery>({
       query: ({ studentId, targetSessionId }) => ({
-        url: `/students/${studentId}/makeup-options`,
-        params: { targetSessionId },
+        url: `/academic-requests/makeup-options`,
+        params: { studentId, targetSessionId },
       }),
+    }),
+    getAcademicWeeklySchedule: builder.query<ApiResponse<WeeklyScheduleData>, AcademicWeeklyScheduleQuery>({
+      query: ({ studentId, weekStart, classId }) => {
+        const params: Record<string, string | number> = {}
+        if (weekStart) {
+          params.weekStart = weekStart
+        }
+        if (typeof classId === 'number') {
+          params.classId = classId
+        }
+        return {
+          url: `/academic-requests/students/${studentId}/schedule`,
+          params: Object.keys(params).length ? params : undefined,
+        }
+      },
     }),
     getAcademicRequests: builder.query<ApiResponse<AcademicRequestsResponse>, AcademicHistoryQuery | void>({
       query: (params) => {
         if (!params) {
-          return '/student-requests'
+          return '/academic-requests'
         }
         return {
-          url: '/student-requests',
+          url: '/academic-requests',
           params,
         }
       },
@@ -473,7 +745,7 @@ export const studentRequestApi = createApi({
     }),
     getRequestDetail: builder.query<ApiResponse<AcademicStudentRequest>, number>({
       query: (id) => ({
-        url: `/student-requests/${id}`,
+        url: `/academic-requests/${id}`,
       }),
       providesTags: (_result, _error, id) => [
         { type: 'RequestDetail', id },
@@ -481,7 +753,7 @@ export const studentRequestApi = createApi({
     }),
     approveRequest: builder.mutation<ApiResponse<AcademicStudentRequest>, ApproveRequestPayload>({
       query: ({ id, note }) => ({
-        url: `/student-requests/${id}/approve`,
+        url: `/academic-requests/${id}/approve`,
         method: 'PUT',
         body: { note },
       }),
@@ -493,7 +765,7 @@ export const studentRequestApi = createApi({
     }),
     rejectRequest: builder.mutation<ApiResponse<AcademicStudentRequest>, RejectRequestPayload>({
       query: ({ id, rejectionReason }) => ({
-        url: `/student-requests/${id}/reject`,
+        url: `/academic-requests/${id}/reject`,
         method: 'PUT',
         body: { rejectionReason },
       }),
@@ -508,11 +780,76 @@ export const studentRequestApi = createApi({
       SubmitOnBehalfRequestPayload
     >({
       query: (body) => ({
-        url: '/student-requests/on-behalf',
+        url: '/academic-requests/on-behalf',
         method: 'POST',
         body,
       }),
       invalidatesTags: ['PendingRequests', 'StudentRequests'],
+    }),
+    submitAbsenceOnBehalf: builder.mutation<ApiResponse<StudentRequest>, SubmitOnBehalfRequestPayload>({
+      query: (body) => ({
+        url: '/academic-requests/absence/on-behalf',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['PendingRequests', 'StudentRequests'],
+    }),
+    // AA Transfer Endpoints
+    getAcademicTransferEligibility: builder.query<ApiResponse<TransferEligibilityResponse>, { studentId: number }>({
+      query: ({ studentId }) => ({
+        url: `/academic-requests/students/${studentId}/transfer-eligibility`,
+      }),
+    }),
+    getAcademicTransferOptions: builder.query<ApiResponse<TransferOptionsResponse>, AcademicTransferOptionsQuery>({
+      query: ({ currentClassId, targetBranchId, targetModality, scheduleOnly }) => {
+        const params: Record<string, string | number | boolean> = { currentClassId }
+
+        if (typeof targetBranchId === 'number') {
+          params.targetBranchId = targetBranchId
+        }
+
+        if (targetModality) {
+          params.targetModality = targetModality
+        }
+
+        if (scheduleOnly) {
+          params.scheduleOnly = scheduleOnly
+        }
+
+        return {
+          url: '/academic-requests/transfer-options',
+          params,
+        }
+      },
+    }),
+    submitTransferOnBehalf: builder.mutation<ApiResponse<TransferRequestResponse>, TransferOnBehalfPayload>({
+      query: (body) => ({
+        url: '/academic-requests/transfer/on-behalf',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['PendingRequests', 'StudentRequests'],
+    }),
+
+    // Student Classes API for AA - /api/v1/students
+    getStudentClasses: builder.query<ApiResponse<StudentClassDTO[]>, { studentId: number }>({
+      query: ({ studentId }) => ({
+        url: `/students/${studentId}/classes`,
+      }),
+    }),
+    // Student search for AA - /api/v1/students
+    searchStudents: builder.query<ApiResponse<StudentSearchResponse>, StudentSearchParams>({
+      query: (params) => ({
+        url: '/students',
+        params,
+      }),
+    }),
+    // Branch list for transfer filters
+    getBranches: builder.query<ApiResponse<BranchOption[]>, { excludeId?: number } | void>({
+      query: (params) => ({
+        url: '/branches',
+        params: params?.excludeId ? { excludeId: params.excludeId } : undefined,
+      }),
     }),
   }),
 })
@@ -528,14 +865,29 @@ export const {
   useGetMyRequestByIdQuery,
   useSubmitStudentRequestMutation,
   useCancelRequestMutation,
-  useGetStudentMissedSessionsQuery,
-  useGetStudentMakeupOptionsQuery,
+  // Academic Affairs endpoints
   useGetPendingRequestsQuery,
   useLazyGetPendingRequestsQuery,
+  useGetStudentMissedSessionsQuery,
+  useGetStudentMakeupOptionsQuery,
+  useGetAcademicWeeklyScheduleQuery,
   useGetAcademicRequestsQuery,
   useLazyGetAcademicRequestsQuery,
   useGetRequestDetailQuery,
   useApproveRequestMutation,
   useRejectRequestMutation,
   useCreateOnBehalfRequestMutation,
+  useSubmitAbsenceOnBehalfMutation,
+  // Transfer Request Hooks
+  useGetTransferEligibilityQuery,
+  useGetTransferOptionsQuery,
+  useSubmitTransferRequestMutation,
+  // Academic Affairs Transfer Hooks
+  useGetAcademicTransferEligibilityQuery,
+  useGetAcademicTransferOptionsQuery,
+  useSubmitTransferOnBehalfMutation,
+  // Student Classes Hooks for AA
+  useGetStudentClassesQuery,
+  useSearchStudentsQuery,
+  useGetBranchesQuery,
 } = studentRequestApi

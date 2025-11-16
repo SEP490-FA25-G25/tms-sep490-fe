@@ -120,6 +120,18 @@ const RESOURCE_TYPE_LABELS: Record<string, string> = {
   VIRTUAL: 'Lớp trực tuyến',
 }
 
+const getTimeSlotId = (slot: TimeSlotDTO) => {
+  if (typeof slot.id === 'number') {
+    return slot.id
+  }
+  if (typeof slot.timeSlotTemplateId === 'number') {
+    return slot.timeSlotTemplateId
+  }
+  return null
+}
+
+const getTimeSlotLabel = (slot: TimeSlotDTO) => slot.displayName ?? slot.name ?? 'Khung giờ'
+
 export default function StudentSchedulePage() {
   const [weekStart, setWeekStart] = useState<string | null>(null)
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null)
@@ -143,9 +155,14 @@ export default function StudentSchedulePage() {
     isLoading: isScheduleLoading,
     isError: isScheduleError,
     refetch: refetchSchedule,
-  } = useGetWeeklyScheduleQuery(weekStart ?? '', {
-    skip: !weekStart,
-  })
+  } = useGetWeeklyScheduleQuery(
+    {
+      weekStart: weekStart ?? '',
+    },
+    {
+      skip: !weekStart,
+    }
+  )
 
   const scheduleData = weeklyScheduleResponse?.data
 
@@ -191,8 +208,12 @@ export default function StudentSchedulePage() {
   const getSessionForCell = useCallback(
     (day: DayOfWeek, slot: TimeSlotDTO) => {
       if (!scheduleData) return null
+      const slotId = getTimeSlotId(slot)
+      if (slotId === null) {
+        return null
+      }
       return scheduleData.schedule?.[day]?.find(
-        (session: SessionSummaryDTO) => session.timeSlotTemplateId === slot.timeSlotTemplateId
+        (session: SessionSummaryDTO) => session.timeSlotTemplateId === slotId
       )
     },
     [scheduleData]
@@ -328,16 +349,20 @@ export default function StudentSchedulePage() {
                           ))}
                         </div>
 
-                        {scheduleData.timeSlots.map((slot) => (
-                          <div
-                            key={slot.timeSlotTemplateId}
-                            className="grid"
-                            style={{
-                              gridTemplateColumns: `160px repeat(${DAYS.length}, minmax(0, 1fr))`,
-                            }}
+                        {scheduleData.timeSlots.map((slot, slotIndex) => {
+                          const slotId = getTimeSlotId(slot)
+                          const slotKey =
+                            slotId !== null ? slotId : `slot-${slotIndex}-${slot.startTime}-${slot.endTime}`
+                          return (
+                            <div
+                              key={slotKey}
+                              className="grid"
+                              style={{
+                                gridTemplateColumns: `160px repeat(${DAYS.length}, minmax(0, 1fr))`,
+                              }}
                           >
                             <div className="border-r border-border/60 bg-muted/20 px-4 py-5">
-                              <p className="text-sm font-semibold text-foreground">{slot.name}</p>
+                              <p className="text-sm font-semibold text-foreground">{getTimeSlotLabel(slot)}</p>
                               <p className="text-xs text-muted-foreground">
                                 {slot.startTime.slice(0, 5)} - {slot.endTime.slice(0, 5)}
                               </p>
@@ -354,7 +379,7 @@ export default function StudentSchedulePage() {
                                 : ''
                               return (
                                 <button
-                                  key={`${day}-${slot.timeSlotTemplateId}`}
+                                  key={`${day}-${slotKey}`}
                                   type="button"
                                   onClick={() => session && setSelectedSessionId(session.sessionId)}
                                   disabled={!session}
@@ -412,8 +437,9 @@ export default function StudentSchedulePage() {
                                 </button>
                               )
                             })}
-                          </div>
-                        ))}
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
                   </section>
@@ -446,9 +472,9 @@ function SessionDetailDialog({ sessionId, onClose }: SessionDetailDialogProps) {
   const homeworkBadge = detail ? HOMEWORK_STATUS_STYLES[detail.studentStatus.homeworkStatus] ?? null : null
   const sessionStatus = detail ? SESSION_STATUS_STYLES[detail.sessionInfo.sessionStatus] ?? null : null
   const locationDisplay = detail
-    ? classroomResource?.location ||
-      detail.sessionInfo.location ||
-      detail.sessionInfo.onlineLink ||
+    ? classroomResource?.resourceType === 'VIRTUAL'
+      ? classroomResource?.onlineLink || classroomResource?.location || detail.sessionInfo.location || detail.sessionInfo.onlineLink
+      : classroomResource?.location || detail.sessionInfo.location || detail.sessionInfo.onlineLink ||
       (detail.classInfo.modality === 'ONLINE' ? 'Học trực tuyến' : detail.classInfo.branchName)
     : 'Chưa cập nhật'
   const resourceTypeLabel = classroomResource

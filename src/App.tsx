@@ -3,6 +3,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AuthRedirect } from '@/components/AuthRedirect'
 import { ApiSetup } from '@/components/ApiSetup'
+import LandingPage from './app/page'
 import DashboardPage from './app/dashboard/page'
 import LoginPage from './app/login/page'
 import AdminUsersPage from './app/admin/users/page'
@@ -31,6 +32,7 @@ function App() {
       <ApiSetup>
         <AuthProvider>
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
 
             {/* Dashboard */}
@@ -195,8 +197,8 @@ function App() {
               }
             />
 
-            {/* Root route - redirect based on auth state */}
-            <Route path="/" element={<AuthRedirect />} />
+            {/* Route dành cho chuyển hướng dựa trên trạng thái đăng nhập */}
+            <Route path="/app" element={<AuthRedirect />} />
 
             {/* Catch all route - redirect based on auth state */}
             <Route path="*" element={<AuthRedirect />} />
