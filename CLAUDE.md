@@ -38,7 +38,13 @@ The build process runs `tsc -b && vite build`, ensuring type checking before bun
 ## Project Structure
 
 ### Key Directories
-- `src/app/` - Page components organized by route (dashboard, login, admin, teacher, student, academic)
+- `src/app/` - Page components organized by route
+  - `login/` - Authentication page
+  - `dashboard/` - Role-based main dashboard
+  - `admin/users/` - User management (ADMIN only)
+  - `teacher/classes/` - Teacher's assigned classes
+  - `student/courses/`, `student/schedule/`, `student/requests/` - Student features
+  - `academic/classes/`, `academic/classes/[id]/`, `academic/requests/` - Academic affairs management
 - `src/components/` - Reusable components
   - `ui/` - shadcn/ui component library
   - `dashboard/` - Role-specific dashboard components
@@ -48,7 +54,7 @@ The build process runs `tsc -b && vite build`, ensuring type checking before bun
 - `src/lib/` - Utility functions (utils.ts with cn() helper)
 - `src/store/` - Redux store configuration
   - `slices/` - Redux slices (authSlice)
-  - `services/` - RTK Query API services (authApi, classApi, studentApi, enrollmentApi)
+  - `services/` - RTK Query API services (authApi, classApi, studentApi, enrollmentApi, curriculumApi, studentScheduleApi, studentRequestApi)
 
 ### Component Architecture
 - **Pages**: Located in `src/app/[route]/page.tsx` following Next.js-style conventions
@@ -71,7 +77,7 @@ The application uses a hybrid state management approach:
 ### Redux Store (Primary)
 - **RTK Query** for API calls with auto-caching and background updates
 - **Auth slice** for authentication state management
-- **Multiple API services**: `authApi`, `classApi`, `studentApi`, `enrollmentApi`
+- **API services**: `authApi`, `classApi`, `studentApi`, `enrollmentApi`, `curriculumApi`, `studentScheduleApi`, `studentRequestApi`
 
 ### Authentication Flow
 - **Redux Toolkit Query** handles login/logout API calls
@@ -85,6 +91,69 @@ The system is connected to a real backend API (localhost:8080) and no longer use
 - User authentication with JWT tokens
 - Role-based authorization
 - Multiple user types and permissions
+
+### Adding New RTK Query Service
+
+All backend responses use `ResponseObject<T>` wrapper:
+```typescript
+interface ResponseObject<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+```
+
+Pattern for new API service (`src/store/services/exampleApi.ts`):
+```typescript
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { baseQueryWithReauth } from './authApi';
+
+interface Example {
+  id: number;
+  name: string;
+}
+
+export const exampleApi = createApi({
+  reducerPath: 'exampleApi',
+  baseQuery: baseQueryWithReauth,
+  tagTypes: ['Example'],
+  endpoints: (builder) => ({
+    getExamples: builder.query<Example[], void>({
+      query: () => '/examples',
+      transformResponse: (response: { data: Example[] }) => response.data,
+      providesTags: ['Example'],
+    }),
+    createExample: builder.mutation<Example, Partial<Example>>({
+      query: (body) => ({
+        url: '/examples',
+        method: 'POST',
+        body,
+      }),
+      transformResponse: (response: { data: Example }) => response.data,
+      invalidatesTags: ['Example'],
+    }),
+  }),
+});
+
+export const { useGetExamplesQuery, useCreateExampleMutation } = exampleApi;
+```
+
+Register in `src/store/index.ts`:
+```typescript
+import { exampleApi } from './services/exampleApi';
+
+export const store = configureStore({
+  reducer: {
+    // ... existing reducers
+    [exampleApi.reducerPath]: exampleApi.reducer,
+  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(
+      // ... existing middleware
+      exampleApi.middleware,
+    ),
+});
+```
 
 ## Path Aliases
 
@@ -132,152 +201,74 @@ The project follows a modern minimal design philosophy inspired by shadcn/ui, Op
 ## Implementation Plan: Core Principles
 
 **1. Code Quality & Structure:**
-
-- **Clean Implementation:** The implementation must be clean, avoiding unnecessary code, complexity, and "code smells." Adhere strictly to established coding standards and best practices (e.g., SOLID, DRY).
-- **No Redundancy (DRY - Don't Repeat Yourself):** Actively prevent code duplication. Abstract and reuse components, functions, and logic wherever possible.
-- **Logical Soundness & Correct Algorithms:** Ensure all logic is correct and the algorithms used are efficient and appropriate for the given problem.
+- **Clean Implementation:** Avoid unnecessary code, complexity, and "code smells." Adhere to SOLID, DRY principles.
+- **No Redundancy:** Actively prevent code duplication. Abstract and reuse components, functions, and logic.
+- **Logical Soundness:** Ensure all logic is correct and algorithms are efficient.
 
 **2. System Integrity & Performance:**
-
-- **Prevent Race Conditions:** Proactively identify and prevent potential race conditions to ensure data integrity and system stability, especially in concurrent operations.
-- **Avoid Over-engineering:** The solution must not be over-engineered. Implement what is necessary to meet the current requirements without adding speculative features or unnecessary complexity.
+- **Prevent Race Conditions:** Ensure data integrity in concurrent operations.
+- **Avoid Over-engineering:** Implement what is necessary without speculative features.
 
 **3. Development Approach:**
+- **Maintain Holistic View:** Consider overall architecture and impact on the entire system.
+- **Focus on MVP Scope:** Deliver the user story at hand within defined scope. Primary goal is functional, demonstrable features.
 
-- **Adhere to Best Practices:** Always follow the best and most current industry-standard approaches for the technologies and patterns being used.
-- **Maintain a Holistic View:** Always consider the overall architecture and the impact of your changes on the entire system. Ensure new implementations integrate seamlessly.
-- **Focus on the Story & Scope:** Concentrate on delivering the user story at hand. Ensure the implementation directly serves the story's requirements and stays within the defined scope for the MVP (Minimum Viable Product). The primary goal is a functional, demonstrable feature that meets the story's acceptance criteria.
-
-**4. Final Deliverable:**
-
-- **Solid & Maintainable Code:** The final code must be robust, reliable, well-documented, and easy for other developers to understand, modify, and maintain in the future.
-
-**5. UI/UX Requirements:**
-
-- **Vietnamese Language**: All user interface text, labels, buttons, messages, and user-facing content must be in Vietnamese 100%
-- **Padding Usage**: Use padding purposefully and avoid excessive whitespace that makes the interface feel disconnected
-- **Card Component And Borders Limitations**: Only use card components when absolutely necessary for visual grouping of related content. Avoid wrapping everything in cards unnecessarily
-- **Clean Interface**: Prioritize direct content presentation over unnecessary container elements
-
-## Serena MCP Server Integration
-
-### Overview
-This project uses **Serena MCP (Model Context Protocol) Server** for intelligent code navigation and editing. Serena provides semantic understanding of the codebase through language server integration.
-
-### Memory Files Available
-After onboarding, these memory files contain project-specific knowledge:
-- `project_overview.md` - Tech stack, architecture, key design principles
-- `suggested_commands.md` - Development, Git, and system commands
-- `code_style_conventions.md` - TypeScript settings, component patterns, RTK Query patterns
-- `task_completion_checklist.md` - Quality checks before completing tasks
-- `project_structure.md` - Complete directory layout and key files
-- `design_patterns_guidelines.md` - Architecture patterns, UI/UX guidelines, Vietnamese language requirements
-
-### Key Serena Tools for This Project
-
-**Code Navigation (Use Instead of Reading Entire Files)**
-```
-# Get overview of symbols in a file
-mcp__serena__get_symbols_overview("src/store/services/authApi.ts")
-
-# Find specific symbol by name path
-mcp__serena__find_symbol("authApi", include_body=true)
-
-# Find references to a symbol
-mcp__serena__find_referencing_symbols("useAuth", "src/hooks/useAuth.ts")
-
-# Search for patterns in codebase
-mcp__serena__search_for_pattern("useGetClassesQuery")
-```
-
-**Code Editing (Symbol-Based)**
-```
-# Replace entire symbol body
-mcp__serena__replace_symbol_body("ComponentName", "src/components/...tsx", "new component body")
-
-# Insert after a symbol (e.g., add new function)
-mcp__serena__insert_after_symbol("existingFunction", "src/...tsx", "new function")
-
-# Insert before a symbol (e.g., add imports)
-mcp__serena__insert_before_symbol("ComponentName", "src/...tsx", "import statement")
-
-# Rename symbol throughout codebase
-mcp__serena__rename_symbol("oldName", "src/...tsx", "newName")
-```
-
-**Memory Management**
-```
-# Read project-specific knowledge
-mcp__serena__read_memory("code_style_conventions.md")
-
-# Update memory with new learnings
-mcp__serena__write_memory("new_insight.md", "content")
-
-# List all available memories
-mcp__serena__list_memories()
-```
-
-**Thinking Tools (Call Before Important Actions)**
-```
-# After gathering information
-mcp__serena__think_about_collected_information()
-
-# Before making code changes
-mcp__serena__think_about_task_adherence()
-
-# When task seems complete
-mcp__serena__think_about_whether_you_are_done()
-```
-
-### Best Practices with Serena
-
-1. **Don't Read Entire Files** - Use `get_symbols_overview` first, then `find_symbol` with specific name paths
-2. **Use Symbol-Based Editing** - Prefer `replace_symbol_body` over line-based edits for component/function changes
-3. **Check Memory Files** - Read relevant memories before starting complex tasks
-4. **Think Before Acting** - Call thinking tools before making significant changes
-5. **Restrict Searches** - Always pass `relative_path` to narrow searches to specific directories
-
-### Example Workflow
-
-```
-1. Read memory: mcp__serena__read_memory("code_style_conventions.md")
-2. Overview: mcp__serena__get_symbols_overview("src/store/services/studentApi.ts")
-3. Find function: mcp__serena__find_symbol("studentApi", include_body=true, depth=1)
-4. Think: mcp__serena__think_about_collected_information()
-5. Edit: mcp__serena__replace_symbol_body("useGetStudentsQuery", ..., "updated query")
-6. Verify: mcp__serena__think_about_whether_you_are_done()
-```
+**4. UI/UX Requirements:**
+- **Vietnamese Language**: All UI text must be in Vietnamese 100%
+- **Minimal Cards/Borders**: Only use cards when necessary for visual grouping
+- **Clean Interface**: Prioritize direct content presentation over unnecessary containers
 
 ## Acknowledging Correct Feedback
 
 When feedback IS correct:
+- ✅ "Fixed. [Brief description of what changed]"
+- ✅ "Good catch – [specific issue]. Fixed in [location]."
+- ✅ Just fix it and show in the code
 
-✅ "Fixed. [Brief description of what changed]"
-✅ "Good catch – [specific issue]. Fixed in [location]."
-✅ [Just fix it and show in the code]
+When feedback is correct, DO NOT use:
+- ❌ "You're absolutely right!", "Great point!", "Thanks for catching that!"
+- ❌ ANY gratitude expression
 
-❌ "You're absolutely right!"
-❌ "Great point!"
-❌ "Thanks for catching that!"
-❌ "Thanks for [anything]!"
-❌ ANY gratitude expression
-
-**Why no thanks:** Actions speak. Just fix it. The code itself shows you heard the feedback.
-
-**If you catch yourself about to write "Thanks":** DELETE IT. State the fix instead.
-
----
+**Why:** Actions speak. The code itself shows you heard the feedback.
 
 ## Gracefully Correcting Your Pushback
 
 If you pushed back and were wrong:
+- ✅ "You were right – I checked [X] and it does [Y]. Implementing now."
+- ✅ "Verified this and you're correct. My initial understanding was wrong because [reason]. Fixing."
 
-✅ "You were right – I checked [X] and it does [Y]. Implementing now."
-✅ "Verified this and you're correct. My initial understanding was wrong because [reason]. Fixing."
+Avoid long apologies, defending why you pushed back, or over-explaining. State the correction factually and move on.
 
-❌ Long apology  
-❌ Defending why you pushed back  
-❌ Over-explaining  
+## Serena MCP Server Integration
 
-State the correction factually and move on.
+This project uses **Serena MCP Server** for semantic code navigation and editing. Available memory files:
+- `project_overview.md`, `project_structure.md` - Architecture and layout
+- `code_style_conventions.md` - TypeScript and component patterns
+- `design_patterns_guidelines.md` - UI/UX and Vietnamese language requirements
+- `task_completion_checklist.md` - Quality checks before completing tasks
 
+### Key Tools
+
+**Code Navigation (Prefer over reading entire files)**
+- `get_symbols_overview(file)` - Get top-level symbols in a file
+- `find_symbol(name_path, include_body=true)` - Find specific symbol with source
+- `find_referencing_symbols(name, file)` - Find all references to a symbol
+- `search_for_pattern(pattern)` - Regex search across codebase
+
+**Code Editing**
+- `replace_symbol_body(name, file, new_body)` - Replace entire function/component
+- `insert_after_symbol(name, file, content)` - Add code after a symbol
+- `insert_before_symbol(name, file, content)` - Add imports or code before symbol
+- `rename_symbol(old_name, file, new_name)` - Rename throughout codebase
+
+**Thinking Tools (Call before important actions)**
+- `think_about_collected_information()` - After gathering context
+- `think_about_task_adherence()` - Before making changes
+- `think_about_whether_you_are_done()` - When task seems complete
+
+### Best Practices
+
+1. Use `get_symbols_overview` before reading entire files
+2. Prefer symbol-based editing over line-based edits
+3. Read relevant memory files before complex tasks
+4. Always pass `relative_path` to narrow searches
