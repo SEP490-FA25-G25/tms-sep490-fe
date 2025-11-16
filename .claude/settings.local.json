@@ -30,7 +30,9 @@
       "mcp__serena__find_symbol",
       "mcp__serena__search_for_pattern",
       "mcp__serena__think_about_collected_information",
-      "mcp__serena__think_about_task_adherence"
+      "mcp__serena__think_about_task_adherence",
+      "Bash(pnpm run build:*)",
+      "Bash(pnpm run lint)"
     ],
     "deny": [],
     "ask": []

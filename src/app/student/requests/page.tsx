@@ -8,7 +8,6 @@ import {
   NotebookPenIcon,
   PlusIcon,
   RefreshCcwIcon,
-  SparklesIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -19,6 +18,16 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -92,6 +101,7 @@ export default function StudentRequestsPage() {
   const [detailId, setDetailId] = useState<number | null>(null)
   const [cancelingId, setCancelingId] = useState<number | null>(null)
   const [successRequest, setSuccessRequest] = useState<StudentRequest | null>(null)
+  const [cancelConfirmRequest, setCancelConfirmRequest] = useState<StudentRequest | null>(null)
 
   const {
     data: requestsResponse,
@@ -115,11 +125,11 @@ export default function StudentRequestsPage() {
 
   const [cancelRequest, { isLoading: isCancelling }] = useCancelRequestMutation()
 
-  const handleCancel = async (request: StudentRequest) => {
-    if (request.status !== 'PENDING') return
-    setCancelingId(request.id)
+  const handleCancelConfirm = async () => {
+    if (!cancelConfirmRequest || cancelConfirmRequest.status !== 'PENDING') return
+    setCancelingId(cancelConfirmRequest.id)
     try {
-      await cancelRequest(request.id).unwrap()
+      await cancelRequest(cancelConfirmRequest.id).unwrap()
       toast.success('Đã hủy yêu cầu')
       refetchRequests()
     } catch (error: unknown) {
@@ -128,6 +138,7 @@ export default function StudentRequestsPage() {
       toast.error(message)
     } finally {
       setCancelingId(null)
+      setCancelConfirmRequest(null)
     }
   }
 
@@ -153,12 +164,9 @@ export default function StudentRequestsPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
-                <div className="flex items-center gap-2">
-                  <SparklesIcon className="h-5 w-5 text-primary" />
-                  <h1 className="text-2xl font-semibold tracking-tight">Yêu cầu của tôi</h1>
-                </div>
+                <h1 className="text-2xl font-semibold tracking-tight">Yêu cầu của tôi</h1>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Theo dõi trạng thái xin nghỉ, học bù và chuyển lớp
+                  Quản lý yêu cầu xin nghỉ, học bù, chuyển lớp
                 </p>
               </div>
               <Button onClick={() => setIsCreateOpen(true)} size="sm">
@@ -417,7 +425,7 @@ export default function StudentRequestsPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleCancel(request)}
+                              onClick={() => setCancelConfirmRequest(request)}
                               disabled={isCancelling && cancelingId === request.id}
                             >
                               {isCancelling && cancelingId === request.id ? 'Đang hủy...' : 'Hủy yêu cầu'}
@@ -436,8 +444,8 @@ export default function StudentRequestsPage() {
 
             {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (
-              <div className="flex items-center justify-between rounded-lg border bg-muted/40 px-4 py-2 text-sm">
-                <span>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
                   Trang {pagination.number + 1} / {pagination.totalPages}
                 </span>
                 <div className="flex gap-2">
@@ -527,7 +535,7 @@ export default function StudentRequestsPage() {
                 Mã yêu cầu <span className="font-semibold text-foreground">#{successRequest.id}</span> • Trạng thái:{' '}
                 <span className="font-semibold text-foreground">Đang chờ duyệt</span>
               </p>
-              <div className="rounded-2xl border border-border/60 bg-muted/20 p-3">
+              <div className="rounded-lg bg-muted/30 p-3">
                 <p className="text-sm font-semibold">
                   {successRequest.currentClass.code} → Buổi {successRequest.targetSession.courseSessionNumber}
                 </p>
@@ -553,6 +561,32 @@ export default function StudentRequestsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Cancel Confirmation Dialog */}
+      <AlertDialog
+        open={!!cancelConfirmRequest}
+        onOpenChange={(open) => {
+          if (!open) setCancelConfirmRequest(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận hủy yêu cầu</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc muốn hủy yêu cầu #{cancelConfirmRequest?.id}? Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Không</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancelConfirm}
+              disabled={isCancelling}
+            >
+              {isCancelling ? 'Đang hủy...' : 'Xác nhận hủy'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </StudentRoute>
   )
 }
@@ -712,6 +746,7 @@ function AbsenceFlow({ onSuccess }: FlowProps) {
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null)
   const [reason, setReason] = useState('')
   const [note, setNote] = useState('')
+  const [reasonError, setReasonError] = useState<string | null>(null)
   const futureLimitDate = useMemo(() => addMonths(new Date(), 1), [])
 
   const { data: currentWeekResponse, isFetching: isLoadingCurrentWeek } = useGetCurrentWeekQuery()
@@ -726,7 +761,7 @@ function AbsenceFlow({ onSuccess }: FlowProps) {
       skip: !weekStart,
     }
   )
-  const { data: sessionDetailResponse, isFetching: isLoadingSessionDetail } = useGetSessionDetailQuery(
+  const { data: sessionDetailResponse } = useGetSessionDetailQuery(
     selectedSessionId ?? skipToken,
     {
       skip: !selectedSessionId,
@@ -791,13 +826,15 @@ function AbsenceFlow({ onSuccess }: FlowProps) {
   }
 
   const handleSubmit = async () => {
+    setReasonError(null)
+
     if (!selectedSession) {
       toast.error('Vui lòng chọn buổi học muốn xin nghỉ')
       return
     }
 
     if (reason.trim().length < 10) {
-      toast.error('Lý do xin nghỉ phải có tối thiểu 10 ký tự')
+      setReasonError('Lý do xin nghỉ phải có tối thiểu 10 ký tự')
       return
     }
 
@@ -1019,20 +1056,31 @@ function AbsenceFlow({ onSuccess }: FlowProps) {
                     )}
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => setSelectedSessionId(null)}>
-                    Đổi buổi
+                    Chọn lại
                   </Button>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Textarea
-                  placeholder="Chia sẻ lý do cụ thể để Học vụ duyệt nhanh hơn..."
+                  placeholder="Nhập lý do xin nghỉ..."
                   value={reason}
-                  onChange={(event) => setReason(event.target.value)}
+                  onChange={(event) => {
+                    setReason(event.target.value)
+                    if (reasonError) setReasonError(null)
+                  }}
                   rows={4}
-                  className="resize-none"
+                  className={cn('resize-none', reasonError && 'border-destructive')}
                 />
-                <p className="text-xs text-muted-foreground">Tối thiểu 10 ký tự · {reason.trim().length}/10</p>
+                <div className="flex items-center justify-between">
+                  {reasonError ? (
+                    <p className="text-xs text-destructive">{reasonError}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      {reason.trim().length} / tối thiểu 10 ký tự
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="flex gap-2">
@@ -1051,11 +1099,12 @@ function AbsenceFlow({ onSuccess }: FlowProps) {
   )
 }
 function MakeupFlow({ onSuccess }: FlowProps) {
-  const [excludeRequested, setExcludeRequested] = useState(true)
+  const [excludeRequested] = useState(true)
   const [selectedMissedId, setSelectedMissedId] = useState<number | null>(null)
   const [selectedMakeupId, setSelectedMakeupId] = useState<number | null>(null)
   const [reason, setReason] = useState('')
   const [note, setNote] = useState('')
+  const [reasonError, setReasonError] = useState<string | null>(null)
 
   const { data: missedResponse, isFetching: isLoadingMissed } = useGetMissedSessionsQuery({
     weeksBack: MAKEUP_LOOKBACK_WEEKS,
@@ -1122,6 +1171,8 @@ function MakeupFlow({ onSuccess }: FlowProps) {
     classInfo?.className ?? classInfo?.name ?? 'Tên lớp đang cập nhật'
 
   const handleSubmit = async () => {
+    setReasonError(null)
+
     if (!selectedMissedSession || !selectedMakeupOption) {
       toast.error('Vui lòng chọn đủ buổi đã vắng và buổi học bù')
       return
@@ -1134,7 +1185,7 @@ function MakeupFlow({ onSuccess }: FlowProps) {
     }
 
     if (reason.trim().length < 10) {
-      toast.error('Lý do học bù phải có tối thiểu 10 ký tự')
+      setReasonError('Lý do học bù phải có tối thiểu 10 ký tự')
       return
     }
 
@@ -1161,19 +1212,7 @@ function MakeupFlow({ onSuccess }: FlowProps) {
     }
   }
 
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'HIGH':
-        return <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20">Ưu tiên cao</Badge>
-      case 'MEDIUM':
-        return <Badge className="bg-amber-500/10 text-amber-600 hover:bg-amber-500/20">Ưu tiên TB</Badge>
-      case 'LOW':
-        return <Badge className="bg-slate-500/10 text-slate-600 hover:bg-slate-500/20">Ưu tiên thấp</Badge>
-      default:
-        return null
-    }
-  }
-
+  
   const step1Complete = !!selectedMissedSession
   const step2Complete = !!selectedMakeupOption
   const step3Complete = step2Complete && reason.trim().length >= 10
@@ -1270,7 +1309,7 @@ function MakeupFlow({ onSuccess }: FlowProps) {
                   )}
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => setSelectedMissedId(null)}>
-                  Đổi buổi
+                  Chọn lại
                 </Button>
               </div>
             </div>
@@ -1358,7 +1397,7 @@ function MakeupFlow({ onSuccess }: FlowProps) {
                     </p>
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => setSelectedMakeupId(null)}>
-                    Đổi buổi
+                    Chọn lại
                   </Button>
                 </div>
               </div>
@@ -1389,13 +1428,24 @@ function MakeupFlow({ onSuccess }: FlowProps) {
           <div className="space-y-4">
             <div className="space-y-2">
               <Textarea
-                placeholder="Chia sẻ lý do bạn muốn học bù buổi này..."
+                placeholder="Nhập lý do học bù..."
                 value={reason}
-                onChange={(event) => setReason(event.target.value)}
+                onChange={(event) => {
+                  setReason(event.target.value)
+                  if (reasonError) setReasonError(null)
+                }}
                 rows={4}
-                className="resize-none"
+                className={cn('resize-none', reasonError && 'border-destructive')}
               />
-              <p className="text-xs text-muted-foreground">Tối thiểu 10 ký tự · {reason.trim().length}/10</p>
+              <div className="flex items-center justify-between">
+                {reasonError ? (
+                  <p className="text-xs text-destructive">{reasonError}</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {reason.trim().length} / tối thiểu 10 ký tự
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="flex gap-2">

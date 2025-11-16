@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { format, isBefore, startOfDay, parseISO, isValid } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { CalendarIcon, CheckCircle, AlertTriangle, ArrowRight } from 'lucide-react'
+import { CalendarIcon, CheckCircle, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { TransferEligibility, TransferOption, TransferRequestResponse } from '@/store/services/studentRequestApi'
 import TransferErrorDisplay from './TransferErrorDisplay'
@@ -113,7 +113,6 @@ export default function TransferConfirmationStep({
   }, [selectedClass])
 
   const contentGapInfo = getContentGapSeverity(normalizedContentGap.severity)
-  const ContentGapIcon = contentGapInfo.icon
 
   const parseTimeSlot = (timeSlot?: string) => {
     if (!timeSlot) {
@@ -218,7 +217,7 @@ export default function TransferConfirmationStep({
             <p className="font-semibold">{currentEnrollment.classCode}</p>
             <p className="text-sm text-muted-foreground">{currentEnrollment.className}</p>
             <p className="text-sm text-muted-foreground">
-              {currentEnrollment.branchName} · {getModalityText(currentEnrollment.modality)}
+              {currentEnrollment.branchName} · {getModalityText(currentEnrollment.modality || '')}
             </p>
           </div>
 
@@ -228,7 +227,7 @@ export default function TransferConfirmationStep({
             <p className="font-semibold">{selectedClass.classCode}</p>
             <p className="text-sm text-muted-foreground">{selectedClass.className}</p>
             <p className="text-sm text-muted-foreground">
-              {selectedClass.branchName} · {getModalityText(selectedClass.modality)}
+              {selectedClass.branchName} · {getModalityText(selectedClass.modality || '')}
             </p>
             <p className="text-sm text-muted-foreground">
               {selectedClass.scheduleDays} · {selectedClass.scheduleTime}

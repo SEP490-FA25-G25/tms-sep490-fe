@@ -31,7 +31,6 @@ import type { DateRange } from 'react-day-picker'
 import {
   CalendarIcon,
   FilterIcon,
-  HourglassIcon,
   PlusCircleIcon,
   SearchIcon,
   UserIcon,
@@ -105,7 +104,6 @@ export default function AcademicRequestsPage() {
   const [searchKeyword, setSearchKeyword] = useState('')
   const [classCode, setClassCode] = useState('')
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
-  const [urgentOnly, setUrgentOnly] = useState(false)
   const [todayOnly, setTodayOnly] = useState(false)
 
   // Pagination states
@@ -146,9 +144,6 @@ export default function AcademicRequestsPage() {
 
   const displayedPending = useMemo(() => {
     return pendingList.filter((request) => {
-      if (urgentOnly && (request.daysUntilSession ?? Number.MAX_SAFE_INTEGER) > 2) {
-        return false
-      }
       if (todayOnly) {
         if (!request.targetSession) return false
         const sessionDate = parseISO(request.targetSession.date)
@@ -163,7 +158,7 @@ export default function AcademicRequestsPage() {
       }
       return true
     })
-  }, [pendingList, urgentOnly, todayOnly])
+  }, [pendingList, todayOnly])
 
   const totalPendingPages = pendingData?.totalPages ?? 0
 
@@ -301,7 +296,7 @@ const detailClassTeacherName =
         {/* Summary Stats */}
         <section className="grid gap-4 md:grid-cols-5">
           {summaryItems.map((item) => (
-            <div key={item.label} className="space-y-1 rounded-lg border p-4">
+            <div key={item.label} className="space-y-1">
               <p className="text-sm text-muted-foreground">{item.label}</p>
               <p className={cn('text-2xl font-semibold', item.accent)}>{item.value}</p>
             </div>
@@ -336,31 +331,23 @@ const detailClassTeacherName =
                   </SelectContent>
                 </Select>
 
-                <Button
-                  variant={urgentOnly ? 'default' : 'outline'}
-                  size="sm"
-                  className={cn('rounded-full', urgentOnly ? 'bg-amber-500 text-white hover:bg-amber-600' : '')}
-                  onClick={() => setUrgentOnly((prev) => !prev)}
-                >
-                  <HourglassIcon className="mr-1 h-4 w-4" />
-                  Khẩn cấp (&lt;= 2 ngày)
-                </Button>
-                <Button
+                  <Button
                   variant={todayOnly ? 'default' : 'outline'}
                   size="sm"
                   className="rounded-full"
                   onClick={() => setTodayOnly((prev) => !prev)}
                 >
                   <CalendarIcon className="mr-1 h-4 w-4" />
-                  Buổi học hôm nay
+                  Hôm nay
                 </Button>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-3">
               <div className="relative flex-1 min-w-60">
+                <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Tìm theo tên học viên / email"
+                  placeholder="Tên học viên"
                   value={searchKeyword}
                   onChange={(event) => {
                     setSearchKeyword(event.target.value)
@@ -369,7 +356,6 @@ const detailClassTeacherName =
                   }}
                   className="pl-9"
                 />
-                <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               </div>
               <Input
                 placeholder="Mã lớp"
@@ -433,77 +419,83 @@ const detailClassTeacherName =
                 </div>
               ) : (
                 displayedPending.map((request) => {
-                  const isUrgent = (request.daysUntilSession ?? Number.MAX_SAFE_INTEGER) <= 2
                   const absenceRate = request.studentAbsenceRate ?? 0
                   return (
                     <div
                       key={request.id}
-                      className={cn(
-                        'rounded-lg border p-4 transition-colors',
-                        isUrgent ? 'border-amber-300 bg-amber-50/70' : ''
-                      )}
+                      className="rounded-lg border p-4 transition-colors hover:bg-muted/30"
                     >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="rounded-full">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="outline" className="rounded-full text-xs">
                               {request.requestType === 'ABSENCE' && 'Xin nghỉ'}
                               {request.requestType === 'MAKEUP' && 'Học bù'}
                               {request.requestType === 'TRANSFER' && 'Chuyển lớp'}
                             </Badge>
-                            {isUrgent && (
-                              <Badge className="rounded-full bg-amber-600/80 text-white">Khẩn cấp</Badge>
-                            )}
                           </div>
-                          <p className="mt-1 text-xs text-muted-foreground">#{request.student.studentCode}</p>
-                          <h3 className="text-lg font-semibold">{request.student.fullName}</h3>
-                          <p className="text-sm text-muted-foreground">{request.student.email}</p>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="font-semibold">{request.student.fullName}</h3>
+                              <p className="text-sm text-muted-foreground">#{request.student.studentCode} · {request.student.email}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-medium">{request.currentClass.name}</p>
+                              <p className="text-xs text-muted-foreground">{request.currentClass.code} · {request.currentClass.branch?.name}</p>
+                              {request.targetSession && (
+                                <p className="text-xs text-muted-foreground">
+                                  {format(parseISO(request.targetSession.date), "dd/MM", { locale: vi })} ·{' '}
+                                  {request.targetSession.timeSlot.startTime}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium">{request.currentClass.name}</p>
-                          <p className="text-xs text-muted-foreground">{request.currentClass.branch?.name}</p>
-                          {request.targetSession ? (
-                            <p className="text-sm text-muted-foreground">
-                              {format(parseISO(request.targetSession.date), "dd/MM/yyyy", { locale: vi })} ·{' '}
-                              {request.targetSession.timeSlot.startTime}-
-                              {request.targetSession.timeSlot.endTime}
-                            </p>
-                          ) : (
-                            <p className="text-sm text-muted-foreground">—</p>
-                          )}
-                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => setSelectedRequestId(request.id)}>
+                          Xử lý
+                        </Button>
                       </div>
 
                       {request.requestType === 'MAKEUP' && request.makeupSession && (
-                        <div className="mt-3 rounded-lg border bg-muted/30 p-3">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/70">
-                            Buổi học bù được chọn
+                        <div className="mt-3 rounded-md bg-muted/20 p-3">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Buổi học bù</p>
+                          <p className="text-sm">
+                            {format(parseISO(request.makeupSession.date), "dd/MM", { locale: vi })} · {request.makeupSession.classInfo?.classCode}
                           </p>
-                          <p className="text-sm font-semibold">
-                            {format(parseISO(request.makeupSession.date), "EEEE, dd/MM/yyyy", { locale: vi })}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {request.makeupSession.classInfo?.classCode ?? 'Đang cập nhật'} · {request.makeupSession.timeSlot.startTime} - {request.makeupSession.timeSlot.endTime}
+                          <p className="text-xs text-muted-foreground">
+                            {request.makeupSession.timeSlot.startTime} - {request.makeupSession.timeSlot.endTime}
                           </p>
                         </div>
                       )}
 
-                      <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
-                        <span className="inline-flex items-center gap-1">
-                          Còn {request.daysUntilSession ?? '-'} ngày
-                        </span>
-                        <span className="inline-flex items-center gap-1">
-                          Tỉ lệ nghỉ: <span className="font-semibold text-rose-600">{absenceRate}%</span>
-                        </span>
-                      </div>
+                      {request.requestType === 'TRANSFER' && request.targetClass && (
+                        <div className="mt-3 rounded-md bg-muted/20 p-3">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Chuyển đến</p>
+                          <p className="text-sm">
+                            {request.targetClass.code} · {request.targetClass.branch?.name}
+                          </p>
+                          {request.effectiveDate && (
+                            <p className="text-xs text-muted-foreground">
+                              Hiệu lực: {format(parseISO(request.effectiveDate), "dd/MM", { locale: vi })}
+                            </p>
+                          )}
+                        </div>
+                      )}
 
-                      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                        <p className="text-sm line-clamp-2 text-muted-foreground">
-                          "{request.requestReason}"
+                      <div className="mt-3 flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-4 text-muted-foreground">
+                          <span className={cn(
+                            request.daysUntilSession !== undefined && request.daysUntilSession <= 2
+                              ? 'text-amber-600 font-medium'
+                              : ''
+                          )}>
+                            Còn {request.daysUntilSession ?? '-'} ngày
+                          </span>
+                          <span>Tỷ lệ nghỉ: {absenceRate.toFixed(2)}%</span>
+                        </div>
+                        <p className="text-muted-foreground max-w-md truncate">
+                          {request.requestReason}
                         </p>
-                        <Button variant="ghost" onClick={() => setSelectedRequestId(request.id)}>
-                          Xem & xử lý
-                        </Button>
                       </div>
                     </div>
                   )
@@ -513,13 +505,13 @@ const detailClassTeacherName =
 
             {totalPendingPages > 1 && (
               <div className="flex items-center justify-between text-sm">
-                <span>
-                  Trang {pendingPage + 1}/{totalPendingPages}
+                <span className="text-muted-foreground">
+                  {pendingPage + 1} / {totalPendingPages}
                 </span>
-                <div className="flex gap-2">
+                <div className="flex gap-1">
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant="ghost"
                     disabled={pendingPage === 0}
                     onClick={() => setPendingPage((prev) => Math.max(prev - 1, 0))}
                   >
@@ -527,7 +519,7 @@ const detailClassTeacherName =
                   </Button>
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant="ghost"
                     disabled={pendingPage + 1 >= totalPendingPages}
                     onClick={() => setPendingPage((prev) => Math.min(prev + 1, totalPendingPages - 1))}
                   >
@@ -709,7 +701,7 @@ const detailClassTeacherName =
             </div>
           ) : (
             <div className="space-y-5">
-              <div className="rounded-2xl border border-border/60 bg-muted/20 p-4 text-sm">
+              <div className="rounded-lg bg-muted/20 p-4 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">Mã yêu cầu</p>
@@ -751,22 +743,17 @@ const detailClassTeacherName =
               <div className="h-px bg-border" />
 
               <div className="space-y-4">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Lớp học</p>
-                    <p className="font-semibold">
-                      {detailRequest.currentClass.code} · {detailRequest.currentClass.name}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {detailRequest.currentClass.branch?.name ?? 'Chưa rõ chi nhánh'}
-                    </p>
-                    {detailClassTeacherName && (
-                      <p className="text-xs text-muted-foreground">Giảng viên: {detailClassTeacherName}</p>
-                    )}
-                  </div>
-                  <div className="text-xs text-muted-foreground text-right">
-                    Người gửi: {detailRequest.submittedBy?.fullName ?? '—'}
-                  </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Lớp học</p>
+                  <p className="font-semibold">
+                    {detailRequest.currentClass.code} · {detailRequest.currentClass.name}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {detailRequest.currentClass.branch?.name ?? 'Chưa rõ chi nhánh'}
+                  </p>
+                  {detailClassTeacherName && (
+                    <p className="text-xs text-muted-foreground">Giảng viên: {detailClassTeacherName}</p>
+                  )}
                 </div>
 
                 <div
@@ -775,7 +762,7 @@ const detailClassTeacherName =
                     detailRequest.requestType === 'MAKEUP' && detailRequest.makeupSession ? 'md:grid-cols-2' : 'md:grid-cols-1'
                   )}
                 >
-                  <div className="rounded-xl border border-border/60 bg-card/30 p-3 text-sm">
+                  <div className="rounded-lg bg-muted/10 p-3 text-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       {detailRequest.requestType === 'MAKEUP' ? 'Buổi đã vắng' : 'Buổi học'}
                     </p>
@@ -1661,24 +1648,9 @@ function MakeupFlow({ onSuccess }: MakeupFlowProps) {
     return 'Sức chứa đang cập nhật'
   }
 
-  const getClassDisplayName = (classInfo?: { className?: string; name?: string }) =>
-    classInfo?.className ?? classInfo?.name ?? 'Tên lớp đang cập nhật'
-
-  const getClassId = (classInfo?: { classId?: number; id?: number }) => classInfo?.classId ?? classInfo?.id ?? null
-
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'HIGH':
-        return <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20">Ưu tiên cao</Badge>
-      case 'MEDIUM':
-        return <Badge className="bg-amber-500/10 text-amber-600 hover:bg-amber-500/20">Ưu tiên TB</Badge>
-      case 'LOW':
-        return <Badge className="bg-slate-500/10 text-slate-600 hover:bg-slate-500/20">Ưu tiên thấp</Badge>
-      default:
-        return null
-    }
-  }
-
+  
+  
+  
   const canSubmit =
     !!selectedStudent && !!selectedMissedSession && !!selectedMakeupOption && reason.trim().length >= 10 && !isCreating
 
@@ -1691,7 +1663,7 @@ function MakeupFlow({ onSuccess }: MakeupFlowProps) {
       toast.error('Lý do học bù phải có tối thiểu 10 ký tự')
       return
     }
-    const currentClassId = getClassId(selectedMissedSession.classInfo)
+    const currentClassId = selectedMissedSession.classInfo?.classId ?? selectedMissedSession.classInfo?.id ?? null
     if (!currentClassId) {
       toast.error('Không thể xác định lớp của buổi đã chọn')
       return
@@ -1723,7 +1695,6 @@ function MakeupFlow({ onSuccess }: MakeupFlowProps) {
 
   const step1Complete = !!selectedMissedSession
   const step2Complete = !!selectedMakeupOption
-  const step3Complete = step2Complete && reason.trim().length >= 10
 
   return (
     <div className="space-y-8">
@@ -1961,7 +1932,9 @@ function MakeupFlow({ onSuccess }: MakeupFlowProps) {
                         </p>
                         <p className="text-xs text-primary">{getCapacityText(option)}</p>
                       </div>
-                      {getPriorityBadge(option.matchScore.priority)}
+                      {option.matchScore.priority === 'HIGH' && <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20">Ưu tiên cao</Badge>}
+                      {option.matchScore.priority === 'MEDIUM' && <Badge className="bg-amber-500/10 text-amber-600 hover:bg-amber-500/20">Ưu tiên TB</Badge>}
+                      {option.matchScore.priority === 'LOW' && <Badge className="bg-slate-500/10 text-slate-600 hover:bg-slate-500/20">Ưu tiên thấp</Badge>}
                     </div>
                   </button>
                 ))}

@@ -161,9 +161,9 @@ export default function CurrentClassSelectionStep({
                   <p className="text-muted-foreground">
                     Cơ sở: <span className="font-medium text-foreground">{transferClass.branchName}</span>
                     <span className="mx-2">•</span>
-                    Hình thức: <span className="font-medium text-foreground">{modalityLabel(transferClass.modality)}</span>
+                    Hình thức: <span className="font-medium text-foreground">{modalityLabel(transferClass.modality || '')}</span>
                   </p>
-                  {renderQuota(transferClass)}
+                  {renderQuota(transferClass as import('@/types/academicTransfer').TransferEligibility)}
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -171,7 +171,7 @@ export default function CurrentClassSelectionStep({
                     size="sm"
                     onClick={() => {
                       if (!disabled) {
-                        onSelectClass(transferClass)
+                        onSelectClass(transferClass as import('@/types/academicTransfer').TransferEligibility)
                       }
                     }}
                     disabled={disabled}
@@ -180,7 +180,7 @@ export default function CurrentClassSelectionStep({
                   </Button>
 
                   {!transferClass.canTransfer && (
-                    <span className="text-xs text-rose-600">{renderBlockingReason(transferClass)}</span>
+                    <span className="text-xs text-rose-600">{renderBlockingReason(transferClass as import('@/types/academicTransfer').TransferEligibility)}</span>
                   )}
                 </div>
               </div>

@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { useGetTransferOptionsQuery, type TransferEligibility, type TransferOption, type TransferOptionsResponse } from '@/store/services/studentRequestApi'
-import { Badge } from '@/components/ui/badge'
-import { Loader2, Users, Calendar, Clock } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import TransferErrorDisplay from './TransferErrorDisplay'
 
@@ -62,21 +61,7 @@ export default function TransferClassSelectionStep({
     onNext()
   }
 
-  const getSeverityBadge = (severity: string, count: number) => {
-    switch (severity) {
-      case 'NONE':
-        return <Badge className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100">Không thiếu nội dung</Badge>
-      case 'MINOR':
-        return <Badge className="bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100">Thiếu ít: {count} buổi</Badge>
-      case 'MODERATE':
-        return <Badge className="bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100">Thiếu vừa phải: {count} buổi</Badge>
-      case 'MAJOR':
-        return <Badge className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100">Thiếu nhiều: {count} buổi</Badge>
-      default:
-        return <Badge variant="secondary">Không xác định</Badge>
-    }
-  }
-
+  
   const getModalityText = (modality: string) => {
     switch (modality) {
       case 'OFFLINE': return 'Tại lớp'
@@ -97,16 +82,7 @@ export default function TransferClassSelectionStep({
     return { severity, missed, recommendation }
   }
 
-  const getCapacityBadge = (availableSlots: number) => {
-    if (availableSlots <= 0) {
-      return <Badge variant="destructive">Đã đủ chỗ</Badge>
-    }
-    if (availableSlots < 3) {
-      return <Badge className="bg-rose-50 text-rose-700">Còn {availableSlots} chỗ</Badge>
-    }
-    return null
-  }
-
+  
   const buildScheduleLine = (classOption: TransferOption) => {
     if (classOption.scheduleDays || classOption.scheduleTime) {
       return `${classOption.scheduleDays ?? ''} ${classOption.scheduleTime ?? ''}`.trim()
@@ -128,7 +104,7 @@ export default function TransferClassSelectionStep({
         <p className="font-semibold">{currentEnrollment.classCode}</p>
         <p className="text-sm text-muted-foreground">{currentEnrollment.className}</p>
         <p className="text-sm text-muted-foreground">
-          {currentEnrollment.branchName} · {getModalityText(currentEnrollment.modality)}
+          {currentEnrollment.branchName} · {getModalityText(currentEnrollment.modality || '')}
         </p>
         <p className="text-xs text-muted-foreground">Chỉ hiển thị lớp cùng cơ sở và hình thức để tự duyệt trong 4-8 giờ</p>
       </div>
@@ -142,11 +118,11 @@ export default function TransferClassSelectionStep({
       {/* Available Classes */}
       <div className="space-y-3">
         {availableClasses.map((classOption) => {
-          const { severity, missed, recommendation } = resolveSeverity(classOption)
+          const { missed, recommendation } = resolveSeverity(classOption)
           const scheduleLine = buildScheduleLine(classOption)
           const enrolledCount = classOption.enrolledCount ?? classOption.currentEnrollment ?? 0
-          const startDate = classOption.startDate ?? classOption.scheduleInfo?.split(' to ')?.[0]
-          const endDate = classOption.endDate ?? classOption.scheduleInfo?.split(' to ')?.[1]
+          const startDate = classOption.startDate ?? (classOption.scheduleInfo?.split(' to ')?.[0] || '')
+          const endDate = classOption.endDate ?? (classOption.scheduleInfo?.split(' to ')?.[1] || '')
 
           return (
             <button
