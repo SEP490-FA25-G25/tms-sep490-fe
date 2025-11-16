@@ -119,39 +119,21 @@ const requestTypes: Array<{
   value: RequestType;
   label: string;
   description: string;
-  bullets: string[];
 }> = [
   {
     value: "MODALITY_CHANGE",
     label: "Thay đổi phương thức",
     description: "Chuyển đổi giữa classroom và online",
-    bullets: [
-      "Chọn session cần thay đổi",
-      "Chọn resource mới",
-      "Gửi lý do yêu cầu",
-    ],
   },
   {
     value: "RESCHEDULE",
     label: "Đổi lịch",
-    description: "Thay đổi thời gian của session",
-    bullets: [
-      "Chọn session cần đổi lịch",
-      "Chọn ngày mới (trong 7 ngày tới)",
-      "Chọn khung giờ không trùng lịch",
-      "Chọn resource mới",
-      "Gửi lý do yêu cầu",
-    ],
+    description: "Thay đổi thời gian của 1 buổi học",
   },
   {
     value: "SWAP",
     label: "Nhờ dạy thay",
-    description: "Yêu cầu giáo viên khác dạy thay session này",
-    bullets: [
-      "Chọn session cần nhờ dạy",
-      "Gửi lý do yêu cầu",
-      "Chờ giáo viên xác nhận",
-    ],
+    description: "Yêu cầu giáo viên khác dạy thay 1 buổi học",
   },
 ];
 
@@ -167,6 +149,13 @@ const formatBackendError = (
   // Map common error codes to user-friendly messages
   if (errorMessage.includes("SESSION_NOT_IN_TIME_WINDOW")) {
     return "Ngày session đề xuất không nằm trong khoảng thời gian cho phép (trong vòng 7 ngày từ hôm nay).";
+  }
+
+  if (
+    errorMessage.includes("Internal Server Error") ||
+    errorMessage.includes("500")
+  ) {
+    return "Lỗi máy chủ. Vui lòng thử lại sau hoặc liên hệ quản trị viên nếu vấn đề vẫn tiếp tục.";
   }
 
   if (errorMessage.includes("INVALID_DATE")) {
@@ -207,7 +196,10 @@ export default function MyRequestsPage() {
     isFetching: isLoadingRequests,
     error,
     refetch,
-  } = useGetMyRequestsQuery();
+  } = useGetMyRequestsQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+  });
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [activeType, setActiveType] = useState<RequestType | null>(null);
   const [typeFilter, setTypeFilter] = useState<"ALL" | RequestType>("ALL");
@@ -248,10 +240,13 @@ export default function MyRequestsPage() {
     });
   }, [requests, typeFilter, statusFilter]);
 
-  const { data: detailData, isFetching: isLoadingDetail } =
-    useGetRequestByIdQuery(detailId ?? 0, {
-      skip: detailId === null,
-    });
+  const {
+    data: detailData,
+    isFetching: isLoadingDetail,
+    error: detailError,
+  } = useGetRequestByIdQuery(detailId ?? 0, {
+    skip: detailId === null,
+  });
 
   // Fallback: Lấy dữ liệu từ danh sách requests nếu detail không có
   const requestFromList = detailId
@@ -315,7 +310,6 @@ export default function MyRequestsPage() {
       handleDetailClose();
       refetch();
     } catch (error) {
-      console.error("Error processing swap request:", error);
       const apiError = error as {
         data?: { message?: string };
         status?: number;
@@ -447,7 +441,15 @@ export default function MyRequestsPage() {
               </SelectContent>
             </Select>
 
-            <Button variant="outline" size="icon" onClick={() => refetch()}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                setTypeFilter("ALL");
+                setStatusFilter("ALL");
+                refetch();
+              }}
+            >
               <RefreshCcw className="h-4 w-4" />
             </Button>
           </div>
@@ -646,14 +648,7 @@ export default function MyRequestsPage() {
 
                     <div className="mt-3 space-y-1">
                       <p className="text-sm font-medium">
-                        {request.className}
-                        {(request.classCode ||
-                          request.classInfo?.classCode) && (
-                          <span className="ml-2 text-xs text-muted-foreground">
-                            ({request.classCode || request.classInfo?.classCode}
-                            )
-                          </span>
-                        )}{" "}
+                        {request.className}{" "}
                         <span className="font-medium">
                           ·{" "}
                           {format(parseISO(request.sessionDate), "dd/MM/yyyy", {
@@ -801,16 +796,33 @@ export default function MyRequestsPage() {
           }
         }}
       >
-        <DialogContent className="max-w-2xl rounded-3xl">
+        <DialogContent className="max-w-2xl rounded-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Chi tiết yêu cầu</DialogTitle>
           </DialogHeader>
-          {isLoadingDetail || !detailData?.data ? (
+          {isLoadingDetail ? (
             <div className="space-y-3">
               <Skeleton className="h-4 w-2/3" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-32 w-full" />
             </div>
+          ) : detailError || !detailData?.data ? (
+            requestFromList ? (
+              <TeacherRequestDetailContent
+                request={requestFromList}
+                fallbackRequest={undefined}
+                onConfirmSwap={handleSwapDecision}
+                onRejectSwap={handleSwapDecision}
+                decisionNote={decisionNote}
+                onDecisionNoteChange={setDecisionNote}
+                isActionLoading={isActionLoading}
+                pendingAction={pendingAction}
+              />
+            ) : (
+              <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-center text-sm text-destructive">
+                <p>Không thể tải chi tiết yêu cầu. Vui lòng thử lại sau.</p>
+              </div>
+            )
           ) : (
             <TeacherRequestDetailContent
               request={detailData.data}
@@ -900,10 +912,7 @@ function TypeSelection({
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1">
-              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                {item.label}
-              </p>
-              <h3 className="mt-1 text-base font-semibold text-foreground">
+              <h3 className="text-base font-semibold text-foreground">
                 {item.label}
               </h3>
               <p className="mt-1 text-xs text-muted-foreground">
@@ -912,14 +921,6 @@ function TypeSelection({
             </div>
             <ArrowRight className="mt-1 h-5 w-5 shrink-0 text-muted-foreground" />
           </div>
-          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
-            {item.bullets.map((bullet) => (
-              <li key={bullet} className="flex items-center gap-1">
-                <span className="text-primary">→</span>
-                <span>{bullet}</span>
-              </li>
-            ))}
-          </ul>
         </button>
       ))}
     </div>
@@ -956,10 +957,12 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
     refetchOnMountOrArgChange: true,
     refetchOnReconnect: true,
   });
-  // Note: Modality resources API requires requestId, not sessionId
-  // This query is skipped when creating new requests as we don't have requestId yet
+  // Get modality resources using sessionId when creating new request
+  const resourceQueryArg = selectedSessionId
+    ? { sessionId: selectedSessionId }
+    : skipToken;
   const { data: resourcesData, isLoading: isLoadingResources } =
-    useGetModalityResourcesQuery(skipToken);
+    useGetModalityResourcesQuery(resourceQueryArg);
 
   const resolveResourceId = (resource?: ResourceDTO) =>
     resource?.id ?? resource?.resourceId ?? null;
@@ -1011,12 +1014,21 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
     }
 
     try {
-      await createRequest({
+      const requestBody: {
+        sessionId: number;
+        requestType: "MODALITY_CHANGE";
+        newResourceId?: number;
+        reason: string;
+      } = {
         sessionId: selectedSessionId,
         requestType: "MODALITY_CHANGE",
-        newResourceId: selectedResourceId,
         reason: reason.trim(),
-      }).unwrap();
+      };
+      // Only include newResourceId if it has a value
+      if (selectedResourceId !== undefined && selectedResourceId !== null) {
+        requestBody.newResourceId = selectedResourceId;
+      }
+      await createRequest(requestBody).unwrap();
 
       toast.success("Yêu cầu đã được gửi thành công");
       setSelectedDate(undefined);
@@ -1026,12 +1038,20 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
       setStep("session");
       onSuccess();
     } catch (error: unknown) {
-      const apiError = error as { data?: { message?: string } };
+      const apiError = error as {
+        data?: { message?: string; error?: string; [key: string]: unknown };
+        status?: number;
+        error?: string;
+        [key: string]: unknown;
+      };
+      const errorMessage =
+        apiError?.data?.message ||
+        apiError?.data?.error ||
+        (typeof apiError?.data === "string" ? apiError.data : undefined) ||
+        apiError?.error ||
+        undefined;
       toast.error(
-        formatBackendError(
-          apiError?.data?.message,
-          "Có lỗi xảy ra khi gửi yêu cầu"
-        )
+        formatBackendError(errorMessage, "Có lỗi xảy ra khi gửi yêu cầu")
       );
     }
   };
@@ -1110,7 +1130,6 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
                 {sessionsData.data.map((session, index) => {
                   const sessionId = session?.sessionId || session?.id;
                   if (!sessionId) {
-                    console.error("Session missing id:", session);
                     return null;
                   }
                   return (
@@ -1237,11 +1256,29 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
                       })}
                     </SelectContent>
                   </Select>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleResourceSelect(undefined)}
+                    className="mt-2"
+                  >
+                    Bỏ qua - Để staff quyết định
+                  </Button>
                 </>
               ) : (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 py-4 text-center text-sm text-amber-700">
-                  Không có resource nào khả dụng cho thời gian này. Vui lòng
-                  chọn thời gian khác.
+                <div className="space-y-2">
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 py-4 text-center text-sm text-amber-700">
+                    Không có resource nào khả dụng tại thời điểm này. Staff sẽ
+                    chọn resource phù hợp cho bạn.
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleResourceSelect(undefined)}
+                    className="w-full"
+                  >
+                    Tiếp tục - Để staff quyết định resource
+                  </Button>
                 </div>
               )}
             </div>
@@ -1594,25 +1631,47 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
     }
 
     try {
-      await createRequest({
+      const requestBody: {
+        sessionId: number;
+        requestType: "RESCHEDULE";
+        newDate: string;
+        newTimeSlotId?: number;
+        newResourceId?: number;
+        reason: string;
+      } = {
         sessionId: selectedSessionId,
         requestType: "RESCHEDULE",
         newDate: format(selectedNewDate, "yyyy-MM-dd"),
-        newTimeSlotId: selectedSlot.timeSlotId ?? selectedSlot.id ?? undefined,
-        newResourceId: selectedResourceId,
         reason: reason.trim(),
-      }).unwrap();
+      };
+      // Only include optional fields if they have values
+      const timeSlotId = selectedSlot.timeSlotId ?? selectedSlot.id;
+      if (timeSlotId !== undefined && timeSlotId !== null) {
+        requestBody.newTimeSlotId = timeSlotId;
+      }
+      if (selectedResourceId !== undefined && selectedResourceId !== null) {
+        requestBody.newResourceId = selectedResourceId;
+      }
+      await createRequest(requestBody).unwrap();
 
       toast.success("Yêu cầu đã được gửi thành công");
       resetToSessionStep();
       onSuccess();
     } catch (error: unknown) {
-      const apiError = error as { data?: { message?: string } };
+      const apiError = error as {
+        data?: { message?: string; error?: string; [key: string]: unknown };
+        status?: number;
+        error?: string;
+        [key: string]: unknown;
+      };
+      const errorMessage =
+        apiError?.data?.message ||
+        apiError?.data?.error ||
+        (typeof apiError?.data === "string" ? apiError.data : undefined) ||
+        apiError?.error ||
+        undefined;
       toast.error(
-        formatBackendError(
-          apiError?.data?.message,
-          "Có lỗi xảy ra khi gửi yêu cầu"
-        )
+        formatBackendError(errorMessage, "Có lỗi xảy ra khi gửi yêu cầu")
       );
     }
   };
@@ -2160,10 +2219,12 @@ function SwapFlow({ onSuccess }: FlowProps) {
     (session) => (session.sessionId || session.id) === selectedSessionId
   );
 
-  // Note: Swap candidates API requires requestId, not sessionId
-  // This query is skipped when creating new requests as we don't have requestId yet
+  // Get swap candidates using sessionId when creating new request
+  const candidateQueryArg = selectedSessionId
+    ? { sessionId: selectedSessionId }
+    : skipToken;
   const { data: candidatesData, isFetching: isLoadingCandidates } =
-    useGetSwapCandidatesQuery(skipToken);
+    useGetSwapCandidatesQuery(candidateQueryArg);
 
   const swapCandidates = candidatesData?.data ?? [];
 
@@ -2329,23 +2390,40 @@ function SwapFlow({ onSuccess }: FlowProps) {
     }
 
     try {
-      await createRequest({
+      const requestBody: {
+        sessionId: number;
+        requestType: RequestType;
+        replacementTeacherId?: number;
+        reason: string;
+      } = {
         sessionId: selectedSessionId,
-        requestType: "SWAP",
-        replacementTeacherId: selectedCandidateId ?? undefined,
+        requestType: "SWAP" as RequestType,
         reason: reason.trim(),
-      }).unwrap();
+      };
+      // Only include replacementTeacherId if it has a value
+      if (selectedCandidateId !== undefined && selectedCandidateId !== null) {
+        requestBody.replacementTeacherId = selectedCandidateId;
+      }
+      await createRequest(requestBody).unwrap();
 
       toast.success("Yêu cầu đã được gửi thành công");
       resetToSessionStep();
       onSuccess();
     } catch (error: unknown) {
-      const apiError = error as { data?: { message?: string } };
+      const apiError = error as {
+        data?: { message?: string; error?: string; [key: string]: unknown };
+        status?: number;
+        error?: string;
+        [key: string]: unknown;
+      };
+      const errorMessage =
+        apiError?.data?.message ||
+        apiError?.data?.error ||
+        (typeof apiError?.data === "string" ? apiError.data : undefined) ||
+        apiError?.error ||
+        undefined;
       toast.error(
-        formatBackendError(
-          apiError?.data?.message,
-          "Có lỗi xảy ra khi gửi yêu cầu"
-        )
+        formatBackendError(errorMessage, "Có lỗi xảy ra khi gửi yêu cầu")
       );
     }
   };
@@ -2758,21 +2836,6 @@ export function TeacherRequestDetailContent({
   pendingAction?: "confirm" | "reject" | null;
   hideRequestType?: boolean;
 }) {
-  // Debug: Log request data to check what backend returns
-  if (request.requestType === "RESCHEDULE") {
-    console.log("Reschedule request data:", {
-      newTimeSlotStartTime: request.newTimeSlotStartTime,
-      newTimeSlotEndTime: request.newTimeSlotEndTime,
-      newTimeSlotName: request.newTimeSlotName,
-      newStartTime: request.newStartTime,
-      newEndTime: request.newEndTime,
-      newSlot: request.newSlot,
-      newTimeSlot: request.newTimeSlot,
-      newSession: request.newSession,
-      fullRequest: request,
-    });
-  }
-
   const getNestedValue = (source: unknown, path: string[]): unknown => {
     let current: unknown = source;
     for (const segment of path) {
@@ -2933,15 +2996,6 @@ export function TeacherRequestDetailContent({
     fallbackRequest?.newTimeSlot?.endAt ||
     undefined;
 
-  // Debug: Log extracted time values
-  if (request.requestType === "RESCHEDULE") {
-    console.log("Extracted time values:", {
-      newSessionStart,
-      newSessionEnd,
-      newSessionDate,
-    });
-  }
-
   const newTimeSlotLabel =
     (request.newTimeSlotName ?? request.newTimeSlotLabel) ||
     request.newSlot?.label ||
@@ -3083,7 +3137,7 @@ export function TeacherRequestDetailContent({
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Lớp & môn
+            Thông tin buổi học
           </p>
           <div className="mt-1 space-y-1">
             <p className="font-medium text-foreground">

@@ -152,9 +152,11 @@ export interface ResourceDTO {
   id?: number; // API may return either id or resourceId
   resourceId?: number;
   name: string;
-  type: string;
+  type?: string; // May not be present if resourceType is used
+  resourceType?: string; // API may return resourceType instead of type
   capacity: number;
   currentResource?: boolean;
+  branchId?: number;
 }
 
 export interface RescheduleSlotDTO {
@@ -401,17 +403,30 @@ export const teacherRequestApi = createApi({
     }),
 
     // Get available resources for modality change
+    // Supports both requestId (for existing requests) and sessionId (for new requests)
     getModalityResources: builder.query<
       ResourcesResponse,
-      { requestId: number }
+      { requestId?: number; sessionId?: number }
     >({
-      query: ({ requestId }) => ({
-        url: `/teacher-requests/${requestId}/modality/resources`,
-        method: "GET",
-      }),
+      query: ({ requestId, sessionId }) => {
+        if (requestId) {
+          return {
+            url: `/teacher-requests/${requestId}/modality/resources`,
+            method: "GET",
+          };
+        }
+        if (sessionId) {
+          return {
+            url: `/teacher-requests/${sessionId}/modality/resources`,
+            method: "GET",
+          };
+        }
+        throw new Error("Either requestId or sessionId must be provided");
+      },
     }),
 
-    // Get available slots for reschedule
+    // Get available slots for reschedule (for teachers only)
+    // Note: API for staff (requestId) has been removed from backend
     getRescheduleSlots: builder.query<
       RescheduleSlotsResponse,
       { sessionId: number; date: string }
@@ -424,29 +439,59 @@ export const teacherRequestApi = createApi({
     }),
 
     // Get resource suggestions for reschedule
+    // For requestId: backend will use newDate and newTimeSlot from the request
+    // For sessionId: need to provide date and timeSlotId
     getRescheduleResources: builder.query<
       RescheduleResourcesResponse,
-      { sessionId: number; date: string; timeSlotId: number }
+      { requestId?: number; sessionId?: number; date?: string; timeSlotId?: number }
     >({
-      query: ({ sessionId, date, timeSlotId }) => ({
-        url: `/teacher-requests/${sessionId}/reschedule/suggestions`,
-        method: "GET",
-        params: {
-          date,
-          timeSlotId,
-        },
-      }),
+      query: ({ requestId, sessionId, date, timeSlotId }) => {
+        if (requestId) {
+          // For existing requests, backend uses newDate and newTimeSlot from request
+          return {
+            url: `/teacher-requests/${requestId}/reschedule/suggestions`,
+            method: "GET",
+          };
+        }
+        if (sessionId) {
+          // For new requests, need to provide date and timeSlotId
+          if (!date || timeSlotId === undefined) {
+            throw new Error("date and timeSlotId are required when using sessionId");
+          }
+          return {
+            url: `/teacher-requests/${sessionId}/reschedule/suggestions`,
+            method: "GET",
+            params: {
+              date,
+              timeSlotId,
+            },
+          };
+        }
+        throw new Error("Either requestId or sessionId must be provided");
+      },
     }),
 
     // Get swap candidates for substitute request
+    // Supports both requestId (for existing requests) and sessionId (for new requests)
     getSwapCandidates: builder.query<
       SwapCandidatesResponse,
-      { requestId: number }
+      { requestId?: number; sessionId?: number }
     >({
-      query: ({ requestId }) => ({
-        url: `/teacher-requests/${requestId}/swap/candidates`,
-        method: "GET",
-      }),
+      query: ({ requestId, sessionId }) => {
+        if (requestId) {
+          return {
+            url: `/teacher-requests/${requestId}/swap/candidates`,
+            method: "GET",
+          };
+        }
+        if (sessionId) {
+          return {
+            url: `/teacher-requests/${sessionId}/swap/candidates`,
+            method: "GET",
+          };
+        }
+        throw new Error("Either requestId or sessionId must be provided");
+      },
     }),
 
     // Get request detail

@@ -164,6 +164,11 @@ const roleBasedNav = {
         icon: CalendarIcon,
       },
       {
+        title: "Điểm danh",
+        url: "/teacher/attendance",
+        icon: CheckCircleIcon,
+      },
+      {
         title: "Yêu cầu của tôi",
         url: "/teacher/requests",
         icon: ClipboardCheckIcon,

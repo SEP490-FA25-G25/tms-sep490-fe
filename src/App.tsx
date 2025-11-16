@@ -7,6 +7,9 @@ import DashboardPage from './app/dashboard/page'
 import LoginPage from './app/login/page'
 import AdminUsersPage from './app/admin/users/page'
 import TeacherClassesPage from './app/teacher/classes/page'
+import TeacherAttendancePage from './app/teacher/attendance/page'
+import TeacherAttendanceDetailPage from './app/teacher/attendance/[sessionId]/page'
+import ClassAttendanceMatrixPage from './app/teacher/attendance/classes/[classId]/matrix/page'
 import TeacherRequestsPage from './app/teacher/requests/page'
 import SelectRequestTypePage from './app/teacher/requests/create/select-type/page'
 import SelectSessionPage from './app/teacher/requests/create/select-session/page'
@@ -56,6 +59,30 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={['TEACHER', 'ADMIN', 'MANAGER', 'CENTER_HEAD', 'SUBJECT_LEADER']}>
                   <TeacherClassesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/teacher/attendance/:sessionId"
+              element={
+                <ProtectedRoute requiredRoles={['TEACHER', 'ADMIN', 'MANAGER', 'CENTER_HEAD', 'SUBJECT_LEADER']}>
+                  <TeacherAttendanceDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/teacher/attendance"
+              element={
+                <ProtectedRoute requiredRoles={['TEACHER', 'ADMIN', 'MANAGER', 'CENTER_HEAD', 'SUBJECT_LEADER']}>
+                  <TeacherAttendancePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/teacher/attendance/classes/:classId/matrix"
+              element={
+                <ProtectedRoute requiredRoles={['TEACHER', 'ADMIN', 'MANAGER', 'CENTER_HEAD', 'SUBJECT_LEADER']}>
+                  <ClassAttendanceMatrixPage />
                 </ProtectedRoute>
               }
             />

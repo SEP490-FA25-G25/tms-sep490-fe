@@ -449,48 +449,18 @@ export default function AcademicTeacherRequestsPage() {
     undefined;
 
   const shouldFetchRescheduleResources =
-    isRescheduleRequest &&
-    !!sessionId &&
-    !!newDate &&
-    newTimeSlotId !== undefined;
+    isRescheduleRequest && !!selectedRequestId;
   const {
     data: rescheduleResourcesResponse,
     isFetching: isLoadingRescheduleResources,
     error: rescheduleResourcesError,
   } = useGetRescheduleResourcesQuery(
-    shouldFetchRescheduleResources &&
-      sessionId &&
-      newDate &&
-      newTimeSlotId !== undefined
+    shouldFetchRescheduleResources && selectedRequestId
       ? {
-          sessionId: Number(sessionId),
-          date: newDate,
-          timeSlotId: Number(newTimeSlotId),
+          requestId: selectedRequestId,
         }
       : skipToken
   );
-
-  // Debug: Log swap candidates query
-  useEffect(() => {
-    if (isSwapRequest) {
-      console.log("SWAP Request Debug:", {
-        requestId,
-        isSwapRequest,
-        canDecide,
-        swapCandidatesResponse,
-        candidates: swapCandidatesResponse?.data,
-        isLoadingCandidates,
-        error: swapCandidatesError,
-      });
-    }
-  }, [
-    isSwapRequest,
-    requestId,
-    canDecide,
-    swapCandidatesResponse,
-    isLoadingCandidates,
-    swapCandidatesError,
-  ]);
 
   const swapCandidates = swapCandidatesResponse?.data ?? [];
   const modalityResources = modalityResourcesResponse?.data ?? [];
@@ -580,18 +550,12 @@ export default function AcademicTeacherRequestsPage() {
     }
   }, [selectedRequestId, refetchRequestDetail]);
 
-  // Set initial replacement teacher from request if available
+  // Reset replacement teacher when switching to non-SWAP request
   useEffect(() => {
-    if (selectedRequest?.requestType === "SWAP" && selectedRequest.replacementTeacherId) {
-      // Only set if not already selected by user
-      if (!selectedReplacementTeacherId) {
-        setSelectedReplacementTeacherId(selectedRequest.replacementTeacherId);
-      }
-    } else if (selectedRequest?.requestType !== "SWAP") {
-      // Reset when switching to non-SWAP request
+    if (selectedRequest?.requestType !== "SWAP") {
       setSelectedReplacementTeacherId(null);
     }
-  }, [selectedRequest, selectedReplacementTeacherId]);
+  }, [selectedRequest]);
 
   const handleOpenRequestDetail = (requestId: number) => {
     setSelectedRequestId(requestId);
@@ -1183,9 +1147,9 @@ export default function AcademicTeacherRequestsPage() {
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Chọn resource
                   </p>
-                  {!sessionId ? (
+                  {isRescheduleRequest && !selectedRequestId ? (
                     <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-                      Không tìm thấy thông tin session. Vui lòng thử lại sau.
+                      Không tìm thấy thông tin request. Vui lòng thử lại sau.
                     </div>
                   ) : isLoadingModalityResources ||
                     isLoadingRescheduleResources ? (
@@ -1233,7 +1197,7 @@ export default function AcademicTeacherRequestsPage() {
                         {availableResources.map((resource) => {
                           const resourceId = resource.id ?? resource.resourceId;
                           const resourceName = resource.name || "Chưa có tên";
-                          const resourceType = resource.type || "";
+                          const resourceType = resource.type || resource.resourceType || "";
                           const resourceCapacity = resource.capacity;
 
                           return (
@@ -1321,18 +1285,8 @@ export default function AcademicTeacherRequestsPage() {
                                     "Chưa có tên"
                                   );
                                 }
-                                // If not in candidates, use from request
-                                if (
-                                  selectedRequest.replacementTeacherName &&
-                                  selectedRequest.replacementTeacherId ===
-                                    selectedReplacementTeacherId
-                                ) {
-                                  return selectedRequest.replacementTeacherName;
-                                }
                                 return "Chưa có tên";
                               })()
-                            : selectedRequest.replacementTeacherName
-                            ? selectedRequest.replacementTeacherName
                             : null}
                         </SelectValue>
                       </SelectTrigger>

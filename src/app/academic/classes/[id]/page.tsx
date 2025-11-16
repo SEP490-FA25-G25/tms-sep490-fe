@@ -398,7 +398,6 @@ export default function ClassDetailPage() {
           studentData={createdStudentData}
           onEnrollNow={(studentId) => {
             // TODO: Implement enrollment API call when backend is ready
-            console.log('Enroll student', studentId, 'to class', classId)
             toast.info('Tính năng ghi danh sẽ được triển khai sau')
           }}
           onAddLater={() => {
