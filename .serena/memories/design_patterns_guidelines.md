@@ -79,23 +79,91 @@ function useAuth() {
 - Messages: "Đang tải...", "Thành công", "Lỗi"
 - Placeholders: "Nhập tên...", "Chọn ngày..."
 
-### Design System
+### Design System Core
 1. **Minimalism with purpose** - Remove unnecessary elements
 2. **Content-first** - Design serves content
 3. **High contrast** - WCAG AA compliance
 4. **Generous whitespace** - 8px grid system
 5. **Subtle animations** - Only when purposeful
 
-### Card Usage (IMPORTANT)
+### Card, Border, Shadow Rules (CRITICAL)
 - ❌ Don't wrap everything in cards
-- ✅ Use cards only for visual grouping of related content
-- ✅ Prefer direct content presentation
+- ✅ Cards only for independent content blocks (widgets/functional blocks)
+- ✅ Maximum 1 level of card nesting
+- ❌ Don't wrap lists/tables/forms in cards unless background separation needed
+- ✅ Prefer Grid/Flex layout for grouping over card containers
+- ✅ Border: 1px neutral-200/300 only
+- ✅ Shadow: none or very subtle (no glow)
+- ❌ Avoid grid of identical cards causing visual noise
 
-### Color Palette
-- **Base**: White, grays (neutral)
-- **Accent**: Subtle purple or brand color
-- **Text**: High contrast ratios
-- **Dark mode**: Support with careful gray selection
+### Information Hygiene (Anti-Text Noise)
+- **Heading**: ≤ 6 words
+- **Description**: ≤ 2 sentences
+- ❌ No successive text blocks (multiple descriptions in a row)
+- ✅ Use tooltip/assist sparingly when really needed
+- ❌ Remove redundant labels when placeholder/label is clear enough
+- ❌ Don't repeat context in subtext
+- ✅ Keep only meaningful information that helps decision/action
+
+### Feedback & Notifications
+- **Inline feedback**: Prefer validation near form fields
+- **Toast**: Only for important actions/success/system errors
+  - Maximum 1-2 toasts per flow
+  - Auto-dismiss with reasonable timing
+  - No stacking/prolonged display
+- **Banner**: Rare, only for system-wide warnings
+- **Loading**: Skeleton/shimmer preferred
+  - ❌ Avoid full-page overlays
+  - Spinner only when absolutely necessary
+
+### Layout & Density for Dashboard
+- **Grid/Flex first, cards second**: Group content with layout and spacing
+- **Tables**:
+  - Density: comfortable/compact
+  - Row height: minimum 44px
+  - Light zebra striping or thin dividers
+  - ❌ No card wrapper around tables
+  - Clear sorting/filter, minimal empty state
+- **Forms**:
+  - 8px grid spacing
+  - Group by sections
+  - ❌ No border-box for each field
+  - Short descriptions, clear hints/placeholders
+  - Inline validation
+- **Navigation/Toolbar**: Compact with icon + short label
+
+### Spacing with Purpose
+- Whitespace must guide content flow
+- ❌ No isolated whitespace without visual direction
+- Block spacing: multiples of 8 (16/24/32px)
+- Heading to content: 8-12px
+- Between groups: 16-24px
+- ✅ Prefer grid alignment over adding cards/bezels
+
+### Icon & Accent Usage
+- **Icons**: Monochrome, only when improving scannability or clarifying actions
+- ❌ No decorative icons
+- **Accent colors**: Only for primary actions/focus states
+- ❌ Avoid multiple accent colors side by side
+- **Status colors** (success/warning/error): Neutral, low saturation, darker only for clear warnings
+
+### Empty/Error States
+- **Empty state**: 1 short sentence + CTA if needed
+  - ❌ No card wrapper
+  - ❌ No elaborate background
+- **Error**: Vietnamese, clear, inline near the error
+  - ❌ No spam toasts/banners
+- **Retry/Refresh**: Visible near the action
+  - ❌ No error modals unless major decision needed
+
+### Dashboard Minimal Checklist
+1. **Card/Border**: Cards when truly needed; border 1px neutral-200/300, shadow light or none
+2. **Layout**: Grid/Flex for grouping; avoid repeated card grids; spacing in multiples of 8, no isolated whitespace
+3. **Text**: 100% Vietnamese, concise; no successive text; heading ≤ 6 words, description ≤ 2 sentences; remove extra captions
+4. **Feedback**: Inline validation; max 1-2 toasts/flow; rare banners; skeleton/shimmer loading
+5. **Tables/Forms**: Compact tables (≥44px rows), light zebra/dividers, no outer card; forms grouped by section, clear hints, inline validation
+6. **Icon/Accent**: Monochrome icons when useful; accent only for primary/focus; avoid multiple accent colors
+7. **Empty/Error**: Empty state 1 sentence + CTA; clear Vietnamese errors, no notification spam; retry near action
 
 ## Code Quality Principles
 
