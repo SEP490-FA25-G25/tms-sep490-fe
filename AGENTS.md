@@ -156,8 +156,97 @@ The project follows a modern minimal design philosophy inspired by shadcn/ui, Op
 
 - **Vietnamese Language**: All user interface text, labels, buttons, messages, and user-facing content must be in Vietnamese 100%
 - **Padding Usage**: Use padding purposefully and avoid excessive whitespace that makes the interface feel disconnected
-- **Card Component Limitations**: Only use card components when absolutely necessary for visual grouping of related content. Avoid wrapping everything in cards unnecessarily
+- **Card Component And Borders Limitations**: Only use card components when absolutely necessary for visual grouping of related content. Avoid wrapping everything in cards unnecessarily
 - **Clean Interface**: Prioritize direct content presentation over unnecessary container elements
+
+## Serena MCP Server Integration
+
+### Overview
+This project uses **Serena MCP (Model Context Protocol) Server** for intelligent code navigation and editing. Serena provides semantic understanding of the codebase through language server integration.
+
+### Memory Files Available
+After onboarding, these memory files contain project-specific knowledge:
+- `project_overview.md` - Tech stack, architecture, key design principles
+- `suggested_commands.md` - Development, Git, and system commands
+- `code_style_conventions.md` - TypeScript settings, component patterns, RTK Query patterns
+- `task_completion_checklist.md` - Quality checks before completing tasks
+- `project_structure.md` - Complete directory layout and key files
+- `design_patterns_guidelines.md` - Architecture patterns, UI/UX guidelines, Vietnamese language requirements
+
+### Key Serena Tools for This Project
+
+**Code Navigation (Use Instead of Reading Entire Files)**
+```
+# Get overview of symbols in a file
+mcp__serena__get_symbols_overview("src/store/services/authApi.ts")
+
+# Find specific symbol by name path
+mcp__serena__find_symbol("authApi", include_body=true)
+
+# Find references to a symbol
+mcp__serena__find_referencing_symbols("useAuth", "src/hooks/useAuth.ts")
+
+# Search for patterns in codebase
+mcp__serena__search_for_pattern("useGetClassesQuery")
+```
+
+**Code Editing (Symbol-Based)**
+```
+# Replace entire symbol body
+mcp__serena__replace_symbol_body("ComponentName", "src/components/...tsx", "new component body")
+
+# Insert after a symbol (e.g., add new function)
+mcp__serena__insert_after_symbol("existingFunction", "src/...tsx", "new function")
+
+# Insert before a symbol (e.g., add imports)
+mcp__serena__insert_before_symbol("ComponentName", "src/...tsx", "import statement")
+
+# Rename symbol throughout codebase
+mcp__serena__rename_symbol("oldName", "src/...tsx", "newName")
+```
+
+**Memory Management**
+```
+# Read project-specific knowledge
+mcp__serena__read_memory("code_style_conventions.md")
+
+# Update memory with new learnings
+mcp__serena__write_memory("new_insight.md", "content")
+
+# List all available memories
+mcp__serena__list_memories()
+```
+
+**Thinking Tools (Call Before Important Actions)**
+```
+# After gathering information
+mcp__serena__think_about_collected_information()
+
+# Before making code changes
+mcp__serena__think_about_task_adherence()
+
+# When task seems complete
+mcp__serena__think_about_whether_you_are_done()
+```
+
+### Best Practices with Serena
+
+1. **Don't Read Entire Files** - Use `get_symbols_overview` first, then `find_symbol` with specific name paths
+2. **Use Symbol-Based Editing** - Prefer `replace_symbol_body` over line-based edits for component/function changes
+3. **Check Memory Files** - Read relevant memories before starting complex tasks
+4. **Think Before Acting** - Call thinking tools before making significant changes
+5. **Restrict Searches** - Always pass `relative_path` to narrow searches to specific directories
+
+### Example Workflow
+
+```
+1. Read memory: mcp__serena__read_memory("code_style_conventions.md")
+2. Overview: mcp__serena__get_symbols_overview("src/store/services/studentApi.ts")
+3. Find function: mcp__serena__find_symbol("studentApi", include_body=true, depth=1)
+4. Think: mcp__serena__think_about_collected_information()
+5. Edit: mcp__serena__replace_symbol_body("useGetStudentsQuery", ..., "updated query")
+6. Verify: mcp__serena__think_about_whether_you_are_done()
+```
 
 ## Acknowledging Correct Feedback
 
@@ -191,3 +280,4 @@ If you pushed back and were wrong:
 ❌ Over-explaining  
 
 State the correction factually and move on.
+
