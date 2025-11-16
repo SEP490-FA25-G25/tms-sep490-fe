@@ -386,11 +386,12 @@ export interface TransferEligibility {
   className: string
   courseId: number
   courseName: string
-  branchId: number
+  branchId?: number
   branchName: string
-  modality: SessionModality
+  modality?: SessionModality
   learningMode?: SessionModality
-  enrollmentStatus: string
+  enrollmentStatus?: string
+  enrollmentDate?: string
   transferQuota: TransferQuota
   hasPendingTransfer: boolean
   canTransfer: boolean
