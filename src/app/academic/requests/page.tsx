@@ -1,31 +1,13 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import { skipToken } from '@reduxjs/toolkit/query'
 import {
-  useSearchStudentsQuery,
   useGetPendingRequestsQuery,
   useGetAcademicRequestsQuery,
   useGetRequestDetailQuery,
   useApproveRequestMutation,
   useRejectRequestMutation,
-  useGetStudentMissedSessionsQuery,
-  useGetStudentMakeupOptionsQuery,
-  useCreateOnBehalfRequestMutation,
-  useSubmitTransferOnBehalfMutation,
-  useGetStudentClassesQuery,
-  useGetAcademicWeeklyScheduleQuery,
-  useSubmitAbsenceOnBehalfMutation,
-  type StudentSearchResult,
-  type TransferOption,
-  type SessionModality,
 } from '@/store/services/studentRequestApi'
-import type { TransferEligibility, TransferRequestResponse } from '@/types/academicTransfer'
-import type { DayOfWeek, SessionSummaryDTO } from '@/store/services/studentScheduleApi'
-import StudentSearchStep from '@/components/requests/wizard/StudentSearchStep'
-import CurrentClassSelectionStep from '@/components/requests/wizard/CurrentClassSelectionStep'
-import TargetClassSelectionStep from '@/components/requests/wizard/TargetClassSelectionStep'
-import AAConfirmationStep from '@/components/requests/wizard/AAConfirmationStep'
-import TransferSuccessDialog from '@/components/requests/TransferSuccessDialog'
-import { addDays, format, parseISO } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import type { DateRange } from 'react-day-picker'
 import {
@@ -34,7 +16,6 @@ import {
   PlusCircleIcon,
   SearchIcon,
   UserIcon,
-  ArrowRightIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -50,6 +31,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import AAAbsenceFlow from '@/components/requests/flows/AAAbsenceFlow'
+import AAMakeupFlow from '@/components/requests/flows/AAMakeupFlow'
+import AATransferFlow from '@/components/requests/flows/AATransferFlow'
 // import các academic requests endpoints khi có trong backend
 import { REQUEST_STATUS_META } from '@/constants/absence'
 import {
@@ -69,30 +53,7 @@ const REQUEST_TYPE_LABELS: Record<'ABSENCE' | 'MAKEUP' | 'TRANSFER', string> = {
   TRANSFER: 'Chuyển lớp',
 }
 
-const WEEK_DAYS: DayOfWeek[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
 
-const WEEK_DAY_LABELS: Record<DayOfWeek, string> = {
-  MONDAY: 'Thứ 2',
-  TUESDAY: 'Thứ 3',
-  WEDNESDAY: 'Thứ 4',
-  THURSDAY: 'Thứ 5',
-  FRIDAY: 'Thứ 6',
-  SATURDAY: 'Thứ 7',
-  SUNDAY: 'Chủ nhật',
-}
-
-const MAKEUP_LOOKBACK_WEEKS = 2
-
-function useDebouncedValue<T>(value: T, delay = 800) {
-  const [debouncedValue, setDebouncedValue] = useState(value)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedValue(value), delay)
-    return () => clearTimeout(timer)
-  }, [value, delay])
-
-  return debouncedValue
-}
 type HistoryFilter = 'ALL' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
 
 const PENDING_PAGE_SIZE = 6
@@ -440,8 +401,10 @@ const detailClassTeacherName =
                               <p className="text-sm text-muted-foreground">#{request.student.studentCode} · {request.student.email}</p>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-medium">{request.currentClass.name}</p>
-                              <p className="text-xs text-muted-foreground">{request.currentClass.code} · {request.currentClass.branch?.name}</p>
+                              <p className="text-sm font-medium">{request.currentClass.code}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {request.currentClass.branch?.name ?? 'Chi nhánh đang cập nhật'}
+                              </p>
                               {request.targetSession && (
                                 <p className="text-xs text-muted-foreground">
                                   {format(parseISO(request.targetSession.date), "dd/MM", { locale: vi })} ·{' '}
@@ -597,7 +560,7 @@ const detailClassTeacherName =
                             </TableCell>
                             <TableCell>
                               <div className="text-sm">
-                                <p className="font-medium">{request.currentClass.name}</p>
+                                <p className="font-medium">{request.currentClass.code}</p>
                                 {request.targetSession ? (
                                   <p className="text-xs text-muted-foreground">
                                     {format(parseISO(request.targetSession.date), "dd/MM/yyyy", { locale: vi })} ·{' '}
@@ -746,7 +709,7 @@ const detailClassTeacherName =
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground">Lớp học</p>
                   <p className="font-semibold">
-                    {detailRequest.currentClass.code} · {detailRequest.currentClass.name}
+                    {detailRequest.currentClass.code}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {detailRequest.currentClass.branch?.name ?? 'Chưa rõ chi nhánh'}
@@ -937,7 +900,55 @@ const detailClassTeacherName =
           </DialogHeader>
 
           {activeRequestType === null ? (
-            <TypeSelection onSelect={setActiveRequestType} />
+            <div className="space-y-3">
+              {[
+                {
+                  type: 'ABSENCE' as const,
+                  title: 'Xin nghỉ thay học viên',
+                  description: 'Tạo đơn xin nghỉ cho học viên với lý do cụ thể.',
+                  bullets: ['Chỉ cho buổi chưa diễn ra', 'AA có quyền duyệt trực tiếp', 'Ghi chú cho phụ huynh'],
+                },
+                {
+                  type: 'MAKEUP' as const,
+                  title: 'Xin học bù thay học viên',
+                  description: 'Gợi ý buổi học bù phù hợp theo lịch và chuyên môn.',
+                  bullets: ['Hiển thị buổi đã vắng', 'Ưu tiên gợi ý thông minh', 'Tự động duyệt ngay'],
+                },
+                {
+                  type: 'TRANSFER' as const,
+                  title: 'Chuyển lớp thay học viên',
+                  description: 'Phân tích nội dung và chuyển lớp với quy trình nhất quán.',
+                  bullets: ['Kiểm tra điều kiện chuyển', 'Phân tích nội dung bị thiếu', 'AA duyệt ngay lập tức'],
+                },
+              ].map((item) => (
+                <button
+                  key={item.type}
+                  type="button"
+                  onClick={() => setActiveRequestType(item.type)}
+                  className="w-full rounded-lg border border-border/60 p-4 text-left transition hover:border-primary/60 hover:bg-primary/5"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                        {item.type === 'ABSENCE' && 'Xin nghỉ'}
+                        {item.type === 'MAKEUP' && 'Học bù'}
+                        {item.type === 'TRANSFER' && 'Chuyển lớp'}
+                      </p>
+                      <h3 className="mt-1 text-base font-semibold text-foreground">{item.title}</h3>
+                      <p className="mt-1 text-xs text-muted-foreground">{item.description}</p>
+                    </div>
+                  </div>
+                  <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
+                    {item.bullets.map((bullet) => (
+                      <li key={bullet} className="flex items-center gap-1">
+                        <span className="text-primary">→</span>
+                        <span>{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </button>
+              ))}
+            </div>
           ) : (
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b pb-3">
@@ -969,7 +980,7 @@ const detailClassTeacherName =
               )}
 
               {activeRequestType === 'MAKEUP' && (
-                <MakeupFlow
+                <AAMakeupFlow
                   onSuccess={() => {
                     setActiveRequestType(null)
                     setShowOnBehalfDialog(false)
@@ -979,7 +990,7 @@ const detailClassTeacherName =
               )}
 
               {activeRequestType === 'TRANSFER' && (
-                <AAInlineTransferWizard
+                <AATransferFlow
                   onSuccess={() => {
                     setActiveRequestType(null)
                     setShowOnBehalfDialog(false)
@@ -995,1156 +1006,4 @@ const detailClassTeacherName =
   )
 }
 
-// Type Selection Component - Similar to student flow
-function TypeSelection({ onSelect }: { onSelect: (type: 'ABSENCE' | 'MAKEUP' | 'TRANSFER') => void }) {
-  const types = [
-    {
-      type: 'ABSENCE' as const,
-      title: 'Xin nghỉ thay học viên',
-      description: 'Tạo đơn xin nghỉ cho học viên với lý do cụ thể.',
-      bullets: ['Chỉ cho buổi chưa diễn ra', 'AA có quyền duyệt trực tiếp', 'Ghi chú cho phụ huynh'],
-    },
-    {
-      type: 'MAKEUP' as const,
-      title: 'Xin học bù thay học viên',
-      description: 'Gợi ý buổi học bù phù hợp theo lịch và chuyên môn.',
-      bullets: ['Hiển thị buổi đã vắng', 'Ưu tiên gợi ý thông minh', 'Tự động duyệt ngay'],
-    },
-    {
-      type: 'TRANSFER' as const,
-      title: 'Chuyển lớp thay học viên',
-      description: 'Phân tích nội dung và chuyển lớp với quy trình 4 bước.',
-      bullets: ['Kiểm tra điều kiện chuyển', 'Phân tích nội dung bị thiếu', 'AA duyệt ngay lập tức'],
-    },
-  ]
 
-  return (
-    <div className="space-y-3">
-      {types.map((item) => (
-        <button
-          key={item.type}
-          type="button"
-          onClick={() => onSelect(item.type)}
-          className="w-full rounded-lg border border-border/60 p-4 text-left transition hover:border-primary/60 hover:bg-primary/5"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1">
-              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                {item.type === 'ABSENCE' && 'Xin nghỉ'}
-                {item.type === 'MAKEUP' && 'Học bù'}
-                {item.type === 'TRANSFER' && 'Chuyển lớp'}
-              </p>
-              <h3 className="mt-1 text-base font-semibold text-foreground">{item.title}</h3>
-              <p className="mt-1 text-xs text-muted-foreground">{item.description}</p>
-            </div>
-            <ArrowRightIcon className="mt-1 h-5 w-5 shrink-0 text-muted-foreground" />
-          </div>
-          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
-            {item.bullets.map((bullet) => (
-              <li key={bullet} className="flex items-center gap-1">
-                <span className="text-primary">→</span>
-                <span>{bullet}</span>
-              </li>
-            ))}
-          </ul>
-        </button>
-      ))}
-    </div>
-  )
-}
-
-interface AASessionOption extends SessionSummaryDTO {
-  isSelectable: boolean
-  disabledReason: string | null
-}
-
-function parseAAAbsenceDateTime(dateStr: string, timeStr?: string) {
-  if (!timeStr) {
-    return parseISO(dateStr)
-  }
-  const normalizedTime = timeStr.length === 5 ? `${timeStr}:00` : timeStr
-  return parseISO(`${dateStr}T${normalizedTime}`)
-}
-
-function getAAAbsenceAvailability(session: SessionSummaryDTO) {
-  const sessionDateTime = parseAAAbsenceDateTime(session.date, session.startTime)
-  const now = new Date()
-  const isPast = sessionDateTime.getTime() <= now.getTime()
-  const hasAttendanceRecord = session.attendanceStatus && session.attendanceStatus !== 'PLANNED'
-  const isInactiveStatus = session.sessionStatus && session.sessionStatus !== 'PLANNED'
-
-  let disabledReason: string | null = null
-  if (isPast) {
-    disabledReason = 'Buổi đã diễn ra'
-  } else if (hasAttendanceRecord) {
-    disabledReason = 'Đã điểm danh'
-  } else if (isInactiveStatus) {
-    disabledReason = 'Buổi không khả dụng'
-  }
-
-  return {
-    isSelectable: !isPast && !hasAttendanceRecord && !isInactiveStatus,
-    disabledReason,
-  }
-}
-
-interface AAAbsenceFlowProps {
-  onSuccess: () => void
-}
-
-function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
-  const [studentSearch, setStudentSearch] = useState('')
-  const [selectedStudent, setSelectedStudent] = useState<StudentSearchResult | null>(null)
-  const [selectedClassId, setSelectedClassId] = useState<number | null>(null)
-  const [weekCursor, setWeekCursor] = useState<string | null>(null)
-  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null)
-  const [reason, setReason] = useState('')
-  const [note, setNote] = useState('')
-
-  const debouncedStudentSearch = useDebouncedValue(studentSearch)
-  const trimmedSearch = debouncedStudentSearch.trim()
-  const shouldSearchStudents = trimmedSearch.length >= 2
-  const studentQueryResult = useSearchStudentsQuery(
-    shouldSearchStudents
-      ? {
-          search: trimmedSearch,
-          size: 5,
-          page: 0,
-        }
-      : skipToken,
-    { skip: !shouldSearchStudents }
-  )
-
-  const studentOptions = studentQueryResult.data?.data?.content ?? []
-  const isSearchingStudents = shouldSearchStudents && studentQueryResult.isFetching
-
-  const { data: classesResponse, isFetching: isLoadingClasses } = useGetStudentClassesQuery(
-    selectedStudent ? { studentId: selectedStudent.id } : skipToken,
-    { skip: !selectedStudent }
-  )
-  const classOptions = classesResponse?.data ?? []
-  const selectedClass = classOptions.find((cls) => cls.classId === selectedClassId) ?? null
-
-  const { data: scheduleResponse, isFetching: isLoadingSchedule } = useGetAcademicWeeklyScheduleQuery(
-    selectedStudent && selectedClass
-      ? {
-          studentId: selectedStudent.id,
-          classId: selectedClass.classId,
-          weekStart: weekCursor ?? undefined,
-        }
-      : skipToken,
-    { skip: !selectedStudent || !selectedClass }
-  )
-
-  const weekData = scheduleResponse?.data
-  const groupedSessions = useMemo(() => {
-    if (!weekData) return []
-    const startDate = parseISO(weekData.weekStart)
-    return WEEK_DAYS.map((day, index) => {
-      const dayDate = addDays(startDate, index)
-      const sessions: AASessionOption[] = (weekData.schedule?.[day] ?? []).map((session) => {
-        const { isSelectable, disabledReason } = getAAAbsenceAvailability(session)
-        return {
-          ...session,
-          isSelectable,
-          disabledReason,
-        }
-      })
-      return {
-        day,
-        date: dayDate,
-        sessions,
-      }
-    })
-  }, [weekData])
-  const displayedGroups = groupedSessions.filter((group) => group.sessions.length > 0)
-  const allSessions = groupedSessions.flatMap((group) => group.sessions)
-  const selectedSession = allSessions.find((session) => session.sessionId === selectedSessionId) ?? null
-  const [submitAbsence, { isLoading: isSubmitting }] = useSubmitAbsenceOnBehalfMutation()
-
-  const baseWeekStart = weekCursor ?? weekData?.weekStart ?? null
-  const weekRangeLabel = weekData
-    ? `${format(parseISO(weekData.weekStart), 'dd/MM', { locale: vi })} - ${format(parseISO(weekData.weekEnd), 'dd/MM', {
-        locale: vi,
-      })}`
-    : 'Chọn buổi để hiển thị'
-
-  const handleSelectStudent = (student: StudentSearchResult) => {
-    setSelectedStudent(student)
-    setStudentSearch(student.fullName)
-    setSelectedClassId(null)
-    setSelectedSessionId(null)
-    setWeekCursor(null)
-    setReason('')
-    setNote('')
-  }
-
-  const handleWeekChange = (direction: 'prev' | 'next') => {
-    if (!baseWeekStart) return
-    const nextStart = addDays(parseISO(baseWeekStart), direction === 'next' ? 7 : -7)
-    setWeekCursor(format(nextStart, 'yyyy-MM-dd'))
-    setSelectedSessionId(null)
-  }
-
-  const handleSubmit = async () => {
-    if (!selectedStudent || !selectedClass || !selectedSession) {
-      toast.error('Vui lòng chọn học viên, lớp và buổi học')
-      return
-    }
-    if (reason.trim().length < 10) {
-      toast.error('Lý do xin nghỉ phải có tối thiểu 10 ký tự')
-      return
-    }
-    try {
-      await submitAbsence({
-        requestType: 'ABSENCE',
-        studentId: selectedStudent.id,
-        currentClassId: selectedClass.classId,
-        targetSessionId: selectedSession.sessionId,
-        requestReason: reason.trim(),
-        note: note.trim() || undefined,
-      }).unwrap()
-      toast.success('Đã tạo yêu cầu xin nghỉ thay học viên')
-      onSuccess()
-    } catch (error: unknown) {
-      const message =
-        (error as { data?: { message?: string } })?.data?.message ?? 'Không thể tạo yêu cầu xin nghỉ thay học viên.'
-      toast.error(message)
-    }
-  }
-
-  const handleResetForm = () => {
-    setSelectedSessionId(null)
-    setReason('')
-    setNote('')
-  }
-
-  const canSubmit = !!(selectedStudent && selectedClass && selectedSession && reason.trim().length >= 10 && !isSubmitting)
-
-  return (
-    <div className="space-y-8">
-      {/* Step 1: Student selection */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div
-            className={cn(
-              'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
-              selectedStudent ? 'bg-primary text-primary-foreground' : 'border-2 border-primary text-primary'
-            )}
-          >
-            {selectedStudent ? '✓' : '1'}
-          </div>
-          <div>
-            <h3 className="font-semibold">Chọn học viên</h3>
-            <p className="text-sm text-muted-foreground">Tìm kiếm học viên để tạo yêu cầu thay</p>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <Input
-            placeholder="Nhập tên hoặc mã học viên (tối thiểu 2 ký tự)"
-            value={studentSearch}
-            onChange={(event) => setStudentSearch(event.target.value)}
-          />
-          {studentSearch.trim().length > 0 && studentOptions.length > 0 && (
-            <div className="space-y-2">
-              {isSearchingStudents ? (
-                <Skeleton className="h-20 w-full" />
-              ) : (
-                studentOptions.map((student) => (
-                  <button
-                    key={student.id}
-                    type="button"
-                    onClick={() => handleSelectStudent(student)}
-                    className="w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30"
-                  >
-                    <p className="font-medium">
-                      {student.fullName} <span className="text-muted-foreground">({student.studentCode})</span>
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {student.email} · {student.phone}
-                    </p>
-                  </button>
-                ))
-              )}
-            </div>
-          )}
-          {selectedStudent && (
-            <div className="border-t pt-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">Học viên đã chọn</p>
-                  <p className="font-semibold">{selectedStudent.fullName}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedStudent.studentCode} · {selectedStudent.email}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Chi nhánh: {selectedStudent.branchName} · Đang học: {selectedStudent.activeEnrollments} lớp
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedStudent(null)
-                    setStudentSearch('')
-                    setSelectedClassId(null)
-                    setSelectedSessionId(null)
-                    setWeekCursor(null)
-                    setReason('')
-                    setNote('')
-                  }}
-                >
-                  Đổi
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Step 2: Class selection */}
-      {selectedStudent && (
-        <div className={cn('space-y-4', !selectedStudent && 'opacity-50')}>
-          <div className="flex items-center gap-3">
-            <div
-              className={cn(
-                'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
-                selectedClass
-                  ? 'bg-primary text-primary-foreground'
-                  : selectedStudent
-                    ? 'border-2 border-primary text-primary'
-                    : 'border-2 border-muted-foreground/30 text-muted-foreground'
-              )}
-            >
-              {selectedClass ? '✓' : '2'}
-            </div>
-            <div>
-              <h3 className="font-semibold">Chọn lớp học</h3>
-              <p className="text-sm text-muted-foreground">Chọn lớp để xem lịch học</p>
-            </div>
-          </div>
-
-          {isLoadingClasses ? (
-            <div className="space-y-2">
-              {[...Array(2)].map((_, index) => (
-                <Skeleton key={index} className="h-20 w-full" />
-              ))}
-            </div>
-          ) : classOptions.length === 0 ? (
-            <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
-              Học viên chưa đăng ký lớp nào
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {classOptions.map((cls) => (
-                <button
-                  key={cls.classId}
-                  type="button"
-                  onClick={() => {
-                    setSelectedClassId(cls.classId)
-                    setSelectedSessionId(null)
-                    setWeekCursor(null)
-                  }}
-                  className={cn(
-                    'w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30',
-                    selectedClassId === cls.classId && 'border-primary bg-primary/5'
-                  )}
-                >
-                  <p className="font-medium">
-                    {cls.classCode} · {cls.className}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {cls.branchName} · {cls.scheduleSummary}
-                  </p>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Step 3: Weekly schedule + reason */}
-      {selectedStudent && selectedClass && (
-        <div className={cn('space-y-4', !selectedClass && 'opacity-50')}>
-          <div className="flex items-center gap-3">
-            <div
-              className={cn(
-                'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
-                selectedSession && reason.trim().length >= 10
-                  ? 'bg-primary text-primary-foreground'
-                  : selectedClass
-                    ? 'border-2 border-primary text-primary'
-                    : 'border-2 border-muted-foreground/30 text-muted-foreground'
-              )}
-            >
-              {selectedSession && reason.trim().length >= 10 ? '✓' : '3'}
-            </div>
-            <div>
-              <h3 className="font-semibold">Chọn buổi học và điền lý do</h3>
-              <p className="text-sm text-muted-foreground">Chỉ chọn buổi chưa diễn ra và chưa điểm danh</p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-3">
-              <div>
-                <p className="text-xs text-muted-foreground">Tuần đang xem</p>
-                <p className="font-medium">{weekRangeLabel}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleWeekChange('prev')}
-                  disabled={!baseWeekStart}
-                >
-                  <ArrowRightIcon className="h-4 w-4 rotate-180" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setWeekCursor(null)
-                    setSelectedSessionId(null)
-                  }}
-                  disabled={!weekData}
-                >
-                  Tuần hiện tại
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleWeekChange('next')}
-                  disabled={!baseWeekStart}
-                >
-                  <ArrowRightIcon className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              {isLoadingSchedule ? (
-                <div className="space-y-2">
-                  {[...Array(3)].map((_, index) => (
-                    <Skeleton key={index} className="h-20 w-full" />
-                  ))}
-                </div>
-              ) : displayedGroups.length === 0 ? (
-                <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
-                  Tuần này chưa có buổi học nào trong lịch
-                </div>
-              ) : (
-                displayedGroups.map((group) => (
-                  <div key={group.day} className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground">
-                      {WEEK_DAY_LABELS[group.day]} · {format(group.date, 'dd/MM', { locale: vi })}
-                    </p>
-                    <div className="space-y-2">
-                      {group.sessions.map((session) => {
-                        const isActive = selectedSessionId === session.sessionId
-                        return (
-                          <label
-                            key={session.sessionId}
-                            className={cn(
-                              'flex gap-3 rounded-lg border px-4 py-3 transition',
-                              session.isSelectable
-                                ? 'cursor-pointer hover:border-primary/50 hover:bg-muted/30'
-                                : 'cursor-not-allowed border-dashed opacity-50',
-                              isActive && 'border-primary bg-primary/5'
-                            )}
-                          >
-                            <input
-                              type="radio"
-                              className="sr-only"
-                              disabled={!session.isSelectable}
-                              checked={isActive}
-                              onChange={() => {
-                                if (session.isSelectable) {
-                                  setSelectedSessionId(session.sessionId)
-                                }
-                              }}
-                            />
-                            <div className="flex h-5 w-5 items-center justify-center">
-                              <span
-                                className={cn(
-                                  'h-4 w-4 rounded-full border-2',
-                                  isActive ? 'border-primary bg-primary' : 'border-muted-foreground/40'
-                                )}
-                              />
-                            </div>
-                            <div className="flex-1 space-y-1">
-                              <p className="font-medium">
-                                {session.classCode} · {session.startTime} - {session.endTime}
-                              </p>
-                              <p className="text-sm text-muted-foreground">{session.topic}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {session.branchName} · {session.modality === 'ONLINE' ? 'Trực tuyến' : 'Tại trung tâm'}
-                              </p>
-                              {!session.isSelectable && session.disabledReason && (
-                                <p className="text-xs font-medium text-rose-600">{session.disabledReason}</p>
-                              )}
-                            </div>
-                          </label>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {selectedSession && (
-              <div className="border-t pt-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground">Buổi đã chọn</p>
-                    <p className="font-semibold">
-                      {selectedSession.classCode} · {selectedSession.startTime} - {selectedSession.endTime}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {format(parseISO(selectedSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{selectedSession.topic}</p>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => setSelectedSessionId(null)}>
-                    Đổi buổi
-                  </Button>
-                </div>
-
-                <div className="mt-3 space-y-2">
-                  <Textarea
-                    placeholder="Chia sẻ lý do cụ thể để lưu vào hồ sơ..."
-                    value={reason}
-                    onChange={(event) => setReason(event.target.value)}
-                    rows={4}
-                    className="resize-none"
-                  />
-                  <p className="text-xs text-muted-foreground">Tối thiểu 10 ký tự · {reason.trim().length}/10</p>
-                </div>
-
-                <div className="mt-3 flex gap-2">
-                  <Button onClick={handleSubmit} disabled={!canSubmit}>
-                    {isSubmitting ? 'Đang tạo...' : 'Tạo yêu cầu'}
-                  </Button>
-                  <Button variant="outline" onClick={handleResetForm}>
-                    Làm lại
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// Makeup Flow Component
-interface MakeupFlowProps {
-  onSuccess: () => void
-}
-
-function MakeupFlow({ onSuccess }: MakeupFlowProps) {
-  const [studentSearch, setStudentSearch] = useState('')
-  const [selectedStudent, setSelectedStudent] = useState<StudentSearchResult | null>(null)
-  const [selectedMissedId, setSelectedMissedId] = useState<number | null>(null)
-  const [selectedMakeupId, setSelectedMakeupId] = useState<number | null>(null)
-  const [excludeRequested, setExcludeRequested] = useState(true)
-  const [reason, setReason] = useState('')
-  const [note, setNote] = useState('')
-
-  const debouncedStudentSearch = useDebouncedValue(studentSearch)
-  const trimmedSearch = debouncedStudentSearch.trim()
-  const shouldSearchStudents = trimmedSearch.length >= 2
-  const studentQueryResult = useSearchStudentsQuery(
-    shouldSearchStudents
-      ? { search: trimmedSearch, size: 5, page: 0 }
-      : skipToken,
-    { skip: !shouldSearchStudents }
-  )
-
-  const studentOptions = studentQueryResult.data?.data?.content ?? []
-  const isSearchingStudents = shouldSearchStudents && studentQueryResult.isFetching
-
-  const {
-    data: missedResponse,
-    isFetching: isLoadingMissed,
-  } = useGetStudentMissedSessionsQuery(
-    selectedStudent
-      ? { studentId: selectedStudent.id, weeksBack: MAKEUP_LOOKBACK_WEEKS, excludeRequested }
-      : skipToken,
-    { skip: !selectedStudent }
-  )
-
-  const missedSessions = useMemo(() => {
-    const sessions = missedResponse?.data?.missedSessions ?? missedResponse?.data?.sessions ?? []
-    if (excludeRequested) {
-      return sessions.filter((session) => !session.hasExistingMakeupRequest)
-    }
-    return sessions
-  }, [missedResponse?.data, excludeRequested])
-  const selectedMissedSession = useMemo(
-    () => missedSessions.find((session) => session.sessionId === selectedMissedId),
-    [missedSessions, selectedMissedId]
-  )
-
-  const {
-    data: optionsResponse,
-    isFetching: isLoadingStudentOptions,
-  } = useGetStudentMakeupOptionsQuery(
-    selectedStudent && selectedMissedId
-      ? { studentId: selectedStudent.id, targetSessionId: selectedMissedId }
-      : skipToken,
-    { skip: !selectedStudent || !selectedMissedId }
-  )
-
-  const makeupOptions = useMemo(() => optionsResponse?.data?.makeupOptions ?? [], [optionsResponse?.data?.makeupOptions])
-  const selectedMakeupOption = useMemo(
-    () => makeupOptions.find((option) => option.sessionId === selectedMakeupId),
-    [makeupOptions, selectedMakeupId]
-  )
-
-  const [createOnBehalf, { isLoading: isCreating }] = useCreateOnBehalfRequestMutation()
-
-  useEffect(() => {
-    setSelectedMissedId(null)
-    setSelectedMakeupId(null)
-    setReason('')
-    setNote('')
-  }, [selectedStudent])
-
-  useEffect(() => {
-    if (!selectedMissedSession) {
-      setSelectedMakeupId(null)
-    }
-  }, [selectedMissedSession])
-
-  const formatModality = (modality?: SessionModality) => {
-    switch (modality) {
-      case 'ONLINE':
-        return 'Trực tuyến'
-      case 'HYBRID':
-        return 'Kết hợp'
-      default:
-        return 'Tại trung tâm'
-    }
-  }
-
-  const getCapacityText = (option: { availableSlots?: number | null; maxCapacity?: number | null; classInfo?: { availableSlots?: number | null; maxCapacity?: number | null } }) => {
-    const available = option.availableSlots ?? option.classInfo?.availableSlots
-    const max = option.maxCapacity ?? option.classInfo?.maxCapacity
-    const hasAvailable = typeof available === 'number'
-    const hasMax = typeof max === 'number'
-    if (hasAvailable && hasMax) {
-      return `${available}/${max} chỗ trống`
-    }
-    if (hasAvailable) {
-      return `Còn ${available} chỗ trống`
-    }
-    if (hasMax) {
-      return `Tối đa ${max} chỗ`
-    }
-    return 'Sức chứa đang cập nhật'
-  }
-
-  
-  
-  
-  const canSubmit =
-    !!selectedStudent && !!selectedMissedSession && !!selectedMakeupOption && reason.trim().length >= 10 && !isCreating
-
-  const handleSubmit = async () => {
-    if (!selectedStudent || !selectedMissedSession || !selectedMakeupOption) {
-      toast.error('Vui lòng chọn học viên, buổi vắng và buổi học bù phù hợp')
-      return
-    }
-    if (reason.trim().length < 10) {
-      toast.error('Lý do học bù phải có tối thiểu 10 ký tự')
-      return
-    }
-    const currentClassId = selectedMissedSession.classInfo?.classId ?? selectedMissedSession.classInfo?.id ?? null
-    if (!currentClassId) {
-      toast.error('Không thể xác định lớp của buổi đã chọn')
-      return
-    }
-    try {
-      await createOnBehalf({
-        requestType: 'MAKEUP',
-        currentClassId,
-        targetSessionId: selectedMissedSession.sessionId,
-        makeupSessionId: selectedMakeupOption.sessionId,
-        requestReason: reason.trim(),
-        note: note.trim() || undefined,
-        studentId: selectedStudent.id,
-      }).unwrap()
-      onSuccess()
-    } catch (error: unknown) {
-      const errorMessage =
-        (error as { data?: { message?: string } })?.data?.message ?? 'Không thể tạo yêu cầu thay học viên.'
-      toast.error(errorMessage)
-    }
-  }
-
-  const handleReset = () => {
-    setSelectedMissedId(null)
-    setSelectedMakeupId(null)
-    setReason('')
-    setNote('')
-  }
-
-  const step1Complete = !!selectedMissedSession
-  const step2Complete = !!selectedMakeupOption
-
-  return (
-    <div className="space-y-8">
-      {/* Step 1: Student selection */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div
-            className={cn(
-              'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
-              selectedStudent ? 'bg-primary text-primary-foreground' : 'border-2 border-primary text-primary'
-            )}
-          >
-            {selectedStudent ? '✓' : '1'}
-          </div>
-          <div>
-            <h3 className="font-semibold">Chọn học viên</h3>
-            <p className="text-sm text-muted-foreground">Tìm kiếm học viên để tạo yêu cầu học bù</p>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <Input
-            placeholder="Nhập tên hoặc mã học viên (tối thiểu 2 ký tự)"
-            value={studentSearch}
-            onChange={(event) => setStudentSearch(event.target.value)}
-          />
-          {studentSearch.trim().length > 0 && studentOptions.length > 0 && (
-            <div className="space-y-2">
-              {isSearchingStudents ? (
-                <Skeleton className="h-20 w-full" />
-              ) : (
-                studentOptions.map((student) => (
-                  <button
-                    key={student.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedStudent(student)
-                      setStudentSearch('')
-                    }}
-                    className="w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30"
-                  >
-                    <p className="font-medium">
-                      {student.fullName} <span className="text-muted-foreground">({student.studentCode})</span>
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {student.email} · {student.phone}
-                    </p>
-                  </button>
-                ))
-              )}
-            </div>
-          )}
-          {selectedStudent && (
-            <div className="border-t pt-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">Học viên đã chọn</p>
-                  <p className="font-semibold">{selectedStudent.fullName}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedStudent.studentCode} · {selectedStudent.email}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedStudent(null)
-                    setStudentSearch('')
-                    handleReset()
-                  }}
-                >
-                  Đổi
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Step 2 & 3: Missed sessions and makeup options */}
-      {!selectedStudent ? (
-        <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
-          Chọn học viên để xem lịch sử vắng và gợi ý buổi học bù
-        </div>
-      ) : (
-        <div className="space-y-8">
-          {/* Step 2: Missed session selection */}
-          <div className={cn('space-y-4', !selectedStudent && 'opacity-50')}>
-            <div className="flex items-center gap-3">
-              <div
-                className={cn(
-                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
-                  step1Complete
-                    ? 'bg-primary text-primary-foreground'
-                    : selectedStudent
-                      ? 'border-2 border-primary text-primary'
-                      : 'border-2 border-muted-foreground/30 text-muted-foreground'
-                )}
-              >
-                {step1Complete ? '✓' : '2'}
-              </div>
-              <div>
-                <h3 className="font-semibold">Chọn buổi đã vắng</h3>
-                <p className="text-sm text-muted-foreground">
-                  Buổi vắng trong {MAKEUP_LOOKBACK_WEEKS} tuần gần nhất
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  {missedSessions.length} buổi vắng tìm thấy
-                </p>
-                <Button
-                  variant={excludeRequested ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setExcludeRequested((prev) => !prev)}
-                >
-                  {excludeRequested ? 'Ẩn đã gửi' : 'Hiện tất cả'}
-                </Button>
-              </div>
-
-              {isLoadingMissed ? (
-                <div className="space-y-2">
-                  {[...Array(2)].map((_, index) => (
-                    <Skeleton key={index} className="h-20 w-full" />
-                  ))}
-                </div>
-              ) : missedSessions.length === 0 ? (
-                <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
-                  Không có buổi vắng hợp lệ trong {MAKEUP_LOOKBACK_WEEKS} tuần gần nhất
-                </div>
-              ) : selectedMissedSession ? (
-                <div className="border-t pt-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground">Buổi đã chọn</p>
-                      <p className="font-medium">
-                        {format(parseISO(selectedMissedSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })} ·{' '}
-                        {selectedMissedSession.classInfo.classCode}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Buổi {selectedMissedSession.courseSessionNumber}: {selectedMissedSession.courseSessionTitle}
-                      </p>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedMissedId(null)}>
-                      Đổi
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {missedSessions.map((session) => (
-                    <button
-                      key={session.sessionId}
-                      type="button"
-                      onClick={() => setSelectedMissedId(session.sessionId)}
-                      className="w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="space-y-1">
-                          <p className="font-medium">
-                            {format(parseISO(session.date), 'EEEE, dd/MM', { locale: vi })} · {session.classInfo.classCode}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Buổi {session.courseSessionNumber}: {session.courseSessionTitle}
-                          </p>
-                        </div>
-                        <Badge className={cn(session.isExcusedAbsence ? 'bg-emerald-500/10 text-emerald-600' : 'bg-amber-500/10 text-amber-600')}>
-                          {session.isExcusedAbsence ? 'Có phép' : 'Không phép'}
-                        </Badge>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Step 3: Makeup session selection */}
-          <div className={cn('space-y-4', !step1Complete && 'opacity-50')}>
-            <div className="flex items-center gap-3">
-              <div
-                className={cn(
-                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
-                  step2Complete
-                    ? 'bg-primary text-primary-foreground'
-                    : step1Complete
-                      ? 'border-2 border-primary text-primary'
-                      : 'border-2 border-muted-foreground/30 text-muted-foreground'
-                )}
-              >
-                {step2Complete ? '✓' : '3'}
-              </div>
-              <div>
-                <h3 className="font-semibold">Chọn buổi học bù</h3>
-                <p className="text-sm text-muted-foreground">Gợi ý buổi học phù hợp</p>
-              </div>
-            </div>
-
-            {!selectedMissedSession ? (
-              <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
-                Chọn buổi đã vắng trước để xem gợi ý học bù
-              </div>
-            ) : isLoadingStudentOptions ? (
-              <div className="space-y-2">
-                {[...Array(2)].map((_, index) => (
-                  <Skeleton key={index} className="h-20 w-full" />
-                ))}
-              </div>
-            ) : makeupOptions.length === 0 ? (
-              <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
-                Không có buổi học bù khả dụng
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {makeupOptions.map((option) => (
-                  <button
-                    key={option.sessionId}
-                    type="button"
-                    onClick={() => setSelectedMakeupId(option.sessionId)}
-                    className={cn(
-                      'w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30',
-                      selectedMakeupId === option.sessionId && 'border-primary bg-primary/5'
-                    )}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="space-y-1">
-                        <p className="font-medium">
-                          {format(parseISO(option.date), 'EEEE, dd/MM', { locale: vi })} · {option.classInfo.classCode}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {option.timeSlotInfo.startTime} - {option.timeSlotInfo.endTime} · {formatModality(option.classInfo.modality)}
-                        </p>
-                        <p className="text-xs text-primary">{getCapacityText(option)}</p>
-                      </div>
-                      {option.matchScore.priority === 'HIGH' && <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20">Ưu tiên cao</Badge>}
-                      {option.matchScore.priority === 'MEDIUM' && <Badge className="bg-amber-500/10 text-amber-600 hover:bg-amber-500/20">Ưu tiên TB</Badge>}
-                      {option.matchScore.priority === 'LOW' && <Badge className="bg-slate-500/10 text-slate-600 hover:bg-slate-500/20">Ưu tiên thấp</Badge>}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {selectedMakeupOption && (
-              <div className="border-t pt-4">
-                <div className="space-y-3">
-                  <Textarea
-                    placeholder="Chia sẻ lý do cụ thể..."
-                    value={reason}
-                    onChange={(event) => setReason(event.target.value)}
-                    rows={4}
-                    className="resize-none"
-                  />
-                  <p className="text-xs text-muted-foreground">Tối thiểu 10 ký tự · {reason.trim().length}/10</p>
-
-                  <div className="flex gap-2">
-                    <Button onClick={handleSubmit} disabled={!canSubmit}>
-                      {isCreating ? 'Đang tạo...' : 'Tạo yêu cầu'}
-                    </Button>
-                    <Button variant="outline" onClick={handleReset}>
-                      Làm lại
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-
-}
-
-// Inline AA Transfer Wizard Component
-interface AAInlineTransferWizardProps {
-  onSuccess: () => void
-}
-
-function AAInlineTransferWizard({ onSuccess }: AAInlineTransferWizardProps) {
-  const [currentStep, setCurrentStep] = useState<'student-search' | 'current-class' | 'target-class' | 'confirmation'>('student-search')
-  const createInitialWizardState = () => ({
-    selectedStudent: null as StudentSearchResult | null,
-    selectedCurrentClass: null as TransferEligibility | null,
-    selectedTargetClass: null as TransferOption | null,
-    effectiveDate: '',
-    requestReason: '',
-    note: '',
-  })
-  const [wizardData, setWizardData] = useState(createInitialWizardState)
-  const [successRequest, setSuccessRequest] = useState<TransferRequestResponse | null>(null)
-
-  const [submitTransferOnBehalf, { isLoading: isSubmitting }] = useSubmitTransferOnBehalfMutation()
-
-  const handleStudentSelect = (student: StudentSearchResult) => {
-    setWizardData(prev => ({ ...prev, selectedStudent: student }))
-    setCurrentStep('current-class')
-  }
-
-  const handleCurrentClassSelect = (classData: TransferEligibility) => {
-    setWizardData(prev => ({ ...prev, selectedCurrentClass: classData }))
-    setCurrentStep('target-class')
-  }
-
-  const handleTargetClassSelect = (classData: TransferOption) => {
-    setWizardData(prev => ({ ...prev, selectedTargetClass: classData, effectiveDate: '' }))
-    setCurrentStep('confirmation')
-  }
-
-  const handleConfirm = async (effectiveDate: string, requestReason: string, note: string) => {
-    if (!wizardData.selectedStudent || !wizardData.selectedCurrentClass || !wizardData.selectedTargetClass) {
-      return
-    }
-
-    try {
-      const result = await submitTransferOnBehalf({
-        studentId: wizardData.selectedStudent.id,
-        currentClassId: wizardData.selectedCurrentClass.classId,
-        targetClassId: wizardData.selectedTargetClass.classId,
-        effectiveDate,
-        requestReason,
-        note,
-      }).unwrap()
-
-      if (result?.data) {
-        setSuccessRequest(result.data)
-      }
-    } catch (error) {
-      console.error('Failed to submit transfer request:', error)
-    }
-  }
-
-  const handleBack = () => {
-    if (currentStep === 'current-class') {
-      setCurrentStep('student-search')
-    } else if (currentStep === 'target-class') {
-      setCurrentStep('current-class')
-    } else if (currentStep === 'confirmation') {
-      setCurrentStep('target-class')
-    }
-  }
-
-  return (
-    <>
-      <div className="space-y-6">
-      {/* Progress indicator */}
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <div className="flex items-center">
-            {['student-search', 'current-class', 'target-class', 'confirmation'].map((step, index) => (
-              <div key={step} className="flex items-center flex-1">
-                <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
-                  currentStep === step ? 'border-primary bg-primary text-primary-foreground' :
-                  ['student-search', 'current-class', 'target-class', 'confirmation'].indexOf(currentStep) > index
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-muted bg-background'
-                }`}>
-                  {index + 1}
-                </div>
-                {index < 3 && (
-                  <div className={`flex-1 h-0.5 mx-2 ${
-                    ['student-search', 'current-class', 'target-class', 'confirmation'].indexOf(currentStep) > index
-                      ? 'bg-primary'
-                      : 'bg-muted'
-                  }`} />
-                )}
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center justify-between mt-2">
-            <span className="text-xs">Sinh viên</span>
-            <span className="text-xs">Lớp hiện tại</span>
-            <span className="text-xs">Lớp mục tiêu</span>
-            <span className="text-xs">Xác nhận</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Wizard steps */}
-      <div className="mt-6">
-        {currentStep === 'student-search' && (
-          <StudentSearchStep
-            selectedStudent={wizardData.selectedStudent}
-            onSelectStudent={handleStudentSelect}
-          />
-        )}
-
-        {currentStep === 'current-class' && wizardData.selectedStudent && (
-          <div className="space-y-4">
-            <CurrentClassSelectionStep
-              studentId={wizardData.selectedStudent.id}
-              selectedClass={wizardData.selectedCurrentClass}
-              onSelectClass={handleCurrentClassSelect}
-            />
-            <div className="flex justify-start pt-4 border-t">
-              <Button variant="outline" onClick={handleBack}>
-                Quay lại
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 'target-class' && wizardData.selectedCurrentClass && (
-          <div className="space-y-4">
-            <TargetClassSelectionStep
-              currentClass={wizardData.selectedCurrentClass}
-              selectedClass={wizardData.selectedTargetClass}
-              onSelectClass={handleTargetClassSelect}
-            />
-            <div className="flex justify-start pt-4 border-t">
-              <Button variant="outline" onClick={handleBack}>
-                Quay lại
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 'confirmation' && wizardData.selectedStudent && wizardData.selectedCurrentClass && wizardData.selectedTargetClass && (
-          <AAConfirmationStep
-            wizardData={wizardData}
-            onEffectiveDateChange={(date) => setWizardData(prev => ({ ...prev, effectiveDate: date }))}
-            onRequestReasonChange={(reason) => setWizardData(prev => ({ ...prev, requestReason: reason }))}
-            onNoteChange={(note) => setWizardData(prev => ({ ...prev, note }))}
-            onPrevious={handleBack}
-            onSubmit={async () => {
-              await handleConfirm(wizardData.effectiveDate, wizardData.requestReason, wizardData.note)
-            }}
-            isLoading={isSubmitting}
-            error={undefined}
-          />
-        )}
-      </div>
-      </div>
-
-      <TransferSuccessDialog
-        open={!!successRequest}
-        onOpenChange={(isOpen) => {
-          if (!isOpen) {
-            setSuccessRequest(null)
-            setWizardData(createInitialWizardState())
-            setCurrentStep('student-search')
-            onSuccess()
-          }
-        }}
-        request={successRequest}
-        userType="aa"
-      />
-    </>
-  )
-}
