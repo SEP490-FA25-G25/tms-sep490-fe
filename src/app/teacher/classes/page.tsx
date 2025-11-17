@@ -10,7 +10,7 @@ import {
   type AttendanceClassDTO,
 } from "@/store/services/attendanceApi";
 import { BookOpen, BarChart3, TrendingUp } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 export default function TeacherClassesPage() {
   const {
@@ -23,24 +23,29 @@ export default function TeacherClassesPage() {
   });
 
   // Handle different response structures - API returns array directly or wrapped in data
-  const classes = Array.isArray(classesResponse)
-    ? classesResponse
-    : Array.isArray(classesResponse?.data)
-    ? classesResponse.data
-    : [];
+  const classes = useMemo(() => {
+    if (Array.isArray(classesResponse)) {
+      return classesResponse;
+    }
+    if (Array.isArray(classesResponse?.data)) {
+      return classesResponse.data;
+    }
+    return [];
+  }, [classesResponse]);
 
   // Debug in development
+  const isDev = import.meta.env.DEV;
+
   useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      if (classesResponse) {
-        console.log("Classes Response:", classesResponse);
-        console.log("Classes:", classes);
-      }
-      if (classesError) {
-        console.error("Classes Error:", classesError);
-      }
+    if (!isDev) return;
+    if (classesResponse) {
+      console.log("Classes Response:", classesResponse);
+      console.log("Classes:", classes);
     }
-  }, [classesResponse, classesError, classes]);
+    if (classesError) {
+      console.error("Classes Error:", classesError);
+    }
+  }, [classesResponse, classesError, classes, isDev]);
 
   return (
     <TeacherRoute>
@@ -55,12 +60,12 @@ export default function TeacherClassesPage() {
               <h2 className="text-lg font-semibold">Danh sách lớp học</h2>
               <p className="text-sm text-muted-foreground">
                 Xem và quản lý các lớp học của bạn
-                    </p>
-                  </div>
+              </p>
+            </div>
             <Badge variant="outline" className="text-sm">
               {classes.length} lớp học
             </Badge>
-                </div>
+          </div>
 
           {/* Danh sách classes */}
           {isLoadingClasses ? (
@@ -74,7 +79,7 @@ export default function TeacherClassesPage() {
               <p>
                 Có lỗi xảy ra khi tải danh sách lớp học. Vui lòng thử lại sau.
               </p>
-              {process.env.NODE_ENV === "development" && (
+              {isDev && (
                 <pre className="mt-2 text-xs text-left overflow-auto">
                   {JSON.stringify(classesError, null, 2)}
                 </pre>
@@ -87,7 +92,7 @@ export default function TeacherClassesPage() {
               </p>
             </div>
           ) : (
-                      <div className="space-y-4">
+            <div className="space-y-4">
               {classes.map((classItem) => (
                 <ClassCard key={classItem.id} classItem={classItem} />
               ))}
@@ -177,10 +182,10 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <BookOpen className="h-4 w-4 flex-shrink-0" />
               <span>{classItem.name}</span>
-                      </div>
+            </div>
           )}
-                </div>
-              </div>
+        </div>
+      </div>
 
       {/* Action button */}
       <div className="mt-4 flex justify-end">
@@ -193,7 +198,7 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
           <BarChart3 className="h-4 w-4" />
           Xem thông tin lớp học
         </Button>
-            </div>
-          </div>
+      </div>
+    </div>
   );
 }

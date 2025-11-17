@@ -61,10 +61,7 @@ const formatBackendError = (
   defaultMessage?: string
 ): string => {
   if (!errorMessage) {
-    return (
-      defaultMessage ||
-      "Có lỗi xảy ra. Vui lòng thử lại sau."
-    );
+    return defaultMessage || "Có lỗi xảy ra. Vui lòng thử lại sau.";
   }
 
   // Map common error codes to user-friendly messages
@@ -126,13 +123,15 @@ const TEACHER_REQUEST_STATUS_META: Record<
   },
 };
 
-const getCandidateSkills = (candidate: SwapCandidateDTO): string | undefined => {
+const getCandidateSkills = (
+  candidate: SwapCandidateDTO
+): string | undefined => {
   // Helper to format skill with level
   const formatSkillWithLevel = (skill: unknown): string | null => {
     if (typeof skill === "string") {
       return skill.trim();
     }
-    
+
     if (skill && typeof skill === "object") {
       // Extract skill name - can be direct string in "skill" field or nested
       const skillName =
@@ -141,8 +140,9 @@ const getCandidateSkills = (candidate: SwapCandidateDTO): string | undefined => 
           : null) ||
         (skill as { name?: string }).name ||
         (skill as { skillName?: string }).skillName ||
-        (typeof (skill as { skill?: unknown }).skill === "object" && (skill as { skill?: { name?: string } }).skill?.name);
-      
+        (typeof (skill as { skill?: unknown }).skill === "object" &&
+          (skill as { skill?: { name?: string } }).skill?.name);
+
       // Extract level - can be number (1-5) or string
       const skillLevelRaw =
         (skill as { level?: string | number }).level !== undefined
@@ -150,45 +150,60 @@ const getCandidateSkills = (candidate: SwapCandidateDTO): string | undefined => 
           : (skill as { skillLevel?: string | number }).skillLevel !== undefined
           ? (skill as { skillLevel?: string | number }).skillLevel
           : (skill as { proficiency?: string | number }).proficiency;
-      
+
       // Format level: if number, convert to string; if string, use as is
       let skillLevel: string | null = null;
       if (skillLevelRaw !== undefined && skillLevelRaw !== null) {
         if (typeof skillLevelRaw === "number") {
           skillLevel = String(skillLevelRaw);
-        } else if (typeof skillLevelRaw === "string" && skillLevelRaw.trim().length > 0) {
+        } else if (
+          typeof skillLevelRaw === "string" &&
+          skillLevelRaw.trim().length > 0
+        ) {
           skillLevel = skillLevelRaw.trim();
         }
       }
-      
-      if (skillName && typeof skillName === "string" && skillName.trim().length > 0) {
+
+      if (
+        skillName &&
+        typeof skillName === "string" &&
+        skillName.trim().length > 0
+      ) {
         if (skillLevel) {
           return `${skillName.trim()} (${skillLevel})`;
         }
         return skillName.trim();
       }
     }
-    
+
     return null;
   };
 
   // Try to extract from skills array (prioritize this as it has structured data)
-  if (candidate.skills && Array.isArray(candidate.skills) && candidate.skills.length > 0) {
+  if (
+    candidate.skills &&
+    Array.isArray(candidate.skills) &&
+    candidate.skills.length > 0
+  ) {
     const formattedSkills = candidate.skills
       .map(formatSkillWithLevel)
       .filter((skill): skill is string => skill !== null);
-    
+
     if (formattedSkills.length > 0) {
       return formattedSkills.join(", ");
     }
   }
 
   // Try to extract from teacherSkills array
-  if (candidate.teacherSkills && Array.isArray(candidate.teacherSkills) && candidate.teacherSkills.length > 0) {
+  if (
+    candidate.teacherSkills &&
+    Array.isArray(candidate.teacherSkills) &&
+    candidate.teacherSkills.length > 0
+  ) {
     const formattedSkills = candidate.teacherSkills
       .map(formatSkillWithLevel)
       .filter((skill): skill is string => skill !== null);
-    
+
     if (formattedSkills.length > 0) {
       return formattedSkills.join(", ");
     }
@@ -200,7 +215,10 @@ const getCandidateSkills = (candidate: SwapCandidateDTO): string | undefined => 
   }
 
   // Try skillsDescription as fallback
-  if (candidate.skillsDescription && typeof candidate.skillsDescription === "string") {
+  if (
+    candidate.skillsDescription &&
+    typeof candidate.skillsDescription === "string"
+  ) {
     return candidate.skillsDescription.trim();
   }
 
@@ -387,19 +405,24 @@ export default function AcademicTeacherRequestsPage() {
   const selectedRequest = useMemo(() => {
     if (!selectedRequestFromDetail) return null;
     if (!selectedRequestFromList) return selectedRequestFromDetail;
-    
+
     // Merge: use className and classInfo from list, keep other data from detail
     return {
       ...selectedRequestFromDetail,
-      className: selectedRequestFromList.className || selectedRequestFromDetail.className,
-      classInfo: selectedRequestFromList.classInfo || selectedRequestFromDetail.classInfo,
-      courseName: selectedRequestFromList.courseName || selectedRequestFromDetail.courseName,
+      className:
+        selectedRequestFromList.className ||
+        selectedRequestFromDetail.className,
+      classInfo:
+        selectedRequestFromList.classInfo ||
+        selectedRequestFromDetail.classInfo,
+      courseName:
+        selectedRequestFromList.courseName ||
+        selectedRequestFromDetail.courseName,
     };
   }, [selectedRequestFromDetail, selectedRequestFromList]);
 
   const canDecide = selectedRequest?.status === "PENDING";
-  const isSwapRequest =
-    selectedRequest?.requestType === "SWAP" && canDecide;
+  const isSwapRequest = selectedRequest?.requestType === "SWAP" && canDecide;
   const isModalityChangeRequest =
     selectedRequest?.requestType === "MODALITY_CHANGE" && canDecide;
   const isRescheduleRequest =
@@ -407,7 +430,6 @@ export default function AcademicTeacherRequestsPage() {
 
   // Get requestId for swap candidates API
   const requestId = selectedRequest?.id;
-  const sessionId = selectedRequest?.sessionId;
 
   // Get swap candidates if this is a SWAP request
   const shouldFetchCandidates = isSwapRequest && !!requestId;
@@ -416,9 +438,7 @@ export default function AcademicTeacherRequestsPage() {
     isFetching: isLoadingCandidates,
     error: swapCandidatesError,
   } = useGetSwapCandidatesQuery(
-    shouldFetchCandidates && requestId
-      ? { requestId }
-      : skipToken
+    shouldFetchCandidates && requestId ? { requestId } : skipToken
   );
 
   // Get resources for MODALITY_CHANGE
@@ -436,17 +456,6 @@ export default function AcademicTeacherRequestsPage() {
 
   // Get resources for RESCHEDULE
   // Extract reschedule info from request
-  const rescheduleInfo = selectedRequest
-    ? getRescheduleInfo(selectedRequest)
-    : null;
-  const newDate = rescheduleInfo?.newSessionDate;
-  const newTimeSlotId =
-    selectedRequest?.newTimeSlotId ??
-    selectedRequest?.newSlot?.id ??
-    selectedRequest?.newSlot?.timeSlotId ??
-    selectedRequest?.newTimeSlot?.id ??
-    selectedRequest?.newTimeSlot?.timeSlotId ??
-    undefined;
 
   const shouldFetchRescheduleResources =
     isRescheduleRequest && !!selectedRequestId;
@@ -465,14 +474,13 @@ export default function AcademicTeacherRequestsPage() {
   const swapCandidates = swapCandidatesResponse?.data ?? [];
   const modalityResources = modalityResourcesResponse?.data ?? [];
   const rescheduleResources = rescheduleResourcesResponse?.data ?? [];
-  
+
   // Combine resources for display
-  const availableResources =
-    isModalityChangeRequest
-      ? modalityResources
-      : isRescheduleRequest
-      ? rescheduleResources
-      : [];
+  const availableResources = isModalityChangeRequest
+    ? modalityResources
+    : isRescheduleRequest
+    ? rescheduleResources
+    : [];
 
   const [approveRequest, { isLoading: isApproving }] =
     useApproveRequestMutation();
@@ -787,7 +795,8 @@ export default function AcademicTeacherRequestsPage() {
                               </p>
                             )}
                             <p className="text-sm text-muted-foreground">
-                              {request.sessionStartTime} - {request.sessionEndTime}
+                              {request.sessionStartTime} -{" "}
+                              {request.sessionEndTime}
                             </p>
                           </div>
                         </div>
@@ -1006,7 +1015,8 @@ export default function AcademicTeacherRequestsPage() {
                                 </p>
                               )}
                               <p className="text-xs text-muted-foreground">
-                                {request.sessionStartTime} - {request.sessionEndTime}
+                                {request.sessionStartTime} -{" "}
+                                {request.sessionEndTime}
                               </p>
                             </div>
                           </TableCell>
@@ -1108,9 +1118,13 @@ export default function AcademicTeacherRequestsPage() {
                   </Badge>
                   <span className="text-xs text-muted-foreground">
                     Gửi lúc{" "}
-                    {format(parseISO(selectedRequest.submittedAt), "dd/MM/yyyy HH:mm", {
-                      locale: vi,
-                    })}
+                    {format(
+                      parseISO(selectedRequest.submittedAt),
+                      "dd/MM/yyyy HH:mm",
+                      {
+                        locale: vi,
+                      }
+                    )}
                   </span>
                 </div>
               </div>
@@ -1137,8 +1151,8 @@ export default function AcademicTeacherRequestsPage() {
               <div className="h-px bg-border" />
 
               {/* Rest of TeacherRequestDetailContent without the request type section */}
-              <TeacherRequestDetailContent 
-                request={selectedRequest} 
+              <TeacherRequestDetailContent
+                request={selectedRequest}
                 hideRequestType={true}
               />
 
@@ -1159,10 +1173,16 @@ export default function AcademicTeacherRequestsPage() {
                   ) : modalityResourcesError || rescheduleResourcesError ? (
                     <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
                       {formatBackendError(
-                        (modalityResourcesError as { data?: { message?: string } })
-                          ?.data?.message ||
-                          (rescheduleResourcesError as { data?: { message?: string } })
-                            ?.data?.message,
+                        (
+                          modalityResourcesError as {
+                            data?: { message?: string };
+                          }
+                        )?.data?.message ||
+                          (
+                            rescheduleResourcesError as {
+                              data?: { message?: string };
+                            }
+                          )?.data?.message,
                         "Có lỗi khi tải danh sách resource. Vui lòng thử lại sau."
                       )}
                     </div>
@@ -1184,10 +1204,12 @@ export default function AcademicTeacherRequestsPage() {
                         <SelectValue placeholder="Chọn resource...">
                           {selectedResourceId
                             ? (() => {
-                                const selectedResource = availableResources.find(
-                                  (r) =>
-                                    (r.id ?? r.resourceId) === selectedResourceId
-                                );
+                                const selectedResource =
+                                  availableResources.find(
+                                    (r) =>
+                                      (r.id ?? r.resourceId) ===
+                                      selectedResourceId
+                                  );
                                 return selectedResource?.name || "Chưa có tên";
                               })()
                             : null}
@@ -1197,7 +1219,8 @@ export default function AcademicTeacherRequestsPage() {
                         {availableResources.map((resource) => {
                           const resourceId = resource.id ?? resource.resourceId;
                           const resourceName = resource.name || "Chưa có tên";
-                          const resourceType = resource.type || resource.resourceType || "";
+                          const resourceType =
+                            resource.type || resource.resourceType || "";
                           const resourceCapacity = resource.capacity;
 
                           return (

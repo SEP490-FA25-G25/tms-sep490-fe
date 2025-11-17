@@ -13,7 +13,7 @@ import {
 } from "@/store/services/attendanceApi";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -33,30 +33,33 @@ import {
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 
+type SessionInfo = {
+  sessionId: number;
+  classId: number;
+  classCode?: string;
+  courseCode?: string;
+  courseName: string;
+  date: string;
+  startTime?: string;
+  endTime?: string;
+  timeSlotName?: string;
+  topic?: string;
+  teacherName?: string;
+  teacherNote?: string | null;
+  totalStudents?: number;
+  presentCount?: number;
+  absentCount?: number;
+  resourceName?: string;
+  modality?: string;
+};
+
 export default function AttendanceDetailPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
-  const sessionIdNum = Number(sessionId ?? 0);
+  const parsedSessionId = Number(sessionId);
+  const sessionIdNum = Number.isFinite(parsedSessionId) ? parsedSessionId : 0;
+  const isSessionIdValid = sessionIdNum > 0;
   const { user } = useAuth();
-
-  if (!sessionId || sessionIdNum === 0) {
-    return (
-      <TeacherRoute>
-        <DashboardLayout title="Điểm danh">
-          <div className="rounded-lg border bg-card p-6 text-center text-destructive">
-            <p>Session ID không hợp lệ.</p>
-            <Button
-              variant="ghost"
-              className="mt-4"
-              onClick={() => navigate("/teacher/attendance")}
-            >
-              Quay lại
-            </Button>
-          </div>
-        </DashboardLayout>
-      </TeacherRoute>
-    );
-  }
 
   const {
     data: studentsResponse,
@@ -64,7 +67,7 @@ export default function AttendanceDetailPage() {
     error: studentsError,
     refetch: refetchStudents,
   } = useGetSessionStudentsQuery(sessionIdNum, {
-    skip: !sessionId || sessionIdNum === 0,
+    skip: !isSessionIdValid,
     refetchOnMountOrArgChange: true,
   });
 
@@ -80,7 +83,15 @@ export default function AttendanceDetailPage() {
 
   // Use session info from studentsResponse if available, otherwise from sessionsResponse
   const sessionDetail = studentsResponse?.data;
-  const session = sessionDetail
+  const fallbackSession = sessionsResponse?.data?.find(
+    (s) => s.sessionId === sessionIdNum
+  );
+  const fallbackTimeSlotName =
+    fallbackSession && "timeSlotName" in fallbackSession
+      ? (fallbackSession as { timeSlotName?: string }).timeSlotName
+      : undefined;
+
+  const session: SessionInfo | null = sessionDetail
     ? {
         sessionId: sessionDetail.sessionId,
         classId: sessionDetail.classId,
@@ -88,8 +99,8 @@ export default function AttendanceDetailPage() {
         courseCode: sessionDetail.courseCode,
         courseName: sessionDetail.courseName,
         date: sessionDetail.date,
-        startTime: sessionDetail.sessionStartTime || "",
-        endTime: sessionDetail.sessionEndTime || "",
+        startTime: sessionDetail.sessionStartTime,
+        endTime: sessionDetail.sessionEndTime,
         timeSlotName: sessionDetail.timeSlotName,
         topic: sessionDetail.sessionTopic,
         teacherName: sessionDetail.teacherName,
@@ -98,10 +109,31 @@ export default function AttendanceDetailPage() {
         presentCount: sessionDetail.summary.presentCount,
         absentCount: sessionDetail.summary.absentCount,
       }
-    : sessionsResponse?.data?.find((s) => s.sessionId === sessionIdNum);
+    : fallbackSession
+    ? {
+        sessionId: fallbackSession.sessionId,
+        classId: fallbackSession.classId,
+        classCode: fallbackSession.classCode,
+        courseCode: fallbackSession.courseCode,
+        courseName: fallbackSession.courseName,
+        date: fallbackSession.date,
+        startTime: fallbackSession.startTime,
+        endTime: fallbackSession.endTime,
+        timeSlotName: fallbackTimeSlotName,
+        topic: fallbackSession.topic,
+        totalStudents: fallbackSession.totalStudents,
+        presentCount: fallbackSession.presentCount,
+        absentCount: fallbackSession.absentCount,
+        resourceName: fallbackSession.resourceName,
+        modality: fallbackSession.modality,
+      }
+    : null;
 
   // Extract students from response - data.students is the array
-  const students = studentsResponse?.data?.students ?? [];
+  const students = useMemo(
+    () => studentsResponse?.data?.students ?? [],
+    [studentsResponse?.data?.students]
+  );
   const [attendanceStatus, setAttendanceStatus] = useState<
     Record<number, "PRESENT" | "ABSENT">
   >({});
@@ -115,14 +147,12 @@ export default function AttendanceDetailPage() {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const { data: reportResponse, isLoading: isLoadingReport } =
     useGetSessionReportQuery(sessionIdNum, {
-      skip: !sessionId || sessionIdNum === 0 || !isReportDialogOpen,
+      skip: !isSessionIdValid || !isReportDialogOpen,
       refetchOnMountOrArgChange: true,
     });
 
   const reportData = reportResponse?.data;
-  const [teacherNote, setTeacherNote] = useState(
-    reportData?.teacherNote || ""
-  );
+  const [teacherNote, setTeacherNote] = useState(reportData?.teacherNote || "");
 
   // Update teacherNote when reportData changes
   useEffect(() => {
@@ -342,7 +372,26 @@ export default function AttendanceDetailPage() {
   };
 
   // Check if session has homework (you may need to adjust this based on your API)
-  const hasHomework = true; // TODO: Get this from session data or API
+  const hasHomework = true; // TODO: Get this from session data hoặc API
+
+  if (!isSessionIdValid) {
+    return (
+      <TeacherRoute>
+        <DashboardLayout title="Điểm danh">
+          <div className="rounded-lg border bg-card p-6 text-center text-destructive">
+            <p>Session ID không hợp lệ.</p>
+            <Button
+              variant="ghost"
+              className="mt-4"
+              onClick={() => navigate("/teacher/attendance")}
+            >
+              Quay lại
+            </Button>
+          </div>
+        </DashboardLayout>
+      </TeacherRoute>
+    );
+  }
 
   if (studentsError) {
     return (
@@ -462,148 +511,157 @@ export default function AttendanceDetailPage() {
               <div className="rounded-lg border bg-card overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                  <thead className="border-b bg-muted/50">
-                    <tr>
-                      <th className="text-left p-4 font-semibold text-foreground border-r">
-                        Học viên
-                      </th>
-                      <th className="text-center p-4 font-semibold text-foreground border-r">
-                        Điểm danh
-                      </th>
-                      <th className="text-center p-4 font-semibold text-foreground border-r">
-                        Bài tập về nhà
-                      </th>
-                      <th className="text-center p-4 font-semibold text-foreground">
-                        Ghi chú
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {students.map((student) => (
-                      <tr
-                        key={student.studentId}
-                        className="border-b last:border-b-0 hover:bg-muted/30 transition-colors"
-                      >
-                        {/* Cột 1: Tên học viên */}
-                        <td className="p-4 border-r">
-                          <div>
-                            <p className="font-medium text-foreground">
-                              {student.fullName}
-                            </p>
-                            {student.studentCode && (
-                              <p className="text-sm text-muted-foreground mt-1">
-                                {student.studentCode}
+                    <thead className="border-b bg-muted/50">
+                      <tr>
+                        <th className="text-left p-4 font-semibold text-foreground border-r">
+                          Học viên
+                        </th>
+                        <th className="text-center p-4 font-semibold text-foreground border-r">
+                          Điểm danh
+                        </th>
+                        <th className="text-center p-4 font-semibold text-foreground border-r">
+                          Bài tập về nhà
+                        </th>
+                        <th className="text-center p-4 font-semibold text-foreground">
+                          Ghi chú
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {students.map((student) => (
+                        <tr
+                          key={student.studentId}
+                          className="border-b last:border-b-0 hover:bg-muted/30 transition-colors"
+                        >
+                          {/* Cột 1: Tên học viên */}
+                          <td className="p-4 border-r">
+                            <div>
+                              <p className="font-medium text-foreground">
+                                {student.fullName}
                               </p>
-                            )}
-                            {student.email && (
-                              <p className="text-sm text-muted-foreground">
-                                {student.email}
-                              </p>
-                            )}
-                          </div>
-                        </td>
+                              {student.studentCode && (
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {student.studentCode}
+                                </p>
+                              )}
+                              {student.email && (
+                                <p className="text-sm text-muted-foreground">
+                                  {student.email}
+                                </p>
+                              )}
+                            </div>
+                          </td>
 
-                        {/* Cột 2: Điểm danh */}
-                        <td className="p-4 border-r">
-                          <div className="flex items-center justify-center gap-3">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleStatusChange(student.studentId, "PRESENT")
-                              }
-                              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                                attendanceStatus[student.studentId] ===
-                                "PRESENT"
-                                  ? "bg-emerald-100 text-emerald-700 border border-emerald-300"
-                                  : "bg-muted text-muted-foreground border border-border hover:bg-muted/80"
-                              }`}
-                            >
-                              <Checkbox
-                                checked={
-                                  attendanceStatus[student.studentId] ===
-                                  "PRESENT"
-                                }
-                                onCheckedChange={() => {}}
-                                className="pointer-events-none"
-                              />
-                              <span>Có mặt</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleStatusChange(student.studentId, "ABSENT")
-                              }
-                              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                                attendanceStatus[student.studentId] === "ABSENT"
-                                  ? "bg-rose-100 text-rose-700 border border-rose-300"
-                                  : "bg-muted text-muted-foreground border border-border hover:bg-muted/80"
-                              }`}
-                            >
-                              <Checkbox
-                                checked={
-                                  attendanceStatus[student.studentId] ===
-                                  "ABSENT"
-                                }
-                                onCheckedChange={() => {}}
-                                className="pointer-events-none"
-                              />
-                              <span>Vắng</span>
-                            </button>
-                          </div>
-                        </td>
-
-                        {/* Cột 3: Bài tập về nhà */}
-                        <td className="p-4 border-r">
-                          <div className="flex justify-center">
-                            {hasHomework ? (
-                              <Select
-                                value={homeworkStatus[student.studentId] || ""}
-                                onValueChange={(value) =>
-                                  handleHomeworkStatusChange(
+                          {/* Cột 2: Điểm danh */}
+                          <td className="p-4 border-r">
+                            <div className="flex items-center justify-center gap-3">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleStatusChange(
                                     student.studentId,
-                                    value as "COMPLETED" | "INCOMPLETE"
+                                    "PRESENT"
                                   )
                                 }
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                                  attendanceStatus[student.studentId] ===
+                                  "PRESENT"
+                                    ? "bg-emerald-100 text-emerald-700 border border-emerald-300"
+                                    : "bg-muted text-muted-foreground border border-border hover:bg-muted/80"
+                                }`}
                               >
-                                <SelectTrigger className="w-full max-w-[200px]">
-                                  <SelectValue placeholder="Chọn trạng thái" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="COMPLETED">
-                                    Đã hoàn thành
-                                  </SelectItem>
-                                  <SelectItem value="INCOMPLETE">
-                                    Chưa hoàn thành
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">
-                                Không có bài tập về nhà
-                              </p>
-                            )}
-                          </div>
-                        </td>
+                                <Checkbox
+                                  checked={
+                                    attendanceStatus[student.studentId] ===
+                                    "PRESENT"
+                                  }
+                                  onCheckedChange={() => {}}
+                                  className="pointer-events-none"
+                                />
+                                <span>Có mặt</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleStatusChange(
+                                    student.studentId,
+                                    "ABSENT"
+                                  )
+                                }
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                                  attendanceStatus[student.studentId] ===
+                                  "ABSENT"
+                                    ? "bg-rose-100 text-rose-700 border border-rose-300"
+                                    : "bg-muted text-muted-foreground border border-border hover:bg-muted/80"
+                                }`}
+                              >
+                                <Checkbox
+                                  checked={
+                                    attendanceStatus[student.studentId] ===
+                                    "ABSENT"
+                                  }
+                                  onCheckedChange={() => {}}
+                                  className="pointer-events-none"
+                                />
+                                <span>Vắng</span>
+                              </button>
+                            </div>
+                          </td>
 
-                        {/* Cột 4: Ghi chú */}
-                        <td className="p-4">
-                          <div className="flex justify-center">
-                            <Textarea
-                              placeholder="Nhập ghi chú (nếu cần)..."
-                              value={notes[student.studentId] || ""}
-                              onChange={(e) =>
-                                handleNoteChange(
-                                  student.studentId,
-                                  e.target.value
-                                )
-                              }
-                              className="min-h-16 w-full max-w-[300px]"
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
+                          {/* Cột 3: Bài tập về nhà */}
+                          <td className="p-4 border-r">
+                            <div className="flex justify-center">
+                              {hasHomework ? (
+                                <Select
+                                  value={
+                                    homeworkStatus[student.studentId] || ""
+                                  }
+                                  onValueChange={(value) =>
+                                    handleHomeworkStatusChange(
+                                      student.studentId,
+                                      value as "COMPLETED" | "INCOMPLETE"
+                                    )
+                                  }
+                                >
+                                  <SelectTrigger className="w-full max-w-[200px]">
+                                    <SelectValue placeholder="Chọn trạng thái" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="COMPLETED">
+                                      Đã hoàn thành
+                                    </SelectItem>
+                                    <SelectItem value="INCOMPLETE">
+                                      Chưa hoàn thành
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">
+                                  Không có bài tập về nhà
+                                </p>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* Cột 4: Ghi chú */}
+                          <td className="p-4">
+                            <div className="flex justify-center">
+                              <Textarea
+                                placeholder="Nhập ghi chú (nếu cần)..."
+                                value={notes[student.studentId] || ""}
+                                onChange={(e) =>
+                                  handleNoteChange(
+                                    student.studentId,
+                                    e.target.value
+                                  )
+                                }
+                                className="min-h-16 w-full max-w-[300px]"
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
                   </table>
                 </div>
               </div>
@@ -620,6 +678,9 @@ export default function AttendanceDetailPage() {
                     <span>
                       <Users className="inline h-4 w-4 mr-1" />
                       Có mặt: {presentCount}/{students.length}
+                    </span>
+                    <span>
+                      Vắng: {absentCount}/{students.length}
                     </span>
                   </div>
                 </div>
@@ -774,10 +835,13 @@ export default function AttendanceDetailPage() {
                           setTeacherNote("");
                           // Refetch data to update session status
                           refetchStudents();
-                        } catch (error: any) {
+                        } catch (error: unknown) {
+                          const apiError = error as {
+                            data?: { message?: string; error?: string };
+                          };
                           const errorMessage =
-                            error?.data?.message ||
-                            error?.data?.error ||
+                            apiError?.data?.message ||
+                            apiError?.data?.error ||
                             "Có lỗi xảy ra khi nộp báo cáo";
                           toast.error(errorMessage);
                         }
