@@ -345,9 +345,6 @@ export default function StudentRequestsPage() {
                                   Lớp hiện tại
                                 </p>
                                 <p className="mt-1 font-medium">{request.currentClass.code}</p>
-                                {request.currentClass.name && (
-                                  <p className="text-xs text-muted-foreground">{request.currentClass.name}</p>
-                                )}
                               </div>
                               {request.targetClass && (
                                 <div>
@@ -355,9 +352,6 @@ export default function StudentRequestsPage() {
                                     Lớp mục tiêu
                                   </p>
                                   <p className="mt-1 text-sm font-medium">{request.targetClass.code}</p>
-                                  {request.targetClass.name && (
-                                    <p className="text-xs text-muted-foreground">{request.targetClass.name}</p>
-                                  )}
                                   {request.effectiveDate && (
                                     <p className="text-xs text-muted-foreground">
                                       Hiệu lực: {format(parseISO(request.effectiveDate), 'dd/MM/yyyy', { locale: vi })}
@@ -1497,9 +1491,6 @@ function RequestDetail({ request }: { request: StudentRequest }) {
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Lớp hiện tại</p>
             <p className="mt-1 font-semibold">{request.currentClass.code}</p>
-            {request.currentClass.name && (
-              <p className="text-sm text-muted-foreground">{request.currentClass.name}</p>
-            )}
             {request.currentClass.branch?.name && (
               <p className="text-xs text-muted-foreground">Chi nhánh: {request.currentClass.branch.name}</p>
             )}

@@ -440,8 +440,10 @@ const detailClassTeacherName =
                               <p className="text-sm text-muted-foreground">#{request.student.studentCode} · {request.student.email}</p>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-medium">{request.currentClass.name}</p>
-                              <p className="text-xs text-muted-foreground">{request.currentClass.code} · {request.currentClass.branch?.name}</p>
+                              <p className="text-sm font-medium">{request.currentClass.code}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {request.currentClass.branch?.name ?? 'Chi nhánh đang cập nhật'}
+                              </p>
                               {request.targetSession && (
                                 <p className="text-xs text-muted-foreground">
                                   {format(parseISO(request.targetSession.date), "dd/MM", { locale: vi })} ·{' '}
@@ -597,7 +599,7 @@ const detailClassTeacherName =
                             </TableCell>
                             <TableCell>
                               <div className="text-sm">
-                                <p className="font-medium">{request.currentClass.name}</p>
+                                <p className="font-medium">{request.currentClass.code}</p>
                                 {request.targetSession ? (
                                   <p className="text-xs text-muted-foreground">
                                     {format(parseISO(request.targetSession.date), "dd/MM/yyyy", { locale: vi })} ·{' '}
@@ -746,7 +748,7 @@ const detailClassTeacherName =
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground">Lớp học</p>
                   <p className="font-semibold">
-                    {detailRequest.currentClass.code} · {detailRequest.currentClass.name}
+                    {detailRequest.currentClass.code}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {detailRequest.currentClass.branch?.name ?? 'Chưa rõ chi nhánh'}
