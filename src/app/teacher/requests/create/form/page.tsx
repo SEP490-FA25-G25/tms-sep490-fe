@@ -22,7 +22,7 @@ const formatBackendError = (
 
   // Map common error codes to user-friendly messages
   if (errorMessage.includes("SESSION_NOT_IN_TIME_WINDOW")) {
-    return "Ngày session đề xuất không nằm trong khoảng thời gian cho phép (trong vòng 7 ngày từ hôm nay).";
+    return "Ngày session đề xuất không nằm trong khoảng thời gian cho phép (trong vòng 14 ngày từ hôm nay).";
   }
 
   if (errorMessage.includes("INVALID_DATE")) {

@@ -185,8 +185,7 @@ export default function ClassAttendanceMatrixPage() {
     );
   }
 
-  const { students, sessions, matrix, summary, classCode, courseName } =
-    matrixData;
+  const { students, sessions, matrix, summary, courseName } = matrixData;
 
   // Defensive checks
   if (!students || !sessions || !matrix || !summary) {
@@ -237,12 +236,7 @@ export default function ClassAttendanceMatrixPage() {
 
   return (
     <TeacherRoute>
-      <DashboardLayout
-        title={`Ma trận điểm danh - ${
-          classCode || `Lớp ${matrixData.classId}`
-        }`}
-        description={courseName}
-      >
+      <DashboardLayout title={courseName}>
         <div className="space-y-6">
           {/* Summary section */}
           <div className="rounded-lg border bg-muted/50 p-6">
@@ -290,15 +284,23 @@ export default function ClassAttendanceMatrixPage() {
                                   })
                                 : "-"}
                             </span>
-                            {session.sessionStartTime &&
-                            session.sessionEndTime ? (
+                            {(session.startTime || session.sessionStartTime) &&
+                            (session.endTime || session.sessionEndTime) ? (
                               <span className="text-xs text-muted-foreground">
-                                {session.sessionStartTime.substring(0, 5)} -{" "}
-                                {session.sessionEndTime.substring(0, 5)}
+                                {(
+                                  session.startTime || session.sessionStartTime
+                                )?.substring(0, 5)}{" "}
+                                -{" "}
+                                {(
+                                  session.endTime || session.sessionEndTime
+                                )?.substring(0, 5)}
                               </span>
-                            ) : session.sessionStartTime ? (
+                            ) : session.startTime ||
+                              session.sessionStartTime ? (
                               <span className="text-xs text-muted-foreground">
-                                {session.sessionStartTime.substring(0, 5)}
+                                {(
+                                  session.startTime || session.sessionStartTime
+                                )?.substring(0, 5)}
                               </span>
                             ) : null}
                           </div>
@@ -375,7 +377,7 @@ export default function ClassAttendanceMatrixPage() {
           <div className="text-sm text-muted-foreground">
             <p>
               <span className="font-medium">Chú thích:</span> P Có mặt | A Vắng
-              | E Có phép | - Chưa điểm danh
+              | - Chưa điểm danh
             </p>
           </div>
         </div>

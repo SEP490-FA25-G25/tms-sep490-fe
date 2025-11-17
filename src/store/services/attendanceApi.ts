@@ -123,6 +123,78 @@ export interface AttendanceClassesResponse {
   data: AttendanceClassDTO[];
 }
 
+// Types cho student attendance overview
+export interface StudentAttendanceOverviewClassDTO {
+  classId: number;
+  classCode: string;
+  className: string;
+  courseId: number;
+  courseCode: string;
+  courseName: string;
+   startDate: string;
+   actualEndDate: string | null;
+  totalSessions: number;
+  attended: number;
+  absent: number;
+  upcoming: number;
+  status: string;
+  lastUpdated: string | null;
+}
+
+export interface StudentAttendanceOverviewResponse {
+  success?: boolean;
+  message?: string;
+  data: {
+    classes: StudentAttendanceOverviewClassDTO[];
+  };
+}
+
+// Types cho student attendance report chi tiết theo buổi của 1 lớp
+export interface StudentAttendanceReportSessionDTO {
+  sessionId: number;
+  sessionNumber?: number;
+  date: string;
+  startTime?: string;
+  endTime?: string;
+  classroomName?: string;
+  teacherName?: string;
+  topic?: string;
+  attendanceStatus?:
+    | "PRESENT"
+    | "ABSENT"
+    | "LATE"
+    | "EXCUSED"
+    | "PLANNED"
+    | "UNKNOWN";
+  note?: string | null;
+}
+
+export interface StudentAttendanceReportDTO {
+  classId: number;
+  classCode: string;
+  className: string;
+  courseId?: number;
+  courseCode?: string;
+  courseName?: string;
+  startDate?: string;
+  actualEndDate?: string | null;
+  status?: string;
+  summary: {
+    totalSessions: number;
+    attended: number;
+    absent: number;
+    upcoming: number;
+    attendanceRate?: number; // rate as decimal (0-1)
+  };
+  sessions: StudentAttendanceReportSessionDTO[];
+}
+
+export interface StudentAttendanceReportResponse {
+  success?: boolean;
+  message?: string;
+  data: StudentAttendanceReportDTO;
+}
+
 // Types for Class Attendance Matrix
 export interface AttendanceMatrixStudentDTO {
   studentId: number;
@@ -135,9 +207,11 @@ export interface AttendanceMatrixStudentDTO {
 export interface AttendanceMatrixSessionDTO {
   sessionId: number;
   date: string;
+  startTime?: string;
+  endTime?: string;
   timeSlotName?: string;
-  sessionStartTime?: string;
-  sessionEndTime?: string;
+  sessionStartTime?: string; // Deprecated: use startTime instead
+  sessionEndTime?: string; // Deprecated: use endTime instead
   sessionTopic?: string;
   status?: string;
 }
@@ -342,6 +416,27 @@ export const attendanceApi = createApi({
       }),
       providesTags: ["AttendanceSession"],
     }),
+    // Student: attendance overview theo lớp
+    getStudentAttendanceOverview: builder.query<
+      StudentAttendanceOverviewResponse,
+      void
+    >({
+      query: () => ({
+        url: "/students/attendance/overview",
+        method: "GET",
+      }),
+    }),
+    // Student: báo cáo điểm danh chi tiết theo buổi của 1 lớp
+    getStudentAttendanceReport: builder.query<
+      StudentAttendanceReportResponse,
+      { classId: number }
+    >({
+      query: ({ classId }) => ({
+        url: "/students/attendance/report",
+        method: "GET",
+        params: { classId },
+      }),
+    }),
     // Get class attendance matrix
     getClassAttendanceMatrix: builder.query<
       AttendanceMatrixResponse,
@@ -376,5 +471,7 @@ export const {
   useSubmitReportMutation,
   useGetAttendanceClassesQuery,
   useGetClassAttendanceMatrixQuery,
+  useGetStudentAttendanceOverviewQuery,
+  useGetStudentAttendanceReportQuery,
 } = attendanceApi;
 

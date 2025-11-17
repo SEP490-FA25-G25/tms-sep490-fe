@@ -152,7 +152,7 @@ export default function SelectSessionPage() {
             </>
           ) : (
             <div className="text-center py-12 text-muted-foreground border rounded-lg">
-              <p>Không có session nào trong 7 ngày tới</p>
+              <p>Không có session nào trong 14 ngày tới</p>
             </div>
           )}
         </div>

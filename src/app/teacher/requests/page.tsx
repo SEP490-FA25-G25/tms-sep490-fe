@@ -148,7 +148,7 @@ const formatBackendError = (
 
   // Map common error codes to user-friendly messages
   if (errorMessage.includes("SESSION_NOT_IN_TIME_WINDOW")) {
-    return "Ngày session đề xuất không nằm trong khoảng thời gian cho phép (trong vòng 7 ngày từ hôm nay).";
+    return "Ngày session đề xuất không nằm trong khoảng thời gian cho phép (trong vòng 14 ngày từ hôm nay).";
   }
 
   if (
@@ -1771,7 +1771,7 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
                 </ul>
               ) : (
                 <div className="rounded-lg border border-dashed py-4 text-center text-sm text-muted-foreground">
-                  Không có session nào trong 7 ngày tới
+                  Không có session nào trong 14 ngày tới
                 </div>
               )}
             </div>
@@ -1821,7 +1821,7 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
               {dateStepComplete ? "✓" : "2"}
             </div>
             <h3 className="text-sm font-semibold">
-              Chọn ngày mới (trong 7 ngày tới)
+              Chọn ngày mới (trong 14 ngày tới)
             </h3>
           </div>
 
@@ -2529,7 +2529,7 @@ function SwapFlow({ onSuccess }: FlowProps) {
                 <div className="rounded-lg border border-dashed py-4 text-center text-sm text-muted-foreground">
                   {selectedDate
                     ? "Không có session nào trong ngày đã chọn"
-                    : "Không có session nào trong 7 ngày tới"}
+                    : "Không có session nào trong 14 ngày tới"}
                 </div>
               )}
             </div>
