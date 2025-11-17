@@ -472,10 +472,10 @@ function SessionDetailDialog({ sessionId, onClose }: SessionDetailDialogProps) {
   const homeworkBadge = detail ? HOMEWORK_STATUS_STYLES[detail.studentStatus.homeworkStatus] ?? null : null
   const sessionStatus = detail ? SESSION_STATUS_STYLES[detail.sessionInfo.sessionStatus] ?? null : null
   const locationDisplay = detail
-    ? classroomResource?.location ||
-      detail.sessionInfo.location ||
-      detail.sessionInfo.onlineLink ||
-      (detail.classInfo.modality === 'ONLINE' ? 'Học trực tuyến' : detail.classInfo.branchName)
+    ? classroomResource?.resourceType === 'VIRTUAL'
+      ? classroomResource?.onlineLink || classroomResource?.location || detail.sessionInfo.location || detail.sessionInfo.onlineLink || ''
+      : classroomResource?.location || detail.sessionInfo.location || detail.sessionInfo.onlineLink ||
+      (detail.classInfo.modality === 'ONLINE' ? 'Học trực tuyến' : detail.classInfo.branchName || '')
     : 'Chưa cập nhật'
   const resourceTypeLabel = classroomResource
     ? RESOURCE_TYPE_LABELS[classroomResource.resourceType] ?? classroomResource.resourceType

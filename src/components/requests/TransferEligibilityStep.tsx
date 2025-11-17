@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { useGetTransferEligibilityQuery, type TransferEligibility } from '@/store/services/studentRequestApi'
-import { Badge } from '@/components/ui/badge'
-import { Loader2, Users, Clock, CheckCircle2, X } from 'lucide-react'
+import { Loader2, Clock, CheckCircle2, X } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { cn } from '@/lib/utils'
 import TransferErrorDisplay from './TransferErrorDisplay'

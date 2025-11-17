@@ -1,8 +1,6 @@
-import { Badge } from '@/components/ui/badge'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { cn } from '@/lib/utils'
 import { Label } from '@/components/ui/label'
-import { Clock, CheckCircle, XCircle, ArrowRight } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import AAContactModal from './AAContactModal'
 import type { TransferEligibility } from '@/store/services/studentRequestApi'
 
@@ -39,7 +37,7 @@ export default function TransferTypeStep({
         <p className="font-semibold">{currentEnrollment.classCode}</p>
         <p className="text-sm text-muted-foreground">{currentEnrollment.className}</p>
         <p className="text-sm text-muted-foreground">
-          {currentEnrollment.branchName} · {getModalityText(currentEnrollment.modality)}
+          {currentEnrollment.branchName} · {getModalityText(currentEnrollment.modality || '')}
         </p>
       </div>
 
