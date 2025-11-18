@@ -41,6 +41,30 @@ export function getCapacityText(available?: number | null, max?: number | null) 
   return 'Sức chứa đang cập nhật'
 }
 
+// Content gap formatter (minimal, clean)
+export function getContentGapText(gap?: { gapLevel?: string; missedSessions?: number; totalSessions?: number }) {
+  if (!gap || !gap.gapLevel || gap.gapLevel === 'NONE' || !gap.missedSessions) {
+    return null
+  }
+
+  const sessions = gap.totalSessions
+    ? `${gap.missedSessions}/${gap.totalSessions}`
+    : gap.missedSessions
+
+  return `Bỏ lỡ ${sessions} buổi`
+}
+
+// Change indicators formatter (minimal prefix)
+export function getChangeIndicators(changes?: { branch?: string; modality?: string; schedule?: string }) {
+  if (!changes) return { hasBranchChange: false, hasModalityChange: false, hasScheduleChange: false }
+
+  return {
+    hasBranchChange: !!changes.branch,
+    hasModalityChange: !!changes.modality,
+    hasScheduleChange: !!changes.schedule
+  }
+}
+
 // Success state handler hook
 export function useSuccessHandler(onSuccess: () => void) {
   const handleSuccess = useCallback(() => {

@@ -1,11 +1,12 @@
 import { useState, useCallback, useMemo } from 'react'
-import { format } from 'date-fns'
+import { format, parseISO, addDays } from 'date-fns'
+import { vi } from 'date-fns/locale'
 import { skipToken } from '@reduxjs/toolkit/query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { ArrowRightIcon } from 'lucide-react'
 import {
   useSearchStudentsQuery,
   useGetAcademicTransferEligibilityQuery,
@@ -27,6 +28,8 @@ import {
   useDebouncedValue,
   getModalityLabel,
   getCapacityText,
+  getContentGapText,
+  getChangeIndicators,
   useSuccessHandler,
   useErrorHandler,
   Validation
@@ -45,7 +48,8 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
   const [selectedTargetClass, setSelectedTargetClass] = useState<TransferOption | null>(null)
   const [targetBranchId, setTargetBranchId] = useState<number | undefined>()
   const [targetModality, setTargetModality] = useState<SessionModality | undefined>()
-  const [effectiveDate, setEffectiveDate] = useState('')
+  const [weekOffset, setWeekOffset] = useState(0)
+  const [selectedSessionIndex, setSelectedSessionIndex] = useState<number | null>(null)
   const [requestReason, setRequestReason] = useState('')
   const [note, setNote] = useState('')
 
@@ -93,6 +97,58 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
 
   const transferOptions = optionsResponse?.data?.availableClasses ?? []
 
+  // Group upcoming sessions by week
+  const upcomingSessions = selectedTargetClass?.upcomingSessions ?? []
+  const sessionsByWeek = useMemo(() => {
+    if (upcomingSessions.length === 0) return []
+
+    const grouped: Array<{ weekStart: Date; weekEnd: Date; sessions: typeof upcomingSessions }> = []
+    let currentWeek: typeof upcomingSessions = []
+    let weekStart: Date | null = null
+
+    upcomingSessions.forEach((session, index) => {
+      const sessionDate = parseISO(session.date)
+
+      if (!weekStart) {
+        weekStart = sessionDate
+      }
+
+      const daysSinceWeekStart = Math.floor((sessionDate.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24))
+
+      if (daysSinceWeekStart < 7) {
+        currentWeek.push(session)
+      } else {
+        grouped.push({
+          weekStart: weekStart,
+          weekEnd: addDays(weekStart, 6),
+          sessions: currentWeek
+        })
+        weekStart = sessionDate
+        currentWeek = [session]
+      }
+
+      if (index === upcomingSessions.length - 1 && currentWeek.length > 0) {
+        grouped.push({
+          weekStart: weekStart!,
+          weekEnd: addDays(weekStart!, 6),
+          sessions: currentWeek
+        })
+      }
+    })
+
+    return grouped
+  }, [upcomingSessions])
+
+  const currentWeek = sessionsByWeek[weekOffset]
+  const selectedSession = selectedSessionIndex !== null && currentWeek
+    ? currentWeek.sessions[selectedSessionIndex]
+    : null
+  const effectiveDate = selectedSession?.date ?? ''
+
+  const weekRangeLabel = currentWeek
+    ? `${format(currentWeek.weekStart, 'dd/MM', { locale: vi })} - ${format(currentWeek.weekEnd, 'dd/MM', { locale: vi })}`
+    : ''
+
   const [submitTransfer, { isLoading: isSubmitting }] = useSubmitTransferOnBehalfMutation()
   const { handleSuccess } = useSuccessHandler(onSuccess)
   const { handleError } = useErrorHandler()
@@ -116,14 +172,25 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
 
   const handleSelectTargetClass = (classData: TransferOption) => {
     setSelectedTargetClass(classData)
+    setWeekOffset(0)
+    setSelectedSessionIndex(null)
   }
+
+  const handleChangeWeek = useCallback((direction: 'prev' | 'next') => {
+    setWeekOffset(prev => {
+      const newOffset = direction === 'next' ? prev + 1 : prev - 1
+      return Math.max(0, Math.min(newOffset, sessionsByWeek.length - 1))
+    })
+    setSelectedSessionIndex(null)
+  }, [sessionsByWeek.length])
 
   const handleReset = useCallback(() => {
     setSelectedCurrentClass(null)
     setSelectedTargetClass(null)
     setTargetBranchId(undefined)
     setTargetModality(undefined)
-    setEffectiveDate('')
+    setWeekOffset(0)
+    setSelectedSessionIndex(null)
     setRequestReason('')
     setNote('')
   }, [])
@@ -141,7 +208,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
     }
 
     if (!effectiveDate) {
-      handleError(new Error('Vui lòng chọn ngày hiệu lực'))
+      handleError(new Error('Vui lòng chọn buổi học bắt đầu'))
       return
     }
 
@@ -293,16 +360,10 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                     <p className="text-sm text-muted-foreground">
                       {cls.branchName} · {cls.modality && getModalityLabel(cls.modality)}
                     </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <p className="text-xs text-muted-foreground">
-                        Quota chuyển: {cls.transferQuota.used}/{cls.transferQuota.limit}
-                      </p>
-                      {cls.canTransfer ? (
-                        <Badge className="bg-emerald-500/10 text-emerald-600">Đủ điều kiện</Badge>
-                      ) : (
-                        <Badge className="bg-rose-500/10 text-rose-600">Không đủ điều kiện</Badge>
-                      )}
-                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Quota chuyển: {cls.transferQuota.used}/{cls.transferQuota.limit}
+                      {!cls.canTransfer && <span className="text-rose-600"> · Đã hết quota</span>}
+                    </p>
                   </button>
                 ))}
               </div>
@@ -381,15 +442,91 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                 </div>
 
                 <div className="mt-4 space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Ngày hiệu lực</label>
-                    <input
-                      type="date"
-                      value={effectiveDate}
-                      onChange={(e) => setEffectiveDate(e.target.value)}
-                      min={format(new Date(), 'yyyy-MM-dd')}
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    />
+                  {/* Session Selection with Week Navigation */}
+                  <div className="space-y-3">
+                    <label className="block text-sm font-medium">Chọn buổi học bắt đầu</label>
+
+                    {upcomingSessions.length === 0 ? (
+                      <p className="text-sm text-muted-foreground py-4 text-center border rounded-lg">
+                        Không có buổi học sắp tới
+                      </p>
+                    ) : (
+                      <>
+                        {/* Week Navigation */}
+                        <div className="flex items-center justify-between border-b pb-3">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Tuần đang xem</p>
+                            <p className="font-medium text-sm">{weekRangeLabel}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleChangeWeek('prev')}
+                              disabled={weekOffset === 0}
+                            >
+                              <ArrowRightIcon className="h-4 w-4 rotate-180" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setWeekOffset(0)}
+                              disabled={weekOffset === 0}
+                            >
+                              Tuần đầu
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleChangeWeek('next')}
+                              disabled={weekOffset >= sessionsByWeek.length - 1}
+                            >
+                              <ArrowRightIcon className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Session List */}
+                        <div className="space-y-2">
+                          {currentWeek?.sessions.map((session, index) => {
+                            const isActive = selectedSessionIndex === index
+                            const sessionDate = parseISO(session.date)
+
+                            return (
+                              <label
+                                key={index}
+                                className={cn(
+                                  'flex gap-3 rounded-lg border px-4 py-3 transition cursor-pointer hover:border-primary/50 hover:bg-muted/30',
+                                  isActive && 'border-primary bg-primary/5'
+                                )}
+                              >
+                                <input
+                                  type="radio"
+                                  className="sr-only"
+                                  checked={isActive}
+                                  onChange={() => setSelectedSessionIndex(index)}
+                                />
+                                <div className="flex h-5 w-5 items-center justify-center">
+                                  <span
+                                    className={cn(
+                                      'h-4 w-4 rounded-full border-2',
+                                      isActive ? 'border-primary bg-primary' : 'border-muted-foreground/40'
+                                    )}
+                                  />
+                                </div>
+                                <div className="flex-1 space-y-1">
+                                  <p className="font-medium text-sm">
+                                    Buổi {session.courseSessionNumber} · {format(sessionDate, 'dd/MM/yyyy (EEEE)', { locale: vi })}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">{session.courseSessionTitle}</p>
+                                  <p className="text-xs text-muted-foreground">{session.timeSlot}</p>
+                                </div>
+                              </label>
+                            )
+                          })}
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   <ReasonInput
@@ -408,33 +545,41 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
               </div>
             ) : (
               <div className="space-y-2">
-                {transferOptions.map((option: TransferOption) => (
-                  <button
-                    key={option.classId}
-                    type="button"
-                    onClick={() => handleSelectTargetClass(option)}
-                    className="w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30"
-                  >
-                    <div className="flex items-start justify-between gap-2">
+                {transferOptions.map((option: TransferOption) => {
+                  const gapText = getContentGapText(option.contentGapAnalysis)
+                  const { hasBranchChange, hasModalityChange } = getChangeIndicators(option.changes)
+                  const isScheduled = option.classStatus === 'SCHEDULED'
+                  const startDate = option.startDate ? new Date(option.startDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : null
+
+                  return (
+                    <button
+                      key={option.classId}
+                      type="button"
+                      onClick={() => handleSelectTargetClass(option)}
+                      className="w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30"
+                    >
                       <div className="space-y-1">
                         <p className="font-medium">
                           {option.classCode} · {option.className}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {option.branchName} · {getModalityLabel(option.modality)}
+                          {hasBranchChange && <span className="text-blue-600">→ </span>}
+                          {option.branchName} · {hasModalityChange && <span className="text-blue-600">→ </span>}
+                          {getModalityLabel(option.modality)}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {option.scheduleInfo ?? option.scheduleDays + ' ' + option.scheduleTime} · {getCapacityText(option.availableSlots, option.maxCapacity)}
+                          {isScheduled && startDate && <span> · Bắt đầu {startDate}</span>}
                         </p>
+                        {gapText && (
+                          <p className="text-xs text-amber-600">
+                            {gapText}
+                          </p>
+                        )}
                       </div>
-                      {option.canTransfer ? (
-                        <Badge className="bg-emerald-500/10 text-emerald-600">Có thể chuyển</Badge>
-                      ) : (
-                        <Badge className="bg-rose-500/10 text-rose-600">Không thể chuyển</Badge>
-                      )}
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  )
+                })}
               </div>
             )}
           </div>
