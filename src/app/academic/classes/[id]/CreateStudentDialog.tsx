@@ -7,6 +7,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -88,6 +98,7 @@ export function CreateStudentDialog({
   })
   const [skillAssessments, setSkillAssessments] = useState<SkillAssessmentFormData[]>([])
   const [showSkillAssessments, setShowSkillAssessments] = useState(false)
+  const [removeIndex, setRemoveIndex] = useState<number | null>(null)
 
   const [createStudent, { isLoading: isSubmitting }] = useCreateStudentMutation()
   const { data: subjectsResponse } = useGetSubjectsWithLevelsQuery()
@@ -146,7 +157,18 @@ export function CreateStudentDialog({
   }
 
   const handleRemoveSkillAssessment = (index: number) => {
-    setSkillAssessments(prev => prev.filter((_, i) => i !== index))
+    setRemoveIndex(index)
+  }
+
+  const handleConfirmRemove = () => {
+    if (removeIndex !== null) {
+      setSkillAssessments(prev => prev.filter((_, i) => i !== removeIndex))
+      setRemoveIndex(null)
+    }
+  }
+
+  const handleCancelRemove = () => {
+    setRemoveIndex(null)
   }
 
   const handleSkillAssessmentChange = (
@@ -688,6 +710,29 @@ export function CreateStudentDialog({
           </Button>
         </div>
       </DialogContent>
+
+      {/* Confirmation Dialog for Remove Skill Assessment */}
+      <AlertDialog open={removeIndex !== null} onOpenChange={(open) => !open && handleCancelRemove()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa đánh giá</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc muốn xóa đánh giá #{removeIndex !== null ? removeIndex + 1 : ''}? Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmRemove}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   )
 }

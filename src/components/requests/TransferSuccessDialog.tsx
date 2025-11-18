@@ -41,7 +41,7 @@ export default function TransferSuccessDialog({
 
   const handleViewRequests = () => {
     onOpenChange(false)
-    window.location.href = isAA ? '/academic/requests' : '/student/requests'
+    window.location.href = isAA ? '/academic/student-requests' : '/student/requests'
   }
 
   return (

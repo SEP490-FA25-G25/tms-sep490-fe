@@ -287,7 +287,7 @@ const roleBasedNav = {
       },
       {
         title: "Quản lý yêu cầu học viên",
-        url: "/academic/requests",
+        url: "/academic/student-requests",
         icon: ClipboardCheckIcon,
       },
       {

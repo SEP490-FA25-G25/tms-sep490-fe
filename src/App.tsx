@@ -24,7 +24,7 @@ import StudentAttendanceReportOverviewPage from './app/student/attendance-report
 import StudentClassAttendanceReportPage from './app/student/attendance-report/[classId]/page'
 import AcademicClassesPage from './app/academic/classes/page'
 import AcademicClassDetailPage from './app/academic/classes/[id]/page'
-import AcademicRequestsPage from './app/academic/requests/page'
+import AcademicStudentRequestsPage from './app/academic/student-requests/page'
 import AcademicTeacherRequestsPage from './app/academic/teacher-requests/page'
 import { Toaster } from '@/components/ui/sonner'
 
@@ -199,10 +199,10 @@ function App() {
               }
             />
             <Route
-              path="/academic/requests"
+              path="/academic/student-requests"
               element={
                 <ProtectedRoute requiredRoles={['ACADEMIC_AFFAIR', 'ADMIN', 'MANAGER', 'CENTER_HEAD']}>
-                  <AcademicRequestsPage />
+                  <AcademicStudentRequestsPage />
                 </ProtectedRoute>
               }
             />

@@ -26,6 +26,16 @@ import { Badge } from '@/components/ui/badge'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -76,6 +86,7 @@ export default function AcademicRequestsPage() {
   const [selectedRequestId, setSelectedRequestId] = useState<number | null>(null)
   const [decisionNote, setDecisionNote] = useState('')
   const [decisionRejectReason, setDecisionRejectReason] = useState('')
+  const [confirmAction, setConfirmAction] = useState<'APPROVE' | 'REJECT' | null>(null)
 
   // On-behalf creation states
   const [showOnBehalfDialog, setShowOnBehalfDialog] = useState(false)
@@ -173,18 +184,31 @@ const detailClassTeacherName =
   const handleDecision = async (type: 'APPROVE' | 'REJECT') => {
     if (!detailRequest) return
 
+    // For approve, show confirmation dialog
+    if (type === 'APPROVE') {
+      setConfirmAction('APPROVE')
+      return
+    }
+
+    // For reject, validate reason and show confirmation dialog
+    if (decisionRejectReason.trim().length < 10) {
+      toast.error('Lý do từ chối cần tối thiểu 10 ký tự')
+      return
+    }
+    setConfirmAction('REJECT')
+  }
+
+  const handleConfirmDecision = async () => {
+    if (!detailRequest || !confirmAction) return
+
     try {
-      if (type === 'APPROVE') {
+      if (confirmAction === 'APPROVE') {
         await approveRequest({
           id: detailRequest.id,
           note: decisionNote.trim() || undefined,
         }).unwrap()
         toast.success('Đã chấp thuận yêu cầu')
-      } else {
-        if (decisionRejectReason.trim().length < 10) {
-          toast.error('Lý do từ chối cần tối thiểu 10 ký tự')
-          return
-        }
+      } else if (confirmAction === 'REJECT') {
         await rejectRequest({
           id: detailRequest.id,
           rejectionReason: decisionRejectReason.trim(),
@@ -195,12 +219,17 @@ const detailClassTeacherName =
       setDecisionNote('')
       setDecisionRejectReason('')
       setSelectedRequestId(null)
+      setConfirmAction(null)
     } catch (error: unknown) {
       const message =
         (error as { data?: { message?: string } })?.data?.message ??
         'Không thể xử lý yêu cầu. Vui lòng thử lại.'
       toast.error(message)
     }
+  }
+
+  const handleCancelDecision = () => {
+    setConfirmAction(null)
   }
 
   // Note: On-behalf request logic moved to inline components for better UX
@@ -1002,6 +1031,38 @@ const detailClassTeacherName =
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation Dialog for Approve/Reject Actions */}
+      <AlertDialog open={confirmAction !== null} onOpenChange={(open) => !open && handleCancelDecision()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction === 'APPROVE' ? 'Xác nhận chấp thuận' : 'Xác nhận từ chối'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction === 'APPROVE'
+                ? `Bạn có chắc muốn chấp thuận yêu cầu #${detailRequest?.id}? Hành động này không thể hoàn tác.`
+                : `Bạn có chắc muốn từ chối yêu cầu #${detailRequest?.id}? Hành động này không thể hoàn tác.`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isApproving || isRejecting}>
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDecision}
+              disabled={isApproving || isRejecting}
+              className={confirmAction === 'REJECT' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}
+            >
+              {confirmAction === 'APPROVE'
+                ? (isApproving ? 'Đang chấp thuận...' : 'Chấp thuận')
+                : (isRejecting ? 'Đang từ chối...' : 'Từ chối')
+              }
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   )
 }
