@@ -17,6 +17,7 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -215,24 +216,26 @@ export default function StudentRequestsPage() {
               </Button>
             </div>
 
-            {/* Request List - NO WRAPPER CARD */}
-            {isLoadingRequests ? (
-              <div className="space-y-3">
-                {[...Array(3)].map((_, index) => (
-                  <Skeleton key={index} className="h-32 w-full" />
-                ))}
-              </div>
-            ) : requests.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 py-12 text-center">
-                <NotebookPenIcon className="h-12 w-12 text-muted-foreground/50" />
-                <p className="font-medium">Chưa có yêu cầu nào</p>
-                <p className="text-sm text-muted-foreground">
-                  Tạo yêu cầu mới để xin nghỉ, học bù hoặc chuyển lớp
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {requests.map((request) => {
+            {/* Request List - Enhanced with ScrollArea */}
+            <ScrollArea className="h-[calc(100vh-350px)]">
+              <div className="pr-4">
+                {isLoadingRequests ? (
+                  <div className="space-y-3">
+                    {[...Array(3)].map((_, index) => (
+                      <Skeleton key={index} className="h-32 w-full" />
+                    ))}
+                  </div>
+                ) : requests.length === 0 ? (
+                  <div className="flex flex-col items-center gap-2 py-12 text-center">
+                    <NotebookPenIcon className="h-12 w-12 text-muted-foreground/50" />
+                    <p className="font-medium">Chưa có yêu cầu nào</p>
+                    <p className="text-sm text-muted-foreground">
+                      Tạo yêu cầu mới để xin nghỉ, học bù hoặc chuyển lớp
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {requests.map((request) => {
                   const submittedAtLabel = format(parseISO(request.submittedAt), 'HH:mm dd/MM/yyyy', { locale: vi })
                   const decidedAtLabel = request.decidedAt
                     ? format(parseISO(request.decidedAt), 'HH:mm dd/MM/yyyy', { locale: vi })
@@ -406,8 +409,10 @@ export default function StudentRequestsPage() {
                     </div>
                   )
                 })}
+                  </div>
+                )}
               </div>
-            )}
+            </ScrollArea>
 
             {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (
@@ -461,19 +466,23 @@ export default function StudentRequestsPage() {
           if (!open) setDetailId(null)
         }}
       >
-        <DialogContent className="max-w-2xl rounded-3xl">
+        <DialogContent className="max-w-2xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>Chi tiết yêu cầu</DialogTitle>
           </DialogHeader>
-          {isLoadingDetail || !detailResponse?.data ? (
-            <div className="space-y-3">
-              <Skeleton className="h-4 w-2/3" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-32 w-full" />
+          <ScrollArea className="flex-1">
+            <div className="pr-4">
+              {isLoadingDetail || !detailResponse?.data ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-32 w-full" />
+                </div>
+              ) : (
+                <RequestDetail request={detailResponse.data} />
+              )}
             </div>
-          ) : (
-            <RequestDetail request={detailResponse.data} />
-          )}
+          </ScrollArea>
         </DialogContent>
       </Dialog>
 
@@ -572,27 +581,31 @@ function CreateRequestDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl rounded-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl rounded-2xl overflow-hidden flex flex-col max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>Tạo yêu cầu mới</DialogTitle>
         </DialogHeader>
-        {activeType === null ? (
-          <TypeSelection onSelect={handleTypeSelect} />
-        ) : (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between border-b pb-2">
-              <div>
-                <p className="text-xs text-muted-foreground">Loại yêu cầu</p>
-                <h3 className="text-base font-semibold">{REQUEST_TYPE_LABELS[activeType]}</h3>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => onSelectType(null)}>
-                Chọn loại khác
-              </Button>
-            </div>
+        <ScrollArea className="flex-1">
+          <div className="pr-4">
+            {activeType === null ? (
+              <TypeSelection onSelect={handleTypeSelect} />
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between border-b pb-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Loại yêu cầu</p>
+                    <h3 className="text-base font-semibold">{REQUEST_TYPE_LABELS[activeType]}</h3>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => onSelectType(null)}>
+                    Chọn loại khác
+                  </Button>
+                </div>
 
-            <UnifiedRequestFlow type={activeType} onSuccess={onSuccess} />
+                <UnifiedRequestFlow type={activeType} onSuccess={onSuccess} />
+              </div>
+            )}
           </div>
-        )}
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   )

@@ -396,7 +396,7 @@ export default function ClassDetailPage() {
           open={successDialogOpen}
           onOpenChange={setSuccessDialogOpen}
           studentData={createdStudentData}
-          onEnrollNow={(studentId) => {
+          onEnrollNow={() => {
             // TODO: Implement enrollment API call when backend is ready
             toast.info('Tính năng ghi danh sẽ được triển khai sau')
           }}

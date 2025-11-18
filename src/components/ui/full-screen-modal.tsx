@@ -1,6 +1,7 @@
 import * as React from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 
 const FullScreenModal = DialogPrimitive.Root
@@ -115,13 +116,9 @@ const FullScreenModalBody = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      'flex-1 overflow-auto px-6 py-4',
-      className
-    )}
-    {...props}
-  />
+  <ScrollArea className={cn('flex-1 px-6 py-4', className)}>
+    {props.children}
+  </ScrollArea>
 )
 FullScreenModalBody.displayName = 'FullScreenModalBody'
 

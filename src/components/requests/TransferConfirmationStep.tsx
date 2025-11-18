@@ -179,10 +179,18 @@ export default function TransferConfirmationStep({
     if (!state.isFormValid) return
 
     try {
+      // Find the session from available sessions that matches the effective date
+      const sessionForTransfer = sessionOptions.find(session => session.date === state.effectiveDate)
+
+      if (!sessionForTransfer) {
+        throw new Error('Không tìm thấy buổi học tương ứng với ngày hiệu lực đã chọn')
+      }
+
       const result = await submitTransfer({
         currentClassId: state.currentClassId,
         targetClassId: state.targetClassId,
         effectiveDate: state.effectiveDate,
+        sessionId: sessionForTransfer.sessionId,
         requestReason: state.requestReason.trim(),
         note: '',
       }).unwrap()
@@ -193,7 +201,7 @@ export default function TransferConfirmationStep({
     } catch {
       // Error is handled by the mutation and displayed below
     }
-  }, [submitTransfer])
+  }, [submitTransfer, sessionOptions])
 
   useEffect(() => {
     if (typeof onSubmitStateChange !== 'function') return

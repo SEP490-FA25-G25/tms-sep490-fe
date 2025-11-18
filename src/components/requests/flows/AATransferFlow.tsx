@@ -98,7 +98,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
   const transferOptions = optionsResponse?.data?.availableClasses ?? []
 
   // Group upcoming sessions by week
-  const upcomingSessions = selectedTargetClass?.upcomingSessions ?? []
+  const upcomingSessions = useMemo(() => selectedTargetClass?.upcomingSessions ?? [], [selectedTargetClass])
   const sessionsByWeek = useMemo(() => {
     if (upcomingSessions.length === 0) return []
 
@@ -160,7 +160,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
     setSelectedTargetClass(null)
     setTargetBranchId(undefined)
     setTargetModality(undefined)
-    setEffectiveDate('')
+    setSelectedSessionIndex(null)
     setRequestReason('')
     setNote('')
   }

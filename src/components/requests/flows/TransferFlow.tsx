@@ -81,11 +81,11 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
   const [selectedEnrollment, setSelectedEnrollment] = useState<TransferEligibility | null>(null)
   const [selectedClass, setSelectedClass] = useState<TransferOption | null>(null)
   const [transferType, setTransferType] = useState<'schedule' | 'branch-modality'>('schedule')
-  const [effectiveDate, setEffectiveDate] = useState('')
   const [requestReason, setRequestReason] = useState('')
   const [reasonError, setReasonError] = useState<string | null>(null)
   const [note, setNote] = useState('')
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
+  const [selectedSession, setSelectedSession] = useState<{ sessionId: number; date: string } | null>(null)
 
   // API calls
   const { data: eligibilityData, error: eligibilityError, refetch: refetchEligibility } = useGetTransferEligibilityQuery()
@@ -124,7 +124,7 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
     setSelectedEnrollment(null)
     setSelectedClass(null)
     setTransferType('schedule')
-    setEffectiveDate('')
+    setSelectedSession(null)
     setRequestReason('')
     setReasonError(null)
     setNote('')
@@ -149,11 +149,17 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
 
     if (transferType === 'schedule') {
       // Schedule transfer - submit real transfer request
+      if (!selectedSession) {
+        handleError(new Error('Vui lòng chọn buổi học để chuyển lớp'))
+        return
+      }
+
       try {
         await submitTransfer({
           currentClassId: selectedEnrollment.classId,
           targetClassId: selectedClass!.classId,
-          effectiveDate: effectiveDate || new Date().toISOString().split('T')[0],
+          effectiveDate: selectedSession.date,
+          sessionId: selectedSession.sessionId,
           requestReason: requestReason.trim(),
           note: note.trim() || undefined
         }).unwrap()
@@ -167,12 +173,12 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
       // Branch/modality change - show contact modal
       setIsContactModalOpen(true)
     }
-  }, [selectedEnrollment, selectedClass, transferType, effectiveDate, requestReason, note, submitTransfer, handleReset, handleSuccess, handleError])
+  }, [selectedEnrollment, selectedClass, selectedSession, transferType, requestReason, note, submitTransfer, handleReset, handleSuccess, handleError])
 
   // Step states
   const step1Complete = !!selectedEnrollment
   const step2Complete = step1Complete && (transferType === 'branch-modality' || !!selectedClass)
-  const step3Complete = step2Complete && requestReason.trim().length >= 10
+  const step3Complete = step2Complete && requestReason.trim().length >= 10 && !!selectedSession
 
   const steps = [
     {
@@ -463,6 +469,66 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
                 })}
               </div>
             )}
+
+            {/* Session Selection */}
+            {selectedClass && selectedClass.upcomingSessions && selectedClass.upcomingSessions.length > 0 && (
+              <div className="space-y-3 border-t pt-4">
+                <h3 className="font-medium">Chọn buổi học bắt đầu</h3>
+                <p className="text-sm text-muted-foreground">
+                  Chọn buổi học đầu tiên bạn sẽ tham gia ở lớp mới
+                </p>
+                <div className="grid gap-2">
+                  {selectedClass.upcomingSessions.map((session) => {
+                    const isSelected = selectedSession?.sessionId === session.sessionId
+                    const sessionDate = new Date(session.date)
+
+                    return (
+                      <label
+                        key={session.sessionId}
+                        className={cn(
+                          'block cursor-pointer rounded-lg border px-4 py-3 transition hover:border-primary/50 hover:bg-muted/30',
+                          isSelected && 'border-primary bg-primary/5'
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          name="session"
+                          className="sr-only"
+                          checked={isSelected}
+                          onChange={() => setSelectedSession({
+                            sessionId: session.sessionId,
+                            date: session.date
+                          })}
+                        />
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">
+                              {sessionDate.toLocaleDateString('vi-VN', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              })}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {session.timeSlot || 'Thời gian chưa xác định'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Buổi {session.courseSessionNumber}: {session.courseSessionTitle}
+                            </p>
+                          </div>
+                          {isSelected && (
+                            <div className="text-primary">
+                              <div className="w-2 h-2 rounded-full bg-primary"></div>
+                            </div>
+                          )}
+                        </div>
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Section>
@@ -498,18 +564,21 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
                   )}
                 </div>
 
-                {transferType === 'schedule' && (
+                {transferType === 'schedule' && selectedSession && (
                   <div>
-                    <Label htmlFor="effectiveDate" className="text-sm font-medium">
-                      Ngày hiệu lực (tùy chọn)
-                    </Label>
-                    <input
-                      id="effectiveDate"
-                      type="date"
-                      value={effectiveDate}
-                      onChange={(e) => setEffectiveDate(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    />
+                    <p className="text-xs text-muted-foreground">Buổi học bắt đầu</p>
+                    <p className="font-medium">
+                      {new Date(selectedSession.date).toLocaleDateString('vi-VN', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedClass?.upcomingSessions?.find(s => s.sessionId === selectedSession.sessionId)?.timeSlot ||
+                       'Thời gian chưa xác định'}
+                    </p>
                   </div>
                 )}
               </div>

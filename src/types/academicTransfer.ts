@@ -171,26 +171,3 @@ export interface TransferRequestResponse {
   }
 }
 
-export interface AATransferWizardData {
-  // Step 1: Student
-  selectedStudent: StudentSearchResult | null
-
-  // Step 2: Current Class
-  selectedCurrentClass: TransferEligibility | null
-
-  // Step 3: Target Class
-  selectedTargetClass: TransferOption | null
-
-  // Step 4: Confirmation
-  effectiveDate: string
-  requestReason: string
-  note: string
-}
-
-export interface AATransferWizardProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSuccess?: (result: TransferRequestResponse) => void
-}
-
-export type WizardStep = 'student-search' | 'current-class' | 'target-class' | 'confirmation'
