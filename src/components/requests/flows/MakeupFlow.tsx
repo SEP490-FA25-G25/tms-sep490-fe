@@ -14,11 +14,13 @@ import {
   StepHeader,
   Section,
   ReasonInput,
-  BaseFlowComponent,
+  BaseFlowComponent
+} from '../UnifiedRequestFlow'
+import {
   useSuccessHandler,
   useErrorHandler,
   Validation
-} from '../UnifiedRequestFlow'
+} from '../utils'
 import type { MakeupFlowProps } from '../UnifiedRequestFlow'
 
 const MAKEUP_LOOKBACK_WEEKS = 2

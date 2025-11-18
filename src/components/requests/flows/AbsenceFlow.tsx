@@ -1,7 +1,6 @@
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { addDays, addMonths, format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { skipToken } from '@reduxjs/toolkit/query'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
@@ -9,8 +8,6 @@ import { ArrowRightIcon } from 'lucide-react'
 import {
   useGetCurrentWeekQuery,
   useGetWeeklyScheduleQuery,
-  useGetSessionDetailQuery,
-  type DayOfWeek,
   type SessionSummaryDTO
 } from '@/store/services/studentScheduleApi'
 import { useSubmitStudentRequestMutation } from '@/store/services/studentRequestApi'
@@ -18,23 +15,16 @@ import {
   StepHeader,
   Section,
   ReasonInput,
-  BaseFlowComponent,
+  BaseFlowComponent
+} from '../UnifiedRequestFlow'
+import {
   useSuccessHandler,
   useErrorHandler,
-  Validation
-} from '../UnifiedRequestFlow'
+  Validation,
+  WEEK_DAYS,
+  WEEK_DAY_LABELS
+} from '../utils'
 import type { AbsenceFlowProps } from '../UnifiedRequestFlow'
-
-const WEEK_DAYS: DayOfWeek[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
-const WEEK_DAY_LABELS: Record<DayOfWeek, string> = {
-  MONDAY: 'Thứ 2',
-  TUESDAY: 'Thứ 3',
-  WEDNESDAY: 'Thứ 4',
-  THURSDAY: 'Thứ 5',
-  FRIDAY: 'Thứ 6',
-  SATURDAY: 'Thứ 7',
-  SUNDAY: 'Chủ nhật'
-}
 
 interface SessionWithAvailability extends SessionSummaryDTO {
   isSelectable: boolean
@@ -94,13 +84,7 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
       skip: !weekStart,
     }
   )
-  const { data: sessionDetailResponse } = useGetSessionDetailQuery(
-    selectedSessionId ?? skipToken,
-    {
-      skip: !selectedSessionId,
-    }
-  )
-
+  
   const [submitRequest, { isLoading }] = useSubmitStudentRequestMutation()
   const { handleSuccess } = useSuccessHandler(onSuccess)
   const { handleError } = useErrorHandler()
@@ -143,8 +127,7 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
   )
   const displayedGroups = groupedSessions.filter((group) => group.sessions.length > 0)
   const selectedSession = allSessions.find((session) => session.sessionId === selectedSessionId) ?? null
-  const selectedSessionDetail = sessionDetailResponse?.data ?? null
-  const selectedClassId = selectedSessionDetail?.classInfo.classId ?? null
+  const selectedClassId = selectedSession?.sessionId ?? null
 
   const weekRangeLabel = weekData
     ? `${format(parseISO(weekData.weekStart), 'dd/MM', { locale: vi })} - ${format(parseISO(weekData.weekEnd), 'dd/MM', { locale: vi })}`
@@ -355,24 +338,7 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
                     {format(parseISO(selectedSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })}
                   </p>
                   <p className="text-sm text-muted-foreground">{selectedSession.topic}</p>
-                  {selectedSessionDetail && (
-                    <div className="space-y-0.5 text-sm text-muted-foreground">
-                      <p>
-                        Giảng viên: <span className="text-foreground">{selectedSessionDetail.classInfo.teacherName ?? 'Đang cập nhật'}</span>
-                      </p>
-                      <p>
-                        Hình thức:{' '}
-                        <span className="text-foreground">
-                          {selectedSessionDetail.classInfo.modality === 'ONLINE'
-                            ? 'Trực tuyến'
-                            : selectedSessionDetail.classInfo.modality === 'HYBRID'
-                              ? 'Kết hợp'
-                              : 'Tại trung tâm'}
-                        </span>
-                      </p>
-                    </div>
-                  )}
-                </div>
+                                  </div>
                 <Button variant="ghost" size="sm" onClick={() => setSelectedSessionId(null)}>
                   Chọn lại
                 </Button>

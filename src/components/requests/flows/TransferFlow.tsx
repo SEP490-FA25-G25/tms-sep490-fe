@@ -6,31 +6,28 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
+import { skipToken } from '@reduxjs/toolkit/query'
 import {
   useGetTransferEligibilityQuery,
-  type TransferEligibility
+  useGetTransferOptionsQuery,
+  useSubmitTransferRequestMutation,
+  type TransferEligibility,
+  type TransferOption
 } from '@/store/services/studentRequestApi'
-
-// Define TransferOption interface locally for demo
-interface TransferOption {
-  classId: number
-  classCode: string
-  className: string
-  branchName: string
-  modality: string
-  scheduleInfo?: string
-  availableSlots: number
-  maxCapacity?: number
-}
 import {
   StepHeader,
   Section,
   ReasonInput,
-  BaseFlowComponent,
+  NoteInput,
+  BaseFlowComponent
+} from '../UnifiedRequestFlow'
+import {
+  getModalityLabel,
   useSuccessHandler,
   useErrorHandler,
   Validation
-} from '../UnifiedRequestFlow'
+} from '../utils'
+import type { SessionModality } from '@/store/services/studentRequestApi'
 import type { TransferFlowProps } from '../UnifiedRequestFlow'
 
 // AAContactModal component (simplified version)
@@ -43,15 +40,7 @@ function AAContactModal({
   onOpenChange: (open: boolean) => void
   currentEnrollment: TransferEligibility
 }) {
-  const getModalityText = (modality: string) => {
-    switch (modality) {
-      case 'OFFLINE': return 'Tại lớp'
-      case 'ONLINE': return 'Online'
-      case 'HYBRID': return 'Hybrid'
-      default: return modality
-    }
-  }
-
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -63,7 +52,7 @@ function AAContactModal({
             <p className="text-sm text-muted-foreground">Lớp hiện tại</p>
             <p className="font-medium">{currentEnrollment.classCode}</p>
             <p className="text-sm text-muted-foreground">
-              {currentEnrollment.branchName} · {getModalityText(currentEnrollment.modality || '')}
+              {currentEnrollment.branchName} · {getModalityLabel(currentEnrollment.modality as SessionModality)}
             </p>
           </div>
           <Alert>
@@ -95,24 +84,21 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
   const [effectiveDate, setEffectiveDate] = useState('')
   const [requestReason, setRequestReason] = useState('')
   const [reasonError, setReasonError] = useState<string | null>(null)
+  const [note, setNote] = useState('')
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
 
-  // API calls - simplified for demo
+  // API calls
   const { data: eligibilityData, error: eligibilityError, refetch: refetchEligibility } = useGetTransferEligibilityQuery()
 
-  // Mock transfer options for demo
-  const mockTransferOptions = [
-    {
-      classId: 1,
-      classCode: 'LOP002',
-      className: 'Lớp 2',
-      branchName: 'Hà Nội',
-      modality: 'OFFLINE',
-      scheduleInfo: 'Thứ 4, 19:00-21:00',
-      availableSlots: 5,
-      maxCapacity: 20
-    }
-  ]
+  // Real transfer options API
+  const {
+    data: transferOptionsResponse,
+    isFetching: isLoadingTransferOptions,
+    error: transferOptionsError
+  } = useGetTransferOptionsQuery(
+    selectedEnrollment?.classId ? { currentClassId: selectedEnrollment.classId } : skipToken,
+    { skip: !selectedEnrollment?.classId }
+  )
 
   const normalizedEnrollments = useMemo(() => {
     if (!eligibilityData?.data) return []
@@ -128,19 +114,11 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
     })
   }, [eligibilityData])
 
-  const transferOptions = mockTransferOptions
+  const transferOptions = transferOptionsResponse?.data?.availableClasses ?? []
 
+  const [submitTransfer, { isLoading }] = useSubmitTransferRequestMutation()
   const { handleSuccess } = useSuccessHandler(onSuccess)
   const { handleError } = useErrorHandler()
-
-  const getModalityText = (modality: string) => {
-    switch (modality) {
-      case 'OFFLINE': return 'Tại lớp'
-      case 'ONLINE': return 'Online'
-      case 'HYBRID': return 'Hybrid'
-      default: return modality
-    }
-  }
 
   const handleReset = useCallback(() => {
     setSelectedEnrollment(null)
@@ -149,6 +127,7 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
     setEffectiveDate('')
     setRequestReason('')
     setReasonError(null)
+    setNote('')
   }, [])
 
   const handleSubmit = useCallback(async () => {
@@ -163,16 +142,37 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
       return
     }
 
-    // Simplified submission for now - just marking as complete
-    handleReset()
-    handleSuccess()
-  }, [selectedEnrollment, requestReason, handleReset, handleSuccess, handleError])
+    if (transferType === 'schedule' && !selectedClass) {
+      handleError(new Error('Vui lòng chọn lớp mục tiêu'))
+      return
+    }
+
+    if (transferType === 'schedule') {
+      // Schedule transfer - submit real transfer request
+      try {
+        await submitTransfer({
+          currentClassId: selectedEnrollment.classId,
+          targetClassId: selectedClass!.classId,
+          effectiveDate: effectiveDate || new Date().toISOString().split('T')[0],
+          requestReason: requestReason.trim(),
+          note: note.trim() || undefined
+        }).unwrap()
+
+        handleReset()
+        handleSuccess()
+      } catch (error) {
+        handleError(error)
+      }
+    } else {
+      // Branch/modality change - show contact modal
+      setIsContactModalOpen(true)
+    }
+  }, [selectedEnrollment, selectedClass, transferType, effectiveDate, requestReason, note, submitTransfer, handleReset, handleSuccess, handleError])
 
   // Step states
   const step1Complete = !!selectedEnrollment
-  const step2Complete = step1Complete && (transferType === 'branch-modality' || true) // Simplified for now
+  const step2Complete = step1Complete && (transferType === 'branch-modality' || !!selectedClass)
   const step3Complete = step2Complete && requestReason.trim().length >= 10
-  const isLoading = false // Simplified for demo
 
   const steps = [
     {
@@ -306,7 +306,7 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
                     <div className="mt-3 flex flex-wrap gap-3 text-sm text-muted-foreground">
                       <span>{enrollment.branchName}</span>
                       <span>·</span>
-                      <span>{getModalityText(enrollment.modality)}</span>
+                      <span>{getModalityLabel(enrollment.modality)}</span>
                       {enrollment.scheduleInfo && (
                         <>
                           <span>·</span>
@@ -403,19 +403,25 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
 
         {step1Complete && transferType === 'schedule' && (
           <div className="space-y-4">
-            {false ? ( // Simplified for demo
+            {isLoadingTransferOptions ? (
               <div className="space-y-2">
                 {[...Array(2)].map((_, index) => (
                   <Skeleton key={index} className="h-20 w-full" />
                 ))}
               </div>
+            ) : transferOptionsError ? (
+              <Alert>
+                <AlertDescription>
+                  Không thể tải danh sách lớp chuyển. Vui lòng thử lại.
+                </AlertDescription>
+              </Alert>
             ) : transferOptions.length === 0 ? (
               <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
                 Chưa có lớp phù hợp để chuyển trong cùng cơ sở và hình thức học
               </div>
             ) : (
               <div className="space-y-2">
-                {transferOptions.map((option: any) => {
+                {transferOptions.map((option) => {
                   const isSelected = selectedClass?.classId === option.classId
                   return (
                     <label
@@ -436,7 +442,7 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
                         <p className="font-medium">{option.classCode}</p>
                         <p className="text-sm text-muted-foreground">{option.className}</p>
                         <p className="text-xs text-muted-foreground">
-                          {option.branchName} · {getModalityText(option.modality || '')}
+                          {option.branchName} · {getModalityLabel(option.modality)}
                         </p>
                         {option.scheduleInfo && (
                           <p className="text-xs text-muted-foreground">{option.scheduleInfo}</p>
@@ -477,7 +483,7 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
                     <p className="text-xs text-muted-foreground">Lớp hiện tại</p>
                     <p className="font-semibold">{selectedEnrollment!.classCode}</p>
                     <p className="text-sm text-muted-foreground">
-                      {selectedEnrollment!.branchName} · {getModalityText(selectedEnrollment!.modality || '')}
+                      {selectedEnrollment!.branchName} · {getModalityLabel(selectedEnrollment!.modality)}
                     </p>
                   </div>
 
@@ -486,7 +492,7 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
                       <p className="text-xs text-muted-foreground">Lớp mục tiêu</p>
                       <p className="font-semibold">{selectedClass.classCode}</p>
                       <p className="text-sm text-muted-foreground">
-                        {selectedClass.branchName} · {getModalityText(selectedClass.modality)}
+                        {selectedClass.branchName} · {getModalityLabel(selectedClass.modality)}
                       </p>
                     </div>
                   )}
@@ -514,6 +520,12 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
               onChange={setRequestReason}
               placeholder="Nhập lý do muốn chuyển lớp..."
               error={reasonError}
+            />
+
+            <NoteInput
+              value={note}
+              onChange={setNote}
+              placeholder="Ghi chú thêm về yêu cầu chuyển lớp..."
             />
           </div>
         )}

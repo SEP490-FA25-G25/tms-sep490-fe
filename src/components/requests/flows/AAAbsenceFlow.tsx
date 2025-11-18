@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { skipToken } from '@reduxjs/toolkit/query'
@@ -13,27 +13,22 @@ import {
   useSubmitAbsenceOnBehalfMutation,
   type StudentSearchResult
 } from '@/store/services/studentRequestApi'
-import { type DayOfWeek, type SessionSummaryDTO } from '@/store/services/studentScheduleApi'
+import { type SessionSummaryDTO } from '@/store/services/studentScheduleApi'
 import {
   StepHeader,
   Section,
   ReasonInput,
-  BaseFlowComponent,
+  NoteInput,
+  BaseFlowComponent
+} from '../UnifiedRequestFlow'
+import {
+  useDebouncedValue,
   useSuccessHandler,
   useErrorHandler,
-  Validation
-} from '../UnifiedRequestFlow'
-
-const WEEK_DAYS: DayOfWeek[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
-const WEEK_DAY_LABELS: Record<DayOfWeek, string> = {
-  MONDAY: 'Thứ 2',
-  TUESDAY: 'Thứ 3',
-  WEDNESDAY: 'Thứ 4',
-  THURSDAY: 'Thứ 5',
-  FRIDAY: 'Thứ 6',
-  SATURDAY: 'Thứ 7',
-  SUNDAY: 'Chủ nhật'
-}
+  Validation,
+  WEEK_DAYS,
+  WEEK_DAY_LABELS
+} from '../utils'
 
 
 interface AASessionOption extends SessionSummaryDTO {
@@ -43,17 +38,6 @@ interface AASessionOption extends SessionSummaryDTO {
 
 interface AAAbsenceFlowProps {
   onSuccess: () => void
-}
-
-function useDebouncedValue<T>(value: T, delay = 800) {
-  const [debouncedValue, setDebouncedValue] = useState(value)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedValue(value), delay)
-    return () => clearTimeout(timer)
-  }, [value, delay])
-
-  return debouncedValue
 }
 
 function parseAAAbsenceDateTime(dateStr: string, timeStr?: string) {
@@ -501,6 +485,12 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
                     onChange={setReason}
                     placeholder="Chia sẻ lý do cụ thể để lưu vào hồ sơ..."
                     error={null}
+                  />
+
+                  <NoteInput
+                    value={note}
+                    onChange={setNote}
+                    placeholder="Ghi chú thêm cho phụ huynh..."
                   />
                 </div>
               </div>

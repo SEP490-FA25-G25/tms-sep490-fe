@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { format } from 'date-fns'
 import { skipToken } from '@reduxjs/toolkit/query'
 import { Button } from '@/components/ui/button'
@@ -14,29 +14,25 @@ import {
   useGetBranchesQuery,
   type StudentSearchResult,
   type TransferEligibility,
-  type TransferOption,
-  type SessionModality
+  type TransferOption
 } from '@/store/services/studentRequestApi'
 import {
   StepHeader,
   Section,
   ReasonInput,
-  BaseFlowComponent,
+  NoteInput,
+  BaseFlowComponent
+} from '../UnifiedRequestFlow'
+import {
+  useDebouncedValue,
+  getModalityLabel,
+  getCapacityText,
   useSuccessHandler,
   useErrorHandler,
   Validation
-} from '../UnifiedRequestFlow'
+} from '../utils'
+import type { SessionModality } from '@/store/services/studentRequestApi'
 
-function useDebouncedValue<T>(value: T, delay = 800) {
-  const [debouncedValue, setDebouncedValue] = useState(value)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedValue(value), delay)
-    return () => clearTimeout(timer)
-  }, [value, delay])
-
-  return debouncedValue
-}
 
 interface AATransferFlowProps {
   onSuccess: () => void
@@ -78,23 +74,24 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
   const eligibilityData = eligibilityResponse?.data
   const eligibilityOptions = eligibilityData?.currentClasses ?? eligibilityData?.currentEnrollments ?? []
 
+  // Fetch all branches independently for filter dropdown
+  const { data: branchesResponse } = useGetBranchesQuery()
+  const branches = branchesResponse?.data ?? []
+
   const {
     data: optionsResponse,
     isFetching: isLoadingOptions,
   } = useGetAcademicTransferOptionsQuery(
-    selectedCurrentClass && targetBranchId ? {
-      currentClassId: selectedCurrentClass.classId,
+    {
+      currentClassId: selectedCurrentClass?.classId ?? 0,
       targetBranchId,
       targetModality,
       scheduleOnly: false
-    } : skipToken,
-    { skip: !selectedCurrentClass || !targetBranchId }
+    },
+    { skip: !selectedCurrentClass }
   )
 
   const transferOptions = optionsResponse?.data?.availableClasses ?? []
-
-  const { data: branchesResponse } = useGetBranchesQuery()
-  const branches = branchesResponse?.data ?? []
 
   const [submitTransfer, { isLoading: isSubmitting }] = useSubmitTransferOnBehalfMutation()
   const { handleSuccess } = useSuccessHandler(onSuccess)
@@ -164,30 +161,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
     }
   }
 
-  const getModalityLabel = (modality: SessionModality) => {
-    switch (modality) {
-      case 'ONLINE': return 'Trực tuyến'
-      case 'OFFLINE': return 'Tại trung tâm'
-      case 'HYBRID': return 'Kết hợp'
-      default: return modality
-    }
-  }
-
-  const getCapacityText = (option: TransferOption) => {
-    const available = option.availableSlots
-    const max = option.maxCapacity
-    if (typeof available === 'number' && typeof max === 'number') {
-      return `${available}/${max} chỗ trống`
-    }
-    if (typeof available === 'number') {
-      return `Còn ${available} chỗ trống`
-    }
-    if (typeof max === 'number') {
-      return `Tối đa ${max} chỗ`
-    }
-    return 'Sức chứa đang cập nhật'
-  }
-
+  
   // Step states
   const step1Complete = !!selectedStudent
   const step2Complete = !!(selectedStudent && selectedCurrentClass)
@@ -398,7 +372,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                       {selectedTargetClass.branchName} · {getModalityLabel(selectedTargetClass.modality)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {getCapacityText(selectedTargetClass)}
+                      {getCapacityText(selectedTargetClass.availableSlots, selectedTargetClass.maxCapacity)}
                     </p>
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => setSelectedTargetClass(null)}>
@@ -425,16 +399,11 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                     error={null}
                   />
 
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Ghi chú thêm (nếu có)</label>
-                    <textarea
-                      value={note}
-                      onChange={(e) => setNote(e.target.value)}
-                      rows={3}
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none"
-                      placeholder="Ghi chú thêm về yêu cầu chuyển lớp..."
-                    />
-                  </div>
+                  <NoteInput
+                    value={note}
+                    onChange={setNote}
+                    placeholder="Ghi chú thêm về yêu cầu chuyển lớp..."
+                  />
                 </div>
               </div>
             ) : (
@@ -455,7 +424,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                           {option.branchName} · {getModalityLabel(option.modality)}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {option.scheduleInfo ?? option.scheduleDays + ' ' + option.scheduleTime} · {getCapacityText(option)}
+                          {option.scheduleInfo ?? option.scheduleDays + ' ' + option.scheduleTime} · {getCapacityText(option.availableSlots, option.maxCapacity)}
                         </p>
                       </div>
                       {option.canTransfer ? (

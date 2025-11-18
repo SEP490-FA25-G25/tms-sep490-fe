@@ -1,8 +1,6 @@
-import { useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { toast } from 'sonner'
 
 // Types
 export type FlowType = 'ABSENCE' | 'MAKEUP' | 'TRANSFER'
@@ -77,6 +75,15 @@ interface ReasonInputProps {
   minLength?: number
 }
 
+// Shared Note Input Component
+interface NoteInputProps {
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  disabled?: boolean
+  maxLength?: number
+}
+
 export function ReasonInput({
   value,
   onChange,
@@ -108,8 +115,37 @@ export function ReasonInput({
   )
 }
 
+function NoteInput({
+  value,
+  onChange,
+  placeholder = 'Ghi chú thêm (tùy chọn)...',
+  disabled = false,
+  maxLength = 500
+}: NoteInputProps) {
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium">
+        Ghi chú thêm
+        <span className="text-xs text-muted-foreground ml-2">(tùy chọn)</span>
+      </label>
+      <Textarea
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={3}
+        className="resize-none"
+        disabled={disabled}
+        maxLength={maxLength}
+      />
+      <div className="text-xs text-muted-foreground text-right">
+        {value.length}/{maxLength}
+      </div>
+    </div>
+  )
+}
+
 // Shared Selection Card Component
-interface SelectionCardProps<T = any> {
+interface SelectionCardProps<T = unknown> {
   item: T
   isSelected: boolean
   onSelect: (item: T) => void
@@ -117,7 +153,7 @@ interface SelectionCardProps<T = any> {
   children: React.ReactNode
 }
 
-export function SelectionCard<T = any>({
+export function SelectionCard<T>({
   item,
   isSelected,
   onSelect,
@@ -197,54 +233,10 @@ export function Section({
   )
 }
 
-// Success state handler hook
-export function useSuccessHandler(onSuccess: () => void) {
-  const handleSuccess = useCallback(() => {
-    toast.success('Đã gửi yêu cầu thành công')
-    onSuccess()
-  }, [onSuccess])
 
-  return { handleSuccess }
-}
-
-// Error handler hook
-export function useErrorHandler() {
-  const handleError = useCallback((error: unknown) => {
-    const message =
-      (error as { data?: { message?: string } })?.data?.message ??
-      'Không thể gửi yêu cầu. Vui lòng thử lại.'
-    toast.error(message)
-  }, [])
-
-  return { handleError }
-}
-
-// Validation helpers
-export const Validation = {
-  reason: (value: string, minLength: number = 10): string | null => {
-    if (value.trim().length < minLength) {
-      return `Lý do phải có tối thiểu ${minLength} ký tự`
-    }
-    return null
-  },
-
-  selection: <T,>(value: T | null): string | null => {
-    if (!value) {
-      return 'Vui lòng chọn một mục'
-    }
-    return null
-  }
-}
-
-// Flow type labels for UI
-export const FLOW_LABELS = {
-  ABSENCE: 'Xin nghỉ',
-  MAKEUP: 'Học bù',
-  TRANSFER: 'Chuyển lớp'
-} as const
 
 // Export components for individual flows
-export { StepHeader }
+export { StepHeader, NoteInput }
 
 // Import individual flow components
 import AbsenceFlow from './flows/AbsenceFlow'

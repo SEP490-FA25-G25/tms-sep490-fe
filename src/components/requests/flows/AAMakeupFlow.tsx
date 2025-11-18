@@ -12,31 +12,25 @@ import {
   useGetStudentMissedSessionsQuery,
   useGetStudentMakeupOptionsQuery,
   useCreateOnBehalfRequestMutation,
-  type StudentSearchResult,
-  type SessionModality
+  type StudentSearchResult
 } from '@/store/services/studentRequestApi'
 import {
   StepHeader,
   Section,
   ReasonInput,
-  BaseFlowComponent,
+  NoteInput,
+  BaseFlowComponent
+} from '../UnifiedRequestFlow'
+import {
+  useDebouncedValue,
+  getModalityLabel,
+  getCapacityText,
   useSuccessHandler,
   useErrorHandler,
   Validation
-} from '../UnifiedRequestFlow'
+} from '../utils'
 
 const MAKEUP_LOOKBACK_WEEKS = 2
-
-function useDebouncedValue<T>(value: T, delay = 800) {
-  const [debouncedValue, setDebouncedValue] = useState(value)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedValue(value), delay)
-    return () => clearTimeout(timer)
-  }, [value, delay])
-
-  return debouncedValue
-}
 
 interface AAMakeupFlowProps {
   onSuccess: () => void
@@ -121,34 +115,7 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
     }
   }, [selectedMissedSession])
 
-  const formatModality = (modality?: SessionModality) => {
-    switch (modality) {
-      case 'ONLINE':
-        return 'Trực tuyến'
-      case 'HYBRID':
-        return 'Kết hợp'
-      default:
-        return 'Tại trung tâm'
-    }
-  }
-
-  const getCapacityText = (option: { availableSlots?: number | null; maxCapacity?: number | null; classInfo?: { availableSlots?: number | null; maxCapacity?: number | null } }) => {
-    const available = option.availableSlots ?? option.classInfo?.availableSlots
-    const max = option.maxCapacity ?? option.classInfo?.maxCapacity
-    const hasAvailable = typeof available === 'number'
-    const hasMax = typeof max === 'number'
-    if (hasAvailable && hasMax) {
-      return `${available}/${max} chỗ trống`
-    }
-    if (hasAvailable) {
-      return `Còn ${available} chỗ trống`
-    }
-    if (hasMax) {
-      return `Tối đa ${max} chỗ`
-    }
-    return 'Sức chứa đang cập nhật'
-  }
-
+  
   const handleSelectStudent = (student: StudentSearchResult) => {
     setSelectedStudent(student)
     setStudentSearch(student.fullName)
@@ -404,10 +371,10 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
                       {selectedMakeupOption.timeSlotInfo.startTime} - {selectedMakeupOption.timeSlotInfo.endTime}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {selectedMakeupOption.classInfo.branchName} · {formatModality(selectedMakeupOption.classInfo.modality)}
+                      {selectedMakeupOption.classInfo.branchName} · {getModalityLabel(selectedMakeupOption.classInfo.modality)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {getCapacityText(selectedMakeupOption)}
+                      {getCapacityText(selectedMakeupOption.availableSlots, selectedMakeupOption.maxCapacity)}
                     </p>
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => setSelectedMakeupId(null)}>
@@ -421,6 +388,12 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
                     onChange={setReason}
                     placeholder="Chia sẻ lý do cụ thể..."
                     error={null}
+                  />
+
+                  <NoteInput
+                    value={note}
+                    onChange={setNote}
+                    placeholder="Ghi chú thêm về yêu cầu học bù..."
                   />
                 </div>
               </div>
@@ -439,9 +412,9 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
                           {format(parseISO(option.date), 'EEEE, dd/MM', { locale: vi })} · {option.classInfo.classCode}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {option.timeSlotInfo.startTime} - {option.timeSlotInfo.endTime} · {formatModality(option.classInfo.modality)}
+                          {option.timeSlotInfo.startTime} - {option.timeSlotInfo.endTime} · {getModalityLabel(option.classInfo.modality)}
                         </p>
-                        <p className="text-xs text-primary">{getCapacityText(option)}</p>
+                        <p className="text-xs text-primary">{getCapacityText(option.availableSlots, option.maxCapacity)}</p>
                       </div>
                       {option.matchScore.priority === 'HIGH' && <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20">Ưu tiên cao</Badge>}
                       {option.matchScore.priority === 'MEDIUM' && <Badge className="bg-amber-500/10 text-amber-600 hover:bg-amber-500/20">Ưu tiên TB</Badge>}
