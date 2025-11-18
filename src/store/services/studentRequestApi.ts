@@ -507,6 +507,7 @@ export interface TransferRequestPayload {
   currentClassId: number
   targetClassId: number
   effectiveDate: string
+  sessionId: number
   requestReason: string
   note?: string
 }

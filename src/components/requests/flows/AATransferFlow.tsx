@@ -207,7 +207,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
       return
     }
 
-    if (!effectiveDate) {
+    if (!selectedSession) {
       handleError(new Error('Vui lòng chọn buổi học bắt đầu'))
       return
     }
@@ -218,6 +218,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
         currentClassId: selectedCurrentClass.classId,
         targetClassId: selectedTargetClass.classId,
         effectiveDate,
+        sessionId: selectedSession.sessionId,
         requestReason: requestReason.trim(),
         note: note.trim() || undefined,
       }).unwrap()
