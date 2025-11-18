@@ -9,7 +9,7 @@ import { WizardFooter } from './WizardFooter'
 import { ResourceConflictDialog } from './ResourceConflictDialog'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import type { ResourceConflict, ResourceOption } from '@/types/classCreation'
+import type { AssignResourcesRequest, ResourceConflict, ResourceOption } from '@/types/classCreation'
 
 interface Step4ResourcesProps {
   classId: number | null
@@ -86,7 +86,9 @@ export function Step4Resources({ classId, timeSlotSelections, onBack, onContinue
   const [isLoadingResources, setIsLoadingResources] = useState(false)
 
   const [selectedResources, setSelectedResources] = useState<Record<number, number | ''>>({})
-  const [conflicts, setConflicts] = useState<ResourceConflict[] | null>(null)
+  const [conflicts, setConflicts] = useState<ResourceConflict[]>([])
+  const [initialConflictCount, setInitialConflictCount] = useState(0)
+  const [lastPattern, setLastPattern] = useState<AssignResourcesRequest['pattern']>([])
 
   useEffect(() => {
     const initial: Record<number, number | ''> = {}
@@ -161,12 +163,61 @@ export function Step4Resources({ classId, timeSlotSelections, onBack, onContinue
       return
     }
 
+    setLastPattern(pattern)
+
     try {
       const response = await assignResources({ classId, data: { pattern } }).unwrap()
       if (response.data.conflictCount > 0) {
-        setConflicts(response.data.conflicts)
+        const conflictList = response.data.conflicts ?? []
+        setConflicts(conflictList)
+        setInitialConflictCount(conflictList.length)
         toast.warning('Một số buổi học bị xung đột tài nguyên')
       } else {
+        setConflicts([])
+        setInitialConflictCount(0)
+        toast.success(response.message || 'Đã gán tài nguyên thành công')
+        onContinue()
+      }
+    } catch (error: unknown) {
+      const message = (error as { data?: { message?: string } })?.data?.message || 'Không thể gán tài nguyên. Vui lòng thử lại.'
+      toast.error(message)
+    }
+  }
+
+  const buildPatternFromState = () =>
+    Object.entries(selectedResources)
+      .filter(([, value]) => value)
+      .map(([day, value]) => ({
+        dayOfWeek: Number(day),
+        resourceId: Number(value),
+      }))
+
+  const handleRetryConflicts = async () => {
+    if (!classId) {
+      setConflicts([])
+      return
+    }
+    const pattern =
+      lastPattern.length > 0
+        ? lastPattern
+        : buildPatternFromState()
+    if (pattern.length === 0) {
+      setConflicts([])
+      return
+    }
+    if (lastPattern.length === 0) {
+      setLastPattern(pattern)
+    }
+    try {
+      const response = await assignResources({ classId, data: { pattern } }).unwrap()
+      if (response.data.conflictCount > 0) {
+        const conflictList = response.data.conflicts ?? []
+        setConflicts(conflictList)
+        setInitialConflictCount((prev) => (prev === 0 ? conflictList.length : prev))
+        toast.warning('Vẫn còn buổi chưa gán tài nguyên. Vui lòng tiếp tục xử lý.')
+      } else {
+        setConflicts([])
+        setInitialConflictCount(0)
         toast.success(response.message || 'Đã gán tài nguyên thành công')
         onContinue()
       }
@@ -276,8 +327,21 @@ export function Step4Resources({ classId, timeSlotSelections, onBack, onContinue
         nextButtonText="Lưu tài nguyên"
       />
 
-      {conflicts && (
-        <ResourceConflictDialog open={conflicts.length > 0} conflicts={conflicts} onOpenChange={(open) => !open && setConflicts(null)} />
+      {classId && conflicts.length > 0 && (
+        <ResourceConflictDialog
+          open={conflicts.length > 0}
+          conflicts={conflicts}
+          classId={classId}
+          initialCount={initialConflictCount}
+          onConflictsChange={(updated) => setConflicts(updated)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setConflicts([])
+              setInitialConflictCount(0)
+            }
+          }}
+          onRetry={handleRetryConflicts}
+        />
       )}
     </div>
   )

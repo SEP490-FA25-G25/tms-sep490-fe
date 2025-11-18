@@ -51,6 +51,20 @@ export interface GeneratedClassSession {
   hasResource: boolean
   hasTeacher: boolean
   timeSlotInfo: Record<string, unknown> | null
+  timeSlotName?: string
+  timeSlotLabel?: string
+  resourceName?: string
+  resourceDisplayName?: string
+  resourceInfo?: Record<string, unknown> | null
+  resource?: Record<string, unknown> | null
+  room?: string
+  roomName?: string
+  teacherName?: string
+  teacherNames?: string
+  teachers?: Array<{ teacherId: number; fullName?: string; name?: string }>
+  teacherAssignments?: Array<{ teacherId?: number; fullName?: string; name?: string }>
+  teacherInfo?: Array<{ teacherId?: number; fullName?: string; name?: string }>
+  assignedTeachers?: Array<{ teacherId?: number; fullName?: string; name?: string }>
 }
 
 export interface ClassSessionsWeekGroup {
@@ -133,14 +147,21 @@ export interface ResourceAssignment {
 
 export interface ResourceConflict {
   sessionId: number
-  sessionDate: string
-  dayOfWeek: string
-  conflictReason: ConflictReason
-  requestedCapacity: number
-  availableCapacity: number
-  resourceId: number
-  resourceName: string
-  conflictingClasses: string[]
+  sessionNumber?: number | null
+  sessionDate?: string | null
+  date?: string | null
+  dayOfWeek?: string | number | null
+  conflictReason: ConflictReason | string
+  requestedCapacity?: number | null
+  availableCapacity?: number | null
+  resourceId?: number | null
+  resourceName?: string | null
+  resourceDisplayName?: string | null
+  timeSlotStart?: string | null
+  timeSlotEnd?: string | null
+  suggestions?: ResourceOption[]
+  conflictingClasses?: string[] | null
+  conflictDetails?: string | null
 }
 
 export interface AssignResourcesRequest {
@@ -156,6 +177,28 @@ export interface AssignResourcesResponse {
     conflicts: ResourceConflict[]
     processingTimeMs: number
   }
+}
+
+export interface AssignSessionResourceRequest {
+  resourceId: number
+}
+
+export interface AssignSessionResourceResponse {
+  success: boolean
+  message: string
+  data: {
+    sessionId: number
+    sessionNumber?: number | null
+    resourceId: number
+    resourceName: string
+    conflictResolved: boolean
+  }
+}
+
+export interface SessionResourceSuggestionsResponse {
+  success: boolean
+  message: string
+  data: ResourceOption[]
 }
 
 // ============ STEP 5A: Teacher Availability ============
@@ -189,18 +232,37 @@ export interface TeacherConflictDetail {
   }
 }
 
+export type TeacherAvailabilityStatus = 'FULLY_AVAILABLE' | 'PARTIALLY_AVAILABLE' | 'UNAVAILABLE'
+
+export interface TeacherConflictSummary {
+  noAvailability: number
+  teachingConflict: number
+  leaveConflict: number
+  skillMismatch: number
+  totalConflicts: number
+}
+
+export interface ScheduleInfo {
+  days: string[]
+  timeSlot: string
+  location: string
+}
+
 export interface TeacherAvailability {
-  id: number
-  name: string
+  teacherId: number
+  fullName: string
   email: string
   skills: string[]
-  conflictCount: number
+  hasGeneralSkill: boolean
   totalSessions: number
   availableSessions: number
-  availabilityRate: number
-  isRecommended: boolean
-  conflicts?: TeacherConflictDetail[] | null
+  availabilityPercentage: number
+  availabilityStatus: TeacherAvailabilityStatus
+  conflicts: TeacherConflictSummary
   availabilityByDay?: Record<number, TeacherDayAvailability> | null
+  conflictDetails?: TeacherConflictDetail[] | null
+  teacherSchedule?: ScheduleInfo | null
+  classSchedule?: ScheduleInfo | null
 }
 
 export interface GetTeacherAvailabilityResponse {
@@ -209,11 +271,38 @@ export interface GetTeacherAvailabilityResponse {
   data: TeacherAvailability[]
 }
 
+export interface TeacherDayAvailabilityInfo {
+  dayOfWeek: number
+  dayName: string
+  totalSessions: number
+  availableSessions: number
+  firstDate: string
+  lastDate: string
+  isFullyAvailable: boolean
+  timeSlotDisplay?: string
+}
+
+export interface TeacherAvailableByDay {
+  teacherId: number
+  fullName: string
+  email: string
+  avatarUrl?: string | null
+  skills: string[]
+  totalClassSessions: number
+  availableDays: TeacherDayAvailabilityInfo[]
+}
+
+export interface GetTeachersAvailableByDayResponse {
+  success: boolean
+  message: string
+  data: TeacherAvailableByDay[]
+}
+
 // ============ STEP 5B: Assign Teacher ============
 
 export interface AssignTeacherRequest {
   teacherId: number
-  sessionIds?: number[] // Optional: for partial assignment
+  sessionIds?: number[] | null // null => assign all sessions
 }
 
 export interface AssignTeacherResponse {
@@ -229,26 +318,38 @@ export interface AssignTeacherResponse {
 
 // ============ STEP 6: Validation ============
 
-export interface MissingAssignment {
-  sessionId: number
-  sessionDate: string
-  missingFields: string[]
-}
-
-export interface ValidationSummary {
+export interface ValidationChecks {
   totalSessions: number
   sessionsWithTimeSlots: number
   sessionsWithResources: number
   sessionsWithTeachers: number
+  sessionsWithoutTimeSlots: number
+  sessionsWithoutResources: number
+  sessionsWithoutTeachers: number
+  completionPercentage: number
+  allSessionsHaveTimeSlots: boolean
+  allSessionsHaveResources: boolean
+  allSessionsHaveTeachers: boolean
+  hasMultipleTeachersPerSkillGroup?: boolean
+  startDateInPast?: boolean
+  hasValidationErrors?: boolean
+  hasValidationWarnings?: boolean
+}
+
+export interface ValidateClassData {
+  valid: boolean
+  canSubmit: boolean
+  classId: number
+  message: string
+  checks: ValidationChecks
+  errors: string[]
+  warnings: string[]
 }
 
 export interface ValidateClassResponse {
   success: boolean
-  data: {
-    isValid: boolean
-    validationSummary: ValidationSummary
-    missingAssignments: MissingAssignment[]
-  }
+  message: string
+  data: ValidateClassData | null
 }
 
 // ============ STEP 7: Submit ============

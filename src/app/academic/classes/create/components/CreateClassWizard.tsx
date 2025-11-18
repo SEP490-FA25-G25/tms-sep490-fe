@@ -6,6 +6,8 @@ import { Step2ReviewSessions } from './Step2ReviewSessions'
 import { Step3TimeSlots } from './Step3TimeSlots'
 import { Step4Resources } from './Step4Resources'
 import { Step5AssignTeacher } from './Step5AssignTeacher'
+import { Step6Validation } from './Step6Validation'
+import { Step7Submit } from './Step7Submit'
 
 /**
  * Main wizard container for Create Class workflow
@@ -22,7 +24,7 @@ export function CreateClassWizard() {
   const [timeSlotSelections, setTimeSlotSelections] = useState<Record<number, number>>({})
 
   // Handle Step 1 success - create class and navigate to Step 2 for review
-  const handleStep1Success = (newClassId: number, _sessionCount: number) => {
+  const handleStep1Success = (newClassId: number) => {
     markStepComplete(1)
     navigateToStep(2, newClassId)
   }
@@ -45,7 +47,7 @@ export function CreateClassWizard() {
           onStepClick={(step) => {
             // Only allow clicking on completed steps or current step
             if (completedSteps.includes(step) || step === currentStep) {
-              navigateToStep(step as any)
+              navigateToStep(step as 1 | 2 | 3 | 4 | 5 | 6 | 7)
             }
           }}
         />
@@ -101,28 +103,27 @@ export function CreateClassWizard() {
           )}
 
           {currentStep === 6 && (
-            <div className="text-center py-12">
-              <h2 className="text-xl font-semibold mb-4">Step 6: Kiểm tra thông tin</h2>
-              <p className="text-muted-foreground">Tính năng đang được phát triển...</p>
-            </div>
+            <Step6Validation
+              classId={classId}
+              onBack={() => navigateToStep(5)}
+              onContinue={() => {
+                markStepComplete(6)
+                navigateToStep(7)
+              }}
+            />
           )}
 
           {currentStep === 7 && (
-            <div className="text-center py-12">
-              <h2 className="text-xl font-semibold mb-4">Step 7: Xác nhận và gửi duyệt</h2>
-              <p className="text-muted-foreground">Tính năng đang được phát triển...</p>
-            </div>
+            <Step7Submit
+              classId={classId}
+              onBack={() => navigateToStep(6)}
+              onFinish={() => {
+                markStepComplete(7)
+              }}
+            />
           )}
         </div>
 
-        {/* Debug Info (remove in production) */}
-        {import.meta.env.DEV && (
-          <div className="mt-4 p-4 bg-muted rounded text-xs font-mono">
-            <div>Current Step: {currentStep}</div>
-            <div>Class ID: {classId || 'null'}</div>
-            <div>Completed Steps: {completedSteps.join(', ') || 'none'}</div>
-          </div>
-        )}
       </div>
     </div>
   )

@@ -1,0 +1,219 @@
+import { useEffect, useMemo, useState } from 'react'
+import { useGetClassByIdQuery } from '@/store/services/classApi'
+import { useSubmitClassMutation, useValidateClassMutation } from '@/store/services/classCreationApi'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import type { ValidateClassData, ValidationChecks } from '@/types/classCreation'
+import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
+
+interface Step7SubmitProps {
+  classId: number | null
+  onBack: () => void
+  onFinish?: () => void
+}
+
+const ChecklistLabel = ({
+  label,
+  description,
+  checked,
+  onCheckedChange,
+}: {
+  label: string
+  description: string
+  checked: boolean
+  onCheckedChange: (value: boolean) => void
+}) => (
+  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/60 bg-background/70 p-3 transition hover:border-foreground/40">
+    <Checkbox checked={checked} onCheckedChange={(value) => onCheckedChange(Boolean(value))} />
+    <span>
+      <p className="font-semibold text-foreground">{label}</p>
+      <p className="text-xs text-muted-foreground">{description}</p>
+    </span>
+  </label>
+)
+
+export function Step7Submit({ classId, onBack, onFinish }: Step7SubmitProps) {
+  const { data: classDetail, isLoading: isClassLoading } = useGetClassByIdQuery(classId ?? 0, {
+    skip: !classId,
+  })
+  const [validateClass, { isLoading: isValidating }] = useValidateClassMutation()
+  const [submitClass, { isLoading: isSubmitting }] = useSubmitClassMutation()
+  const [validationResult, setValidationResult] = useState<ValidateClassData | null>(null)
+  const [validationError, setValidationError] = useState<string | null>(null)
+  const [checklist, setChecklist] = useState({
+    accuracy: false,
+    notify: false,
+    attachments: false,
+  })
+
+  useEffect(() => {
+    if (!classId) return
+    void handleValidate()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classId])
+
+  const overview = classDetail?.data
+  const defaultTotal = overview?.sessionSummary?.totalSessions ?? 0
+  const summaryChecks: ValidationChecks = validationResult?.checks || {
+    totalSessions: defaultTotal,
+    sessionsWithTimeSlots: overview?.sessionSummary?.totalSessions ?? 0,
+    sessionsWithResources: 0,
+    sessionsWithTeachers: 0,
+    sessionsWithoutTimeSlots: 0,
+    sessionsWithoutResources: 0,
+    sessionsWithoutTeachers: 0,
+    completionPercentage: 0,
+    allSessionsHaveTimeSlots: false,
+    allSessionsHaveResources: false,
+    allSessionsHaveTeachers: false,
+  }
+
+  const canSubmitValidation = Boolean(validationResult?.canSubmit && validationResult.valid && validationResult.errors.length === 0)
+  const checklistComplete = Object.values(checklist).every(Boolean)
+  const submitDisabled = !classId || !canSubmitValidation || !checklistComplete || isSubmitting
+
+  const handleValidate = async () => {
+    if (!classId) return
+    setValidationError(null)
+    try {
+      const response = await validateClass(classId).unwrap()
+      if (response.data) {
+        setValidationResult(response.data)
+      } else {
+        setValidationResult(null)
+        setValidationError(response.message || 'Không thể kiểm tra lớp học.')
+      }
+    } catch (error: unknown) {
+      const message = (error as { data?: { message?: string } })?.data?.message || 'Không thể kiểm tra lớp học.'
+      setValidationError(message)
+      setValidationResult(null)
+    }
+  }
+
+  const handleSubmit = async () => {
+    if (!classId) return
+    try {
+      const response = await submitClass(classId).unwrap()
+      toast.success(response.message || 'Lớp đã được gửi duyệt.')
+      onFinish?.()
+    } catch (error: unknown) {
+      const message = (error as { data?: { message?: string } })?.data?.message || 'Không thể gửi duyệt. Vui lòng thử lại.'
+      toast.error(message)
+    }
+  }
+
+  const infoRows = useMemo(() => {
+    if (!overview) return []
+    const data = overview
+    return [
+      { label: 'Mã lớp', value: data.code },
+      { label: 'Khóa học', value: data.course?.name },
+      { label: 'Chi nhánh', value: data.branch?.name },
+      { label: 'Ngày bắt đầu', value: data.startDate },
+      { label: 'Ngày kết thúc dự kiến', value: data.plannedEndDate },
+      { label: 'Ngày học', value: data.scheduleSummary },
+      { label: 'Sức chứa tối đa', value: data.maxCapacity?.toString() },
+    ]
+  }, [overview])
+
+  if (!classId) {
+    return (
+      <Alert>
+        <AlertDescription>Vui lòng tạo lớp và hoàn thành các bước trước khi gửi duyệt.</AlertDescription>
+      </Alert>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card className="border border-border/70">
+        <CardHeader>
+          <CardTitle>Tổng quan sẵn sàng</CardTitle>
+          <p className="text-sm text-muted-foreground">Kiểm tra nhanh các tiêu chí bắt buộc trước khi gửi duyệt.</p>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-4">
+          {[
+            { label: 'Tổng buổi', value: summaryChecks.totalSessions },
+            { label: 'Đã có khung giờ', value: summaryChecks.sessionsWithTimeSlots, hint: summaryChecks.sessionsWithoutTimeSlots },
+            { label: 'Đã có tài nguyên', value: summaryChecks.sessionsWithResources, hint: summaryChecks.sessionsWithoutResources },
+            { label: 'Đã có giáo viên', value: summaryChecks.sessionsWithTeachers, hint: summaryChecks.sessionsWithoutTeachers },
+          ].map((item) => (
+            <div key={item.label} className={cn('rounded-xl border bg-background/80 p-4', item.hint && item.hint > 0 && 'border-amber-300 bg-amber-50/60')}>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">{item.label}</p>
+              <p className="text-2xl font-semibold text-foreground">{item.value ?? '--'}</p>
+              {item.hint !== undefined && item.hint > 0 && (
+                <p className="text-xs text-amber-700">{item.hint} buổi chưa hoàn thành</p>
+              )}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card className="border border-border/70">
+        <CardHeader>
+          <CardTitle>Thông tin lớp học</CardTitle>
+          <p className="text-sm text-muted-foreground">Kiểm tra lại các thông tin chính trước khi gửi duyệt.</p>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2">
+          {isClassLoading ? (
+            <p className="text-sm text-muted-foreground">Đang tải thông tin lớp…</p>
+          ) : (
+            infoRows.map((row) => (
+              <div key={row.label} className="rounded-xl border border-border/50 bg-card/60 p-3 text-sm">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">{row.label}</p>
+                <p className="text-base font-semibold text-foreground">{row.value || '--'}</p>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="border border-border/70">
+        <CardHeader>
+          <CardTitle>Checklist trước khi gửi</CardTitle>
+          <p className="text-sm text-muted-foreground">Xác nhận rằng bạn đã hoàn thành các bước sau.</p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <ChecklistLabel
+            label="Thông tin lớp chính xác"
+            description="Đã rà soát lại mã lớp, lịch học, tài nguyên, giáo viên."
+            checked={checklist.accuracy}
+            onCheckedChange={(value) => setChecklist((prev) => ({ ...prev, accuracy: value }))}
+          />
+          <ChecklistLabel
+            label="Đã thông báo các bên liên quan"
+            description="Đã thông báo cho giảng viên, CSKH hoặc các bộ phận liên quan nếu có thay đổi."
+            checked={checklist.notify}
+            onCheckedChange={(value) => setChecklist((prev) => ({ ...prev, notify: value }))}
+          />
+          <ChecklistLabel
+            label="Đính kèm ghi chú nếu cần"
+            description="Thêm ghi chú cho Trưởng chi nhánh (nếu có yêu cầu đặc biệt)."
+            checked={checklist.attachments}
+            onCheckedChange={(value) => setChecklist((prev) => ({ ...prev, attachments: value }))}
+          />
+        </CardContent>
+      </Card>
+
+      {validationError && (
+        <Alert variant="destructive">
+          <AlertDescription>{validationError}</AlertDescription>
+        </Alert>
+      )}
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" onClick={onBack} disabled={isSubmitting}>
+          Quay lại
+        </Button>
+        <Button variant="outline" onClick={handleValidate} disabled={isValidating || isSubmitting}>
+          {isValidating ? 'Đang kiểm tra…' : 'Kiểm tra lại'}
+        </Button>
+        <Button onClick={handleSubmit} disabled={submitDisabled}>
+          {isSubmitting ? 'Đang gửi duyệt…' : 'Gửi duyệt lớp học'}
+        </Button>
+      </div>
+    </div>
+  )
+}

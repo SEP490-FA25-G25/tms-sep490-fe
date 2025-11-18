@@ -8,7 +8,11 @@ import type {
   AssignTimeSlotsResponse,
   AssignResourcesRequest,
   AssignResourcesResponse,
+  AssignSessionResourceRequest,
+  AssignSessionResourceResponse,
+  SessionResourceSuggestionsResponse,
   GetTeacherAvailabilityResponse,
+  GetTeachersAvailableByDayResponse,
   AssignTeacherRequest,
   AssignTeacherResponse,
   ValidateClassResponse,
@@ -102,9 +106,13 @@ export const classCreationApi = createApi({
     /**
      * STEP 2: Get generated sessions for review
      */
-    getClassSessions: builder.query<GetClassSessionsResponse, number>({
+  getClassSessions: builder.query<GetClassSessionsResponse, number>({
       query: (classId) => `/classes/${classId}/sessions`,
       providesTags: ['ClassSessions'],
+    }),
+
+    validateClassStatus: builder.query<GetClassSessionsResponse, number>({
+      query: (classId) => `/classes/${classId}/validate`,
     }),
 
     // ============ STEP 3: Assign Time Slots ============
@@ -143,6 +151,34 @@ export const classCreationApi = createApi({
       invalidatesTags: ['ClassSessions'],
     }),
 
+    /**
+     * STEP 4 Quick Fix: Get resource suggestions for a specific session
+     */
+    getSessionResourceSuggestions: builder.query<
+      SessionResourceSuggestionsResponse,
+      { classId: number; sessionId: number }
+    >({
+      query: ({ classId, sessionId }) => ({
+        url: `/classes/${classId}/sessions/${sessionId}/resources`,
+        method: 'GET',
+      }),
+    }),
+
+    /**
+     * STEP 4 Quick Fix: Assign resource to a specific session
+     */
+    assignSessionResource: builder.mutation<
+      AssignSessionResourceResponse,
+      { classId: number; sessionId: number; data: AssignSessionResourceRequest }
+    >({
+      query: ({ classId, sessionId, data }) => ({
+        url: `/classes/${classId}/sessions/${sessionId}/resource`,
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['ClassSessions'],
+    }),
+
     // ============ STEP 5A: Teacher Availability ============
 
     /**
@@ -151,14 +187,25 @@ export const classCreationApi = createApi({
      */
     getTeacherAvailability: builder.query<
       GetTeacherAvailabilityResponse,
-      { classId: number; includeConflictDetails?: boolean }
+      { classId: number }
     >({
-      query: ({ classId, includeConflictDetails = false }) => ({
-        url: `/classes/${classId}/teachers/detailed`,
+      query: ({ classId }) => ({
+        url: `/classes/${classId}/available-teachers`,
         method: 'GET',
-        params: {
-          includeConflictDetails,
-        },
+      }),
+      providesTags: ['AvailableTeachers'],
+    }),
+
+    /**
+     * STEP 5A (multi-teacher mode): Get teachers fully available for each day
+     */
+    getTeachersAvailableByDay: builder.query<
+      GetTeachersAvailableByDayResponse,
+      { classId: number }
+    >({
+      query: ({ classId }) => ({
+        url: `/classes/${classId}/teachers/available-by-day`,
+        method: 'GET',
       }),
       providesTags: ['AvailableTeachers'],
     }),
@@ -222,8 +269,12 @@ export const {
   useGetClassSessionsQuery,
   useAssignTimeSlotsMutation,
   useAssignResourcesMutation,
+  useGetSessionResourceSuggestionsQuery,
+  useLazyGetSessionResourceSuggestionsQuery,
+  useAssignSessionResourceMutation,
   useGetTeacherAvailabilityQuery,
   useLazyGetTeacherAvailabilityQuery,
+  useGetTeachersAvailableByDayQuery,
   useAssignTeacherMutation,
   useValidateClassMutation,
   useSubmitClassMutation,

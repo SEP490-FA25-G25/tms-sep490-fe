@@ -130,7 +130,7 @@ export function Step1BasicInfo({ onSuccess }: Step1BasicInfoProps) {
         setValue('code', response.data.previewCode, { shouldValidate: true })
       }
       setPreviewWarning(response?.data?.warning || null)
-    } catch (error) {
+    } catch {
       setPreviewWarning(null)
       toast.error('Không thể sinh mã lớp tự động. Vui lòng thử lại.')
     }
@@ -162,23 +162,27 @@ export function Step1BasicInfo({ onSuccess }: Step1BasicInfoProps) {
   const onSubmit = async (data: FormData) => {
     try {
       const response = await createClass(data).unwrap()
+      const createdClassId = response?.data?.classId
+      const totalSessions = response?.data?.sessionSummary?.totalSessions ?? 0
 
-      if (response.success) {
-        const createdCode = response.data.code || data.code || 'mới'
-        toast.success(
-          `Lớp ${createdCode} đã được tạo với ${response.data.sessionSummary.totalSessions} buổi học`
-        )
-        onSuccess(response.data.classId, response.data.sessionSummary.totalSessions)
+      if (!createdClassId) {
+        toast.error('Không nhận được thông tin lớp vừa tạo. Vui lòng thử lại.')
+        return
       }
-    } catch (err: any) {
-      if (err.status === 400) {
-        if (err.data?.data && typeof err.data.data === 'object') {
+
+      const createdCode = response?.data?.code || data.code || 'mới'
+      toast.success(`Lớp ${createdCode} đã được tạo với ${totalSessions} buổi học`)
+      onSuccess(createdClassId, totalSessions)
+    } catch (err: unknown) {
+      const error = err as { status?: number; data?: { message?: string; data?: unknown } }
+      if (error.status === 400) {
+        if (error.data?.data && typeof error.data.data === 'object') {
           // Field-level errors
-          toast.error(err.data.message || 'Dữ liệu không hợp lệ')
+          toast.error(error.data.message || 'Dữ liệu không hợp lệ')
         } else {
-          toast.error(err.data?.message || 'Có lỗi xảy ra khi tạo lớp học')
+          toast.error(error.data?.message || 'Có lỗi xảy ra khi tạo lớp học')
         }
-      } else if (err.status === 403) {
+      } else if (error.status === 403) {
         toast.error('Bạn không có quyền tạo lớp học')
       } else {
         toast.error('Lỗi kết nối. Vui lòng thử lại.')

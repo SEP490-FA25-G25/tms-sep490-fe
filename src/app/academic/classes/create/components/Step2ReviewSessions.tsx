@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useGetClassSessionsQuery } from '@/store/services/classCreationApi'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -44,8 +44,69 @@ export function Step2ReviewSessions({ classId, onBack, onContinue }: Step2Review
 
   const overview = data?.data
 
-  const weekOptions = useMemo(() => overview?.groupedByWeek ?? [], [overview])
+  const weekOptions = overview?.groupedByWeek ?? []
 
+  const weekSelectOptions = [{ label: 'Tất cả', value: 'all' as const }, ...weekOptions.map((week) => ({
+    label: `Tuần ${week.weekNumber}`,
+    value: week.weekNumber as number,
+  }))]
+
+  const statusFilterOptions = [
+    { label: 'Tất cả trạng thái', value: 'all' as const },
+    { label: 'Chưa gán khung giờ', value: 'missingTimeSlot' as const },
+    { label: 'Chưa gán tài nguyên', value: 'missingResource' as const },
+    { label: 'Chưa chọn giáo viên', value: 'missingTeacher' as const },
+  ]
+
+  const weekCount = overview?.groupedByWeek?.length ?? 0
+  const dateRangeLabel = overview?.dateRange
+    ? `${formatDate(overview.dateRange.startDate)} → ${formatDate(overview.dateRange.endDate)}`
+    : 'Đang cập nhật...'
+
+  const timelineWeeks = useMemo(() => {
+    if (!overview) {
+      return []
+    }
+    const sessionMap = new Map(overview.sessions.map((session) => [session.sessionId, session]))
+    const resolveStatus = (session: typeof overview.sessions[number]) => {
+      switch (selectedStatus) {
+        case 'missingTimeSlot':
+          return !session.hasTimeSlot
+        case 'missingResource':
+          return !session.hasResource
+        case 'missingTeacher':
+          return !session.hasTeacher
+        default:
+          return true
+      }
+    }
+
+    const sourceWeeks = overview.groupedByWeek?.length
+      ? overview.groupedByWeek
+      : [
+          {
+            weekNumber: 1,
+            weekRange: overview.dateRange
+              ? `${formatDate(overview.dateRange.startDate)} - ${formatDate(overview.dateRange.endDate)}`
+              : 'Không xác định',
+            sessionCount: overview.sessions?.length ?? 0,
+            sessionIds: overview.sessions?.map((session) => session.sessionId) ?? [],
+          },
+        ]
+
+    return sourceWeeks
+      .filter((week) => selectedWeek === 'all' || week.weekNumber === selectedWeek)
+      .map((week) => {
+        const sessions = week.sessionIds
+          .map((id) => sessionMap.get(id))
+          .filter((session): session is typeof overview.sessions[number] => Boolean(session))
+          .filter((session) => resolveStatus(session))
+        return { ...week, sessions }
+      })
+      .filter((week) => week.sessions.length > 0)
+  }, [overview, selectedWeek, selectedStatus])
+
+  const hasSessions = timelineWeeks.some((week) => week.sessions.length > 0)
 
   if (!classId) {
     return (
@@ -82,61 +143,6 @@ export function Step2ReviewSessions({ classId, onBack, onContinue }: Step2Review
     )
   }
 
-  const weekSelectOptions = [{ label: 'Tất cả', value: 'all' as const }, ...weekOptions.map((week) => ({
-    label: `Tuần ${week.weekNumber}`,
-    value: week.weekNumber as number,
-  }))]
-
-  const statusFilterOptions = [
-    { label: 'Tất cả trạng thái', value: 'all' as const },
-    { label: 'Chưa gán khung giờ', value: 'missingTimeSlot' as const },
-    { label: 'Chưa gán tài nguyên', value: 'missingResource' as const },
-    { label: 'Chưa chọn giáo viên', value: 'missingTeacher' as const },
-  ]
-
-  const weekCount = overview?.groupedByWeek?.length ?? 0
-
-  const timelineWeeks = useMemo(() => {
-    if (!overview) return []
-    const sessionMap = new Map(overview.sessions.map((session) => [session.sessionId, session]))
-    const resolveStatus = (session: typeof overview.sessions[number]) => {
-      switch (selectedStatus) {
-        case 'missingTimeSlot':
-          return !session.hasTimeSlot
-        case 'missingResource':
-          return !session.hasResource
-        case 'missingTeacher':
-          return !session.hasTeacher
-        default:
-          return true
-      }
-    }
-
-    const sourceWeeks = overview.groupedByWeek?.length
-      ? overview.groupedByWeek
-      : [
-          {
-            weekNumber: 1,
-            weekRange: `${formatDate(overview.dateRange.startDate)} - ${formatDate(overview.dateRange.endDate)}`,
-            sessionCount: overview.sessions.length,
-            sessionIds: overview.sessions.map((session) => session.sessionId),
-          },
-        ]
-
-    return sourceWeeks
-      .filter((week) => selectedWeek === 'all' || week.weekNumber === selectedWeek)
-      .map((week) => {
-        const sessions = week.sessionIds
-          .map((id) => sessionMap.get(id))
-          .filter((session): session is typeof overview.sessions[number] => Boolean(session))
-          .filter((session) => resolveStatus(session))
-        return { ...week, sessions }
-      })
-      .filter((week) => week.sessions.length > 0)
-  }, [overview, selectedWeek, selectedStatus])
-
-  const hasSessions = timelineWeeks.some((week) => week.sessions.length > 0)
-
   return (
     <div className="space-y-6 pb-24">
       <Card className="bg-gradient-to-r from-primary/5 to-transparent border border-border/60">
@@ -146,9 +152,7 @@ export function Step2ReviewSessions({ classId, onBack, onContinue }: Step2Review
             <h2 className="text-2xl font-semibold mt-1">
               {overview?.totalSessions ?? '--'} buổi · {weekCount || 1} tuần
             </h2>
-            <p className="text-sm text-muted-foreground">
-              {overview ? `${formatDate(overview.dateRange.startDate)} → ${formatDate(overview.dateRange.endDate)}` : 'Đang tải...'}
-            </p>
+            <p className="text-sm text-muted-foreground">{dateRangeLabel}</p>
           </div>
           <div className="text-left md:text-right">
             <p className="text-xs text-muted-foreground">Mã lớp</p>
