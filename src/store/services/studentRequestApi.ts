@@ -326,6 +326,12 @@ export interface AcademicHistoryQuery {
   sort?: string
 }
 
+export interface AAStaffDTO {
+  id: number
+  fullName: string
+  email: string
+}
+
 export interface MissedSessionsQuery {
   weeksBack?: number
   excludeRequested?: boolean
@@ -615,7 +621,7 @@ const baseQueryWithReauth: BaseQueryFn<
 export const studentRequestApi = createApi({
   reducerPath: 'studentRequestApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['StudentRequests', 'PendingRequests', 'RequestDetail'],
+  tagTypes: ['StudentRequests', 'PendingRequests', 'RequestDetail', 'AAStaff'],
   endpoints: (builder) => ({
     // Student-specific endpoints - /api/v1/students-request
     getAvailableSessions: builder.query<ApiResponse<StudentClassSessions[]>, StudentSessionQuery>({
@@ -744,6 +750,10 @@ export const studentRequestApi = createApi({
         }
       },
       providesTags: ['PendingRequests'],
+    }),
+    getAAStaff: builder.query<ApiResponse<AAStaffDTO[]>, void>({
+      query: () => '/academic-requests/staff',
+      providesTags: ['AAStaff'],
     }),
     getRequestDetail: builder.query<ApiResponse<AcademicStudentRequest>, number>({
       query: (id) => ({
@@ -892,4 +902,5 @@ export const {
   useGetStudentClassesQuery,
   useSearchStudentsQuery,
   useGetBranchesQuery,
+  useGetAAStaffQuery,
 } = studentRequestApi

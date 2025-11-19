@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useGetPendingRequestsQuery, useGetAcademicRequestsQuery } from '@/store/services/studentRequestApi'
+import { useGetPendingRequestsQuery, useGetAcademicRequestsQuery, useGetAAStaffQuery } from '@/store/services/studentRequestApi'
 import type { RequestStatus } from '@/store/services/studentRequestApi'
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -52,6 +52,7 @@ export default function AcademicRequestsPage() {
   const [historyStatus, setHistoryStatus] = useState<RequestStatus | 'ALL'>('ALL')
   const [historySearchKeyword, setHistorySearchKeyword] = useState('')
   const [historyClassCode, setHistoryClassCode] = useState('')
+  const [historyDecidedBy, setHistoryDecidedBy] = useState<number | undefined>(undefined)
 
   // History tab pagination
   const [historyPage, setHistoryPage] = useState(0)
@@ -83,10 +84,16 @@ export default function AcademicRequestsPage() {
     status: historyStatus === 'ALL' ? undefined : historyStatus,
     studentName: historySearchKeyword || undefined,
     classCode: historyClassCode || undefined,
+    decidedBy: historyDecidedBy,
     page: historyPage,
     size: PAGE_SIZE,
     sort: 'submittedAt,desc', // Newest first for history
   })
+
+  // Fetch AA staff for filter
+  const {
+    data: aaStaffResponse,
+  } = useGetAAStaffQuery()
 
   const pendingData = pendingResponse?.data
   const requests = pendingData?.content ?? []
@@ -113,11 +120,12 @@ export default function AcademicRequestsPage() {
     setHistoryStatus('ALL')
     setHistorySearchKeyword('')
     setHistoryClassCode('')
+    setHistoryDecidedBy(undefined)
     setHistoryPage(0)
   }
 
   const hasActiveFilters = requestTypeFilter !== 'ALL' || searchKeyword !== '' || classCode !== ''
-  const hasActiveHistoryFilters = historyRequestType !== 'ALL' || historyStatus !== 'ALL' || historySearchKeyword !== '' || historyClassCode !== ''
+  const hasActiveHistoryFilters = historyRequestType !== 'ALL' || historyStatus !== 'ALL' || historySearchKeyword !== '' || historyClassCode !== '' || historyDecidedBy !== undefined
 
   return (
     <DashboardLayout>
@@ -258,6 +266,26 @@ export default function AcademicRequestsPage() {
                       {STATUS_OPTIONS.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={historyDecidedBy?.toString() || 'all'}
+                    onValueChange={(value) => {
+                      setHistoryDecidedBy(value === 'all' ? undefined : parseInt(value))
+                      setHistoryPage(0)
+                    }}
+                  >
+                    <SelectTrigger className="flex-1 min-w-40">
+                      <SelectValue placeholder="Người duyệt" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả người duyệt</SelectItem>
+                      {aaStaffResponse?.data?.map((staff) => (
+                        <SelectItem key={staff.id} value={staff.id.toString()}>
+                          {staff.fullName}
                         </SelectItem>
                       ))}
                     </SelectContent>
