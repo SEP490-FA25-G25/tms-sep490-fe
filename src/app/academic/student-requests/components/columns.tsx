@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { format, parseISO, differenceInDays } from 'date-fns'
+import { format, parseISO, differenceInDays, differenceInHours } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -96,22 +96,205 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
     enableSorting: true,
   },
   {
-    accessorKey: 'decidedBy.fullName',
-    header: 'Người duyệt',
-    cell: ({ row }) => {
-      const decidedBy = row.original.decidedBy
-      if (!decidedBy) {
-        return <span className="text-sm text-muted-foreground">-</span>
-      }
+    id: 'timeLeft',
+    header: ({ column }) => {
       return (
-        <div className="flex flex-col">
-          <span className="font-medium">{decidedBy.fullName}</span>
-          <span className="text-xs text-muted-foreground">{decidedBy.email}</span>
-        </div>
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          className="-ml-4"
+        >
+          Thời gian còn lại
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
       )
     },
-    size: 200,
-    enableSorting: false,
+    cell: ({ row }) => {
+      const daysUntilSession = row.original.daysUntilSession
+      const requestType = row.original.requestType
+      const targetSession = row.original.targetSession
+
+      // Helper function to calculate hours until session
+      const getHoursUntilSession = () => {
+        if (!targetSession?.date || !targetSession?.timeSlot?.startTime) {
+          return null
+        }
+
+        try {
+          // Combine date and time to create full session datetime
+          const sessionDateTime = parseISO(`${targetSession.date}T${targetSession.timeSlot.startTime}:00`)
+          const now = new Date()
+          return differenceInHours(sessionDateTime, now)
+        } catch (error) {
+          return null
+        }
+      }
+
+      const hoursUntilSession = getHoursUntilSession()
+
+      // Helper function to get time display text and color
+      const getTimeDisplay = (hours: number | null, days: number | null) => {
+        // Handle past events
+        if (hours !== null && hours < 0) {
+          return {
+            text: 'Đã qua',
+            className: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+          }
+        }
+
+        // Handle very urgent (less than 3 hours)
+        if (hours !== null && hours < 3) {
+          return {
+            text: `${hours} giờ`,
+            className: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+          }
+        }
+
+        // Handle urgent (less than 24 hours)
+        if (hours !== null && hours < 24) {
+          return {
+            text: `${hours} giờ`,
+            className: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'
+          }
+        }
+
+        // Handle days
+        if (days !== null && days >= 0) {
+          if (days === 0) {
+            return {
+              text: 'Hôm nay',
+              className: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'
+            }
+          } else if (days <= 2) {
+            return {
+              text: `${days} ngày`,
+              className: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
+            }
+          } else {
+            return {
+              text: `${days} ngày`,
+              className: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+            }
+          }
+        }
+
+        return {
+          text: 'Không xác định',
+          className: 'bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300'
+        }
+      }
+
+      // Different logic for different request types
+      if (requestType === 'ABSENCE') {
+        // For absence requests, use precise hours when available
+        const timeDisplay = getTimeDisplay(hoursUntilSession, daysUntilSession)
+        return (
+          <Badge variant="outline" className={timeDisplay.className}>
+            {timeDisplay.text}
+          </Badge>
+        )
+      } else if (requestType === 'MAKEUP') {
+        // For makeup requests, show urgency based on when missed session occurred
+        if (daysUntilSession === null || daysUntilSession === undefined) {
+          return (
+            <Badge variant="outline" className="bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+              Không xác định
+            </Badge>
+          )
+        }
+
+        // For makeup, daysUntilSession is negative (days since missed session)
+        const daysSinceMissed = Math.abs(daysUntilSession)
+
+        // For recent missed sessions, show hours if we can calculate them
+        if (hoursUntilSession !== null && Math.abs(hoursUntilSession) < 24) {
+          const hoursAgo = Math.abs(hoursUntilSession)
+          if (hoursAgo <= 3) {
+            return (
+              <Badge variant="outline" className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
+                {hoursAgo} giờ trước
+              </Badge>
+            )
+          }
+          return (
+            <Badge variant="outline" className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
+              {hoursAgo} giờ trước
+            </Badge>
+          )
+        }
+
+        if (daysSinceMissed <= 7) {
+          return (
+            <Badge variant="outline" className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
+              {daysSinceMissed} ngày trước
+            </Badge>
+          )
+        } else if (daysSinceMissed <= 14) {
+          return (
+            <Badge variant="outline" className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+              {daysSinceMissed} ngày trước
+            </Badge>
+          )
+        } else {
+          return (
+            <Badge variant="outline" className="bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+              {daysSinceMissed} ngày trước
+            </Badge>
+          )
+        }
+      } else if (requestType === 'TRANSFER') {
+        // For transfer requests, show based on submission date with hours for recent submissions
+        const submittedAt = parseISO(row.original.submittedAt)
+        const now = new Date()
+        const hoursSinceSubmission = differenceInHours(now, submittedAt)
+        const daysSinceSubmission = differenceInDays(now, submittedAt)
+
+        if (hoursSinceSubmission < 1) {
+          return (
+            <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+              Mới
+            </Badge>
+          )
+        } else if (hoursSinceSubmission < 24) {
+          return (
+            <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+              {hoursSinceSubmission} giờ
+            </Badge>
+          )
+        } else if (daysSinceSubmission >= 3) {
+          return (
+            <Badge variant="outline" className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
+              {daysSinceSubmission} ngày
+            </Badge>
+          )
+        } else if (daysSinceSubmission >= 1) {
+          return (
+            <Badge variant="outline" className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+              {daysSinceSubmission} ngày
+            </Badge>
+          )
+        } else {
+          return (
+            <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+              Mới
+            </Badge>
+          )
+        }
+      }
+
+      return (
+        <Badge variant="outline" className="bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+          Không xác định
+        </Badge>
+      )
+    },
+    size: 140,
+    enableSorting: true,
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.daysUntilSession ?? 999
+      const b = rowB.original.daysUntilSession ?? 999
+      return a - b
+    },
   },
   {
     accessorKey: 'currentClass.code',
