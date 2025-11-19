@@ -117,4 +117,63 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Clean default scrollbar styles */
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: oklch(0.708 0 0 / 0.2);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.708 0 0 / 0.4);
+  }
+
+  /* Make scrollbar buttons (arrows) transparent instead of hiding them */
+  *::-webkit-scrollbar-button {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+  }
+
+  *::-webkit-scrollbar-button:hover {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-button:active {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* For dark mode */
+  .dark *::-webkit-scrollbar-thumb {
+    background: oklch(0.556 0 0 / 0.2);
+  }
+
+  .dark *::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.556 0 0 / 0.5);
+  }
+
+  /* Firefox scrollbar styles */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.708 0 0 / 0.2) transparent;
+  }
+
+  .dark * {
+    scrollbar-color: oklch(0.556 0 0 / 0.2) transparent;
+  }
 }
