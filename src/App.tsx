@@ -18,6 +18,7 @@ import SelectResourcePage from './app/teacher/requests/create/select-resource/pa
 import RequestFormPage from './app/teacher/requests/create/form/page'
 import RequestDetailPage from './app/teacher/requests/[id]/page'
 import StudentCoursesPage from './app/student/courses/page'
+import CourseDetailPage from './app/student/courses/[id]/page'
 import StudentSchedulePage from './app/student/schedule/page'
 import StudentRequestsPage from './app/student/requests/page'
 import StudentAttendanceReportOverviewPage from './app/student/attendance-report/page'
@@ -145,6 +146,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={['STUDENT']}>
                   <StudentCoursesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/courses/:id"
+              element={
+                <ProtectedRoute requiredRoles={['STUDENT']}>
+                  <CourseDetailPage />
                 </ProtectedRoute>
               }
             />

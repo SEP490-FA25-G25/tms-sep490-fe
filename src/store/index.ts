@@ -8,6 +8,7 @@ import { studentScheduleApi } from "./services/studentScheduleApi";
 import { studentRequestApi } from "./services/studentRequestApi";
 import { teacherRequestApi } from "./services/teacherRequestApi";
 import { attendanceApi } from "./services/attendanceApi";
+import { courseApi } from "./services/courseApi";
 import authSlice, {
   setCredentials,
   logout,
@@ -32,6 +33,7 @@ export const store = configureStore({
     [studentRequestApi.reducerPath]: studentRequestApi.reducer,
     [teacherRequestApi.reducerPath]: teacherRequestApi.reducer,
     [attendanceApi.reducerPath]: attendanceApi.reducer,
+    [courseApi.reducerPath]: courseApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -47,7 +49,8 @@ export const store = configureStore({
     .concat(studentScheduleApi.middleware)
     .concat(studentRequestApi.middleware)
     .concat(teacherRequestApi.middleware)
-    .concat(attendanceApi.middleware),
+    .concat(attendanceApi.middleware)
+    .concat(courseApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

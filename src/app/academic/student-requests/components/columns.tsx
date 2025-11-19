@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import type { ColumnDef } from '@tanstack/react-table'
 import { format, parseISO, differenceInDays, differenceInHours } from 'date-fns'
 import { vi } from 'date-fns/locale'
@@ -125,7 +126,7 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
           const sessionDateTime = parseISO(`${targetSession.date}T${targetSession.timeSlot.startTime}:00`)
           const now = new Date()
           return differenceInHours(sessionDateTime, now)
-        } catch (error) {
+        } catch {
           return null
         }
       }
@@ -133,9 +134,9 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
       const hoursUntilSession = getHoursUntilSession()
 
       // Helper function to get time display text and color
-      const getTimeDisplay = (hours: number | null, days: number | null) => {
+      const getTimeDisplay = (hours: number | null | undefined, days: number | null) => {
         // Handle past events
-        if (hours !== null && hours < 0) {
+        if (hours !== null && hours !== undefined && hours < 0) {
           return {
             text: 'Đã qua',
             className: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
@@ -143,7 +144,7 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
         }
 
         // Handle very urgent (less than 3 hours)
-        if (hours !== null && hours < 3) {
+        if (hours !== null && hours !== undefined && hours < 3) {
           return {
             text: `${hours} giờ`,
             className: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
@@ -151,7 +152,7 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
         }
 
         // Handle urgent (less than 24 hours)
-        if (hours !== null && hours < 24) {
+        if (hours !== null && hours !== undefined && hours < 24) {
           return {
             text: `${hours} giờ`,
             className: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'
@@ -187,7 +188,7 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
       // Different logic for different request types
       if (requestType === 'ABSENCE') {
         // For absence requests, use precise hours when available
-        const timeDisplay = getTimeDisplay(hoursUntilSession, daysUntilSession)
+        const timeDisplay = getTimeDisplay(hoursUntilSession ?? null, daysUntilSession ?? null)
         return (
           <Badge variant="outline" className={timeDisplay.className}>
             {timeDisplay.text}

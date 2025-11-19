@@ -52,7 +52,7 @@ const baseQuery = fetchBaseQuery({
 })
 
 // Base query with token refresh logic
-const baseQueryWithReauth: BaseQueryFn<
+export const baseQueryWithReauth: BaseQueryFn<
   string | FetchArgs,
   unknown,
   FetchBaseQueryError,
