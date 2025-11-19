@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { useGetPendingRequestsQuery } from '@/store/services/studentRequestApi'
+import { useGetPendingRequestsQuery, useGetAcademicRequestsQuery } from '@/store/services/studentRequestApi'
+import type { RequestStatus } from '@/store/services/studentRequestApi'
 import { DashboardLayout } from '@/components/DashboardLayout'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -9,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { PlusCircleIcon, XIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { DataTable } from './components/DataTable'
-import { columns } from './components/columns'
+import { pendingColumns, historyColumns } from './components/columns'
 import { RequestDetailDialog } from './components/RequestDetailDialog'
 import AAAbsenceFlow from '@/components/requests/flows/AAAbsenceFlow'
 import AAMakeupFlow from '@/components/requests/flows/AAMakeupFlow'
@@ -18,22 +20,41 @@ import AATransferFlow from '@/components/requests/flows/AATransferFlow'
 type RequestType = 'ABSENCE' | 'MAKEUP' | 'TRANSFER' | 'ALL'
 
 const REQUEST_TYPE_OPTIONS: { value: RequestType; label: string }[] = [
-  { value: 'ALL', label: 'Tất cả loại' },
+  { value: 'ALL', label: 'Tất cả yêu cầu' },
   { value: 'ABSENCE', label: 'Xin nghỉ' },
   { value: 'MAKEUP', label: 'Học bù' },
   { value: 'TRANSFER', label: 'Chuyển lớp' },
 ]
 
+const STATUS_OPTIONS: { value: RequestStatus | 'ALL'; label: string }[] = [
+  { value: 'ALL', label: 'Tất cả trạng thái' },
+  { value: 'APPROVED', label: 'Đã duyệt' },
+  { value: 'REJECTED', label: 'Đã từ chối' },
+  { value: 'CANCELLED', label: 'Đã hủy' },
+]
+
 const PAGE_SIZE = 20
 
 export default function AcademicRequestsPage() {
-  // Filter states
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'pending' | 'history'>('pending')
+
+  // Pending tab filter states
   const [requestTypeFilter, setRequestTypeFilter] = useState<RequestType>('ALL')
   const [searchKeyword, setSearchKeyword] = useState('')
   const [classCode, setClassCode] = useState('')
 
-  // Pagination
+  // Pending tab pagination
   const [page, setPage] = useState(0)
+
+  // History tab filter states
+  const [historyRequestType, setHistoryRequestType] = useState<RequestType>('ALL')
+  const [historyStatus, setHistoryStatus] = useState<RequestStatus | 'ALL'>('ALL')
+  const [historySearchKeyword, setHistorySearchKeyword] = useState('')
+  const [historyClassCode, setHistoryClassCode] = useState('')
+
+  // History tab pagination
+  const [historyPage, setHistoryPage] = useState(0)
 
   // Dialog states
   const [selectedRequestId, setSelectedRequestId] = useState<number | null>(null)
@@ -43,7 +64,7 @@ export default function AcademicRequestsPage() {
   // Fetch pending requests
   const {
     data: pendingResponse,
-    isFetching: isLoading,
+    isFetching: isLoadingPending,
   } = useGetPendingRequestsQuery({
     requestType: requestTypeFilter === 'ALL' ? undefined : requestTypeFilter,
     studentName: searchKeyword || undefined,
@@ -53,10 +74,28 @@ export default function AcademicRequestsPage() {
     sort: 'submittedAt,asc', // Oldest first (most urgent)
   })
 
+  // Fetch history requests
+  const {
+    data: historyResponse,
+    isFetching: isLoadingHistory,
+  } = useGetAcademicRequestsQuery({
+    requestType: historyRequestType === 'ALL' ? undefined : historyRequestType,
+    status: historyStatus === 'ALL' ? undefined : historyStatus,
+    studentName: historySearchKeyword || undefined,
+    classCode: historyClassCode || undefined,
+    page: historyPage,
+    size: PAGE_SIZE,
+    sort: 'submittedAt,desc', // Newest first for history
+  })
+
   const pendingData = pendingResponse?.data
   const requests = pendingData?.content ?? []
   const summary = pendingData?.summary
   const totalPages = pendingData?.totalPages ?? 0
+
+  const historyData = historyResponse?.data
+  const historyRequests = historyData?.content ?? []
+  const historyTotalPages = historyData?.page?.totalPages ?? 0
 
   const handleViewDetail = (id: number) => {
     setSelectedRequestId(id)
@@ -69,7 +108,16 @@ export default function AcademicRequestsPage() {
     setPage(0)
   }
 
+  const handleClearHistoryFilters = () => {
+    setHistoryRequestType('ALL')
+    setHistoryStatus('ALL')
+    setHistorySearchKeyword('')
+    setHistoryClassCode('')
+    setHistoryPage(0)
+  }
+
   const hasActiveFilters = requestTypeFilter !== 'ALL' || searchKeyword !== '' || classCode !== ''
+  const hasActiveHistoryFilters = historyRequestType !== 'ALL' || historyStatus !== 'ALL' || historySearchKeyword !== '' || historyClassCode !== ''
 
   return (
     <DashboardLayout>
@@ -116,106 +164,220 @@ export default function AcademicRequestsPage() {
           </div>
         )}
 
-        {/* Filters */}
-        <div className="space-y-3">
-          {hasActiveFilters && (
-            <div className="flex items-center justify-end">
-              <Button variant="ghost" size="sm" onClick={handleClearFilters} className="gap-2">
-                <XIcon className="h-4 w-4" />
-                Xóa bộ lọc
-              </Button>
-            </div>
-          )}
+        {/* Tabs with filters on same line */}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'pending' | 'history')}>
+          {/* Tab Headers with Filters */}
+          <div className="space-y-3">
+            {/* First row: Tabs + Filters */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <TabsList>
+                <TabsTrigger value="pending">Chờ duyệt</TabsTrigger>
+                <TabsTrigger value="history">Lịch sử</TabsTrigger>
+              </TabsList>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">Loại yêu cầu</label>
-              <Select
-                value={requestTypeFilter}
-                onValueChange={(value) => {
-                  setRequestTypeFilter(value as RequestType)
-                  setPage(0)
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {REQUEST_TYPE_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              {/* Filters that apply to current tab */}
+              {activeTab === 'pending' ? (
+                <>
+                  <Select
+                    value={requestTypeFilter}
+                    onValueChange={(value) => {
+                      setRequestTypeFilter(value as RequestType)
+                      setPage(0)
+                    }}
+                  >
+                    <SelectTrigger className="flex-1 min-w-40">
+                      <SelectValue placeholder="Tất cả yêu cầu" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {REQUEST_TYPE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">
-                Tìm kiếm học viên
-              </label>
-              <Input
-                placeholder="Tên hoặc mã học viên..."
-                value={searchKeyword}
-                onChange={(e) => {
-                  setSearchKeyword(e.target.value)
-                  setPage(0)
-                }}
-              />
-            </div>
+                  <Input
+                    placeholder="Tìm kiếm học viên..."
+                    value={searchKeyword}
+                    onChange={(e) => {
+                      setSearchKeyword(e.target.value)
+                      setPage(0)
+                    }}
+                    className="flex-1 min-w-40"
+                  />
 
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">Mã lớp</label>
-              <Input
-                placeholder="Nhập mã lớp..."
-                value={classCode}
-                onChange={(e) => {
-                  setClassCode(e.target.value)
-                  setPage(0)
-                }}
-              />
+                  <Input
+                    placeholder="Mã lớp..."
+                    value={classCode}
+                    onChange={(e) => {
+                      setClassCode(e.target.value)
+                      setPage(0)
+                    }}
+                    className="flex-1 min-w-32"
+                  />
+
+                  {hasActiveFilters && (
+                    <Button variant="ghost" size="sm" onClick={handleClearFilters} className="gap-2">
+                      <XIcon className="h-4 w-4" />
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Select
+                    value={historyRequestType}
+                    onValueChange={(value) => {
+                      setHistoryRequestType(value as RequestType)
+                      setHistoryPage(0)
+                    }}
+                  >
+                    <SelectTrigger className="flex-1 min-w-40">
+                      <SelectValue placeholder="Tất cả yêu cầu" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {REQUEST_TYPE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={historyStatus}
+                    onValueChange={(value) => {
+                      setHistoryStatus(value as RequestStatus | 'ALL')
+                      setHistoryPage(0)
+                    }}
+                  >
+                    <SelectTrigger className="flex-1 min-w-40">
+                      <SelectValue placeholder="Tất cả trạng thái" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUS_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Input
+                    placeholder="Tìm kiếm học viên..."
+                    value={historySearchKeyword}
+                    onChange={(e) => {
+                      setHistorySearchKeyword(e.target.value)
+                      setHistoryPage(0)
+                    }}
+                    className="flex-1 min-w-40"
+                  />
+
+                  <Input
+                    placeholder="Mã lớp..."
+                    value={historyClassCode}
+                    onChange={(e) => {
+                      setHistoryClassCode(e.target.value)
+                      setHistoryPage(0)
+                    }}
+                    className="flex-1 min-w-32"
+                  />
+
+                  {hasActiveHistoryFilters && (
+                    <Button variant="ghost" size="sm" onClick={handleClearHistoryFilters} className="gap-2">
+                      <XIcon className="h-4 w-4" />
+                    </Button>
+                  )}
+                </>
+              )}
             </div>
           </div>
-        </div>
 
-        {/* Data Table */}
-        <div className="space-y-4">
-          {isLoading ? (
-            <div className="space-y-3">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-64 w-full" />
-            </div>
-          ) : (
-            <DataTable columns={columns} data={requests} onViewDetail={handleViewDetail} />
-          )}
+          {/* Pending Tab */}
+          <TabsContent value="pending" className="space-y-4 mt-4">
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between text-sm">
-              <p className="text-muted-foreground">
-                Trang {page + 1} / {totalPages} · {pendingData?.totalElements ?? 0} yêu cầu
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={page === 0 || isLoading}
-                  onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
-                >
-                  Trước
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={page + 1 >= totalPages || isLoading}
-                  onClick={() => setPage((prev) => Math.min(prev + 1, totalPages - 1))}
-                >
-                  Sau
-                </Button>
-              </div>
+            {/* Data Table */}
+            <div className="space-y-4">
+              {isLoadingPending ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-64 w-full" />
+                </div>
+              ) : (
+                <DataTable columns={pendingColumns} data={requests} onViewDetail={handleViewDetail} />
+              )}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between text-sm">
+                  <p className="text-muted-foreground">
+                    Trang {page + 1} / {totalPages} · {pendingData?.totalElements ?? 0} yêu cầu
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={page === 0 || isLoadingPending}
+                      onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
+                    >
+                      Trước
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={page + 1 >= totalPages || isLoadingPending}
+                      onClick={() => setPage((prev) => Math.min(prev + 1, totalPages - 1))}
+                    >
+                      Sau
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </TabsContent>
+
+          {/* History Tab */}
+          <TabsContent value="history" className="space-y-4 mt-4">
+            {/* History Data Table */}
+            <div className="space-y-4">
+              {isLoadingHistory ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-64 w-full" />
+                </div>
+              ) : (
+                <DataTable columns={historyColumns} data={historyRequests} onViewDetail={handleViewDetail} />
+              )}
+
+              {/* History Pagination */}
+              {historyTotalPages > 1 && (
+                <div className="flex items-center justify-between text-sm">
+                  <p className="text-muted-foreground">
+                    Trang {historyPage + 1} / {historyTotalPages} · {historyData?.page?.totalElements ?? 0} yêu cầu
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={historyPage === 0 || isLoadingHistory}
+                      onClick={() => setHistoryPage((prev) => Math.max(prev - 1, 0))}
+                    >
+                      Trước
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={historyPage + 1 >= historyTotalPages || isLoadingHistory}
+                      onClick={() => setHistoryPage((prev) => Math.min(prev + 1, historyTotalPages - 1))}
+                    >
+                      Sau
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Request Detail Dialog */}

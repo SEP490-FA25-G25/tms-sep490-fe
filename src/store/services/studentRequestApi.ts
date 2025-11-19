@@ -318,6 +318,7 @@ export interface AcademicHistoryQuery {
   status?: RequestStatus
   studentName?: string
   classCode?: string
+  decidedBy?: number
   submittedDateFrom?: string
   submittedDateTo?: string
   page?: number
