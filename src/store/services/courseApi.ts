@@ -128,7 +128,6 @@ export interface CourseAssessment {
   name: string;
   description?: string;
   assessmentType: string;
-  weight: number;
   maxScore: number;
   duration?: string;
   sessionIds?: number[];
@@ -169,7 +168,6 @@ export interface AssessmentProgress {
   assessmentId: number;
   name: string;
   assessmentType: string;
-  weight: number;
   maxScore: number;
   achievedScore: number;
   isCompleted: boolean;

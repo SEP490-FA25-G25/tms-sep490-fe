@@ -35,7 +35,7 @@ export function SyllabusViewer({ phases }: SyllabusViewerProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold mb-4">Đề cương chi tiết</h2>
+        <h2 className="text-2xl font-semibold mb-4">Giáo trình chi tiết</h2>
         <p className="text-gray-600">
           {phases.length} giai đoạn • {phases.reduce((total, phase) => total + (phase.totalSessions || 0), 0)} buổi học
         </p>

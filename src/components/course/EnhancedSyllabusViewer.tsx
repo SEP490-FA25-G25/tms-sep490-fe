@@ -17,6 +17,14 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 
 interface EnhancedSyllabusViewerProps {
   phases: CoursePhase[]
@@ -26,6 +34,7 @@ interface EnhancedSyllabusViewerProps {
 
 export function EnhancedSyllabusViewer({ phases, materials, assessments }: EnhancedSyllabusViewerProps) {
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set())
+  const [expandedSessions, setExpandedSessions] = useState<Set<number>>(new Set())
 
   const togglePhase = (phaseId: string) => {
     const newExpanded = new Set(expandedPhases)
@@ -35,6 +44,16 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
       newExpanded.add(phaseId)
     }
     setExpandedPhases(newExpanded)
+  }
+
+  const toggleSession = (sessionId: number) => {
+    const next = new Set(expandedSessions)
+    if (next.has(sessionId)) {
+      next.delete(sessionId)
+    } else {
+      next.add(sessionId)
+    }
+    setExpandedSessions(next)
   }
 
   
@@ -98,11 +117,32 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
     return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i]
   }
 
+  const getAssessmentTypeLabel = (assessmentType?: string) => {
+    switch (assessmentType?.toUpperCase()) {
+      case 'QUIZ':
+        return 'Quiz'
+      case 'MIDTERM':
+        return 'Midterm'
+      case 'FINAL':
+        return 'Final'
+      case 'ASSIGNMENT':
+        return 'Assignment'
+      case 'PROJECT':
+        return 'Project'
+      case 'ORAL':
+        return 'Oral'
+      case 'PRACTICE':
+        return 'Practice'
+      default:
+        return assessmentType || 'Khác'
+    }
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="space-y-2">
-        <h2 className="text-2xl font-semibold">Đề cương khóa học</h2>
+        <h2 className="text-2xl font-semibold">Giáo trình khóa học</h2>
         <p className="text-muted-foreground">
           {phases.length} giai đoạn • {phases.reduce((total, phase) => total + (phase.totalSessions || 0), 0)} buổi học
           {materials && ` • ${materials.totalMaterials} tài liệu`}
@@ -111,15 +151,15 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
 
       {/* Course-level Materials */}
       {materials?.courseLevel && materials.courseLevel.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-3" id="tai-lieu-khoa-hoc">
           <div className="flex items-center gap-3">
             <BookOpen className="h-5 w-5 text-primary" />
             <h3 className="text-lg font-semibold">Tài liệu khóa học</h3>
             <Badge variant="secondary">{materials.courseLevel.length}</Badge>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-lg border divide-y overflow-hidden bg-white">
             {materials.courseLevel.map((material) => (
-              <div key={material.id} className="flex items-center gap-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+              <div key={material.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
                 <div className="flex-shrink-0 text-muted-foreground">
                   {getMaterialIcon(material.materialType)}
                 </div>
@@ -130,13 +170,18 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
                     {material.fileSize && ` • ${formatFileSize(material.fileSize)}`}
                   </p>
                 </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline">
-                    <Eye className="h-3 w-3" />
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    <Download className="h-3 w-3" />
-                  </Button>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    {getMaterialTypeLabel(material.materialType)}
+                  </Badge>
+                  <div className="flex gap-1">
+                    <Button size="icon" variant="ghost" aria-label="Xem tài liệu">
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="ghost" aria-label="Tải tài liệu">
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -147,144 +192,161 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
       <Separator />
 
       {/* Phases with Sessions - Using Accordion */}
-      <div className="space-y-6">
-        <h3 className="text-lg font-semibold">Nội dung chi tiết</h3>
+      <div className="space-y-4" id="noi-dung-chi-tiet">
+        <div className="flex items-center gap-3">
+          <h3 className="text-lg font-semibold">Nội dung chi tiết</h3>
+        </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {phases.map((phase) => (
             <Collapsible
               key={phase.id}
               open={expandedPhases.has(phase.id.toString())}
               onOpenChange={() => togglePhase(phase.id.toString())}
-              className="border rounded-lg"
+              className="rounded-xl border bg-white"
             >
               <CollapsibleTrigger asChild>
-                <button className="w-full p-6 hover:bg-muted/50 transition-colors text-left">
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-3">
-                      <span className="font-semibold text-lg">
-                        Giai đoạn {phase.phaseNumber}: {phase.name}
-                      </span>
+                <button className="w-full px-5 py-4 hover:bg-muted/50 transition-colors text-left">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Giai đoạn {phase.phaseNumber}</p>
+                      <div className="text-base font-semibold text-foreground">{phase.name}</div>
+                      {phase.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {phase.description}
+                        </p>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">{phase.totalSessions} buổi</Badge>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      {phase.totalSessions && <span>{phase.totalSessions} buổi</span>}
                       {materials?.phases?.find(p => p.id === phase.id)?.totalMaterials && (
-                        <Badge variant="secondary">
+                        <span className="flex items-center gap-1">
+                          <BookOpen className="h-4 w-4" />
                           {materials.phases.find(p => p.id === phase.id)?.totalMaterials} tài liệu
-                        </Badge>
+                        </span>
                       )}
                     </div>
                   </div>
                 </button>
               </CollapsibleTrigger>
 
-              <CollapsibleContent className="px-6 pb-6">
-                {phase.description && (
-                  <p className="text-muted-foreground mb-6">{phase.description}</p>
-                )}
-
-                <div className="space-y-4">
-                  {phase.sessions?.map((session) => {
+              <CollapsibleContent className="px-5 pb-5 space-y-4">
+                {phase.sessions?.length ? (
+                  phase.sessions.map((session) => {
                     const sessionMaterials = getSessionMaterials(session.id)
+                    const isOpen = expandedSessions.has(session.id)
 
                     return (
-                      <div key={session.id} className="py-6 border-b last:border-0">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-3">
-                            <h4 className="font-semibold text-base">
-                              Buổi {session.sequenceNo}: {session.topic}
-                            </h4>
-                            <div className="flex items-center gap-2">
+                      <div key={session.id} className="border-t first:border-t-0 ">
+                        <button
+                          type="button"
+                          onClick={() => toggleSession(session.id)}
+                          className="w-full px-4 py-2 flex items-start justify-between gap-3 text-left rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-3">
+                              <h4 className="font-semibold text-base text-foreground">
+                                Buổi {session.sequenceNo}: {session.topic}
+                              </h4>
                               {session.isCompleted && (
-                                <Badge variant="default" className="text-xs bg-success hover:bg-success/90">
+                                <Badge variant="default" className="bg-success hover:bg-success/90">
                                   <CheckCircle className="h-3 w-3 mr-1" />
                                   Hoàn thành
                                 </Badge>
                               )}
-                              {sessionMaterials.length > 0 && (
-                                <Badge variant="outline" className="text-xs">
-                                  {sessionMaterials.length} tài liệu
-                                </Badge>
-                              )}
                             </div>
+                            {session.description && (
+                              <p className="text-sm text-muted-foreground line-clamp-2">
+                                {session.description}
+                              </p>
+                            )}
                           </div>
-                        </div>
-
-                        {session.description && (
-                          <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{session.description}</p>
-                        )}
-
-                        {/* Session Objectives */}
-                        {session.objectives && (
-                          <div className="mb-4">
-                            <h5 className="font-medium text-sm mb-2 flex items-center gap-2 text-foreground">
-                              <Target className="h-4 w-4 text-primary" />
-                              Mục tiêu buổi học:
-                            </h5>
-                            <p className="text-sm text-muted-foreground pl-6">
-                              {session.objectives}
-                            </p>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground pl-2">
+                            {sessionMaterials.length > 0 && (
+                              <span>{sessionMaterials.length} tài liệu</span>
+                            )}
+                            <span className="text-primary font-medium">{isOpen ? 'Ẩn' : 'Xem'}</span>
                           </div>
-                        )}
+                        </button>
 
-                        {/* Session Skills */}
-                        {session.skillSets && session.skillSets.length > 0 && (
-                          <div className="mb-4 pl-6">
-                            <div className="flex flex-wrap gap-2">
-                              {session.skillSets.map((skill, index) => (
-                                <Badge key={index} variant="secondary" className="text-xs font-normal">
-                                  {skill}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Session Materials */}
-                        {sessionMaterials.length > 0 && (
-                          <div className="mb-4">
-                            <h5 className="font-medium text-sm mb-3 flex items-center gap-2 text-foreground">
-                              <BookOpen className="h-4 w-4 text-muted-foreground" />
-                              Tài liệu cần thiết:
-                            </h5>
-                            <div className="space-y-2 pl-6">
-                              {sessionMaterials.map((material) => (
-                                <div key={material.id} className="flex items-center gap-3 p-3 hover:bg-muted/50 rounded transition-colors group">
-                                  <div className="shrink-0 text-muted-foreground group-hover:text-foreground transition-colors">
-                                    {getMaterialIcon(material.materialType)}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <h6 className="font-medium text-sm truncate">{material.title}</h6>
-                                    <p className="text-xs text-muted-foreground">
-                                      {getMaterialTypeLabel(material.materialType)}
-                                      {material.fileSize && ` • ${formatFileSize(material.fileSize)}`}
-                                    </p>
-                                  </div>
-                                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-8 w-8 p-0"
-                                    >
-                                      <Eye className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-8 w-8 p-0"
-                                    >
-                                      <Download className="h-4 w-4" />
-                                    </Button>
-                                  </div>
+                        {isOpen && (
+                          <div className="px-3 pb-5 pt-2 space-y-4">
+                            {session.objectives && (
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                                  <Target className="h-4 w-4 text-primary" />
+                                  <span>Mục tiêu buổi học</span>
                                 </div>
-                              ))}
-                            </div>
+                                <p className="text-sm text-muted-foreground">
+                                  {session.objectives}
+                                </p>
+                              </div>
+                            )}
+
+                            {session.skillSets && session.skillSets.length > 0 && (
+                              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                                {session.skillSets.map((skill, index) => (
+                                  <span
+                                    key={index}
+                                    className="rounded-full bg-muted px-2 py-1 uppercase tracking-wide font-medium"
+                                  >
+                                    {skill}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {sessionMaterials.length > 0 && (
+                              <div className="rounded-lg border overflow-hidden bg-muted/20">
+                                {sessionMaterials.map((material) => (
+                                  <div
+                                    key={material.id}
+                                    className="flex items-center gap-3 px-4 py-3 border-b last:border-b-0"
+                                  >
+                                    <div className="shrink-0 text-muted-foreground">
+                                      {getMaterialIcon(material.materialType)}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <h6 className="font-medium text-sm truncate">{material.title}</h6>
+                                        <span className="text-xs text-muted-foreground">
+                                          {getMaterialTypeLabel(material.materialType)}
+                                        </span>
+                                      </div>
+                                      {material.fileSize && (
+                                        <p className="text-xs text-muted-foreground">
+                                          {formatFileSize(material.fileSize)}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <div className="flex gap-1">
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        aria-label="Xem tài liệu"
+                                      >
+                                        <Eye className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        aria-label="Tải tài liệu"
+                                      >
+                                        <Download className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
                     )
-                  })}
-                </div>
+                  })
+                ) : (
+                  <p className="text-sm text-muted-foreground">Chưa có buổi học trong giai đoạn này</p>
+                )}
               </CollapsibleContent>
             </Collapsible>
           ))}
@@ -295,44 +357,62 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
       {assessments && assessments.length > 0 && (
         <>
           <Separator />
-          <div className="space-y-4">
+          <div className="space-y-3" id="ke-hoach-danh-gia">
             <div className="flex items-center gap-3">
               <Award className="h-5 w-5 text-primary" />
               <h3 className="text-lg font-semibold">Kế hoạch đánh giá</h3>
               <Badge variant="secondary">{assessments.length}</Badge>
             </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {assessments.map((assessment) => (
-                <div key={assessment.id} className="p-4 border rounded-lg space-y-3 bg-card text-card-foreground shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-semibold">{assessment.name}</h4>
-                    <Badge variant="secondary" className="text-xs">
-                      {assessment.assessmentType}
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    {assessment.duration && (
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="h-4 w-4" />
-                        <span>{assessment.duration} phút</span>
-                      </div>
-                    )}
-                    {assessment.maxScore && (
-                      <div className="flex items-center gap-1.5">
-                        <Award className="h-4 w-4" />
-                        <span>{assessment.maxScore} điểm</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {assessment.description && (
-                    <p className="text-sm text-muted-foreground border-t pt-2 mt-2">
-                      {assessment.description}
-                    </p>
-                  )}
-                </div>
-              ))}
+            <div className="rounded-lg border overflow-hidden bg-white">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[240px]">Bài đánh giá</TableHead>
+                    <TableHead className="w-[120px]">Loại</TableHead>
+                    <TableHead className="w-[120px]">Thời lượng</TableHead>
+                    <TableHead className="w-[120px]">Điểm tối đa</TableHead>
+                    <TableHead>CLO liên kết</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {assessments.map((assessment) => (
+                    <TableRow key={assessment.id}>
+                      <TableCell>
+                        <div className="font-semibold">{assessment.name}</div>
+                        {assessment.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {assessment.description}
+                          </p>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="uppercase tracking-wide">
+                          {getAssessmentTypeLabel(assessment.assessmentType)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {assessment.duration ? `${assessment.duration} phút` : '—'}
+                      </TableCell>
+                      <TableCell>
+                        {assessment.maxScore ?? '—'}
+                      </TableCell>
+                      <TableCell>
+                        {assessment.cloMappings && assessment.cloMappings.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {assessment.cloMappings.map((clo, idx) => (
+                              <Badge key={idx} variant="secondary" className="uppercase">
+                                {clo}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">Chưa liên kết CLO</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           </div>
         </>
