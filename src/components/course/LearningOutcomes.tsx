@@ -50,11 +50,11 @@ export function LearningOutcomes({ clos, progress }: LearningOutcomesProps) {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Target className="h-6 w-6 text-blue-600" />
+            <Target className="h-6 w-6 text-primary" />
             <h3 className="text-lg font-semibold">Tiến độ tổng thể</h3>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-primary">
               {Math.round(overallProgress)}%
             </div>
             <p className="text-sm text-muted-foreground">hoàn thành</p>
@@ -63,11 +63,11 @@ export function LearningOutcomes({ clos, progress }: LearningOutcomesProps) {
         <Progress value={overallProgress} className="h-3" />
         <div className="flex items-center gap-6 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-green-600" />
+            <CheckCircle className="h-4 w-4 text-success" />
             <span>{completedCLOs} CLOs đã đạt</span>
           </div>
           <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-orange-600" />
+            <Clock className="h-4 w-4 text-muted-foreground" />
             <span>{clos.length - completedCLOs} CLOs đang học</span>
           </div>
         </div>
@@ -103,7 +103,7 @@ export function LearningOutcomes({ clos, progress }: LearningOutcomesProps) {
                   <TableRow key={clo.id}>
                     <TableCell className="font-medium">
                       <div className="space-y-1">
-                        <div className="font-bold text-blue-700">{clo.code}</div>
+                        <div className="font-bold text-primary">{clo.code}</div>
                         <div className="text-sm text-muted-foreground line-clamp-2" title={clo.description}>
                           {clo.description}
                         </div>
@@ -111,7 +111,7 @@ export function LearningOutcomes({ clos, progress }: LearningOutcomesProps) {
                     </TableCell>
                     <TableCell>
                       {cloProgress?.isAchieved ? (
-                        <Badge variant="default" className="bg-green-600 hover:bg-green-700">
+                        <Badge variant="default" className="bg-success hover:bg-success/90">
                           Đã đạt
                         </Badge>
                       ) : cloProgress ? (
@@ -135,7 +135,7 @@ export function LearningOutcomes({ clos, progress }: LearningOutcomesProps) {
                       <TableCell key={plo.id} className="text-center">
                         {relatedPloIds.has(plo.id) && (
                           <div className="flex justify-center">
-                            <Check className="h-5 w-5 text-blue-600" />
+                            <Check className="h-5 w-5 text-primary" />
                           </div>
                         )}
                       </TableCell>

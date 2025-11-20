@@ -107,6 +107,7 @@ N0 `#FFFFFF`, N50 `#F8FAFC`, N100 `#F1F5F9`, N200 `#E2E8F0`, N300 `#CBD5E1`, N50
 - Toast/Dialog: toast ≤2/flow; dialog chỉ cho hành động quan trọng, CTA chính = primary, phụ = ghost/outline. 
 - Navigation: breadcrumb/heading ngắn; sidebar active dùng A100/A300 + text A700; giữ state filter khi quay lại. 
 - Motion: chỉ transition 150–200ms ease-out; không thêm animation khác nếu không được yêu cầu. 
+- Tương tác: mọi phần tử click được phải có `cursor: pointer` + trạng thái hover/focus rõ; link/CTA cần focus ring A700. 
 
 ### **11) Danh Mục Component shadcn/ui (áp dụng chuẩn trên)** 
 Accordion, Alert, Alert Dialog, Aspect Ratio, Avatar, Badge, Breadcrumb, Button, Button Group, Calendar, Card, Carousel, Chart, Checkbox, Collapsible, Combobox, Command, Context Menu, Data Table, Date Picker, Dialog, Drawer, Dropdown Menu, Empty, Field, Form, Hover Card, Input Group, Input OTP, Input, Item, Kbd, Label, Menubar, Native Select, Navigation Menu, Pagination, Popover, Progress, Radio Group, Resizable, Scroll Area, Select, Separator, Sheet, Sidebar, Skeleton, Slider, Sonner, Spinner, Switch, Table, Tabs, Textarea, Toast, Toggle Group, Toggle, Tooltip, Typography. 

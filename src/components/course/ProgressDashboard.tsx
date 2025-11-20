@@ -20,9 +20,9 @@ export function ProgressDashboard({ progress }: ProgressDashboardProps) {
   const attendanceRate = Math.round(progress.attendanceRate)
 
   const getStatusColor = (percentage: number) => {
-    if (percentage >= 80) return 'text-green-600'
-    if (percentage >= 60) return 'text-yellow-600'
-    return 'text-red-600'
+    if (percentage >= 80) return 'text-success'
+    if (percentage >= 60) return 'text-warning'
+    return 'text-destructive'
   }
 
   const getStatusBadge = (percentage: number) => {
@@ -45,11 +45,11 @@ export function ProgressDashboard({ progress }: ProgressDashboardProps) {
         {/* Overall Progress */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <Target className="h-6 w-6 text-blue-600" />
+            <Target className="h-6 w-6 text-primary" />
             <h3 className="font-semibold">Tiến độ tổng thể</h3>
           </div>
           <div className="space-y-2">
-            <div className="text-3xl font-bold text-blue-600">
+            <div className="text-3xl font-bold text-primary">
               {completionPercentage}%
             </div>
             <Progress value={progress.progressPercentage} className="h-2" />
@@ -62,7 +62,7 @@ export function ProgressDashboard({ progress }: ProgressDashboardProps) {
         {/* Attendance Rate */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <Calendar className="h-6 w-6 text-green-600" />
+            <Calendar className="h-6 w-6 text-muted-foreground" />
             <h3 className="font-semibold">Tỷ lệ điểm danh</h3>
           </div>
           <div className="space-y-2">
@@ -76,29 +76,10 @@ export function ProgressDashboard({ progress }: ProgressDashboardProps) {
           </div>
         </div>
 
-        {/* Materials Progress */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <BookOpen className="h-6 w-6 text-purple-600" />
-            <h3 className="font-semibold">Tiến độ tài liệu</h3>
-          </div>
-          <div className="space-y-2">
-            <div className="text-3xl font-bold text-purple-600">
-              {progress.accessibleMaterials}
-            </div>
-            <div className="text-lg text-muted-foreground">
-              /{progress.totalMaterials} tài liệu
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {Math.round((progress.accessibleMaterials / progress.totalMaterials) * 100)}% khả dụng
-            </p>
-          </div>
-        </div>
-
         {/* Current Status */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <TrendingUp className="h-6 w-6 text-orange-600" />
+            <TrendingUp className="h-6 w-6 text-muted-foreground" />
             <h3 className="font-semibold">Trạng thái</h3>
           </div>
           <div className="space-y-3">
@@ -140,12 +121,12 @@ export function ProgressDashboard({ progress }: ProgressDashboardProps) {
                   <Progress value={cloProgress.achievementRate} className="h-1" />
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     {cloProgress.isAchieved ? (
-                      <CheckCircle className="h-3 w-3 text-green-600" />
+                      <CheckCircle className="h-3 w-3 text-success" />
                     ) : (
-                      <Clock className="h-3 w-3 text-orange-600" />
+                      <Clock className="h-3 w-3 text-warning" />
                     )}
                     <span>
-                      {cloProgress.completedAssessments}/{cloProgress.totalAssessments} bài tập
+                      {cloProgress.completedAssessments}/{cloProgress.totalAssessments} bài kiểm tra
                     </span>
                     <span>• Điểm TB: {cloProgress.averageScore.toFixed(1)}</span>
                   </div>

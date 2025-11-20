@@ -10,7 +10,8 @@ import {
   Music,
   Image,
   Target,
-  Award
+  Award,
+  Clock
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -101,7 +102,7 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
     <div className="space-y-8">
       {/* Header */}
       <div className="space-y-2">
-        <h2 className="text-2xl font-semibold">Syllabus khóa học</h2>
+        <h2 className="text-2xl font-semibold">Đề cương khóa học</h2>
         <p className="text-muted-foreground">
           {phases.length} giai đoạn • {phases.reduce((total, phase) => total + (phase.totalSessions || 0), 0)} buổi học
           {materials && ` • ${materials.totalMaterials} tài liệu`}
@@ -112,7 +113,7 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
       {materials?.courseLevel && materials.courseLevel.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <BookOpen className="h-5 w-5 text-blue-600" />
+            <BookOpen className="h-5 w-5 text-primary" />
             <h3 className="text-lg font-semibold">Tài liệu khóa học</h3>
             <Badge variant="secondary">{materials.courseLevel.length}</Badge>
           </div>
@@ -162,7 +163,7 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-3">
                       <span className="font-semibold text-lg">
-                        Phase {phase.phaseNumber}: {phase.name}
+                        Giai đoạn {phase.phaseNumber}: {phase.name}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -187,15 +188,15 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
                     const sessionMaterials = getSessionMaterials(session.id)
 
                     return (
-                      <div key={session.id} className="border rounded-lg p-4 bg-muted/30">
+                      <div key={session.id} className="py-6 border-b last:border-0">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-3">
-                            <h4 className="font-semibold">
-                              Session {session.sequenceNo}: {session.topic}
+                            <h4 className="font-semibold text-base">
+                              Buổi {session.sequenceNo}: {session.topic}
                             </h4>
                             <div className="flex items-center gap-2">
                               {session.isCompleted && (
-                                <Badge variant="default" className="text-xs">
+                                <Badge variant="default" className="text-xs bg-success hover:bg-success/90">
                                   <CheckCircle className="h-3 w-3 mr-1" />
                                   Hoàn thành
                                 </Badge>
@@ -210,17 +211,17 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
                         </div>
 
                         {session.description && (
-                          <p className="text-sm text-muted-foreground mb-4">{session.description}</p>
+                          <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{session.description}</p>
                         )}
 
                         {/* Session Objectives */}
                         {session.objectives && (
                           <div className="mb-4">
-                            <h5 className="font-medium text-sm mb-2 flex items-center gap-2">
-                              <Target className="h-4 w-4 text-blue-600" />
+                            <h5 className="font-medium text-sm mb-2 flex items-center gap-2 text-foreground">
+                              <Target className="h-4 w-4 text-primary" />
                               Mục tiêu buổi học:
                             </h5>
-                            <p className="text-sm text-muted-foreground bg-background p-3 rounded border">
+                            <p className="text-sm text-muted-foreground pl-6">
                               {session.objectives}
                             </p>
                           </div>
@@ -228,11 +229,10 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
 
                         {/* Session Skills */}
                         {session.skillSets && session.skillSets.length > 0 && (
-                          <div className="mb-4">
-                            <h5 className="font-medium text-sm mb-2">Kỹ năng:</h5>
+                          <div className="mb-4 pl-6">
                             <div className="flex flex-wrap gap-2">
                               {session.skillSets.map((skill, index) => (
-                                <Badge key={index} variant="secondary" className="text-xs">
+                                <Badge key={index} variant="secondary" className="text-xs font-normal">
                                   {skill}
                                 </Badge>
                               ))}
@@ -243,14 +243,14 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
                         {/* Session Materials */}
                         {sessionMaterials.length > 0 && (
                           <div className="mb-4">
-                            <h5 className="font-medium text-sm mb-3 flex items-center gap-2">
-                              <BookOpen className="h-4 w-4 text-green-600" />
+                            <h5 className="font-medium text-sm mb-3 flex items-center gap-2 text-foreground">
+                              <BookOpen className="h-4 w-4 text-muted-foreground" />
                               Tài liệu cần thiết:
                             </h5>
-                            <div className="space-y-2">
+                            <div className="space-y-2 pl-6">
                               {sessionMaterials.map((material) => (
-                                <div key={material.id} className="flex items-center gap-3 p-3 bg-background border rounded">
-                                  <div className="flex-shrink-0 text-muted-foreground">
+                                <div key={material.id} className="flex items-center gap-3 p-3 hover:bg-muted/50 rounded transition-colors group">
+                                  <div className="shrink-0 text-muted-foreground group-hover:text-foreground transition-colors">
                                     {getMaterialIcon(material.materialType)}
                                   </div>
                                   <div className="flex-1 min-w-0">
@@ -260,22 +260,20 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
                                       {material.fileSize && ` • ${formatFileSize(material.fileSize)}`}
                                     </p>
                                   </div>
-                                  <div className="flex gap-1">
+                                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <Button
                                       size="sm"
-                                      variant="outline"
-                                      className="h-7"
+                                      variant="ghost"
+                                      className="h-8 w-8 p-0"
                                     >
-                                      <Eye className="h-3 w-3 mr-1" />
-                                      Xem
+                                      <Eye className="h-4 w-4" />
                                     </Button>
                                     <Button
                                       size="sm"
-                                      variant="outline"
-                                      className="h-7"
+                                      variant="ghost"
+                                      className="h-8 w-8 p-0"
                                     >
-                                      <Download className="h-3 w-3 mr-1" />
-                                      Tải
+                                      <Download className="h-4 w-4" />
                                     </Button>
                                   </div>
                                 </div>
@@ -299,24 +297,39 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
           <Separator />
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <Award className="h-5 w-5 text-purple-600" />
+              <Award className="h-5 w-5 text-primary" />
               <h3 className="text-lg font-semibold">Kế hoạch đánh giá</h3>
               <Badge variant="secondary">{assessments.length}</Badge>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               {assessments.map((assessment) => (
-                <div key={assessment.id} className="p-4 border rounded-lg space-y-2">
+                <div key={assessment.id} className="p-4 border rounded-lg space-y-3 bg-card text-card-foreground shadow-sm">
                   <div className="flex items-center justify-between">
                     <h4 className="font-semibold">{assessment.name}</h4>
-                    <Badge variant="outline">
+                    <Badge variant="secondary" className="text-xs">
                       {assessment.assessmentType}
                     </Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {assessment.assessmentType} • {assessment.weight}% trọng số
-                  </p>
+                  
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    {assessment.duration && (
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="h-4 w-4" />
+                        <span>{assessment.duration} phút</span>
+                      </div>
+                    )}
+                    {assessment.maxScore && (
+                      <div className="flex items-center gap-1.5">
+                        <Award className="h-4 w-4" />
+                        <span>{assessment.maxScore} điểm</span>
+                      </div>
+                    )}
+                  </div>
+
                   {assessment.description && (
-                    <p className="text-sm text-muted-foreground">{assessment.description}</p>
+                    <p className="text-sm text-muted-foreground border-t pt-2 mt-2">
+                      {assessment.description}
+                    </p>
                   )}
                 </div>
               ))}

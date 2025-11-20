@@ -115,42 +115,42 @@ export default function CourseDetailPage() {
         <AppSidebar variant="inset" />
         <SidebarInset>
           <SiteHeader />
-          <div className="flex flex-1 flex-col">
-            {/* Course Header */}
-            <CourseHeader
-              course={courseDetail}
-              progress={progress}
-              materials={materials}
-            />
-
+          <div className="flex flex-1 flex-col overflow-hidden">
             {/* Content Sections */}
             <ScrollArea className="flex-1">
-              <div className="p-6 md:p-8">
+              {/* Course Header - Now inside scroll area */}
+              <CourseHeader
+                course={courseDetail}
+                progress={progress}
+                materials={materials}
+              />
+              
+              <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
                 <Tabs defaultValue="syllabus" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3 h-10 bg-muted/50">
-                    <TabsTrigger
-                      value="syllabus"
-                      className="data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                    >
-                      <span className="font-medium">Syllabus</span>
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="outcomes"
-                      className="data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                    >
-                      <span className="font-medium">Mục tiêu</span>
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="progress"
-                      className="data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                    >
-                      <span className="font-medium">Tiến độ</span>
-                    </TabsTrigger>
-                  </TabsList>
+                  <div className="border-b pb-px mb-6">
+                    <TabsList className="h-auto p-0 bg-transparent space-x-6">
+                      <TabsTrigger
+                        value="syllabus"
+                        className="rounded-none border-b-2 border-transparent px-2 py-2 font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none hover:text-foreground"
+                      >
+                        Đề cương
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="outcomes"
+                        className="rounded-none border-b-2 border-transparent px-2 py-2 font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none hover:text-foreground"
+                      >
+                        Mục tiêu
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="progress"
+                        className="rounded-none border-b-2 border-transparent px-2 py-2 font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none hover:text-foreground"
+                      >
+                        Tiến độ
+                      </TabsTrigger>
+                    </TabsList>
+                  </div>
 
-                  <Separator className="mt-4" />
-
-                  <div className="mt-6 min-h-[400px]">
+                  <div className="min-h-[400px]">
                     <TabsContent value="syllabus" className="mt-0">
                       {courseDetail.phases && courseDetail.phases.length > 0 ? (
                         <EnhancedSyllabusViewer
@@ -161,7 +161,7 @@ export default function CourseDetailPage() {
                       ) : (
                         <Card>
                           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                            <h3 className="text-lg font-semibold mb-2">Chưa có syllabus chi tiết</h3>
+                            <h3 className="text-lg font-semibold mb-2">Chưa có đề cương chi tiết</h3>
                             <p className="text-muted-foreground">Nội dung khóa học sẽ được cập nhật sớm</p>
                           </CardContent>
                         </Card>

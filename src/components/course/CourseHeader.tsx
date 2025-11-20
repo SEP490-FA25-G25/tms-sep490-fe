@@ -54,10 +54,10 @@ export function CourseHeader({ course, progress, materials }: CourseHeaderProps)
             {/* Title and Status */}
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div className="space-y-2">
-                <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
                   {course.name}
                 </h1>
-                <p className="text-xl text-gray-600">
+                <p className="text-lg text-muted-foreground">
                   {course.code}
                 </p>
               </div>
@@ -78,14 +78,14 @@ export function CourseHeader({ course, progress, materials }: CourseHeaderProps)
               )}
               {course.levelName && (
                 <div className="flex items-center gap-2">
-                  <span>Level: {course.levelName}</span>
+                  <span>Cấp độ: {course.levelName}</span>
                 </div>
               )}
             </div>
 
             {/* Description */}
             {course.description && (
-              <p className="text-gray-700 max-w-4xl leading-relaxed">
+              <p className="text-muted-foreground max-w-4xl leading-relaxed">
                 {course.description}
               </p>
             )}
@@ -93,118 +93,54 @@ export function CourseHeader({ course, progress, materials }: CourseHeaderProps)
 
           {/* Key Information Grid */}
           <div className="px-4 lg:px-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {course.totalHours && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-blue-600" />
-                    <span className="font-medium">Tổng thời gian</span>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    <span className="text-sm font-medium">Tổng thời gian</span>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-2xl font-bold text-blue-600">{course.totalHours}</p>
-                    <p className="text-sm text-muted-foreground">giờ học</p>
-                  </div>
+                  <p className="text-xl font-semibold text-foreground">{course.totalHours} giờ</p>
                 </div>
               )}
 
               {course.durationWeeks && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <Calendar className="h-5 w-5 text-green-600" />
-                    <span className="font-medium">Thời gian</span>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Calendar className="h-4 w-4" />
+                    <span className="text-sm font-medium">Thời gian</span>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-2xl font-bold text-green-600">{course.durationWeeks}</p>
-                    <p className="text-sm text-muted-foreground">tuần</p>
-                  </div>
+                  <p className="text-xl font-semibold text-foreground">{course.durationWeeks} tuần</p>
                 </div>
               )}
 
               {course.totalSessions && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <BookOpen className="h-5 w-5 text-purple-600" />
-                    <span className="font-medium">Buổi học</span>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <BookOpen className="h-4 w-4" />
+                    <span className="text-sm font-medium">Buổi học</span>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-2xl font-bold text-purple-600">{course.totalSessions}</p>
-                    <p className="text-sm text-muted-foreground">buổi</p>
-                  </div>
+                  <p className="text-xl font-semibold text-foreground">{course.totalSessions} buổi</p>
                 </div>
               )}
 
               {course.sessionPerWeek && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <Users className="h-5 w-5 text-orange-600" />
-                    <span className="font-medium">Lịch học</span>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Users className="h-4 w-4" />
+                    <span className="text-sm font-medium">Lịch học</span>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-2xl font-bold text-orange-600">{course.sessionPerWeek}</p>
-                    <p className="text-sm text-muted-foreground">buổi/tuần</p>
-                  </div>
+                  <p className="text-xl font-semibold text-foreground">{course.sessionPerWeek} buổi/tuần</p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Progress Section */}
-          {(progress || progressPercentage > 0) && (
-            <div className="bg-gray-50 rounded-lg p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Tiến độ học tập</h3>
-                  <p className="text-sm text-gray-600">
-                    {completedSessions}/{totalSessions} buổi học
-                  </p>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {Math.round(progressPercentage)}%
-                  </div>
-                  <p className="text-sm text-gray-600">hoàn thành</p>
-                </div>
-              </div>
-
-              <Progress value={progressPercentage} className="h-3" />
-
-              {/* Additional Progress Info */}
-              <div className="flex flex-wrap gap-4 text-sm">
-                {progress?.attendanceRate && (
-                  <div>
-                    <span className="text-gray-600">Điểm danh: </span>
-                    <span className="font-medium">{progress.attendanceRate.toFixed(1)}%</span>
-                  </div>
-                )}
-                {progress?.currentPhase && (
-                  <div>
-                    <span className="text-gray-600">Giai đoạn hiện tại: </span>
-                    <span className="font-medium">{progress.currentPhase}</span>
-                  </div>
-                )}
-                {nextSession && (
-                  <div>
-                    <span className="text-gray-600">Buổi học tiếp theo: </span>
-                    <span className="font-medium">{nextSession}</span>
-                  </div>
-                )}
-                {materials && (
-                  <div>
-                    <span className="text-gray-600">Tài liệu: </span>
-                    <span className="font-medium">
-                      {materials.accessibleMaterials}/{materials.totalMaterials} có sẵn
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Quick Actions */}
-          <div className="flex flex-wrap gap-3">
-            <Button className="bg-blue-600 hover:bg-blue-700">
+          {/* Quick Actions - Simplified */}
+          <div className="px-4 lg:px-6 flex flex-wrap gap-3">
+            <Button>
               <BookOpen className="h-4 w-4 mr-2" />
-              Xem buổi học tiếp theo
+              Vào học ngay
             </Button>
             <Button variant="outline">
               <BookOpen className="h-4 w-4 mr-2" />
