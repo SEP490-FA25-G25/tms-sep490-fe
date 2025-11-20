@@ -1,164 +1,117 @@
-## 🎨 **Phong Cách Modern Minimal Design** 
+## 🎨 **Thiết Kế Modern Minimal Cho TMS (Frontend shadcn/ui + Tailwind)** 
 
-### **1. Nguyên Tắc Thiết Kế Cốt Lõi** 
+Tài liệu này chuẩn hóa UI/UX cho web app quản lý (dashboard) với shadcn/ui. Mục tiêu: nhanh, dễ quét, ít nhiễu, 100% tiếng Việt, ưu tiên hiệu suất và dễ bảo trì. Dark mode sẽ bổ sung sau.
 
-Shadcn/ui được xây dựng dựa trên các nguyên tắc thiết kế Swiss với triết lý tối giản hiện đại, tập trung vào mã nguồn mở, khả năng tùy biến cao và sự kết hợp linh hoạt của các component. 
+### **1) Nguyên Tắc Cốt Lõi** 
+- **Content-first, tối giản có chủ đích**: Chỉ giữ yếu tố phục vụ thao tác/quyết định. 
+- **Không lạm dụng card/đổ bóng**: Dùng lưới/spacing để nhóm nội dung; card chỉ khi cần nền riêng. 
+- **Truy cập & tốc độ**: WCAG AA, tab-able, lightweight; hạn chế motion, ưu tiên phản hồi nhanh. 
+- **Nhất quán component**: Dùng variant mặc định của shadcn/ui, chỉ override khi thật sự cần. 
 
-**Các nguyên tắc thiết kế:**
-- **Minimalism thông minh**: Loại bỏ mọi thứ không phục vụ mục đích, không phải loại bỏ mọi thứ
-- **Content-first**: Nội dung là trọng tâm, thiết kế phải "vô hình" nhưng mạnh mẽ
-- **Restraint (Kiềm chế)**: Sử dụng màu sắc và hiệu ứng một cách tiết chế, có chủ đích
-- **Accessibility**: Tỷ lệ tương phản đạt chuẩn WCAG AA, dễ sử dụng cho mọi người
+### **2) Màu Sắc & Token (Light mode)** 
+Palette đề xuất (4 màu đã chọn) dùng cho thương hiệu/nhấn. Luôn kết hợp với neutral xám để giữ độ rõ ràng.
 
-### **2. Hệ Thống Màu Sắc**
+**Brand/Accent (A):**
+- A100 `#FFF2E0` (rgb(255, 242, 224)) – nền nhấn nhẹ (tag nền, highlight soft). 
+- A300 `#C0C9EE` (rgb(192, 201, 238)) – hover cho element nhấn, nền phụ cho stats. 
+- A500 `#A2AADB` (rgb(162, 170, 219)) – primary background state (chip/label). 
+- A700 `#898AC4` (rgb(137, 138, 196)) – **Primary** (button, link nhấn, focus ring). 
 
-Palette màu chủ đạo với màu trắng sạch và xám nhạt chiếm ưu thế, kết hợp với accent màu tím tinh tế (hoặc màu nhấn khác) chỉ xuất hiện ở các vị trí quan trọng như primary actions và focus states.
+**Neutral (N) đề xuất** (giữ tông xám cho đọc dễ):  
+N0 `#FFFFFF`, N50 `#F8FAFC`, N100 `#F1F5F9`, N200 `#E2E8F0`, N300 `#CBD5E1`, N500 `#64748B`, N700 `#334155`, N900 `#0F172A`.
 
-**Đặc điểm:**
-- **Neutral base**: Trắng/xám làm nền chính
-- **Subtle accents**: Màu nhấn tinh tế (tím, xanh, hoặc màu thương hiệu)
-- **High contrast**: Tỷ lệ tương phản cao cho khả năng đọc tốt
-- **Dark mode**: Hỗ trợ theme tối với màu xám được chọn lọc kỹ
+**Ánh xạ CSS variable (light):**
+- `--bg`: N0/N50; `--surface`: N50/N100; `--surface-subtle`: A100 5% overlay. 
+- `--border`: N200/N300; `--text`: N700/N900; `--muted`: N500. 
+- `--primary`: A700; `--primary-foreground`: N0; `--primary-hover`: A500/A700 mix 90%; 
+- `--accent`: A500; `--accent-foreground`: N900. 
+- `--success`: `#1A9C68`; `--warning`: `#D97706`; `--error`: `#DC2626`; nền state = màu 10% alpha.
 
-### **3. Typography (Chữ)**
+**Nguyên tắc dùng màu:**
+- Primary chỉ cho CTA chính, link nhấn, focus ring. 
+- Trạng thái (success/warning/error) ưu tiên nền nhạt + text đậm, icon đơn sắc. 
+- Overlay/hover: tăng độ sâu bằng border/độ sáng, không thêm shadow dày. 
+- Giữ contrast AA (≥4.5:1 cho text body); check nhanh bằng plugin/grayscale. 
 
-OpenAI sử dụng system fonts gốc (SF Pro trên iOS, Roboto trên Android) để đảm bảo khả năng đọc và khả năng tiếp cận trên mọi thiết bị.
+### **3) Typography & Spacing** 
+**Font:** Inter → SF Pro/Roboto fallback; 100% tiếng Việt.  
+**Typo scale (desktop / mobile):**
+- H1: 28 / 24px, 700, lh 1.2 (dùng cho tiêu đề trang). 
+- H2: 24 / 20px, 600, lh 1.25 (tiêu đề section). 
+- H3: 20 / 18px, 600, lh 1.3 (nhóm nội dung). 
+- H4: 18 / 16px, 600, lh 1.35 (subsection/nhãn nhóm). 
+- Body: 16px, lh 1.5 (mặc định). 
+- Secondary: 14px, lh 1.5 (mô tả ngắn, label phụ). 
+- Caption: 12-13px, lh 1.4 (dùng rất hạn chế, chỉ metadata). 
+- Tránh chữ in hoa liên tục; dùng ellipsis cho text thao tác dài; heading ≤ 6 từ, mô tả ≤ 2 câu. 
 
-**Tiêu chuẩn:**
-- **System fonts**: Inter, SF Pro, Roboto
-- **Font hierarchy rõ ràng**: Heading, body, caption
-- **Font weight đa dạng**: Regular, Medium, Semibold, Bold
-- **Line height thoải mái**: 1.5-1.6 cho body text
+**Spacing token (8px grid):** 4 / 8 / 12 / 16 / 20 / 24 / 32 / 40 / 48.  
+**Mật độ dashboard:** block cách nhau 16-24px; heading ↔ nội dung 8-12px; nhóm ↔ nhóm 16-24px; row bảng ≥44px cao.  
+**Layout:** container max 1280-1366px; dùng Grid/Flex trước, tránh lồng card. 
 
-### **4. Spacing & Layout**
+### **4) Component Guideline (gọn cho shadcn/ui)** 
+- **Button:** Primary = A700, hover A500/A700 mix; Secondary = outline N200; Ghost cho icon-only; có trạng thái loading (spinner nhỏ bên trái). Không nhồi icon trang trí. 
+- **Form/Input:** Border N200, focus ring A700 2px; error border màu error + text trợ giúp ngắn 1 dòng. Group field theo section, tránh card bao ngoài. 
+- **Table/Data Table:** Không bọc card; header nền N50, border N200; zebra nhẹ hoặc divider 1px N200; action trong bảng dùng ghost/inline, không là primary trừ CTA chính. Empty state ngắn gọn + CTA nếu cần. 
+- **Toast/Alert/Dialog:** Dùng tiết kiệm; toast ≤2 mỗi flow, auto-dismiss; dialog chỉ cho quyết định lớn. 
+- **Nav/Sidebar:** Nền N0/N50; active item dùng A100/A300 với text A700; icon + label ngắn. 
+- **Loading:** Skeleton/shimmer nhẹ, tránh overlay toàn trang trừ chờ bắt buộc. Motion tối giản (transition 150–200ms ease-out). 
+- **Accordion/Collapsible/Drawer/Sheet/Popover/Dropdown:** Dùng để giảm mật độ; nội dung ngắn gọn, không lồng nhiều lớp; đóng mở phải có focus/esc/ngoài-đóng chuẩn. 
+- **Tabs/Navigation Menu:** Tối đa 5-7 tab, label ngắn; dùng khi nội dung cùng cấp; trạng thái active rõ (border dưới hoặc nền A100). 
+- **Card/Empty/Error:** Card chỉ cho khối độc lập; Empty/Error một câu + CTA ngắn, không thêm đồ họa nặng. 
 
-White space (khoảng trống) rộng rãi giúp nội dung "thở" và giảm cognitive load, tạo giao diện mà người dùng có thể tập trung vào nhiệm vụ.
+### **5) Ngôn Ngữ & Chống Noise** 
+- 100% tiếng Việt, câu ngắn, động từ rõ. Heading ≤6 từ, mô tả ≤2 câu. 
+- Loại bỏ nhãn thừa; không lặp ngữ cảnh; tooltip chỉ khi thật cần. 
+- CTA ngắn: “Lưu”, “Thêm lớp”, “Gửi yêu cầu”. Lỗi/validation đặt sát trường, một câu ngắn. 
 
-**Nguyên tắc:**
-- **Generous whitespace**: Không ngại để trống nhiều
-- **8px grid system**: Spacing theo bội số của 8
-- **Asymmetric layouts**: Bố cục bất đối xứng cho sự thú vị
-- **CSS Grid Layout**: Sử dụng Grid cho responsive layout
+### **6) Trạng Thái & Phản Hồi** 
+- **Loading**: skeleton/placeholder tại vùng dữ liệu; spinner nhỏ trong nút khi submit. 
+- **Empty**: 1 câu + CTA tùy bối cảnh, không card thừa. 
+- **Error**: thông điệp rõ, tiếng Việt; gợi ý retry ngay tại vị trí thao tác. 
+- **Success**: feedback ngắn (toast nhỏ/inline), không spam. 
 
-### **5. Components & Interactions**
+### **7) Accessibility & Kiểm Tra Nhanh** 
+- Focus ring luôn hiện (A700 trên nền sáng); tab order đúng; component shadcn dùng props mặc định (aria/keyboard). 
+- Contrast AA cho text; kiểm tra nhanh với devtools/grayscale. 
+- Keyboard: mọi hành động chính có thể tab/enter/space; form có `aria-invalid`, `aria-describedby` cho lỗi. 
 
-Shadcn/ui cung cấp component library với default styles được chọn lọc kỹ càng, thiết kế để hoạt động tốt riêng lẻ và kết hợp với nhau như một hệ thống nhất quán.
+### **8) Card, Border, Shadow (nhắc lại chống lạm dụng)** 
+- Card khi cần nền riêng (widget độc lập); tối đa 1 cấp lồng. 
+- Border 1px N200/N300; ưu tiên divider/spacing. Shadow: none hoặc rất nhẹ (2-4 blur, alpha thấp). 
+- Tránh lưới nhiều card giống hệt; ưu tiên một grid rõ với hierarchy bằng typography/spacing. 
 
-**Đặc điểm components:**
-- **Composable**: Mọi component có interface chung, dễ kết hợp
-- **Accessible**: Tuân thủ WCAG standards
-- **Customizable**: Dễ dàng override và mở rộng
-- **Lightweight animations**: Hiệu ứng tinh tế, có mục đích
+### **9) Checklist Nhanh Cho Mỗi Màn Hình** 
+1. Màu: Nền neutral, primary = A700, accent không tràn; state màu nhạt + text rõ. 
+2. Text: Tiếng Việt ngắn gọn; heading ≤6 từ; không mô tả dài; có ellipsis khi cần. 
+3. Spacing/Layout: 8px grid; block 16-24px; không bọc card thừa; row bảng ≥44px. 
+4. Component: Button đúng variant; form border N200 + focus rõ; table không card, header N50. 
+5. Feedback: Loading = skeleton; toast ≤2/flow; error/success ngắn, tại chỗ. 
+6. Access: Focus ring rõ; tab-able; contrast AA. 
+7. Hiệu suất: Tránh animation nặng; ảnh/icon tối ưu; không render thừa. 
 
-### **6. Xu Hướng 2025**
+### **10) UX Flow Tối Thiểu (mỗi tính năng phải có)** 
+- **Trạng thái bắt buộc**: idle → loading (skeleton tại vùng) → success (hiển thị dữ liệu) → empty (1 câu + CTA nếu cần) → error (thông điệp + retry tại chỗ). 
+- **Form**: label/placeholder rõ, hint ngắn, validation inline, disabled khi đang submit, spinner trong nút. 
+- **Tìm kiếm/Lọc/Phân trang**: trạng thái “không kết quả” riêng, lưu tiêu chí lọc đã chọn, nút reset rõ. 
+- **Hành động phá hủy/quan trọng**: dialog xác nhận ngắn, 2 nút rõ ràng; CTA chính mang màu primary, phụ là ghost/outline. 
+- **Điều hướng**: breadcrumb hoặc header ngắn; trạng thái active trong sidebar/nav dùng A100/A300 + text A700; không nhảy context đột ngột (giữ tiêu đề/trạng thái filter nếu quay lại). 
 
-Năm 2025 chứng kiến sự chuyển dịch về minimalism có chủ đích, với ít animation và 3D hơn, tập trung vào motion design tinh tế và các yếu tố 3D chiến lược thay vì mặc định.
+### **Agent Guardrails (khi implement)** 
+- Luôn dùng token màu ở mục 2; không chèn mã màu tự do. 
+- Spacing theo 8px grid, nhưng **tiết chế**: block 16-24px là giới hạn điển hình; tránh padding >24px cho khối nhỏ để không tạo khoảng trắng thừa. 
+- Typography đúng scale H1–H4 + body/secondary; heading ≤6 từ; mô tả ≤2 câu; ellipsis cho text dài. 
+- Bắt buộc đủ 5 trạng thái (idle/loading/success/empty/error) cho màn hình dữ liệu. Skeleton trong vùng, không overlay toàn trang trừ khi cần. 
+- Form: focus ring A700, validation inline, nút có loading, disable khi submit. 
+- Card: chỉ khi cần surface riêng; table/list/form mặc định không bọc card; border 1px N200, shadow rất nhẹ hoặc none. 
+- Toast/Dialog: toast ≤2/flow; dialog chỉ cho hành động quan trọng, CTA chính = primary, phụ = ghost/outline. 
+- Navigation: breadcrumb/heading ngắn; sidebar active dùng A100/A300 + text A700; giữ state filter khi quay lại. 
+- Motion: chỉ transition 150–200ms ease-out; không thêm animation khác nếu không được yêu cầu. 
 
-**Trends nổi bật:**
-- **Bold minimalism**: Minimalism kết hợp typography mạnh mẽ
-- **Purposeful motion**: Animation có mục đích, không quá tải
-- **Dark mode aesthetics**: >55% websites hỗ trợ dark mode
-- **Mobile-first design**: Thiết kế ưu tiên mobile
+### **11) Danh Mục Component shadcn/ui (áp dụng chuẩn trên)** 
+Accordion, Alert, Alert Dialog, Aspect Ratio, Avatar, Badge, Breadcrumb, Button, Button Group, Calendar, Card, Carousel, Chart, Checkbox, Collapsible, Combobox, Command, Context Menu, Data Table, Date Picker, Dialog, Drawer, Dropdown Menu, Empty, Field, Form, Hover Card, Input Group, Input OTP, Input, Item, Kbd, Label, Menubar, Native Select, Navigation Menu, Pagination, Popover, Progress, Radio Group, Resizable, Scroll Area, Select, Separator, Sheet, Sidebar, Skeleton, Slider, Sonner, Spinner, Switch, Table, Tabs, Textarea, Toast, Toggle Group, Toggle, Tooltip, Typography. 
 
-### **7. Technical Stack**
-
-**Technology:**
-- **Framework**: Next.js, React, Vue
-- **Styling**: Tailwind CSS với CSS variables
-- **Components**: Radix UI primitives + custom styling
-- **Icons**: Lucide React (outlined, monochromatic)
-- **Colors**: OKLCH color space cho độ chính xác màu sắc
-
-### **8. Ví Dụ Thực Tế**
-
-**Các công ty áp dụng thành công:**
-- **Linear**: Native-like experience, performance 50ms interactions, keyboard-first
-- **Vercel**: Clean, monochrome design với subtle animations
-- **Stripe**: Professional, trustworthy, data-driven aesthetics
-- **OpenAI**: Minimal, system colors, responsive và lightweight
-
-### **9. Best Practices Khi Thiết Kế**
-
-**Do's:**
-- ✅ Embrace negative space - đừng cảm thấy phải lấp đầy mọi pixel
-- ✅ Sử dụng màu nhấn một cách tiết chế - chỉ cho primary actions
-- ✅ High contrast ratios cho accessibility
-- ✅ Generous spacing để giảm cognitive load
-- ✅ Consistent design system với primitive tokens
-
-**Don'ts:**
-- ❌ Đừng nhầm lẫn plain design với minimalist design
-- ❌ Không overuse animations và 3D elements
-- ❌ Tránh custom gradients phá vỡ minimal look
-- ❌ Không thay đổi text colors hoặc core component styles tùy tiện
-
-### **10. Quy Tắc Card, Border, Shadow (Anti-lạm dụng)** 
-
-- Card chỉ dùng khi cần nhóm nội dung độc lập (widget/khối chức năng), tối đa 1 cấp lồng; không bọc list/table/form bằng card nếu không cần nền riêng. 
-- Ưu tiên layout trực tiếp với Grid/Flex để tạo nhóm; dùng spacing và alignment thay vì thêm container phụ. 
-- Border 1px neutral-200/300; ưu tiên divider mảnh hoặc khoảng cách để tách nhóm. Shadow mặc định: none hoặc rất nhẹ (no glow). 
-- Không xếp lưới nhiều card giống hệt gây noise; nếu cần tổng quan, gom vào 1 grid rõ ràng với hierarchy bằng typography/spacing. 
-
-### **11. Information Hygiene & Ngôn Ngữ (Anti-text noise)** 
-
-- UI 100% tiếng Việt, câu ngắn gọn, hành động rõ; heading ≤ 6 từ, mô tả ≤ 2 câu. 
-- Tránh successive text: không đặt nhiều đoạn mô tả liên tiếp; dùng tooltip/assist ngắn khi thật sự cần. 
-- Loại bỏ nhãn thừa khi placeholder/label đã đủ rõ; không lặp lại ngữ cảnh trong text phụ. 
-- Hạn chế caption/phụ chú; chỉ giữ thông tin có ý nghĩa giúp quyết định hoặc thao tác. 
-
-### **12. Feedback & Notifications Tối Giản** 
-
-- Ưu tiên inline feedback sát thao tác (form validation ngay cạnh trường). 
-- Toast: chỉ cho hành động quan trọng/thành công/lỗi hệ thống, tối đa 1-2 toast cho mỗi flow, auto-dismiss hợp lý, không stack kéo dài. 
-- Banner hiếm dùng, chỉ cho cảnh báo hệ thống rộng; tránh lặp lại giữa các màn hình. 
-- Loading: skeleton/shimmer nhẹ; hạn chế overlay toàn trang, spinner toàn trang chỉ khi bắt buộc. 
-
-### **13. Layout & Density Cho Dashboard** 
-
-- Grid/Flex trước, card sau: nhóm nội dung bằng lưới và spacing thay vì bọc card. 
-- Bảng: chọn density “thoải mái/compact”, chiều cao hàng tối thiểu 44px; zebra nhẹ hoặc divider mảnh; không thêm card bao ngoài. Sorting/filter rõ, empty state gọn. 
-- Form: 8px grid, group theo section; tránh border-box cho từng field, mô tả ngắn; hint/placeholder rõ ràng, validation inline. 
-- Navigation/toolbar gọn: ưu tiên icon + label ngắn; tránh text phụ trong thanh công cụ. 
-
-### **14. Spacing Có Chủ Đích** 
-
-- Whitespace phải gắn với mạch nội dung; tránh khoảng trống cô lập không dẫn dắt mắt. 
-- Khoảng cách giữa các block chính theo bội 8 (16/24/32); ưu tiên alignment lưới hơn là thêm card/bezel. 
-- Giữa heading và nội dung: 8-12px; giữa nhóm và nhóm: 16-24px. 
-
-### **15. Icon & Accent Usage** 
-
-- Icon đơn sắc, chỉ dùng khi tăng khả năng quét hoặc làm rõ hành động; không dùng icon trang trí. 
-- Accent dùng cho primary actions/focus; tránh đặt nhiều màu nhấn cạnh nhau. 
-- Trạng thái (success/warning/error) dùng màu trung tính, độ bão hòa thấp, chỉ đậm hơn khi cần cảnh báo rõ. 
-
-### **16. Empty/Error States** 
-
-- Empty state: 1 câu ngắn + CTA nếu cần; không bọc card thừa, không thêm background rườm rà. 
-- Error: tiếng Việt rõ ràng, đặt inline gần lỗi; không spam toast/banners lặp lại. 
-- Retry/refresh hiển thị rõ ràng tại vị trí thao tác; tránh mở modal lỗi trừ khi cần quyết định lớn. 
-
----
-
-## 📋 **Checklist Thiết Kế Website Modern Minimal**
-
-1. **Colors**: Neutral base + 1-2 subtle accent colors
-2. **Typography**: System font, clear hierarchy, 1.5+ line height
-3. **Spacing**: 8px grid, generous whitespace
-4. **Components**: shadcn/ui hoặc similar system
-5. **Interactions**: Subtle, purposeful animations
-6. **Accessibility**: WCAG AA contrast, keyboard navigation
-7. **Performance**: Fast load time, optimized assets
-8. **Responsive**: Mobile-first approach
-9. **Dark mode**: Support theme switching
-10. **Icons**: Outlined style, monochromatic
-
-## 📋 **Checklist Dashboard Minimal (Anti-noise)** 
-
-1. **Card/Border**: Card khi thật sự cần nhóm; border 1px neutral-200/300, shadow nhẹ hoặc none. 
-2. **Layout**: Grid/Flex để nhóm nội dung; tránh lưới card lặp lại; spacing theo bội 8, không khoảng trống cô lập. 
-3. **Text**: 100% tiếng Việt, ngắn gọn; không successive text; heading ≤ 6 từ, mô tả ≤ 2 câu; bỏ caption thừa. 
-4. **Feedback**: Validation inline; toast tối đa 1-2/flow; banner hiếm; loading bằng skeleton/shimmer nhẹ. 
-5. **Tables/Forms**: Bảng compact (≥44px row), zebra nhẹ/divider mảnh, không card ngoài; form nhóm theo section, hint rõ, validation inline. 
-6. **Icon/Accent**: Icon đơn sắc khi hữu ích; accent chỉ cho primary/focus; tránh nhiều màu nhấn. 
-7. **Empty/Error**: Empty state 1 câu + CTA (nếu cần); lỗi tiếng Việt rõ, không spam thông báo; retry gần thao tác.
+**Áp dụng chung**: 
+- Dùng variant mặc định, màu theo token ở mục 2; focus ring A700; hover nhẹ (border/độ sáng), shadow rất thấp hoặc none. 
+- Icon chỉ khi tăng khả năng quét; tránh icon trang trí. 
+- Không bọc card nếu surface đã đủ rõ; ưu tiên layout Grid/Flex và spacing. 
