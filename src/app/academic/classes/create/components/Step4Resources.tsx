@@ -16,6 +16,8 @@ interface Step4ResourcesProps {
   timeSlotSelections: Record<number, number>
   onBack: () => void
   onContinue: () => void
+  onCancelKeepDraft: () => void
+  onCancelDelete: () => Promise<void> | void
 }
 
 const DAY_LABELS: Record<number, string> = {
@@ -74,7 +76,14 @@ function SelectedResourceSummary({ resource }: { resource: ResourceOption }) {
   )
 }
 
-export function Step4Resources({ classId, timeSlotSelections, onBack, onContinue }: Step4ResourcesProps) {
+export function Step4Resources({
+  classId,
+  timeSlotSelections,
+  onBack,
+  onContinue,
+  onCancelKeepDraft,
+  onCancelDelete,
+}: Step4ResourcesProps) {
   const { data: classDetail } = useGetClassByIdQuery(classId ?? 0, { skip: !classId })
   const scheduleDays = classDetail?.data?.scheduleDays ?? DEFAULT_DAYS
   const sortedDays = useMemo(() => Array.from(new Set(scheduleDays)).sort(), [scheduleDays])
@@ -233,7 +242,16 @@ export function Step4Resources({ classId, timeSlotSelections, onBack, onContinue
         <Alert>
           <AlertDescription>Vui lòng tạo lớp (Bước 1) trước khi gán tài nguyên.</AlertDescription>
         </Alert>
-        <WizardFooter currentStep={4} isFirstStep={false} isLastStep={false} onBack={onBack} onNext={onContinue} isNextDisabled />
+        <WizardFooter
+          currentStep={4}
+          isFirstStep={false}
+          isLastStep={false}
+          onBack={onBack}
+          onNext={onContinue}
+          onCancelKeepDraft={onCancelKeepDraft}
+          onCancelDelete={onCancelDelete}
+          isNextDisabled
+        />
       </div>
     )
   }
@@ -323,6 +341,8 @@ export function Step4Resources({ classId, timeSlotSelections, onBack, onContinue
         isLastStep={false}
         onBack={onBack}
         onNext={handleSubmit}
+        onCancelKeepDraft={onCancelKeepDraft}
+        onCancelDelete={onCancelDelete}
         isSubmitting={isSubmitting}
         nextButtonText="Lưu tài nguyên"
       />

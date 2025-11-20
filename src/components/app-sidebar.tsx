@@ -106,6 +106,11 @@ const roleBasedNav = {
         icon: CalendarIcon,
       },
       {
+        title: "Phê duyệt lớp học",
+        url: "/center-head/approvals",
+        icon: ClipboardCheckIcon,
+      },
+      {
         title: "Quản lý học sinh",
         url: "/center/students",
         icon: UsersIcon,

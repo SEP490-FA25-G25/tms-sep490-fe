@@ -14,6 +14,8 @@ interface Step3TimeSlotsProps {
   onBack: () => void
   onContinue: () => void
   onSaveSelections: (selections: Record<number, number>) => void
+  onCancelKeepDraft: () => void
+  onCancelDelete: () => Promise<void> | void
 }
 
 const DAY_LABELS: Record<number, string> = {
@@ -28,7 +30,14 @@ const DAY_LABELS: Record<number, string> = {
 
 const DEFAULT_DAYS = [1, 3, 5]
 
-export function Step3TimeSlots({ classId, onBack, onContinue, onSaveSelections }: Step3TimeSlotsProps) {
+export function Step3TimeSlots({
+  classId,
+  onBack,
+  onContinue,
+  onSaveSelections,
+  onCancelKeepDraft,
+  onCancelDelete,
+}: Step3TimeSlotsProps) {
   const { data: classDetail } = useGetClassByIdQuery(classId ?? 0, {
     skip: !classId,
   })
@@ -102,7 +111,16 @@ export function Step3TimeSlots({ classId, onBack, onContinue, onSaveSelections }
         <Alert>
           <AlertDescription>Vui lòng tạo lớp (Bước 1) trước khi gán khung giờ.</AlertDescription>
         </Alert>
-        <WizardFooter currentStep={3} isFirstStep={false} isLastStep={false} onBack={onBack} onNext={onContinue} isNextDisabled />
+        <WizardFooter
+          currentStep={3}
+          isFirstStep={false}
+          isLastStep={false}
+          onBack={onBack}
+          onNext={onContinue}
+          onCancelKeepDraft={onCancelKeepDraft}
+          onCancelDelete={onCancelDelete}
+          isNextDisabled
+        />
       </div>
     )
   }
@@ -149,6 +167,8 @@ export function Step3TimeSlots({ classId, onBack, onContinue, onSaveSelections }
         isLastStep={false}
         onBack={onBack}
         onNext={handleSubmit}
+        onCancelKeepDraft={onCancelKeepDraft}
+        onCancelDelete={onCancelDelete}
         isSubmitting={isSubmitting}
         nextButtonText="Lưu khung giờ"
       />

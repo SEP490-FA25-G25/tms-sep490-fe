@@ -29,6 +29,8 @@ interface Step5AssignTeacherProps {
   classId: number | null
   onBack: () => void
   onContinue: () => void
+  onCancelKeepDraft: () => void
+  onCancelDelete: () => Promise<void> | void
 }
 
 interface DayOption {
@@ -362,7 +364,13 @@ const UnavailableTeacherCard = ({
   )
 }
 
-export function Step5AssignTeacher({ classId, onBack, onContinue }: Step5AssignTeacherProps) {
+export function Step5AssignTeacher({
+  classId,
+  onBack,
+  onContinue,
+  onCancelKeepDraft,
+  onCancelDelete,
+}: Step5AssignTeacherProps) {
   const [assignTeacher, { isLoading: isSubmitting }] = useAssignTeacherMutation()
   const { data: classDetail } = useGetClassByIdQuery(classId ?? 0, { skip: !classId, refetchOnMountOrArgChange: true })
   const [assignmentMode, setAssignmentMode] = useState<'single' | 'multi'>('single')
@@ -611,7 +619,16 @@ export function Step5AssignTeacher({ classId, onBack, onContinue }: Step5AssignT
         <Alert>
           <AlertDescription>Vui lòng tạo lớp (Bước 1) trước khi chọn giáo viên.</AlertDescription>
         </Alert>
-        <WizardFooter currentStep={5} isFirstStep={false} isLastStep={false} onBack={onBack} onNext={onContinue} isNextDisabled />
+        <WizardFooter
+          currentStep={5}
+          isFirstStep={false}
+          isLastStep={false}
+          onBack={onBack}
+          onNext={onContinue}
+          onCancelKeepDraft={onCancelKeepDraft}
+          onCancelDelete={onCancelDelete}
+          isNextDisabled
+        />
       </div>
     )
   }
@@ -846,6 +863,8 @@ export function Step5AssignTeacher({ classId, onBack, onContinue }: Step5AssignT
         isLastStep={false}
         onBack={onBack}
         onNext={onContinue}
+        onCancelKeepDraft={onCancelKeepDraft}
+        onCancelDelete={onCancelDelete}
         nextButtonText="Bỏ qua bước này"
       />
       {scheduleModal && (

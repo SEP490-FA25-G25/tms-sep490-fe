@@ -14,6 +14,7 @@ import AcademicClassesPage from './app/academic/classes/page'
 import AcademicClassDetailPage from './app/academic/classes/[id]/page'
 import CreateClassPage from './app/academic/classes/create/page'
 import AcademicAbsenceRequestsPage from './app/academic/absence-requests/page'
+import CenterHeadApprovalsPage from './app/center-head/approvals/page'
 import { Toaster } from '@/components/ui/sonner'
 
 function App() {
@@ -110,6 +111,16 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={['ACADEMIC_AFFAIR', 'ADMIN', 'MANAGER', 'CENTER_HEAD']}>
                   <AcademicAbsenceRequestsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Center Head */}
+            <Route
+              path="/center-head/approvals"
+              element={
+                <ProtectedRoute requiredRoles={['CENTER_HEAD']}>
+                  <CenterHeadApprovalsPage />
                 </ProtectedRoute>
               }
             />

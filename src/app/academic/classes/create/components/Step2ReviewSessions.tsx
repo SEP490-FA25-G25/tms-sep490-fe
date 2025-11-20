@@ -14,6 +14,8 @@ interface Step2ReviewSessionsProps {
   classId: number | null
   onBack: () => void
   onContinue: () => void
+  onCancelKeepDraft: () => void
+  onCancelDelete: () => Promise<void> | void
 }
 
 const formatDate = (dateString: string) => {
@@ -30,7 +32,7 @@ const StatusBadge = ({ label, active }: { label: string; active: boolean }) => (
   </Badge>
 )
 
-export function Step2ReviewSessions({ classId, onBack, onContinue }: Step2ReviewSessionsProps) {
+export function Step2ReviewSessions({ classId, onBack, onContinue, onCancelKeepDraft, onCancelDelete }: Step2ReviewSessionsProps) {
   const [selectedWeek, setSelectedWeek] = useState<number | 'all'>('all')
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'missingTimeSlot' | 'missingResource' | 'missingTeacher'>('all')
   const {
@@ -122,6 +124,8 @@ export function Step2ReviewSessions({ classId, onBack, onContinue }: Step2Review
           isLastStep={false}
           onBack={onBack}
           onNext={onContinue}
+          onCancelKeepDraft={onCancelKeepDraft}
+          onCancelDelete={onCancelDelete}
           isNextDisabled
         />
       </div>
@@ -262,6 +266,8 @@ export function Step2ReviewSessions({ classId, onBack, onContinue }: Step2Review
           isLastStep={false}
           onBack={onBack}
           onNext={onContinue}
+          onCancelKeepDraft={onCancelKeepDraft}
+          onCancelDelete={onCancelDelete}
           isNextDisabled={!overview || overview.sessions.length === 0}
         />
       </div>

@@ -68,9 +68,10 @@ const DAY_OPTIONS = [
 
 interface Step1BasicInfoProps {
   onSuccess: (classId: number, sessionCount: number) => void
+  onCancel: () => void
 }
 
-export function Step1BasicInfo({ onSuccess }: Step1BasicInfoProps) {
+export function Step1BasicInfo({ onSuccess, onCancel }: Step1BasicInfoProps) {
   const {
     register,
     handleSubmit,
@@ -423,7 +424,10 @@ export function Step1BasicInfo({ onSuccess }: Step1BasicInfoProps) {
       </div>
 
       {/* Submit Button */}
-      <div className="flex justify-end pt-4">
+      <div className="flex flex-wrap items-center justify-between pt-4 gap-3">
+        <Button type="button" variant="ghost" disabled={isLoading} onClick={onCancel}>
+          Hủy &amp; về danh sách
+        </Button>
         <Button type="submit" disabled={isLoading} className="min-w-[150px]">
           {isLoading ? (
             <>

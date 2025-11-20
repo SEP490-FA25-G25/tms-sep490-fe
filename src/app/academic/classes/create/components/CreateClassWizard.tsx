@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { useDeleteClassMutation } from '@/store/services/classApi'
 import { useWizardNavigation } from './hooks/useWizardNavigation'
 import { ProgressIndicator } from './ProgressIndicator'
 import { Step1BasicInfo } from './Step1BasicInfo'
@@ -14,6 +17,7 @@ import { Step7Submit } from './Step7Submit'
  * Manages step navigation and renders appropriate step component
  */
 export function CreateClassWizard() {
+  const navigate = useNavigate()
   const {
     currentStep,
     classId,
@@ -22,11 +26,29 @@ export function CreateClassWizard() {
     markStepComplete,
   } = useWizardNavigation()
   const [timeSlotSelections, setTimeSlotSelections] = useState<Record<number, number>>({})
+  const [deleteClass] = useDeleteClassMutation()
 
   // Handle Step 1 success - create class and navigate to Step 2 for review
   const handleStep1Success = (newClassId: number) => {
     markStepComplete(1)
     navigateToStep(2, newClassId)
+  }
+  const handleCancelKeepDraft = () => {
+    navigate('/academic/classes')
+  }
+  const handleCancelDelete = async () => {
+    if (!classId) {
+      toast.error('Không tìm thấy lớp nháp để xóa.')
+      return
+    }
+    try {
+      await deleteClass(classId).unwrap()
+      toast.success('Lớp nháp đã được xóa.')
+      navigate('/academic/classes')
+    } catch (error: unknown) {
+      const message = (error as { data?: { message?: string } })?.data?.message || 'Không thể xóa lớp. Vui lòng thử lại.'
+      toast.error(message)
+    }
   }
 
   return (
@@ -54,7 +76,7 @@ export function CreateClassWizard() {
 
         {/* Step Content */}
         <div className="mt-8 bg-card rounded-lg border p-8 shadow-sm">
-          {currentStep === 1 && <Step1BasicInfo onSuccess={handleStep1Success} />}
+          {currentStep === 1 && <Step1BasicInfo onSuccess={handleStep1Success} onCancel={handleCancelKeepDraft} />}
 
           {currentStep === 2 && (
             <Step2ReviewSessions
@@ -64,6 +86,8 @@ export function CreateClassWizard() {
                 markStepComplete(2)
                 navigateToStep(3)
               }}
+              onCancelKeepDraft={handleCancelKeepDraft}
+              onCancelDelete={handleCancelDelete}
             />
           )}
 
@@ -76,6 +100,8 @@ export function CreateClassWizard() {
                 navigateToStep(4)
               }}
               onSaveSelections={(selections) => setTimeSlotSelections(selections)}
+              onCancelKeepDraft={handleCancelKeepDraft}
+              onCancelDelete={handleCancelDelete}
             />
           )}
 
@@ -88,6 +114,8 @@ export function CreateClassWizard() {
                 markStepComplete(4)
                 navigateToStep(5)
               }}
+              onCancelKeepDraft={handleCancelKeepDraft}
+              onCancelDelete={handleCancelDelete}
             />
           )}
 
@@ -99,6 +127,8 @@ export function CreateClassWizard() {
                 markStepComplete(5)
                 navigateToStep(6)
               }}
+              onCancelKeepDraft={handleCancelKeepDraft}
+              onCancelDelete={handleCancelDelete}
             />
           )}
 
@@ -110,6 +140,8 @@ export function CreateClassWizard() {
                 markStepComplete(6)
                 navigateToStep(7)
               }}
+              onCancelKeepDraft={handleCancelKeepDraft}
+              onCancelDelete={handleCancelDelete}
             />
           )}
 
@@ -117,8 +149,11 @@ export function CreateClassWizard() {
             <Step7Submit
               classId={classId}
               onBack={() => navigateToStep(6)}
+              onCancelKeepDraft={handleCancelKeepDraft}
+              onCancelDelete={handleCancelDelete}
               onFinish={() => {
                 markStepComplete(7)
+                navigate('/academic/classes')
               }}
             />
           )}

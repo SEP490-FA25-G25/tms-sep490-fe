@@ -16,9 +16,11 @@ interface Step6ValidationProps {
   classId: number | null
   onBack: () => void
   onContinue: () => void
+  onCancelKeepDraft: () => void
+  onCancelDelete: () => Promise<void> | void
 }
 
-export function Step6Validation({ classId, onBack, onContinue }: Step6ValidationProps) {
+export function Step6Validation({ classId, onBack, onContinue, onCancelKeepDraft, onCancelDelete }: Step6ValidationProps) {
   const { data: classDetail } = useGetClassByIdQuery(classId ?? 0, {
     skip: !classId,
   })
@@ -326,7 +328,16 @@ export function Step6Validation({ classId, onBack, onContinue }: Step6Validation
         <Alert>
           <AlertDescription>Vui lòng hoàn thành các bước trước để tạo lớp trước khi kiểm tra.</AlertDescription>
         </Alert>
-        <WizardFooter currentStep={6} isFirstStep={false} isLastStep={false} onBack={onBack} onNext={onContinue} isNextDisabled />
+        <WizardFooter
+          currentStep={6}
+          isFirstStep={false}
+          isLastStep={false}
+          onBack={onBack}
+          onNext={onContinue}
+          onCancelKeepDraft={onCancelKeepDraft}
+          onCancelDelete={onCancelDelete}
+          isNextDisabled
+        />
       </div>
     )
   }
@@ -520,6 +531,8 @@ export function Step6Validation({ classId, onBack, onContinue }: Step6Validation
         isLastStep={false}
         onBack={onBack}
         onNext={onContinue}
+        onCancelKeepDraft={onCancelKeepDraft}
+        onCancelDelete={onCancelDelete}
         isNextDisabled={!canContinue}
         nextButtonText="Tiếp tục bước 7"
       />

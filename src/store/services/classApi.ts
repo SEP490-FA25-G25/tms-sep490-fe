@@ -375,10 +375,30 @@ const baseQueryWithReauth: BaseQueryFn<
   return result
 }
 
+export interface ApproveClassResponse {
+  success: boolean
+  message: string
+  data: string
+}
+
+export interface RejectClassResponse {
+  success: boolean
+  message: string
+  data: {
+    classId: number
+    classCode: string
+    rejectedAt: string
+    rejectedBy: string
+    reason: string
+    status: 'DRAFT'
+    approvalStatus: 'REJECTED'
+  }
+}
+
 export const classApi = createApi({
   reducerPath: 'classApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['ClassStudents', 'AvailableStudents'],
+  tagTypes: ['Classes', 'ClassStudents', 'AvailableStudents'],
   endpoints: (builder) => ({
     // Get classes with filtering and pagination
     getClasses: builder.query<ClassListResponse, ClassListRequest>({
@@ -398,6 +418,7 @@ export const classApi = createApi({
           sortDir: params.sortDir || 'asc',
         },
       }),
+      providesTags: ['Classes'],
     }),
 
     // Get class details by ID
@@ -428,6 +449,31 @@ export const classApi = createApi({
       }),
       providesTags: ['AvailableStudents'],
     }),
+
+    approveClass: builder.mutation<ApproveClassResponse, number>({
+      query: (classId) => ({
+        url: `/classes/${classId}/approve`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['Classes'],
+    }),
+
+    rejectClass: builder.mutation<RejectClassResponse, { classId: number; reason: string }>({
+      query: ({ classId, reason }) => ({
+        url: `/classes/${classId}/reject`,
+        method: 'POST',
+        body: { reason },
+      }),
+      invalidatesTags: ['Classes'],
+    }),
+
+    deleteClass: builder.mutation<{ success: boolean; message: string }, number>({
+      query: (classId) => ({
+        url: `/classes/${classId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Classes'],
+    }),
   }),
 })
 
@@ -437,5 +483,8 @@ export const {
   useGetClassByIdQuery,
   useGetClassStudentsQuery,
   useGetAvailableStudentsQuery,
+  useApproveClassMutation,
+  useRejectClassMutation,
+  useDeleteClassMutation,
   util: { invalidateTags: invalidateClassApiTags },
 } = classApi

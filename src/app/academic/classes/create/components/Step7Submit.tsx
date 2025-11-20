@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useGetClassByIdQuery } from '@/store/services/classApi'
+import { useDispatch } from 'react-redux'
+import { useGetClassByIdQuery, classApi } from '@/store/services/classApi'
 import { useSubmitClassMutation, useValidateClassMutation } from '@/store/services/classCreationApi'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -8,11 +9,55 @@ import { Checkbox } from '@/components/ui/checkbox'
 import type { ValidateClassData, ValidationChecks } from '@/types/classCreation'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+
+const DAY_SHORT_LABELS: Record<number, string> = {
+  0: 'CN',
+  1: 'T2',
+  2: 'T3',
+  3: 'T4',
+  4: 'T5',
+  5: 'T6',
+  6: 'T7',
+}
+
+const formatScheduleDays = (days?: number[], fallback?: string): string => {
+  if (days && days.length > 0) {
+    const normalized = Array.from(new Set(days))
+      .map((day) => {
+        if (typeof day !== 'number' || Number.isNaN(day)) return undefined
+        return ((day % 7) + 7) % 7
+      })
+      .filter((day): day is number => typeof day === 'number')
+      .sort((a, b) => a - b)
+
+    if (normalized.length > 0) {
+      return normalized.map((day) => DAY_SHORT_LABELS[day] ?? `Thứ ${day}`).join(' / ')
+    }
+  }
+
+  if (fallback && fallback.trim().length > 0) {
+    return fallback
+  }
+
+  return '--'
+}
 
 interface Step7SubmitProps {
   classId: number | null
   onBack: () => void
   onFinish?: () => void
+  onCancelKeepDraft: () => void
+  onCancelDelete: () => Promise<void> | void
 }
 
 const ChecklistLabel = ({
@@ -35,7 +80,14 @@ const ChecklistLabel = ({
   </label>
 )
 
-export function Step7Submit({ classId, onBack, onFinish }: Step7SubmitProps) {
+export function Step7Submit({
+  classId,
+  onBack,
+  onFinish,
+  onCancelKeepDraft,
+  onCancelDelete,
+}: Step7SubmitProps) {
+  const dispatch = useDispatch()
   const { data: classDetail, isLoading: isClassLoading } = useGetClassByIdQuery(classId ?? 0, {
     skip: !classId,
   })
@@ -48,6 +100,7 @@ export function Step7Submit({ classId, onBack, onFinish }: Step7SubmitProps) {
     notify: false,
     attachments: false,
   })
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false)
 
   useEffect(() => {
     if (!classId) return
@@ -98,6 +151,7 @@ export function Step7Submit({ classId, onBack, onFinish }: Step7SubmitProps) {
     try {
       const response = await submitClass(classId).unwrap()
       toast.success(response.message || 'Lớp đã được gửi duyệt.')
+      dispatch(classApi.util.invalidateTags(['Classes']))
       onFinish?.()
     } catch (error: unknown) {
       const message = (error as { data?: { message?: string } })?.data?.message || 'Không thể gửi duyệt. Vui lòng thử lại.'
@@ -114,7 +168,10 @@ export function Step7Submit({ classId, onBack, onFinish }: Step7SubmitProps) {
       { label: 'Chi nhánh', value: data.branch?.name },
       { label: 'Ngày bắt đầu', value: data.startDate },
       { label: 'Ngày kết thúc dự kiến', value: data.plannedEndDate },
-      { label: 'Ngày học', value: data.scheduleSummary },
+      {
+        label: 'Ngày học',
+        value: formatScheduleDays(data.scheduleDays, data.scheduleSummary),
+      },
       { label: 'Sức chứa tối đa', value: data.maxCapacity?.toString() },
     ]
   }, [overview])
@@ -207,6 +264,9 @@ export function Step7Submit({ classId, onBack, onFinish }: Step7SubmitProps) {
         <Button variant="outline" onClick={onBack} disabled={isSubmitting}>
           Quay lại
         </Button>
+        <Button variant="ghost" onClick={() => setIsCancelDialogOpen(true)} disabled={isSubmitting}>
+          Hủy &amp; về danh sách
+        </Button>
         <Button variant="outline" onClick={handleValidate} disabled={isValidating || isSubmitting}>
           {isValidating ? 'Đang kiểm tra…' : 'Kiểm tra lại'}
         </Button>
@@ -214,6 +274,34 @@ export function Step7Submit({ classId, onBack, onFinish }: Step7SubmitProps) {
           {isSubmitting ? 'Đang gửi duyệt…' : 'Gửi duyệt lớp học'}
         </Button>
       </div>
+      <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Rời khỏi wizard tạo lớp?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có thể giữ lớp ở trạng thái nháp để tiếp tục sau, hoặc xóa hoàn toàn lớp này. Hành động này không ảnh hưởng đến các lớp khác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setIsCancelDialogOpen(false)
+                onCancelKeepDraft()
+              }}
+            >
+              Giữ lớp (DRAFT)
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                await onCancelDelete()
+                setIsCancelDialogOpen(false)
+              }}
+            >
+              Xóa lớp
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
