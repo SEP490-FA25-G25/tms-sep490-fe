@@ -60,6 +60,8 @@ export interface CourseDetail {
   assessments?: CourseAssessment[];
   totalSessions?: number;
   totalMaterials?: number;
+  progressPercentage?: number;
+  completedSessions?: number;
 }
 
 export interface CoursePhase {

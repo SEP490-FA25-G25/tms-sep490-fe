@@ -1,8 +1,16 @@
 import type { CourseCLO, CLOProgress } from '@/store/services/courseApi'
-import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { Target, CheckCircle, Clock } from 'lucide-react'
+import { Separator } from '@/components/ui/separator'
+import { Target, CheckCircle, Clock, Check } from 'lucide-react'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 interface LearningOutcomesProps {
   clos: CourseCLO[]
@@ -23,129 +31,121 @@ export function LearningOutcomes({ clos, progress }: LearningOutcomesProps) {
   const overallProgress = getOverallProgress()
   const completedCLOs = progress?.filter(p => p.isAchieved).length || 0
 
+  // Extract unique PLOs for columns
+  const allPLOs = clos.flatMap(clo => clo.relatedPLOs || [])
+  const uniquePLOs = Array.from(new Set(allPLOs.map(plo => plo.id)))
+    .map(id => allPLOs.find(plo => plo.id === id)!)
+    .sort((a, b) => a.code.localeCompare(b.code))
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold mb-4">Kết quả học tập</h2>
-        <p className="text-gray-600">
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <h2 className="text-2xl font-semibold">Kết quả học tập</h2>
+        <p className="text-muted-foreground">
           {clos.length} CLOs • {completedCLOs} đã đạt • {Math.round(overallProgress)}% hoàn thành
         </p>
       </div>
 
-      {/* Overall Progress */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Target className="h-6 w-6 text-blue-600" />
-              <h3 className="text-lg font-semibold">Tiến độ tổng thể</h3>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-blue-600">
-                {Math.round(overallProgress)}%
-              </div>
-              <p className="text-sm text-gray-600">hoàn thành</p>
-            </div>
+      {/* Overall Progress - Clean layout */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Target className="h-6 w-6 text-blue-600" />
+            <h3 className="text-lg font-semibold">Tiến độ tổng thể</h3>
           </div>
-          <Progress value={overallProgress} className="h-3" />
-          <div className="mt-4 flex items-center gap-4 text-sm text-gray-600">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <span>{completedCLOs} CLOs đã đạt</span>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-blue-600">
+              {Math.round(overallProgress)}%
             </div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-orange-600" />
-              <span>{clos.length - completedCLOs} CLOs đang học</span>
-            </div>
+            <p className="text-sm text-muted-foreground">hoàn thành</p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+        <Progress value={overallProgress} className="h-3" />
+        <div className="flex items-center gap-6 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <span>{completedCLOs} CLOs đã đạt</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-orange-600" />
+            <span>{clos.length - completedCLOs} CLOs đang học</span>
+          </div>
+        </div>
+      </div>
 
-      {/* Individual CLOs */}
-      <div className="grid gap-4">
-        {clos.map((clo) => {
-          const cloProgress = getProgressForCLO(clo.id)
+      <Separator />
 
-          return (
-            <Card key={clo.id}>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-semibold text-lg">{clo.code}</h3>
-                        {cloProgress?.isAchieved ? (
-                          <Badge variant="default" className="bg-green-600">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Đã đạt
-                          </Badge>
-                        ) : cloProgress ? (
-                          <Badge variant="secondary">
-                            <Clock className="h-3 w-3 mr-1" />
-                            Đang học
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline">Chưa bắt đầu</Badge>
-                        )}
+      {/* CLO - PLO Matrix Table - Clean without card wrapper */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Ma trận CLO-PLO</h3>
+        <div className="rounded-lg border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[300px] min-w-[300px] bg-muted/50">CLO (Chuẩn đầu ra môn học)</TableHead>
+                <TableHead className="w-[120px] bg-muted/50">Trạng thái</TableHead>
+                <TableHead className="w-[100px] bg-muted/50">Tiến độ</TableHead>
+                {uniquePLOs.map(plo => (
+                  <TableHead key={plo.id} className="text-center min-w-[80px] bg-muted/50">
+                    <div className="flex flex-col items-center justify-center" title={plo.description}>
+                      <span>{plo.code}</span>
+                    </div>
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {clos.map((clo) => {
+                const cloProgress = getProgressForCLO(clo.id)
+                const relatedPloIds = new Set(clo.relatedPLOs?.map(p => p.id) || [])
+
+                return (
+                  <TableRow key={clo.id}>
+                    <TableCell className="font-medium">
+                      <div className="space-y-1">
+                        <div className="font-bold text-blue-700">{clo.code}</div>
+                        <div className="text-sm text-muted-foreground line-clamp-2" title={clo.description}>
+                          {clo.description}
+                        </div>
                       </div>
-                      <p className="text-gray-700">{clo.description}</p>
-                      {clo.competencyLevel && (
-                        <p className="text-sm text-gray-600 mt-2">
-                          <span className="font-medium">Cấp độ:</span> {clo.competencyLevel}
-                        </p>
+                    </TableCell>
+                    <TableCell>
+                      {cloProgress?.isAchieved ? (
+                        <Badge variant="default" className="bg-green-600 hover:bg-green-700">
+                          Đã đạt
+                        </Badge>
+                      ) : cloProgress ? (
+                        <Badge variant="secondary">
+                          Đang học
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline">Chưa học</Badge>
                       )}
-                    </div>
-                  </div>
-
-                  {cloProgress && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Tiến độ</span>
-                        <span className="font-medium">
-                          {Math.round(cloProgress.achievementRate)}%
-                        </span>
-                      </div>
-                      <Progress value={cloProgress.achievementRate} className="h-2" />
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-600">Bài tập:</span>
-                          <p className="font-medium">
-                            {cloProgress.completedAssessments}/{cloProgress.totalAssessments}
-                          </p>
+                    </TableCell>
+                    <TableCell>
+                      {cloProgress && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">
+                            {Math.round(cloProgress.achievementRate)}%
+                          </span>
                         </div>
-                        <div>
-                          <span className="text-gray-600">Điểm trung bình:</span>
-                          <p className="font-medium">{cloProgress.averageScore.toFixed(1)}/100</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Trạng thái:</span>
-                          <p className="font-medium">
-                            {cloProgress.isAchieved ? 'Đã đạt' : 'Chưa đạt'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Related PLOs */}
-                  {clo.relatedPLOs && clo.relatedPLOs.length > 0 && (
-                    <div className="pt-4 border-t">
-                      <h4 className="font-medium text-sm text-gray-700 mb-2">Liên quan PLO:</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {clo.relatedPLOs.map((plo) => (
-                          <Badge key={plo.id} variant="outline" className="text-xs">
-                            {plo.code}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
+                      )}
+                    </TableCell>
+                    {uniquePLOs.map(plo => (
+                      <TableCell key={plo.id} className="text-center">
+                        {relatedPloIds.has(plo.id) && (
+                          <div className="flex justify-center">
+                            <Check className="h-5 w-5 text-blue-600" />
+                          </div>
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </div>
   )

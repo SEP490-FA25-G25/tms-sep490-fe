@@ -2,7 +2,7 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { CourseDetail, CourseProgress, MaterialHierarchy } from '@/store/services/courseApi'
-import { BookOpen, Clock, Calendar } from 'lucide-react'
+import { BookOpen, Clock, Calendar, Users, Target } from 'lucide-react'
 
 interface CourseHeaderProps {
   course: CourseDetail
@@ -11,8 +11,13 @@ interface CourseHeaderProps {
 }
 
 export function CourseHeader({ course, progress, materials }: CourseHeaderProps) {
-  const progressPercentage = progress?.progressPercentage || 0
+  // Use course progress if available, fallback to detailed progress
+  const progressPercentage = course.progressPercentage || progress?.progressPercentage || 0
   const nextSession = progress?.nextSession || 'Chưa bắt đầu'
+
+  // Use course session data if detailed progress is not available
+  const completedSessions = course.completedSessions || progress?.completedSessions || 0
+  const totalSessions = course.totalSessions || progress?.totalSessions || 0
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -63,7 +68,7 @@ export function CourseHeader({ course, progress, materials }: CourseHeaderProps)
               </div>
             </div>
 
-            {/* Course Metadata */}
+            {/* Course Metadata - Simplified */}
             <div className="flex flex-wrap gap-6 text-sm text-gray-600">
               {course.subjectName && (
                 <div className="flex items-center gap-2">
@@ -76,18 +81,6 @@ export function CourseHeader({ course, progress, materials }: CourseHeaderProps)
                   <span>Level: {course.levelName}</span>
                 </div>
               )}
-              {course.totalHours && (
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  <span>{course.totalHours} giờ</span>
-                </div>
-              )}
-              {course.durationWeeks && (
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  <span>{course.durationWeeks} tuần</span>
-                </div>
-              )}
             </div>
 
             {/* Description */}
@@ -98,6 +91,63 @@ export function CourseHeader({ course, progress, materials }: CourseHeaderProps)
             )}
           </div>
 
+          {/* Key Information Grid */}
+          <div className="px-4 lg:px-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {course.totalHours && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <Clock className="h-5 w-5 text-blue-600" />
+                    <span className="font-medium">Tổng thời gian</span>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-2xl font-bold text-blue-600">{course.totalHours}</p>
+                    <p className="text-sm text-muted-foreground">giờ học</p>
+                  </div>
+                </div>
+              )}
+
+              {course.durationWeeks && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-5 w-5 text-green-600" />
+                    <span className="font-medium">Thời gian</span>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-2xl font-bold text-green-600">{course.durationWeeks}</p>
+                    <p className="text-sm text-muted-foreground">tuần</p>
+                  </div>
+                </div>
+              )}
+
+              {course.totalSessions && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <BookOpen className="h-5 w-5 text-purple-600" />
+                    <span className="font-medium">Buổi học</span>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-2xl font-bold text-purple-600">{course.totalSessions}</p>
+                    <p className="text-sm text-muted-foreground">buổi</p>
+                  </div>
+                </div>
+              )}
+
+              {course.sessionPerWeek && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <Users className="h-5 w-5 text-orange-600" />
+                    <span className="font-medium">Lịch học</span>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-2xl font-bold text-orange-600">{course.sessionPerWeek}</p>
+                    <p className="text-sm text-muted-foreground">buổi/tuần</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Progress Section */}
           {(progress || progressPercentage > 0) && (
             <div className="bg-gray-50 rounded-lg p-6 space-y-4">
@@ -105,7 +155,7 @@ export function CourseHeader({ course, progress, materials }: CourseHeaderProps)
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">Tiến độ học tập</h3>
                   <p className="text-sm text-gray-600">
-                    {progress?.completedSessions || 0}/{progress?.totalSessions || 0} buổi học
+                    {completedSessions}/{totalSessions} buổi học
                   </p>
                 </div>
                 <div className="text-right">
@@ -160,15 +210,8 @@ export function CourseHeader({ course, progress, materials }: CourseHeaderProps)
               <BookOpen className="h-4 w-4 mr-2" />
               Tải tài liệu
             </Button>
-            <Button variant="outline">
-              <Calendar className="h-4 w-4 mr-2" />
-              Xem lịch học
-            </Button>
           </div>
         </div>
-
-        {/* Visual Separator */}
-        <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
       </div>
     </div>
   )
