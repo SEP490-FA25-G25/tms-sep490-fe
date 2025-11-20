@@ -10,8 +10,7 @@ import {
   Music,
   Image,
   Target,
-  Award,
-  Clock
+  Award
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -160,7 +159,7 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
           <div className="rounded-lg border divide-y overflow-hidden bg-white">
             {materials.courseLevel.map((material) => (
               <div key={material.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
-                <div className="flex-shrink-0 text-muted-foreground">
+                <div className="shrink-0 text-muted-foreground">
                   {getMaterialIcon(material.materialType)}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -367,7 +366,7 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[240px]">Bài đánh giá</TableHead>
+                    <TableHead className="w-60">Bài đánh giá</TableHead>
                     <TableHead className="w-[120px]">Loại</TableHead>
                     <TableHead className="w-[120px]">Thời lượng</TableHead>
                     <TableHead className="w-[120px]">Điểm tối đa</TableHead>

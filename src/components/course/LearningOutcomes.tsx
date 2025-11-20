@@ -89,7 +89,7 @@ export function LearningOutcomes({ clos, progress }: LearningOutcomesProps) {
                 <TableHead className="w-[120px] bg-muted/50">Trạng thái</TableHead>
                 <TableHead className="w-[100px] bg-muted/50">Tiến độ</TableHead>
                 {uniquePLOs.map(plo => (
-                  <TableHead key={plo.id} className="text-center min-w-[80px] bg-muted/50">
+                  <TableHead key={plo.id} className="text-center min-w-20 bg-muted/50">
                     <div className="flex flex-col items-center justify-center" title={plo.description}>
                       <span>{plo.code}</span>
                     </div>

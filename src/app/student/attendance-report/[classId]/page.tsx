@@ -1,70 +1,19 @@
 import type React from "react";
 import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { format, parseISO } from "date-fns";
-import { vi } from "date-fns/locale";
 import { ArrowLeftIcon } from "lucide-react";
 
 import { StudentRoute } from "@/components/ProtectedRoute";
 import { AppSidebar } from "@/components/app-sidebar";
+import { AttendanceSessionsTable } from "@/components/attendance/AttendanceSessionsTable";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 import {
   type StudentAttendanceReportDTO,
-  type StudentAttendanceReportSessionDTO,
   useGetStudentAttendanceReportQuery,
 } from "@/store/services/attendanceApi";
-
-const ATTENDANCE_STATUS_META: Record<
-  string,
-  {
-    label: string;
-    className: string;
-  }
-> = {
-  PRESENT: {
-    label: "Có mặt",
-    className: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  },
-  ABSENT: {
-    label: "Vắng",
-    className: "bg-rose-50 text-rose-700 border-rose-200",
-  },
-  LATE: {
-    label: "Đi trễ",
-    className: "bg-amber-50 text-amber-700 border-amber-200",
-  },
-  EXCUSED: {
-    label: "Có phép",
-    className: "bg-indigo-50 text-indigo-700 border-indigo-200",
-  },
-  PLANNED: {
-    label: "Chưa diễn ra",
-    className: "bg-slate-50 text-slate-700 border-slate-200",
-  },
-};
-
-function formatDateLabel(dateString: string) {
-  try {
-    const date = parseISO(dateString);
-    return format(date, "EEEE '-' dd/MM/yyyy", { locale: vi });
-  } catch {
-    return dateString;
-  }
-}
-
-function formatTimeRange(startTime?: string, endTime?: string) {
-  const start = startTime ? startTime.slice(0, 5) : "";
-  const end = endTime ? endTime.slice(0, 5) : "";
-  if (!start && !end) return "—";
-  if (!end) return start;
-  if (!start) return end;
-  return `${start} - ${end}`;
-}
 
 function computeAttendanceRate(attended: number, absent: number) {
   const totalCompleted = attended + absent;
@@ -221,103 +170,19 @@ export default function StudentClassAttendanceReportPage() {
                 )}
 
                 {!isLoading && !isError && hasSessions && report && (
-                  <section className="space-y-3 rounded-2xl border border-border/60 bg-card/40 p-4">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-sm font-semibold text-foreground">
-                        Danh sách buổi học
-                      </h2>
-                      <p className="text-xs text-muted-foreground">
-                        {report.sessions.length} buổi
-                      </p>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full text-left text-sm">
-                        <thead>
-                          <tr className="border-b border-border/60 text-xs text-muted-foreground">
-                            <th className="border-r border-border/40 px-3 py-2 font-medium">
-                              Buổi
-                            </th>
-                            <th className="border-r border-border/40 px-3 py-2 text-center font-medium">
-                              Ngày
-                            </th>
-                            <th className="border-r border-border/40 px-3 py-2 text-center font-medium">
-                              Giờ học
-                            </th>
-                            <th className="border-r border-border/40 px-3 py-2 text-center font-medium">
-                              Phòng học
-                            </th>
-                            <th className="border-r border-border/40 px-3 py-2 text-center font-medium">
-                              Giảng viên
-                            </th>
-                            <th className="border-r border-border/40 px-3 py-2 text-center font-medium">
-                              Trạng thái điểm danh
-                            </th>
-                            <th className="border-r border-border/40 px-3 py-2 text-center font-medium">
-                              Ghi chú từ giảng viên
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {report.sessions.map(
-                            (
-                              session: StudentAttendanceReportSessionDTO,
-                              idx
-                            ) => {
-                              const statusKey =
-                                session.attendanceStatus ?? "UNKNOWN";
-                              const statusMeta =
-                                ATTENDANCE_STATUS_META[statusKey] ?? null;
-                              return (
-                                <tr
-                                  key={session.sessionId ?? idx}
-                                  className="border-b border-border/40 last:border-0"
-                                >
-                                  <td className="border-r border-border/40 px-3 py-2 text-xs text-muted-foreground">
-                                    {session.sessionNumber ?? idx + 1}
-                                  </td>
-                                  <td className="border-r border-border/40 px-3 py-2 text-sm text-center text-foreground">
-                                    {formatDateLabel(session.date)}
-                                  </td>
-                                  <td className="border-r border-border/40 px-3 py-2 text-sm text-center text-muted-foreground">
-                                    {formatTimeRange(
-                                      session.startTime,
-                                      session.endTime
-                                    )}
-                                  </td>
-                                  <td className="border-r border-border/40 px-3 py-2 text-sm text-center text-muted-foreground">
-                                    {session.classroomName || "Chưa cập nhật"}
-                                  </td>
-                                  <td className="border-r border-border/40 px-3 py-2 text-sm text-center text-muted-foreground">
-                                    {session.teacherName || "Chưa cập nhật"}
-                                  </td>
-                                  <td className="border-r border-border/40 px-3 py-2 text-center">
-                                    {statusMeta ? (
-                                      <Badge
-                                        variant="outline"
-                                        className={cn(
-                                          "px-2 py-0.5 text-[11px] font-medium",
-                                          statusMeta.className
-                                        )}
-                                      >
-                                        {statusMeta.label}
-                                      </Badge>
-                                    ) : (
-                                      <span className="text-xs text-muted-foreground">
-                                        Chưa có dữ liệu
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td className="border-r border-border/40 px-3 py-2 text-sm text-center text-muted-foreground">
-                                    {session.note?.trim() || "Không có ghi chú"}
-                                  </td>
-                                </tr>
-                              );
-                            }
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </section>
+                  <AttendanceSessionsTable
+                    rows={report.sessions.map((session, idx) => ({
+                      id: session.sessionId ?? idx,
+                      order: session.sessionNumber ?? idx + 1,
+                      date: session.date,
+                      startTime: session.startTime,
+                      endTime: session.endTime,
+                      room: session.classroomName,
+                      teacher: session.teacherName,
+                      attendanceStatus: session.attendanceStatus,
+                      note: session.note,
+                    }))}
+                  />
                 )}
               </section>
             </div>

@@ -7,8 +7,7 @@ import {
   CheckCircle,
   Clock,
   TrendingUp,
-  Target,
-  BookOpen
+  Target
 } from 'lucide-react'
 
 interface ProgressDashboardProps {
