@@ -109,10 +109,10 @@ export function Step7Submit({
   }, [classId])
 
   const overview = classDetail?.data
-  const defaultTotal = overview?.sessionSummary?.totalSessions ?? 0
+  const defaultTotal = overview?.upcomingSessions?.length ?? 0
   const summaryChecks: ValidationChecks = validationResult?.checks || {
     totalSessions: defaultTotal,
-    sessionsWithTimeSlots: overview?.sessionSummary?.totalSessions ?? 0,
+    sessionsWithTimeSlots: overview?.upcomingSessions?.length ?? 0,
     sessionsWithResources: 0,
     sessionsWithTeachers: 0,
     sessionsWithoutTimeSlots: 0,

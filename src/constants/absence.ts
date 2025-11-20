@@ -1,6 +1,6 @@
-import type { RequestStatus } from '@/store/services/studentAbsenceRequestApi'
+import type { RequestStatus } from '@/store/services/studentRequestApi'
 
-export const ABSENCE_STATUS_META: Record<
+export const REQUEST_STATUS_META: Record<
   RequestStatus,
   {
     label: string
@@ -12,3 +12,5 @@ export const ABSENCE_STATUS_META: Record<
   REJECTED: { label: 'Đã từ chối', badgeClass: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' },
   CANCELLED: { label: 'Đã hủy', badgeClass: 'bg-slate-100 text-slate-700 ring-1 ring-slate-300' },
 }
+
+export const ABSENCE_STATUS_META = REQUEST_STATUS_META

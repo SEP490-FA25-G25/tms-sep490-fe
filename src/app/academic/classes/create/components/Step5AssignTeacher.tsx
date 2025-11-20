@@ -16,11 +16,10 @@ import { toast } from 'sonner'
 import type {
   ScheduleInfo,
   TeacherAvailability,
-  TeacherAvailableByDay,
   TeacherDayAvailabilityInfo,
 } from '@/types/classCreation'
 import { cn } from '@/lib/utils'
-import { Label } from '@/components/ui/label'
+
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -673,17 +672,17 @@ export function Step5AssignTeacher({
             </RadioGroup>
           </div>
 
-      {assignmentMode === 'multi' && (
-        <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 p-4 text-sm text-muted-foreground">
-          <p className="font-semibold text-foreground">Phân công nhiều giáo viên</p>
-          <p className="mt-1">
-            Chọn giáo viên có thể dạy toàn bộ các buổi của từng ngày trong tuần (ví dụ: 8/8 buổi Thứ Hai). Danh sách hiển thị dựa trên dữ liệu khả dụng theo ngày.
-          </p>
-          <p className="mt-1">
-            Sau khi gán hết, hãy chuyển sang bước tiếp theo để kiểm tra lại các buổi còn thiếu.
-          </p>
-        </div>
-      )}
+          {assignmentMode === 'multi' && (
+            <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 p-4 text-sm text-muted-foreground">
+              <p className="font-semibold text-foreground">Phân công nhiều giáo viên</p>
+              <p className="mt-1">
+                Chọn giáo viên có thể dạy toàn bộ các buổi của từng ngày trong tuần (ví dụ: 8/8 buổi Thứ Hai). Danh sách hiển thị dựa trên dữ liệu khả dụng theo ngày.
+              </p>
+              <p className="mt-1">
+                Sau khi gán hết, hãy chuyển sang bước tiếp theo để kiểm tra lại các buổi còn thiếu.
+              </p>
+            </div>
+          )}
 
           {isTeachersLoading ? (
             <Skeleton className="h-64 rounded-2xl" />
@@ -704,91 +703,91 @@ export function Step5AssignTeacher({
                 </AlertDescription>
               </Alert>
             ) : (
-            <Fragment>
-              <div className="grid gap-3 rounded-2xl border border-border/60 bg-white p-4 sm:grid-cols-2">
-                <div className="rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-white p-4 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700/80">Khuyến nghị</p>
-                  <p className="text-3xl font-semibold text-emerald-700">{fullyAvailable.length}</p>
-                  <p className="text-xs text-muted-foreground">Sẵn sàng toàn bộ buổi học</p>
-                </div>
-                <div className="rounded-xl border border-rose-100 bg-gradient-to-br from-rose-50 via-white to-white p-4 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-rose-700/80">Không khả dụng</p>
-                  <p className="text-3xl font-semibold text-rose-600">{unavailable.length}</p>
-                  <p className="text-xs text-muted-foreground">Bao gồm giáo viên xung đột hoặc không phù hợp lịch</p>
-                </div>
-              </div>
-
-              <section className="space-y-4">
-                <div>
-                  <p className="font-semibold text-foreground">
-                    {STATUS_LABELS.FULLY_AVAILABLE} ({fullyAvailable.length})
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Mở rộng chi tiết để xem nhanh kỹ năng, tỷ lệ khả dụng và phân công ngay lập tức.
-                  </p>
-                </div>
-                {fullyAvailable.length === 0 ? (
-                  <Alert>
-                    <AlertDescription>Chưa có giáo viên đạt mức khả dụng 100%. Hãy xem nhóm “Có xung đột”.</AlertDescription>
-                  </Alert>
-                ) : (
-                  <div className="grid max-h-[520px] gap-4 overflow-y-auto pr-1 md:grid-cols-2 xl:grid-cols-3">
-                    {fullyAvailable.map((teacher) => (
-                     <RecommendedTeacherCard
-                       key={teacher.teacherId}
-                       teacher={teacher}
-                        onAssign={() => handleAssign(teacher.teacherId, null, teacher.fullName)}
-                        isAssigning={isSubmitting && pendingTeacherId === teacher.teacherId}
-                        assignmentMode={assignmentMode}
-                        onOpenSchedule={() => {
-                          setSelectedDays([])
-                          setScheduleModal({ teacher })
-                        }}
-                      />
-                    ))}
+              <Fragment>
+                <div className="grid gap-3 rounded-2xl border border-border/60 bg-white p-4 sm:grid-cols-2">
+                  <div className="rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-white p-4 shadow-sm">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700/80">Khuyến nghị</p>
+                    <p className="text-3xl font-semibold text-emerald-700">{fullyAvailable.length}</p>
+                    <p className="text-xs text-muted-foreground">Sẵn sàng toàn bộ buổi học</p>
                   </div>
-                )}
-              </section>
+                  <div className="rounded-xl border border-rose-100 bg-gradient-to-br from-rose-50 via-white to-white p-4 shadow-sm">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-rose-700/80">Không khả dụng</p>
+                    <p className="text-3xl font-semibold text-rose-600">{unavailable.length}</p>
+                    <p className="text-xs text-muted-foreground">Bao gồm giáo viên xung đột hoặc không phù hợp lịch</p>
+                  </div>
+                </div>
 
-              <section className="space-y-4">
-                <div className="flex flex-wrap items-center gap-2">
+                <section className="space-y-4">
                   <div>
                     <p className="font-semibold text-foreground">
-                      Giáo viên không khả dụng (trùng lịch với lớp khác / xin nghỉ / chưa đăng ký lịch dạy) ({unavailable.length})
+                      {STATUS_LABELS.FULLY_AVAILABLE} ({fullyAvailable.length})
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Dùng để tham khảo lý do và liên hệ giáo viên cập nhật dữ liệu nếu cần.
+                      Mở rộng chi tiết để xem nhanh kỹ năng, tỷ lệ khả dụng và phân công ngay lập tức.
                     </p>
                   </div>
-                  {unavailable.length > 0 && (
-                    <Button variant="ghost" size="sm" onClick={() => setIsUnavailableExpanded((prev) => !prev)}>
-                      {isUnavailableExpanded ? 'Thu gọn danh sách' : 'Xem lý do không khả dụng'}
-                    </Button>
-                  )}
-                </div>
-                {unavailable.length === 0 ? (
-                  <Alert>
-                    <AlertDescription>Không có giáo viên nào bị đánh dấu không khả dụng.</AlertDescription>
-                  </Alert>
-                ) : (
-                  isUnavailableExpanded && (
-                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                      {unavailable.map((teacher) => (
-                        <UnavailableTeacherCard
+                  {fullyAvailable.length === 0 ? (
+                    <Alert>
+                      <AlertDescription>Chưa có giáo viên đạt mức khả dụng 100%. Hãy xem nhóm “Có xung đột”.</AlertDescription>
+                    </Alert>
+                  ) : (
+                    <div className="grid max-h-[520px] gap-4 overflow-y-auto pr-1 md:grid-cols-2 xl:grid-cols-3">
+                      {fullyAvailable.map((teacher) => (
+                        <RecommendedTeacherCard
                           key={teacher.teacherId}
                           teacher={teacher}
+                          onAssign={() => handleAssign(teacher.teacherId, null, teacher.fullName)}
+                          isAssigning={isSubmitting && pendingTeacherId === teacher.teacherId}
                           assignmentMode={assignmentMode}
+                          onOpenSchedule={() => {
+                            setSelectedDays([])
+                            setScheduleModal({ teacher })
+                          }}
                         />
                       ))}
                     </div>
-                  )
-                )}
-              </section>
+                  )}
+                </section>
 
-      <p className="text-xs text-muted-foreground">
-        Có thể gán nhiều giáo viên. Hệ thống sẽ giữ lại các buổi chưa có giáo viên sau mỗi lần phân công để bạn tiếp tục hoàn thiện lịch dạy.
-      </p>
-            </Fragment>
+                <section className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        Giáo viên không khả dụng (trùng lịch với lớp khác / xin nghỉ / chưa đăng ký lịch dạy) ({unavailable.length})
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Dùng để tham khảo lý do và liên hệ giáo viên cập nhật dữ liệu nếu cần.
+                      </p>
+                    </div>
+                    {unavailable.length > 0 && (
+                      <Button variant="ghost" size="sm" onClick={() => setIsUnavailableExpanded((prev) => !prev)}>
+                        {isUnavailableExpanded ? 'Thu gọn danh sách' : 'Xem lý do không khả dụng'}
+                      </Button>
+                    )}
+                  </div>
+                  {unavailable.length === 0 ? (
+                    <Alert>
+                      <AlertDescription>Không có giáo viên nào bị đánh dấu không khả dụng.</AlertDescription>
+                    </Alert>
+                  ) : (
+                    isUnavailableExpanded && (
+                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                        {unavailable.map((teacher) => (
+                          <UnavailableTeacherCard
+                            key={teacher.teacherId}
+                            teacher={teacher}
+                            assignmentMode={assignmentMode}
+                          />
+                        ))}
+                      </div>
+                    )
+                  )}
+                </section>
+
+                <p className="text-xs text-muted-foreground">
+                  Có thể gán nhiều giáo viên. Hệ thống sẽ giữ lại các buổi chưa có giáo viên sau mỗi lần phân công để bạn tiếp tục hoàn thiện lịch dạy.
+                </p>
+              </Fragment>
             )
           ) : filteredMultiDayKeys.length === 0 ? (
             <Alert>
@@ -878,41 +877,41 @@ export function Step5AssignTeacher({
                 Chọn các ngày mà giáo viên này sẽ phụ trách. Bạn có thể phân công lại cho những ngày còn trống sau khi lưu.
               </p>
               <div className="grid grid-cols-2 gap-2">
-                    {dayOptions.map((day) => {
-                      const assignedNames = dayAssignments[day.value] || []
-                      const isAssigned = assignedDays[day.value] ?? false
-                      const checked = isAssigned || selectedDays.includes(day.value)
-                      return (
-                        <label
-                          key={day.value}
-                          className={cn(
-                            'flex items-center gap-2 rounded-xl border px-3 py-2 text-sm',
-                            checked ? 'border-primary bg-primary/5' : 'border-border/60 bg-background',
-                            isAssigned && 'opacity-75'
-                          )}
-                        >
-                          <Checkbox
-                            checked={checked}
-                            disabled={isAssigned}
-                            onCheckedChange={(checkedValue) => {
-                              if (isAssigned) return
-                              setSelectedDays((prev) =>
-                                checkedValue ? [...prev, day.value] : prev.filter((value) => value !== day.value)
-                              )
-                            }}
-                          />
-                          <div className="flex flex-col">
-                            <span>{day.label}</span>
-                            {isAssigned && (
-                              <span className="text-[11px] text-muted-foreground">
-                                Đã phân công{assignedNames.length ? `: ${assignedNames.join(', ')}` : ''}
-                              </span>
-                            )}
-                          </div>
-                        </label>
-                      )
-                    })}
-                  </div>
+                {dayOptions.map((day) => {
+                  const assignedNames = dayAssignments[day.value] || []
+                  const isAssigned = assignedDays[day.value] ?? false
+                  const checked = isAssigned || selectedDays.includes(day.value)
+                  return (
+                    <label
+                      key={day.value}
+                      className={cn(
+                        'flex items-center gap-2 rounded-xl border px-3 py-2 text-sm',
+                        checked ? 'border-primary bg-primary/5' : 'border-border/60 bg-background',
+                        isAssigned && 'opacity-75'
+                      )}
+                    >
+                      <Checkbox
+                        checked={checked}
+                        disabled={isAssigned}
+                        onCheckedChange={(checkedValue) => {
+                          if (isAssigned) return
+                          setSelectedDays((prev) =>
+                            checkedValue ? [...prev, day.value] : prev.filter((value) => value !== day.value)
+                          )
+                        }}
+                      />
+                      <div className="flex flex-col">
+                        <span>{day.label}</span>
+                        {isAssigned && (
+                          <span className="text-[11px] text-muted-foreground">
+                            Đã phân công{assignedNames.length ? `: ${assignedNames.join(', ')}` : ''}
+                          </span>
+                        )}
+                      </div>
+                    </label>
+                  )
+                })}
+              </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setScheduleModal(null)}>
                   Hủy

@@ -52,7 +52,7 @@ const baseQuery = fetchBaseQuery({
 })
 
 // Base query with token refresh logic
-const baseQueryWithReauth: BaseQueryFn<
+export const baseQueryWithReauth: BaseQueryFn<
   string | FetchArgs,
   unknown,
   FetchBaseQueryError,
@@ -107,7 +107,7 @@ const baseQueryWithReauth: BaseQueryFn<
 }
 
 // Export baseQueryWithReauth for use in other API services
-export { baseQueryWithReauth }
+
 
 export const authApi = createApi({
   reducerPath: 'authApi',

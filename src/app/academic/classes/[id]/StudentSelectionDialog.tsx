@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
   FullScreenModal,
   FullScreenModalContent,
@@ -8,9 +8,9 @@ import {
   FullScreenModalTitle,
   FullScreenModalBody,
   FullScreenModalFooter,
-} from '@/components/ui/full-screen-modal'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+} from "@/components/ui/full-screen-modal";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -18,19 +18,19 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Search, UserPlus, Info } from 'lucide-react'
-import { useGetAvailableStudentsQuery } from '@/store/services/classApi'
-import { useEnrollExistingStudentsMutation } from '@/store/services/enrollmentApi'
-import type { AvailableStudentDTO } from '@/store/services/classApi'
-import { toast } from 'sonner'
-import { ReplacementAssessmentsPopover } from '@/components/ReplacementAssessmentsPopover'
+} from "@/components/ui/table";
+import { Search, UserPlus, Info } from "lucide-react";
+import { useGetAvailableStudentsQuery } from "@/store/services/classApi";
+import { useEnrollExistingStudentsMutation } from "@/store/services/enrollmentApi";
+import type { AvailableStudentDTO } from "@/store/services/classApi";
+import { toast } from "sonner";
+import { ReplacementAssessmentsPopover } from "@/components/ReplacementAssessmentsPopover";
 
 interface StudentSelectionDialogProps {
-  classId: number
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSuccess: () => void
+  classId: number;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
 }
 
 export function StudentSelectionDialog({
@@ -39,107 +39,116 @@ export function StudentSelectionDialog({
   onOpenChange,
   onSuccess,
 }: StudentSelectionDialogProps) {
-  const [search, setSearch] = useState('')
-  const [selectedStudents, setSelectedStudents] = useState<Set<number>>(new Set())
-  const [page, setPage] = useState(0)
+  const [search, setSearch] = useState("");
+  const [selectedStudents, setSelectedStudents] = useState<Set<number>>(
+    new Set()
+  );
+  const [page, setPage] = useState(0);
 
-  const {
-    data: response,
-    isLoading,
-  } = useGetAvailableStudentsQuery(
+  const { data: response, isLoading } = useGetAvailableStudentsQuery(
     { classId, search, page, size: 20 },
     { skip: !open } // Only fetch when dialog is open
-  )
+  );
 
-  const [enrollStudents, { isLoading: isEnrolling }] = useEnrollExistingStudentsMutation()
+  const [enrollStudents, { isLoading: isEnrolling }] =
+    useEnrollExistingStudentsMutation();
 
   // Reset state when dialog opens
   useEffect(() => {
     if (open) {
-      setSearch('')
-      setSelectedStudents(new Set())
-      setPage(0)
+      setSearch("");
+      setSelectedStudents(new Set());
+      setPage(0);
     }
-  }, [open])
+  }, [open]);
 
-  const students = response?.data?.content || []
-  const pagination = response?.data?.page
+  const students = response?.data?.content || [];
+  const pagination = response?.data?.page;
 
   const toggleStudent = (studentId: number) => {
-    const newSet = new Set(selectedStudents)
+    const newSet = new Set(selectedStudents);
     if (newSet.has(studentId)) {
-      newSet.delete(studentId)
+      newSet.delete(studentId);
     } else {
-      newSet.add(studentId)
+      newSet.add(studentId);
     }
-    setSelectedStudents(newSet)
-  }
+    setSelectedStudents(newSet);
+  };
 
   const selectAll = () => {
-    const newSet = new Set(selectedStudents)
-    students.forEach(student => newSet.add(student.id))
-    setSelectedStudents(newSet)
-  }
+    const newSet = new Set(selectedStudents);
+    students.forEach((student) => newSet.add(student.id));
+    setSelectedStudents(newSet);
+  };
 
   const clearSelection = () => {
-    setSelectedStudents(new Set())
-  }
+    setSelectedStudents(new Set());
+  };
 
   const handleEnroll = async () => {
     if (selectedStudents.size === 0) {
-      toast.error('Vui lòng chọn ít nhất một học sinh')
-      return
+      toast.error("Vui lòng chọn ít nhất một học sinh");
+      return;
     }
 
     try {
       const result = await enrollStudents({
         classId,
         studentIds: Array.from(selectedStudents),
-      }).unwrap()
+      }).unwrap();
 
       toast.success(
         `Đã ghi danh thành công ${result.data.successfulEnrollments} trên ${result.data.totalAttempted} học sinh vào lớp ${result.data.className}`
-      )
+      );
 
-      handleClose()
-      onSuccess()
+      handleClose();
+      onSuccess();
     } catch (error: unknown) {
-      console.error('Enrollment error:', error)
-      const err = error as { data?: { message?: string } }
-      const errorMessage = err?.data?.message || 'Ghi danh học sinh thất bại'
-      toast.error(errorMessage)
+      console.error("Enrollment error:", error);
+      const err = error as { data?: { message?: string } };
+      const errorMessage = err?.data?.message || "Ghi danh học sinh thất bại";
+      toast.error(errorMessage);
     }
-  }
+  };
 
   const handleClose = () => {
-    setSearch('')
-    setSelectedStudents(new Set())
-    setPage(0)
-    onOpenChange(false)
-  }
+    setSearch("");
+    setSelectedStudents(new Set());
+    setPage(0);
+    onOpenChange(false);
+  };
 
   const getMatchPriorityBadge = (priority: number) => {
     switch (priority) {
       case 1:
         return (
-          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+          <Badge
+            variant="outline"
+            className="bg-green-100 text-green-800 border-green-200"
+          >
             Phù hợp hoàn hảo
           </Badge>
-        )
+        );
       case 2:
         return (
-          <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">
+          <Badge
+            variant="outline"
+            className="bg-yellow-100 text-yellow-800 border-yellow-200"
+          >
             Phù hợp một phần
           </Badge>
-        )
+        );
       default:
         return (
-          <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">
+          <Badge
+            variant="outline"
+            className="bg-gray-100 text-gray-800 border-gray-200"
+          >
             Không phù hợp
           </Badge>
-        )
+        );
     }
-  }
+  };
 
   return (
     <FullScreenModal open={open} onOpenChange={onOpenChange}>
@@ -147,7 +156,8 @@ export function StudentSelectionDialog({
         <FullScreenModalHeader>
           <FullScreenModalTitle>Chọn học sinh để ghi danh</FullScreenModalTitle>
           <FullScreenModalDescription>
-            Học sinh được sắp xếp theo mức độ phù hợp của bài kiểm tra kỹ năng. Các học sinh phù hợp hoàn hảo sẽ xuất hiện đầu tiên.
+            Học sinh được sắp xếp theo mức độ phù hợp của bài kiểm tra kỹ năng.
+            Các học sinh phù hợp hoàn hảo sẽ xuất hiện đầu tiên.
           </FullScreenModalDescription>
         </FullScreenModalHeader>
 
@@ -160,8 +170,8 @@ export function StudentSelectionDialog({
                 placeholder="Tìm kiếm theo tên, email, điện thoại, hoặc mã học sinh..."
                 value={search}
                 onChange={(e) => {
-                  setSearch(e.target.value)
-                  setPage(0)
+                  setSearch(e.target.value);
+                  setPage(0);
                 }}
                 className="pl-9"
               />
@@ -179,7 +189,9 @@ export function StudentSelectionDialog({
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 mx-6">
               <div className="flex items-center gap-2 text-sm text-blue-900">
                 <Info className="h-4 w-4" />
-                <span className="font-medium">Đã chọn {selectedStudents.size} học sinh</span>
+                <span className="font-medium">
+                  Đã chọn {selectedStudents.size} học sinh
+                </span>
               </div>
             </div>
           )}
@@ -188,7 +200,10 @@ export function StudentSelectionDialog({
           {isLoading ? (
             <div className="space-y-3">
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="h-16 bg-muted/50 rounded-lg animate-pulse" />
+                <div
+                  key={i}
+                  className="h-16 bg-muted/50 rounded-lg animate-pulse"
+                />
               ))}
             </div>
           ) : students.length > 0 ? (
@@ -198,18 +213,32 @@ export function StudentSelectionDialog({
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[50px] sticky top-0 bg-background"></TableHead>
-                      <TableHead className="min-w-[200px] sticky top-0 bg-background">Mức độ phù hợp</TableHead>
-                      <TableHead className="min-w-[200px] sticky top-0 bg-background">Học sinh</TableHead>
-                      <TableHead className="min-w-[250px] sticky top-0 bg-background">Email</TableHead>
-                      <TableHead className="min-w-[150px] sticky top-0 bg-background">Điện thoại</TableHead>
-                      <TableHead className="min-w-[200px] sticky top-0 bg-background">Bài kiểm tra đánh giá</TableHead>
+                      <TableHead className="min-w-[200px] sticky top-0 bg-background">
+                        Mức độ phù hợp
+                      </TableHead>
+                      <TableHead className="min-w-[200px] sticky top-0 bg-background">
+                        Học sinh
+                      </TableHead>
+                      <TableHead className="min-w-[250px] sticky top-0 bg-background">
+                        Email
+                      </TableHead>
+                      <TableHead className="min-w-[150px] sticky top-0 bg-background">
+                        Điện thoại
+                      </TableHead>
+                      <TableHead className="min-w-[200px] sticky top-0 bg-background">
+                        Bài kiểm tra đánh giá
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {students.map((student: AvailableStudentDTO) => (
                       <TableRow
                         key={student.id}
-                        className={selectedStudents.has(student.id) ? 'bg-blue-50' : undefined}
+                        className={
+                          selectedStudents.has(student.id)
+                            ? "bg-blue-50"
+                            : undefined
+                        }
                       >
                         <TableCell>
                           <input
@@ -221,20 +250,29 @@ export function StudentSelectionDialog({
                         </TableCell>
                         <TableCell>
                           <div className="space-y-1">
-                            {getMatchPriorityBadge(student.classMatchInfo?.matchPriority || student.matchPriority)}
+                            {getMatchPriorityBadge(
+                              student.classMatchInfo?.matchPriority ||
+                                student.matchPriority
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{student.fullName}</div>
-                            <div className="text-sm text-muted-foreground">{student.studentCode}</div>
+                            <div className="font-medium">
+                              {student.fullName}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {student.studentCode}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>{student.email}</TableCell>
                         <TableCell>{student.phone}</TableCell>
                         <TableCell>
                           <ReplacementAssessmentsPopover
-                            assessments={student.replacementSkillAssessments || []}
+                            assessments={
+                              student.replacementSkillAssessments || []
+                            }
                           />
                         </TableCell>
                       </TableRow>
@@ -247,7 +285,8 @@ export function StudentSelectionDialog({
               {pagination && pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between pt-4 pb-4">
                   <div className="text-sm text-muted-foreground">
-                    Hiển thị {students.length} trên {pagination.totalElements} học sinh
+                    Hiển thị {students.length} trên {pagination.totalElements}{" "}
+                    học sinh
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
@@ -277,7 +316,11 @@ export function StudentSelectionDialog({
             <div className="text-center py-12 text-muted-foreground">
               <UserPlus className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Không tìm thấy học sinh nào phù hợp.</p>
-              {search && <p className="text-sm mt-2">Thử điều chỉnh tiêu chí tìm kiếm của bạn.</p>}
+              {search && (
+                <p className="text-sm mt-2">
+                  Thử điều chỉnh tiêu chí tìm kiếm của bạn.
+                </p>
+              )}
             </div>
           )}
         </FullScreenModalBody>
@@ -290,10 +333,14 @@ export function StudentSelectionDialog({
             onClick={handleEnroll}
             disabled={selectedStudents.size === 0 || isEnrolling}
           >
-            {isEnrolling ? 'Đang ghi danh...' : `Ghi danh ${selectedStudents.size > 0 ? `(${selectedStudents.size})` : ''} học sinh`}
+            {isEnrolling
+              ? "Đang ghi danh..."
+              : `Ghi danh ${
+                  selectedStudents.size > 0 ? `(${selectedStudents.size})` : ""
+                } học sinh`}
           </Button>
         </FullScreenModalFooter>
       </FullScreenModalContent>
     </FullScreenModal>
-  )
+  );
 }

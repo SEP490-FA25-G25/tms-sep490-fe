@@ -105,6 +105,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 /* eslint-disable react-refresh/only-export-components */
 export const schema = z.object({
@@ -491,9 +492,10 @@ export function DataTable({
       </div>
       <TabsContent
         value="outline"
-        className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
+        className="relative flex flex-col gap-4 px-4 lg:px-6"
       >
-        <div className="overflow-hidden rounded-lg border">
+        <ScrollArea className="h-[calc(100vh-400px)] rounded-lg border">
+          <div className="pr-2">
           <DndContext
             collisionDetection={closestCenter}
             modifiers={[restrictToVerticalAxis]}
@@ -541,9 +543,10 @@ export function DataTable({
                   </TableRow>
                 )}
               </TableBody>
-            </Table>
-          </DndContext>
-        </div>
+              </Table>
+            </DndContext>
+          </div>
+        </ScrollArea>
         <div className="flex items-center justify-between px-4">
           <div className="hidden flex-1 text-sm text-muted-foreground lg:flex">
             {table.getFilteredSelectedRowModel().rows.length} của{" "}
@@ -678,7 +681,8 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
             Hiển thị tổng số người truy cập trong 6 tháng qua
           </SheetDescription>
         </SheetHeader>
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto py-4 text-sm">
+        <ScrollArea className="flex-1">
+          <div className="pr-4 py-4 space-y-4 text-sm">
           {!isMobile && (
             <>
               <ChartContainer config={chartConfig}>
@@ -807,8 +811,9 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
                 </SelectContent>
               </Select>
             </div>
-          </form>
-        </div>
+            </form>
+          </div>
+        </ScrollArea>
         <SheetFooter className="mt-auto flex gap-2 sm:flex-col sm:space-x-0">
           <Button className="w-full">Gửi</Button>
           <SheetClose asChild>

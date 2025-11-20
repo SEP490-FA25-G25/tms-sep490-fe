@@ -122,9 +122,9 @@ export function Step4Resources({
             timeSlotId: timeSlotSelections[day],
             dayOfWeek: day,
           }).unwrap()
-          return [day, result.data ?? []] as const
+          return [day, result.data ?? []] as [number, ResourceOption[]]
         } catch {
-          return [day, []] as const
+          return [day, []] as [number, ResourceOption[]]
         }
       })
     ).then((entries) => {

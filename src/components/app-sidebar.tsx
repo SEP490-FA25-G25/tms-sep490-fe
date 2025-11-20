@@ -1,4 +1,4 @@
-import * as React from "react"
+import * as React from "react";
 import {
   ArrowUpCircleIcon,
   BarChartIcon,
@@ -16,11 +16,11 @@ import {
   AwardIcon,
   ClipboardCheckIcon,
   NotebookPenIcon,
-} from "lucide-react"
+} from "lucide-react";
 
-import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
-import { NavUser } from "@/components/nav-user"
+import { NavMain } from "@/components/nav-main";
+import { NavSecondary } from "@/components/nav-secondary";
+import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -29,9 +29,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { useAuth } from "@/hooks/useAuth"
-import { ROLES } from "@/hooks/useRoleBasedAccess"
+} from "@/components/ui/sidebar";
+import { useAuth } from "@/hooks/useAuth";
+import { ROLES } from "@/hooks/useRoleBasedAccess";
 
 // Role-based navigation configuration
 const roleBasedNav = {
@@ -169,6 +169,16 @@ const roleBasedNav = {
         icon: CalendarIcon,
       },
       {
+        title: "Điểm danh",
+        url: "/teacher/attendance",
+        icon: CheckCircleIcon,
+      },
+      {
+        title: "Yêu cầu của tôi",
+        url: "/teacher/requests",
+        icon: ClipboardCheckIcon,
+      },
+      {
         title: "Bài tập",
         url: "/teacher/assignments",
         icon: FileTextIcon,
@@ -198,6 +208,11 @@ const roleBasedNav = {
         icon: BookOpenIcon,
       },
       {
+        title: "Báo cáo điểm danh",
+        url: "/student/attendance-report",
+        icon: BarChartIcon,
+      },
+      {
         title: "Bài tập",
         url: "/student/assignments",
         icon: FileTextIcon,
@@ -213,8 +228,8 @@ const roleBasedNav = {
         icon: CalendarIcon,
       },
       {
-        title: "Xin nghỉ buổi học",
-        url: "/student/absence",
+        title: "Yêu cầu của tôi",
+        url: "/student/requests",
         icon: NotebookPenIcon,
       },
     ],
@@ -276,13 +291,18 @@ const roleBasedNav = {
         icon: FileTextIcon,
       },
       {
-        title: "Đơn xin nghỉ",
-        url: "/academic/absence-requests",
+        title: "Quản lý yêu cầu học viên",
+        url: "/academic/student-requests",
+        icon: ClipboardCheckIcon,
+      },
+      {
+        title: "Quản lý yêu cầu giáo viên",
+        url: "/academic/teacher-requests",
         icon: ClipboardCheckIcon,
       },
     ],
   },
-}
+};
 
 const navSecondary = [
   {
@@ -300,15 +320,15 @@ const navSecondary = [
     url: "/search",
     icon: SearchIcon,
   },
-]
+];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user } = useAuth()
+  const { user } = useAuth();
 
   // Get navigation items based on user's highest priority role
   const getNavigationForRole = () => {
     if (!user?.roles || user.roles.length === 0) {
-      return { navMain: [] }
+      return { navMain: [] };
     }
 
     // Find highest priority role
@@ -321,17 +341,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       [ROLES.QA]: 3,
       [ROLES.TEACHER]: 2,
       [ROLES.STUDENT]: 1,
-    }
+    };
 
     const highestRole = user.roles.reduce((highest, current) =>
       rolePriorities[current as keyof typeof rolePriorities] >
-      rolePriorities[highest as keyof typeof rolePriorities] ? current : highest
-    )
+      rolePriorities[highest as keyof typeof rolePriorities]
+        ? current
+        : highest
+    );
 
-    return roleBasedNav[highestRole as keyof typeof roleBasedNav] || { navMain: [] }
-  }
+    return (
+      roleBasedNav[highestRole as keyof typeof roleBasedNav] || { navMain: [] }
+    );
+  };
 
-  const { navMain } = getNavigationForRole()
+  const { navMain } = getNavigationForRole();
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -340,7 +364,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
+              className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
               <a href="/dashboard">
                 <ArrowUpCircleIcon className="h-5 w-5" />
@@ -355,12 +379,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={{
-          name: user?.fullName || 'Người dùng',
-          email: user?.email || '',
-          avatar: '/avatars/default.jpg',
-        }} />
+        <NavUser
+          user={{
+            name: user?.fullName || "Người dùng",
+            email: user?.email || "",
+            avatar: "/avatars/default.jpg",
+          }}
+        />
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }

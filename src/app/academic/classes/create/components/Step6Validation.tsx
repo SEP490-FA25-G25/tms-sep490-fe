@@ -42,7 +42,7 @@ export function Step6Validation({ classId, onBack, onContinue, onCancelKeepDraft
   const handleValidate = async () => {
     setErrorMessage(null)
     try {
-      const response = await validateClass(classId).unwrap()
+      const response = await validateClass(classId!).unwrap()
       if (response.data) {
         setResult(response.data)
         setApiMessage(response.message || response.data.message)
@@ -59,7 +59,6 @@ export function Step6Validation({ classId, onBack, onContinue, onCancelKeepDraft
 
   const defaultTotal =
     overview?.totalSessions ??
-    classDetail?.data?.sessionSummary?.totalSessions ??
     classDetail?.data?.upcomingSessions?.length ??
     0
   const summaryChecks: ValidationChecks = result?.checks || {
@@ -178,7 +177,7 @@ export function Step6Validation({ classId, onBack, onContinue, onCancelKeepDraft
     return []
   }
 
-  const matchesStatus = useCallback((session: typeof overview.sessions[number]) => {
+  const matchesStatus = useCallback((session: NonNullable<typeof overview>['sessions'][number]) => {
     switch (selectedStatus) {
       case 'missingTimeSlot':
         return !session.hasTimeSlot
@@ -200,15 +199,15 @@ export function Step6Validation({ classId, onBack, onContinue, onCancelKeepDraft
     const sourceWeeks = overview.groupedByWeek?.length
       ? overview.groupedByWeek
       : [
-          {
-            weekNumber: 1,
-            weekRange: overview.dateRange
-              ? `${overview.dateRange.startDate} - ${overview.dateRange.endDate}`
-              : 'Không xác định',
-            sessionCount: overview.sessions.length,
-            sessionIds: overview.sessions.map((session) => session.sessionId),
-          },
-        ]
+        {
+          weekNumber: 1,
+          weekRange: overview.dateRange
+            ? `${overview.dateRange.startDate} - ${overview.dateRange.endDate}`
+            : 'Không xác định',
+          sessionCount: overview.sessions.length,
+          sessionIds: overview.sessions.map((session) => session.sessionId),
+        },
+      ]
 
     return sourceWeeks
       .filter((week) => selectedWeek === 'all' || week.weekNumber === selectedWeek)
@@ -493,22 +492,22 @@ export function Step6Validation({ classId, onBack, onContinue, onCancelKeepDraft
                 <div className="mt-4 space-y-3">
                   {week.sessions.map((session) => (
                     <div key={session.sessionId} className="rounded-xl border border-border/60 bg-background/90 p-4">
-                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                          <div>
-                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Buổi #{session.sequenceNumber}</p>
-                            <p className="text-lg font-semibold">{formatDisplayDate(session.date)}</p>
-                            <p className="text-sm text-muted-foreground">{session.dayOfWeek}</p>
-                          </div>
+                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Buổi #{session.sequenceNumber}</p>
+                          <p className="text-lg font-semibold">{formatDisplayDate(session.date)}</p>
+                          <p className="text-sm text-muted-foreground">{session.dayOfWeek}</p>
+                        </div>
                         <div className="flex-1 md:px-6 space-y-1">
                           <p className="text-sm font-medium">{session.courseSessionName}</p>
                           <p className="text-xs text-muted-foreground">
-                            Khung giờ: <span className="font-semibold text-foreground">{getTimeSlotLabel(session as Record<string, unknown>)}</span>
+                            Khung giờ: <span className="font-semibold text-foreground">{getTimeSlotLabel((session as unknown) as Record<string, unknown>)}</span>
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Tài nguyên / phòng: <span className="font-semibold text-foreground">{getResourceLabel(session as Record<string, unknown>)}</span>
+                            Tài nguyên / phòng: <span className="font-semibold text-foreground">{getResourceLabel((session as unknown) as Record<string, unknown>)}</span>
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Giáo viên: <span className="font-semibold text-foreground">{getTeacherLabel(session as Record<string, unknown>)}</span>
+                            Giáo viên: <span className="font-semibold text-foreground">{getTeacherLabel((session as unknown) as Record<string, unknown>)}</span>
                           </p>
                         </div>
                       </div>

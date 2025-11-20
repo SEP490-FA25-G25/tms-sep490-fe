@@ -123,7 +123,7 @@ const extractCommonTimeSlot = (sessions: GeneratedClassSession[]) => {
       (session.timeSlotInfo?.startTime && session.timeSlotInfo?.endTime
         ? `${session.timeSlotInfo.startTime} - ${session.timeSlotInfo.endTime}`
         : undefined)
-    if (label) slotSet.add(label)
+    if (label && typeof label === 'string') slotSet.add(label)
   })
   if (slotSet.size === 0) return null
   if (slotSet.size === 1) return Array.from(slotSet)[0]
@@ -172,7 +172,7 @@ export function ApprovalDetailDrawer({ classId, open, onClose, onActionComplete 
   const teacherSummaries: TeacherSummary[] = useMemo(() => {
     if (overview?.teachers?.length) {
       return overview.teachers.map((teacher) => ({
-        id: teacher.id ?? teacher.teacherId ?? teacher.userId ?? teacher.email ?? teacher.fullName,
+        id: teacher.id ?? teacher.teacherId ?? teacher.email ?? teacher.fullName,
         fullName: teacher.fullName,
         email: teacher.email,
         employeeCode: (teacher as { employeeCode?: string }).employeeCode,
@@ -459,7 +459,7 @@ export function ApprovalDetailDrawer({ classId, open, onClose, onActionComplete 
                             <div className="text-muted-foreground">
                               {session.timeSlotName ||
                                 session.timeSlotLabel ||
-                                session.timeSlotInfo?.displayName ||
+                                (session.timeSlotInfo?.displayName as string) ||
                                 (session.timeSlotInfo?.startTime && session.timeSlotInfo?.endTime
                                   ? `${session.timeSlotInfo.startTime} - ${session.timeSlotInfo.endTime}`
                                   : 'Chưa có khung giờ')}
