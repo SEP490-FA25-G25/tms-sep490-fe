@@ -23,6 +23,8 @@ import StudentSchedulePage from './app/student/schedule/page'
 import StudentRequestsPage from './app/student/requests/page'
 import StudentAttendanceReportOverviewPage from './app/student/attendance-report/page'
 import StudentClassAttendanceReportPage from './app/student/attendance-report/[classId]/page'
+import StudentMyClassesPage from './app/student/my-classes/page'
+import StudentClassDetailPage from './app/student/my-classes/[classId]/page'
 import AcademicClassesPage from './app/academic/classes/page'
 import AcademicClassDetailPage from './app/academic/classes/[id]/page'
 import AcademicStudentRequestsPage from './app/academic/student-requests/page'
@@ -186,6 +188,22 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={['STUDENT']}>
                   <StudentRequestsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/my-classes"
+              element={
+                <ProtectedRoute requiredRoles={['STUDENT']}>
+                  <StudentMyClassesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/my-classes/:classId"
+              element={
+                <ProtectedRoute requiredRoles={['STUDENT']}>
+                  <StudentClassDetailPage />
                 </ProtectedRoute>
               }
             />

@@ -38,11 +38,14 @@ export function LearningOutcomes({ clos, progress }: LearningOutcomesProps) {
     .sort((a, b) => a.code.localeCompare(b.code))
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" id="muc-tieu-hoc-tap">
       <div className="space-y-2">
         <h2 className="text-2xl font-semibold">Kết quả học tập</h2>
         <p className="text-muted-foreground">
           {clos.length} CLOs • {completedCLOs} đã đạt • {Math.round(overallProgress)}% hoàn thành
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Theo dõi chuẩn đầu ra môn học (CLO) và liên kết với chuẩn đầu ra chương trình (PLO).
         </p>
       </div>
 
@@ -86,7 +89,7 @@ export function LearningOutcomes({ clos, progress }: LearningOutcomesProps) {
                 <TableHead className="w-[120px] bg-muted/50">Trạng thái</TableHead>
                 <TableHead className="w-[100px] bg-muted/50">Tiến độ</TableHead>
                 {uniquePLOs.map(plo => (
-                  <TableHead key={plo.id} className="text-center min-w-[80px] bg-muted/50">
+                  <TableHead key={plo.id} className="text-center min-w-20 bg-muted/50">
                     <div className="flex flex-col items-center justify-center" title={plo.description}>
                       <span>{plo.code}</span>
                     </div>
@@ -133,11 +136,7 @@ export function LearningOutcomes({ clos, progress }: LearningOutcomesProps) {
                     </TableCell>
                     {uniquePLOs.map(plo => (
                       <TableCell key={plo.id} className="text-center">
-                        {relatedPloIds.has(plo.id) && (
-                          <div className="flex justify-center">
-                            <Check className="h-5 w-5 text-primary" />
-                          </div>
-                        )}
+                        {relatedPloIds.has(plo.id) && <Check className="mx-auto h-5 w-5 text-primary" />}
                       </TableCell>
                     ))}
                   </TableRow>
@@ -146,6 +145,23 @@ export function LearningOutcomes({ clos, progress }: LearningOutcomesProps) {
             </TableBody>
           </Table>
         </div>
+      </div>
+
+      <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1">
+          <Badge variant="default" className="bg-success hover:bg-success/90 h-5 px-2">
+            Đã đạt
+          </Badge>
+          Hoàn thành CLO
+        </span>
+        <span className="flex items-center gap-1">
+          <Badge variant="secondary" className="h-5 px-2">Đang học</Badge>
+          CLO đang tiến hành
+        </span>
+        <span className="flex items-center gap-1">
+          <Check className="h-4 w-4 text-primary" />
+          Liên kết với PLO
+        </span>
       </div>
     </div>
   )

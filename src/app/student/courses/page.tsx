@@ -162,9 +162,16 @@ export default function StudentCoursesPage() {
                               <CardTitle className="text-lg leading-tight truncate mb-1">
                                 {course.name}
                               </CardTitle>
-                              <p className="text-sm text-muted-foreground font-medium">
-                                {course.code}
-                              </p>
+                              <div className="space-y-1">
+                                <p className="text-sm text-muted-foreground font-medium">
+                                  {course.code}
+                                </p>
+                                {course.targetAudience && (
+                                  <p className="text-xs text-muted-foreground line-clamp-2">
+                                    Đối tượng: <span className="font-medium text-foreground">{course.targetAudience}</span>
+                                  </p>
+                                )}
+                              </div>
                             </div>
                             <div className="flex flex-col gap-2">
                               <Badge variant={getStatusBadgeVariant(course.enrollmentStatus)} className="shrink-0">
@@ -250,17 +257,9 @@ export default function StudentCoursesPage() {
                             )}
                           </div>
 
-                          {/* Additional Information */}
-                          {course.targetAudience && (
-                            <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg">
-                              <span className="font-medium">Đối tượng: </span>
-                              {course.targetAudience}
-                            </div>
-                          )}
-
                           {/* Action Button */}
                           <Link to={`/student/courses/${course.id}`}>
-                            <Button className="w-full" size="sm">
+                            <Button className="w-full" size="sm" variant="outline">
                               Xem chi tiết
                             </Button>
                           </Link>

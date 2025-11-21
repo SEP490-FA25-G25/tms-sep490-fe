@@ -7,8 +7,7 @@ import {
   CheckCircle,
   Clock,
   TrendingUp,
-  Target,
-  BookOpen
+  Target
 } from 'lucide-react'
 
 interface ProgressDashboardProps {
@@ -31,8 +30,29 @@ export function ProgressDashboard({ progress }: ProgressDashboardProps) {
     return 'destructive'
   }
 
+  const getAssessmentTypeLabel = (assessmentType: string) => {
+    switch (assessmentType?.toUpperCase()) {
+      case 'QUIZ':
+        return 'Quiz'
+      case 'MIDTERM':
+        return 'Giữa kỳ'
+      case 'FINAL':
+        return 'Cuối kỳ'
+      case 'ASSIGNMENT':
+        return 'Bài tập'
+      case 'PROJECT':
+        return 'Dự án'
+      case 'ORAL':
+        return 'Thuyết trình'
+      case 'PRACTICE':
+        return 'Thực hành'
+      default:
+        return assessmentType
+    }
+  }
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" id="tien-do-hoc-tap">
       <div className="space-y-2">
         <h2 className="text-2xl font-semibold">Tiến độ học tập</h2>
         <p className="text-muted-foreground">
@@ -140,27 +160,51 @@ export function ProgressDashboard({ progress }: ProgressDashboardProps) {
         {progress.assessmentProgress && progress.assessmentProgress.length > 0 && (
           <div className="space-y-4">
             <h3 className="font-semibold">Tiến độ đánh giá</h3>
-            <div className="space-y-4">
-              {progress.assessmentProgress.map((assessment) => (
-                <div key={assessment.assessmentId} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium truncate flex-1 mr-2">
-                      {assessment.name}
-                    </span>
-                    <span className="text-sm whitespace-nowrap">
-                      {assessment.isCompleted ? `${assessment.percentageScore.toFixed(1)}%` : 'Chưa làm'}
-                    </span>
-                  </div>
-                  {assessment.isCompleted && (
-                    <Progress value={assessment.percentageScore} className="h-1" />
-                  )}
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>{assessment.assessmentType}</span>
-                    <span>• Trọng số: {assessment.weight}%</span>
-                    <span>• Điểm: {assessment.achievedScore}/{assessment.maxScore}</span>
-                  </div>
-                </div>
-              ))}
+            <div className="rounded-lg border overflow-hidden">
+              <table className="min-w-full text-sm">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-medium text-muted-foreground">Bài đánh giá</th>
+                    <th className="px-4 py-2 text-left font-medium text-muted-foreground">Loại</th>
+                    <th className="px-4 py-2 text-left font-medium text-muted-foreground">Điểm</th>
+                    <th className="px-4 py-2 text-left font-medium text-muted-foreground">Trạng thái</th>
+                    <th className="px-4 py-2 text-left font-medium text-muted-foreground">Hoàn thành</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {progress.assessmentProgress.map((assessment) => (
+                    <tr key={assessment.assessmentId} className="border-t">
+                      <td className="px-4 py-2 font-medium">{assessment.name}</td>
+                      <td className="px-4 py-2 text-muted-foreground">
+                        {getAssessmentTypeLabel(assessment.assessmentType)}
+                      </td>
+                      <td className="px-4 py-2">
+                        {assessment.isCompleted
+                          ? (
+                            <div className="space-y-1">
+                              <div className="font-semibold text-foreground">
+                                {assessment.achievedScore}/{assessment.maxScore}
+                              </div>
+                            </div>
+                          )
+                          : <span className="text-muted-foreground">Chưa làm</span>}
+                      </td>
+                      <td className="px-4 py-2">
+                        {assessment.isCompleted ? (
+                          <Badge variant="secondary">Đã làm</Badge>
+                        ) : (
+                          <Badge variant="outline">Chưa làm</Badge>
+                        )}
+                      </td>
+                      <td className="px-4 py-2 text-muted-foreground">
+                        {assessment.completedAt
+                          ? new Date(assessment.completedAt).toLocaleDateString('vi-VN')
+                          : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}

@@ -1,0 +1,174 @@
+import { useMemo, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Search, UserCircle, Users } from 'lucide-react';
+import type { ClassmateDTO } from '@/types/studentClass';
+import { ENROLLMENT_STATUSES } from '@/types/studentClass';
+import { cn } from '@/lib/utils';
+
+interface ClassmatesTabProps {
+  classmates: ClassmateDTO[];
+  isLoading: boolean;
+  enrollmentSummary: {
+    totalEnrolled: number;
+    maxCapacity: number;
+  };
+}
+
+const ClassmatesTab: React.FC<ClassmatesTabProps> = ({ classmates, isLoading, enrollmentSummary }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Filter classmates based on search term
+  const filteredClassmates = useMemo(
+    () =>
+      classmates.filter((classmate) =>
+        classmate.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        classmate.studentCode.toLowerCase().includes(searchTerm.toLowerCase())
+      ),
+    [classmates, searchTerm]
+  );
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  const getEnrollmentStatusColor = (status: string) => {
+    switch (status) {
+      case 'ENROLLED':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'TRANSFERRED':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'DROPPED':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'COMPLETED':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-10 w-64" />
+            </div>
+            <div className="space-y-2">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <div key={idx} className="flex items-center gap-3 p-3 border rounded-lg">
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <div className="flex-1 space-y-1">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">Thành viên lớp</h3>
+          <p className="text-sm text-muted-foreground">
+            {enrollmentSummary.totalEnrolled}/{enrollmentSummary.maxCapacity} học viên ·
+            Còn {enrollmentSummary.maxCapacity - enrollmentSummary.totalEnrolled} chỗ trống
+          </p>
+        </div>
+        <div className="relative w-full md:w-64">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Tìm kiếm thành viên..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
+      <Card>
+        <CardContent>
+          {filteredClassmates.length > 0 ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Họ tên</TableHead>
+                    <TableHead>MSSV</TableHead>
+                    <TableHead>Trạng thái</TableHead>
+                    <TableHead>Ngày đăng ký</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead className="text-right">Điểm danh</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredClassmates.map((classmate) => (
+                    <TableRow key={classmate.studentId}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          {classmate.avatar ? (
+                            <img
+                              src={classmate.avatar}
+                              alt={classmate.fullName}
+                              className="h-8 w-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+                              <UserCircle className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                          )}
+                          <span className="font-medium text-foreground">{classmate.fullName}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">{classmate.studentCode}</TableCell>
+                      <TableCell>
+                        <Badge className={cn("text-xs", getEnrollmentStatusColor(classmate.enrollmentStatus))}>
+                          {ENROLLMENT_STATUSES[classmate.enrollmentStatus]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {formatDate(classmate.enrollmentDate)}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {classmate.email || '—'}
+                      </TableCell>
+                      <TableCell className="text-right text-sm text-muted-foreground">
+                        {classmate.attendanceRate !== undefined
+                          ? `${classmate.attendanceRate.toFixed(1)}%`
+                          : '—'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              <Users className="h-10 w-10 text-muted-foreground/60 mx-auto mb-3" />
+              {searchTerm ? 'Không có thành viên trùng khớp tìm kiếm.' : 'Chưa có thành viên nào.'}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default ClassmatesTab;

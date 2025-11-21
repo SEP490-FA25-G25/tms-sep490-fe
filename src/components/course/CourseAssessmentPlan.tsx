@@ -57,10 +57,6 @@ export function CourseAssessmentPlan({ assessments }: CourseAssessmentPlanProps)
     }
   }
 
-  const getTotalWeight = () => {
-    return assessments.reduce((sum, assessment) => sum + (assessment.weight || 0), 0)
-  }
-
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
@@ -73,8 +69,10 @@ export function CourseAssessmentPlan({ assessments }: CourseAssessmentPlanProps)
         </Card>
         <Card>
           <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-primary">{getTotalWeight()}%</div>
-            <div className="text-sm text-muted-foreground">Tổng trọng số</div>
+            <div className="text-2xl font-bold text-primary">
+              {assessments.filter(a => a.cloMappings && a.cloMappings.length > 0).length}
+            </div>
+            <div className="text-sm text-muted-foreground">Liên kết CLO</div>
           </CardContent>
         </Card>
         <Card>
@@ -102,11 +100,6 @@ export function CourseAssessmentPlan({ assessments }: CourseAssessmentPlanProps)
                     <Badge variant={getAssessmentTypeVariant(assessment.assessmentType)}>
                       {getAssessmentTypeLabel(assessment.assessmentType)}
                     </Badge>
-                    {assessment.weight && (
-                      <span className="text-sm font-semibold text-primary">
-                        {assessment.weight}%
-                      </span>
-                    )}
                   </div>
                   <h3 className="text-lg font-semibold mb-1">{assessment.name}</h3>
                   {assessment.description && (

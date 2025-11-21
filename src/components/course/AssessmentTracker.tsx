@@ -24,11 +24,10 @@ export function AssessmentTracker({ assessments, assessmentProgress }: Assessmen
 
   const getOverallScore = () => {
     if (!assessmentProgress || assessmentProgress.length === 0) return null
-    const totalWeightedScore = assessmentProgress.reduce((sum, p) => {
-      const assessment = assessments.find(a => a.id === p.assessmentId)
-      return sum + (p.percentageScore * (assessment?.weight || 0)) / 100
-    }, 0)
-    return totalWeightedScore
+    const completed = assessmentProgress.filter(p => p.isCompleted)
+    if (completed.length === 0) return null
+    const average = completed.reduce((sum, p) => sum + p.percentageScore, 0) / completed.length
+    return average
   }
 
   const completedAssessments = assessmentProgress?.filter(p => p.isCompleted).length || 0
@@ -64,14 +63,14 @@ export function AssessmentTracker({ assessments, assessmentProgress }: Assessmen
             <div className="text-center space-y-4">
               <div className="flex items-center justify-center gap-3">
                 <TrendingUp className="h-6 w-6 text-blue-600" />
-                <h3 className="text-lg font-semibold">Điểm trung bình có trọng số</h3>
+                <h3 className="text-lg font-semibold">Điểm trung bình</h3>
               </div>
               <div className="text-4xl font-bold text-blue-600">
-                {overallScore.toFixed(1)}/100
+                {overallScore.toFixed(1)}%
               </div>
               <Progress value={overallScore} className="h-3 max-w-md mx-auto" />
               <p className="text-sm text-gray-600">
-                Dựa trên {completedAssessments}/{assessments.length} bài tập đã nộp
+                Trung bình các bài đã làm ({completedAssessments}/{assessments.length})
               </p>
             </div>
           </CardContent>
@@ -101,8 +100,8 @@ export function AssessmentTracker({ assessments, assessmentProgress }: Assessmen
                     <div className="text-right space-y-1">
                       <div className="flex items-center gap-2 justify-end">
                         {getStatusIcon(progress?.isCompleted)}
-                        <span className="text-sm font-medium">
-                          {assessment.weight}% trọng số
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {assessment.assessmentType}
                         </span>
                       </div>
                       <p className="text-sm text-gray-600">
@@ -125,10 +124,6 @@ export function AssessmentTracker({ assessments, assessmentProgress }: Assessmen
                           </div>
                         </div>
                       </div>
-
-                      {progress.percentageScore > 0 && (
-                        <Progress value={progress.percentageScore} className="h-2" />
-                      )}
 
                       {progress.completedAt && (
                         <div className="flex items-center gap-2 text-sm text-gray-600">

@@ -1,118 +1,545 @@
-## 🎨 **Thiết Kế Modern Minimal Cho TMS (Frontend shadcn/ui + Tailwind)** 
+# 🎨 Thiết Kế Modern Minimal Cho TMS (Frontend shadcn/ui + Tailwind)
 
-Tài liệu này chuẩn hóa UI/UX cho web app quản lý (dashboard) với shadcn/ui. Mục tiêu: nhanh, dễ quét, ít nhiễu, 100% tiếng Việt, ưu tiên hiệu suất và dễ bảo trì. Dark mode sẽ bổ sung sau.
+Tài liệu này chuẩn hóa UI/UX cho web app quản lý (dashboard) với shadcn/ui. Mục tiêu: **ship nhanh, dễ quét, ít nhiễu**, 100% tiếng Việt, ưu tiên hiệu suất và dễ bảo trì.
 
-### **1) Nguyên Tắc Cốt Lõi** 
-- **Content-first, tối giản có chủ đích**: Chỉ giữ yếu tố phục vụ thao tác/quyết định. 
-- **Không lạm dụng card/đổ bóng**: Dùng lưới/spacing để nhóm nội dung; card chỉ khi cần nền riêng. 
-- **Truy cập & tốc độ**: WCAG AA, tab-able, lightweight; hạn chế motion, ưu tiên phản hồi nhanh. 
-- **Nhất quán component**: Dùng variant mặc định của shadcn/ui, chỉ override khi thật sự cần. 
+---
 
-### **2) Màu Sắc & Token (Light mode)** 
-Palette đề xuất (4 màu đã chọn) dùng cho thương hiệu/nhấn. Luôn kết hợp với neutral xám để giữ độ rõ ràng.
+## **🚀 Nguyên Tắc Áp Dụng: Ship Fast, Refine Later**
 
-**Brand/Accent (A):**
-- A100 `#FFF2E0` (rgb(255, 242, 224)) – nền nhấn nhẹ (tag nền, highlight soft). 
-- A300 `#C0C9EE` (rgb(192, 201, 238)) – hover cho element nhấn, nền phụ cho stats. 
-- A500 `#A2AADB` (rgb(162, 170, 219)) – primary background state (chip/label). 
-- A700 `#898AC4` (rgb(137, 138, 196)) – **Primary** (button, link nhấn, focus ring). 
+Guideline này được thiết kế theo phases:
 
-**Neutral (N) đề xuất** (giữ tông xám cho đọc dễ):  
-N0 `#FFFFFF`, N50 `#F8FAFC`, N100 `#F1F5F9`, N200 `#E2E8F0`, N300 `#CBD5E1`, N500 `#64748B`, N700 `#334155`, N900 `#0F172A`.
+**Phase 1 - POC/Spike (Week 1-2):**
+- ✅ Inline components OK
+- ✅ Simple states (loading/success/error)
+- ✅ Focus: Ship & validate concept
+- ✅ Apply: Typography + basic spacing only
 
-**Ánh xạ CSS variable (light):**
-- `--bg`: N0/N50; `--surface`: N50/N100; `--surface-subtle`: A100 5% overlay. 
-- `--border`: N200/N300; `--text`: N700/N900; `--muted`: N500. 
-- `--primary`: A700; `--primary-foreground`: N0; `--primary-hover`: A500/A700 mix 90%; 
-- `--accent`: A500; `--accent-foreground`: N900. 
-- `--success`: `#1A9C68`; `--warning`: `#D97706`; `--error`: `#DC2626`; nền state = màu 10% alpha.
+**Phase 2 - Production Ready (Week 3-4):**
+- ✅ Extract components khi thấy pattern lặp (≥2 uses)
+- ✅ Full states cho main screens
+- ✅ Apply: Card guidelines, component structure
 
-**Nguyên tắc dùng màu:**
-- Primary chỉ cho CTA chính, link nhấn, focus ring. 
-- Trạng thái (success/warning/error) ưu tiên nền nhạt + text đậm, icon đơn sắc. 
-- Overlay/hover: tăng độ sâu bằng border/độ sáng, không thêm shadow dày. 
-- Giữ contrast AA (≥4.5:1 cho text body); check nhanh bằng plugin/grayscale. 
+**Phase 3 - Stable/Scale (Month 2+):**
+- ✅ Enforce consistency across codebase
+- ✅ Accessibility compliance
+- ✅ Apply: All guidelines
 
-### **3) Typography & Spacing** 
-**Font:** Inter → SF Pro/Roboto fallback; 100% tiếng Việt.  
-**Typo scale (desktop / mobile):**
-- H1: 28 / 24px, 700, lh 1.2 (dùng cho tiêu đề trang). 
-- H2: 24 / 20px, 600, lh 1.25 (tiêu đề section). 
-- H3: 20 / 18px, 600, lh 1.3 (nhóm nội dung). 
-- H4: 18 / 16px, 600, lh 1.35 (subsection/nhãn nhóm). 
-- Body: 16px, lh 1.5 (mặc định). 
-- Secondary: 14px, lh 1.5 (mô tả ngắn, label phụ). 
-- Caption: 12-13px, lh 1.4 (dùng rất hạn chế, chỉ metadata). 
-- Tránh chữ in hoa liên tục; dùng ellipsis cho text thao tác dài; heading ≤ 6 từ, mô tả ≤ 2 câu. 
+**Rule of thumb:** Khi nghi ngờ → chọn simple, refactor sau khi pattern rõ.
 
-**Spacing token (8px grid):** 4 / 8 / 12 / 16 / 20 / 24 / 32 / 40 / 48.  
-**Mật độ dashboard:** block cách nhau 16-24px; heading ↔ nội dung 8-12px; nhóm ↔ nhóm 16-24px; row bảng ≥44px cao.  
-**Layout:** container max 1280-1366px; dùng Grid/Flex trước, tránh lồng card. 
+---
 
-### **4) Component Guideline (gọn cho shadcn/ui)** 
-- **Button:** Primary = A700, hover A500/A700 mix; Secondary = outline N200; Ghost cho icon-only; có trạng thái loading (spinner nhỏ bên trái). Không nhồi icon trang trí. 
-- **Form/Input:** Border N200, focus ring A700 2px; error border màu error + text trợ giúp ngắn 1 dòng. Group field theo section, tránh card bao ngoài. 
-- **Table/Data Table:** Không bọc card; header nền N50, border N200; zebra nhẹ hoặc divider 1px N200; action trong bảng dùng ghost/inline, không là primary trừ CTA chính. Empty state ngắn gọn + CTA nếu cần. 
-- **Toast/Alert/Dialog:** Dùng tiết kiệm; toast ≤2 mỗi flow, auto-dismiss; dialog chỉ cho quyết định lớn. 
-- **Nav/Sidebar:** Nền N0/N50; active item dùng A100/A300 với text A700; icon + label ngắn. 
-- **Loading:** Skeleton/shimmer nhẹ, tránh overlay toàn trang trừ chờ bắt buộc. Motion tối giản (transition 150–200ms ease-out). 
-- **Accordion/Collapsible/Drawer/Sheet/Popover/Dropdown:** Dùng để giảm mật độ; nội dung ngắn gọn, không lồng nhiều lớp; đóng mở phải có focus/esc/ngoài-đóng chuẩn. 
-- **Tabs/Navigation Menu:** Tối đa 5-7 tab, label ngắn; dùng khi nội dung cùng cấp; trạng thái active rõ (border dưới hoặc nền A100). 
-- **Card/Empty/Error:** Card chỉ cho khối độc lập; Empty/Error một câu + CTA ngắn, không thêm đồ họa nặng. 
+## **1) Nguyên Tắc Cốt Lõi**
 
-### **5) Ngôn Ngữ & Chống Noise** 
-- 100% tiếng Việt, câu ngắn, động từ rõ. Heading ≤6 từ, mô tả ≤2 câu. 
-- Loại bỏ nhãn thừa; không lặp ngữ cảnh; tooltip chỉ khi thật cần. 
-- CTA ngắn: “Lưu”, “Thêm lớp”, “Gửi yêu cầu”. Lỗi/validation đặt sát trường, một câu ngắn. 
+- **Content-first, tối giản có chủ đích**: Chỉ giữ yếu tố phục vụ thao tác/quyết định
+- **Default: No card**: Dùng spacing/dividers trước, cards chỉ khi cần visual separation rõ ràng
+- **Truy cập & tốc độ**: WCAG AA, tab-able, lightweight; hạn chế motion, ưu tiên phản hồi nhanh
+- **Nhất quán component**: Dùng variant mặc định của shadcn/ui, chỉ override khi thật sự cần
+- **Inline first, extract later**: Không extract component sớm; đợi pattern lặp lại
 
-### **6) Trạng Thái & Phản Hồi** 
-- **Loading**: skeleton/placeholder tại vùng dữ liệu; spinner nhỏ trong nút khi submit. 
-- **Empty**: 1 câu + CTA tùy bối cảnh, không card thừa. 
-- **Error**: thông điệp rõ, tiếng Việt; gợi ý retry ngay tại vị trí thao tác. 
-- **Success**: feedback ngắn (toast nhỏ/inline), không spam. 
+---
 
-### **7) Accessibility & Kiểm Tra Nhanh** 
-- Focus ring luôn hiện (A700 trên nền sáng); tab order đúng; component shadcn dùng props mặc định (aria/keyboard). 
-- Contrast AA cho text; kiểm tra nhanh với devtools/grayscale. 
-- Keyboard: mọi hành động chính có thể tab/enter/space; form có `aria-invalid`, `aria-describedby` cho lỗi. 
+## **2) Màu Sắc & Token (Simplified)**
 
-### **8) Card, Border, Shadow (nhắc lại chống lạm dụng)** 
-- Card khi cần nền riêng (widget độc lập); tối đa 1 cấp lồng. 
-- Border 1px N200/N300; ưu tiên divider/spacing. Shadow: none hoặc rất nhẹ (2-4 blur, alpha thấp). 
-- Tránh lưới nhiều card giống hệt; ưu tiên một grid rõ với hierarchy bằng typography/spacing. 
+### Primary Color
 
-### **9) Checklist Nhanh Cho Mỗi Màn Hình** 
-1. Màu: Nền neutral, primary = A700, accent không tràn; state màu nhạt + text rõ. 
-2. Text: Tiếng Việt ngắn gọn; heading ≤6 từ; không mô tả dài; có ellipsis khi cần. 
-3. Spacing/Layout: 8px grid; block 16-24px; không bọc card thừa; row bảng ≥44px. 
-4. Component: Button đúng variant; form border N200 + focus rõ; table không card, header N50. 
-5. Feedback: Loading = skeleton; toast ≤2/flow; error/success ngắn, tại chỗ. 
-6. Access: Focus ring rõ; tab-able; contrast AA. 
-7. Hiệu suất: Tránh animation nặng; ảnh/icon tối ưu; không render thừa. 
+- **Primary:** `#3C467B` (rgb(60, 70, 123)) - Brand color cho buttons, links, focus rings
+- **Hover/Active:** Dùng Tailwind opacity modifiers: `bg-primary/90`, `bg-primary/80`
+- **Subtle backgrounds:** `bg-primary/10`, `bg-primary/5`
 
-### **10) UX Flow Tối Thiểu (mỗi tính năng phải có)** 
-- **Trạng thái bắt buộc**: idle → loading (skeleton tại vùng) → success (hiển thị dữ liệu) → empty (1 câu + CTA nếu cần) → error (thông điệp + retry tại chỗ). 
-- **Form**: label/placeholder rõ, hint ngắn, validation inline, disabled khi đang submit, spinner trong nút. 
-- **Tìm kiếm/Lọc/Phân trang**: trạng thái “không kết quả” riêng, lưu tiêu chí lọc đã chọn, nút reset rõ. 
-- **Hành động phá hủy/quan trọng**: dialog xác nhận ngắn, 2 nút rõ ràng; CTA chính mang màu primary, phụ là ghost/outline. 
-- **Điều hướng**: breadcrumb hoặc header ngắn; trạng thái active trong sidebar/nav dùng A100/A300 + text A700; không nhảy context đột ngột (giữ tiêu đề/trạng thái filter nếu quay lại). 
+### Neutral Colors
 
-### **Agent Guardrails (khi implement)** 
-- Luôn dùng token màu ở mục 2; không chèn mã màu tự do. 
-- Spacing theo 8px grid, nhưng **tiết chế**: block 16-24px là giới hạn điển hình; tránh padding >24px cho khối nhỏ để không tạo khoảng trắng thừa. 
-- Typography đúng scale H1–H4 + body/secondary; heading ≤6 từ; mô tả ≤2 câu; ellipsis cho text dài. 
-- Bắt buộc đủ 5 trạng thái (idle/loading/success/empty/error) cho màn hình dữ liệu. Skeleton trong vùng, không overlay toàn trang trừ khi cần. 
-- Form: focus ring A700, validation inline, nút có loading, disable khi submit. 
-- Card: chỉ khi cần surface riêng; table/list/form mặc định không bọc card; border 1px N200, shadow rất nhẹ hoặc none. 
-- Toast/Dialog: toast ≤2/flow; dialog chỉ cho hành động quan trọng, CTA chính = primary, phụ = ghost/outline. 
-- Navigation: breadcrumb/heading ngắn; sidebar active dùng A100/A300 + text A700; giữ state filter khi quay lại. 
-- Motion: chỉ transition 150–200ms ease-out; không thêm animation khác nếu không được yêu cầu. 
-- Tương tác: mọi phần tử click được phải có `cursor: pointer` + trạng thái hover/focus rõ; link/CTA cần focus ring A700. 
+- **N0** `#FFFFFF` - Background
+- **N50** `#F8FAFC` - Surface subtle
+- **N100** `#F1F5F9` - Surface
+- **N200** `#E2E8F0` - Border
+- **N500** `#64748B` - Muted text
+- **N700** `#334155` - Primary text
+- **N900** `#0F172A` - Headings
 
-### **11) Danh Mục Component shadcn/ui (áp dụng chuẩn trên)** 
-Accordion, Alert, Alert Dialog, Aspect Ratio, Avatar, Badge, Breadcrumb, Button, Button Group, Calendar, Card, Carousel, Chart, Checkbox, Collapsible, Combobox, Command, Context Menu, Data Table, Date Picker, Dialog, Drawer, Dropdown Menu, Empty, Field, Form, Hover Card, Input Group, Input OTP, Input, Item, Kbd, Label, Menubar, Native Select, Navigation Menu, Pagination, Popover, Progress, Radio Group, Resizable, Scroll Area, Select, Separator, Sheet, Sidebar, Skeleton, Slider, Sonner, Spinner, Switch, Table, Tabs, Textarea, Toast, Toggle Group, Toggle, Tooltip, Typography. 
+### State Colors
 
-**Áp dụng chung**: 
-- Dùng variant mặc định, màu theo token ở mục 2; focus ring A700; hover nhẹ (border/độ sáng), shadow rất thấp hoặc none. 
-- Icon chỉ khi tăng khả năng quét; tránh icon trang trí. 
-- Không bọc card nếu surface đã đủ rõ; ưu tiên layout Grid/Flex và spacing. 
+- **Success:** `#1A9C68` - bg với `bg-success/10` cho subtle
+- **Warning:** `#D97706` - bg với `bg-warning/10`
+- **Error:** `#DC2626` - bg với `bg-destructive/10`
+
+### CSS Variables (shadcn defaults)
+
+Dùng shadcn/ui CSS variables có sẵn:
+- `--primary`, `--primary-foreground`
+- `--muted`, `--muted-foreground`
+- `--border`, `--background`, `--foreground`
+- `--destructive`, `--success`, `--warning`
+
+**Không cần custom tokens.** Dùng Tailwind modifiers (`/90`, `/80`, `/10`) cho variations.
+
+### Nguyên Tắc Dùng Màu
+
+- Primary chỉ cho CTA chính, links, focus rings
+- State colors: nền nhạt (`/10`) + text đậm
+- Hover: dùng opacity (`/90`) thay vì màu mới
+- Contrast ≥4.5:1 (WCAG AA)
+
+---
+
+## **3) Typography & Spacing**
+
+### Font
+
+**Inter → SF Pro/Roboto fallback; 100% tiếng Việt**
+
+### Typography Scale (Tailwind Standard)
+
+| Element | Class | Desktop | Mobile | Weight | Use |
+|---------|-------|---------|--------|--------|-----|
+| **H1** | `text-3xl` | 30px | `text-2xl md:text-3xl` | `font-bold` | Page title |
+| **H2** | `text-2xl` | 24px | `text-xl md:text-2xl` | `font-semibold` | Section |
+| **H3** | `text-xl` | 20px | `text-lg md:text-xl` | `font-semibold` | Subsection |
+| **Body** | `text-base` | 16px | 16px | `font-normal` | Default |
+| **Secondary** | `text-sm` | 14px | 14px | `font-normal` | Meta/labels |
+| **Caption** | `text-xs` | 12px | 12px | `font-normal` | Timestamps |
+
+### Quick Examples
+
+```tsx
+// Page header
+<h1 className="text-3xl font-bold tracking-tight">Quản lý Lớp học</h1>
+<p className="text-base text-muted-foreground">Mô tả ngắn gọn</p>
+
+// Info block
+<div className="space-y-1">
+  <span className="text-sm text-muted-foreground">Giáo viên</span>
+  <p className="text-base font-semibold">Nguyễn Văn A</p>
+</div>
+```
+
+### Quy Tắc
+
+- Heading ≤ 6 từ
+- Description ≤ 2 câu
+- Dùng `truncate` hoặc `line-clamp-2` cho text dài
+
+### Spacing (Core Rules Only)
+
+| Context | Class | Size | Use |
+|---------|-------|------|-----|
+| **Sections** | `gap-6` | 24px | Between major blocks |
+| **Groups** | `gap-4` | 16px | Filters, form groups |
+| **Items** | `gap-3` | 12px | List items |
+| **Page padding** | `px-4 lg:px-6` | 16px → 24px | Horizontal margins |
+| **Page padding** | `py-6 md:py-8` | 24px → 32px | Vertical spacing |
+
+**Rule:** Dùng `gap-6` cho most cases. Chỉ giảm xuống `gap-4` khi cần tight spacing. Container max: `max-w-7xl mx-auto`.
+
+---
+
+## **4) Cards: Simple Decision Tree**
+
+### Default: No Card
+
+**Ưu tiên:** Spacing và dividers thay vì cards.
+
+```tsx
+<div className="space-y-6">
+  <section className="space-y-4">
+    <h2>Section Title</h2>
+    <div>Content</div>
+  </section>
+  <Separator />
+  <section>Next section</section>
+</div>
+```
+
+### When to Use Cards
+
+**1. Table/Section Container** (visual boundary)
+
+```tsx
+<div className="rounded-lg border overflow-hidden">
+  <Table>...</Table>
+</div>
+```
+
+**Khi nào:** Table hoặc section cần tách khỏi background
+
+**2. Independent Grid Items** (clickable, self-contained)
+
+```tsx
+<Card className="cursor-pointer hover:shadow-sm">
+  <CardHeader><CardTitle>Title</CardTitle></CardHeader>
+  <CardContent>Content + actions</CardContent>
+</Card>
+```
+
+**Khi nào:** Class cards, course cards, dashboard widgets trong grid
+
+**3. Info Display Blocks** (subtle separation)
+
+```tsx
+<div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+  <div className="flex items-center gap-2 text-muted-foreground">
+    <Icon className="h-4 w-4" />
+    <span className="text-sm">Label</span>
+  </div>
+  <p className="text-base font-semibold">Value</p>
+</div>
+```
+
+**Khi nào:** Header info cards (teacher, schedule, location)
+
+### Decision Flow
+
+```
+Cần visual separation?
+├─ No → Spacing only (gap-6, dividers)
+└─ Yes → Table/section boundary?
+    ├─ Yes → Container (<div> + border)
+    └─ No → Independent item in grid?
+        ├─ Yes → Card component
+        └─ No → Consider info block OR just spacing
+```
+
+**Rule:** Khi nghi ngờ → không dùng card.
+
+---
+
+## **5) Component Architecture**
+
+### Extraction Rules (Revised)
+
+**Extract component khi:**
+1. **Pattern lặp thực tế** (≥2 nơi với logic tương tự)
+2. **Logic phức tạp cần test** (calculations, validations)
+3. **Feature đã ổn định** (không còn thay đổi requirements)
+
+**Inline OK khi:**
+- POC/spike features
+- First iteration của feature mới
+- Logic đơn giản, chỉ render data
+- Page đang experiment
+
+**Rule:** Inline first → Extract when pattern emerges.
+
+### Component Structure
+
+```tsx
+// src/components/[domain]/ComponentName.tsx
+export interface ComponentNameProps {
+  data: DataType
+  onAction?: (id: number) => void
+}
+
+export function ComponentName({ data, onAction }: ComponentNameProps) {
+  return <div>{/* Component */}</div>
+}
+```
+
+### Layout Wrapper Pattern
+
+**Preferred: DashboardLayout**
+
+```tsx
+export default function ClassListPage() {
+  return (
+    <DashboardLayout
+      title="Quản lý Lớp học"
+      description="Quản lý các lớp học"
+    >
+      <div className="space-y-6">
+        <FilterSection />
+        <DataSection />
+      </div>
+    </DashboardLayout>
+  )
+}
+```
+
+**Inline layout OK** trong POC phase, refactor sau khi pattern stable.
+
+### Code Organization
+
+```
+src/
+├── app/[role]/[feature]/
+│   ├── page.tsx              # Main page (delegate to components)
+│   └── components/           # Page-specific (if needed)
+├── components/
+│   ├── ui/                   # shadcn/ui (don't edit)
+│   └── [domain]/             # Shared components (extract when ≥2 uses)
+└── lib/utils.ts
+```
+
+---
+
+## **6) Component Guidelines**
+
+### Button
+
+```tsx
+<Button>Primary Action</Button>
+<Button variant="outline">Secondary</Button>
+<Button variant="ghost" size="icon"><Icon /></Button>
+
+// Loading
+<Button disabled={isLoading}>
+  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+  Lưu
+</Button>
+```
+
+### Form/Input
+
+```tsx
+<div className="space-y-2">
+  <Label htmlFor="name">Tên lớp</Label>
+  <Input id="name" placeholder="Nhập tên..." />
+  {error && <p className="text-sm text-destructive">{error}</p>}
+</div>
+```
+
+**Rules:** Focus ring visible, validation inline, disabled khi submit.
+
+### Table
+
+```tsx
+<div className="rounded-lg border overflow-hidden">
+  <Table>
+    <TableHeader>
+      <TableRow className="bg-muted/50">
+        <TableHead>Column</TableHead>
+      </TableRow>
+    </TableHeader>
+    <TableBody>
+      <TableRow className="hover:bg-muted/50">
+        <TableCell>Data</TableCell>
+      </TableRow>
+    </TableBody>
+  </Table>
+</div>
+```
+
+**Rules:** No `<Card>` wrapper; header `bg-muted/50`; rows ≥44px; actions = ghost buttons.
+
+### Tabs (for detail pages)
+
+```tsx
+<Tabs value={activeTab} onValueChange={setActiveTab}>
+  <div className="sticky top-[var(--header-height)] bg-background/95 backdrop-blur">
+    <TabsList className="bg-transparent border-b w-full justify-start rounded-none">
+      <TabsTrigger
+        value="tab1"
+        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
+      >
+        Tab 1
+      </TabsTrigger>
+    </TabsList>
+  </div>
+  <TabsContent value="tab1"><Content /></TabsContent>
+</Tabs>
+```
+
+**Rules:** Sticky tabs với backdrop-blur; active = border-bottom; max 5-7 tabs.
+
+---
+
+## **7) State Management (Simplified)**
+
+### Main Data Screens (Required)
+
+```tsx
+function DataPage() {
+  const { data, isLoading, error, refetch } = useQuery()
+
+  if (isLoading) return <SkeletonLoader />
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-sm mb-4">Không thể tải dữ liệu</p>
+        <Button size="sm" onClick={refetch}>Thử lại</Button>
+      </div>
+    )
+  }
+
+  if (!data || data.length === 0) {
+    return <EmptyState message="Chưa có dữ liệu" />
+  }
+
+  return <DataDisplay data={data} />
+}
+```
+
+**Required states:** loading → success/empty → error (with retry)
+
+### Secondary Views (Dialogs, Sub-tables)
+
+```tsx
+// Simplified - chỉ 3 states
+{isLoading ? (
+  <Skeleton className="h-20" />
+) : error ? (
+  <p className="text-sm text-muted-foreground">Không thể tải</p>
+) : (
+  <Content data={data} />
+)}
+```
+
+**Optional:** Empty state có thể là inline "Không có dữ liệu"
+
+### Simple Displays
+
+```tsx
+// Inline skeleton, no error UI needed
+{isLoading ? <Skeleton className="h-4 w-20" /> : <span>{value}</span>}
+```
+
+**Rule:** State complexity theo importance của view.
+
+---
+
+## **8) Ngôn Ngữ & UX**
+
+- **100% tiếng Việt**, câu ngắn, động từ rõ
+- **Heading:** ≤ 6 từ
+- **Mô tả:** ≤ 2 câu
+- **CTA ngắn:** "Lưu", "Thêm", "Xóa"
+- **Lỗi:** Sát field, một câu ngắn
+
+---
+
+## **9) Accessibility Basics**
+
+- **Focus ring:** Visible (default shadcn behavior)
+- **Tab order:** Logical
+- **Keyboard:** Tab/Enter/Space cho actions
+- **Contrast:** ≥4.5:1 (WCAG AA)
+- **ARIA:** Dùng props mặc định của shadcn
+
+**Test:** Tab through page, check focus visibility.
+
+---
+
+## **10) Quick Checklist**
+
+Trước khi commit:
+
+**Typography:**
+- [ ] H1 = `text-3xl font-bold`
+- [ ] Body = `text-base`, Secondary = `text-sm`
+
+**Spacing:**
+- [ ] Sections = `gap-6`
+- [ ] Page padding = `px-4 lg:px-6`, `py-6 md:py-8`
+
+**Cards:**
+- [ ] Default = no card (spacing only)
+- [ ] Table = container wrapper
+- [ ] Grid items = Card component if clickable
+
+**States:**
+- [ ] Main screens: loading/success/empty/error
+- [ ] Secondary views: simplified OK
+
+**Components:**
+- [ ] Extract chỉ khi pattern lặp (≥2 uses)
+- [ ] POC = inline OK
+
+**Vietnamese:**
+- [ ] 100% UI text tiếng Việt
+- [ ] Heading ≤ 6 từ
+
+---
+
+## **11) Common Patterns**
+
+### Page Structure
+
+```tsx
+<DashboardLayout title="Title" description="Description">
+  <div className="space-y-6">
+    <FilterSection />
+    <DataSection />
+    <PaginationSection />
+  </div>
+</DashboardLayout>
+```
+
+### Filter Section
+
+```tsx
+<div className="flex flex-col md:flex-row gap-4">
+  <Input placeholder="Tìm kiếm..." className="max-w-sm" />
+  <Select>...</Select>
+  <Select>...</Select>
+</div>
+```
+
+### Data Grid
+
+```tsx
+<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+  {items.map(item => (
+    <Card key={item.id} className="cursor-pointer hover:shadow-sm">
+      <CardHeader><CardTitle>{item.name}</CardTitle></CardHeader>
+      <CardContent>{item.description}</CardContent>
+    </Card>
+  ))}
+</div>
+```
+
+### Info Grid (in headers)
+
+```tsx
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+  <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+    <div className="flex items-center gap-2 text-muted-foreground">
+      <Icon className="h-4 w-4" />
+      <span className="text-sm">Label</span>
+    </div>
+    <p className="text-base font-semibold">Value</p>
+  </div>
+</div>
+```
+
+---
+
+## **12) Agent Guardrails**
+
+Khi implement code:
+
+**Typography:**
+- Dùng `text-3xl`, `text-2xl`, `text-base`, `text-sm` (Tailwind classes)
+- KHÔNG custom px values
+- H1 = `text-3xl font-bold`
+
+**Spacing:**
+- Default = `gap-6` cho sections
+- Page padding = `px-4 lg:px-6`, `py-6 md:py-8`
+- Container = `max-w-7xl mx-auto`
+
+**Cards:**
+- Default = no card
+- Table = `<div className="rounded-lg border overflow-hidden">`
+- Grid items = `<Card>` nếu clickable
+- Khi nghi ngờ = no card
+
+**Components:**
+- Inline first (POC phase)
+- Extract khi ≥2 uses với logic tương tự
+- TypeScript interfaces cho extracted components
+
+**States:**
+- Main screens = full states (loading/success/empty/error)
+- Secondary = simplified (loading/success/error)
+- Simple displays = inline skeleton
+
+**Colors:**
+- Primary = brand color
+- Hover = `bg-primary/90`
+- Subtle = `bg-primary/10`
+- KHÔNG custom color tokens
+
+**Vietnamese:**
+- 100% UI text
+- Ngắn gọn, heading ≤6 từ
+
+---
