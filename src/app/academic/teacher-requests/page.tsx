@@ -39,20 +39,20 @@ import {
   useGetRequestByIdQuery,
   useApproveRequestMutation,
   useRejectRequestMutation,
-  useGetSwapCandidatesQuery,
+  useGetReplacementCandidatesQuery,
   useGetModalityResourcesQuery,
   useGetRescheduleResourcesQuery,
   type RequestType as TeacherRequestType,
   type RequestStatus as TeacherRequestStatus,
   type TeacherRequestDTO,
-  type SwapCandidateDTO,
+  type ReplacementCandidateDTO,
 } from "@/store/services/teacherRequestApi";
 import { TeacherRequestDetailContent } from "@/app/teacher/requests/page";
 
 const TEACHER_REQUEST_TYPE_LABELS: Record<TeacherRequestType, string> = {
   MODALITY_CHANGE: "Thay đổi phương thức",
   RESCHEDULE: "Đổi lịch",
-  SWAP: "Nhờ dạy thay",
+  REPLACEMENT: "Nhờ dạy thay",
 };
 
 // Helper function to format error messages from backend to user-friendly Vietnamese
@@ -124,7 +124,7 @@ const TEACHER_REQUEST_STATUS_META: Record<
 };
 
 const getCandidateSkills = (
-  candidate: SwapCandidateDTO
+  candidate: ReplacementCandidateDTO
 ): string | undefined => {
   // Helper to format skill with level
   const formatSkillWithLevel = (skill: unknown): string | null => {
@@ -422,22 +422,23 @@ export default function AcademicTeacherRequestsPage() {
   }, [selectedRequestFromDetail, selectedRequestFromList]);
 
   const canDecide = selectedRequest?.status === "PENDING";
-  const isSwapRequest = selectedRequest?.requestType === "SWAP" && canDecide;
+  const isReplacementRequest =
+    selectedRequest?.requestType === "REPLACEMENT" && canDecide;
   const isModalityChangeRequest =
     selectedRequest?.requestType === "MODALITY_CHANGE" && canDecide;
   const isRescheduleRequest =
     selectedRequest?.requestType === "RESCHEDULE" && canDecide;
 
-  // Get requestId for swap candidates API
+  // Get requestId for replacement candidates API
   const requestId = selectedRequest?.id;
 
-  // Get swap candidates if this is a SWAP request
-  const shouldFetchCandidates = isSwapRequest && !!requestId;
+  // Get replacement candidates if this is a REPLACEMENT request
+  const shouldFetchCandidates = isReplacementRequest && !!requestId;
   const {
-    data: swapCandidatesResponse,
+    data: replacementCandidatesResponse,
     isFetching: isLoadingCandidates,
-    error: swapCandidatesError,
-  } = useGetSwapCandidatesQuery(
+    error: replacementCandidatesError,
+  } = useGetReplacementCandidatesQuery(
     shouldFetchCandidates && requestId ? { requestId } : skipToken
   );
 
@@ -471,7 +472,7 @@ export default function AcademicTeacherRequestsPage() {
       : skipToken
   );
 
-  const swapCandidates = swapCandidatesResponse?.data ?? [];
+  const replacementCandidates = replacementCandidatesResponse?.data ?? [];
   const modalityResources = modalityResourcesResponse?.data ?? [];
   const rescheduleResources = rescheduleResourcesResponse?.data ?? [];
 
@@ -558,9 +559,9 @@ export default function AcademicTeacherRequestsPage() {
     }
   }, [selectedRequestId, refetchRequestDetail]);
 
-  // Reset replacement teacher when switching to non-SWAP request
+  // Reset replacement teacher when switching to non-REPLACEMENT request
   useEffect(() => {
-    if (selectedRequest?.requestType !== "SWAP") {
+    if (selectedRequest?.requestType !== "REPLACEMENT") {
       setSelectedReplacementTeacherId(null);
     }
   }, [selectedRequest]);
@@ -594,11 +595,11 @@ export default function AcademicTeacherRequestsPage() {
       return;
     }
 
-    // Validate replacement teacher for SWAP requests
+    // Validate replacement teacher for REPLACEMENT requests
     // Only require selection if request doesn't already have a replacement teacher
     if (
       action === "approve" &&
-      selectedRequest.requestType === "SWAP" &&
+      selectedRequest.requestType === "REPLACEMENT" &&
       !selectedReplacementTeacherId &&
       !selectedRequest.replacementTeacherId
     ) {
@@ -615,7 +616,7 @@ export default function AcademicTeacherRequestsPage() {
           body: {
             note: trimmedNote || undefined,
             replacementTeacherId:
-              selectedRequest.requestType === "SWAP"
+              selectedRequest.requestType === "REPLACEMENT"
                 ? selectedReplacementTeacherId ??
                   selectedRequest.replacementTeacherId ??
                   undefined
@@ -689,8 +690,8 @@ export default function AcademicTeacherRequestsPage() {
                   <SelectItem value="RESCHEDULE">
                     {TEACHER_REQUEST_TYPE_LABELS.RESCHEDULE}
                   </SelectItem>
-                  <SelectItem value="SWAP">
-                    {TEACHER_REQUEST_TYPE_LABELS.SWAP}
+                  <SelectItem value="REPLACEMENT">
+                    {TEACHER_REQUEST_TYPE_LABELS.REPLACEMENT}
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -860,7 +861,7 @@ export default function AcademicTeacherRequestsPage() {
                         </div>
                       )}
 
-                      {request.requestType === "SWAP" && (
+                      {request.requestType === "REPLACEMENT" && (
                         <div className="mt-3 rounded-xl bg-muted/40 p-3">
                           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground/70">
                             <span>Giáo viên dạy thay:</span>
@@ -920,8 +921,8 @@ export default function AcademicTeacherRequestsPage() {
                   <SelectItem value="RESCHEDULE">
                     {TEACHER_REQUEST_TYPE_LABELS.RESCHEDULE}
                   </SelectItem>
-                  <SelectItem value="SWAP">
-                    {TEACHER_REQUEST_TYPE_LABELS.SWAP}
+                  <SelectItem value="REPLACEMENT">
+                    {TEACHER_REQUEST_TYPE_LABELS.REPLACEMENT}
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -1268,7 +1269,7 @@ export default function AcademicTeacherRequestsPage() {
                 </div>
               )}
 
-              {isSwapRequest && (
+              {isReplacementRequest && (
                 <div className="space-y-2">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Chọn giáo viên dạy thay
@@ -1281,15 +1282,18 @@ export default function AcademicTeacherRequestsPage() {
                     <div className="rounded-lg border p-4 text-center text-sm text-muted-foreground">
                       Đang tải danh sách giáo viên...
                     </div>
-                  ) : swapCandidatesError ? (
+                  ) : replacementCandidatesError ? (
                     <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
                       {formatBackendError(
-                        (swapCandidatesError as { data?: { message?: string } })
-                          ?.data?.message,
+                        (
+                          replacementCandidatesError as {
+                            data?: { message?: string };
+                          }
+                        )?.data?.message,
                         "Có lỗi khi tải danh sách giáo viên. Vui lòng thử lại sau."
                       )}
                     </div>
-                  ) : swapCandidates.length === 0 ? (
+                  ) : replacementCandidates.length === 0 ? (
                     <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
                       Không tìm thấy giáo viên phù hợp để dạy thay.
                     </div>
@@ -1310,12 +1314,13 @@ export default function AcademicTeacherRequestsPage() {
                           {selectedReplacementTeacherId
                             ? (() => {
                                 // First try to find in candidates list
-                                const selectedCandidate = swapCandidates.find(
-                                  (c) =>
-                                    (c.teacherId ??
-                                      (c as { id?: number }).id) ===
-                                    selectedReplacementTeacherId
-                                );
+                                const selectedCandidate =
+                                  replacementCandidates.find(
+                                    (c) =>
+                                      (c.teacherId ??
+                                        (c as { id?: number }).id) ===
+                                      selectedReplacementTeacherId
+                                  );
                                 if (selectedCandidate) {
                                   return (
                                     selectedCandidate.fullName ||
@@ -1330,7 +1335,7 @@ export default function AcademicTeacherRequestsPage() {
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        {swapCandidates.map((candidate) => {
+                        {replacementCandidates.map((candidate) => {
                           const teacherId =
                             candidate.teacherId ??
                             (candidate as { id?: number }).id;

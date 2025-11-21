@@ -23,7 +23,7 @@ const requestTypes: Array<{
     description: "Thay đổi thời gian của session",
   },
   {
-    value: "SWAP",
+    value: "REPLACEMENT",
     label: "Nhờ dạy thay (Substitute)",
     description: "Yêu cầu giáo viên khác dạy thay session này",
   },
