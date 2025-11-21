@@ -30,6 +30,14 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
 import { cn } from '@/lib/utils'
 import UnifiedRequestFlow from '@/components/requests/UnifiedRequestFlow'
 import {
@@ -415,29 +423,49 @@ export default function StudentRequestsPage() {
             </ScrollArea>
 
             {/* Pagination */}
-            {pagination && pagination.totalPages > 1 && (
+            {pagination && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">
                   Trang {pagination.number + 1} / {pagination.totalPages}
                 </span>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
-                    disabled={pagination.number === 0}
-                  >
-                    Trước
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setPage((prev) => Math.min(prev + 1, pagination.totalPages - 1))}
-                    disabled={pagination.number + 1 >= pagination.totalPages}
-                  >
-                    Sau
-                  </Button>
-                </div>
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setPage((prev) => Math.max(prev - 1, 0))
+                        }}
+                        disabled={pagination.number === 0}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: pagination.totalPages }, (_, i) => i).map((pageNum) => (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setPage(pageNum)
+                          }}
+                          isActive={pageNum === pagination.number}
+                        >
+                          {pageNum + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setPage((prev) => Math.min(prev + 1, pagination.totalPages - 1))
+                        }}
+                        disabled={pagination.number + 1 >= pagination.totalPages}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
               </div>
             )}
           </div>

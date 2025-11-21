@@ -12,6 +12,14 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { useGetStudentClassesQuery } from '@/store/services/studentClassApi';
@@ -437,29 +445,49 @@ const MyClassesPage = () => {
                       })}
                     </div>
 
-                    {totalPages > 1 && (
-                      <div className="mt-8 flex items-center justify-center gap-3 text-sm">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setPage((p) => Math.max(0, p - 1))}
-                          disabled={page === 0}
-                        >
-                          Trước
-                        </Button>
-                        <span className="text-muted-foreground">
-                          Trang {page + 1} / {totalPages}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                          disabled={page === totalPages - 1}
-                        >
-                          Sau
-                        </Button>
-                      </div>
-                    )}
+                    <div className="mt-8 flex items-center justify-center gap-3 text-sm">
+                      <span className="text-muted-foreground mr-4">
+                        Trang {page + 1} / {totalPages}
+                      </span>
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setPage((p) => Math.max(0, p - 1))
+                              }}
+                              disabled={page === 0}
+                            />
+                          </PaginationItem>
+                          {Array.from({ length: totalPages }, (_, i) => i).map((pageNum) => (
+                            <PaginationItem key={pageNum}>
+                              <PaginationLink
+                                href="#"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  setPage(pageNum)
+                                }}
+                                isActive={pageNum === page}
+                              >
+                                {pageNum + 1}
+                              </PaginationLink>
+                            </PaginationItem>
+                          ))}
+                          <PaginationItem>
+                            <PaginationNext
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setPage((p) => Math.min(totalPages - 1, p + 1))
+                              }}
+                              disabled={page === totalPages - 1}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
                   </>
                 )}
 

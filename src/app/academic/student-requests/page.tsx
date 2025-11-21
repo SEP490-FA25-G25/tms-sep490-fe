@@ -8,6 +8,14 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
 import { PlusCircleIcon, XIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { DataTable } from './components/DataTable'
@@ -336,31 +344,49 @@ export default function AcademicRequestsPage() {
               )}
 
               {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between text-sm">
-                  <p className="text-muted-foreground">
-                    Trang {page + 1} / {totalPages} · {pendingData?.totalElements ?? 0} yêu cầu
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={page === 0 || isLoadingPending}
-                      onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
-                    >
-                      Trước
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={page + 1 >= totalPages || isLoadingPending}
-                      onClick={() => setPage((prev) => Math.min(prev + 1, totalPages - 1))}
-                    >
-                      Sau
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <div className="flex items-center justify-between text-sm">
+                <p className="text-muted-foreground">
+                  Trang {page + 1} / {totalPages} · {pendingData?.totalElements ?? 0} yêu cầu
+                </p>
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setPage((prev) => Math.max(prev - 1, 0))
+                        }}
+                        disabled={page === 0 || isLoadingPending}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: totalPages }, (_, i) => i).map((pageNum) => (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setPage(pageNum)
+                          }}
+                          isActive={pageNum === page}
+                        >
+                          {pageNum + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setPage((prev) => Math.min(prev + 1, totalPages - 1))
+                        }}
+                        disabled={page + 1 >= totalPages || isLoadingPending}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
             </div>
           </TabsContent>
 
@@ -378,31 +404,49 @@ export default function AcademicRequestsPage() {
               )}
 
               {/* History Pagination */}
-              {historyTotalPages > 1 && (
-                <div className="flex items-center justify-between text-sm">
-                  <p className="text-muted-foreground">
-                    Trang {historyPage + 1} / {historyTotalPages} · {historyData?.page?.totalElements ?? 0} yêu cầu
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={historyPage === 0 || isLoadingHistory}
-                      onClick={() => setHistoryPage((prev) => Math.max(prev - 1, 0))}
-                    >
-                      Trước
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={historyPage + 1 >= historyTotalPages || isLoadingHistory}
-                      onClick={() => setHistoryPage((prev) => Math.min(prev + 1, historyTotalPages - 1))}
-                    >
-                      Sau
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <div className="flex items-center justify-between text-sm">
+                <p className="text-muted-foreground">
+                  Trang {historyPage + 1} / {historyTotalPages} · {historyData?.page?.totalElements ?? 0} yêu cầu
+                </p>
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setHistoryPage((prev) => Math.max(prev - 1, 0))
+                        }}
+                        disabled={historyPage === 0 || isLoadingHistory}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: historyTotalPages }, (_, i) => i).map((pageNum) => (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setHistoryPage(pageNum)
+                          }}
+                          isActive={pageNum === historyPage}
+                        >
+                          {pageNum + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setHistoryPage((prev) => Math.min(prev + 1, historyTotalPages - 1))
+                        }}
+                        disabled={historyPage + 1 >= historyTotalPages || isLoadingHistory}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
