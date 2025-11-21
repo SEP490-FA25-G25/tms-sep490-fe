@@ -11,11 +11,11 @@ Tài liệu này chuẩn hóa UI/UX cho web app quản lý (dashboard) với sha
 ### **2) Màu Sắc & Token (Light mode)** 
 Palette đề xuất (4 màu đã chọn) dùng cho thương hiệu/nhấn. Luôn kết hợp với neutral xám để giữ độ rõ ràng.
 
-**Brand/Accent (A):**
-- A100 `#FFF2E0` (rgb(255, 242, 224)) – nền nhấn nhẹ (tag nền, highlight soft). 
-- A300 `#C0C9EE` (rgb(192, 201, 238)) – hover cho element nhấn, nền phụ cho stats. 
-- A500 `#A2AADB` (rgb(162, 170, 219)) – primary background state (chip/label). 
-- A700 `#898AC4` (rgb(137, 138, 196)) – **Primary** (button, link nhấn, focus ring). 
+**Brand/Accent (A) – new palette:**
+- A100 `#6E8CFB` (rgb(110, 140, 251)) – nền nhấn nhẹ/hover phụ (tag, highlight mềm). 
+- A300 `#636CCB` (rgb(99, 108, 203)) – hover cho element nhấn, nền phụ cho stats. 
+- A500 `#50589C` (rgb(80, 88, 156)) – primary background state (chip/label, badge). 
+- A700 `#3C467B` (rgb(60, 70, 123)) – **Primary** (button, link nhấn, focus ring). 
 
 **Neutral (N) đề xuất** (giữ tông xám cho đọc dễ):  
 N0 `#FFFFFF`, N50 `#F8FAFC`, N100 `#F1F5F9`, N200 `#E2E8F0`, N300 `#CBD5E1`, N500 `#64748B`, N700 `#334155`, N900 `#0F172A`.

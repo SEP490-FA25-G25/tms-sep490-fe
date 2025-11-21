@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { useGetStudentClassesQuery } from '@/store/services/studentClassApi';
 import type { ClassStatus, Modality, StudentClassDTO } from '@/types/studentClass';
 import { CLASS_STATUSES, MODALITIES } from '@/types/studentClass';
-import { AlertCircle, BookOpen, Calendar, Filter, MapPin, Search, Users } from 'lucide-react';
+import { AlertCircle, BookOpen, Filter, Search } from 'lucide-react';
 
 interface FilterState {
   status: ClassStatus[];
@@ -355,52 +355,52 @@ const MyClassesPage = () => {
                           classItem.totalSessions > 0
                             ? (classItem.completedSessions / classItem.totalSessions) * 100
                             : 0;
+                        const teacherSummary = classItem.instructorNames?.length
+                          ? `${classItem.instructorNames[0]}${classItem.instructorNames.length > 1 ? ` +${classItem.instructorNames.length - 1}` : ''}`
+                          : 'Chưa phân công';
+                        const attendanceTone = classItem.attendanceRate < 80 ? 'text-destructive' : 'text-foreground';
+
                         return (
                           <Card
                             key={classItem.classId}
                             className="h-full cursor-pointer border border-border/80 transition-shadow hover:shadow-md"
                             onClick={() => navigate(`/student/my-classes/${classItem.classId}`)}
                           >
-                            <CardHeader className="space-y-2">
-                              <div className="flex items-center justify-between gap-2">
-                                <Badge className={cn('text-xs', getStatusColor(classItem.status))}>
-                                  {CLASS_STATUSES[classItem.status]}
-                                </Badge>
-                                <Badge variant="outline" className="text-xs">
-                                  {MODALITIES[classItem.modality]}
-                                </Badge>
-                              </div>
-                              <CardTitle className="text-lg leading-tight">
-                                {classItem.classCode}
-                              </CardTitle>
-                              <p className="text-sm text-muted-foreground line-clamp-2">
-                                {classItem.className}
-                              </p>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                              {classItem.instructorNames?.length ? (
-                                <div className="flex items-start gap-2 text-sm">
-                                  <Users className="h-4 w-4 text-muted-foreground" />
-                                  <div className="space-y-1">
-                                    <p className="font-medium text-foreground">Giáo viên</p>
-                                    <p className="text-muted-foreground">
-                                      {classItem.instructorNames.slice(0, 2).join(', ')}
-                                      {classItem.instructorNames.length > 2 &&
-                                        ` +${classItem.instructorNames.length - 2}`}
-                                    </p>
-                                  </div>
+                            <CardHeader className="pb-4">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex-1 min-w-0 space-y-1">
+                                  <CardTitle className="text-lg leading-tight line-clamp-2">
+                                    {classItem.className}
+                                  </CardTitle>
+                                  <p className="text-sm text-muted-foreground font-medium">{classItem.classCode}</p>
                                 </div>
-                              ) : null}
-
-                              <div className="flex items-start gap-2 text-sm">
-                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                <div className="flex flex-col items-end gap-2">
+                                  <Badge className={cn('text-xs', getStatusColor(classItem.status))}>
+                                    {CLASS_STATUSES[classItem.status]}
+                                  </Badge>
+                                  <Badge variant="outline" className="text-xs">
+                                    {MODALITIES[classItem.modality]}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                              <div className="grid grid-cols-2 gap-3 text-sm">
                                 <div className="space-y-1">
-                                  <p className="font-medium text-foreground">Lịch</p>
-                                  <p className="text-muted-foreground">{classItem.scheduleSummary}</p>
-                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    <MapPin className="h-3 w-3" />
-                                    <span>{classItem.branchName}</span>
-                                  </div>
+                                  <p className="text-muted-foreground">Giáo viên</p>
+                                  <p className="font-medium text-foreground">{teacherSummary}</p>
+                                </div>
+                                <div className="space-y-1 text-right">
+                                  <p className="text-muted-foreground">Địa điểm</p>
+                                  <p className="font-medium text-foreground">{classItem.branchName}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <p className="text-muted-foreground">Lịch</p>
+                                  <p className="font-medium text-foreground">{classItem.scheduleSummary}</p>
+                                </div>
+                                <div className="space-y-1 text-right">
+                                  <p className="text-muted-foreground">Khóa học</p>
+                                  <p className="font-medium text-foreground">{classItem.courseName}</p>
                                 </div>
                               </div>
 
@@ -414,7 +414,7 @@ const MyClassesPage = () => {
                                 <Progress value={progress} className="h-2" />
                                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                                   <span>Điểm danh</span>
-                                  <span className="font-semibold text-foreground">
+                                  <span className={cn('font-semibold', attendanceTone)}>
                                     {classItem.attendanceRate.toFixed(1)}%
                                   </span>
                                 </div>

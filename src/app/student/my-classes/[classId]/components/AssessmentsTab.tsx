@@ -12,6 +12,7 @@ interface AssessmentsTabProps {
   assessments: AssessmentDTO[];
   isLoading: boolean;
   scores: StudentAssessmentScoreDTO[];
+  averageScore?: number;
 }
 
 type FilterType = 'all' | 'upcoming' | 'graded' | 'overdue';
@@ -175,7 +176,8 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
                   <TableRow>
                     <TableHead>Tên bài</TableHead>
                     <TableHead>Loại</TableHead>
-                    <TableHead>Thời gian</TableHead>
+                    <TableHead>Thời gian bắt đầu</TableHead>
+                    <TableHead>Thời lượng</TableHead>
                     <TableHead>Giáo viên</TableHead>
                     <TableHead>Trạng thái</TableHead>
                     <TableHead className="text-right">Điểm</TableHead>
@@ -211,11 +213,15 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
                             <Calendar className="h-4 w-4" />
                             <span>{formatDate(assessment.scheduledDate)}</span>
                           </div>
-                          {assessment.durationMinutes && (
-                            <div className="flex items-center gap-1 text-xs">
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {assessment.durationMinutes ? (
+                            <div className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
                               <span>{assessment.durationMinutes} phút</span>
                             </div>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
                           )}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">

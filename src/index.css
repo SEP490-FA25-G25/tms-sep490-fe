@@ -55,7 +55,7 @@
   --popover-foreground: #0F172A; /* N900 */
   
   /* Primary - A700 */
-  --primary: #898AC4;
+  --primary: #3C467B;
   --primary-foreground: #FFFFFF;
   
   /* Secondary - N100 */
@@ -67,7 +67,7 @@
   --muted-foreground: #64748B;
   
   /* Accent - A500 */
-  --accent: #A2AADB;
+  --accent: #50589C;
   --accent-foreground: #0F172A;
   
   /* Destructive - Error */
@@ -79,7 +79,7 @@
   --input: #E2E8F0;
   
   /* Ring - A700 */
-  --ring: #898AC4;
+  --ring: #3C467B;
   
   /* Charts (Keep existing or update if needed, leaving as is for now but converting to hex if possible, or keeping oklch) */
   --chart-1: oklch(0.646 0.222 41.116);
@@ -91,12 +91,12 @@
   /* Sidebar */
   --sidebar: #F8FAFC; /* N50 */
   --sidebar-foreground: #334155; /* N700 */
-  --sidebar-primary: #898AC4; /* A700 */
+  --sidebar-primary: #3C467B; /* A700 */
   --sidebar-primary-foreground: #FFFFFF; /* N0 */
-  --sidebar-accent: #FFF2E0; /* A100 */
-  --sidebar-accent-foreground: #898AC4; /* A700 */
+  --sidebar-accent: #6E8CFB; /* A100 */
+  --sidebar-accent-foreground: #3C467B; /* A700 */
   --sidebar-border: #E2E8F0; /* N200 */
-  --sidebar-ring: #898AC4; /* A700 */
+  --sidebar-ring: #3C467B; /* A700 */
 }
 
 .dark {
