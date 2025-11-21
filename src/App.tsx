@@ -25,6 +25,7 @@ import StudentAttendanceReportOverviewPage from './app/student/attendance-report
 import StudentClassAttendanceReportPage from './app/student/attendance-report/[classId]/page'
 import StudentMyClassesPage from './app/student/my-classes/page'
 import StudentClassDetailPage from './app/student/my-classes/[classId]/page'
+import StudentProfilePage from './app/student/profile/page'
 import AcademicClassesPage from './app/academic/classes/page'
 import AcademicClassDetailPage from './app/academic/classes/[id]/page'
 import AcademicStudentRequestsPage from './app/academic/student-requests/page'
@@ -204,6 +205,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={['STUDENT']}>
                   <StudentClassDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/profile"
+              element={
+                <ProtectedRoute requiredRoles={['STUDENT']}>
+                  <StudentProfilePage />
                 </ProtectedRoute>
               }
             />

@@ -17,6 +17,7 @@ import {
   ClipboardCheckIcon,
   NotebookPenIcon,
   SchoolIcon,
+  UserCircleIcon,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -232,6 +233,11 @@ const roleBasedNav = {
         title: "Yêu cầu của tôi",
         url: "/student/requests",
         icon: NotebookPenIcon,
+      },
+      {
+        title: "Hồ sơ cá nhân",
+        url: "/student/profile",
+        icon: UserCircleIcon,
       },
     ],
   },
