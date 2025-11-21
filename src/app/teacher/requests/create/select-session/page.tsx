@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useGetMySessionsQuery } from "@/store/services/teacherRequestApi";
 import { DashboardLayout } from "@/components/DashboardLayout";
@@ -12,15 +12,27 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Circle } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { RequestType } from "@/store/services/teacherRequestApi";
+import { format, parseISO } from "date-fns";
+import { vi } from "date-fns/locale";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  return `${day}/${month}`;
+const formatDateLabel = (dateString: string) => {
+  try {
+    return format(parseISO(dateString), "EEE · dd/MM", { locale: vi });
+  } catch {
+    return dateString;
+  }
 };
 
 export default function SelectSessionPage() {
@@ -31,7 +43,9 @@ export default function SelectSessionPage() {
     number | undefined
   >();
 
-  const { data, isLoading, error } = useGetMySessionsQuery({});
+  const { data, isLoading, error, refetch, isFetching } = useGetMySessionsQuery(
+    {}
+  );
 
   const handleContinue = () => {
     if (!selectedSessionId || !requestType) return;
@@ -49,113 +63,176 @@ export default function SelectSessionPage() {
     }
   };
 
-  if (error) {
+  const sessions = useMemo(() => data?.data ?? [], [data]);
+  const isEmpty = !isLoading && !isFetching && sessions.length === 0;
+
+  const renderContent = () => {
+    if (isLoading || isFetching) {
+      return (
+        <div className="space-y-3">
+          {[...Array(5)].map((_, index) => (
+            <div
+              key={index}
+              className="rounded-2xl border border-border/60 bg-card/40 p-4"
+            >
+              <Skeleton className="h-4 w-1/3 rounded-full" />
+              <Skeleton className="mt-3 h-4 w-2/3 rounded-full" />
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <Empty className="border border-destructive/40 text-destructive">
+          <EmptyHeader>
+            <EmptyTitle>Không thể tải danh sách buổi học</EmptyTitle>
+            <EmptyDescription>
+              Vui lòng kiểm tra kết nối và thử lại.
+            </EmptyDescription>
+          </EmptyHeader>
+          <Button variant="outline" onClick={() => refetch()}>
+            Thử tải lại
+          </Button>
+        </Empty>
+      );
+    }
+
+    if (isEmpty) {
+      return (
+        <Empty className="border border-dashed border-border/70">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <span className="text-lg font-semibold text-muted-foreground">
+                14
+              </span>
+            </EmptyMedia>
+            <EmptyTitle>Không có buổi học phù hợp</EmptyTitle>
+            <EmptyDescription>
+              Bạn không có buổi dạy nào trong 14 ngày tới để tạo yêu cầu.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <p>
+              Nếu cần hỗ trợ khẩn, vui lòng liên hệ trực tiếp bộ phận Học vụ.
+            </p>
+          </EmptyContent>
+        </Empty>
+      );
+    }
+
     return (
-      <TeacherRoute>
-        <DashboardLayout>
-          <div className="text-center text-destructive">
-            <p>Không thể tải danh sách sessions. Vui lòng thử lại.</p>
-          </div>
-        </DashboardLayout>
-      </TeacherRoute>
+      <>
+        <div className="rounded-2xl border border-border/60 bg-card/40">
+          <Table>
+            <TableHeader>
+              <TableRow className="text-xs uppercase tracking-wide text-muted-foreground">
+                <TableHead className="w-[60px] text-center">Chọn</TableHead>
+                <TableHead>Ngày & giờ</TableHead>
+                <TableHead>Lớp</TableHead>
+                <TableHead>Khoá học</TableHead>
+                <TableHead>Chủ đề</TableHead>
+                <TableHead className="w-[110px] text-center">
+                  Trạng thái
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sessions.map((session) => {
+                const sessionRowId = session.sessionId ?? session.id;
+                const isSelected = selectedSessionId === sessionRowId;
+                return (
+                  <TableRow
+                    key={sessionRowId}
+                    role="radio"
+                    aria-checked={isSelected}
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setSelectedSessionId(sessionRowId);
+                      }
+                    }}
+                    className={cn(
+                      "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                      isSelected
+                        ? "bg-primary/5"
+                        : "hover:bg-muted/40 transition-colors"
+                    )}
+                    onClick={() => setSelectedSessionId(sessionRowId)}
+                  >
+                    <TableCell className="text-center">
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          "inline-flex h-4 w-4 items-center justify-center rounded-full border transition",
+                          isSelected
+                            ? "border-primary bg-primary"
+                            : "border-border"
+                        )}
+                      >
+                        {isSelected && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />
+                        )}
+                      </span>
+                      <span className="sr-only">
+                        Chọn buổi {session.className} ngày{" "}
+                        {formatDateLabel(session.date)}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <p className="text-sm font-medium text-foreground">
+                        {formatDateLabel(session.date)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {session.startTime} - {session.endTime}
+                      </p>
+                    </TableCell>
+                    <TableCell className="text-sm font-medium">
+                      {session.className}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {session.courseName}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {session.topic || "Chưa cập nhật"}
+                    </TableCell>
+                    <TableCell className="text-center text-xs text-muted-foreground">
+                      {session.hasPendingRequest
+                        ? "Đang có yêu cầu"
+                        : "Không có"}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 pt-4">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/teacher/requests/create/select-type")}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Quay lại
+          </Button>
+          <Button onClick={handleContinue} disabled={!selectedSessionId}>
+            Tiếp tục
+          </Button>
+        </div>
+      </>
     );
-  }
+  };
 
   return (
     <TeacherRoute>
-      <DashboardLayout>
-        <div className="flex flex-col gap-6 max-w-4xl">
-          <h1 className="text-2xl font-semibold">Chọn session</h1>
-
-          {isLoading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-16 bg-muted/50 rounded-lg animate-pulse"
-                />
-              ))}
-            </div>
-          ) : data?.data && data.data.length > 0 ? (
-            <>
-              <div className="rounded-lg border bg-card">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[60px]"></TableHead>
-                      <TableHead>Date/Time</TableHead>
-                      <TableHead>Class</TableHead>
-                      <TableHead>Course</TableHead>
-                      <TableHead>Topic</TableHead>
-                      <TableHead className="w-[80px]">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.data.map((session) => (
-                      <TableRow
-                        key={session.id}
-                        className={cn(
-                          "cursor-pointer transition-colors",
-                          selectedSessionId === session.id
-                            ? "bg-primary/5"
-                            : "hover:bg-muted/50"
-                        )}
-                        onClick={() => setSelectedSessionId(session.id)}
-                      >
-                        <TableCell>
-                          {selectedSessionId === session.id ? (
-                            <Circle className="h-5 w-5 fill-primary text-primary" />
-                          ) : (
-                            <Circle className="h-5 w-5 text-muted-foreground" />
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">
-                              {formatDate(session.date)} {session.startTime} -{" "}
-                              {session.endTime}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {session.className}
-                        </TableCell>
-                        <TableCell>{session.courseName}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {session.topic || "-"}
-                        </TableCell>
-                        <TableCell>
-                          {session.hasPendingRequest && (
-                            <div className="h-2 w-2 rounded-full bg-yellow-500" />
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4">
-                <Button
-                  variant="ghost"
-                  onClick={() =>
-                    navigate("/teacher/requests/create/select-type")
-                  }
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Quay lại
-                </Button>
-                <Button onClick={handleContinue} disabled={!selectedSessionId}>
-                  Tiếp tục
-                </Button>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-12 text-muted-foreground border rounded-lg">
-              <p>Không có session nào trong 14 ngày tới</p>
-            </div>
-          )}
-        </div>
+      <DashboardLayout
+        title="Chọn buổi cần hỗ trợ"
+        description="Chỉ hiển thị các buổi bạn phụ trách trong 14 ngày tới"
+      >
+        <div className="flex flex-col gap-6">{renderContent()}</div>
       </DashboardLayout>
     </TeacherRoute>
   );

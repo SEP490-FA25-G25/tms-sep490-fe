@@ -362,7 +362,7 @@ export default function MyRequestsPage() {
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
                 Quản lý các yêu cầu đã gửi và tạo yêu cầu mới khi cần hỗ trợ từ
-                Academic team.
+                bộ phận Học vụ.
               </p>
             </div>
             <Button onClick={() => setIsCreateOpen(true)} size="sm">
@@ -466,7 +466,7 @@ export default function MyRequestsPage() {
               <p className="font-medium">Không có yêu cầu phù hợp</p>
               <p className="text-sm text-muted-foreground">
                 {requests.length === 0
-                  ? "Bạn chưa có yêu cầu nào. Tạo yêu cầu mới để Academic team hỗ trợ."
+                  ? "Bạn chưa có yêu cầu nào. Tạo yêu cầu mới để bộ phận Học vụ hỗ trợ."
                   : "Điều chỉnh bộ lọc hoặc tạo thêm yêu cầu mới."}
               </p>
             </div>
@@ -3342,7 +3342,7 @@ export function TeacherRequestDetailContent({
           <div className="h-px bg-border" />
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Ghi chú từ Academic
+              Ghi chú từ bộ phận Học vụ
             </p>
             <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
               {request.note}

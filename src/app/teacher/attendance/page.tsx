@@ -98,16 +98,16 @@ function SessionCard({ session }: { session: AttendanceSessionDTO }) {
     try {
       const now = new Date();
       const sessionDateObj = parseISO(session.date);
-      
+
       // Parse startTime (could be "HH:mm:ss" or "HH:mm")
       const timeParts = session.startTime.split(":");
       const hours = parseInt(timeParts[0], 10);
       const minutes = parseInt(timeParts[1] || "0", 10);
-      
+
       // Create session start datetime
       const sessionStartDateTime = new Date(sessionDateObj);
       sessionStartDateTime.setHours(hours, minutes, 0, 0);
-      
+
       // Check if current time is before session start time
       return !isBefore(now, sessionStartDateTime);
     } catch (error) {
@@ -150,11 +150,11 @@ function SessionCard({ session }: { session: AttendanceSessionDTO }) {
             <span>{sessionDate}</span>
           </div>
 
-          {/* Resource và Modality */}
+          {/* Phòng học và hình thức */}
           {(session.resourceName || session.modality) && (
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
               {session.resourceName && (
-                <span>Resource: {session.resourceName}</span>
+                <span>Phòng/phương tiện: {session.resourceName}</span>
               )}
               {session.modality && (
                 <span className="capitalize">
