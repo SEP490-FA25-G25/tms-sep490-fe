@@ -1,5 +1,5 @@
 import type React from "react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -17,7 +17,10 @@ import {
   type StudentAttendanceReportDTO,
   type StudentAttendanceReportSessionDTO,
   useGetStudentAttendanceReportQuery,
+  attendanceApi,
 } from "@/store/services/attendanceApi";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "@/store";
 
 const ATTENDANCE_STATUS_META: Record<
   string,
@@ -77,6 +80,16 @@ export default function StudentClassAttendanceReportPage() {
   const params = useParams();
   const classIdParam = params.classId;
   const classId = classIdParam ? Number.parseInt(classIdParam, 10) : NaN;
+  const dispatch = useDispatch<AppDispatch>();
+
+  // Prefetch overview data để khi quay lại trang tổng quan không bị giật
+  useEffect(() => {
+    dispatch(
+      attendanceApi.endpoints.getStudentAttendanceOverview.initiate(undefined, {
+        forceRefetch: false,
+      })
+    );
+  }, [dispatch]);
 
   const { data, isLoading, isError, refetch } =
     useGetStudentAttendanceReportQuery(
@@ -139,7 +152,7 @@ export default function StudentClassAttendanceReportPage() {
                   </div>
 
                   {report && (
-                    <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-border/60 bg-muted/20 px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-4 rounded-lg border border-border bg-muted/40 px-4 py-3">
                       <div>
                         <p className="text-xs text-muted-foreground">
                           Tổng số buổi đã học
@@ -190,11 +203,11 @@ export default function StudentClassAttendanceReportPage() {
                 )}
 
                 {isError && !isLoading && (
-                  <div className="rounded-2xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
-                    <p className="font-semibold">
+                  <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm">
+                    <p className="font-semibold text-destructive">
                       Không thể tải báo cáo chi tiết.
                     </p>
-                    <p className="mt-1 text-destructive/80">
+                    <p className="mt-1 text-destructive/90">
                       Vui lòng kiểm tra kết nối hoặc thử tải lại sau.
                     </p>
                     <Button
@@ -209,7 +222,7 @@ export default function StudentClassAttendanceReportPage() {
                 )}
 
                 {!isLoading && !isError && report && !hasSessions && (
-                  <div className="rounded-2xl border border-dashed border-muted-foreground/40 bg-background/60 p-10 text-center">
+                  <div className="rounded-lg border border-dashed border-border bg-muted/20 p-8 text-center">
                     <p className="text-base font-medium text-foreground">
                       Chưa có buổi học nào để hiển thị.
                     </p>
@@ -221,7 +234,7 @@ export default function StudentClassAttendanceReportPage() {
                 )}
 
                 {!isLoading && !isError && hasSessions && report && (
-                  <section className="space-y-3 rounded-2xl border border-border/60 bg-card/40 p-4">
+                  <section className="space-y-3 rounded-lg border border-border bg-muted/40 p-4">
                     <div className="flex items-center justify-between">
                       <h2 className="text-sm font-semibold text-foreground">
                         Danh sách buổi học

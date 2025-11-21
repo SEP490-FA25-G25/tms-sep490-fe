@@ -11,7 +11,10 @@ import { cn } from "@/lib/utils";
 import {
   type StudentAttendanceOverviewClassDTO,
   useGetStudentAttendanceOverviewQuery,
+  attendanceApi,
 } from "@/store/services/attendanceApi";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "@/store";
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   ONGOING: {
@@ -38,10 +41,10 @@ function getStatusMeta(status?: string | null) {
   );
 }
 
- function getAttendanceRate(attended: number, absent: number) {
-   const totalCompleted = attended + absent;
-   if (!totalCompleted || totalCompleted <= 0) return 0;
-   return (attended / totalCompleted) * 100;
+function getAttendanceRate(attended: number, absent: number) {
+  const totalCompleted = attended + absent;
+  if (!totalCompleted || totalCompleted <= 0) return 0;
+  return (attended / totalCompleted) * 100;
 }
 
 function getAttendanceRateClass(rate: number) {
@@ -61,11 +64,21 @@ export default function StudentAttendanceReportOverviewPage() {
   const { data, isLoading, isError, refetch } =
     useGetStudentAttendanceOverviewQuery();
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
 
   const classes: StudentAttendanceOverviewClassDTO[] =
     data?.data?.classes ?? [];
 
   const hasContent = classes.length > 0;
+
+  const handlePrefetch = (classId: number) => {
+    dispatch(
+      attendanceApi.endpoints.getStudentAttendanceReport.initiate(
+        { classId },
+        { forceRefetch: false }
+      )
+    );
+  };
 
   return (
     <StudentRoute>
@@ -84,7 +97,7 @@ export default function StudentAttendanceReportOverviewPage() {
             <div className="@container/main flex flex-1 flex-col gap-2">
               <section className="flex flex-col gap-4 px-4 pb-6 pt-4 lg:px-6">
                 <header className="flex flex-col gap-2">
-                  <h1 className="text-3xl font-semibold tracking-tight">
+                  <h1 className="text-2xl font-semibold tracking-tight">
                     Báo cáo điểm danh
                   </h1>
                   <p className="text-sm text-muted-foreground">
@@ -105,18 +118,18 @@ export default function StudentAttendanceReportOverviewPage() {
                 )}
 
                 {isError && !isLoading && (
-                  <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-                    <p className="font-semibold">
+                  <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm">
+                    <p className="font-semibold text-destructive">
                       Không thể tải báo cáo điểm danh.
                     </p>
-                    <p className="mt-1 text-destructive/80">
+                    <p className="mt-1 text-destructive/90">
                       Vui lòng kiểm tra kết nối và thử lại. Nếu lỗi tiếp diễn,
                       hãy liên hệ bộ phận hỗ trợ.
                     </p>
                     <button
                       type="button"
                       onClick={() => refetch()}
-                      className="mt-3 inline-flex items-center rounded-full border border-destructive/40 px-3 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
+                      className="mt-3 inline-flex items-center rounded-md border border-destructive/40 bg-background px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       Thử tải lại
                     </button>
@@ -124,8 +137,8 @@ export default function StudentAttendanceReportOverviewPage() {
                 )}
 
                 {!isLoading && !isError && !hasContent && (
-                  <div className="rounded-2xl border border-dashed border-muted-foreground/40 bg-background/60 p-10 text-center">
-                    <p className="text-lg font-medium text-foreground">
+                  <div className="rounded-lg border border-dashed border-border bg-muted/20 p-8 text-center">
+                    <p className="text-base font-medium text-foreground">
                       Chưa có dữ liệu điểm danh
                     </p>
                     <p className="mt-2 text-sm text-muted-foreground">
@@ -140,33 +153,47 @@ export default function StudentAttendanceReportOverviewPage() {
                     <div className="grid gap-3">
                       {classes.map((item) => {
                         const statusMeta = getStatusMeta(item.status);
-                         const rate = getAttendanceRate(item.attended, item.absent);
+                        const rate = getAttendanceRate(
+                          item.attended,
+                          item.absent
+                        );
                         return (
                           <article
                             key={item.classId}
-                            className="group flex cursor-pointer flex-col gap-3 rounded-2xl border border-border/60 bg-card/40 p-4 transition-colors hover:bg-card/70"
+                            className="group flex cursor-pointer flex-col gap-3 rounded-lg border border-border bg-muted/40 p-4 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             onClick={() =>
                               navigate(
                                 `/student/attendance-report/${item.classId}`
                               )
                             }
+                            onMouseEnter={() => handlePrefetch(item.classId)}
+                            tabIndex={0}
+                            role="button"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                navigate(
+                                  `/student/attendance-report/${item.classId}`
+                                );
+                              }
+                            }}
                           >
                             <div className="flex flex-wrap items-start justify-between gap-3">
                               <div className="space-y-1">
                                 <h2 className="text-base font-semibold text-foreground">
                                   {item.className}
                                 </h2>
-                                 <p className="text-xs text-muted-foreground">
-                                   Ngày bắt đầu:{" "}
-                                   <span className="font-medium text-foreground">
-                                     {formatDate(item.startDate)}
-                                   </span>
-                                   <span className="mx-1">·</span>
-                                   Ngày kết thúc:{" "}
-                                   <span className="font-medium text-foreground">
-                                     {formatDate(item.actualEndDate)}
-                                   </span>
-                                 </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Ngày bắt đầu:{" "}
+                                  <span className="font-medium text-foreground">
+                                    {formatDate(item.startDate)}
+                                  </span>
+                                  <span className="mx-1">·</span>
+                                  Ngày kết thúc:{" "}
+                                  <span className="font-medium text-foreground">
+                                    {formatDate(item.actualEndDate)}
+                                  </span>
+                                </p>
                               </div>
                               <div className="flex flex-col items-end gap-1 text-right">
                                 <p
@@ -178,8 +205,8 @@ export default function StudentAttendanceReportOverviewPage() {
                                   {rate.toFixed(1)}%
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                  {item.attended + item.absent}/{item.totalSessions} buổi
-                                  đã học
+                                  {item.attended + item.absent}/
+                                  {item.totalSessions} buổi đã học
                                 </p>
                               </div>
                             </div>
