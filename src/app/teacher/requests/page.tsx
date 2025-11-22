@@ -8,16 +8,16 @@ import {
   useGetModalityResourcesQuery,
   useGetRescheduleSlotsQuery,
   useGetRescheduleResourcesQuery,
-  useGetSwapCandidatesQuery,
+  useGetReplacementCandidatesQuery,
   useCreateRequestMutation,
-  useConfirmSwapRequestMutation,
-  useRejectSwapRequestMutation,
+  useConfirmReplacementRequestMutation,
+  useRejectReplacementRequestMutation,
   type RequestType,
   type RequestStatus,
   type ResourceDTO,
   type TeacherRequestDTO,
   type RescheduleSlotDTO,
-  type SwapCandidateDTO,
+  type ReplacementCandidateDTO,
 } from "@/store/services/teacherRequestApi";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { TeacherRoute } from "@/components/ProtectedRoute";
@@ -61,7 +61,7 @@ import { skipToken } from "@reduxjs/toolkit/query";
 const REQUEST_TYPE_LABELS: Record<RequestType, string> = {
   MODALITY_CHANGE: "Thay đổi phương thức",
   RESCHEDULE: "Đổi lịch",
-  SWAP: "Nhờ dạy thay",
+  REPLACEMENT: "Nhờ dạy thay",
 };
 
 const REQUEST_STATUS_META: Record<
@@ -105,7 +105,7 @@ const TYPE_FILTERS: Array<{ label: string; value: "ALL" | RequestType }> = [
   { label: "Tất cả loại yêu cầu", value: "ALL" },
   { label: REQUEST_TYPE_LABELS.MODALITY_CHANGE, value: "MODALITY_CHANGE" },
   { label: REQUEST_TYPE_LABELS.RESCHEDULE, value: "RESCHEDULE" },
-  { label: REQUEST_TYPE_LABELS.SWAP, value: "SWAP" },
+  { label: REQUEST_TYPE_LABELS.REPLACEMENT, value: "REPLACEMENT" },
 ];
 
 const formatDateShort = (dateString: string) => {
@@ -131,7 +131,7 @@ const requestTypes: Array<{
     description: "Thay đổi thời gian của 1 buổi học",
   },
   {
-    value: "SWAP",
+    value: "REPLACEMENT",
     label: "Nhờ dạy thay",
     description: "Yêu cầu giáo viên khác dạy thay 1 buổi học",
   },
@@ -258,10 +258,10 @@ export default function MyRequestsPage() {
     "confirm" | "reject" | null
   >(null);
 
-  const [confirmSwapRequest, { isLoading: isConfirming }] =
-    useConfirmSwapRequestMutation();
-  const [rejectSwapRequest, { isLoading: isRejecting }] =
-    useRejectSwapRequestMutation();
+  const [confirmReplacementRequest, { isLoading: isConfirming }] =
+    useConfirmReplacementRequestMutation();
+  const [rejectReplacementRequest, { isLoading: isRejecting }] =
+    useRejectReplacementRequestMutation();
 
   const isActionLoading = isConfirming || isRejecting;
 
@@ -276,7 +276,7 @@ export default function MyRequestsPage() {
     setPendingAction(null);
   };
 
-  const handleSwapDecision = async (action: "confirm" | "reject") => {
+  const handleReplacementDecision = async (action: "confirm" | "reject") => {
     if (!detailId) return;
 
     const trimmedNote = decisionNote.trim();
@@ -290,7 +290,7 @@ export default function MyRequestsPage() {
 
     try {
       if (action === "confirm") {
-        await confirmSwapRequest({
+        await confirmReplacementRequest({
           id: detailId,
           body: {
             note: trimmedNote || undefined,
@@ -298,7 +298,7 @@ export default function MyRequestsPage() {
         }).unwrap();
         toast.success("Đã đồng ý dạy thay.");
       } else {
-        await rejectSwapRequest({
+        await rejectReplacementRequest({
           id: detailId,
           body: {
             reason: trimmedNote,
@@ -594,7 +594,7 @@ export default function MyRequestsPage() {
                 const newSessionDateDisplay = formattedNewSessionDate ?? "";
                 const newSessionTimeDisplay = newSessionTimeRange ?? "";
 
-                // Extract info for SWAP
+                // Extract info for REPLACEMENT
                 const replacementTeacherName =
                   request.replacementTeacherName ||
                   request.replacementTeacher?.fullName ||
@@ -613,7 +613,8 @@ export default function MyRequestsPage() {
                 const showRescheduleSummary =
                   request.requestType === "RESCHEDULE" &&
                   Boolean(newSessionDate || newSessionStart || newSessionEnd);
-                const showSwapSummary = request.requestType === "SWAP";
+                const showReplacementSummary =
+                  request.requestType === "REPLACEMENT";
 
                 return (
                   <button
@@ -734,7 +735,7 @@ export default function MyRequestsPage() {
                       </div>
                     ) : null}
 
-                    {showSwapSummary ? (
+                    {showReplacementSummary ? (
                       <div className="mt-3 rounded-lg border bg-muted/30 p-3">
                         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground/70">
                           <span>Giáo viên dạy thay:</span>
@@ -811,8 +812,8 @@ export default function MyRequestsPage() {
               <TeacherRequestDetailContent
                 request={requestFromList}
                 fallbackRequest={undefined}
-                onConfirmSwap={handleSwapDecision}
-                onRejectSwap={handleSwapDecision}
+                onConfirmReplacement={handleReplacementDecision}
+                onRejectReplacement={handleReplacementDecision}
                 decisionNote={decisionNote}
                 onDecisionNoteChange={setDecisionNote}
                 isActionLoading={isActionLoading}
@@ -827,8 +828,8 @@ export default function MyRequestsPage() {
             <TeacherRequestDetailContent
               request={detailData.data}
               fallbackRequest={requestFromList ?? undefined}
-              onConfirmSwap={handleSwapDecision}
-              onRejectSwap={handleSwapDecision}
+              onConfirmReplacement={handleReplacementDecision}
+              onRejectReplacement={handleReplacementDecision}
               decisionNote={decisionNote}
               onDecisionNoteChange={setDecisionNote}
               isActionLoading={isActionLoading}
@@ -888,7 +889,9 @@ function CreateRequestDialog({
             {activeType === "RESCHEDULE" && (
               <RescheduleFlow onSuccess={onSuccess} />
             )}
-            {activeType === "SWAP" && <SwapFlow onSuccess={onSuccess} />}
+            {activeType === "REPLACEMENT" && (
+              <ReplacementFlow onSuccess={onSuccess} />
+            )}
           </div>
         )}
       </DialogContent>
@@ -2186,7 +2189,7 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
   );
 }
 
-function SwapFlow({ onSuccess }: FlowProps) {
+function ReplacementFlow({ onSuccess }: FlowProps) {
   const today = startOfToday();
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
     null
@@ -2219,16 +2222,16 @@ function SwapFlow({ onSuccess }: FlowProps) {
     (session) => (session.sessionId || session.id) === selectedSessionId
   );
 
-  // Get swap candidates using sessionId when creating new request
+  // Get replacement candidates using sessionId when creating new request
   const candidateQueryArg = selectedSessionId
     ? { sessionId: selectedSessionId }
     : skipToken;
   const { data: candidatesData, isFetching: isLoadingCandidates } =
-    useGetSwapCandidatesQuery(candidateQueryArg);
+    useGetReplacementCandidatesQuery(candidateQueryArg);
 
-  const swapCandidates = candidatesData?.data ?? [];
+  const replacementCandidates = candidatesData?.data ?? [];
 
-  const computeCandidateMeta = (candidate: SwapCandidateDTO) => {
+  const computeCandidateMeta = (candidate: ReplacementCandidateDTO) => {
     const name =
       candidate.teacherName ||
       candidate.fullName ||
@@ -2314,7 +2317,7 @@ function SwapFlow({ onSuccess }: FlowProps) {
 
   const selectedCandidate =
     selectedCandidateId !== null
-      ? swapCandidates.find(
+      ? replacementCandidates.find(
           (candidate) => (candidate.teacherId ?? null) === selectedCandidateId
         )
       : undefined;
@@ -2322,7 +2325,7 @@ function SwapFlow({ onSuccess }: FlowProps) {
   const normalizedCandidateQuery = candidateSearch.trim().toLowerCase();
   const filteredCandidates =
     normalizedCandidateQuery.length > 0
-      ? swapCandidates.filter((candidate) => {
+      ? replacementCandidates.filter((candidate) => {
           const meta = computeCandidateMeta(candidate);
           const searchableText = [
             meta.name,
@@ -2337,7 +2340,7 @@ function SwapFlow({ onSuccess }: FlowProps) {
             .toLowerCase();
           return searchableText.includes(normalizedCandidateQuery);
         })
-      : swapCandidates;
+      : replacementCandidates;
 
   const [createRequest, { isLoading: isSubmitting }] =
     useCreateRequestMutation();
@@ -2397,7 +2400,7 @@ function SwapFlow({ onSuccess }: FlowProps) {
         reason: string;
       } = {
         sessionId: selectedSessionId,
-        requestType: "SWAP" as RequestType,
+        requestType: "REPLACEMENT" as RequestType,
         reason: reason.trim(),
       };
       // Only include replacementTeacherId if it has a value
@@ -2585,7 +2588,7 @@ function SwapFlow({ onSuccess }: FlowProps) {
                     <Skeleton key={index} className="h-16 w-full rounded-lg" />
                   ))}
                 </div>
-              ) : swapCandidates.length > 0 ? (
+              ) : replacementCandidates.length > 0 ? (
                 <div className="space-y-2">
                   <Popover
                     open={isCandidateDropdownOpen}
@@ -2818,8 +2821,8 @@ function SwapFlow({ onSuccess }: FlowProps) {
 export function TeacherRequestDetailContent({
   request,
   fallbackRequest,
-  onConfirmSwap,
-  onRejectSwap,
+  onConfirmReplacement,
+  onRejectReplacement,
   decisionNote,
   onDecisionNoteChange,
   isActionLoading,
@@ -2828,8 +2831,8 @@ export function TeacherRequestDetailContent({
 }: {
   request: TeacherRequestDTO;
   fallbackRequest?: TeacherRequestDTO;
-  onConfirmSwap?: (action: "confirm") => void;
-  onRejectSwap?: (action: "reject") => void;
+  onConfirmReplacement?: (action: "confirm") => void;
+  onRejectReplacement?: (action: "reject") => void;
   decisionNote?: string;
   onDecisionNoteChange?: (note: string) => void;
   isActionLoading?: boolean;
@@ -3094,8 +3097,8 @@ export function TeacherRequestDetailContent({
       newSessionEnd ||
       newTimeSlotLabel ||
       newResourceName);
-  const hasSwapInfo =
-    request.requestType === "SWAP" &&
+  const hasReplacementInfo =
+    request.requestType === "REPLACEMENT" &&
     (replacementTeacherName ||
       replacementTeacherEmail ||
       replacementTeacherPhone ||
@@ -3255,7 +3258,7 @@ export function TeacherRequestDetailContent({
         </>
       )}
 
-      {hasSwapInfo && (
+      {hasReplacementInfo && (
         <>
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -3375,10 +3378,10 @@ export function TeacherRequestDetailContent({
         </div>
       </div>
 
-      {request.requestType === "SWAP" &&
+      {request.requestType === "REPLACEMENT" &&
         request.status === "WAITING_CONFIRM" &&
-        onConfirmSwap &&
-        onRejectSwap && (
+        onConfirmReplacement &&
+        onRejectReplacement && (
           <>
             <div className="h-px bg-border" />
 
@@ -3423,14 +3426,14 @@ export function TeacherRequestDetailContent({
                     variant="outline"
                     className="border-rose-200 text-rose-600 hover:bg-rose-50"
                     disabled={isActionLoading}
-                    onClick={() => onRejectSwap("reject")}
+                    onClick={() => onRejectReplacement("reject")}
                   >
                     {pendingAction === "reject" ? "Đang từ chối..." : "Từ chối"}
                   </Button>
                   <Button
                     type="button"
                     disabled={isActionLoading}
-                    onClick={() => onConfirmSwap("confirm")}
+                    onClick={() => onConfirmReplacement("confirm")}
                   >
                     {pendingAction === "confirm" ? "Đang đồng ý..." : "Đồng ý"}
                   </Button>
