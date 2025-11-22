@@ -1,10 +1,12 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { TeacherRoute } from "@/components/ProtectedRoute";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import {
   useGetClassAttendanceMatrixQuery,
   type AttendanceMatrixDTO,
@@ -16,6 +18,7 @@ import { cn } from "@/lib/utils";
 export default function ClassAttendanceMatrixPage() {
   const { classId } = useParams<{ classId: string }>();
   const classIdNum = classId ? parseInt(classId, 10) : 0;
+  const navigate = useNavigate();
 
   const {
     data: matrixResponse,
@@ -119,7 +122,7 @@ export default function ClassAttendanceMatrixPage() {
       classId: apiData.classId ?? 0,
       classCode: apiData.classCode,
       courseCode: apiData.courseCode,
-      courseName: apiData.courseName || "",
+      className: apiData.className || apiData.courseName || "",
       summary: {
         totalSessions: apiData.summary?.totalSessions ?? sessions.length,
         averageAttendanceRate,
@@ -185,7 +188,7 @@ export default function ClassAttendanceMatrixPage() {
     );
   }
 
-  const { students, sessions, matrix, summary, courseName } = matrixData;
+  const { students, sessions, matrix, summary, className } = matrixData;
 
   // Defensive checks
   if (!students || !sessions || !matrix || !summary) {
@@ -236,8 +239,23 @@ export default function ClassAttendanceMatrixPage() {
 
   return (
     <TeacherRoute>
-      <DashboardLayout title={courseName}>
+      <DashboardLayout title="Ma trận điểm danh">
         <div className="space-y-6">
+          {/* Header with back button */}
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/teacher/classes")}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Quay lại
+            </Button>
+            <div className="h-6 w-px bg-border" />
+            <h1 className="text-lg font-semibold">{className}</h1>
+          </div>
+
           {/* Summary section */}
           <div className="rounded-lg border bg-muted/50 p-6">
             <div className="flex items-center gap-8">

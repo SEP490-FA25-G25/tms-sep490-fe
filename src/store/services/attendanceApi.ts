@@ -237,6 +237,7 @@ export interface AttendanceMatrixResponseDTO {
   classCode?: string;
   courseCode?: string;
   courseName?: string;
+  className?: string;
   attendanceRate?: number; // rate as decimal (0-1), tỷ lệ chuyên cần của cả lớp
   summary?: {
     totalSessions: number;
@@ -251,7 +252,7 @@ export interface AttendanceMatrixDTO {
   classId: number;
   classCode?: string;
   courseCode?: string;
-  courseName: string;
+  className: string;
   summary: {
     totalSessions: number;
     averageAttendanceRate: number; // rate as decimal (0-1), e.g., 0.7747 = 77.47%

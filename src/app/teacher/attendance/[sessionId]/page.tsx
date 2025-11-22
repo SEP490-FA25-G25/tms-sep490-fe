@@ -33,6 +33,51 @@ import {
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 
+// Helper function to format error messages from backend to user-friendly Vietnamese
+const formatBackendError = (
+  errorMessage?: string,
+  defaultMessage?: string
+): string => {
+  if (!errorMessage) {
+    return defaultMessage || "Có lỗi xảy ra. Vui lòng thử lại sau.";
+  }
+
+  // Map common error codes to user-friendly messages
+  if (errorMessage.includes("SESSION_ALREADY_DONE")) {
+    return "Không được sửa điểm danh hoặc nộp báo cáo cho buổi học đã kết thúc";
+  }
+
+  if (errorMessage.includes("ATTENDANCE_RECORDS_EMPTY")) {
+    return "Vui lòng chọn trạng thái điểm danh cho ít nhất một học sinh";
+  }
+
+  if (errorMessage.includes("HOMEWORK_STATUS_INVALID")) {
+    return "Trạng thái bài tập về nhà không hợp lệ. Vui lòng kiểm tra lại.";
+  }
+
+  if (
+    errorMessage.includes("Internal Server Error") ||
+    errorMessage.includes("500")
+  ) {
+    return "Lỗi máy chủ. Vui lòng thử lại sau hoặc liên hệ quản trị viên nếu vấn đề vẫn tiếp tục.";
+  }
+
+  // If it's a technical error code, try to extract a more readable part
+  if (errorMessage.includes(":")) {
+    const parts = errorMessage.split(":");
+    if (parts.length > 1) {
+      // Use the part after the colon if it's more readable
+      const readablePart = parts.slice(1).join(":").trim();
+      if (readablePart.length > 0 && !readablePart.includes("_")) {
+        return readablePart;
+      }
+    }
+  }
+
+  // Return the original message if no mapping found
+  return errorMessage;
+};
+
 type SessionInfo = {
   sessionId: number;
   classId: number;
@@ -393,7 +438,7 @@ export default function AttendanceDetailPage() {
         apiError?.data?.message ||
         apiError?.data?.error ||
         "Có lỗi xảy ra khi lưu điểm danh";
-      toast.error(errorMessage);
+      toast.error(formatBackendError(errorMessage, "Có lỗi xảy ra khi lưu điểm danh"));
     }
   };
 
@@ -863,7 +908,7 @@ export default function AttendanceDetailPage() {
                             apiError?.data?.message ||
                             apiError?.data?.error ||
                             "Có lỗi xảy ra khi nộp báo cáo";
-                          toast.error(errorMessage);
+                          toast.error(formatBackendError(errorMessage, "Có lỗi xảy ra khi nộp báo cáo"));
                         }
                       }}
                       disabled={isSubmittingReport || !teacherNote.trim()}
