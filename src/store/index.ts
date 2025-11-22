@@ -11,6 +11,8 @@ import { attendanceApi } from "./services/attendanceApi";
 import { courseApi } from "./services/courseApi";
 import { studentClassApi } from "./services/studentClassApi";
 import { studentProfileApi } from "./services/studentProfileApi";
+import { teacherScheduleApi } from "./services/teacherScheduleApi";
+import { teacherGradeApi } from "./services/teacherGradeApi";
 import authSlice, {
   setCredentials,
   logout,
@@ -38,6 +40,8 @@ export const store = configureStore({
     [courseApi.reducerPath]: courseApi.reducer,
     [studentClassApi.reducerPath]: studentClassApi.reducer,
     [studentProfileApi.reducerPath]: studentProfileApi.reducer,
+    [teacherScheduleApi.reducerPath]: teacherScheduleApi.reducer,
+    [teacherGradeApi.reducerPath]: teacherGradeApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -45,18 +49,20 @@ export const store = configureStore({
         ignoredActions: ["persist/PERSIST", "persist/REHYDRATE"],
       },
     })
-    .concat(authApi.middleware)
-    .concat(classApi.middleware)
-    .concat(studentApi.middleware)
-    .concat(enrollmentApi.middleware)
-    .concat(curriculumApi.middleware)
-    .concat(studentScheduleApi.middleware)
-    .concat(studentRequestApi.middleware)
-    .concat(teacherRequestApi.middleware)
-    .concat(attendanceApi.middleware)
-    .concat(courseApi.middleware)
-    .concat(studentClassApi.middleware)
-    .concat(studentProfileApi.middleware),
+      .concat(authApi.middleware)
+      .concat(classApi.middleware)
+      .concat(studentApi.middleware)
+      .concat(enrollmentApi.middleware)
+      .concat(curriculumApi.middleware)
+      .concat(studentScheduleApi.middleware)
+      .concat(studentRequestApi.middleware)
+      .concat(teacherRequestApi.middleware)
+      .concat(attendanceApi.middleware)
+      .concat(courseApi.middleware)
+      .concat(studentClassApi.middleware)
+      .concat(studentProfileApi.middleware)
+      .concat(teacherScheduleApi.middleware)
+      .concat(teacherGradeApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
