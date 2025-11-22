@@ -7,6 +7,7 @@ import { StudentRoute } from '@/components/ProtectedRoute'
 import { useGetMyProfileQuery } from '@/store/services/studentProfileApi';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import {
   Table,
   TableBody,
@@ -118,10 +119,10 @@ export default function StudentProfilePage() {
                   <Badge variant="secondary">{profile.studentCode}</Badge>
                 </div>
                 <div className="space-y-1">
-                  <h1 className="text-2xl md:text-3xl font-bold leading-tight">
+                  <h1 className="text-2xl font-semibold tracking-tight">
                     {profile.fullName}
                   </h1>
-                  <p className="text-lg text-muted-foreground">{profile.email}</p>
+                  <p className="text-sm text-muted-foreground">{profile.email}</p>
                 </div>
                 <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1.5">
@@ -149,7 +150,7 @@ export default function StudentProfilePage() {
 
           {/* Personal Info Section */}
           <div className="space-y-4">
-            <h2 className="text-xl md:text-2xl font-semibold">Thông tin cá nhân</h2>
+            <h2 className="text-lg font-semibold">Thông tin cá nhân</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
@@ -222,22 +223,26 @@ export default function StudentProfilePage() {
           {/* Current Classes Table */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl md:text-2xl font-semibold">Lớp đang học</h2>
+              <h2 className="text-lg font-semibold">Lớp đang học</h2>
               <span className="text-sm text-muted-foreground">
                 {profile.currentClasses.length} lớp
               </span>
             </div>
 
             {profile.currentClasses.length === 0 ? (
-              <div className="py-10 text-center">
-                <FileText className="h-10 w-10 text-muted-foreground/60 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">
-                  Bạn chưa đăng ký lớp học nào đang hoạt động.
-                </p>
-              </div>
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <FileText className="h-10 w-10" />
+                  </EmptyMedia>
+                  <EmptyTitle>Chưa có lớp học</EmptyTitle>
+                  <EmptyDescription>
+                    Bạn chưa đăng ký lớp học nào đang hoạt động.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             ) : (
-              <div className="rounded-lg border bg-white overflow-hidden">
-                <Table>
+              <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Mã lớp</TableHead>
@@ -267,7 +272,6 @@ export default function StudentProfilePage() {
                     ))}
                   </TableBody>
                 </Table>
-              </div>
             )}
           </div>
 

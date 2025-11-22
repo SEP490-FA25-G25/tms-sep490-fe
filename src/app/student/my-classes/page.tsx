@@ -7,7 +7,9 @@ import { SiteHeader } from '@/components/site-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -173,9 +175,9 @@ const MyClassesPage = () => {
           <SiteHeader />
           <div className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col">
-              <header className="flex flex-col gap-4 border-b border-border px-6 py-5">
+              <header className="flex flex-col gap-2 border-b border-border px-6 py-5">
                 <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
+                  <div className="flex flex-col gap-2">
                     <h1 className="text-2xl font-semibold tracking-tight">Lớp của tôi</h1>
                     <p className="text-sm text-muted-foreground">
                       Quản lý và xem thông tin các lớp học đã đăng ký
@@ -187,18 +189,20 @@ const MyClassesPage = () => {
                     </Button>
                   )}
                 </div>
-
                 <Tabs value={activeStatusTab} onValueChange={(value) => {
                   setActiveStatusTab(value as 'all' | ClassStatus);
                   setPage(0);
                 }} className="w-full">
-                  <TabsList className="w-full justify-start">
+                  <TabsList className="w-full justify-start mt-2">
                     <TabsTrigger value="all">Tất cả</TabsTrigger>
                     <TabsTrigger value="ONGOING">Đang học</TabsTrigger>
                     <TabsTrigger value="COMPLETED">Đã hoàn thành</TabsTrigger>
                     <TabsTrigger value="SCHEDULED">Sắp học</TabsTrigger>
                   </TabsList>
                 </Tabs>
+              </header>
+
+              <div className="flex flex-col gap-4 px-6 py-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <div className="relative w-full lg:max-w-md">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -210,70 +214,103 @@ const MyClassesPage = () => {
                     />
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          Hình thức
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-40">
+                    <Select
+                      value={filters.modality[0] || ""}
+                      onValueChange={(value) => {
+                        if (value && !filters.modality.includes(value as Modality)) {
+                          toggleFilter('modality', value);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-[140px] h-8">
+                        <SelectValue placeholder="Hình thức" />
+                      </SelectTrigger>
+                      <SelectContent>
                         {Object.keys(MODALITIES).map((key) => (
-                          <DropdownMenuCheckboxItem
-                            key={key}
-                            checked={filters.modality.includes(key as Modality)}
-                            onCheckedChange={() => toggleFilter('modality', key)}
-                          >
-                            {MODALITIES[key as Modality]}
-                          </DropdownMenuCheckboxItem>
+                          <div key={key} className="flex items-center space-x-2 px-2 py-1">
+                            <Checkbox
+                              id={`modality-${key}`}
+                              checked={filters.modality.includes(key as Modality)}
+                              onCheckedChange={() => toggleFilter('modality', key)}
+                            />
+                            <label
+                              htmlFor={`modality-${key}`}
+                              className="text-sm font-medium cursor-pointer flex-1"
+                            >
+                              {MODALITIES[key as Modality]}
+                            </label>
+                          </div>
                         ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      </SelectContent>
+                    </Select>
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          Chi nhánh
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-56">
+                    <Select
+                      value={filters.branchId[0]?.toString() || ""}
+                      onValueChange={(value) => {
+                        if (value && !filters.branchId.includes(parseInt(value))) {
+                          toggleFilter('branchId', parseInt(value));
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-[140px] h-8">
+                        <SelectValue placeholder="Chi nhánh" />
+                      </SelectTrigger>
+                      <SelectContent>
                         {branchOptions.length > 0 ? (
                           branchOptions.map((branch) => (
-                            <DropdownMenuCheckboxItem
-                              key={branch.id}
-                              checked={filters.branchId.includes(branch.id)}
-                              onCheckedChange={() => toggleFilter('branchId', branch.id)}
-                            >
-                              {branch.name}
-                            </DropdownMenuCheckboxItem>
+                            <div key={branch.id} className="flex items-center space-x-2 px-2 py-1">
+                              <Checkbox
+                                id={`branch-${branch.id}`}
+                                checked={filters.branchId.includes(branch.id)}
+                                onCheckedChange={() => toggleFilter('branchId', branch.id)}
+                              />
+                              <label
+                                htmlFor={`branch-${branch.id}`}
+                                className="text-sm font-medium cursor-pointer flex-1"
+                              >
+                                {branch.name}
+                              </label>
+                            </div>
                           ))
                         ) : (
                           <div className="px-2 py-1 text-xs text-muted-foreground">Chưa có dữ liệu chi nhánh</div>
                         )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      </SelectContent>
+                    </Select>
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          Khóa học
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-56">
+                    <Select
+                      value={filters.courseId[0]?.toString() || ""}
+                      onValueChange={(value) => {
+                        if (value && !filters.courseId.includes(parseInt(value))) {
+                          toggleFilter('courseId', parseInt(value));
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-[140px] h-8">
+                        <SelectValue placeholder="Khóa học" />
+                      </SelectTrigger>
+                      <SelectContent>
                         {courseOptions.length > 0 ? (
                           courseOptions.map((course) => (
-                            <DropdownMenuCheckboxItem
-                              key={course.id}
-                              checked={filters.courseId.includes(course.id)}
-                              onCheckedChange={() => toggleFilter('courseId', course.id)}
-                            >
-                              {course.name}
-                            </DropdownMenuCheckboxItem>
+                            <div key={course.id} className="flex items-center space-x-2 px-2 py-1">
+                              <Checkbox
+                                id={`course-${course.id}`}
+                                checked={filters.courseId.includes(course.id)}
+                                onCheckedChange={() => toggleFilter('courseId', course.id)}
+                              />
+                              <label
+                                htmlFor={`course-${course.id}`}
+                                className="text-sm font-medium cursor-pointer flex-1"
+                              >
+                                {course.name}
+                              </label>
+                            </div>
                           ))
                         ) : (
                           <div className="px-2 py-1 text-xs text-muted-foreground">Chưa có dữ liệu khóa học</div>
                         )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 {hasActiveFilters && (
@@ -320,9 +357,9 @@ const MyClassesPage = () => {
                     ))}
                   </div>
                 )}
-              </header>
+              </div>
 
-              <main className="flex-1 px-6 py-6 md:px-8 md:py-8">
+              <main className="flex-1 px-6 py-6">
                 {isLoading && (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {Array.from({ length: 6 }).map((_, idx) => (
@@ -442,19 +479,21 @@ const MyClassesPage = () => {
                 )}
 
                 {!isLoading && !error && classItems.length === 0 && (
-                  <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border/80 bg-muted/10 p-10 text-center">
-                    <BookOpen className="h-10 w-10 text-muted-foreground" />
-                    <div className="space-y-1">
-                      <p className="text-base font-semibold text-foreground">
+                  <Empty>
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon">
+                        <BookOpen className="h-10 w-10" />
+                      </EmptyMedia>
+                      <EmptyTitle>
                         {hasActiveFilters ? 'Không tìm thấy lớp học phù hợp' : 'Bạn chưa đăng ký lớp học nào'}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
+                      </EmptyTitle>
+                      <EmptyDescription>
                         {hasActiveFilters
                           ? 'Điều chỉnh bộ lọc hoặc thử từ khóa khác.'
                           : 'Liên hệ với trung tâm để đăng ký lớp học.'}
-                      </p>
-                    </div>
-                  </div>
+                      </EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
                 )}
               </main>
             </div>

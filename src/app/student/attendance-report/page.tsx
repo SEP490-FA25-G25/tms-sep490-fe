@@ -130,17 +130,20 @@ export default function StudentAttendanceReportOverviewPage() {
         <SidebarInset>
           <SiteHeader />
           <main className="flex flex-1 flex-col">
-            <div className="@container/main flex flex-1 flex-col gap-2">
-              <section className="flex flex-col gap-4 px-4 pb-6 pt-4 lg:px-6">
-                <header className="flex flex-col gap-2">
-                  <h1 className="text-2xl font-semibold tracking-tight">
-                    Báo cáo điểm danh
-                  </h1>
-                  <p className="text-sm text-muted-foreground">
-                    Xem tổng quan tình trạng điểm danh theo từng lớp bạn đang
-                    hoặc đã tham gia.
-                  </p>
-                </header>
+            <header className="flex flex-col gap-2 border-b border-border px-6 py-5">
+              <div className="flex flex-col gap-2">
+                <h1 className="text-2xl font-semibold tracking-tight">
+                  Báo cáo điểm danh
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Xem tổng quan tình trạng điểm danh theo từng lớp bạn đang
+                  hoặc đã tham gia.
+                </p>
+              </div>
+            </header>
+
+            <div className="flex flex-1 flex-col gap-2">
+              <section className="flex flex-col gap-4 px-6 py-6">
 
                 {isLoading && (
                   <div className="space-y-3">
@@ -186,7 +189,7 @@ export default function StudentAttendanceReportOverviewPage() {
               </section>
 
               {!isLoading && !isError && hasContent && (
-                <section className="flex flex-1 flex-col gap-4 px-4 pb-6 lg:px-6 space-y-6">
+                <section className="flex flex-1 flex-col gap-4 px-6 py-6 space-y-6">
                     {/* Attendance Summary Section */}
                     <AttendanceSummary classes={classes} />
 

@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { AlertCircle, Calendar, CheckCircle, Clock, FileText } from 'lucide-react';
 import type { AssessmentDTO, StudentAssessmentScoreDTO } from '@/types/studentClass';
 import { ASSESSMENT_KINDS } from '@/types/studentClass';
@@ -144,27 +146,25 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-lg font-semibold">Bài kiểm tra & Điểm</h3>
-        <div className="flex gap-2">
-          {[
-            { key: 'all', label: 'Tất cả' },
-            { key: 'upcoming', label: 'Sắp tới' },
-            { key: 'graded', label: 'Đã chấm' },
-            { key: 'overdue', label: 'Quá hạn' }
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setFilter(tab.key as FilterType)}
-              className={cn(
-                "px-3 py-1 text-sm rounded-md transition-colors",
-                filter === tab.key
-                  ? "bg-blue-100 text-blue-800 border border-blue-200"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        <ToggleGroup
+          type="single"
+          value={filter}
+          onValueChange={(value) => setFilter(value as FilterType)}
+          className="gap-1"
+        >
+          <ToggleGroupItem value="all" className="px-3 py-1 text-sm">
+            Tất cả
+          </ToggleGroupItem>
+          <ToggleGroupItem value="upcoming" className="px-3 py-1 text-sm">
+            Sắp tới
+          </ToggleGroupItem>
+          <ToggleGroupItem value="graded" className="px-3 py-1 text-sm">
+            Đã chấm
+          </ToggleGroupItem>
+          <ToggleGroupItem value="overdue" className="px-3 py-1 text-sm">
+            Quá hạn
+          </ToggleGroupItem>
+        </ToggleGroup>
       </div>
 
       <Card>
@@ -251,12 +251,21 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
               </Table>
             </div>
           ) : (
-            <div className="text-center py-10 text-sm text-muted-foreground">
-              <FileText className="h-10 w-10 text-muted-foreground/60 mx-auto mb-3" />
-              {filter === 'all'
-                ? 'Chưa có bài kiểm tra nào.'
-                : 'Không có bài theo bộ lọc hiện tại.'}
-            </div>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <FileText className="h-10 w-10" />
+                </EmptyMedia>
+                <EmptyTitle>
+                  {filter === 'all' ? 'Chưa có bài kiểm tra' : 'Không có bài nào theo bộ lọc'}
+                </EmptyTitle>
+                <EmptyDescription>
+                  {filter === 'all'
+                    ? 'Chưa có bài kiểm tra nào.'
+                    : 'Không có bài theo bộ lọc hiện tại.'}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           )}
         </CardContent>
       </Card>
