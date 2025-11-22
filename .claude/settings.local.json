@@ -35,7 +35,9 @@
       "Bash(pnpm run lint)",
       "mcp__serena__find_file",
       "mcp__serena__replace_symbol_body",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "mcp__serena__initial_instructions",
+      "Bash(test:*)"
     ],
     "deny": [],
     "ask": []

@@ -19,6 +19,7 @@ import AssessmentsTab from './components/AssessmentsTab';
 import ClassmatesTab from './components/ClassmatesTab';
 import AnnouncementsTab from './components/AnnouncementsTab';
 import SessionsTab from './components/SessionsTab';
+import SyllabusTab from './components/SyllabusTab';
 
 const ClassDetailPage = () => {
   const { classId } = useParams<{ classId: string }>();
@@ -150,14 +151,12 @@ const ClassDetailPage = () => {
       );
     }
 
-    const nextSession = classDetail.upcomingSessions?.[0];
-
     return (
       <ClassHeader
         classDetail={classDetail}
         attendanceRate={attendanceRate}
         sessionStats={sessionStats}
-        nextSession={nextSession}
+        nextSession={classDetail.nextSession}
       />
     );
   };
@@ -218,6 +217,12 @@ const ClassDetailPage = () => {
                             Lịch học
                           </TabsTrigger>
                           <TabsTrigger
+                            value="syllabus"
+                            className="rounded-none border-b-2 border-transparent px-2 py-3 text-sm font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-primary"
+                          >
+                            Giáo trình
+                          </TabsTrigger>
+                          <TabsTrigger
                             value="assessments"
                             className="rounded-none border-b-2 border-transparent px-2 py-3 text-sm font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-primary"
                           >
@@ -238,6 +243,13 @@ const ClassDetailPage = () => {
                           isLoading={isSessionsLoading}
                           classDetail={classDetail}
                           reportSessions={attendanceReportSessions}
+                        />
+                      </TabsContent>
+
+                      <TabsContent value="syllabus" className="mt-0">
+                        <SyllabusTab
+                          classDetail={classDetail}
+                          isLoading={isAssessmentsLoading}
                         />
                       </TabsContent>
 

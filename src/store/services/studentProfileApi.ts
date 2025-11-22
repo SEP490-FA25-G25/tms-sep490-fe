@@ -23,6 +23,8 @@ export interface StudentProfile {
   averageScore: number;
   totalAbsences: number;
   totalSessions: number;
+  primaryCourseType?: string;
+  scoreScale?: string;
   currentClasses: StudentActiveClass[];
 }
 

@@ -12,20 +12,13 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { useGetStudentClassesQuery } from '@/store/services/studentClassApi';
 import type { ClassStatus, Modality, StudentClassDTO } from '@/types/studentClass';
 import { CLASS_STATUSES, MODALITIES } from '@/types/studentClass';
-import { AlertCircle, BookOpen, Filter, Search } from 'lucide-react';
+import { AlertCircle, BookOpen, Search } from 'lucide-react';
 
 interface FilterState {
   status: ClassStatus[];
@@ -40,6 +33,7 @@ const MyClassesPage = () => {
   const { user } = useAuth();
   const studentId = user?.id || 0;
 
+  const [activeStatusTab, setActiveStatusTab] = useState<'all' | ClassStatus>('all');
   const [filters, setFilters] = useState<FilterState>({
     status: [],
     branchId: [],
@@ -51,6 +45,25 @@ const MyClassesPage = () => {
   const [page, setPage] = useState(0);
   const [pageSize] = useState(12);
 
+  // Map frontend status tabs to backend enrollment status values
+  const getEnrollmentStatus = (tabStatus: 'all' | ClassStatus): string[] | undefined => {
+    if (tabStatus === 'all') {
+      return filters.status.length > 0 ? filters.status : undefined;
+    }
+
+    // Map ClassStatus to EnrollmentStatus
+    switch (tabStatus) {
+      case 'ONGOING':
+        return ['ENROLLED'];
+      case 'COMPLETED':
+        return ['COMPLETED'];
+      case 'SCHEDULED':
+        return ['SCHEDULED'];
+      default:
+        return ['ENROLLED'];
+    }
+  };
+
   const {
     data: classesResponse,
     isLoading,
@@ -58,7 +71,7 @@ const MyClassesPage = () => {
     refetch,
   } = useGetStudentClassesQuery({
     studentId,
-    status: filters.status.length > 0 ? filters.status : undefined,
+    status: getEnrollmentStatus(activeStatusTab),
     branchId: filters.branchId.length > 0 ? filters.branchId : undefined,
     courseId: filters.courseId.length > 0 ? filters.courseId : undefined,
     modality: filters.modality.length > 0 ? filters.modality : undefined,
@@ -72,11 +85,7 @@ const MyClassesPage = () => {
     () => classesResponse?.data?.content || [],
     [classesResponse]
   );
-  const totalPages = useMemo(
-    () => classesResponse?.data?.totalPages || 0,
-    [classesResponse]
-  );
-
+  
   const branchOptions = useMemo(() => {
     const map = new Map<number, string>();
     classItems.forEach((item) => {
@@ -164,7 +173,7 @@ const MyClassesPage = () => {
           <SiteHeader />
           <div className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col">
-              <header className="flex flex-col gap-2 border-b border-border px-6 py-5">
+              <header className="flex flex-col gap-4 border-b border-border px-6 py-5">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <h1 className="text-2xl font-semibold tracking-tight">Lớp của tôi</h1>
@@ -178,6 +187,18 @@ const MyClassesPage = () => {
                     </Button>
                   )}
                 </div>
+
+                <Tabs value={activeStatusTab} onValueChange={(value) => {
+                  setActiveStatusTab(value as 'all' | ClassStatus);
+                  setPage(0);
+                }} className="w-full">
+                  <TabsList className="w-full justify-start">
+                    <TabsTrigger value="all">Tất cả</TabsTrigger>
+                    <TabsTrigger value="ONGOING">Đang học</TabsTrigger>
+                    <TabsTrigger value="COMPLETED">Đã hoàn thành</TabsTrigger>
+                    <TabsTrigger value="SCHEDULED">Sắp học</TabsTrigger>
+                  </TabsList>
+                </Tabs>
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <div className="relative w-full lg:max-w-md">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -189,26 +210,6 @@ const MyClassesPage = () => {
                     />
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="flex items-center gap-2">
-                          <Filter className="h-4 w-4" />
-                          Trạng thái
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-48">
-                        {Object.keys(CLASS_STATUSES).map((key) => (
-                          <DropdownMenuCheckboxItem
-                            key={key}
-                            checked={filters.status.includes(key as ClassStatus)}
-                            onCheckedChange={() => toggleFilter('status', key)}
-                          >
-                            {CLASS_STATUSES[key as ClassStatus]}
-                          </DropdownMenuCheckboxItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="sm">
@@ -366,8 +367,7 @@ const MyClassesPage = () => {
                         const teacherSummary = classItem.instructorNames?.length
                           ? `${classItem.instructorNames[0]}${classItem.instructorNames.length > 1 ? ` +${classItem.instructorNames.length - 1}` : ''}`
                           : 'Chưa phân công';
-                        const attendanceTone = classItem.attendanceRate < 80 ? 'text-destructive' : 'text-foreground';
-
+  
                         return (
                           <Card
                             key={classItem.classId}
@@ -420,12 +420,6 @@ const MyClassesPage = () => {
                                   </span>
                                 </div>
                                 <Progress value={progress} className="h-2" />
-                                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                  <span>Điểm danh</span>
-                                  <span className={cn('font-semibold', attendanceTone)}>
-                                    {classItem.attendanceRate.toFixed(1)}%
-                                  </span>
-                                </div>
                               </div>
 
                               <Button
@@ -444,50 +438,6 @@ const MyClassesPage = () => {
                         );
                       })}
                     </div>
-
-                    <div className="mt-8 flex items-center justify-center gap-3 text-sm">
-                      <span className="text-muted-foreground mr-4">
-                        Trang {page + 1} / {totalPages}
-                      </span>
-                      <Pagination>
-                        <PaginationContent>
-                          <PaginationItem>
-                            <PaginationPrevious
-                              href="#"
-                              onClick={(e) => {
-                                e.preventDefault()
-                                setPage((p) => Math.max(0, p - 1))
-                              }}
-                              disabled={page === 0}
-                            />
-                          </PaginationItem>
-                          {Array.from({ length: totalPages }, (_, i) => i).map((pageNum) => (
-                            <PaginationItem key={pageNum}>
-                              <PaginationLink
-                                href="#"
-                                onClick={(e) => {
-                                  e.preventDefault()
-                                  setPage(pageNum)
-                                }}
-                                isActive={pageNum === page}
-                              >
-                                {pageNum + 1}
-                              </PaginationLink>
-                            </PaginationItem>
-                          ))}
-                          <PaginationItem>
-                            <PaginationNext
-                              href="#"
-                              onClick={(e) => {
-                                e.preventDefault()
-                                setPage((p) => Math.min(totalPages - 1, p + 1))
-                              }}
-                              disabled={page === totalPages - 1}
-                            />
-                          </PaginationItem>
-                        </PaginationContent>
-                      </Pagination>
-                    </div>
                   </>
                 )}
 
@@ -501,12 +451,9 @@ const MyClassesPage = () => {
                       <p className="text-sm text-muted-foreground">
                         {hasActiveFilters
                           ? 'Điều chỉnh bộ lọc hoặc thử từ khóa khác.'
-                          : 'Hãy tìm lớp và đăng ký để bắt đầu học tập.'}
+                          : 'Liên hệ với trung tâm để đăng ký lớp học.'}
                       </p>
                     </div>
-                    <Button size="sm" onClick={() => navigate('/student/courses')}>
-                      Tìm lớp học
-                    </Button>
                   </div>
                 )}
               </main>

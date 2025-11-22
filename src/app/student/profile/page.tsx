@@ -16,20 +16,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  BookOpen,
-  CheckCircle,
-  Award,
-  Calendar,
-  TrendingUp,
   Phone,
   MapPin,
   AlertCircle,
   FileText,
   User,
   Mail,
-  BarChart3,
-  XCircle,
-  Facebook
+  Facebook,
+  Calendar
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -145,39 +139,6 @@ export default function StudentProfilePage() {
                 <Button variant="ghost">Đổi mật khẩu</Button>
               </div>
             </div>
-
-            {/* Row 2: Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-              <StatCard
-                icon={<BookOpen className="h-4 w-4" />}
-                label="Tổng lớp"
-                value={`${profile.totalEnrollments} lớp`}
-              />
-              <StatCard
-                icon={<CheckCircle className="h-4 w-4" />}
-                label="Đang học"
-                value={`${profile.activeEnrollments} lớp`}
-              />
-              <StatCard
-                icon={<Award className="h-4 w-4" />}
-                label="Hoàn thành"
-                value={`${profile.completedEnrollments} lớp`}
-              />
-              <StatCard
-                icon={<Calendar className="h-4 w-4" />}
-                label="Học từ"
-                value={profile.firstEnrollmentDate ?
-                  new Date(profile.firstEnrollmentDate).toLocaleDateString('vi-VN', {
-                    day: '2-digit', month: '2-digit', year: 'numeric'
-                  }) : 'N/A'
-                }
-              />
-              <StatCard
-                icon={<TrendingUp className="h-4 w-4" />}
-                label="Điểm danh"
-                value={`${profile.attendanceRate}%`}
-              />
-            </div>
           </div>
         </div>
       </div>
@@ -258,51 +219,6 @@ export default function StudentProfilePage() {
             </div>
           </div>
 
-          {/* Performance Stats Section */}
-          <div className="space-y-4">
-            <h2 className="text-xl md:text-2xl font-semibold">Hiệu suất học tập</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
-              <div className="rounded-lg border border-border/70 bg-muted/10 p-4 space-y-3">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <TrendingUp className="h-5 w-5" />
-                  <span className="text-sm font-medium">Điểm danh</span>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-3xl font-bold text-success">
-                    {profile.attendanceRate}%
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {profile.totalSessions - profile.totalAbsences}/{profile.totalSessions} buổi
-                  </p>
-                </div>
-              </div>
-              <div className="rounded-lg border border-border/70 bg-muted/10 p-4 space-y-3">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <BarChart3 className="h-5 w-5" />
-                  <span className="text-sm font-medium">Điểm trung bình</span>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-3xl font-bold text-success">
-                    {(profile.averageScore * 9 / 100).toFixed(1)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Trên thang điểm 9 (IELTS)</p>
-                </div>
-              </div>
-              <div className="rounded-lg border border-border/70 bg-muted/10 p-4 space-y-3">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <XCircle className="h-5 w-5" />
-                  <span className="text-sm font-medium">Buổi vắng</span>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-3xl font-bold text-foreground">
-                    {profile.totalAbsences}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Tổng số buổi nghỉ</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Current Classes Table */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -362,18 +278,6 @@ export default function StudentProfilePage() {
         </SidebarInset>
       </SidebarProvider>
     </StudentRoute>
-  );
-}
-
-function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-border/70 bg-muted/10 p-3 space-y-1">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        {icon}
-        <span className="text-sm font-medium">{label}</span>
-      </div>
-      <p className="text-sm font-semibold text-foreground">{value}</p>
-    </div>
   );
 }
 
