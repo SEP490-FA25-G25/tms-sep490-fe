@@ -201,14 +201,14 @@ const roleBasedNav = {
         icon: HomeIcon,
       },
       {
+        title: "Thời khóa biểu",
+        url: "/student/schedule",
+        icon: CalendarIcon,
+      },
+      {
         title: "Lớp của tôi",
         url: "/student/my-classes",
         icon: SchoolIcon,
-      },
-      {
-        title: "Khóa học của tôi",
-        url: "/student/courses",
-        icon: BookOpenIcon,
       },
       {
         title: "Báo cáo điểm danh",
@@ -216,19 +216,9 @@ const roleBasedNav = {
         icon: BarChartIcon,
       },
       {
-        title: "Bài tập",
-        url: "/student/assignments",
-        icon: FileTextIcon,
-      },
-      {
-        title: "Điểm số",
-        url: "/student/grades",
-        icon: AwardIcon,
-      },
-      {
-        title: "Thời khóa biểu",
-        url: "/student/schedule",
-        icon: CalendarIcon,
+        title: "Bảng điểm",
+        url: "/student/transcript",
+        icon: GraduationCapIcon,
       },
       {
         title: "Yêu cầu của tôi",

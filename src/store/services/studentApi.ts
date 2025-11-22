@@ -74,6 +74,21 @@ export interface StudentActiveClassDTO {
   averageScore?: number
 }
 
+// Student Transcript DTO
+export interface StudentTranscriptDTO {
+  classId: number
+  classCode: string
+  className: string
+  courseName: string
+  teacherName: string
+  status: string
+  averageScore?: number
+  componentScores: Record<string, number>
+  completedDate?: string
+  totalSessions: number
+  completedSessions: number
+}
+
 export interface StudentEnrollmentHistoryDTO {
   id: number
   studentId: number
@@ -233,7 +248,7 @@ const baseQueryWithReauth: BaseQueryFn<
 export const studentApi = createApi({
   reducerPath: 'studentApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Student'],
+  tagTypes: ['Student', 'Transcript'],
   endpoints: (builder) => ({
     // Get students list
     getStudents: builder.query<ApiResponse<PaginationInfo & { content: StudentListItemDTO[] }>, StudentListRequest>({
@@ -291,6 +306,15 @@ export const studentApi = createApi({
         }
       },
     }),
+
+    // Get student transcript
+    getStudentTranscript: builder.query<ApiResponse<StudentTranscriptDTO[]>, { studentId: number }>({
+      query: ({ studentId }) => ({
+        url: `/students/${studentId}/transcript`,
+        method: 'GET',
+      }),
+      providesTags: ['Transcript'],
+    }),
   }),
 })
 
@@ -299,4 +323,5 @@ export const {
   useGetStudentDetailQuery,
   useGetStudentEnrollmentHistoryQuery,
   useCreateStudentMutation,
+  useGetStudentTranscriptQuery,
 } = studentApi

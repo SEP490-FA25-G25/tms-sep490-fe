@@ -132,9 +132,6 @@ export interface CourseAssessment {
   duration?: string;
   sessionIds?: number[];
   cloMappings?: string[];
-  isCompleted?: boolean;
-  achievedScore?: number;
-  completedAt?: string;
 }
 
 export interface CourseProgress {

@@ -3,7 +3,6 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import {
-  Calendar,
   CheckCircle,
   Clock,
   TrendingUp,
@@ -16,13 +15,6 @@ interface ProgressDashboardProps {
 
 export function ProgressDashboard({ progress }: ProgressDashboardProps) {
   const completionPercentage = Math.round(progress.progressPercentage)
-  const attendanceRate = Math.round(progress.attendanceRate)
-
-  const getStatusColor = (percentage: number) => {
-    if (percentage >= 80) return 'text-success'
-    if (percentage >= 60) return 'text-warning'
-    return 'text-destructive'
-  }
 
   const getStatusBadge = (percentage: number) => {
     if (percentage >= 80) return 'default'
@@ -79,23 +71,7 @@ export function ProgressDashboard({ progress }: ProgressDashboardProps) {
           </div>
         </div>
 
-        {/* Attendance Rate */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Calendar className="h-6 w-6 text-muted-foreground" />
-            <h3 className="font-semibold">Tỷ lệ điểm danh</h3>
-          </div>
-          <div className="space-y-2">
-            <div className={`text-3xl font-bold ${getStatusColor(attendanceRate)}`}>
-              {attendanceRate}%
-            </div>
-            <Progress value={progress.attendanceRate} className="h-2" />
-            <p className="text-sm text-muted-foreground">
-              {progress.completedSessions} buổi đã tham dự
-            </p>
-          </div>
-        </div>
-
+  
         {/* Current Status */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">

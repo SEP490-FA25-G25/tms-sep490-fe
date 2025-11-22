@@ -30,6 +30,7 @@ import StudentClassAttendanceReportPage from './app/student/attendance-report/[c
 import StudentMyClassesPage from './app/student/my-classes/page'
 import StudentClassDetailPage from './app/student/my-classes/[classId]/page'
 import StudentProfilePage from './app/student/profile/page'
+import StudentTranscriptPage from './app/student/transcript/page'
 import AcademicClassesPage from './app/academic/classes/page'
 import AcademicClassDetailPage from './app/academic/classes/[id]/page'
 import AcademicStudentRequestsPage from './app/academic/student-requests/page'
@@ -182,22 +183,6 @@ function App() {
 
             {/* Student routes */}
             <Route
-              path="/student/courses"
-              element={
-                <ProtectedRoute requiredRoles={['STUDENT']}>
-                  <StudentCoursesPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/student/courses/:id"
-              element={
-                <ProtectedRoute requiredRoles={['STUDENT']}>
-                  <CourseDetailPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/student/attendance-report"
               element={
                 <ProtectedRoute requiredRoles={['STUDENT']}>
@@ -250,6 +235,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={['STUDENT']}>
                   <StudentProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/transcript"
+              element={
+                <ProtectedRoute requiredRoles={['STUDENT']}>
+                  <StudentTranscriptPage />
                 </ProtectedRoute>
               }
             />

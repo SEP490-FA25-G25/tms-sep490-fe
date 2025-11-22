@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import AttendanceSessionsTable, { type AttendanceSessionRow } from '@/components/attendance/AttendanceSessionsTable';
 import type { StudentAttendanceReportSessionDTO } from '@/store/services/attendanceApi';
 import type { ClassSessionsResponseDTO, ClassDetailDTO } from '@/types/studentClass';
-import { cn } from '@/lib/utils';
 
 interface SessionsTabProps {
   sessionsData: ClassSessionsResponseDTO | undefined;
@@ -90,48 +90,44 @@ const SessionsTab: React.FC<SessionsTabProps> = ({ sessionsData, isLoading, repo
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-lg font-semibold">Lịch học & Điểm danh</h3>
-        <div className="flex gap-2">
-          {[
-            { key: 'all', label: 'Tất cả' },
-            { key: 'upcoming', label: 'Sắp tới' },
-            { key: 'past', label: 'Đã diễn ra' }
-          ].map((option) => (
-            <button
-              key={option.key}
-              onClick={() => setFilter(option.key as SessionFilter)}
-              className={cn(
-                "px-3 py-1 text-sm rounded-md transition-colors",
-                filter === option.key
-                  ? "bg-blue-100 text-blue-800 border border-blue-200"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              )}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
+        <ToggleGroup
+          type="single"
+          value={filter}
+          onValueChange={(value) => setFilter(value as SessionFilter)}
+          className="gap-1"
+        >
+          <ToggleGroupItem value="all" className="px-3 py-1 text-sm">
+            Tất cả
+          </ToggleGroupItem>
+          <ToggleGroupItem value="upcoming" className="px-3 py-1 text-sm">
+            Sắp tới
+          </ToggleGroupItem>
+          <ToggleGroupItem value="past" className="px-3 py-1 text-sm">
+            Đã diễn ra
+          </ToggleGroupItem>
+        </ToggleGroup>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-        <div className="rounded-lg border border-border/70 bg-muted/10 px-3 py-2">
+      <div className="grid gap-4 md:grid-cols-5">
+        <div className="rounded-lg border bg-muted/10 p-3">
           <p className="text-xs text-muted-foreground">Tổng số buổi đã học</p>
           <p className="text-sm font-semibold text-foreground">
             {summary.total > 0 ? `${summary.total - summary.upcomingCount} / ${summary.total}` : '—'}
           </p>
         </div>
-        <div className="rounded-lg border border-border/70 bg-muted/10 px-3 py-2">
+        <div className="rounded-lg border bg-muted/10 p-3">
           <p className="text-xs text-muted-foreground">Có mặt</p>
           <p className="text-sm font-semibold text-foreground">{summary.present}</p>
         </div>
-        <div className="rounded-lg border border-border/70 bg-muted/10 px-3 py-2">
+        <div className="rounded-lg border bg-muted/10 p-3">
           <p className="text-xs text-muted-foreground">Vắng</p>
           <p className="text-sm font-semibold text-foreground">{summary.absent}</p>
         </div>
-        <div className="rounded-lg border border-border/70 bg-muted/10 px-3 py-2">
+        <div className="rounded-lg border bg-muted/10 p-3">
           <p className="text-xs text-muted-foreground">Buổi sắp tới</p>
           <p className="text-sm font-semibold text-foreground">{summary.upcomingCount}</p>
         </div>
-        <div className="rounded-lg border border-border/70 bg-muted/10 px-3 py-2">
+        <div className="rounded-lg border bg-muted/10 p-3">
           <p className="text-xs text-muted-foreground">Tỷ lệ chuyên cần</p>
           <p className="text-sm font-semibold text-foreground">{summary.attendanceRate.toFixed(1)}%</p>
         </div>

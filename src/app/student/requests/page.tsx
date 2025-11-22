@@ -142,20 +142,23 @@ export default function StudentRequestsPage() {
         <AppSidebar variant="inset" />
         <SidebarInset>
           <SiteHeader />
-          <div className="flex flex-1 flex-col gap-6 p-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-semibold tracking-tight">Yêu cầu của tôi</h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Quản lý yêu cầu xin nghỉ, học bù, chuyển lớp
-                </p>
+          <main className="flex flex-1 flex-col">
+            <header className="flex flex-col gap-2 border-b border-border px-6 py-5">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-2">
+                  <h1 className="text-2xl font-semibold tracking-tight">Yêu cầu của tôi</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Quản lý yêu cầu xin nghỉ, học bù, chuyển lớp
+                  </p>
+                </div>
+                <Button onClick={() => setIsCreateOpen(true)} size="sm">
+                  <PlusIcon className="h-4 w-4" />
+                  Tạo yêu cầu
+                </Button>
               </div>
-              <Button onClick={() => setIsCreateOpen(true)} size="sm">
-                <PlusIcon className="h-4 w-4" />
-                Tạo yêu cầu
-              </Button>
-            </div>
+            </header>
+
+            <div className="flex flex-1 flex-col gap-6 px-6 py-6">
 
             {/* Summary Stats - NO WRAPPER CARD */}
             <div className="grid gap-4 md:grid-cols-4">
@@ -251,7 +254,7 @@ export default function StudentRequestsPage() {
                   return (
                     <div
                       key={request.id}
-                      className="rounded-lg border bg-card p-4 transition-colors hover:bg-muted/30"
+                      className="p-4 border-b border-border hover:bg-muted/30"
                     >
                       {/* Request Header */}
                       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -382,7 +385,7 @@ export default function StudentRequestsPage() {
                           )}
                           {request.rejectionReason && (
                             <div>
-                              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground text-rose-500">
+                              <p className="text-xs font-medium uppercase tracking-wide text-rose-500">
                                 Lý do từ chối
                               </p>
                               <p className="mt-1 line-clamp-2 text-sm text-rose-500">{request.rejectionReason}</p>
@@ -468,7 +471,8 @@ export default function StudentRequestsPage() {
                 </Pagination>
               </div>
             )}
-          </div>
+            </div>
+          </main>
         </SidebarInset>
       </SidebarProvider>
       <CreateRequestDialog

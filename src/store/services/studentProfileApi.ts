@@ -23,16 +23,21 @@ export interface StudentProfile {
   averageScore: number;
   totalAbsences: number;
   totalSessions: number;
-  currentClasses: StudentActiveClass[];
+  primaryCourseType?: string;
+  scoreScale?: string;
+  enrollments: StudentActiveClass[];
 }
 
 export interface StudentActiveClass {
   classId: number;
   classCode: string;
   className: string;
-  courseCode: string;
   courseName: string;
-  status: string;
+  branchName: string;
+  startDate: string;
+  plannedEndDate: string;
+  enrollmentStatus: string;
+  enrolledAt: string;
 }
 
 export const studentProfileApi = createApi({

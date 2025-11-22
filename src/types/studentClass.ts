@@ -60,11 +60,13 @@ export interface StudentClassDTO {
   enrollmentStatus: EnrollmentStatus;
   totalSessions: number;
   completedSessions: number;
-  attendedSessions: number;
-  attendanceRate: number; // 0-100
   instructorNames: string[]; // Aggregated from TeachingSlot
   scheduleSummary: string; // e.g., "T2,T4,T6 19:00-21:00"
-  averageScore?: number; // Optional if available
+  // Removed over-fetched fields (Phase 2 optimization):
+  // - attendedSessions (expensive SUM query)
+  // - attendanceRate (expensive calculation)
+  // - averageScore (expensive calculation)
+  // These are now available only in dedicated report endpoints
 }
 
 // Nested interfaces for ClassDetailDTO
@@ -109,7 +111,7 @@ export interface ClassDetailDTO {
   teachers: TeacherSummary[];
   scheduleSummary: string;
   enrollmentSummary: EnrollmentSummary;
-  upcomingSessions: SessionDTO[];
+  nextSession?: SessionDTO; // Optimization: Only next session, not full list
 }
 
 // Session DTO for class schedule
@@ -193,7 +195,7 @@ export interface ClassmateDTO {
 // Request parameters for API calls
 export interface GetStudentClassesRequest {
   studentId: number;
-  status?: ClassStatus[];
+  status?: string[]; // Can be ClassStatus[] (for class filtering) OR EnrollmentStatus[] (for enrollment filtering)
   branchId?: number[];
   courseId?: number[];
   modality?: Modality[];
@@ -242,14 +244,14 @@ export const SESSION_STATUSES: Record<SessionStatus, string> = {
 };
 
 export const ASSESSMENT_KINDS: Record<AssessmentKind, string> = {
-  QUIZ: 'Bài kiểm tra nhanh',
-  MIDTERM: 'Giữa kỳ',
-  FINAL: 'Cuối kỳ',
-  ASSIGNMENT: 'Bài tập',
-  PROJECT: 'Đồ án',
-  ORAL: 'Vấn đáp',
-  PRACTICE: 'Thực hành',
-  OTHER: 'Khác'
+  QUIZ: 'Quiz',
+  MIDTERM: 'Midterm',
+  FINAL: 'Final',
+  ASSIGNMENT: 'Assignment',
+  PROJECT: 'Project',
+  ORAL: 'Oral',
+  PRACTICE: 'Practice',
+  OTHER: 'Other'
 };
 
 export const HOMEWORK_STATUSES: Record<HomeworkStatus, string> = {

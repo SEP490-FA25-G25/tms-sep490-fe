@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -57,28 +56,13 @@ const ClassmatesTab: React.FC<ClassmatesTabProps> = ({ classmates, isLoading, en
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Skeleton className="h-6 w-32" />
-              <Skeleton className="h-10 w-64" />
-            </div>
-            <div className="space-y-2">
-              {Array.from({ length: 6 }).map((_, idx) => (
-                <div key={idx} className="flex items-center gap-3 p-3 border rounded-lg">
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                  <div className="flex-1 space-y-1">
-                    <Skeleton className="h-4 w-40" />
-                    <Skeleton className="h-3 w-24" />
-                  </div>
-                  <Skeleton className="h-4 w-20" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="rounded-lg border">
+        <div className="p-4 space-y-3">
+          {Array.from({ length: 6 }).map((_, idx) => (
+            <Skeleton key={idx} className="h-12 w-full" />
+          ))}
+        </div>
+      </div>
     );
   }
 
@@ -103,70 +87,66 @@ const ClassmatesTab: React.FC<ClassmatesTabProps> = ({ classmates, isLoading, en
         </div>
       </div>
 
-      <Card>
-        <CardContent>
-          {filteredClassmates.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Họ tên</TableHead>
-                    <TableHead>MSSV</TableHead>
-                    <TableHead>Trạng thái</TableHead>
-                    <TableHead>Ngày đăng ký</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead className="text-right">Điểm danh</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredClassmates.map((classmate) => (
-                    <TableRow key={classmate.studentId}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          {classmate.avatar ? (
-                            <img
-                              src={classmate.avatar}
-                              alt={classmate.fullName}
-                              className="h-8 w-8 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-                              <UserCircle className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                          )}
-                          <span className="font-medium text-foreground">{classmate.fullName}</span>
+      <div className="rounded-lg border overflow-hidden">
+        {filteredClassmates.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50">
+                <TableHead>Họ tên</TableHead>
+                <TableHead>MSSV</TableHead>
+                <TableHead>Trạng thái</TableHead>
+                <TableHead>Ngày đăng ký</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead className="text-right">Điểm danh</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredClassmates.map((classmate) => (
+                <TableRow key={classmate.studentId}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      {classmate.avatar ? (
+                        <img
+                          src={classmate.avatar}
+                          alt={classmate.fullName}
+                          className="h-8 w-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+                          <UserCircle className="h-5 w-5 text-muted-foreground" />
                         </div>
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">{classmate.studentCode}</TableCell>
-                      <TableCell>
-                        <Badge className={cn("text-xs", getEnrollmentStatusColor(classmate.enrollmentStatus))}>
-                          {ENROLLMENT_STATUSES[classmate.enrollmentStatus]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {formatDate(classmate.enrollmentDate)}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {classmate.email || '—'}
-                      </TableCell>
-                      <TableCell className="text-right text-sm text-muted-foreground">
-                        {classmate.attendanceRate !== undefined
-                          ? `${classmate.attendanceRate.toFixed(1)}%`
-                          : '—'}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="py-10 text-center text-sm text-muted-foreground">
-              <Users className="h-10 w-10 text-muted-foreground/60 mx-auto mb-3" />
-              {searchTerm ? 'Không có thành viên trùng khớp tìm kiếm.' : 'Chưa có thành viên nào.'}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                      )}
+                      <span className="font-medium text-foreground">{classmate.fullName}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">{classmate.studentCode}</TableCell>
+                  <TableCell>
+                    <Badge className={cn("text-xs", getEnrollmentStatusColor(classmate.enrollmentStatus))}>
+                      {ENROLLMENT_STATUSES[classmate.enrollmentStatus]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {formatDate(classmate.enrollmentDate)}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {classmate.email || '—'}
+                  </TableCell>
+                  <TableCell className="text-right text-sm text-muted-foreground">
+                    {classmate.attendanceRate !== undefined
+                      ? `${classmate.attendanceRate.toFixed(1)}%`
+                      : '—'}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            <Users className="h-10 w-10 text-muted-foreground/60 mx-auto mb-3" />
+            {searchTerm ? 'Không có thành viên trùng khớp tìm kiếm.' : 'Chưa có thành viên nào.'}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -7,25 +7,20 @@ import { SiteHeader } from '@/components/site-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { useGetStudentClassesQuery } from '@/store/services/studentClassApi';
 import type { ClassStatus, Modality, StudentClassDTO } from '@/types/studentClass';
 import { CLASS_STATUSES, MODALITIES } from '@/types/studentClass';
-import { AlertCircle, BookOpen, Filter, Search } from 'lucide-react';
+import { AlertCircle, BookOpen, Search } from 'lucide-react';
 
 interface FilterState {
   status: ClassStatus[];
@@ -40,6 +35,7 @@ const MyClassesPage = () => {
   const { user } = useAuth();
   const studentId = user?.id || 0;
 
+  const [activeStatusTab, setActiveStatusTab] = useState<'all' | ClassStatus>('all');
   const [filters, setFilters] = useState<FilterState>({
     status: [],
     branchId: [],
@@ -51,6 +47,25 @@ const MyClassesPage = () => {
   const [page, setPage] = useState(0);
   const [pageSize] = useState(12);
 
+  // Map frontend status tabs to backend enrollment status values
+  const getEnrollmentStatus = (tabStatus: 'all' | ClassStatus): string[] | undefined => {
+    if (tabStatus === 'all') {
+      return filters.status.length > 0 ? filters.status : undefined;
+    }
+
+    // Map ClassStatus to EnrollmentStatus
+    switch (tabStatus) {
+      case 'ONGOING':
+        return ['ENROLLED'];
+      case 'COMPLETED':
+        return ['COMPLETED'];
+      case 'SCHEDULED':
+        return ['SCHEDULED'];
+      default:
+        return ['ENROLLED'];
+    }
+  };
+
   const {
     data: classesResponse,
     isLoading,
@@ -58,25 +73,47 @@ const MyClassesPage = () => {
     refetch,
   } = useGetStudentClassesQuery({
     studentId,
-    status: filters.status.length > 0 ? filters.status : undefined,
+    status: getEnrollmentStatus(activeStatusTab),
     branchId: filters.branchId.length > 0 ? filters.branchId : undefined,
     courseId: filters.courseId.length > 0 ? filters.courseId : undefined,
     modality: filters.modality.length > 0 ? filters.modality : undefined,
     page,
     size: pageSize,
-    sort: 'enrollmentDate',
+    sort: 'startDate',
     direction: 'desc',
   });
 
-  const classItems = useMemo(
-    () => classesResponse?.data?.content || [],
-    [classesResponse]
-  );
-  const totalPages = useMemo(
-    () => classesResponse?.data?.totalPages || 0,
-    [classesResponse]
-  );
+  // Sort classes by status priority, then by startDate
+  const classItems = useMemo(() => {
+    const items = classesResponse?.data?.content || [];
 
+    // If viewing specific status tab, no need to re-sort by status priority
+    if (activeStatusTab !== 'all') {
+      return items;
+    }
+
+    // For "all" tab, prioritize: ONGOING → SCHEDULED → COMPLETED → DRAFT → CANCELLED
+    const statusPriority: Record<ClassStatus, number> = {
+      'ONGOING': 1,
+      'SCHEDULED': 2,
+      'COMPLETED': 3,
+      'DRAFT': 4,
+      'CANCELLED': 5,
+    };
+
+    return [...items].sort((a, b) => {
+      const priorityA = statusPriority[a.status] || 999;
+      const priorityB = statusPriority[b.status] || 999;
+
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+
+      // Within same status, keep server-side sorting (startDate desc)
+      return 0;
+    });
+  }, [classesResponse, activeStatusTab]);
+  
   const branchOptions = useMemo(() => {
     const map = new Map<number, string>();
     classItems.forEach((item) => {
@@ -166,7 +203,7 @@ const MyClassesPage = () => {
             <div className="@container/main flex flex-1 flex-col">
               <header className="flex flex-col gap-2 border-b border-border px-6 py-5">
                 <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
+                  <div className="flex flex-col gap-2">
                     <h1 className="text-2xl font-semibold tracking-tight">Lớp của tôi</h1>
                     <p className="text-sm text-muted-foreground">
                       Quản lý và xem thông tin các lớp học đã đăng ký
@@ -178,6 +215,20 @@ const MyClassesPage = () => {
                     </Button>
                   )}
                 </div>
+                <Tabs value={activeStatusTab} onValueChange={(value) => {
+                  setActiveStatusTab(value as 'all' | ClassStatus);
+                  setPage(0);
+                }} className="w-full">
+                  <TabsList className="w-full justify-start mt-2">
+                    <TabsTrigger value="all">Tất cả</TabsTrigger>
+                    <TabsTrigger value="ONGOING">Đang học</TabsTrigger>
+                    <TabsTrigger value="COMPLETED">Đã hoàn thành</TabsTrigger>
+                    <TabsTrigger value="SCHEDULED">Sắp học</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </header>
+
+              <div className="flex flex-col gap-4 px-4 lg:px-6 py-4 md:py-6">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <div className="relative w-full lg:max-w-md">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -189,90 +240,103 @@ const MyClassesPage = () => {
                     />
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="flex items-center gap-2">
-                          <Filter className="h-4 w-4" />
-                          Trạng thái
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-48">
-                        {Object.keys(CLASS_STATUSES).map((key) => (
-                          <DropdownMenuCheckboxItem
-                            key={key}
-                            checked={filters.status.includes(key as ClassStatus)}
-                            onCheckedChange={() => toggleFilter('status', key)}
-                          >
-                            {CLASS_STATUSES[key as ClassStatus]}
-                          </DropdownMenuCheckboxItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          Hình thức
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-40">
+                    <Select
+                      value={filters.modality[0] || ""}
+                      onValueChange={(value) => {
+                        if (value && !filters.modality.includes(value as Modality)) {
+                          toggleFilter('modality', value);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-[140px] h-8">
+                        <SelectValue placeholder="Hình thức" />
+                      </SelectTrigger>
+                      <SelectContent>
                         {Object.keys(MODALITIES).map((key) => (
-                          <DropdownMenuCheckboxItem
-                            key={key}
-                            checked={filters.modality.includes(key as Modality)}
-                            onCheckedChange={() => toggleFilter('modality', key)}
-                          >
-                            {MODALITIES[key as Modality]}
-                          </DropdownMenuCheckboxItem>
+                          <div key={key} className="flex items-center space-x-2 px-2 py-1">
+                            <Checkbox
+                              id={`modality-${key}`}
+                              checked={filters.modality.includes(key as Modality)}
+                              onCheckedChange={() => toggleFilter('modality', key)}
+                            />
+                            <label
+                              htmlFor={`modality-${key}`}
+                              className="text-sm font-medium cursor-pointer flex-1"
+                            >
+                              {MODALITIES[key as Modality]}
+                            </label>
+                          </div>
                         ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      </SelectContent>
+                    </Select>
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          Chi nhánh
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-56">
+                    <Select
+                      value={filters.branchId[0]?.toString() || ""}
+                      onValueChange={(value) => {
+                        if (value && !filters.branchId.includes(parseInt(value))) {
+                          toggleFilter('branchId', parseInt(value));
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-[140px] h-8">
+                        <SelectValue placeholder="Chi nhánh" />
+                      </SelectTrigger>
+                      <SelectContent>
                         {branchOptions.length > 0 ? (
                           branchOptions.map((branch) => (
-                            <DropdownMenuCheckboxItem
-                              key={branch.id}
-                              checked={filters.branchId.includes(branch.id)}
-                              onCheckedChange={() => toggleFilter('branchId', branch.id)}
-                            >
-                              {branch.name}
-                            </DropdownMenuCheckboxItem>
+                            <div key={branch.id} className="flex items-center space-x-2 px-2 py-1">
+                              <Checkbox
+                                id={`branch-${branch.id}`}
+                                checked={filters.branchId.includes(branch.id)}
+                                onCheckedChange={() => toggleFilter('branchId', branch.id)}
+                              />
+                              <label
+                                htmlFor={`branch-${branch.id}`}
+                                className="text-sm font-medium cursor-pointer flex-1"
+                              >
+                                {branch.name}
+                              </label>
+                            </div>
                           ))
                         ) : (
                           <div className="px-2 py-1 text-xs text-muted-foreground">Chưa có dữ liệu chi nhánh</div>
                         )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      </SelectContent>
+                    </Select>
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          Khóa học
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-56">
+                    <Select
+                      value={filters.courseId[0]?.toString() || ""}
+                      onValueChange={(value) => {
+                        if (value && !filters.courseId.includes(parseInt(value))) {
+                          toggleFilter('courseId', parseInt(value));
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-[140px] h-8">
+                        <SelectValue placeholder="Khóa học" />
+                      </SelectTrigger>
+                      <SelectContent>
                         {courseOptions.length > 0 ? (
                           courseOptions.map((course) => (
-                            <DropdownMenuCheckboxItem
-                              key={course.id}
-                              checked={filters.courseId.includes(course.id)}
-                              onCheckedChange={() => toggleFilter('courseId', course.id)}
-                            >
-                              {course.name}
-                            </DropdownMenuCheckboxItem>
+                            <div key={course.id} className="flex items-center space-x-2 px-2 py-1">
+                              <Checkbox
+                                id={`course-${course.id}`}
+                                checked={filters.courseId.includes(course.id)}
+                                onCheckedChange={() => toggleFilter('courseId', course.id)}
+                              />
+                              <label
+                                htmlFor={`course-${course.id}`}
+                                className="text-sm font-medium cursor-pointer flex-1"
+                              >
+                                {course.name}
+                              </label>
+                            </div>
                           ))
                         ) : (
                           <div className="px-2 py-1 text-xs text-muted-foreground">Chưa có dữ liệu khóa học</div>
                         )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 {hasActiveFilters && (
@@ -319,9 +383,9 @@ const MyClassesPage = () => {
                     ))}
                   </div>
                 )}
-              </header>
+              </div>
 
-              <main className="flex-1 px-6 py-6 md:px-8 md:py-8">
+              <main className="flex-1 px-4 lg:px-6 py-6 md:py-8">
                 {isLoading && (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {Array.from({ length: 6 }).map((_, idx) => (
@@ -366,8 +430,7 @@ const MyClassesPage = () => {
                         const teacherSummary = classItem.instructorNames?.length
                           ? `${classItem.instructorNames[0]}${classItem.instructorNames.length > 1 ? ` +${classItem.instructorNames.length - 1}` : ''}`
                           : 'Chưa phân công';
-                        const attendanceTone = classItem.attendanceRate < 80 ? 'text-destructive' : 'text-foreground';
-
+  
                         return (
                           <Card
                             key={classItem.classId}
@@ -420,12 +483,6 @@ const MyClassesPage = () => {
                                   </span>
                                 </div>
                                 <Progress value={progress} className="h-2" />
-                                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                  <span>Điểm danh</span>
-                                  <span className={cn('font-semibold', attendanceTone)}>
-                                    {classItem.attendanceRate.toFixed(1)}%
-                                  </span>
-                                </div>
                               </div>
 
                               <Button
@@ -444,70 +501,25 @@ const MyClassesPage = () => {
                         );
                       })}
                     </div>
-
-                    <div className="mt-8 flex items-center justify-center gap-3 text-sm">
-                      <span className="text-muted-foreground mr-4">
-                        Trang {page + 1} / {totalPages}
-                      </span>
-                      <Pagination>
-                        <PaginationContent>
-                          <PaginationItem>
-                            <PaginationPrevious
-                              href="#"
-                              onClick={(e) => {
-                                e.preventDefault()
-                                setPage((p) => Math.max(0, p - 1))
-                              }}
-                              disabled={page === 0}
-                            />
-                          </PaginationItem>
-                          {Array.from({ length: totalPages }, (_, i) => i).map((pageNum) => (
-                            <PaginationItem key={pageNum}>
-                              <PaginationLink
-                                href="#"
-                                onClick={(e) => {
-                                  e.preventDefault()
-                                  setPage(pageNum)
-                                }}
-                                isActive={pageNum === page}
-                              >
-                                {pageNum + 1}
-                              </PaginationLink>
-                            </PaginationItem>
-                          ))}
-                          <PaginationItem>
-                            <PaginationNext
-                              href="#"
-                              onClick={(e) => {
-                                e.preventDefault()
-                                setPage((p) => Math.min(totalPages - 1, p + 1))
-                              }}
-                              disabled={page === totalPages - 1}
-                            />
-                          </PaginationItem>
-                        </PaginationContent>
-                      </Pagination>
-                    </div>
                   </>
                 )}
 
                 {!isLoading && !error && classItems.length === 0 && (
-                  <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border/80 bg-muted/10 p-10 text-center">
-                    <BookOpen className="h-10 w-10 text-muted-foreground" />
-                    <div className="space-y-1">
-                      <p className="text-base font-semibold text-foreground">
+                  <Empty>
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon">
+                        <BookOpen className="h-10 w-10" />
+                      </EmptyMedia>
+                      <EmptyTitle>
                         {hasActiveFilters ? 'Không tìm thấy lớp học phù hợp' : 'Bạn chưa đăng ký lớp học nào'}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
+                      </EmptyTitle>
+                      <EmptyDescription>
                         {hasActiveFilters
                           ? 'Điều chỉnh bộ lọc hoặc thử từ khóa khác.'
-                          : 'Hãy tìm lớp và đăng ký để bắt đầu học tập.'}
-                      </p>
-                    </div>
-                    <Button size="sm" onClick={() => navigate('/student/courses')}>
-                      Tìm lớp học
-                    </Button>
-                  </div>
+                          : 'Liên hệ với trung tâm để đăng ký lớp học.'}
+                      </EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
                 )}
               </main>
             </div>

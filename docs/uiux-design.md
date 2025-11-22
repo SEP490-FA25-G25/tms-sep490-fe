@@ -134,20 +134,14 @@ Dùng shadcn/ui CSS variables có sẵn:
 
 ## **4) Cards: Simple Decision Tree**
 
-### Default: No Card
+### Core Principle: Avoid "Card-ception" (Lồng Card quá nhiều)
 
-**Ưu tiên:** Spacing và dividers thay vì cards.
+Chúng ta vẫn sử dụng Card để group nội dung, nhưng **hạn chế lồng nhau** để tránh giao diện bị "nặng" (too many borders).
 
-```tsx
-<div className="space-y-6">
-  <section className="space-y-4">
-    <h2>Section Title</h2>
-    <div>Content</div>
-  </section>
-  <Separator />
-  <section>Next section</section>
-</div>
-```
+**Rules:**
+1.  **Max Depth = 1:** Chỉ dùng 1 lớp Card chính bao ngoài.
+2.  **Nested Content:** Bên trong Card, dùng `Separator`, `bg-muted/50`, hoặc `spacing` để phân chia. **Tránh** dùng thêm `border` hoặc lồng `<Card>` con.
+3.  **Depth 2 (Exception):** Chỉ chấp nhận lồng cấp 2 nếu thật sự cần thiết (VD: highlight một item đặc biệt), nhưng nên dùng style nhẹ (`bg-muted` thay vì border).
 
 ### When to Use Cards
 
@@ -170,7 +164,8 @@ Dùng shadcn/ui CSS variables có sẵn:
 </Card>
 ```
 
-**Khi nào:** Class cards, course cards, dashboard widgets trong grid
+**Khi nào:** Class cards, course cards, dashboard widgets trong grid.
+**Exception:** Dashboard KPI Blocks (Metrics) luôn dùng Card để tạo focal point.
 
 **3. Info Display Blocks** (subtle separation)
 
@@ -190,15 +185,15 @@ Dùng shadcn/ui CSS variables có sẵn:
 
 ```
 Cần visual separation?
-├─ No → Spacing only (gap-6, dividers)
-└─ Yes → Table/section boundary?
-    ├─ Yes → Container (<div> + border)
-    └─ No → Independent item in grid?
-        ├─ Yes → Card component
-        └─ No → Consider info block OR just spacing
+├─ Yes → Là container chính (Table, Form, Grid Item)?
+│   ├─ Yes → Dùng Card (Depth 1)
+│   └─ No → Đang ở trong Card rồi?
+│       ├─ Yes → Dùng Spacing / Divider / bg-muted (No Border)
+│       └─ No → Dùng Card được (Depth 1)
+└─ No → Spacing only
 ```
 
-**Rule:** Khi nghi ngờ → không dùng card.
+**Rule:** Khi nghi ngờ → Bỏ bớt border.
 
 ---
 
@@ -317,13 +312,36 @@ src/
 </div>
 ```
 
-**Rules:** No `<Card>` wrapper; header `bg-muted/50`; rows ≥44px; actions = ghost buttons.
+**Rules:**
+- No `<Card>` wrapper (trừ khi trong Dashboard)
+- Header `bg-muted/50` + **Sticky** (`sticky top-0`) nếu list dài
+- Rows ≥44px
+- **Sortable:** Icon mũi tên mờ bên cạnh header text
+- **Actions:** Cột cuối cùng, dùng `<DropdownMenu>` cho >2 actions
+
+### Filter & Search Bar
+
+```tsx
+<div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+  <div className="flex gap-2 w-full sm:w-auto">
+    <Input placeholder="Tìm kiếm..." className="w-full sm:w-[300px]" />
+    {/* Active Filters Badges here */}
+  </div>
+  <div className="flex gap-2 w-full sm:w-auto">
+    <Select>...</Select> {/* Filter 1 */}
+    <Select>...</Select> {/* Filter 2 */}
+    <Button>Tạo mới</Button>
+  </div>
+</div>
+```
+
+**Rules:** Search bên trái, Filters/Actions bên phải. Hiển thị badge cho active filters.
 
 ### Tabs (for detail pages)
 
 ```tsx
 <Tabs value={activeTab} onValueChange={setActiveTab}>
-  <div className="sticky top-[var(--header-height)] bg-background/95 backdrop-blur">
+  <div className="sticky top-(--header-height) bg-background/95 backdrop-blur">
     <TabsList className="bg-transparent border-b w-full justify-start rounded-none">
       <TabsTrigger
         value="tab1"
@@ -361,14 +379,24 @@ function DataPage() {
   }
 
   if (!data || data.length === 0) {
-    return <EmptyState message="Chưa có dữ liệu" />
+    return (
+      <EmptyState
+        icon={FolderOpen}
+        title="Chưa có dữ liệu"
+        description="Bắt đầu bằng cách tạo mới."
+        action={<Button>Tạo mới</Button>}
+      />
+    )
   }
 
   return <DataDisplay data={data} />
 }
 ```
 
-**Required states:** loading → success/empty → error (with retry)
+**Required states:**
+- **Loading:** Dùng **Skeleton** (Table: 5 rows; Detail: Header + Content blocks). Tránh Spinner full-screen.
+- **Empty:** Icon + Message + CTA (Create button).
+- **Error:** Message + Retry button.
 
 ### Secondary Views (Dialogs, Sub-tables)
 
@@ -431,7 +459,8 @@ Trước khi commit:
 - [ ] Page padding = `px-4 lg:px-6`, `py-6 md:py-8`
 
 **Cards:**
-- [ ] Default = no card (spacing only)
+- [ ] **Max Depth 1:** Không lồng card trong card (trừ ngoại lệ)
+- [ ] **Nested:** Dùng `bg-muted` hoặc `Separator` thay vì border
 - [ ] Table = container wrapper
 - [ ] Grid items = Card component if clickable
 
@@ -517,10 +546,10 @@ Khi implement code:
 - Container = `max-w-7xl mx-auto`
 
 **Cards:**
-- Default = no card
+- Default = Card OK cho main containers
+- **Max Depth 1:** Tránh lồng card/border quá nhiều
 - Table = `<div className="rounded-lg border overflow-hidden">`
 - Grid items = `<Card>` nếu clickable
-- Khi nghi ngờ = no card
 
 **Components:**
 - Inline first (POC phase)
