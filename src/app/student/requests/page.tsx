@@ -254,7 +254,7 @@ export default function StudentRequestsPage() {
                   return (
                     <div
                       key={request.id}
-                      className="rounded-lg border bg-card p-4 transition-colors hover:bg-muted/30"
+                      className="p-4 border-b border-border hover:bg-muted/30"
                     >
                       {/* Request Header */}
                       <div className="flex flex-wrap items-center justify-between gap-2">

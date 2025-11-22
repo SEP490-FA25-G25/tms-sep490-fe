@@ -109,25 +109,25 @@ const SessionsTab: React.FC<SessionsTabProps> = ({ sessionsData, isLoading, repo
       </div>
 
       <div className="grid gap-4 md:grid-cols-5">
-        <div>
+        <div className="rounded-lg border bg-muted/10 p-3">
           <p className="text-xs text-muted-foreground">Tổng số buổi đã học</p>
           <p className="text-sm font-semibold text-foreground">
             {summary.total > 0 ? `${summary.total - summary.upcomingCount} / ${summary.total}` : '—'}
           </p>
         </div>
-        <div>
+        <div className="rounded-lg border bg-muted/10 p-3">
           <p className="text-xs text-muted-foreground">Có mặt</p>
           <p className="text-sm font-semibold text-foreground">{summary.present}</p>
         </div>
-        <div>
+        <div className="rounded-lg border bg-muted/10 p-3">
           <p className="text-xs text-muted-foreground">Vắng</p>
           <p className="text-sm font-semibold text-foreground">{summary.absent}</p>
         </div>
-        <div>
+        <div className="rounded-lg border bg-muted/10 p-3">
           <p className="text-xs text-muted-foreground">Buổi sắp tới</p>
           <p className="text-sm font-semibold text-foreground">{summary.upcomingCount}</p>
         </div>
-        <div>
+        <div className="rounded-lg border bg-muted/10 p-3">
           <p className="text-xs text-muted-foreground">Tỷ lệ chuyên cần</p>
           <p className="text-sm font-semibold text-foreground">{summary.attendanceRate.toFixed(1)}%</p>
         </div>

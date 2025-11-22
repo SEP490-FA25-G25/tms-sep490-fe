@@ -25,16 +25,19 @@ export interface StudentProfile {
   totalSessions: number;
   primaryCourseType?: string;
   scoreScale?: string;
-  currentClasses: StudentActiveClass[];
+  enrollments: StudentActiveClass[];
 }
 
 export interface StudentActiveClass {
   classId: number;
   classCode: string;
   className: string;
-  courseCode: string;
   courseName: string;
-  status: string;
+  branchName: string;
+  startDate: string;
+  plannedEndDate: string;
+  enrollmentStatus: string;
+  enrolledAt: string;
 }
 
 export const studentProfileApi = createApi({

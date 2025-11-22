@@ -1,11 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { AlertCircle, Calendar, CheckCircle, Clock, FileText } from 'lucide-react';
+import { Calendar, Clock, FileText } from 'lucide-react';
 import type { AssessmentDTO, StudentAssessmentScoreDTO } from '@/types/studentClass';
 import { ASSESSMENT_KINDS } from '@/types/studentClass';
 import { cn } from '@/lib/utils';
@@ -81,7 +80,6 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
     if (score && score.isGraded) {
       return (
         <Badge className="bg-green-100 text-green-800 border-green-200">
-          <CheckCircle className="h-3 w-3 mr-1" />
           Đã chấm điểm
         </Badge>
       );
@@ -90,7 +88,6 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
     if (score && score.isSubmitted && !score.isGraded) {
       return (
         <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
-          <Clock className="h-3 w-3 mr-1" />
           Chờ chấm điểm
         </Badge>
       );
@@ -99,7 +96,6 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
     if (assessmentDate < now) {
       return (
         <Badge variant="destructive">
-          <AlertCircle className="h-3 w-3 mr-1" />
           Quá hạn
         </Badge>
       );
@@ -107,7 +103,6 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
 
     return (
       <Badge variant="outline">
-        <Calendar className="h-3 w-3 mr-1" />
         Sắp diễn ra
       </Badge>
     );
@@ -116,29 +111,13 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
   // Loading state
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Bài kiểm tra & Đánh giá</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="border rounded-lg p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <Skeleton className="h-6 w-32" />
-                  <Skeleton className="h-6 w-24" />
-                </div>
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-3/4 mb-3" />
-                <div className="flex justify-between">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-4 w-20" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="rounded-lg border">
+        <div className="p-4 space-y-3">
+          {[...Array(6)].map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
+        </div>
+      </div>
     );
   }
 
@@ -167,90 +146,88 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
         </ToggleGroup>
       </div>
 
-      <Card>
-        <CardContent>
-          {filteredAssessments.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tên bài</TableHead>
-                    <TableHead>Loại</TableHead>
-                    <TableHead>Thời gian bắt đầu</TableHead>
-                    <TableHead>Thời lượng</TableHead>
-                    <TableHead>Giáo viên</TableHead>
-                    <TableHead>Trạng thái</TableHead>
-                    <TableHead className="text-right">Điểm</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAssessments.map((assessment) => {
-                    const score = scoreMap.get(assessment.id);
-                    const scorePercentage =
-                      assessment.maxScore && score?.score != null
-                        ? (score.score / assessment.maxScore) * 100
-                        : undefined;
+      <div className="rounded-lg border overflow-hidden">
+        {filteredAssessments.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50">
+                <TableHead>Tên bài</TableHead>
+                <TableHead>Loại</TableHead>
+                <TableHead>Thời gian bắt đầu</TableHead>
+                <TableHead>Thời lượng</TableHead>
+                <TableHead>Giáo viên</TableHead>
+                <TableHead>Trạng thái</TableHead>
+                <TableHead className="text-right">Điểm</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredAssessments.map((assessment) => {
+                const score = scoreMap.get(assessment.id);
+                const scorePercentage =
+                  assessment.maxScore && score?.score != null
+                    ? (score.score / assessment.maxScore) * 100
+                    : undefined;
 
-                    return (
-                      <TableRow key={assessment.id}>
-                        <TableCell className="max-w-xs">
-                          <div className="flex flex-col gap-1">
-                            <span className="font-medium text-foreground">{assessment.name}</span>
-                            {assessment.description && (
-                              <span className="text-xs text-muted-foreground line-clamp-2">
-                                {assessment.description}
-                              </span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={cn("text-xs", getAssessmentKindColor(assessment.kind))}>
-                            {ASSESSMENT_KINDS[assessment.kind]}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            <span>{formatDate(assessment.scheduledDate)}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {assessment.durationMinutes ? (
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              <span>{assessment.durationMinutes} phút</span>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
+                return (
+                  <TableRow key={assessment.id}>
+                    <TableCell className="max-w-xs">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-medium text-foreground">{assessment.name}</span>
+                        {assessment.description && (
+                          <span className="text-xs text-muted-foreground line-clamp-2">
+                            {assessment.description}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={cn("text-xs", getAssessmentKindColor(assessment.kind))}>
+                        {ASSESSMENT_KINDS[assessment.kind]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        <span>{formatDate(assessment.scheduledDate)}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {assessment.durationMinutes ? (
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          <span>{assessment.durationMinutes} phút</span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {assessment.teacherName || '—'}
+                    </TableCell>
+                    <TableCell>{getStatusBadge(assessment, score)}</TableCell>
+                    <TableCell className="text-right">
+                      {score?.score != null ? (
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="font-semibold text-foreground">
+                            {score.score}/{assessment.maxScore}
+                          </span>
+                          {scorePercentage !== undefined && (
+                            <span className="text-xs text-muted-foreground">
+                              {scorePercentage.toFixed(1)}%
+                            </span>
                           )}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {assessment.teacherName || '—'}
-                        </TableCell>
-                        <TableCell>{getStatusBadge(assessment, score)}</TableCell>
-                        <TableCell className="text-right">
-                          {score?.score != null ? (
-                            <div className="flex flex-col items-end gap-1">
-                              <span className="font-semibold text-foreground">
-                                {score.score}/{assessment.maxScore}
-                              </span>
-                              {scorePercentage !== undefined && (
-                                <span className="text-xs text-muted-foreground">
-                                  {scorePercentage.toFixed(1)}%
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">Chưa có điểm</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Chưa có điểm</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        ) : (
+          <div className="py-10">
             <Empty>
               <EmptyHeader>
                 <EmptyMedia variant="icon">
@@ -266,9 +243,9 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

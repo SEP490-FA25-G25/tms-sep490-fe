@@ -27,10 +27,53 @@ import {
   Calendar
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { useMemo } from 'react';
 
 export default function StudentProfilePage() {
   const { data: profile, error, isLoading } = useGetMyProfileQuery();
   const navigate = useNavigate();
+
+  // Filter enrollments into two categories
+  const currentClasses = useMemo(() =>
+    profile?.enrollments.filter(e => e.enrollmentStatus === 'ENROLLED') || [],
+    [profile]
+  );
+
+  const completedClasses = useMemo(() =>
+    profile?.enrollments.filter(e => e.enrollmentStatus === 'COMPLETED') || [],
+    [profile]
+  );
+
+  const getEnrollmentStatusColor = (status: string) => {
+    switch (status) {
+      case 'ENROLLED':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case 'COMPLETED':
+        return 'bg-slate-50 text-slate-700 border-slate-200';
+      case 'DROPPED':
+        return 'bg-red-50 text-red-700 border-red-200';
+      case 'WITHDRAWN':
+        return 'bg-amber-50 text-amber-700 border-amber-200';
+      default:
+        return 'bg-slate-50 text-slate-700 border-slate-200';
+    }
+  };
+
+  const getEnrollmentStatusText = (status: string) => {
+    switch (status) {
+      case 'ENROLLED':
+        return 'Đang học';
+      case 'COMPLETED':
+        return 'Đã hoàn thành';
+      case 'DROPPED':
+        return 'Đã nghỉ';
+      case 'WITHDRAWN':
+        return 'Đã rút';
+      default:
+        return status;
+    }
+  };
 
   if (isLoading) {
     return (
@@ -149,8 +192,8 @@ export default function StudentProfilePage() {
         <div className="px-4 lg:px-6 max-w-7xl mx-auto space-y-6">
 
           {/* Personal Info Section */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Thông tin cá nhân</h2>
+          <div className="rounded-lg border bg-muted/10 p-6">
+            <h2 className="text-lg font-semibold mb-4">Thông tin cá nhân</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
@@ -225,11 +268,11 @@ export default function StudentProfilePage() {
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Lớp đang học</h2>
               <span className="text-sm text-muted-foreground">
-                {profile.currentClasses.length} lớp
+                {currentClasses.length} lớp
               </span>
             </div>
 
-            {profile.currentClasses.length === 0 ? (
+            {currentClasses.length === 0 ? (
               <Empty>
                 <EmptyHeader>
                   <EmptyMedia variant="icon">
@@ -242,36 +285,115 @@ export default function StudentProfilePage() {
                 </EmptyHeader>
               </Empty>
             ) : (
-              <Table>
+              <div className="rounded-lg border overflow-hidden">
+                <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Mã lớp</TableHead>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="w-32">Mã lớp</TableHead>
                       <TableHead>Tên lớp</TableHead>
-                      <TableHead>Khóa học</TableHead>
-                      <TableHead>Trạng thái</TableHead>
+                      <TableHead className="w-48">Khóa học</TableHead>
+                      <TableHead className="w-40">Chi nhánh</TableHead>
+                      <TableHead className="w-32 text-center">Ngày ghi danh</TableHead>
+                      <TableHead className="w-48 text-center">Thời gian học</TableHead>
+                      <TableHead className="w-32 text-center">Trạng thái</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {profile.currentClasses.map((cls) => (
+                    {currentClasses.map((cls) => (
                       <TableRow
                         key={cls.classId}
-                        className="cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => navigate(`/student/classes/${cls.classId}`)}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => navigate(`/student/my-classes/${cls.classId}`)}
                       >
                         <TableCell className="font-medium">{cls.classCode}</TableCell>
                         <TableCell>{cls.className}</TableCell>
                         <TableCell className="text-muted-foreground">
-                          {cls.courseCode}
+                          {cls.courseName}
                         </TableCell>
-                        <TableCell>
-                          <Badge className="bg-success/10 text-success border-success/20">
-                            {cls.status}
+                        <TableCell className="text-sm">{cls.branchName}</TableCell>
+                        <TableCell className="text-sm text-center">
+                          {new Date(cls.enrolledAt).toLocaleDateString('vi-VN')}
+                        </TableCell>
+                        <TableCell className="text-sm text-center">
+                          {new Date(cls.startDate).toLocaleDateString('vi-VN')} - {new Date(cls.plannedEndDate).toLocaleDateString('vi-VN')}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge className={cn('text-xs', getEnrollmentStatusColor(cls.enrollmentStatus))}>
+                            {getEnrollmentStatusText(cls.enrollmentStatus)}
                           </Badge>
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+            )}
+          </div>
+
+          {/* Completed Classes Table */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Lịch sử lớp học</h2>
+              <span className="text-sm text-muted-foreground">
+                {completedClasses.length} lớp đã hoàn thành
+              </span>
+            </div>
+
+            {completedClasses.length === 0 ? (
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <FileText className="h-10 w-10" />
+                  </EmptyMedia>
+                  <EmptyTitle>Chưa có lớp đã hoàn thành</EmptyTitle>
+                  <EmptyDescription>
+                    Bạn chưa hoàn thành lớp học nào.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            ) : (
+              <div className="rounded-lg border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="w-32">Mã lớp</TableHead>
+                      <TableHead>Tên lớp</TableHead>
+                      <TableHead className="w-48">Khóa học</TableHead>
+                      <TableHead className="w-40">Chi nhánh</TableHead>
+                      <TableHead className="w-32 text-center">Ngày ghi danh</TableHead>
+                      <TableHead className="w-48 text-center">Thời gian học</TableHead>
+                      <TableHead className="w-32 text-center">Trạng thái</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {completedClasses.map((cls) => (
+                      <TableRow
+                        key={cls.classId}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => navigate(`/student/my-classes/${cls.classId}`)}
+                      >
+                        <TableCell className="font-medium">{cls.classCode}</TableCell>
+                        <TableCell>{cls.className}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {cls.courseName}
+                        </TableCell>
+                        <TableCell className="text-sm">{cls.branchName}</TableCell>
+                        <TableCell className="text-sm text-center">
+                          {new Date(cls.enrolledAt).toLocaleDateString('vi-VN')}
+                        </TableCell>
+                        <TableCell className="text-sm text-center">
+                          {new Date(cls.startDate).toLocaleDateString('vi-VN')} - {new Date(cls.plannedEndDate).toLocaleDateString('vi-VN')}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge className={cn('text-xs', getEnrollmentStatusColor(cls.enrollmentStatus))}>
+                            {getEnrollmentStatusText(cls.enrollmentStatus)}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </div>
 

@@ -1,7 +1,6 @@
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +26,6 @@ export interface AttendanceSessionRow {
 }
 
 interface AttendanceSessionsTableProps {
-  title?: string;
   rows: AttendanceSessionRow[];
   emptyMessage?: string;
 }
@@ -80,83 +78,73 @@ function formatTimeRange(startTime?: string, endTime?: string) {
 }
 
 export function AttendanceSessionsTable({
-  title,
   rows,
   emptyMessage = "Chưa có dữ liệu buổi học.",
 }: AttendanceSessionsTableProps) {
   return (
-    <Card className="border border-border/60">
-      {title ? (
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-sm font-semibold text-foreground">{title}</CardTitle>
-        </CardHeader>
-      ) : null}
-      <CardContent>
-        {rows.length > 0 ? (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[72px] text-center">Buổi</TableHead>
-                  <TableHead>Ngày</TableHead>
-                  <TableHead>Giờ học</TableHead>
-                  <TableHead>Phòng học</TableHead>
-                  <TableHead>Giảng viên</TableHead>
-                  <TableHead>Trạng thái điểm danh</TableHead>
-                  <TableHead>Ghi chú từ giảng viên</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((row, idx) => {
-                  const statusKey = row.attendanceStatus ?? "UNKNOWN";
-                  const statusMeta = STATUS_META[statusKey] ?? null;
+    <div className="rounded-lg border overflow-hidden">
+      {rows.length > 0 ? (
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50">
+              <TableHead className="w-[72px] text-center">Buổi</TableHead>
+              <TableHead>Ngày</TableHead>
+              <TableHead>Giờ học</TableHead>
+              <TableHead>Phòng học</TableHead>
+              <TableHead>Giảng viên</TableHead>
+              <TableHead>Trạng thái điểm danh</TableHead>
+              <TableHead>Ghi chú từ giảng viên</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row, idx) => {
+              const statusKey = row.attendanceStatus ?? "UNKNOWN";
+              const statusMeta = STATUS_META[statusKey] ?? null;
 
-                  return (
-                    <TableRow key={row.id}>
-                      <TableCell className="text-center text-xs text-muted-foreground">
-                        {row.order ?? idx + 1}
-                      </TableCell>
-                      <TableCell className="text-sm text-foreground">
-                        {formatDateLabel(row.date)}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {formatTimeRange(row.startTime, row.endTime)}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {row.room || "Chưa cập nhật"}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {row.teacher || "Chưa cập nhật"}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {statusMeta ? (
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              "px-2 py-0.5 text-[11px] font-medium",
-                              statusMeta.className
-                            )}
-                          >
-                            {statusMeta.label}
-                          </Badge>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">Chưa có dữ liệu</span>
+              return (
+                <TableRow key={row.id}>
+                  <TableCell className="text-center text-xs text-muted-foreground">
+                    {row.order ?? idx + 1}
+                  </TableCell>
+                  <TableCell className="text-sm text-foreground">
+                    {formatDateLabel(row.date)}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {formatTimeRange(row.startTime, row.endTime)}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {row.room || "Chưa cập nhật"}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {row.teacher || "Chưa cập nhật"}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {statusMeta ? (
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "px-2 py-0.5 text-[11px] font-medium",
+                          statusMeta.className
                         )}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {row.note?.trim() || "Không có ghi chú"}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        ) : (
-          <div className="py-10 text-center text-sm text-muted-foreground">{emptyMessage}</div>
-        )}
-      </CardContent>
-    </Card>
+                      >
+                        {statusMeta.label}
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Chưa có dữ liệu</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {row.note?.trim() || "Không có ghi chú"}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      ) : (
+        <div className="py-10 text-center text-sm text-muted-foreground">{emptyMessage}</div>
+      )}
+    </div>
   );
 }
 

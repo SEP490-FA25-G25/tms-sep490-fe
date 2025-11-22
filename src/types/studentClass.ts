@@ -244,14 +244,14 @@ export const SESSION_STATUSES: Record<SessionStatus, string> = {
 };
 
 export const ASSESSMENT_KINDS: Record<AssessmentKind, string> = {
-  QUIZ: 'Bài kiểm tra nhanh',
-  MIDTERM: 'Giữa kỳ',
-  FINAL: 'Cuối kỳ',
-  ASSIGNMENT: 'Bài tập',
-  PROJECT: 'Đồ án',
-  ORAL: 'Vấn đáp',
-  PRACTICE: 'Thực hành',
-  OTHER: 'Khác'
+  QUIZ: 'Quiz',
+  MIDTERM: 'Midterm',
+  FINAL: 'Final',
+  ASSIGNMENT: 'Assignment',
+  PROJECT: 'Project',
+  ORAL: 'Oral',
+  PRACTICE: 'Practice',
+  OTHER: 'Other'
 };
 
 export const HOMEWORK_STATUSES: Record<HomeworkStatus, string> = {

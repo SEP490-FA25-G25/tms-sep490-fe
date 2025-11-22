@@ -79,14 +79,40 @@ const MyClassesPage = () => {
     modality: filters.modality.length > 0 ? filters.modality : undefined,
     page,
     size: pageSize,
-    sort: 'enrollmentDate',
+    sort: 'startDate',
     direction: 'desc',
   });
 
-  const classItems = useMemo(
-    () => classesResponse?.data?.content || [],
-    [classesResponse]
-  );
+  // Sort classes by status priority, then by startDate
+  const classItems = useMemo(() => {
+    const items = classesResponse?.data?.content || [];
+
+    // If viewing specific status tab, no need to re-sort by status priority
+    if (activeStatusTab !== 'all') {
+      return items;
+    }
+
+    // For "all" tab, prioritize: ONGOING → SCHEDULED → COMPLETED → DRAFT → CANCELLED
+    const statusPriority: Record<ClassStatus, number> = {
+      'ONGOING': 1,
+      'SCHEDULED': 2,
+      'COMPLETED': 3,
+      'DRAFT': 4,
+      'CANCELLED': 5,
+    };
+
+    return [...items].sort((a, b) => {
+      const priorityA = statusPriority[a.status] || 999;
+      const priorityB = statusPriority[b.status] || 999;
+
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+
+      // Within same status, keep server-side sorting (startDate desc)
+      return 0;
+    });
+  }, [classesResponse, activeStatusTab]);
   
   const branchOptions = useMemo(() => {
     const map = new Map<number, string>();
@@ -202,7 +228,7 @@ const MyClassesPage = () => {
                 </Tabs>
               </header>
 
-              <div className="flex flex-col gap-4 px-6 py-4">
+              <div className="flex flex-col gap-4 px-4 lg:px-6 py-4 md:py-6">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <div className="relative w-full lg:max-w-md">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -359,7 +385,7 @@ const MyClassesPage = () => {
                 )}
               </div>
 
-              <main className="flex-1 px-6 py-6">
+              <main className="flex-1 px-4 lg:px-6 py-6 md:py-8">
                 {isLoading && (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {Array.from({ length: 6 }).map((_, idx) => (

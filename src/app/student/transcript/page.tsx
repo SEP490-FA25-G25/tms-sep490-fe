@@ -36,10 +36,41 @@ const TranscriptPage = () => {
     studentId,
   });
 
-  const transcriptData = useMemo(
-    () => transcriptResponse?.data || [],
-    [transcriptResponse]
-  );
+  // Sort transcript: ONGOING first, then COMPLETED, then others
+  // Within each status group, sort by completed date (most recent first)
+  const transcriptData = useMemo(() => {
+    const data = transcriptResponse?.data || [];
+
+    const statusPriority: Record<string, number> = {
+      'ONGOING': 1,
+      'COMPLETED': 2,
+      'DROPPED': 3,
+    };
+
+    return [...data].sort((a, b) => {
+      // First, sort by status priority
+      const priorityA = statusPriority[a.status] || 999;
+      const priorityB = statusPriority[b.status] || 999;
+
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+
+      // Within same status, sort by completed date (most recent first)
+      // For ONGOING classes, those without completedDate come first
+      if (a.completedDate && b.completedDate) {
+        return new Date(b.completedDate).getTime() - new Date(a.completedDate).getTime();
+      }
+      if (a.completedDate && !b.completedDate) {
+        return 1; // b (no date) comes first
+      }
+      if (!a.completedDate && b.completedDate) {
+        return -1; // a (no date) comes first
+      }
+
+      return 0;
+    });
+  }, [transcriptResponse]);
 
   // Calculate GPA from completed classes with scores
   const gpa = useMemo(() => {
