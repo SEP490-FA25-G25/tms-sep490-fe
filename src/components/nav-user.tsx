@@ -11,6 +11,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -102,6 +103,12 @@ export function NavUser({
               <DropdownMenuItem>
                 <BellIcon />
                 Thông báo
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <div className="flex items-center justify-between w-full">
+                  <span>Chủ đề</span>
+                  <ThemeToggle />
+                </div>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
