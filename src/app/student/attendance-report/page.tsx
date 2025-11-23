@@ -1,15 +1,12 @@
 import type React from "react";
-import { useState } from "react";
-import { format } from "date-fns";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { StudentRoute } from "@/components/ProtectedRoute";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { cn } from "@/lib/utils";
 import {
   type StudentAttendanceOverviewClassDTO,
   useGetStudentAttendanceOverviewQuery,
@@ -17,50 +14,7 @@ import {
 } from "@/store/services/attendanceApi";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/store";
-
-const STATUS_LABELS: Record<string, { label: string; className: string }> = {
-  ONGOING: {
-    label: "Đang học",
-    className: "text-emerald-700 bg-emerald-50 border-emerald-200",
-  },
-  COMPLETED: {
-    label: "Đã kết thúc",
-    className: "text-slate-700 bg-slate-50 border-slate-200",
-  },
-  UPCOMING: {
-    label: "Sắp diễn ra",
-    className: "text-sky-700 bg-sky-50 border-sky-200",
-  },
-};
-
-function getStatusMeta(status?: string | null) {
-  if (!status) return null;
-  return (
-    STATUS_LABELS[status] ?? {
-      label: status,
-      className: "text-slate-700 bg-slate-50 border-slate-200",
-    }
-  );
-}
-
-function getAttendanceRate(attended: number, absent: number) {
-  const totalCompleted = attended + absent;
-  if (!totalCompleted || totalCompleted <= 0) return 0;
-  return (attended / totalCompleted) * 100;
-}
-
-function getAttendanceRateClass(rate: number) {
-  if (rate >= 80) return "text-emerald-700";
-  if (rate >= 60) return "text-amber-700";
-  return "text-rose-700";
-}
-
-function formatDate(dateString?: string | null) {
-  if (!dateString) return "—";
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return "—";
-  return format(date, "dd/MM/yyyy");
-}
+import { AttendanceClassCard } from "@/components/attendance/AttendanceClassCard";
 
 type StatusFilter = 'all' | 'ongoing' | 'completed';
 
@@ -71,16 +25,30 @@ export default function StudentAttendanceReportOverviewPage() {
   const dispatch = useDispatch<AppDispatch>();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
-  const classes: StudentAttendanceOverviewClassDTO[] =
-    data?.data?.classes ?? [];
+  const classes: StudentAttendanceOverviewClassDTO[] = useMemo(() => 
+    data?.data?.classes ?? [], [data]);
 
   // Filter classes by status
-  const filteredClasses = classes.filter((item) => {
+  const filteredClasses = useMemo(() => classes.filter((item) => {
     if (statusFilter === 'all') return true;
     if (statusFilter === 'ongoing') return item.status === 'ONGOING';
     if (statusFilter === 'completed') return item.status === 'COMPLETED';
     return true;
-  });
+  }), [classes, statusFilter]);
+
+  // Prefetch all class reports on page load for instant heatmap rendering
+  useEffect(() => {
+    if (classes.length > 0) {
+      classes.forEach((cls) => {
+        dispatch(
+          attendanceApi.endpoints.getStudentAttendanceReport.initiate(
+            { classId: cls.classId },
+            { forceRefetch: false }
+          )
+        );
+      });
+    }
+  }, [classes, dispatch]);
 
   const handlePrefetch = (classId: number) => {
     dispatch(
@@ -199,114 +167,28 @@ export default function StudentAttendanceReportOverviewPage() {
                       )}
 
                       {filteredClasses.length > 0 && (
-                        <div className="grid gap-3">
-                        {filteredClasses.map((item) => {
-                        const statusMeta = getStatusMeta(item.status);
-                        const rate = getAttendanceRate(
-                          item.attended,
-                          item.absent
-                        );
-                        return (
-                          <article
-                            key={item.classId}
-                            className="group flex cursor-pointer flex-col gap-3 rounded-lg border border-border bg-muted/40 p-4 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            onClick={() =>
-                              navigate(
-                                `/student/my-classes/${item.classId}?tab=sessions`
-                              )
-                            }
-                            onMouseEnter={() => handlePrefetch(item.classId)}
-                            tabIndex={0}
-                            role="button"
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" || e.key === " ") {
-                                e.preventDefault();
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                          {filteredClasses.map((item) => (
+                            <AttendanceClassCard
+                              key={item.classId}
+                              classId={item.classId}
+                              classCode={item.classCode}
+                              className={item.className}
+                              startDate={item.startDate}
+                              actualEndDate={item.actualEndDate}
+                              totalSessions={item.totalSessions}
+                              attended={item.attended}
+                              absent={item.absent}
+                              upcoming={item.upcoming}
+                              status={item.status}
+                              onClick={() =>
                                 navigate(
                                   `/student/my-classes/${item.classId}?tab=sessions`
-                                );
+                                )
                               }
-                            }}
-                          >
-                            <div className="flex flex-wrap items-start justify-between gap-3">
-                              <div className="space-y-1">
-                                <h2 className="text-base font-semibold text-foreground">
-                                  {item.className}
-                                </h2>
-                                <p className="text-xs text-muted-foreground">
-                                  Ngày bắt đầu:{" "}
-                                  <span className="font-medium text-foreground">
-                                    {formatDate(item.startDate)}
-                                  </span>
-                                  <span className="mx-1">·</span>
-                                  Ngày kết thúc:{" "}
-                                  <span className="font-medium text-foreground">
-                                    {formatDate(item.actualEndDate)}
-                                  </span>
-                                </p>
-                              </div>
-                              <div className="flex flex-col items-end gap-1 text-right">
-                                <p
-                                  className={cn(
-                                    "text-2xl font-semibold",
-                                    getAttendanceRateClass(rate)
-                                  )}
-                                >
-                                  {rate.toFixed(1)}%
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {item.attended + item.absent}/
-                                  {item.totalSessions} buổi đã học
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                              <span>
-                                Tổng số buổi:{" "}
-                                <span className="font-medium text-foreground">
-                                  {item.totalSessions}
-                                </span>
-                              </span>
-                              <span className="h-1 w-1 rounded-full bg-border" />
-                              <span>
-                                Có mặt:{" "}
-                                <span className="font-medium text-emerald-700">
-                                  {item.attended}
-                                </span>
-                              </span>
-                              <span className="h-1 w-1 rounded-full bg-border" />
-                              <span>
-                                Vắng:{" "}
-                                <span className="font-medium text-rose-700">
-                                  {item.absent}
-                                </span>
-                              </span>
-                              <span className="h-1 w-1 rounded-full bg-border" />
-                              <span>
-                                Sắp tới:{" "}
-                                <span className="font-medium text-sky-700">
-                                  {item.upcoming}
-                                </span>
-                              </span>
-
-                              {statusMeta && (
-                                <>
-                                  <span className="h-1 w-1 rounded-full bg-border" />
-                                  <Badge
-                                    variant="outline"
-                                    className={cn(
-                                      "border px-2 py-0.5 text-[11px] font-medium",
-                                      statusMeta.className
-                                    )}
-                                  >
-                                    {statusMeta.label}
-                                  </Badge>
-                                </>
-                              )}
-                            </div>
-                          </article>
-                        );
-                      })}
+                              onMouseEnter={() => handlePrefetch(item.classId)}
+                            />
+                          ))}
                         </div>
                       )}
                     </div>
