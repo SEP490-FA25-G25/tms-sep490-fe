@@ -17,7 +17,6 @@ import type { StudentSessionDTO } from '@/types/studentClass';
 
 import AssessmentsTab from './components/AssessmentsTab';
 import ClassmatesTab from './components/ClassmatesTab';
-import AnnouncementsTab from './components/AnnouncementsTab';
 import SessionsTab from './components/SessionsTab';
 import SyllabusTab from './components/SyllabusTab';
 
@@ -41,6 +40,7 @@ const ClassDetailPage = () => {
   const {
     data: sessionsResponse,
     isLoading: isSessionsLoading,
+    error: sessionsError,
   } = useGetClassSessionsQuery(
     { classId: classIdNumber, studentId },
     { skip: !classDetailResponse || !isValidClassId }
@@ -204,56 +204,62 @@ const ClassDetailPage = () => {
                   )}
 
                   {!isDetailLoading && classDetail && (
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-4">
-                      <div
-                        className="sticky z-20 -mx-4 -mt-2 bg-background/95 backdrop-blur px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
-                        style={{ top: 'calc(var(--header-height) + 0.5rem)' }}
-                      >
-                        <TabsList className="h-auto gap-2 bg-transparent p-0">
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
+                      <div className="sticky top-[--header-height] bg-background/95 backdrop-blur-sm z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2" style={{ top: 'calc(var(--header-height) + 0.5rem)' }}>
+                        <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted/50">
                           <TabsTrigger
                             value="sessions"
-                            className="rounded-none border-b-2 border-transparent px-2 py-3 text-sm font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-primary"
+                            className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
                           >
                             Lịch học
                           </TabsTrigger>
                           <TabsTrigger
                             value="syllabus"
-                            className="rounded-none border-b-2 border-transparent px-2 py-3 text-sm font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-primary"
+                            className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
                           >
                             Giáo trình
                           </TabsTrigger>
                           <TabsTrigger
                             value="assessments"
-                            className="rounded-none border-b-2 border-transparent px-2 py-3 text-sm font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-primary"
+                            className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
                           >
                             Bài kiểm tra
                           </TabsTrigger>
                           <TabsTrigger
                             value="classmates"
-                            className="rounded-none border-b-2 border-transparent px-2 py-3 text-sm font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-primary"
+                            className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
                           >
                             Thành viên
                           </TabsTrigger>
                         </TabsList>
                       </div>
 
-                      <TabsContent value="sessions" className="mt-0 space-y-4">
-                        <SessionsTab
-                          sessionsData={sessionsData}
-                          isLoading={isSessionsLoading}
-                          classDetail={classDetail}
-                          reportSessions={attendanceReportSessions}
-                        />
+                      <TabsContent value="sessions" className="space-y-4">
+                        {sessionsError ? (
+                          <div className="text-center py-8">
+                            <p className="text-sm text-muted-foreground">Không tải được lịch học</p>
+                            <Button size="sm" variant="outline" className="mt-2" onClick={() => window.location.reload()}>
+                              Thử lại
+                            </Button>
+                          </div>
+                        ) : (
+                          <SessionsTab
+                            sessionsData={sessionsData}
+                            isLoading={isSessionsLoading}
+                            classDetail={classDetail}
+                            reportSessions={attendanceReportSessions}
+                          />
+                        )}
                       </TabsContent>
 
-                      <TabsContent value="syllabus" className="mt-0">
+                      <TabsContent value="syllabus" className="space-y-4">
                         <SyllabusTab
                           classDetail={classDetail}
-                          isLoading={isAssessmentsLoading}
+                          isLoading={false}
                         />
                       </TabsContent>
 
-                      <TabsContent value="assessments" className="mt-0">
+                      <TabsContent value="assessments" className="space-y-4">
                         <AssessmentsTab
                           assessments={assessments || []}
                           isLoading={isAssessmentsLoading}
@@ -262,16 +268,12 @@ const ClassDetailPage = () => {
                         />
                       </TabsContent>
 
-                      <TabsContent value="classmates" className="mt-0">
+                      <TabsContent value="classmates" className="space-y-4">
                         <ClassmatesTab
                           classmates={classmates || []}
                           isLoading={isClassmatesLoading}
                           enrollmentSummary={classDetail.enrollmentSummary}
                         />
-                      </TabsContent>
-
-                      <TabsContent value="announcements" className="mt-0">
-                        <AnnouncementsTab classDetail={classDetail} />
                       </TabsContent>
                     </Tabs>
                   )}

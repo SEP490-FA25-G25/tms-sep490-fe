@@ -7,8 +7,7 @@ import { SiteHeader } from '@/components/site-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
@@ -23,10 +22,10 @@ import { CLASS_STATUSES, MODALITIES } from '@/types/studentClass';
 import { AlertCircle, BookOpen, Search } from 'lucide-react';
 
 interface FilterState {
-  status: ClassStatus[];
-  branchId: number[];
-  courseId: number[];
-  modality: Modality[];
+  status: ClassStatus | 'all';
+  modality: Modality | 'all';
+  branchId: number | 'all';
+  courseId: number | 'all';
   searchTerm: string;
 }
 
@@ -37,10 +36,10 @@ const MyClassesPage = () => {
 
   const [activeStatusTab, setActiveStatusTab] = useState<'all' | ClassStatus>('all');
   const [filters, setFilters] = useState<FilterState>({
-    status: [],
-    branchId: [],
-    courseId: [],
-    modality: [],
+    status: 'all',
+    modality: 'all',
+    branchId: 'all',
+    courseId: 'all',
     searchTerm: '',
   });
 
@@ -49,11 +48,7 @@ const MyClassesPage = () => {
 
   // Map frontend status tabs to backend enrollment status values
   const getEnrollmentStatus = (tabStatus: 'all' | ClassStatus): string[] | undefined => {
-    if (tabStatus === 'all') {
-      return filters.status.length > 0 ? filters.status : undefined;
-    }
-
-    // Map ClassStatus to EnrollmentStatus
+    // For tabs, use the tab status, not filter status
     switch (tabStatus) {
       case 'ONGOING':
         return ['ENROLLED'];
@@ -62,7 +57,7 @@ const MyClassesPage = () => {
       case 'SCHEDULED':
         return ['SCHEDULED'];
       default:
-        return ['ENROLLED'];
+        return undefined;
     }
   };
 
@@ -74,9 +69,9 @@ const MyClassesPage = () => {
   } = useGetStudentClassesQuery({
     studentId,
     status: getEnrollmentStatus(activeStatusTab),
-    branchId: filters.branchId.length > 0 ? filters.branchId : undefined,
-    courseId: filters.courseId.length > 0 ? filters.courseId : undefined,
-    modality: filters.modality.length > 0 ? filters.modality : undefined,
+    modality: filters.modality !== 'all' ? [filters.modality] : undefined,
+    branchId: filters.branchId !== 'all' ? [filters.branchId] : undefined,
+    courseId: filters.courseId !== 'all' ? [filters.courseId] : undefined,
     page,
     size: pageSize,
     sort: 'startDate',
@@ -113,7 +108,7 @@ const MyClassesPage = () => {
       return 0;
     });
   }, [classesResponse, activeStatusTab]);
-  
+
   const branchOptions = useMemo(() => {
     const map = new Map<number, string>();
     classItems.forEach((item) => {
@@ -136,20 +131,20 @@ const MyClassesPage = () => {
 
   const hasActiveFilters = useMemo(() => {
     return (
-      filters.status.length > 0 ||
-      filters.branchId.length > 0 ||
-      filters.courseId.length > 0 ||
-      filters.modality.length > 0 ||
+      filters.status !== 'all' ||
+      filters.modality !== 'all' ||
+      filters.branchId !== 'all' ||
+      filters.courseId !== 'all' ||
       filters.searchTerm.trim() !== ''
     );
   }, [filters]);
 
   const resetFilters = () => {
     setFilters({
-      status: [],
-      branchId: [],
-      courseId: [],
-      modality: [],
+      status: 'all',
+      modality: 'all',
+      branchId: 'all',
+      courseId: 'all',
       searchTerm: '',
     });
     setPage(0);
@@ -160,14 +155,8 @@ const MyClassesPage = () => {
     setPage(0);
   };
 
-  const toggleFilter = (type: keyof FilterState, value: string | number) => {
-    setFilters((prev) => {
-      const currentValues = prev[type] as (string | number)[];
-      const newValues = currentValues.includes(value)
-        ? currentValues.filter((item) => item !== value)
-        : [...currentValues, value];
-      return { ...prev, [type]: newValues };
-    });
+  const setFilter = (type: keyof FilterState, value: string | number | 'all') => {
+    setFilters((prev) => ({ ...prev, [type]: value }));
     setPage(0);
   };
 
@@ -202,19 +191,12 @@ const MyClassesPage = () => {
           <div className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col">
               <header className="flex flex-col gap-2 border-b border-border px-6 py-5">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2">
                     <h1 className="text-2xl font-semibold tracking-tight">Lớp của tôi</h1>
                     <p className="text-sm text-muted-foreground">
                       Quản lý và xem thông tin các lớp học đã đăng ký
                     </p>
                   </div>
-                  {hasActiveFilters && (
-                    <Button variant="ghost" size="sm" onClick={resetFilters}>
-                      Xóa bộ lọc
-                    </Button>
-                  )}
-                </div>
                 <Tabs value={activeStatusTab} onValueChange={(value) => {
                   setActiveStatusTab(value as 'all' | ClassStatus);
                   setPage(0);
@@ -240,63 +222,29 @@ const MyClassesPage = () => {
                     />
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <Select
-                      value={filters.modality[0] || ""}
-                      onValueChange={(value) => {
-                        if (value && !filters.modality.includes(value as Modality)) {
-                          toggleFilter('modality', value);
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-[140px] h-8">
-                        <SelectValue placeholder="Hình thức" />
+                    <Select value={filters.modality} onValueChange={(value) => setFilter('modality', value as Modality | 'all')}>
+                      <SelectTrigger className="w-[160px] h-8">
+                        <SelectValue placeholder="Tất cả hình thức" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Object.keys(MODALITIES).map((key) => (
-                          <div key={key} className="flex items-center space-x-2 px-2 py-1">
-                            <Checkbox
-                              id={`modality-${key}`}
-                              checked={filters.modality.includes(key as Modality)}
-                              onCheckedChange={() => toggleFilter('modality', key)}
-                            />
-                            <label
-                              htmlFor={`modality-${key}`}
-                              className="text-sm font-medium cursor-pointer flex-1"
-                            >
-                              {MODALITIES[key as Modality]}
-                            </label>
-                          </div>
+                        <SelectItem value="all">Tất cả hình thức</SelectItem>
+                        {Object.entries(MODALITIES).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
 
-                    <Select
-                      value={filters.branchId[0]?.toString() || ""}
-                      onValueChange={(value) => {
-                        if (value && !filters.branchId.includes(parseInt(value))) {
-                          toggleFilter('branchId', parseInt(value));
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-[140px] h-8">
-                        <SelectValue placeholder="Chi nhánh" />
+                    <Select value={filters.branchId.toString()} onValueChange={(value) => setFilter('branchId', value === 'all' ? 'all' : parseInt(value))}>
+                      <SelectTrigger className="w-[160px] h-8">
+                        <SelectValue placeholder="Tất cả chi nhánh" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="all">Tất cả chi nhánh</SelectItem>
                         {branchOptions.length > 0 ? (
                           branchOptions.map((branch) => (
-                            <div key={branch.id} className="flex items-center space-x-2 px-2 py-1">
-                              <Checkbox
-                                id={`branch-${branch.id}`}
-                                checked={filters.branchId.includes(branch.id)}
-                                onCheckedChange={() => toggleFilter('branchId', branch.id)}
-                              />
-                              <label
-                                htmlFor={`branch-${branch.id}`}
-                                className="text-sm font-medium cursor-pointer flex-1"
-                              >
-                                {branch.name}
-                              </label>
-                            </div>
+                            <SelectItem key={branch.id} value={branch.id.toString()}>
+                              {branch.name}
+                            </SelectItem>
                           ))
                         ) : (
                           <div className="px-2 py-1 text-xs text-muted-foreground">Chưa có dữ liệu chi nhánh</div>
@@ -304,85 +252,31 @@ const MyClassesPage = () => {
                       </SelectContent>
                     </Select>
 
-                    <Select
-                      value={filters.courseId[0]?.toString() || ""}
-                      onValueChange={(value) => {
-                        if (value && !filters.courseId.includes(parseInt(value))) {
-                          toggleFilter('courseId', parseInt(value));
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-[140px] h-8">
-                        <SelectValue placeholder="Khóa học" />
+                    <Select value={filters.courseId.toString()} onValueChange={(value) => setFilter('courseId', value === 'all' ? 'all' : parseInt(value))}>
+                      <SelectTrigger className="w-[160px] h-8">
+                        <SelectValue placeholder="Tất cả khóa học" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="all">Tất cả khóa học</SelectItem>
                         {courseOptions.length > 0 ? (
                           courseOptions.map((course) => (
-                            <div key={course.id} className="flex items-center space-x-2 px-2 py-1">
-                              <Checkbox
-                                id={`course-${course.id}`}
-                                checked={filters.courseId.includes(course.id)}
-                                onCheckedChange={() => toggleFilter('courseId', course.id)}
-                              />
-                              <label
-                                htmlFor={`course-${course.id}`}
-                                className="text-sm font-medium cursor-pointer flex-1"
-                              >
-                                {course.name}
-                              </label>
-                            </div>
+                            <SelectItem key={course.id} value={course.id.toString()}>
+                              {course.name}
+                            </SelectItem>
                           ))
                         ) : (
                           <div className="px-2 py-1 text-xs text-muted-foreground">Chưa có dữ liệu khóa học</div>
                         )}
                       </SelectContent>
                     </Select>
+
+                    {hasActiveFilters && (
+                      <Button variant="ghost" size="sm" onClick={resetFilters}>
+                        Xóa bộ lọc
+                      </Button>
+                    )}
                   </div>
                 </div>
-                {hasActiveFilters && (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {filters.status.map((status) => (
-                      <Badge
-                        key={status}
-                        variant="secondary"
-                        className="cursor-pointer"
-                        onClick={() => toggleFilter('status', status)}
-                      >
-                        {CLASS_STATUSES[status]} · Bỏ
-                      </Badge>
-                    ))}
-                    {filters.modality.map((modality) => (
-                      <Badge
-                        key={modality}
-                        variant="secondary"
-                        className="cursor-pointer"
-                        onClick={() => toggleFilter('modality', modality)}
-                      >
-                        {MODALITIES[modality]} · Bỏ
-                      </Badge>
-                    ))}
-                    {filters.branchId.map((branchId) => (
-                      <Badge
-                        key={branchId}
-                        variant="secondary"
-                        className="cursor-pointer"
-                        onClick={() => toggleFilter('branchId', branchId)}
-                      >
-                        {branchOptions.find((b) => b.id === branchId)?.name || 'Chi nhánh'} · Bỏ
-                      </Badge>
-                    ))}
-                    {filters.courseId.map((courseId) => (
-                      <Badge
-                        key={courseId}
-                        variant="secondary"
-                        className="cursor-pointer"
-                        onClick={() => toggleFilter('courseId', courseId)}
-                      >
-                        {courseOptions.find((c) => c.id === courseId)?.name || 'Khóa học'} · Bỏ
-                      </Badge>
-                    ))}
-                  </div>
-                )}
               </div>
 
               <main className="flex-1 px-4 lg:px-6 py-6 md:py-8">
@@ -421,7 +315,7 @@ const MyClassesPage = () => {
 
                 {!isLoading && !error && classItems.length > 0 && (
                   <>
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                       {classItems.map((classItem: StudentClassDTO) => {
                         const progress =
                           classItem.totalSessions > 0

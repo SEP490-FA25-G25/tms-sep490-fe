@@ -87,16 +87,41 @@ Dùng shadcn/ui CSS variables có sẵn:
 
 **Inter → SF Pro/Roboto fallback; 100% tiếng Việt**
 
-### Typography Scale (Tailwind Standard)
+### Complete Typography Scale (8-Point System)
 
-| Element | Class | Desktop | Mobile | Weight | Use |
-|---------|-------|---------|--------|--------|-----|
-| **H1** | `text-3xl` | 30px | `text-2xl md:text-3xl` | `font-bold` | Page title |
-| **H2** | `text-2xl` | 24px | `text-xl md:text-2xl` | `font-semibold` | Section |
-| **H3** | `text-xl` | 20px | `text-lg md:text-xl` | `font-semibold` | Subsection |
-| **Body** | `text-base` | 16px | 16px | `font-normal` | Default |
-| **Secondary** | `text-sm` | 14px | 14px | `font-normal` | Meta/labels |
-| **Caption** | `text-xs` | 12px | 12px | `font-normal` | Timestamps |
+| Element | Class | Desktop | Mobile | Line-height | Weight | Use |
+|---------|-------|---------|--------|-------------|--------|-----|
+| **Display** | `text-4xl` | 36px | `text-3xl md:text-4xl` | 1.2 | `font-bold` | Hero headings |
+| **H1** | `text-3xl` | 30px | `text-2xl md:text-3xl` | 1.2 | `font-bold` | Page title |
+| **H2** | `text-2xl` | 24px | `text-xl md:text-2xl` | 1.3 | `font-semibold` | Section |
+| **H3** | `text-xl` | 20px | `text-lg md:text-xl` | 1.3 | `font-semibold` | Subsection |
+| **H4** | `text-lg` | 18px | `text-base md:text-lg` | 1.4 | `font-medium` | Sub-subsection |
+| **Body Large** | `text-lg` | 18px | `text-base` | 1.5 | `font-normal` | Intro text |
+| **Body** | `text-base` | 16px | 16px | 1.5 | `font-normal` | Default |
+| **Secondary** | `text-sm` | 14px | 14px | 1.4 | `font-normal` | Meta/labels |
+| **Caption** | `text-xs` | 12px | 12px | 1.4 | `font-normal` | Timestamps |
+
+### Typography Rules & Best Practices
+
+**Line-height Standards:**
+- Headings (H1-H3): `tracking-tight` + `leading-tight` (1.2-1.3)
+- Body text: `leading-normal` (1.5) - WCAG minimum for readability
+- Small text: `leading-relaxed` (1.4-1.5)
+
+**Spacing Between Elements:**
+- Heading to body: `mb-3` (12px)
+- Section spacing: `mb-6` (24px)
+- Paragraph spacing: `mb-4` (16px)
+
+**Text Handling:**
+- Long headings: `truncate` hoặc `line-clamp-2`
+- Long descriptions: `line-clamp-3`
+- ALL CAPS: `uppercase tracking-wider` + `text-xs`/`text-sm`
+
+**Mobile Optimization:**
+- Scale down by 1 step: `text-3xl` → `text-2xl` on mobile
+- Maintain readability: minimum 16px for body text
+- Increase line-height slightly on mobile: `leading-relaxed`
 
 ### Quick Examples
 
@@ -118,17 +143,33 @@ Dùng shadcn/ui CSS variables có sẵn:
 - Description ≤ 2 câu
 - Dùng `truncate` hoặc `line-clamp-2` cho text dài
 
-### Spacing (Core Rules Only)
+### Spacing System (8-Point Grid)
 
-| Context | Class | Size | Use |
-|---------|-------|------|-----|
-| **Sections** | `gap-6` | 24px | Between major blocks |
-| **Groups** | `gap-4` | 16px | Filters, form groups |
-| **Items** | `gap-3` | 12px | List items |
-| **Page padding** | `px-4 lg:px-6` | 16px → 24px | Horizontal margins |
-| **Page padding** | `py-6 md:py-8` | 24px → 32px | Vertical spacing |
+**Standard Spacing Scale:**
+| Size | Tailwind | Use Case |
+|------|----------|----------|
+| 2px | `gap-0.5` | Icon-text inline spacing |
+| 4px | `gap-1` | Tight element spacing |
+| 8px | `gap-2` | Component internal spacing |
+| 12px | `gap-3` | List items, button padding |
+| 16px | `gap-4` | Form groups, cards |
+| 24px | `gap-6` | **Default section spacing** |
+| 32px | `gap-8` | Major sections |
+| 48px | `gap-12` | Page sections |
+| 64px | `gap-16` | Container margins |
 
-**Rule:** Dùng `gap-6` cho most cases. Chỉ giảm xuống `gap-4` khi cần tight spacing. Container max: `max-w-7xl mx-auto`.
+**Context Guidelines:**
+- **Sections:** `gap-6` (24px) - default for most cases
+- **Groups:** `gap-4` (16px) - filters, form groups
+- **Items:** `gap-3` (12px) - list items, table rows
+- **Page padding:** `px-4 lg:px-6`, `py-6 md:py-8`
+- **Container:** `max-w-7xl mx-auto`
+
+**Visual Hierarchy Rules:**
+- More important = more whitespace around it
+- CTAs get generous spacing (`gap-8`+)
+- Related items: closer spacing (`gap-3`-`gap-4`)
+- Unrelated sections: clear separation (`gap-12`+)
 
 ---
 
@@ -197,7 +238,125 @@ Cần visual separation?
 
 ---
 
-## **5) Component Architecture**
+## **5) Dashboard-Specific Patterns**
+
+### Dashboard Layout (F-Pattern)
+
+**Visual Hierarchy for Dashboards:**
+- **Top-left:** Most important metrics/KPIs
+- **Top-right:** Filters, date ranges, actions
+- **Middle:** Data tables, charts
+- **Bottom:** Secondary info, pagination
+
+```tsx
+<DashboardLayout title="Dashboard Overview">
+  {/* Top section - KPI Cards */}
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <MetricCard title="Total Classes" value="24" change="+12%" trend="up" />
+    <MetricCard title="Active Students" value="156" change="+5%" trend="up" />
+    <MetricCard title="Completion Rate" value="87%" change="-2%" trend="down" />
+    <MetricCard title="Revenue" value="₫124M" change="+18%" trend="up" />
+  </div>
+
+  {/* Middle section - Main content */}
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="lg:col-span-2">
+      <DataTableSection />
+    </div>
+    <div className="space-y-6">
+      <QuickActions />
+      <RecentActivity />
+    </div>
+  </div>
+</DashboardLayout>
+```
+
+### KPI/Metrics Cards
+
+**Structure:**
+```tsx
+<div className="rounded-lg border bg-card p-6">
+  <div className="flex items-center justify-between">
+    <div>
+      <p className="text-sm font-medium text-muted-foreground">{title}</p>
+      <div className="flex items-center gap-2 mt-1">
+        <p className="text-2xl font-bold">{value}</p>
+        {change && (
+          <span className={`text-sm font-medium ${
+            trend === 'up' ? 'text-green-600' : 'text-red-600'
+          }`}>
+            {change}
+          </span>
+        )}
+      </div>
+      {description && (
+        <p className="text-xs text-muted-foreground mt-1">{description}</p>
+      )}
+    </div>
+    <Icon className="h-8 w-8 text-muted-foreground/50" />
+  </div>
+</div>
+```
+
+**Rules:**
+- Always use Card for metrics (creates focal points)
+- Include trend indicators (up/down arrows)
+- Sparklines optional for historical context
+- Responsive: 1 column mobile, 2 tablet, 4 desktop
+
+### Data Visualization Best Practices
+
+**Chart Selection:**
+- **Trends over time:** Line chart
+- **Comparisons:** Bar chart
+- **Proportions:** Pie/donut (max 5 segments)
+- **Distributions:** Histogram
+
+**Color Usage:**
+- Sequential: Single hue, varied lightness
+- Categorical: Distinct hues (max 8 colors)
+- Avoid red/green for accessibility (use blue/orange instead)
+
+**Table Design:**
+- Header sticky (`sticky top-0`)
+- Row height minimum 44px
+- Zebra striping optional (`hover:bg-muted/50`)
+- Sort indicators subtle
+- Actions in last column with dropdown
+
+### Dashboard Navigation
+
+**Tab Pattern for Detail Pages:**
+```tsx
+<Tabs value={activeTab} className="w-full">
+  <div className="sticky top-(--header-height) bg-background/95 backdrop-blur z-10">
+    <TabsList className="bg-transparent border-b w-full justify-start rounded-none h-auto p-0">
+      <TabsTrigger
+        value="overview"
+        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3"
+      >
+        Tổng quan
+      </TabsTrigger>
+      <TabsTrigger value="students" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
+        Học viên
+      </TabsTrigger>
+    </TabsList>
+  </div>
+  <TabsContent value="overview" className="mt-6">
+    <OverviewTab />
+  </TabsContent>
+</Tabs>
+```
+
+**Rules:**
+- Sticky navigation with backdrop blur
+- Active state = border-bottom (not background)
+- Max 5-7 tabs
+- Vietnamese labels only
+
+---
+
+## **6) Component Architecture**
 
 ### Extraction Rules (Revised)
 
@@ -359,68 +518,227 @@ src/
 
 ---
 
-## **7) State Management (Simplified)**
+## **7) Comprehensive State Management**
 
-### Main Data Screens (Required)
+### State Priority Levels
+
+**Level 1: Main Data Screens (Full States Required)**
+- List pages, detail pages, dashboard widgets
+- **4 states:** Loading → Success → Empty → Error
 
 ```tsx
 function DataPage() {
   const { data, isLoading, error, refetch } = useQuery()
 
-  if (isLoading) return <SkeletonLoader />
+  // 1. Loading State
+  if (isLoading) {
+    return <DataTableSkeleton />
+  }
 
+  // 2. Error State
   if (error) {
     return (
-      <div className="text-center py-8">
-        <p className="text-sm mb-4">Không thể tải dữ liệu</p>
-        <Button size="sm" onClick={refetch}>Thử lại</Button>
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+        <div className="space-y-2 max-w-md">
+          <h3 className="text-lg font-semibold">Không thể tải dữ liệu</h3>
+          <p className="text-sm text-muted-foreground">
+            {error.message || "Đã có lỗi xảy ra. Vui lòng thử lại."}
+          </p>
+          <Button size="sm" onClick={refetch} className="mt-4">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Thử lại
+          </Button>
+        </div>
       </div>
     )
   }
 
+  // 3. Empty State
   if (!data || data.length === 0) {
     return (
       <EmptyState
-        icon={FolderOpen}
+        icon={<FolderOpen className="h-12 w-12 text-muted-foreground" />}
         title="Chưa có dữ liệu"
-        description="Bắt đầu bằng cách tạo mới."
+        description="Bắt đầu bằng cách tạo lớp học đầu tiên."
         action={<Button>Tạo mới</Button>}
       />
     )
   }
 
+  // 4. Success State
   return <DataDisplay data={data} />
 }
 ```
 
-**Required states:**
-- **Loading:** Dùng **Skeleton** (Table: 5 rows; Detail: Header + Content blocks). Tránh Spinner full-screen.
-- **Empty:** Icon + Message + CTA (Create button).
-- **Error:** Message + Retry button.
-
-### Secondary Views (Dialogs, Sub-tables)
+**Level 2: Secondary Views (Simplified States)**
+- Modal dialogs, dropdown content, side panels
+- **3 states:** Loading → Success → Error
 
 ```tsx
-// Simplified - chỉ 3 states
-{isLoading ? (
-  <Skeleton className="h-20" />
-) : error ? (
-  <p className="text-sm text-muted-foreground">Không thể tải</p>
-) : (
-  <Content data={data} />
-)}
+function SecondaryView() {
+  const { data, isLoading, error } = useQuery()
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-4">
+        <p className="text-sm text-muted-foreground">Không thể tải dữ liệu</p>
+      </div>
+    )
+  }
+
+  return <Content data={data} />
+}
 ```
 
-**Optional:** Empty state có thể là inline "Không có dữ liệu"
-
-### Simple Displays
+**Level 3: Inline Elements (Minimal States)**
+- Individual data points, status indicators
+- **2 states:** Loading → Success
 
 ```tsx
-// Inline skeleton, no error UI needed
-{isLoading ? <Skeleton className="h-4 w-20" /> : <span>{value}</span>}
+function InlineDisplay({ value }) {
+  const { data, isLoading } = useQuery()
+
+  if (isLoading) {
+    return <Skeleton className="h-4 w-20 inline-block" />
+  }
+
+  return <span>{data || value}</span>
+}
 ```
 
-**Rule:** State complexity theo importance của view.
+### Loading State Patterns
+
+**Table Skeleton:**
+```tsx
+function DataTableSkeleton() {
+  return (
+    <div className="space-y-3">
+      {/* Header skeleton */}
+      <div className="flex gap-4 p-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-4 w-24" />
+        ))}
+      </div>
+      {/* Row skeletons */}
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="flex gap-4 p-4 border-t">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-16" />
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+**Card Grid Skeleton:**
+```tsx
+function CardGridSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="rounded-lg border p-6 space-y-4">
+          <Skeleton className="h-6 w-3/4" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-2/3" />
+          <Skeleton className="h-10 w-20" />
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+### Empty State Best Practices
+
+**Required Elements:**
+- **Icon:** Relevant visual (FolderOpen, Users, Calendar)
+- **Title:** Clear, action-oriented message
+- **Description:** Brief explanation of what this section contains
+- **CTA:** Primary action button (Create, Add, Browse)
+
+**Example Components:**
+```tsx
+function EmptyState({ icon, title, description, action }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+        {icon}
+      </div>
+      <h3 className="text-lg font-semibold mb-2">{title}</h3>
+      <p className="text-sm text-muted-foreground mb-6 max-w-md">
+        {description}
+      </p>
+      {action}
+    </div>
+  )
+}
+```
+
+### Error State Patterns
+
+**Error Types:**
+1. **Network Error:** Retry button + message
+2. **Permission Error:** Contact admin + explanation
+3. **Not Found:** Back button + suggestion
+4. **Validation Error:** Inline field errors
+
+**Error Message Guidelines:**
+- Use plain language, no technical jargon
+- Be specific about what went wrong
+- Provide clear next steps
+- Include retry mechanism when appropriate
+
+**Error State Component:**
+```tsx
+function ErrorState({ title, description, onRetry, showRetry = true }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 mb-4">
+        <AlertCircle className="h-8 w-8 text-destructive" />
+      </div>
+      <h3 className="text-lg font-semibold mb-2">{title}</h3>
+      <p className="text-sm text-muted-foreground mb-6 max-w-md">
+        {description}
+      </p>
+      {showRetry && onRetry && (
+        <Button onClick={onRetry} variant="outline">
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Thử lại
+        </Button>
+      )}
+    </div>
+  )
+}
+```
+
+### Success & Feedback Patterns
+
+**Success Feedback:**
+- Toast notifications for actions
+- Inline success messages for forms
+- Progress indicators for multi-step flows
+
+**Loading Feedback:**
+- Skeleton screens for content
+- Spinners for actions
+- Progress bars for file uploads
+
+**Micro-interactions:**
+- Button press effects (scale: 0.98)
+- Loading states disable interactions
+- Hover states provide feedback
 
 ---
 
@@ -434,15 +752,203 @@ function DataPage() {
 
 ---
 
-## **9) Accessibility Basics**
+## **9) Accessibility Implementation (WCAG AA Compliance)**
 
-- **Focus ring:** Visible (default shadcn behavior)
-- **Tab order:** Logical
-- **Keyboard:** Tab/Enter/Space cho actions
-- **Contrast:** ≥4.5:1 (WCAG AA)
-- **ARIA:** Dùng props mặc định của shadcn
+### Color & Contrast Requirements
 
-**Test:** Tab through page, check focus visibility.
+**Minimum Contrast Ratios (WCAG AA):**
+- **Normal text (< 18px):** 4.5:1 minimum
+- **Large text (≥ 18px or bold ≥ 14px):** 3:1 minimum
+- **UI components & graphics:** 3:1 minimum
+
+**Color Usage Guidelines:**
+- **Primary actions:** Use brand color with sufficient contrast
+- **Success/Error states:** Don't rely on color alone - add icons or text
+- **Links:** Must have 3:1 contrast with surrounding text + non-color indicator (underline)
+- **Disabled elements:** Can have lower contrast but must still be distinguishable
+
+**Implementation:**
+```tsx
+// Good - High contrast + icon
+<span className="flex items-center gap-2 text-green-600">
+  <CheckCircle className="h-4 w-4" />
+  Hoàn thành
+</span>
+
+// Bad - Color only
+<span className="text-green-600">Hoàn thành</span>
+```
+
+### Focus Management
+
+**Focus States:**
+- All interactive elements must have visible focus indication
+- Use shadcn's default focus rings or custom `focus-visible` styles
+- Focus trap inside modals and dropdowns
+
+**Focus Order:**
+- Logical tab order following DOM structure
+- Skip links for keyboard navigation
+- No keyboard traps
+
+**Implementation:**
+```tsx
+// Custom focus ring (if needed)
+<button className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+  Button
+</button>
+
+// Skip link (top of page)
+<a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4">
+  Skip to main content
+</a>
+```
+
+### Keyboard Navigation
+
+**Required Keyboard Support:**
+- **Tab:** Navigate through focusable elements
+- **Shift+Tab:** Navigate backwards
+- **Enter/Space:** Activate buttons, links, form controls
+- **Arrow keys:** Navigate menus, tabs, radio buttons
+- **Escape:** Close modals, dropdowns, cancel actions
+
+**Touch Targets:**
+- Minimum 44x44px for touch devices
+- Adequate spacing between touch targets
+- Large enough for finger accuracy
+
+**Implementation Examples:**
+```tsx
+// Accessible dropdown
+<DropdownMenu>
+  <DropdownMenuTrigger className="h-10 px-4">Menu</DropdownMenuTrigger>
+  <DropdownMenuContent>
+    <DropdownMenuItem>Option 1</DropdownMenuItem>
+    <DropdownMenuItem>Option 2</DropdownMenuItem>
+  </DropdownMenuContent>
+</DropdownMenu>
+
+// Accessible tabs
+<Tabs defaultValue="tab1">
+  <TabsList aria-label="Navigation tabs">
+    <TabsTrigger value="tab1">Tab 1</TabsTrigger>
+    <TabsTrigger value="tab2">Tab 2</TabsTrigger>
+  </TabsList>
+  <TabsContent value="tab1">Content 1</TabsContent>
+  <TabsContent value="tab2">Content 2</TabsContent>
+</Tabs>
+```
+
+### Screen Reader Support
+
+**Semantic HTML:**
+- Use proper HTML elements: `<nav>`, `<main>`, `<section>`, `<article>`
+- Heading hierarchy: Single `<h1>` per page, logical heading order
+- Form labels associated with inputs
+
+**ARIA Usage:**
+- Use ARIA labels when native HTML insufficient
+- Live regions for dynamic content updates
+- Descriptive labels for icons and decorative elements
+
+**Implementation:**
+```tsx
+// Form with proper labels
+<div className="space-y-2">
+  <Label htmlFor="email">Email</Label>
+  <Input
+    id="email"
+    type="email"
+    required
+    aria-describedby="email-help"
+  />
+  <p id="email-help" className="text-sm text-muted-foreground">
+    Ví dụ: user@example.com
+  </p>
+</div>
+
+// Icon buttons with labels
+<button
+  aria-label="Delete item"
+  className="p-2 hover:bg-muted rounded"
+>
+  <Trash2 className="h-4 w-4" />
+</button>
+
+// Live regions for status updates
+<div aria-live="polite" aria-atomic="true">
+  {statusMessage && <p>{statusMessage}</p>}
+</div>
+```
+
+### Motion & Animation
+
+**Reduced Motion Support:**
+- Respect `prefers-reduced-motion: reduce`
+- Provide non-animated alternatives
+- Essential animations (like loading states) can remain
+
+**Implementation:**
+```tsx
+// Respect motion preferences
+<div className="transition-all duration-200 motion-reduce:transition-none">
+  Animated content
+</div>
+
+// CSS for reduced motion
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
+
+### Testing Checklist
+
+**Manual Testing:**
+- [ ] Navigate entire page using Tab key only
+- [ ] Check focus visibility on all interactive elements
+- [ ] Test with screen reader (NVDA, VoiceOver, TalkBack)
+- [ ] Verify color contrast with WebAIM Contrast Checker
+- [ ] Test with zoom (200%) - content must remain usable
+- [ ] Check with high contrast mode
+
+**Automated Testing:**
+- [ ] Run axe DevTools extension
+- [ ] Use Lighthouse accessibility audit
+- [ ] ESLint with `jsx-a11y` plugin
+
+**Common Issues to Check:**
+- Missing alt text for meaningful images
+- Empty links or buttons
+- Duplicate IDs on elements
+- Missing form labels
+- Insufficient color contrast
+- Keyboard traps
+- Focus order issues
+
+### Resources for Testing
+
+**Tools:**
+- **Browser DevTools:** Accessibility panel, Lighthouse
+- **Screen Readers:** NVDA (Windows), VoiceOver (Mac), TalkBack (Android)
+- **Color Checkers:** WebAIM Contrast Checker, Chrome DevTools
+- **Automated:** axe DevTools, WAVE Web Accessibility Evaluation
+
+**Test Users:**
+- Keyboard-only users
+- Screen reader users
+- Users with motor impairments
+- Users with low vision
+- Color blind users
+
+**Implementation Priority:**
+1. **Level A (Essential):** Keyboard navigation, focus management, color contrast
+2. **Level AA (Enhanced):** Screen reader support, reduced motion, enhanced contrast
+3. **Level AAA (Optional):** Extended contrast ratios, sign language support
 
 ---
 
@@ -450,31 +956,58 @@ function DataPage() {
 
 Trước khi commit:
 
-**Typography:**
-- [ ] H1 = `text-3xl font-bold`
-- [ ] Body = `text-base`, Secondary = `text-sm`
+### Typography & Readability
+- [ ] **Heading hierarchy:** H1 = `text-3xl font-bold`, H2 = `text-2xl font-semibold`, etc.
+- [ ] **Body text:** `text-base` with `leading-normal` (1.5)
+- [ ] **Mobile responsive:** Scale down headings on mobile (`text-2xl md:text-3xl`)
+- [ ] **Text handling:** Use `truncate` or `line-clamp` for long content
+- [ ] **Vietnamese content:** 100% UI text in Vietnamese, headings ≤ 6 words
 
-**Spacing:**
-- [ ] Sections = `gap-6`
-- [ ] Page padding = `px-4 lg:px-6`, `py-6 md:py-8`
+### Spacing & Layout
+- [ ] **8-point grid:** Use standard spacing values (4, 8, 12, 16, 24, 32, 48, 64px)
+- [ ] **Section spacing:** Default `gap-6` (24px) between major sections
+- [ ] **Page container:** `px-4 lg:px-6`, `py-6 md:py-8`, `max-w-7xl mx-auto`
+- [ ] **Visual hierarchy:** More whitespace around important elements
+- [ ] **Touch targets:** Minimum 44x44px for interactive elements
 
-**Cards:**
-- [ ] **Max Depth 1:** Không lồng card trong card (trừ ngoại lệ)
-- [ ] **Nested:** Dùng `bg-muted` hoặc `Separator` thay vì border
-- [ ] Table = container wrapper
-- [ ] Grid items = Card component if clickable
+### Component Usage
+- [ ] **Card depth:** Max 1 level deep, avoid "card-ception"
+- [ ] **Tables:** Container wrapper with border, sticky headers
+- [ ] **Grid items:** Use Card component if clickable
+- [ ] **Forms:** Proper labels, validation states, error handling
+- [ ] **Buttons:** Loading states, disabled states, proper variants
 
-**States:**
-- [ ] Main screens: loading/success/empty/error
-- [ ] Secondary views: simplified OK
+### State Management
+- [ ] **Main screens:** Complete 4-state flow (loading → success → empty → error)
+- [ ] **Secondary views:** Simplified 3-state flow (loading → success → error)
+- [ ] **Inline elements:** Minimal loading → success states
+- [ ] **Empty states:** Icon + title + description + CTA
+- [ ] **Error states:** Clear message + retry mechanism when appropriate
 
-**Components:**
-- [ ] Extract chỉ khi pattern lặp (≥2 uses)
-- [ ] POC = inline OK
+### Accessibility (WCAG AA)
+- [ ] **Color contrast:** ≥ 4.5:1 for normal text, ≥ 3:1 for large text
+- [ ] **Focus states:** Visible focus rings on all interactive elements
+- [ ] **Keyboard navigation:** Tab order logical, no keyboard traps
+- [ ] **Screen reader:** Semantic HTML, proper labels, ARIA where needed
+- [ ] **Motion support:** Respect `prefers-reduced-motion`
 
-**Vietnamese:**
-- [ ] 100% UI text tiếng Việt
-- [ ] Heading ≤ 6 từ
+### Dashboard-Specific
+- [ ] **KPI cards:** Always use Card for metrics, include trend indicators
+- [ ] **Data visualization:** Appropriate chart types, accessible colors
+- [ ] **F-pattern layout:** Important metrics top-left, filters top-right
+- [ ] **Tab navigation:** Sticky with backdrop-blur, Vietnamese labels
+
+### Performance & Polish
+- [ ] **Loading feedback:** Skeleton screens > spinners for content
+- [ ] **Micro-interactions:** Button press effects, hover states
+- [ ] **Error prevention:** Clear validation, confirmation for destructive actions
+- [ ] **Success feedback:** Toast notifications, inline messages
+
+### Code Quality
+- [ ] **Component extraction:** Only when pattern repeats (≥2 uses)
+- [ ] **POC code:** Inline acceptable in development phase
+- [ ] **TypeScript interfaces:** Proper typing for extracted components
+- [ ] **Consistency:** Follow established patterns and shadcn defaults
 
 ---
 
