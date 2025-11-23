@@ -165,7 +165,7 @@ export default function AssessmentScoresPage() {
   return (
     <TeacherRoute>
       <DashboardLayout
-        title="Chấm điểm"
+        title="Nhập điểm"
         description="Nhập và chỉnh sửa điểm số cho học sinh"
       >
         <div className="space-y-6">
@@ -183,11 +183,11 @@ export default function AssessmentScoresPage() {
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="gap-2">
                 <Users className="h-4 w-4" />
-                {gradedCount}/{totalCount} đã chấm
+                {gradedCount}/{totalCount} đã nhập
               </Badge>
               {!batchMode && (
                 <Button onClick={handleBatchEditClick} variant="outline" size="sm">
-                  Chấm hàng loạt
+                  Nhập hàng loạt
                 </Button>
               )}
             </div>
@@ -210,11 +210,11 @@ export default function AssessmentScoresPage() {
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <CheckCircle className="h-4 w-4" />
-                  <span>Đã chấm: {gradedCount}</span>
+                  <span>Đã nhập: {gradedCount}</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <XCircle className="h-4 w-4" />
-                  <span>Chưa chấm: {totalCount - gradedCount}</span>
+                  <span>Chưa nhập: {totalCount - gradedCount}</span>
                 </div>
               </div>
             </CardContent>
@@ -241,7 +241,7 @@ export default function AssessmentScoresPage() {
               {batchMode && (
                 <Card className="border-primary">
                   <CardHeader>
-                    <CardTitle className="text-lg">Chế độ chấm hàng loạt</CardTitle>
+                    <CardTitle className="text-lg">Chế độ nhập hàng loạt</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center justify-between">
@@ -278,8 +278,8 @@ export default function AssessmentScoresPage() {
                           <TableHead>Điểm</TableHead>
                           <TableHead>Phần trăm</TableHead>
                           <TableHead>Nhận xét</TableHead>
-                          <TableHead>Người chấm</TableHead>
-                          <TableHead>Ngày chấm</TableHead>
+                          <TableHead>Người nhập</TableHead>
+                          <TableHead>Ngày nhập</TableHead>
                           <TableHead className="text-right">Thao tác</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -440,7 +440,7 @@ export default function AssessmentScoresPage() {
                                     className="gap-2"
                                   >
                                     <Edit className="h-4 w-4" />
-                                    {student.isGraded ? "Sửa" : "Chấm"}
+                                    {student.isGraded ? "Sửa" : "Nhập"}
                                   </Button>
                                 )}
                               </TableCell>

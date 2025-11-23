@@ -186,9 +186,9 @@ const roleBasedNav = {
         icon: AwardIcon,
       },
       {
-        title: "Tiến độ học sinh",
-        url: "/teacher/students",
-        icon: UsersIcon,
+        title: "Hồ sơ cá nhân",
+        url: "/teacher/profile",
+        icon: UserCircleIcon,
       },
     ],
   },

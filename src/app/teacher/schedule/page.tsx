@@ -148,6 +148,8 @@ export default function TeacherSchedulePage() {
     },
     {
       skip: !weekStart,
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
     }
   );
 

@@ -481,12 +481,12 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
     <div className="rounded-lg border p-5 transition-colors hover:border-primary/60 hover:bg-primary/5">
       <div className="space-y-4">
         {/* Header: Class Name and Status */}
-        <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-4">
           <div className="flex-1 space-y-2">
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-semibold text-foreground">
-                {classItem.name}
-              </h3>
+              {classItem.name}
+            </h3>
               <Badge variant={getStatusBadgeVariant(classItem.status)}>
                 {STATUS_LABELS[classItem.status] || classItem.status}
               </Badge>
@@ -536,34 +536,34 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
             </div>
           )}
 
-          {/* Total Sessions */}
+              {/* Total Sessions */}
           {totalSessions > 0 && (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <BookOpen className="h-4 w-4 flex-shrink-0" />
-              <span>{totalSessions} buổi học</span>
-            </div>
-          )}
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <BookOpen className="h-4 w-4 flex-shrink-0" />
+                  <span>{totalSessions} buổi học</span>
+                </div>
+              )}
         </div>
 
-        {/* Attendance Rate */}
-        {averageAttendanceRate !== undefined && (
+              {/* Attendance Rate */}
+              {averageAttendanceRate !== undefined && (
           <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-3">
-            <TrendingUp className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                  <TrendingUp className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">
-              Tỷ lệ chuyên cần:
-            </span>
-            <Badge
-              variant="outline"
-              className={cn(
-                "text-xs font-medium",
-                getAttendanceRateColor(averageAttendanceRate),
-                getAttendanceRateBgColor(averageAttendanceRate)
-              )}
-            >
+                    Tỷ lệ chuyên cần:
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "text-xs font-medium",
+                      getAttendanceRateColor(averageAttendanceRate),
+                      getAttendanceRateBgColor(averageAttendanceRate)
+                    )}
+                  >
               {averageAttendanceRate.toFixed(1)}%
-            </Badge>
-          </div>
-        )}
+                  </Badge>
+                </div>
+              )}
 
         {/* Action buttons */}
         <div className="flex flex-wrap gap-2 pt-2">
@@ -576,13 +576,13 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
             <Calendar className="h-4 w-4" />
             Xem lịch dạy
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
+        <Button
+          variant="outline"
+          size="sm"
             onClick={handleViewMatrix}
-            className="gap-2"
-          >
-            <BarChart3 className="h-4 w-4" />
+          className="gap-2"
+        >
+          <BarChart3 className="h-4 w-4" />
             Xem bảng điểm danh
           </Button>
           <Button
@@ -595,7 +595,7 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
               <BookOpen className="h-4 w-4" />
               Quản lý điểm
             </Link>
-          </Button>
+        </Button>
         </div>
       </div>
     </div>
