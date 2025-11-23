@@ -126,13 +126,13 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
       <div className="space-y-6">
         <div className="space-y-4">
           <Skeleton className="h-6 w-48" />
-          <div className="rounded-lg border bg-white p-6 space-y-4">
+          <div className="rounded-lg border bg-card p-6 space-y-4">
             <Skeleton className="h-20 w-full" />
             <Skeleton className="h-20 w-full" />
           </div>
         </div>
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="rounded-lg border bg-white p-6 space-y-4">
+            <div key={i} className="rounded-lg border bg-card p-6 space-y-4">
             <Skeleton className="h-6 w-32" />
             <Skeleton className="h-32 w-full" />
           </div>
@@ -168,7 +168,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
           Tổng quan khóa học
         </h3>
 
-        <div className="rounded-lg border bg-white">
+                    <div className="rounded-lg border bg-card">
           <div className="p-6 space-y-6">
             <div>
               <h4 className="text-sm font-medium text-muted-foreground mb-2">Tên khóa học</h4>
@@ -226,7 +226,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
             <Badge variant="secondary">{courseMaterials.length}</Badge>
           </div>
 
-          <div className="rounded-lg border divide-y overflow-hidden bg-white">
+          <div className="rounded-lg border divide-y overflow-hidden bg-card">
             {courseMaterials.map((material) => (
               <div key={material.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
                 <div className="shrink-0 text-muted-foreground">
@@ -296,7 +296,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
               const phaseId = `phase-${phaseIndex}`;
 
               return (
-                <AccordionItem key={phase.id} value={phaseId} className="rounded-lg border bg-white">
+                <AccordionItem key={phase.id} value={phaseId} className="rounded-lg border bg-card">
                   <AccordionTrigger className="px-5 py-4 hover:no-underline">
                     <div className="flex items-start justify-between gap-3 text-left">
                       <div className="space-y-1">
@@ -392,7 +392,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                           const sessionId = `session-${session.id}`;
 
                           return (
-                            <div key={session.id} className="border rounded-lg bg-white overflow-hidden">
+                            <div key={session.id} className="border rounded-lg bg-card overflow-hidden">
                               <Accordion type="single" value={expandedSessions.includes(sessionId) ? sessionId : ''} onValueChange={(value: string | string[] | undefined) => {
                                 if (value) {
                                   setExpandedSessions(prev => [...prev, sessionId]);
@@ -409,7 +409,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                                             Buổi {session.sequenceNo}: {session.topic}
                                           </h4>
                                           {session.isCompleted && (
-                                            <Badge variant="default" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+                                            <Badge variant="default" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/30">
                                               <CheckCircle className="h-3 w-3 mr-1" />
                                               Hoàn thành
                                             </Badge>
@@ -539,7 +539,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
             })}
           </Accordion>
         ) : (
-          <div className="rounded-lg border bg-white p-6 text-center">
+          <div className="rounded-lg border bg-card p-6 text-center">
             <BookOpen className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">
               Chưa có nội dung giáo trình chi tiết.
@@ -558,7 +558,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
               Mục tiêu học tập (CLO)
             </h3>
 
-            <div className="rounded-lg border bg-white">
+            <div className="rounded-lg border bg-card">
               <div className="p-6 space-y-4">
                 {courseSyllabus.clos.map((clo) => (
                   <div key={clo.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">

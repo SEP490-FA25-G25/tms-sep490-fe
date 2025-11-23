@@ -12,11 +12,11 @@ interface ClassHeaderProps {
 }
 
 const STATUS_STYLES: Record<ClassStatus, string> = {
-  ONGOING: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  SCHEDULED: 'bg-amber-50 text-amber-700 border-amber-200',
-  COMPLETED: 'bg-slate-50 text-slate-700 border-slate-200',
-  CANCELLED: 'bg-rose-50 text-rose-700 border-rose-200',
-  DRAFT: 'bg-slate-50 text-slate-700 border-slate-200',
+  ONGOING: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800',
+  SCHEDULED: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800',
+  COMPLETED: 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800/50 dark:text-slate-400 dark:border-slate-700',
+  CANCELLED: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800',
+  DRAFT: 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800/50 dark:text-slate-400 dark:border-slate-700',
 }
 
 const formatDate = (dateString?: string) => {
@@ -57,7 +57,7 @@ export function ClassHeader({ classDetail, attendanceRate, sessionStats, nextSes
   const capacity = classDetail.enrollmentSummary?.maxCapacity ?? classDetail.maxCapacity ?? 0
 
   return (
-    <div className="border-b bg-white">
+    <div className="border-b bg-background">
       <div className="@container/main py-6 md:py-8">
         <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6">
           {/* Header top row */}

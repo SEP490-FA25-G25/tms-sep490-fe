@@ -117,7 +117,7 @@ const ClassDetailPage = () => {
   const renderHeader = () => {
     if (isDetailLoading) {
       return (
-        <div className="border-b bg-white">
+        <div className="border-b bg-background">
           <div className="@container/main py-6 md:py-8">
             <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-4">
               <div className="flex items-start gap-3">
@@ -140,7 +140,7 @@ const ClassDetailPage = () => {
 
     if (detailError || !classDetail) {
       return (
-        <div className="border-b bg-white">
+        <div className="border-b bg-background">
           <div className="@container/main py-4">
             <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
               <div className="flex items-center justify-between">
