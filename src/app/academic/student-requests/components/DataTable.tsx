@@ -46,11 +46,11 @@ export function DataTable<TData, TValue>({
   })
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-lg border overflow-hidden">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
+            <TableRow key={headerGroup.id} className="bg-muted/50">
               {headerGroup.headers.map((header) => {
                 return (
                   <TableHead key={header.id} style={{ width: header.getSize() }}>

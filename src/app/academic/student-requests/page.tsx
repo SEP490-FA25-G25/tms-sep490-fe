@@ -16,7 +16,15 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
-import { PlusCircleIcon, XIcon } from 'lucide-react'
+import {
+  PlusCircleIcon,
+  XIcon,
+  ClockIcon,
+  AlertTriangleIcon,
+  CalendarXIcon,
+  CalendarCheckIcon,
+  ArrowRightLeftIcon
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { DataTable } from './components/DataTable'
 import { pendingColumns, historyColumns } from './components/columns'
@@ -154,28 +162,43 @@ export default function AcademicRequestsPage() {
 
         {/* Summary Stats */}
         {summary && (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="rounded-lg bg-muted/30 p-4">
-              <p className="text-xs text-muted-foreground">Chờ duyệt</p>
-              <p className="text-2xl font-bold mt-1">{summary.totalPending}</p>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+            <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <ClockIcon className="h-4 w-4" />
+                <span className="text-sm">Chờ duyệt</span>
+              </div>
+              <p className="text-2xl font-semibold">{summary.totalPending}</p>
             </div>
-            <div className="rounded-lg bg-amber-50/50 dark:bg-amber-950/20 p-4">
-              <p className="text-xs text-amber-700 dark:text-amber-400">Khẩn cấp</p>
-              <p className="text-2xl font-bold text-amber-700 dark:text-amber-400 mt-1">
+            <div className="rounded-lg border border-border/70 bg-amber-50 dark:bg-amber-950/20 p-4">
+              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                <AlertTriangleIcon className="h-4 w-4" />
+                <span className="text-sm">Khẩn cấp</span>
+              </div>
+              <p className="text-2xl font-semibold text-amber-700 dark:text-amber-400">
                 {summary.needsUrgentReview}
               </p>
             </div>
-            <div className="rounded-lg bg-muted/30 p-4">
-              <p className="text-xs text-muted-foreground">Xin nghỉ</p>
-              <p className="text-2xl font-bold mt-1">{summary.absenceRequests}</p>
+            <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <CalendarXIcon className="h-4 w-4" />
+                <span className="text-sm">Xin nghỉ</span>
+              </div>
+              <p className="text-2xl font-semibold">{summary.absenceRequests}</p>
             </div>
-            <div className="rounded-lg bg-muted/30 p-4">
-              <p className="text-xs text-muted-foreground">Học bù</p>
-              <p className="text-2xl font-bold mt-1">{summary.makeupRequests}</p>
+            <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <CalendarCheckIcon className="h-4 w-4" />
+                <span className="text-sm">Học bù</span>
+              </div>
+              <p className="text-2xl font-semibold">{summary.makeupRequests}</p>
             </div>
-            <div className="rounded-lg bg-muted/30 p-4">
-              <p className="text-xs text-muted-foreground">Chuyển lớp</p>
-              <p className="text-2xl font-bold mt-1">{summary.transferRequests}</p>
+            <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <ArrowRightLeftIcon className="h-4 w-4" />
+                <span className="text-sm">Chuyển lớp</span>
+              </div>
+              <p className="text-2xl font-semibold">{summary.transferRequests}</p>
             </div>
           </div>
         )}

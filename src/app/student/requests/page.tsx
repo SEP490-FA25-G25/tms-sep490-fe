@@ -4,10 +4,13 @@ import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import {
   ArrowRightIcon,
+  CheckCircleIcon,
+  ClockIcon,
   NotebookPenIcon,
   PlusIcon,
   RefreshCcwIcon,
   SearchIcon,
+  XCircleIcon,
   XIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -179,22 +182,34 @@ export default function StudentRequestsPage() {
 
             <div className="flex flex-1 flex-col gap-6 px-6 py-6">
 
-            {/* Summary Stats*/}
-            <div className="grid gap-4 md:grid-cols-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Tổng số yêu cầu</p>
+            {/* Summary Stats */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <NotebookPenIcon className="h-4 w-4" />
+                  <span className="text-sm">Tổng số yêu cầu</span>
+                </div>
                 <p className="text-2xl font-semibold">{summary?.totalRequests ?? 0}</p>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Đang chờ</p>
+              <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <ClockIcon className="h-4 w-4" />
+                  <span className="text-sm">Đang chờ</span>
+                </div>
                 <p className="text-2xl font-semibold text-sky-600">{summary?.pending ?? 0}</p>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Đã duyệt</p>
+              <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <CheckCircleIcon className="h-4 w-4" />
+                  <span className="text-sm">Đã duyệt</span>
+                </div>
                 <p className="text-2xl font-semibold text-emerald-600">{summary?.approved ?? 0}</p>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Bị từ chối</p>
+              <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <XCircleIcon className="h-4 w-4" />
+                  <span className="text-sm">Bị từ chối</span>
+                </div>
                 <p className="text-2xl font-semibold text-rose-600">{summary?.rejected ?? 0}</p>
               </div>
             </div>
