@@ -6,6 +6,7 @@ import { StudentRoute } from '@/components/ProtectedRoute';
 import { SiteHeader } from '@/components/site-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import {
@@ -16,6 +17,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { useGetStudentTranscriptQuery } from '@/store/services/studentApi';
@@ -117,14 +124,6 @@ const TranscriptPage = () => {
     return score !== null && score !== undefined ? score.toFixed(1) : '—';
   };
 
-  // Format component scores for tooltip
-  const formatComponentScores = (componentScores: Record<string, number>) => {
-    const entries = Object.entries(componentScores);
-    if (entries.length === 0) return 'Chưa có điểm';
-
-    return entries.map(([name, score]) => `${name}: ${score.toFixed(1)}`).join('\n');
-  };
-
   return (
     <StudentRoute>
       <SidebarProvider
@@ -188,7 +187,7 @@ const TranscriptPage = () => {
                   <div className="space-y-6">
                     <div className="rounded-lg border overflow-hidden">
                       <Table>
-                        <TableHeader>
+                        <TableHeader className="sticky top-0 z-10 bg-background">
                           <TableRow className="bg-muted/50">
                             <TableHead className="w-32">Mã lớp</TableHead>
                             <TableHead>Tên môn</TableHead>
@@ -214,11 +213,6 @@ const TranscriptPage = () => {
                                   `/student/my-classes/${transcriptItem.classId}?tab=assessments`
                                 )
                               }
-                              title={
-                                Object.keys(transcriptItem.componentScores).length > 0
-                                  ? formatComponentScores(transcriptItem.componentScores)
-                                  : undefined
-                              }
                             >
                               <TableCell className="font-medium">
                                 {transcriptItem.classCode}
@@ -237,31 +231,47 @@ const TranscriptPage = () => {
                                 {transcriptItem.teacherName}
                               </TableCell>
                               <TableCell className="text-center">
-                                <div className="space-y-1">
-                                  <span className="font-semibold">
-                                    {formatScore(transcriptItem.averageScore)}
-                                  </span>
-                                  {Object.keys(transcriptItem.componentScores).length > 0 && (
-                                    <div className="text-xs text-muted-foreground">
-                                      {Object.keys(transcriptItem.componentScores).length} điểm thành phần
-                                    </div>
-                                  )}
-                                </div>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="space-y-1 cursor-help">
+                                        <span className="font-semibold">
+                                          {formatScore(transcriptItem.averageScore)}
+                                        </span>
+                                        {Object.keys(transcriptItem.componentScores).length > 0 && (
+                                          <div className="text-xs text-muted-foreground">
+                                            {Object.keys(transcriptItem.componentScores).length} điểm thành phần
+                                          </div>
+                                        )}
+                                      </div>
+                                    </TooltipTrigger>
+                                    {Object.keys(transcriptItem.componentScores).length > 0 && (
+                                      <TooltipContent className="max-w-xs">
+                                        <div className="space-y-1">
+                                          {Object.entries(transcriptItem.componentScores).map(([name, score]) => (
+                                            <div key={name} className="flex justify-between gap-3 text-xs">
+                                              <span>{name}:</span>
+                                              <span className="font-medium">{score.toFixed(1)}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </TooltipContent>
+                                    )}
+                                  </Tooltip>
+                                </TooltipProvider>
                               </TableCell>
                               <TableCell className="text-center">
-                                <div className="text-sm">
-                                  {transcriptItem.completedSessions}/{transcriptItem.totalSessions}
-                                </div>
-                                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
-                                  <div
-                                    className="bg-blue-600 h-1.5 rounded-full"
-                                    style={{
-                                      width: `${Math.min(
-                                        (transcriptItem.completedSessions / transcriptItem.totalSessions) * 100,
-                                        100
-                                      )}%`,
-                                    }}
-                                  ></div>
+                                <div className="space-y-1">
+                                  <div className="text-sm">
+                                    {transcriptItem.completedSessions}/{transcriptItem.totalSessions}
+                                  </div>
+                                  <Progress
+                                    value={Math.min(
+                                      (transcriptItem.completedSessions / transcriptItem.totalSessions) * 100,
+                                      100
+                                    )}
+                                    className="h-1.5"
+                                  />
                                 </div>
                               </TableCell>
                               <TableCell className="text-center">
@@ -284,7 +294,9 @@ const TranscriptPage = () => {
 
                 {!isLoading && !error && transcriptData.length === 0 && (
                   <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border/80 bg-muted/10 p-10 text-center">
-                    <BookOpen className="h-10 w-10 text-muted-foreground" />
+                    <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-2">
+                      <BookOpen className="h-8 w-8 text-muted-foreground" />
+                    </div>
                     <div className="space-y-1">
                       <p className="text-base font-semibold text-foreground">
                         Chưa có dữ liệu điểm số

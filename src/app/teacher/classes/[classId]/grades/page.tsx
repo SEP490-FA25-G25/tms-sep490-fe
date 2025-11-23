@@ -11,7 +11,6 @@ import {
   useGetClassGradebookQuery,
   useSaveOrUpdateScoreMutation,
   type TeacherAssessmentDTO,
-  type GradebookDTO,
 } from "@/store/services/teacherGradeApi";
 import {
   Calendar,
@@ -32,7 +31,7 @@ import {
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -125,9 +124,10 @@ export default function TeacherGradesPage() {
       setEditingCell(null);
       setEditingScoreValue("");
       refetchGradebook();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string } };
       const errorMessage =
-        error?.data?.message || "Có lỗi xảy ra khi lưu điểm.";
+        err?.data?.message || "Có lỗi xảy ra khi lưu điểm.";
       toast.error(errorMessage);
       console.error("Failed to save score:", error);
     }
@@ -602,7 +602,6 @@ export default function TeacherGradesPage() {
                         </TableHeader>
                         <TableBody>
                           {gradebook.students.map((student) => {
-                            const isEditing = editingCell?.studentId === student.studentId;
                             return (
                               <TableRow key={student.studentId}>
                                 <TableCell className="sticky left-0 z-10 bg-background font-medium">

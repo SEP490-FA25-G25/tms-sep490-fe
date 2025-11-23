@@ -105,8 +105,9 @@ export default function AssessmentScoresPage() {
       toast.success("Đã lưu điểm thành công");
       setEditingStudentId(null);
       refetch();
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Có lỗi xảy ra khi lưu điểm");
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string } };
+      toast.error(err?.data?.message || "Có lỗi xảy ra khi lưu điểm");
     }
   };
 
@@ -131,8 +132,9 @@ export default function AssessmentScoresPage() {
       setBatchMode(false);
       setBatchScores(new Map());
       refetch();
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Có lỗi xảy ra khi lưu điểm");
+    } catch (error: unknown) {
+      const err = error as { data?: { message?: string } };
+      toast.error(err?.data?.message || "Có lỗi xảy ra khi lưu điểm");
     }
   };
 

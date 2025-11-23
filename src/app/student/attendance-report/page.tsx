@@ -1,4 +1,5 @@
 import type React from "react";
+import { useState } from "react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { StudentRoute } from "@/components/ProtectedRoute";
@@ -7,9 +8,8 @@ import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
-import { AttendanceSummary } from "@/components/attendance/AttendanceSummary";
-import { AttendanceTrendChart } from "@/components/attendance/AttendanceTrendChart";
 import {
   type StudentAttendanceOverviewClassDTO,
   useGetStudentAttendanceOverviewQuery,
@@ -55,40 +55,6 @@ function getAttendanceRateClass(rate: number) {
   return "text-rose-700";
 }
 
-// Generate trend data from class attendance information
-function generateTrendData(classes: StudentAttendanceOverviewClassDTO[]) {
-  // In a real implementation, this would come from the backend API
-  // For now, we'll generate some sample data based on current attendance patterns
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
-
-  // Generate 6 months of data
-  const months = [];
-  for (let i = 5; i >= 0; i--) {
-    const date = new Date(currentYear, currentMonth - i, 1);
-    const monthName = date.toLocaleDateString('vi-VN', { month: 'short' });
-
-    // Calculate average attendance for this month (simulation)
-    // In real implementation, this would be based on actual session dates
-    const baseRate = classes.length > 0
-      ? classes.reduce((sum, c) => sum + getAttendanceRate(c.attended, c.absent), 0) / classes.length
-      : 75;
-
-    // Add some variation to make it realistic
-    const variation = (Math.random() - 0.5) * 20; // +/- 10% variation
-    const monthRate = Math.max(0, Math.min(100, baseRate + variation));
-
-    months.push({
-      month: monthName,
-      attendanceRate: Math.round(monthRate * 10) / 10,
-      totalSessions: Math.floor(Math.random() * 20) + 10, // Sample data
-      presentSessions: Math.floor((monthRate / 100) * (Math.floor(Math.random() * 20) + 10)),
-    });
-  }
-
-  return months;
-}
-
 function formatDate(dateString?: string | null) {
   if (!dateString) return "—";
   const date = new Date(dateString);
@@ -96,16 +62,25 @@ function formatDate(dateString?: string | null) {
   return format(date, "dd/MM/yyyy");
 }
 
+type StatusFilter = 'all' | 'ongoing' | 'completed';
+
 export default function StudentAttendanceReportOverviewPage() {
   const { data, isLoading, isError, refetch } =
     useGetStudentAttendanceOverviewQuery();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
   const classes: StudentAttendanceOverviewClassDTO[] =
     data?.data?.classes ?? [];
 
-  const hasContent = classes.length > 0;
+  // Filter classes by status
+  const filteredClasses = classes.filter((item) => {
+    if (statusFilter === 'all') return true;
+    if (statusFilter === 'ongoing') return item.status === 'ONGOING';
+    if (statusFilter === 'completed') return item.status === 'COMPLETED';
+    return true;
+  });
 
   const handlePrefetch = (classId: number) => {
     dispatch(
@@ -142,68 +117,90 @@ export default function StudentAttendanceReportOverviewPage() {
               </div>
             </header>
 
-            <div className="flex flex-1 flex-col gap-2">
-              <section className="flex flex-col gap-4 px-6 py-6">
+            <div className="flex flex-1 flex-col">
+              {(isLoading || isError || classes.length === 0) && (
+                <section className="flex flex-col gap-4 px-6 py-6">
+                  {isLoading && (
+                    <div className="space-y-3">
+                      {[...Array(3)].map((_, index) => (
+                        <Skeleton
+                          key={index}
+                          className="h-24 w-full rounded-2xl"
+                        />
+                      ))}
+                    </div>
+                  )}
 
-                {isLoading && (
-                  <div className="space-y-3">
-                    {[...Array(3)].map((_, index) => (
-                      <Skeleton
-                        key={index}
-                        className="h-24 w-full rounded-2xl"
-                      />
-                    ))}
-                  </div>
-                )}
+                  {isError && !isLoading && (
+                    <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm">
+                      <p className="font-semibold text-destructive">
+                        Không thể tải báo cáo điểm danh.
+                      </p>
+                      <p className="mt-1 text-destructive/90">
+                        Vui lòng kiểm tra kết nối và thử lại. Nếu lỗi tiếp diễn,
+                        hãy liên hệ bộ phận hỗ trợ.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => refetch()}
+                        className="mt-3 inline-flex items-center rounded-md border border-destructive/40 bg-background px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        Thử tải lại
+                      </button>
+                    </div>
+                  )}
 
-                {isError && !isLoading && (
-                  <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm">
-                    <p className="font-semibold text-destructive">
-                      Không thể tải báo cáo điểm danh.
-                    </p>
-                    <p className="mt-1 text-destructive/90">
-                      Vui lòng kiểm tra kết nối và thử lại. Nếu lỗi tiếp diễn,
-                      hãy liên hệ bộ phận hỗ trợ.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => refetch()}
-                      className="mt-3 inline-flex items-center rounded-md border border-destructive/40 bg-background px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      Thử tải lại
-                    </button>
-                  </div>
-                )}
+                  {!isLoading && !isError && classes.length === 0 && (
+                    <div className="rounded-lg border border-dashed border-border bg-muted/20 p-8 text-center">
+                      <p className="text-base font-medium text-foreground">
+                        Chưa có dữ liệu điểm danh
+                      </p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Hệ thống sẽ hiển thị báo cáo ngay khi bạn được xếp vào
+                        lớp và có buổi học phát sinh.
+                      </p>
+                    </div>
+                  )}
+                </section>
+              )}
 
-                {!isLoading && !isError && !hasContent && (
-                  <div className="rounded-lg border border-dashed border-border bg-muted/20 p-8 text-center">
-                    <p className="text-base font-medium text-foreground">
-                      Chưa có dữ liệu điểm danh
-                    </p>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      Hệ thống sẽ hiển thị báo cáo ngay khi bạn được xếp vào lớp
-                      và có buổi học phát sinh.
-                    </p>
-                  </div>
-                )}
-              </section>
-
-              {!isLoading && !isError && hasContent && (
-                <section className="flex flex-1 flex-col gap-4 px-6 py-6 space-y-6">
-                    {/* Attendance Summary Section */}
-                    <AttendanceSummary classes={classes} />
-
-                    {/* Attendance Trend Chart */}
-                    <AttendanceTrendChart
-                      data={generateTrendData(classes)}
-                      className="w-full"
-                    />
-
+              {!isLoading && !isError && classes.length > 0 && (
+                <section className="flex flex-col gap-6 px-6 py-6">
                     {/* Classes Detail Section */}
                     <div className="space-y-3">
-                      <h2 className="text-lg font-semibold">Chi tiết theo lớp</h2>
-                      <div className="grid gap-3">
-                      {classes.map((item) => {
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-lg font-semibold">Chi tiết theo lớp</h2>
+                        <ToggleGroup
+                          type="single"
+                          value={statusFilter}
+                          onValueChange={(value) => {
+                            if (value) setStatusFilter(value as StatusFilter);
+                          }}
+                          className="border rounded-lg p-1"
+                        >
+                          <ToggleGroupItem value="all" className="text-sm">
+                            Tất cả
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value="ongoing" className="text-sm">
+                            Đang học
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value="completed" className="text-sm">
+                            Đã kết thúc
+                          </ToggleGroupItem>
+                        </ToggleGroup>
+                      </div>
+
+                      {filteredClasses.length === 0 && (
+                        <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center">
+                          <p className="text-sm text-muted-foreground">
+                            Không có lớp học nào phù hợp với bộ lọc đã chọn
+                          </p>
+                        </div>
+                      )}
+
+                      {filteredClasses.length > 0 && (
+                        <div className="grid gap-3">
+                        {filteredClasses.map((item) => {
                         const statusMeta = getStatusMeta(item.status);
                         const rate = getAttendanceRate(
                           item.attended,
@@ -215,7 +212,7 @@ export default function StudentAttendanceReportOverviewPage() {
                             className="group flex cursor-pointer flex-col gap-3 rounded-lg border border-border bg-muted/40 p-4 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             onClick={() =>
                               navigate(
-                                `/student/attendance-report/${item.classId}`
+                                `/student/my-classes/${item.classId}?tab=sessions`
                               )
                             }
                             onMouseEnter={() => handlePrefetch(item.classId)}
@@ -225,7 +222,7 @@ export default function StudentAttendanceReportOverviewPage() {
                               if (e.key === "Enter" || e.key === " ") {
                                 e.preventDefault();
                                 navigate(
-                                  `/student/attendance-report/${item.classId}`
+                                  `/student/my-classes/${item.classId}?tab=sessions`
                                 );
                               }
                             }}
@@ -310,7 +307,8 @@ export default function StudentAttendanceReportOverviewPage() {
                           </article>
                         );
                       })}
-                    </div>
+                        </div>
+                      )}
                     </div>
                   </section>
                 )}

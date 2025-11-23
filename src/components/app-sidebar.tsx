@@ -18,7 +18,6 @@ import {
   NotebookPenIcon,
   SchoolIcon,
   UserCircleIcon,
-  ClockIcon,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";

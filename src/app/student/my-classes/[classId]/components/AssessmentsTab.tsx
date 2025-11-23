@@ -129,18 +129,18 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
           type="single"
           value={filter}
           onValueChange={(value) => setFilter(value as FilterType)}
-          className="gap-1"
+          className="border rounded-lg p-1"
         >
-          <ToggleGroupItem value="all" className="px-3 py-1 text-sm">
+          <ToggleGroupItem value="all" className="text-sm">
             Tất cả
           </ToggleGroupItem>
-          <ToggleGroupItem value="upcoming" className="px-3 py-1 text-sm">
+          <ToggleGroupItem value="upcoming" className="text-sm">
             Sắp tới
           </ToggleGroupItem>
-          <ToggleGroupItem value="graded" className="px-3 py-1 text-sm">
+          <ToggleGroupItem value="graded" className="text-sm">
             Đã chấm
           </ToggleGroupItem>
-          <ToggleGroupItem value="overdue" className="px-3 py-1 text-sm">
+          <ToggleGroupItem value="overdue" className="text-sm">
             Quá hạn
           </ToggleGroupItem>
         </ToggleGroup>
@@ -163,11 +163,6 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
             <TableBody>
               {filteredAssessments.map((assessment) => {
                 const score = scoreMap.get(assessment.id);
-                const scorePercentage =
-                  assessment.maxScore && score?.score != null
-                    ? (score.score / assessment.maxScore) * 100
-                    : undefined;
-
                 return (
                   <TableRow key={assessment.id}>
                     <TableCell className="max-w-xs">
@@ -211,11 +206,6 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
                           <span className="font-semibold text-foreground">
                             {score.score}/{assessment.maxScore}
                           </span>
-                          {scorePercentage !== undefined && (
-                            <span className="text-xs text-muted-foreground">
-                              {scorePercentage.toFixed(1)}%
-                            </span>
-                          )}
                         </div>
                       ) : (
                         <span className="text-sm text-muted-foreground">Chưa có điểm</span>

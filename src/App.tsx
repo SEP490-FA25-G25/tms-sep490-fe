@@ -21,12 +21,9 @@ import RequestDetailPage from "./app/teacher/requests/[id]/page";
 import TeacherGradesListPage from "./app/teacher/grades/page";
 import TeacherGradesPage from "./app/teacher/classes/[classId]/grades/page";
 import AssessmentScoresPage from "./app/teacher/assessments/[assessmentId]/scores/page";
-import StudentCoursesPage from "./app/student/courses/page";
-import CourseDetailPage from "./app/student/courses/[id]/page";
 import StudentSchedulePage from "./app/student/schedule/page";
 import StudentRequestsPage from "./app/student/requests/page";
 import StudentAttendanceReportOverviewPage from "./app/student/attendance-report/page";
-import StudentClassAttendanceReportPage from "./app/student/attendance-report/[classId]/page";
 import StudentMyClassesPage from "./app/student/my-classes/page";
 import StudentClassDetailPage from "./app/student/my-classes/[classId]/page";
 import StudentProfilePage from "./app/student/profile/page";
@@ -299,14 +296,6 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={["STUDENT"]}>
                   <StudentAttendanceReportOverviewPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/student/attendance-report/:classId"
-              element={
-                <ProtectedRoute requiredRoles={["STUDENT"]}>
-                  <StudentClassAttendanceReportPage />
                 </ProtectedRoute>
               }
             />

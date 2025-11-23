@@ -94,15 +94,15 @@ const SessionsTab: React.FC<SessionsTabProps> = ({ sessionsData, isLoading, repo
           type="single"
           value={filter}
           onValueChange={(value) => setFilter(value as SessionFilter)}
-          className="gap-1"
+          className="border rounded-lg p-1"
         >
-          <ToggleGroupItem value="all" className="px-3 py-1 text-sm">
+          <ToggleGroupItem value="all" className="text-sm">
             Tất cả
           </ToggleGroupItem>
-          <ToggleGroupItem value="upcoming" className="px-3 py-1 text-sm">
+          <ToggleGroupItem value="upcoming" className="text-sm">
             Sắp tới
           </ToggleGroupItem>
-          <ToggleGroupItem value="past" className="px-3 py-1 text-sm">
+          <ToggleGroupItem value="past" className="text-sm">
             Đã diễn ra
           </ToggleGroupItem>
         </ToggleGroup>

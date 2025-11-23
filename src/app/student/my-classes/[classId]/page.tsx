@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
-import { useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
 import { AppSidebar } from '@/components/app-sidebar';
 import { ClassHeader } from '@/components/class/ClassHeader';
@@ -20,13 +20,28 @@ import ClassmatesTab from './components/ClassmatesTab';
 import SessionsTab from './components/SessionsTab';
 import SyllabusTab from './components/SyllabusTab';
 
+const VALID_TABS = ['sessions', 'syllabus', 'assessments', 'classmates'] as const;
+type TabValue = typeof VALID_TABS[number];
+
 const ClassDetailPage = () => {
   const { classId } = useParams<{ classId: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const studentId = user?.id || 0;
 
-  const [activeTab, setActiveTab] = useState('sessions');
+  // Read tab from URL query param, fallback to 'sessions'
+  const tabFromUrl = searchParams.get('tab') || 'sessions';
+  const initialTab = VALID_TABS.includes(tabFromUrl as TabValue) ? tabFromUrl : 'sessions';
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
+
+  // Sync activeTab when URL changes (e.g., browser back/forward navigation)
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && VALID_TABS.includes(tab as TabValue)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   const classIdNumber = Number(classId);
   const isValidClassId = Number.isFinite(classIdNumber);

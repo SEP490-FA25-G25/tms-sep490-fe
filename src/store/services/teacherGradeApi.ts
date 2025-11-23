@@ -37,6 +37,9 @@ export interface TeacherStudentScoreDTO {
   isGraded: boolean;
 }
 
+// Alias for backward compatibility
+export type StudentScoreDTO = TeacherStudentScoreDTO;
+
 export interface ScoreInputDTO {
   studentId: number;
   score: number;
@@ -121,7 +124,7 @@ const baseQueryWithReauth: BaseQueryFn<
   unknown,
   FetchBaseQueryError
 > = async (args, api, extraOptions) => {
-  let result = await baseQuery(args, api, extraOptions);
+  const result = await baseQuery(args, api, extraOptions);
   if (result.error && result.error.status === 401) {
     // Handle token refresh if needed
   }
@@ -142,7 +145,7 @@ export const teacherGradeApi = createApi({
         url: `/teacher/grades/classes/${classId}/assessments`,
         params: { filter },
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: { data?: TeacherAssessmentDTO[] } | TeacherAssessmentDTO[]) => {
         // Handle both direct array and ResponseObject format
         if (Array.isArray(response)) {
           return response;
@@ -176,12 +179,12 @@ export const teacherGradeApi = createApi({
       query: ({ assessmentId, studentId }) => ({
         url: `/teacher/grades/assessments/${assessmentId}/scores/${studentId}`,
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: { data?: StudentScoreDTO } | StudentScoreDTO): StudentScoreDTO => {
         // Handle both direct object and ResponseObject format
-        if (response?.data) {
+        if (response && 'data' in response && response.data) {
           return response.data;
         }
-        return response;
+        return response as StudentScoreDTO;
       },
       providesTags: (_result, _error, { assessmentId, studentId }) => [
         { type: "Scores", id: `${assessmentId}-${studentId}` },
@@ -198,12 +201,12 @@ export const teacherGradeApi = createApi({
         method: "POST",
         body: scoreInput,
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: { data?: StudentScoreDTO } | StudentScoreDTO): StudentScoreDTO => {
         // Handle both direct object and ResponseObject format
-        if (response?.data) {
+        if (response && 'data' in response && response.data) {
           return response.data;
         }
-        return response;
+        return response as StudentScoreDTO;
       },
       invalidatesTags: (_result, _error, { assessmentId }) => [
         { type: "Scores", id: assessmentId },
@@ -234,12 +237,12 @@ export const teacherGradeApi = createApi({
       query: (classId) => ({
         url: `/teacher/grades/classes/${classId}/summary`,
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: { data?: ClassGradesSummaryDTO } | ClassGradesSummaryDTO): ClassGradesSummaryDTO => {
         // Handle both direct object and ResponseObject format
-        if (response?.data) {
+        if (response && 'data' in response && response.data) {
           return response.data;
         }
-        return response;
+        return response as ClassGradesSummaryDTO;
       },
       providesTags: (_result, _error, classId) => [
         { type: "GradesSummary", id: classId },
@@ -251,11 +254,11 @@ export const teacherGradeApi = createApi({
       query: (classId) => ({
         url: `/teacher/grades/classes/${classId}/gradebook`,
       }),
-      transformResponse: (response: any) => {
-        if (response?.data) {
+      transformResponse: (response: { data?: GradebookDTO } | GradebookDTO): GradebookDTO => {
+        if (response && 'data' in response && response.data) {
           return response.data;
         }
-        return response;
+        return response as GradebookDTO;
       },
       providesTags: (_result, _error, classId) => [
         { type: "Gradebook", id: classId },
