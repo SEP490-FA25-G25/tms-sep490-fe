@@ -3,11 +3,18 @@ import { cn } from '@/lib/utils'
 import type { ClassDetailDTO, ClassStatus, SessionDTO } from '@/types/studentClass'
 import { CLASS_STATUSES, MODALITIES } from '@/types/studentClass'
 import { BookOpen, Calendar, Clock, MapPin, Users } from 'lucide-react'
+import { AttendanceProgressRing } from './AttendanceProgressRing'
 
 interface ClassHeaderProps {
   classDetail: ClassDetailDTO
   attendanceRate?: number
-  sessionStats?: { completed: number; total: number }
+  sessionStats?: { 
+    completed: number; 
+    total: number;
+    present: number;
+    absent: number;
+    future: number;
+  }
   nextSession?: SessionDTO
 }
 
@@ -87,14 +94,40 @@ export function ClassHeader({ classDetail, attendanceRate, sessionStats, nextSes
 
             <div className="flex flex-col items-start lg:items-end gap-3">
               <div className="space-y-1 text-left lg:text-right">
-                <div className="text-sm text-muted-foreground">Điểm danh & tiến độ</div>
-                <div className="flex items-center gap-3">
-                  <span className={cn('text-3xl font-bold', attendanceAlert ? 'text-destructive' : 'text-primary')}>
-                    {attendanceDisplay}
-                  </span>
-                  <div className="text-sm text-muted-foreground">{progressDisplay}</div>
+                <div className="text-sm text-muted-foreground mb-4">Điểm danh & tiến độ</div>
+                
+                <div className="flex items-center gap-4">
+                  <div className="flex flex-col items-end gap-1 text-sm">
+                     <div className="text-muted-foreground">
+                        Đã học: <span className="font-medium text-foreground">{sessionStats?.completed ?? 0}/{sessionStats?.total ?? 0}</span>
+                     </div>
+                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1.5" title="Có mặt">
+                           <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                           <span>{sessionStats?.present ?? 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5" title="Vắng">
+                           <div className="w-2 h-2 rounded-full bg-rose-500" />
+                           <span>{sessionStats?.absent ?? 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5" title="Chưa diễn ra">
+                           <div className="w-2 h-2 rounded-full bg-slate-200 dark:bg-slate-700" />
+                           <span>{sessionStats?.future ?? 0}</span>
+                        </div>
+                     </div>
+                  </div>
+
+                  <AttendanceProgressRing 
+                    present={sessionStats?.present || 0}
+                    absent={sessionStats?.absent || 0}
+                    future={sessionStats?.future || 0}
+                    size={64}
+                    strokeWidth={6}
+                    textClassName={attendanceAlert ? 'text-destructive' : 'text-primary'}
+                  />
                 </div>
-                <p className="text-sm text-muted-foreground">
+
+                <p className="text-sm text-muted-foreground mt-1">
                   Tiếp theo: <span className="text-foreground">{formatNextSession(nextSession, classDetail.status)}</span>
                 </p>
               </div>

@@ -104,8 +104,11 @@ const ClassDetailPage = () => {
 
   const sessionStats = useMemo(() => {
     const sessions = sessionsData?.studentSessions || [];
-    const completed = sessions.filter((s: StudentSessionDTO) => s.attendanceStatus !== 'PLANNED').length;
-    return { completed, total: sessions.length };
+    const present = sessions.filter((s: StudentSessionDTO) => s.attendanceStatus === 'PRESENT').length;
+    const absent = sessions.filter((s: StudentSessionDTO) => s.attendanceStatus === 'ABSENT').length;
+    const future = sessions.filter((s: StudentSessionDTO) => s.attendanceStatus === 'PLANNED').length;
+    const completed = present + absent;
+    return { completed, total: sessions.length, present, absent, future };
   }, [sessionsData]);
 
   const averageScore = useMemo(() => {
