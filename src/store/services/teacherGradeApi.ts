@@ -95,6 +95,11 @@ export interface GradebookStudentDTO {
   averageScore?: number;
   gradedCount: number;
   totalAssessments: number;
+  attendedSessions?: number;
+  totalSessions?: number;
+  attendanceRate?: number;
+  attendanceScore?: number;
+  attendanceFinalized?: boolean;
 }
 
 export interface GradebookScoreDTO {
@@ -145,7 +150,9 @@ export const teacherGradeApi = createApi({
         url: `/teacher/grades/classes/${classId}/assessments`,
         params: { filter },
       }),
-      transformResponse: (response: { data?: TeacherAssessmentDTO[] } | TeacherAssessmentDTO[]) => {
+      transformResponse: (
+        response: { data?: TeacherAssessmentDTO[] } | TeacherAssessmentDTO[]
+      ) => {
         // Handle both direct array and ResponseObject format
         if (Array.isArray(response)) {
           return response;
@@ -165,9 +172,11 @@ export const teacherGradeApi = createApi({
       query: (assessmentId) => ({
         url: `/teacher/grades/assessments/${assessmentId}/scores`,
       }),
-      transformResponse: (response: { data: StudentScoreDTO[] }) => response.data,
+      transformResponse: (response: { data: StudentScoreDTO[] }) =>
+        response.data,
       providesTags: (_result, _error, assessmentId) => [
         { type: "Scores", id: assessmentId },
+        { type: "Scores", id: "LIST" },
       ],
     }),
 
@@ -179,9 +188,11 @@ export const teacherGradeApi = createApi({
       query: ({ assessmentId, studentId }) => ({
         url: `/teacher/grades/assessments/${assessmentId}/scores/${studentId}`,
       }),
-      transformResponse: (response: { data?: StudentScoreDTO } | StudentScoreDTO): StudentScoreDTO => {
+      transformResponse: (
+        response: { data?: StudentScoreDTO } | StudentScoreDTO
+      ): StudentScoreDTO => {
         // Handle both direct object and ResponseObject format
-        if (response && 'data' in response && response.data) {
+        if (response && "data" in response && response.data) {
           return response.data;
         }
         return response as StudentScoreDTO;
@@ -201,15 +212,18 @@ export const teacherGradeApi = createApi({
         method: "POST",
         body: scoreInput,
       }),
-      transformResponse: (response: { data?: StudentScoreDTO } | StudentScoreDTO): StudentScoreDTO => {
+      transformResponse: (
+        response: { data?: StudentScoreDTO } | StudentScoreDTO
+      ): StudentScoreDTO => {
         // Handle both direct object and ResponseObject format
-        if (response && 'data' in response && response.data) {
+        if (response && "data" in response && response.data) {
           return response.data;
         }
         return response as StudentScoreDTO;
       },
       invalidatesTags: (_result, _error, { assessmentId }) => [
         { type: "Scores", id: assessmentId },
+        { type: "Scores", id: "LIST" },
         { type: "GradesSummary", id: "LIST" },
       ],
     }),
@@ -224,9 +238,11 @@ export const teacherGradeApi = createApi({
         method: "POST",
         body: batchInput,
       }),
-      transformResponse: (response: { data: StudentScoreDTO[] }) => response.data,
+      transformResponse: (response: { data: StudentScoreDTO[] }) =>
+        response.data,
       invalidatesTags: (_result, _error, { assessmentId }) => [
         { type: "Scores", id: assessmentId },
+        { type: "Scores", id: "LIST" },
         { type: "GradesSummary", id: "LIST" },
         { type: "Assessments", id: "LIST" },
       ],
@@ -237,9 +253,11 @@ export const teacherGradeApi = createApi({
       query: (classId) => ({
         url: `/teacher/grades/classes/${classId}/summary`,
       }),
-      transformResponse: (response: { data?: ClassGradesSummaryDTO } | ClassGradesSummaryDTO): ClassGradesSummaryDTO => {
+      transformResponse: (
+        response: { data?: ClassGradesSummaryDTO } | ClassGradesSummaryDTO
+      ): ClassGradesSummaryDTO => {
         // Handle both direct object and ResponseObject format
-        if (response && 'data' in response && response.data) {
+        if (response && "data" in response && response.data) {
           return response.data;
         }
         return response as ClassGradesSummaryDTO;
@@ -254,8 +272,10 @@ export const teacherGradeApi = createApi({
       query: (classId) => ({
         url: `/teacher/grades/classes/${classId}/gradebook`,
       }),
-      transformResponse: (response: { data?: GradebookDTO } | GradebookDTO): GradebookDTO => {
-        if (response && 'data' in response && response.data) {
+      transformResponse: (
+        response: { data?: GradebookDTO } | GradebookDTO
+      ): GradebookDTO => {
+        if (response && "data" in response && response.data) {
           return response.data;
         }
         return response as GradebookDTO;
@@ -277,4 +297,3 @@ export const {
   useGetClassGradesSummaryQuery,
   useGetClassGradebookQuery,
 } = teacherGradeApi;
-

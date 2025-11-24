@@ -10,6 +10,7 @@ import {
   useGetClassGradesSummaryQuery,
   useGetClassGradebookQuery,
   type TeacherAssessmentDTO,
+  useSaveOrUpdateScoreMutation,
 } from "@/store/services/teacherGradeApi";
 import {
   Calendar,
@@ -28,7 +29,7 @@ import {
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -45,6 +46,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Award } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 const ASSESSMENT_KINDS: Record<string, string> = {
   QUIZ: "Quiz",
@@ -83,6 +85,7 @@ export default function TeacherGradesPage() {
     data: gradebook,
     isLoading: isLoadingGradebook,
     error: gradebookError,
+    refetch: refetchGradebook,
   } = useGetClassGradebookQuery(Number(classId), { skip: !classId });
 
   // Debug: Log gradebook data
@@ -103,6 +106,321 @@ export default function TeacherGradesPage() {
     studentName: string;
     studentCode: string;
   } | null>(null);
+
+  const [scoreDrafts, setScoreDrafts] = useState<
+    Record<number, { value: string; error?: string }>
+  >({});
+  const [saveStatus, setSaveStatus] = useState<
+    Record<number, "success" | "error" | undefined>
+  >({});
+  const [savingAssessmentId, setSavingAssessmentId] = useState<number | null>(
+    null
+  );
+  const [editingAssessmentId, setEditingAssessmentId] = useState<number | null>(
+    null
+  );
+  const [saveOrUpdateScore] = useSaveOrUpdateScoreMutation();
+  const activeStudent =
+    selectedStudent && gradebook
+      ? gradebook.students.find(
+          (s) => s.studentId === selectedStudent.studentId
+        )
+      : undefined;
+
+  useEffect(() => {
+    if (!selectedStudent || !gradebook) {
+      setScoreDrafts({});
+      setEditingAssessmentId(null);
+      return;
+    }
+
+    const student = gradebook.students.find(
+      (s) => s.studentId === selectedStudent.studentId
+    );
+    if (!student) return;
+
+    const drafts: Record<number, { value: string; error?: string }> = {};
+
+    gradebook.assessments.forEach((assessment) => {
+      const score = student.scores[assessment.assessmentId];
+      drafts[assessment.assessmentId] =
+        score && score.score !== null && score.score !== undefined
+          ? { value: String(score.score) }
+          : { value: "" };
+    });
+
+    setScoreDrafts(drafts);
+    setSaveStatus({});
+    setEditingAssessmentId(null);
+  }, [gradebook, selectedStudent]);
+
+  const handleStartEditing = (assessmentId: number) => {
+    setEditingAssessmentId(assessmentId);
+  };
+
+  const handleCancelEditing = (assessmentId: number) => {
+    if (!activeStudent) {
+      setEditingAssessmentId(null);
+      return;
+    }
+    const existingScore = activeStudent.scores[assessmentId];
+    setScoreDrafts((prev) => ({
+      ...prev,
+      [assessmentId]:
+        existingScore &&
+        existingScore.score !== null &&
+        existingScore.score !== undefined
+          ? { value: String(existingScore.score) }
+          : { value: "" },
+    }));
+    setSaveStatus((prev) => ({ ...prev, [assessmentId]: undefined }));
+    setEditingAssessmentId(null);
+  };
+
+  const handleScoreChange = (assessmentId: number, value: string) => {
+    setScoreDrafts((prev) => ({
+      ...prev,
+      [assessmentId]: { value, error: undefined },
+    }));
+    setSaveStatus((prev) => ({
+      ...prev,
+      [assessmentId]: undefined,
+    }));
+  };
+
+  const handleSaveScore = async (
+    assessmentId: number,
+    maxScore: number = 100
+  ) => {
+    if (!selectedStudent) return;
+    const currentDraft = scoreDrafts[assessmentId];
+    const rawValue = currentDraft?.value ?? "";
+
+    if (rawValue.trim() === "") {
+      setScoreDrafts((prev) => ({
+        ...prev,
+        [assessmentId]: {
+          value: "",
+          error: "Vui lòng nhập điểm hợp lệ",
+        },
+      }));
+      return;
+    }
+
+    const numericValue = Number(rawValue);
+    if (Number.isNaN(numericValue)) {
+      setScoreDrafts((prev) => ({
+        ...prev,
+        [assessmentId]: {
+          value: rawValue,
+          error: "Điểm phải là số",
+        },
+      }));
+      return;
+    }
+
+    if (numericValue < 0 || numericValue > maxScore) {
+      setScoreDrafts((prev) => ({
+        ...prev,
+        [assessmentId]: {
+          value: rawValue,
+          error: `Điểm phải nằm trong khoảng 0 - ${maxScore}`,
+        },
+      }));
+      return;
+    }
+
+    setSavingAssessmentId(assessmentId);
+    setSaveStatus((prev) => ({ ...prev, [assessmentId]: undefined }));
+    try {
+      await saveOrUpdateScore({
+        assessmentId,
+        scoreInput: {
+          studentId: selectedStudent.studentId,
+          score: numericValue,
+        },
+      }).unwrap();
+
+      setScoreDrafts((prev) => ({
+        ...prev,
+        [assessmentId]: { value: numericValue.toString(), error: undefined },
+      }));
+      setSaveStatus((prev) => ({ ...prev, [assessmentId]: "success" }));
+      if (editingAssessmentId === assessmentId) {
+        setEditingAssessmentId(null);
+      }
+      await refetchGradebook();
+    } catch (error) {
+      console.error("Failed to save score", error);
+      setScoreDrafts((prev) => ({
+        ...prev,
+        [assessmentId]: {
+          value: rawValue,
+          error: "Không thể lưu điểm. Vui lòng thử lại.",
+        },
+      }));
+      setSaveStatus((prev) => ({ ...prev, [assessmentId]: "error" }));
+    } finally {
+      setSavingAssessmentId(null);
+    }
+  };
+
+  const renderAssessmentRows = () => {
+    if (!gradebook || !activeStudent) {
+      return null;
+    }
+
+    return gradebook.assessments.map((assessment) => {
+      const score = activeStudent.scores[assessment.assessmentId];
+      const maxScore = assessment.maxScore || 100;
+      const percentage =
+        score && score.isGraded && score.score !== null
+          ? (Number(score.score) / maxScore) * 100
+          : null;
+      const draft = scoreDrafts[assessment.assessmentId] || {
+        value: "",
+        error: undefined,
+      };
+      const inputValue = draft.value ?? "";
+      const isSavingThisScore = savingAssessmentId === assessment.assessmentId;
+      const saveState = saveStatus[assessment.assessmentId];
+      const isEditing = editingAssessmentId === assessment.assessmentId;
+
+      return (
+        <div
+          key={assessment.assessmentId}
+          className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/30 transition-colors"
+        >
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <p className="font-semibold text-base">
+                {assessment.assessmentName}
+              </p>
+              {assessment.kind && (
+                <Badge variant="outline" className="text-xs">
+                  {ASSESSMENT_KINDS[assessment.kind] || assessment.kind}
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              {assessment.scheduledDate && (
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>
+                    {format(parseISO(assessment.scheduledDate), "dd/MM/yyyy", {
+                      locale: vi,
+                    })}
+                  </span>
+                </div>
+              )}
+              <div className="flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5" />
+                <span>Max: {maxScore}</span>
+              </div>
+            </div>
+          </div>
+          <div className="w-full max-w-[280px] text-right space-y-2">
+            {score && score.isGraded && score.score !== null ? (
+              <div className="flex items-center gap-3 justify-end">
+                <Award
+                  className={cn(
+                    "h-6 w-6",
+                    percentage !== null
+                      ? getScoreColor(Number(score.score), maxScore)
+                      : "text-muted-foreground"
+                  )}
+                />
+                <div className="text-right">
+                  <div
+                    className={cn(
+                      "text-2xl font-bold",
+                      percentage !== null
+                        ? getScoreColor(Number(score.score), maxScore)
+                        : ""
+                    )}
+                  >
+                    {Number(score.score).toFixed(1)}
+                    <span className="text-base font-normal text-muted-foreground ml-1">
+                      /{maxScore}
+                    </span>
+                  </div>
+                  {percentage !== null && (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {percentage.toFixed(1)}%
+                    </p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">Chưa nhập</div>
+            )}
+
+            {isEditing ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-end gap-2">
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min={0}
+                    max={maxScore}
+                    value={inputValue}
+                    onChange={(event) =>
+                      handleScoreChange(
+                        assessment.assessmentId,
+                        event.target.value
+                      )
+                    }
+                    className="w-28 text-right"
+                    placeholder="Nhập điểm"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      handleSaveScore(assessment.assessmentId, maxScore)
+                    }
+                    disabled={isSavingThisScore || inputValue.trim() === ""}
+                  >
+                    {isSavingThisScore ? "Đang lưu..." : "Lưu điểm"}
+                  </Button>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleCancelEditing(assessment.assessmentId)}
+                >
+                  Hủy
+                </Button>
+              </div>
+            ) : (
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleStartEditing(assessment.assessmentId)}
+                >
+                  {score && score.isGraded && score.score !== null
+                    ? "Chỉnh sửa"
+                    : "Nhập điểm"}
+                </Button>
+              </div>
+            )}
+
+            {draft.error && (
+              <p className="text-xs text-destructive">{draft.error}</p>
+            )}
+            {saveState === "success" && !draft.error && !isEditing && (
+              <p className="text-xs text-emerald-600">Đã lưu điểm</p>
+            )}
+            {saveState === "error" && !draft.error && (
+              <p className="text-xs text-destructive">
+                Lưu điểm thất bại, vui lòng thử lại.
+              </p>
+            )}
+          </div>
+        </div>
+      );
+    });
+  };
 
   // Debug: Log errors
   if (assessmentsError) {
@@ -618,22 +936,13 @@ export default function TeacherGradesPage() {
                         <TableHead className="text-center min-w-[140px]">
                           Điểm trung bình
                         </TableHead>
-                        <TableHead className="text-center min-w-[140px]">
-                          Tiến độ
+                        <TableHead className="text-center min-w-[180px]">
+                          Chuyên cần
                         </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {gradebook.students.map((student) => {
-                        const gradedCount = student.gradedCount || 0;
-                        const totalAssessments =
-                          student.totalAssessments ||
-                          gradebook.assessments.length;
-                        const progressPercentage =
-                          totalAssessments > 0
-                            ? (gradedCount / totalAssessments) * 100
-                            : 0;
-
                         return (
                           <TableRow
                             key={student.studentId}
@@ -691,31 +1000,23 @@ export default function TeacherGradesPage() {
                               )}
                             </TableCell>
                             <TableCell>
-                              <div className="space-y-1.5">
-                                <div className="flex items-center justify-center gap-2 text-sm">
-                                  <span className="font-medium">
-                                    {gradedCount}/{totalAssessments}
-                                  </span>
-                                  <span className="text-muted-foreground">
-                                    bài đã nhập
-                                  </span>
+                              {student.attendanceFinalized &&
+                              student.attendanceScore !== undefined &&
+                              student.totalSessions !== undefined ? (
+                                <div className="text-center space-y-1">
+                                  <p className="text-lg font-semibold text-primary">
+                                    {student.attendanceScore.toFixed(1)}%
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {student.attendedSessions ?? 0}/
+                                    {student.totalSessions ?? 0} buổi
+                                  </p>
                                 </div>
-                                <div className="w-full max-w-[120px] mx-auto bg-muted rounded-full h-2">
-                                  <div
-                                    className={cn(
-                                      "h-2 rounded-full transition-all",
-                                      progressPercentage === 100
-                                        ? "bg-emerald-600"
-                                        : progressPercentage > 0
-                                        ? "bg-primary"
-                                        : "bg-muted"
-                                    )}
-                                    style={{
-                                      width: `${progressPercentage}%`,
-                                    }}
-                                  />
+                              ) : (
+                                <div className="text-center text-sm text-muted-foreground">
+                                  Chưa có dữ liệu
                                 </div>
-                              </div>
+                              )}
                             </TableCell>
                           </TableRow>
                         );
@@ -730,7 +1031,12 @@ export default function TeacherGradesPage() {
             {selectedStudent && gradebook && (
               <Dialog
                 open={!!selectedStudent}
-                onOpenChange={(open) => !open && setSelectedStudent(null)}
+                onOpenChange={(open) => {
+                  if (!open) {
+                    setSelectedStudent(null);
+                    setEditingAssessmentId(null);
+                  }
+                }}
               >
                 <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
                   <DialogHeader>
@@ -744,13 +1050,10 @@ export default function TeacherGradesPage() {
                   <div className="space-y-6 mt-6">
                     {/* Student Info Card */}
                     {(() => {
-                      const student = gradebook.students.find(
-                        (s) => s.studentId === selectedStudent.studentId
-                      );
-                      const avgScore = student?.averageScore;
-                      const gradedCount = student?.gradedCount || 0;
+                      const avgScore = activeStudent?.averageScore;
+                      const gradedCount = activeStudent?.gradedCount || 0;
                       const totalAssessments =
-                        student?.totalAssessments ||
+                        activeStudent?.totalAssessments ||
                         gradebook.assessments.length;
 
                       return (
@@ -807,6 +1110,42 @@ export default function TeacherGradesPage() {
                       );
                     })()}
 
+                    {/* Attendance */}
+                    {activeStudent?.attendanceFinalized ? (
+                      <div className="rounded-lg border bg-muted/40 p-5">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-semibold">
+                              Điểm chuyên cần
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {activeStudent.attendedSessions ?? 0}/
+                              {activeStudent.totalSessions ?? 0} buổi đã tham
+                              gia
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-4xl font-bold text-primary">
+                              {activeStudent.attendanceScore !== undefined
+                                ? activeStudent.attendanceScore.toFixed(1)
+                                : "--"}
+                              <span className="text-base font-normal text-muted-foreground ml-1">
+                                %
+                              </span>
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Tỷ lệ chuyên cần
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">
+                        Điểm chuyên cần sẽ được tự động cập nhật khi lớp học
+                        hoàn thành.
+                      </div>
+                    )}
+
                     {/* Assessment Scores */}
                     {gradebook.assessments.length === 0 ? (
                       <div className="rounded-lg border border-dashed p-12 text-center">
@@ -821,155 +1160,10 @@ export default function TeacherGradesPage() {
                           Chi tiết điểm các bài kiểm tra
                         </h3>
                         <div className="space-y-2">
-                          {gradebook.assessments.map((assessment) => {
-                            const student = gradebook.students.find(
-                              (s) => s.studentId === selectedStudent.studentId
-                            );
-                            const score =
-                              student?.scores[assessment.assessmentId];
-                            const maxScore = assessment.maxScore || 100;
-                            const percentage =
-                              score && score.isGraded && score.score !== null
-                                ? (Number(score.score) / maxScore) * 100
-                                : null;
-
-                            return (
-                              <div
-                                key={assessment.assessmentId}
-                                className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/30 transition-colors"
-                              >
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-3 mb-2">
-                                    <p className="font-semibold text-base">
-                                      {assessment.assessmentName}
-                                    </p>
-                                    {assessment.kind && (
-                                      <Badge
-                                        variant="outline"
-                                        className="text-xs"
-                                      >
-                                        {ASSESSMENT_KINDS[assessment.kind] ||
-                                          assessment.kind}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                    {assessment.scheduledDate && (
-                                      <div className="flex items-center gap-1.5">
-                                        <Calendar className="h-3.5 w-3.5" />
-                                        <span>
-                                          {format(
-                                            parseISO(assessment.scheduledDate),
-                                            "dd/MM/yyyy",
-                                            { locale: vi }
-                                          )}
-                                        </span>
-                                      </div>
-                                    )}
-                                    <div className="flex items-center gap-1.5">
-                                      <FileText className="h-3.5 w-3.5" />
-                                      <span>Max: {maxScore}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  {score &&
-                                  score.isGraded &&
-                                  score.score !== null ? (
-                                    <div className="flex items-center gap-3">
-                                      <Award
-                                        className={cn(
-                                          "h-6 w-6",
-                                          percentage !== null
-                                            ? getScoreColor(
-                                                Number(score.score),
-                                                maxScore
-                                              )
-                                            : "text-muted-foreground"
-                                        )}
-                                      />
-                                      <div className="text-right">
-                                        <div
-                                          className={cn(
-                                            "text-2xl font-bold",
-                                            percentage !== null
-                                              ? getScoreColor(
-                                                  Number(score.score),
-                                                  maxScore
-                                                )
-                                              : ""
-                                          )}
-                                        >
-                                          {Number(score.score).toFixed(1)}
-                                          <span className="text-base font-normal text-muted-foreground ml-1">
-                                            /{maxScore}
-                                          </span>
-                                        </div>
-                                        {percentage !== null && (
-                                          <p className="text-xs text-muted-foreground mt-0.5">
-                                            {percentage.toFixed(1)}%
-                                          </p>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className="text-center">
-                                      <span className="text-sm text-muted-foreground">
-                                        Chưa nhập
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
+                          {renderAssessmentRows()}
                         </div>
                       </div>
                     )}
-
-                    {/* Progress Summary */}
-                    {(() => {
-                      const student = gradebook.students.find(
-                        (s) => s.studentId === selectedStudent.studentId
-                      );
-                      if (!student) return null;
-                      const gradedCount = student.gradedCount || 0;
-                      const totalAssessments =
-                        student.totalAssessments ||
-                        gradebook.assessments.length;
-                      const progressPercentage =
-                        totalAssessments > 0
-                          ? (gradedCount / totalAssessments) * 100
-                          : 0;
-
-                      return (
-                        <div className="rounded-lg border bg-muted/50 p-5">
-                          <div className="flex items-center justify-between mb-3">
-                            <h3 className="font-semibold text-sm">
-                              Tiến độ nhập điểm
-                            </h3>
-                            <span className="text-sm font-medium">
-                              {gradedCount}/{totalAssessments} bài
-                            </span>
-                          </div>
-                          <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
-                            <div
-                              className={cn(
-                                "h-3 rounded-full transition-all",
-                                progressPercentage === 100
-                                  ? "bg-emerald-600"
-                                  : progressPercentage > 0
-                                  ? "bg-primary"
-                                  : "bg-muted"
-                              )}
-                              style={{
-                                width: `${progressPercentage}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })()}
                   </div>
                 </DialogContent>
               </Dialog>
