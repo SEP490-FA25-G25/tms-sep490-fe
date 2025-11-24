@@ -4,8 +4,9 @@ import { format, parseISO, differenceInDays } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import type { StudentRequest } from '@/store/services/studentRequestApi'
-import { ArrowUpDown, XIcon } from 'lucide-react'
+import { ArrowUpDown, XIcon, MoreVertical, FileText } from 'lucide-react'
 
 // Request type badge
 function RequestTypeBadge({ type }: { type: string }) {
@@ -210,43 +211,56 @@ export const columns: ColumnDef<StudentRequest>[] = [
         cancelingId?: number | null
       }
 
+      const isCancelling = meta.isCancelling && meta.cancelingId === request.id
+
       return (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation()
-              meta.onViewDetail?.(request.id)
-            }}
-          >
-            Chi tiết
-          </Button>
-          {request.status === 'PENDING' && (
+        <Popover>
+          <PopoverTrigger asChild>
             <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation()
-                meta.onCancelRequest?.(request.id)
-              }}
-              disabled={meta.isCancelling && meta.cancelingId === request.id}
-              className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-900 dark:hover:bg-red-950"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={(e) => e.stopPropagation()}
             >
-              {meta.isCancelling && meta.cancelingId === request.id ? (
-                'Đang hủy...'
-              ) : (
-                <>
-                  <XIcon className="h-3 w-3 mr-1" />
-                  Hủy
-                </>
-              )}
+              <MoreVertical className="h-4 w-4" />
+              <span className="sr-only">Mở menu hành động</span>
             </Button>
-          )}
-        </div>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-48 p-1">
+            <div className="flex flex-col gap-0.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start gap-2 h-9 px-2"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  meta.onViewDetail?.(request.id)
+                }}
+              >
+                <FileText className="h-4 w-4" />
+                Xem chi tiết
+              </Button>
+              {request.status === 'PENDING' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start gap-2 h-9 px-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    meta.onCancelRequest?.(request.id)
+                  }}
+                  disabled={isCancelling}
+                >
+                  <XIcon className="h-4 w-4" />
+                  {isCancelling ? 'Đang hủy...' : 'Hủy yêu cầu'}
+                </Button>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
       )
     },
-    size: 120,
+    size: 80,
     enableSorting: false,
   },
 ]
