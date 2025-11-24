@@ -13,8 +13,10 @@ export interface LevelDTO {
   code: string
   name: string
   description: string
-  expectedDurationHours: number
+  durationHours: number
   sortOrder: number
+  subjectName?: string
+  subjectCode?: string
 }
 
 export interface SubjectWithLevelsDTO {
@@ -25,6 +27,20 @@ export interface SubjectWithLevelsDTO {
   status: string
   createdAt: string
   levels: LevelDTO[]
+}
+
+export interface CreateSubjectRequest {
+  code: string
+  name: string
+  description?: string
+}
+
+export interface CreateLevelRequest {
+  subjectId: number
+  code: string
+  name: string
+  description?: string
+  durationHours?: number
 }
 
 export interface ApiResponse<T = unknown> {
@@ -107,9 +123,46 @@ export const curriculumApi = createApi({
       }),
       providesTags: ['Curriculum'],
     }),
+    // Create new subject
+    createSubject: builder.mutation<ApiResponse<SubjectWithLevelsDTO>, CreateSubjectRequest>({
+      query: (body) => ({
+        url: '/curriculum/subjects',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Curriculum'],
+    }),
+    // Create new level
+    createLevel: builder.mutation<ApiResponse<LevelDTO>, CreateLevelRequest>({
+      query: (body) => ({
+        url: '/curriculum/levels',
+        method: 'POST',
+        body,
+      }),
+    }),
+    // Get levels (optionally filtered by subject)
+    getLevels: builder.query<ApiResponse<LevelDTO[]>, number | undefined>({
+      query: (subjectId) => ({
+        url: '/curriculum/levels',
+        method: 'GET',
+        params: subjectId ? { subjectId } : undefined,
+      }),
+      providesTags: ['Curriculum'],
+    }),
+    // Get standard timeslot duration
+    getTimeslotDuration: builder.query<ApiResponse<number>, void>({
+      query: () => ({
+        url: '/curriculum/timeslot-duration',
+        method: 'GET',
+      }),
+    }),
   }),
 })
 
 export const {
   useGetSubjectsWithLevelsQuery,
+  useCreateSubjectMutation,
+  useCreateLevelMutation,
+  useGetLevelsQuery,
+  useGetTimeslotDurationQuery,
 } = curriculumApi

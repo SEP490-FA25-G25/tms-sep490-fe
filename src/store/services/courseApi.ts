@@ -199,6 +199,62 @@ export interface SessionMaterial {
   totalMaterials: number;
 }
 
+export interface CourseDTO {
+  id: number;
+  code: string;
+  name: string;
+}
+
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+export interface CreateCourseRequest {
+  basicInfo: {
+    subjectId: number;
+    levelId: number;
+    code: string;
+    name: string;
+    description?: string;
+    prerequisites?: string;
+    durationHours: number;
+    durationWeeks: number;
+    scoreScale?: string;
+    targetAudience?: string;
+    teachingMethods?: string;
+    effectiveDate?: string;
+    sessionPerWeek?: number;
+    hoursPerSession?: number;
+  };
+  clos?: {
+    code: string;
+    description: string;
+  }[];
+  structure?: {
+    phases: {
+      name: string;
+      sessions: {
+        topic: string;
+        studentTask?: string;
+        mappedCLOs?: string[];
+      }[];
+    }[];
+  };
+  assessments?: {
+    name: string;
+    type: string;
+    durationMinutes: number;
+    mappedCLOs?: string[];
+  }[];
+  materials?: {
+    name: string;
+    type: string;
+    url: string;
+  }[];
+}
+
 export const courseApi = createApi({
   reducerPath: 'courseApi',
   baseQuery: baseQueryWithReauth,
@@ -267,6 +323,38 @@ export const courseApi = createApi({
       }),
       transformResponse: (response: { data: boolean }) => response.data,
     }),
+
+    // Create new course
+    createCourse: builder.mutation<void, CreateCourseRequest>({
+      query: (body) => ({
+        url: '/courses',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Course'],
+    }),
+    updateCourse: builder.mutation<void, { id: number; data: CreateCourseRequest }>({
+      query: ({ id, data }) => ({
+        url: `/courses/${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [{ type: 'Course', id }],
+    }),
+    getCourseDetails: builder.query<ApiResponse<any>, number>({
+      query: (id) => `/courses/${id}`,
+      providesTags: (_result, _error, id) => [{ type: 'Course', id }],
+    }),
+    // Get all courses (optionally filtered)
+    getAllCourses: builder.query<CourseDTO[], { subjectId?: number; levelId?: number } | void>({
+      query: (params) => ({
+        url: '/courses',
+        method: 'GET',
+        params: params || undefined,
+      }),
+      transformResponse: (response: { data: CourseDTO[] }) => response.data,
+      providesTags: ['Course'],
+    }),
   }),
 });
 
@@ -280,4 +368,8 @@ export const {
   useGetCourseCLOsQuery,
   useGetStudentCourseProgressQuery,
   useCheckMaterialAccessQuery,
+  useCreateCourseMutation,
+  useUpdateCourseMutation,
+  useGetAllCoursesQuery,
+  useGetCourseDetailsQuery,
 } = courseApi;

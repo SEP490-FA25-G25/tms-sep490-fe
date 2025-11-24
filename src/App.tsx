@@ -32,6 +32,12 @@ import EditClassPage from './app/academic/classes/[id]/edit/page'
 import CenterHeadApprovalsPage from './app/center-head/approvals/page'
 import AcademicStudentRequestsPage from './app/academic/student-requests/page'
 import AcademicTeacherRequestsPage from './app/academic/teacher-requests/page'
+import CurriculumPage from './features/curriculum/pages/CurriculumPage'
+import CreateCoursePage from './features/curriculum/pages/CreateCoursePage'
+import CreateSubjectPage from './features/curriculum/pages/CreateSubjectPage'
+import CreateLevelPage from './features/curriculum/pages/CreateLevelPage'
+import CurriculumCourseDetailPage from './features/curriculum/pages/CourseDetailPage'
+import EditCoursePage from './features/curriculum/pages/EditCoursePage'
 import { Toaster } from '@/components/ui/sonner'
 
 function App() {
@@ -241,6 +247,56 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={['ACADEMIC_AFFAIR', 'ADMIN', 'MANAGER', 'CENTER_HEAD']}>
                   <AcademicTeacherRequestsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Curriculum routes */}
+            <Route
+              path="/curriculum"
+              element={
+                <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
+                  <CurriculumPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/curriculum/courses/create"
+              element={
+                <ProtectedRoute requiredRoles={['SUBJECT_LEADER']}>
+                  <CreateCoursePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/curriculum/subjects/create"
+              element={
+                <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
+                  <CreateSubjectPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/curriculum/levels/create"
+              element={
+                <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
+                  <CreateLevelPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/curriculum/courses/:id"
+              element={
+                <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
+                  <CurriculumCourseDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/curriculum/courses/:id/edit"
+              element={
+                <ProtectedRoute requiredRoles={['SUBJECT_LEADER']}>
+                  <EditCoursePage />
                 </ProtectedRoute>
               }
             />

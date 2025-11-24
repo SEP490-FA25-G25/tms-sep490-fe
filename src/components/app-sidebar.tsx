@@ -136,7 +136,7 @@ const roleBasedNav = {
       },
       {
         title: "Quản lý môn học",
-        url: "/subject/courses",
+        url: "/curriculum",
         icon: BookOpenIcon,
       },
       {
@@ -326,9 +326,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
 
   // Get navigation items based on user's highest priority role
-  const getNavigationForRole = () => {
+  const getHighestRole = () => {
     if (!user?.roles || user.roles.length === 0) {
-      return { navMain: [] };
+      return undefined;
     }
 
     // Find highest priority role
@@ -343,19 +343,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       [ROLES.STUDENT]: 1,
     };
 
-    const highestRole = user.roles.reduce((highest, current) =>
+    return user.roles.reduce((highest, current) =>
       rolePriorities[current as keyof typeof rolePriorities] >
-      rolePriorities[highest as keyof typeof rolePriorities]
+        rolePriorities[highest as keyof typeof rolePriorities]
         ? current
         : highest
     );
-
-    return (
-      roleBasedNav[highestRole as keyof typeof roleBasedNav] || { navMain: [] }
-    );
   };
 
-  const { navMain } = getNavigationForRole();
+  const highestRole = getHighestRole();
+  const navMain = highestRole ? roleBasedNav[highestRole as keyof typeof roleBasedNav]?.navMain || [] : [];
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -384,6 +381,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             name: user?.fullName || "Người dùng",
             email: user?.email || "",
             avatar: "/avatars/default.jpg",
+            role: highestRole,
           }}
         />
       </SidebarFooter>

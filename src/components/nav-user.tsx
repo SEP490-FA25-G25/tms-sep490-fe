@@ -36,6 +36,7 @@ export function NavUser({
     name: string
     email: string
     avatar: string
+    role?: string
   }
 }) {
   const { isMobile } = useSidebar()
@@ -64,6 +65,9 @@ export function NavUser({
                 <span className="truncate font-medium">{user.name}</span>
                 <span className="truncate text-xs text-muted-foreground">
                   {user.email}
+                </span>
+                <span className="truncate text-xs text-blue-500 font-semibold">
+                  {user.role}
                 </span>
               </div>
               <MoreVerticalIcon className="ml-auto size-4" />
