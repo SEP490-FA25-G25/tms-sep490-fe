@@ -83,10 +83,10 @@ export interface BranchInfo {
 }
 
 export interface TeacherSummary {
-  id: number;
-  name: string;
-  email?: string;
-  isPrimary: boolean;
+  teacherId: number;
+  teacherName: string;
+  teacherEmail?: string;
+  isPrimaryInstructor: boolean;
 }
 
 export interface EnrollmentSummary {

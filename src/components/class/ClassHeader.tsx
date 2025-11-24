@@ -51,7 +51,7 @@ const formatNextSession = (nextSession?: SessionDTO, status?: ClassStatus) => {
 }
 
 export function ClassHeader({ classDetail, attendanceRate, sessionStats, nextSession }: ClassHeaderProps) {
-  const primaryTeacher = classDetail.teachers.find((t) => t.isPrimary) ?? classDetail.teachers[0]
+  const primaryTeacher = classDetail.teachers.find((t) => t.isPrimaryInstructor) ?? classDetail.teachers[0]
   const teacherCount = classDetail.teachers.length
   const attendanceAlert = attendanceRate !== undefined && attendanceRate < 80
   const scheduleDisplay = classDetail.scheduleSummary || 'Chưa có lịch'
@@ -138,7 +138,7 @@ export function ClassHeader({ classDetail, attendanceRate, sessionStats, nextSes
                 <span className="text-sm font-medium">Giáo viên</span>
               </div>
               <p className="text-sm font-semibold text-foreground">
-                {primaryTeacher?.name || 'Chưa phân công'}
+                {primaryTeacher?.teacherName || 'Chưa phân công'}
                 {teacherCount > 1 && (
                   <span className="text-xs text-muted-foreground"> +{teacherCount - 1}</span>
                 )}
