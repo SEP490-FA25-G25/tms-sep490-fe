@@ -20,7 +20,6 @@ import {
   Phone,
   MapPin,
   AlertCircle,
-  FileText,
   User,
   Mail,
   Facebook,

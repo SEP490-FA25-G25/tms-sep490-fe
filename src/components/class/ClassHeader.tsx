@@ -53,11 +53,7 @@ const formatNextSession = (nextSession?: SessionDTO, status?: ClassStatus) => {
 export function ClassHeader({ classDetail, attendanceRate, sessionStats, nextSession }: ClassHeaderProps) {
   const primaryTeacher = classDetail.teachers.find((t) => t.isPrimary) ?? classDetail.teachers[0]
   const teacherCount = classDetail.teachers.length
-  const attendanceDisplay =
-    attendanceRate !== undefined && attendanceRate !== null ? `${attendanceRate.toFixed(1)}%` : 'Chưa cập nhật'
   const attendanceAlert = attendanceRate !== undefined && attendanceRate < 80
-  const progressDisplay =
-    sessionStats && sessionStats.total > 0 ? `${sessionStats.completed}/${sessionStats.total} buổi` : 'Đang cập nhật'
   const scheduleDisplay = classDetail.scheduleSummary || 'Chưa có lịch'
   const locationDisplay = classDetail.modality === 'ONLINE' ? 'Online' : classDetail.branch?.name || '—'
   const enrollment = classDetail.enrollmentSummary?.totalEnrolled ?? 0

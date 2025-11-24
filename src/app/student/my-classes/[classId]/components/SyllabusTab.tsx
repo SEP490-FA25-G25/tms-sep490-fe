@@ -19,9 +19,7 @@ import {
   Image,
   Target,
   Award,
-  Users,
   Clock,
-  GraduationCap,
 } from 'lucide-react';
 import { useGetCourseSyllabusQuery, useGetCourseMaterialsQuery } from '@/store/services/courseApi';
 import type { ClassDetailDTO } from '@/types/studentClass';
@@ -176,43 +174,68 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
               <p className="text-sm text-muted-foreground mt-1">Mã: {course.code}</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                   <Clock className="h-4 w-4" />
-                  <span>Hình thức</span>
+                  <span>Tổng thời gian học</span>
                 </div>
                 <p className="text-base text-foreground">
-                  {classDetail.modality === 'ONLINE' ? 'Trực tuyến' :
-                   classDetail.modality === 'OFFLINE' ? 'Tại trung tâm' : 'Kết hợp'}
+                  {courseSyllabus?.totalHours || 0} giờ
+                  {courseSyllabus?.durationWeeks && ` (${courseSyllabus.durationWeeks} tuần)`}
                 </p>
               </div>
 
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Users className="h-4 w-4" />
-                  <span>Sĩ số</span>
+                  <Target className="h-4 w-4" />
+                  <span>Ca học</span>
                 </div>
                 <p className="text-base text-foreground">
-                  {classDetail.enrollmentSummary.totalEnrolled} / {classDetail.maxCapacity} học viên
-                </p>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <GraduationCap className="h-4 w-4" />
-                  <span>Giáo viên</span>
-                </div>
-                <p className="text-base text-foreground">
-                  {classDetail.teachers.find(t => t.isPrimary)?.name || classDetail.teachers[0]?.name || 'Chưa phân công'}
+                  {courseSyllabus?.sessionPerWeek || 0} buổi/tuần
+                  {courseSyllabus?.hoursPerSession && ` • ${courseSyllabus.hoursPerSession} giờ/buổi`}
                 </p>
               </div>
             </div>
 
-            <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-2">Thời gian học</h4>
-              <p className="text-base text-foreground">{classDetail.scheduleSummary}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {courseSyllabus?.subjectName && (
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Môn học</h4>
+                  <p className="text-base text-foreground">{courseSyllabus.subjectName}</p>
+                </div>
+              )}
+
+              {courseSyllabus?.levelName && (
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Trình độ</h4>
+                  <p className="text-base text-foreground">{courseSyllabus.levelName}</p>
+                </div>
+              )}
             </div>
+
+            {courseSyllabus?.prerequisites && (
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Điều kiện tiên quyết</h4>
+                <p className="text-base text-foreground">{courseSyllabus.prerequisites}</p>
+              </div>
+            )}
+
+            {courseSyllabus?.teachingMethods && (
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Phương pháp giảng dạy</h4>
+                <p className="text-base text-foreground">{courseSyllabus.teachingMethods}</p>
+              </div>
+            )}
+
+            {courseSyllabus?.description && (
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Mô tả khóa học</h4>
+                <p className="text-base text-foreground">
+                  {courseSyllabus.description}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
