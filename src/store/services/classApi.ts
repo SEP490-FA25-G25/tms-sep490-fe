@@ -30,8 +30,8 @@ export interface ClassListItemDTO {
   modality: 'ONLINE' | 'OFFLINE' | 'HYBRID'
   startDate: string // LocalDate from backend
   plannedEndDate: string // LocalDate from backend
-  status: 'DRAFT' | 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
-  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
+  status: 'DRAFT' | 'SUBMITTED' | 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
+  approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | null
   maxCapacity: number
   currentEnrolled: number
   availableSlots: number
@@ -112,7 +112,7 @@ export interface ClassListRequest {
   size?: number // Backend uses 'size' instead of 'limit'
   branchIds?: number[] // Backend expects list of branch IDs
   courseId?: number // Backend uses courseId instead of subjectId
-  status?: 'DRAFT' | 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED' // NEW: Filter by class status
+  status?: 'DRAFT' | 'SUBMITTED' | 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED' // NEW: Filter by class status
   approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' // NEW: Filter by approval status
   modality?: 'ONLINE' | 'OFFLINE' | 'HYBRID'
   search?: string
@@ -196,11 +196,11 @@ export interface ClassDetailDTO {
   actualEndDate?: string // LocalDate from backend
   scheduleDays: number[] // Short[] from backend
   maxCapacity: number
-  status: 'DRAFT' | 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
-  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
+  status: 'DRAFT' | 'SUBMITTED' | 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
+  approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | null
   rejectionReason?: string
-  submittedAt: string // LocalDate from backend
-  decidedAt?: string // LocalDate from backend
+  submittedAt?: string | null // LocalDate from backend
+  decidedAt?: string | null // LocalDate from backend
   decidedByName?: string
   room: string
   teachers: TeacherSummaryDTO[] // List of all teachers teaching this class

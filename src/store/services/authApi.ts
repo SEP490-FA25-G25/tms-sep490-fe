@@ -76,29 +76,58 @@ export const baseQueryWithReauth: BaseQueryFn<
       extraOptions
     )
 
-    if (refreshResult.data) {
-      // Update auth state with new tokens
-      const authData = refreshResult.data as LoginResponse
-      if (authData?.data) {
-        api.dispatch({
-          type: 'auth/setCredentials',
-          payload: {
-            accessToken: authData.data.accessToken,
-            refreshToken: authData.data.refreshToken,
-            user: {
-              id: authData.data.userId,
-              email: authData.data.email,
-              fullName: authData.data.fullName,
-              roles: authData.data.roles,
-            },
-          },
-        })
-      }
+    const refreshData = refreshResult.data as LoginResponse | undefined
+    const refreshSucceeded = Boolean(refreshData?.success && refreshData.data)
 
-      // Retry the original request with new token
-      result = await baseQuery(args, api, extraOptions)
+    if (!refreshSucceeded || refreshResult.error) {
+      // Refresh failed => token hết hạn/không hợp lệ -> đăng xuất và trả lỗi
+      api.dispatch({ type: 'auth/logout' })
+      return result
+    }
+
+    // Refresh thành công -> cập nhật token rồi retry request gốc với token mới
+    const nextAccessToken = refreshData.data.accessToken
+
+    api.dispatch({
+      type: 'auth/setCredentials',
+      payload: {
+        accessToken: nextAccessToken,
+        refreshToken: refreshData.data.refreshToken,
+        user: {
+          id: refreshData.data.userId,
+          email: refreshData.data.email,
+          fullName: refreshData.data.fullName,
+          roles: refreshData.data.roles,
+        },
+      },
+    })
+
+    // Bảo hiểm: ép header Authorization dùng token mới khi retry
+    if (typeof args === 'string') {
+      result = await baseQuery(
+        {
+          url: args,
+          headers: { authorization: `Bearer ${nextAccessToken}` },
+        },
+        api,
+        extraOptions
+      )
     } else {
-      // Refresh failed, logout user
+      result = await baseQuery(
+        {
+          ...args,
+          headers: {
+            ...(args.headers || {}),
+            authorization: `Bearer ${nextAccessToken}`,
+          },
+        },
+        api,
+        extraOptions
+      )
+    }
+
+    // Nếu retry vẫn 401 thì buộc đăng xuất để tránh lặp 401
+    if (result.error && result.error.status === 401) {
       api.dispatch({ type: 'auth/logout' })
     }
   }
@@ -142,4 +171,3 @@ export const {
   useRefreshTokenMutation,
   useLogoutMutation,
 } = authApi
-

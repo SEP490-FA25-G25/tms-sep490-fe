@@ -26,12 +26,6 @@ const formatDate = (dateString: string) => {
   }
 }
 
-const StatusBadge = ({ label, active }: { label: string; active: boolean }) => (
-  <Badge variant={active ? 'default' : 'outline'} className={cn(!active && 'text-muted-foreground')}>
-    {active ? `Đã ${label}` : `Chưa ${label}`}
-  </Badge>
-)
-
 export function Step2ReviewSessions({ classId, onBack, onContinue, onCancelKeepDraft, onCancelDelete }: Step2ReviewSessionsProps) {
   const [selectedWeek, setSelectedWeek] = useState<number | 'all'>('all')
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'missingTimeSlot' | 'missingResource' | 'missingTeacher'>('all')
@@ -86,15 +80,15 @@ export function Step2ReviewSessions({ classId, onBack, onContinue, onCancelKeepD
     const sourceWeeks = overview.groupedByWeek?.length
       ? overview.groupedByWeek
       : [
-          {
-            weekNumber: 1,
-            weekRange: overview.dateRange
-              ? `${formatDate(overview.dateRange.startDate)} - ${formatDate(overview.dateRange.endDate)}`
-              : 'Không xác định',
-            sessionCount: overview.sessions?.length ?? 0,
-            sessionIds: overview.sessions?.map((session) => session.sessionId) ?? [],
-          },
-        ]
+        {
+          weekNumber: 1,
+          weekRange: overview.dateRange
+            ? `${formatDate(overview.dateRange.startDate)} - ${formatDate(overview.dateRange.endDate)}`
+            : 'Không xác định',
+          sessionCount: overview.sessions?.length ?? 0,
+          sessionIds: overview.sessions?.map((session) => session.sessionId) ?? [],
+        },
+      ]
 
     return sourceWeeks
       .filter((week) => selectedWeek === 'all' || week.weekNumber === selectedWeek)
@@ -238,11 +232,6 @@ export function Step2ReviewSessions({ classId, onBack, onContinue, onCancelKeepD
                             Khung giờ: {(session.timeSlotInfo as { label?: string })?.label || 'Đã gán'}
                           </p>
                         )}
-                      </div>
-                      <div className="flex gap-2 text-xs flex-wrap">
-                        <StatusBadge label="Khung giờ" active={session.hasTimeSlot} />
-                        <StatusBadge label="Tài nguyên" active={session.hasResource} />
-                        <StatusBadge label="Giáo viên" active={session.hasTeacher} />
                       </div>
                     </div>
                   </div>

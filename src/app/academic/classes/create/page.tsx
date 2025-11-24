@@ -6,5 +6,5 @@ import { CreateClassWizard } from './components/CreateClassWizard'
  * Role: ACADEMIC_AFFAIR
  */
 export default function CreateClassPage() {
-  return <CreateClassWizard />
+  return <CreateClassWizard mode="create" />
 }

@@ -25,7 +25,9 @@ import StudentAttendanceReportOverviewPage from './app/student/attendance-report
 import StudentClassAttendanceReportPage from './app/student/attendance-report/[classId]/page'
 import AcademicClassesPage from './app/academic/classes/page'
 import AcademicClassDetailPage from './app/academic/classes/[id]/page'
+
 import CreateClassPage from './app/academic/classes/create/page'
+import EditClassPage from './app/academic/classes/[id]/edit/page'
 
 import CenterHeadApprovalsPage from './app/center-head/approvals/page'
 import AcademicStudentRequestsPage from './app/academic/student-requests/page'
@@ -215,6 +217,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={['ACADEMIC_AFFAIR', 'ADMIN', 'MANAGER', 'CENTER_HEAD']}>
                   <AcademicClassDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academic/classes/:id/edit"
+              element={
+                <ProtectedRoute requiredRoles={['ACADEMIC_AFFAIR', 'ADMIN', 'MANAGER', 'CENTER_HEAD']}>
+                  <EditClassPage />
                 </ProtectedRoute>
               }
             />

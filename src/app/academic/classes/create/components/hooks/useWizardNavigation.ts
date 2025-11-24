@@ -18,15 +18,16 @@ interface UseWizardNavigationReturn {
  * Hook for managing wizard navigation state
  * Uses URL params to persist current step and classId
  */
-export function useWizardNavigation(): UseWizardNavigationReturn {
+export function useWizardNavigation(initialClassId?: number | null): UseWizardNavigationReturn {
   const [searchParams, setSearchParams] = useSearchParams()
   const [completedSteps, setCompletedSteps] = useState<number[]>([])
 
   // Parse step from URL (default to 1)
   const currentStep = (parseInt(searchParams.get('step') || '1') as WizardStep) || 1
 
-  // Parse classId from URL (nullable)
-  const classId = searchParams.get('classId') ? parseInt(searchParams.get('classId')!) : null
+  // Parse classId from URL (nullable) or use initialClassId
+  const paramClassId = searchParams.get('classId') ? parseInt(searchParams.get('classId')!) : null
+  const classId = initialClassId ?? paramClassId
 
   // Validate step is in range 1-7
   useEffect(() => {

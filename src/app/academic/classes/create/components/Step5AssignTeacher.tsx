@@ -402,6 +402,20 @@ export function Step5AssignTeacher({
   const { data: sessionsData, refetch: refetchSessions } = useGetClassSessionsQuery(classId ?? 0, {
     skip: !classId,
   })
+  const existingTeacherAssignments = useMemo(() => {
+    const sessions = sessionsData?.data?.sessions ?? []
+    const map: Record<number, string[]> = {}
+    sessions.forEach((session) => {
+      const day = resolveSessionDay(session)
+      if (day === undefined) return
+      const names = getSessionTeacherNames(session)
+      if (names.length === 0) return
+      const current = new Set(map[day] ?? [])
+      names.forEach((n) => current.add(n))
+      map[day] = Array.from(current)
+    })
+    return map
+  }, [sessionsData])
   const isTeachersLoading = assignmentMode === 'single' ? isSingleLoading : isDayLoading
   const isTeachersError = assignmentMode === 'single' ? isSingleError : isDayError
   const refetchTeachers = assignmentMode === 'single' ? refetchSingleTeachers : refetchDayTeachers
@@ -634,6 +648,27 @@ export function Step5AssignTeacher({
 
   return (
     <div className="space-y-6">
+      {Object.keys(existingTeacherAssignments).length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Phân công hiện tại</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Giáo viên đã được gán cho các buổi. Bạn có thể gán lại để thay thế toàn bộ hoặc chỉ một số ngày.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {Object.entries(existingTeacherAssignments).map(([day, names]) => (
+              <div key={day} className="flex flex-wrap items-center gap-2">
+                <Badge variant="outline">Ngày {day}</Badge>
+                <span className="text-sm text-muted-foreground">Đã gán:</span>
+                {names.map((name) => (
+                  <Badge key={name} variant="secondary">{name}</Badge>
+                ))}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
       <Card>
         <CardHeader>
           <CardTitle>Bước 5: Gán giáo viên</CardTitle>

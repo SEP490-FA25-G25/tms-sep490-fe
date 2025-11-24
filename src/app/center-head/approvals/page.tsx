@@ -30,23 +30,6 @@ const approvalStatusLabel = (status?: string) => {
   }
 }
 
-const classStatusLabel = (status?: string) => {
-  switch (status) {
-    case 'DRAFT':
-      return 'Nháp'
-    case 'SCHEDULED':
-      return 'Đã lên lịch'
-    case 'ONGOING':
-      return 'Đang diễn ra'
-    case 'COMPLETED':
-      return 'Hoàn thành'
-    case 'CANCELLED':
-      return 'Đã hủy'
-    default:
-      return status || 'Không xác định'
-  }
-}
-
 const approvalBadgeVariant = (status?: string) => {
   switch (status) {
     case 'PENDING':
@@ -57,6 +40,25 @@ const approvalBadgeVariant = (status?: string) => {
       return 'destructive'
     default:
       return 'outline'
+  }
+}
+
+const classStatusLabel = (status?: string) => {
+  switch (status) {
+    case 'DRAFT':
+      return 'Nháp'
+    case 'SUBMITTED':
+      return 'Đã gửi duyệt'
+    case 'SCHEDULED':
+      return 'Đã lên lịch'
+    case 'ONGOING':
+      return 'Đang diễn ra'
+    case 'COMPLETED':
+      return 'Hoàn thành'
+    case 'CANCELLED':
+      return 'Đã hủy'
+    default:
+      return status || 'Không xác định'
   }
 }
 
@@ -117,7 +119,7 @@ export default function CenterHeadApprovalsPage() {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [branchFilter, setBranchFilter] = useState<string>('all')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('DRAFT')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('SUBMITTED')
   const [approvalFilter, setApprovalFilter] = useState<ApprovalFilter>('PENDING')
   const [page, setPage] = useState(0)
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null)
@@ -132,14 +134,14 @@ export default function CenterHeadApprovalsPage() {
       page,
       size: PAGE_SIZE,
       search: debouncedSearch || undefined,
-      status: statusFilter === 'all' ? undefined : statusFilter,
-      approvalStatus: approvalFilter === 'all' ? undefined : approvalFilter,
-      branchIds: branchFilter === 'all' ? undefined : [Number(branchFilter)],
-      sort: 'submittedAt',
-      sortDir: 'desc',
-    }),
-    [page, debouncedSearch, statusFilter, approvalFilter, branchFilter]
-  )
+    status: statusFilter === 'all' ? undefined : statusFilter,
+    approvalStatus: approvalFilter === 'all' ? undefined : approvalFilter,
+    branchIds: branchFilter === 'all' ? undefined : [Number(branchFilter)],
+    sort: 'submittedAt',
+    sortDir: 'desc',
+  }),
+  [page, debouncedSearch, statusFilter, approvalFilter, branchFilter]
+)
 
   const { data: listResponse, isLoading, isFetching, refetch } = useGetClassesQuery(queryArgs)
   const { data: branchesResponse } = useGetBranchesQuery()
@@ -147,7 +149,7 @@ export default function CenterHeadApprovalsPage() {
   const { data: pendingSummary } = useGetClassesQuery({
     page: 0,
     size: 1,
-    status: 'DRAFT',
+    status: 'SUBMITTED',
     approvalStatus: 'PENDING',
     sort: 'submittedAt',
     sortDir: 'desc',

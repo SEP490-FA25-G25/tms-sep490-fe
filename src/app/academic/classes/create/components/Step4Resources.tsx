@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useAssignResourcesMutation, useLazyGetResourcesQuery } from '@/store/services/classCreationApi'
+import { useAssignResourcesMutation, useLazyGetResourcesQuery, useGetClassSessionsQuery } from '@/store/services/classCreationApi'
 import { useGetClassByIdQuery } from '@/store/services/classApi'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
@@ -85,6 +85,7 @@ export function Step4Resources({
   onCancelDelete,
 }: Step4ResourcesProps) {
   const { data: classDetail } = useGetClassByIdQuery(classId ?? 0, { skip: !classId })
+  const { data: sessionsData } = useGetClassSessionsQuery(classId ?? 0, { skip: !classId })
   const scheduleDays = classDetail?.data?.scheduleDays ?? DEFAULT_DAYS
   const sortedDays = useMemo(() => Array.from(new Set(scheduleDays)).sort(), [scheduleDays])
 
@@ -101,11 +102,26 @@ export function Step4Resources({
 
   useEffect(() => {
     const initial: Record<number, number | ''> = {}
+    const sessions = sessionsData?.data?.sessions ?? []
+    const dayToResource: Record<number, Record<number, number>> = {}
+    sessions.forEach((session) => {
+      const day = session.dayOfWeekNumber
+      const resourceId = session.resourceId
+      if (day === undefined || day === null || !resourceId) return
+      if (!dayToResource[day]) dayToResource[day] = {}
+      dayToResource[day][resourceId] = (dayToResource[day][resourceId] || 0) + 1
+    })
     sortedDays.forEach((day) => {
-      initial[day] = ''
+      const counts = dayToResource[day]
+      if (counts) {
+        const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
+        initial[day] = best ? Number(best[0]) : ''
+      } else {
+        initial[day] = ''
+      }
     })
     setSelectedResources(initial)
-  }, [sortedDays])
+  }, [sortedDays, sessionsData])
 
   useEffect(() => {
     if (!classId) return

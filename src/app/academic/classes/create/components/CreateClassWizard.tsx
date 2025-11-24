@@ -16,7 +16,14 @@ import { Step7Submit } from './Step7Submit'
  * Main wizard container for Create Class workflow
  * Manages step navigation and renders appropriate step component
  */
-export function CreateClassWizard() {
+interface CreateClassWizardProps {
+  classId?: number
+  mode?: 'create' | 'edit' // explicit mode to avoid guessing by classId
+}
+
+export function CreateClassWizard({ classId: propClassId, mode: modeProp }: CreateClassWizardProps = {}) {
+  // Chốt mode ngay khi mount để không đổi khi classId được sinh ra sau Step 1 (create flow)
+  const [mode] = useState<'create' | 'edit'>(() => modeProp ?? (propClassId ? 'edit' : 'create'))
   const navigate = useNavigate()
   const {
     currentStep,
@@ -24,7 +31,7 @@ export function CreateClassWizard() {
     completedSteps,
     navigateToStep,
     markStepComplete,
-  } = useWizardNavigation()
+  } = useWizardNavigation(propClassId)
   const [timeSlotSelections, setTimeSlotSelections] = useState<Record<number, number>>({})
   const [deleteClass] = useDeleteClassMutation()
 
@@ -56,7 +63,7 @@ export function CreateClassWizard() {
       <div className="container max-w-7xl mx-auto py-8 px-4">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">Tạo Lớp Học Mới</h1>
+          <h1 className="text-3xl font-bold">{mode === 'edit' ? 'Chỉnh sửa Lớp Học' : 'Tạo Lớp Học Mới'}</h1>
           <p className="text-muted-foreground mt-2">
             Hoàn thành 7 bước để tạo lớp học mới và gửi duyệt
           </p>
@@ -76,7 +83,7 @@ export function CreateClassWizard() {
 
         {/* Step Content */}
         <div className="mt-8 bg-card rounded-lg border p-8 shadow-sm">
-          {currentStep === 1 && <Step1BasicInfo onSuccess={handleStep1Success} onCancel={handleCancelKeepDraft} />}
+          {currentStep === 1 && <Step1BasicInfo classId={classId} onSuccess={handleStep1Success} onCancel={handleCancelKeepDraft} />}
 
           {currentStep === 2 && (
             <Step2ReviewSessions

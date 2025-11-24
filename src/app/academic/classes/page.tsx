@@ -69,7 +69,11 @@ export default function ClassListPage() {
     data: response,
     isLoading,
     error
-  } = useGetClassesQuery(queryParams)
+  } = useGetClassesQuery(queryParams, {
+    // Force refetch when quay lại màn hình để thấy lớp mới/lưu nháp ngay,
+    // không phụ thuộc cache cũ của RTK Query
+    refetchOnMountOrArgChange: true,
+  })
 
   const handleFilterChange = (key: keyof FilterState, value: string | number | undefined) => {
     setFilters(prev => ({ ...prev, [key]: value }))
@@ -91,6 +95,8 @@ export default function ClassListPage() {
     switch (status) {
       case 'DRAFT':
         return 'bg-slate-100 text-slate-800 border-slate-200'
+      case 'SUBMITTED':
+        return 'bg-amber-100 text-amber-800 border-amber-200'
       case 'ONGOING':
         return 'bg-green-100 text-green-800 border-green-200'
       case 'SCHEDULED':
@@ -102,6 +108,50 @@ export default function ClassListPage() {
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200'
     }
+  }
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'DRAFT':
+        return 'Bản nháp'
+      case 'SUBMITTED':
+        return 'Đã gửi duyệt'
+      case 'SCHEDULED':
+        return 'Đã lên lịch'
+      case 'ONGOING':
+        return 'Đang diễn ra'
+      case 'COMPLETED':
+        return 'Đã kết thúc'
+      case 'CANCELLED':
+        return 'Đã hủy'
+      default:
+        return status
+    }
+  }
+
+  const getApprovalLabel = (status?: string | null) => {
+    switch (status) {
+      case 'PENDING':
+        return 'Chờ duyệt'
+      case 'APPROVED':
+        return 'Đã duyệt'
+      case 'REJECTED':
+        return 'Bị từ chối'
+      default:
+        return undefined
+    }
+  }
+
+  // Gộp hiển thị: ưu tiên approvalStatus; nếu APPROVED thì hiển thị trạng thái vận hành
+  const getUnifiedStatus = (status: string, approval?: string | null) => {
+    if (approval === 'PENDING') {
+      return { label: 'Chờ duyệt', color: 'bg-amber-100 text-amber-800 border-amber-200' }
+    }
+    if (approval === 'REJECTED') {
+      return { label: 'Bị từ chối', color: 'bg-red-100 text-red-800 border-red-200' }
+    }
+    // APPROVED hoặc không có approvalStatus
+    return { label: getStatusLabel(status), color: getStatusColor(status) }
   }
 
   const renderTeachers = (teachers: TeacherSummaryDTO[]) => {
@@ -278,24 +328,24 @@ export default function ClassListPage() {
           </Button>
         </div>
 
-      {/* Class List */}
-      <div>
-        <div className="mb-4 text-sm text-muted-foreground">
-          {response?.data ?
-            `Hiển thị ${response.data.content.length} của ${response.data.page.totalElements} lớp học` :
-            'Đang tải lớp học...'
-          }
-        </div>
-
-        {isLoading ? (
-          <div className="space-y-3">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-16 bg-muted/50 rounded-lg animate-pulse" />
-            ))}
+        {/* Class List */}
+        <div>
+          <div className="mb-4 text-sm text-muted-foreground">
+            {response?.data ?
+              `Hiển thị ${response.data.content.length} của ${response.data.page.totalElements} lớp học` :
+              'Đang tải lớp học...'
+            }
           </div>
-        ) : response?.data?.content ? (
-          <div className="rounded-lg border bg-card">
-            <Table>
+
+          {isLoading ? (
+            <div className="space-y-3">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="h-16 bg-muted/50 rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : response?.data?.content ? (
+            <div className="rounded-lg border bg-card">
+              <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Lớp học</TableHead>
@@ -353,12 +403,14 @@ export default function ClassListPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={getStatusColor(classItem.status)}
-                        >
-                          {classItem.status}
-                        </Badge>
+                        {(() => {
+                          const unified = getUnifiedStatus(classItem.status, classItem.approvalStatus)
+                          return (
+                            <Badge variant="outline" className={unified.color}>
+                              {unified.label}
+                            </Badge>
+                          )
+                        })()}
                       </TableCell>
                       <TableCell>
                         <Button variant="ghost" size="sm">

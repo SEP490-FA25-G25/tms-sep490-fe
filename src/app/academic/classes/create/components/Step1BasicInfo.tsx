@@ -24,10 +24,12 @@ import { vi } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import {
   useCreateClassMutation,
+  useUpdateClassMutation,
   useGetBranchesQuery,
   useGetCoursesQuery,
   usePreviewClassCodeMutation,
 } from '@/store/services/classCreationApi'
+import { useGetClassByIdQuery } from '@/store/services/classApi'
 
 const classCodePattern = /^[A-Z0-9]+-[A-Z0-9]+-\d{2}-\d{3}$/
 
@@ -47,6 +49,7 @@ const createClassSchema = z.object({
   startDate: z.string().refine((date) => new Date(date) > new Date(), {
     message: 'Ngày bắt đầu phải là ngày trong tương lai',
   }),
+  plannedEndDate: z.string().optional(),
   scheduleDays: z
     .array(z.number().min(0).max(6))
     .min(1, 'Phải chọn ít nhất 1 ngày')
@@ -67,15 +70,16 @@ const DAY_OPTIONS = [
 ]
 
 interface Step1BasicInfoProps {
+  classId?: number | null
   onSuccess: (classId: number, sessionCount: number) => void
   onCancel: () => void
 }
 
-export function Step1BasicInfo({ onSuccess, onCancel }: Step1BasicInfoProps) {
+export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoProps) {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isDirty },
     setValue,
     watch,
   } = useForm<FormData>({
@@ -84,10 +88,54 @@ export function Step1BasicInfo({ onSuccess, onCancel }: Step1BasicInfoProps) {
       code: '',
       scheduleDays: [],
       modality: 'OFFLINE',
+      plannedEndDate: undefined,
     },
   })
 
-  const [createClass, { isLoading }] = useCreateClassMutation()
+
+
+  const [createClass, { isLoading: isCreating }] = useCreateClassMutation()
+  const [updateClass, { isLoading: isUpdating }] = useUpdateClassMutation()
+  const isLoading = isCreating || isUpdating
+
+  // Fetch existing class data if editing
+  const { data: existingClassData } = useGetClassByIdQuery(classId!, {
+    skip: !classId,
+  })
+  const classStatus = existingClassData?.data?.status
+  const approvalStatus = existingClassData?.data?.approvalStatus
+  const isEditLocked = Boolean(classId && (
+    (classStatus === 'DRAFT' && approvalStatus === 'PENDING') ||
+    approvalStatus === 'APPROVED'
+  ))
+  const editLockMessage = (() => {
+    if (classStatus === 'DRAFT' && approvalStatus === 'PENDING') {
+      return 'Lớp đang chờ duyệt, không thể chỉnh sửa.'
+    }
+    if (approvalStatus === 'APPROVED') {
+      return 'Lớp đã được duyệt, không thể chỉnh sửa.'
+    }
+    return 'Lớp không được chỉnh sửa trong trạng thái này.'
+  })()
+
+  // Populate form when data loads
+  React.useEffect(() => {
+    if (existingClassData?.data) {
+      const data = existingClassData.data
+      setValue('branchId', data.branch.id)
+      setValue('courseId', data.course.id)
+      setValue('code', data.code)
+      setValue('name', data.name)
+      setValue('modality', data.modality)
+      setValue('startDate', data.startDate)
+      setValue('plannedEndDate', data.plannedEndDate)
+      setValue('scheduleDays', data.scheduleDays)
+      setValue('maxCapacity', data.maxCapacity)
+
+      // If code matches pattern, assume auto-generated, else manual
+      setIsManualCode(!classCodePattern.test(data.code))
+    }
+  }, [existingClassData, setValue])
   const { data: branchesData } = useGetBranchesQuery()
   const { data: coursesData } = useGetCoursesQuery()
   const [previewClassCode, { isLoading: isPreviewLoading }] = usePreviewClassCodeMutation()
@@ -162,18 +210,47 @@ export function Step1BasicInfo({ onSuccess, onCancel }: Step1BasicInfoProps) {
 
   const onSubmit = async (data: FormData) => {
     try {
-      const response = await createClass(data).unwrap()
-      const createdClassId = response?.data?.classId
-      const totalSessions = response?.data?.sessionSummary?.totalSessions ?? 0
-
-      if (!createdClassId) {
-        toast.error('Không nhận được thông tin lớp vừa tạo. Vui lòng thử lại.')
+      if (isEditLocked) {
+        toast.error(editLockMessage)
         return
       }
 
-      const createdCode = response?.data?.code || data.code || 'mới'
-      toast.success(`Lớp ${createdCode} đã được tạo với ${totalSessions} buổi học`)
-      onSuccess(createdClassId, totalSessions)
+      let response
+      const shouldRegenerate =
+        classId &&
+        existingClassData?.data && (
+          data.branchId !== existingClassData.data.branch.id ||
+          data.courseId !== existingClassData.data.course.id ||
+          data.modality !== existingClassData.data.modality ||
+          data.startDate !== existingClassData.data.startDate ||
+          JSON.stringify(data.scheduleDays) !== JSON.stringify(existingClassData.data.scheduleDays)
+        )
+      const plannedEndDate = data.plannedEndDate || existingClassData?.data?.plannedEndDate || data.startDate
+
+      if (classId) {
+        response = await updateClass({
+          classId,
+          data: {
+            ...data,
+            plannedEndDate,
+            regenerateSessions: shouldRegenerate || data.regenerateSessions,
+          },
+        }).unwrap()
+        toast.success(`Cập nhật lớp ${data.code} thành công`)
+      } else {
+        response = await createClass(data).unwrap()
+        toast.success(`Lớp ${response?.data?.code || data.code} đã được tạo`)
+      }
+
+      const resultClassId = response?.data?.classId
+      const totalSessions = response?.data?.sessionSummary?.totalSessions ?? 0
+
+      if (!resultClassId) {
+        toast.error('Không nhận được thông tin lớp học. Vui lòng thử lại.')
+        return
+      }
+
+      onSuccess(resultClassId, totalSessions)
     } catch (err: unknown) {
       const error = err as { status?: number; data?: { message?: string; data?: unknown } }
       if (error.status === 400) {
@@ -181,10 +258,12 @@ export function Step1BasicInfo({ onSuccess, onCancel }: Step1BasicInfoProps) {
           // Field-level errors
           toast.error(error.data.message || 'Dữ liệu không hợp lệ')
         } else {
-          toast.error(error.data?.message || 'Có lỗi xảy ra khi tạo lớp học')
+          toast.error(error.data?.message || 'Có lỗi xảy ra')
         }
+      } else if (error.data?.message === 'CLASS_NOT_EDITABLE' || error.data?.errorCode === 'CLASS_NOT_EDITABLE') {
+        toast.error('Lớp này đang chờ duyệt hoặc đã duyệt, không thể chỉnh sửa')
       } else if (error.status === 403) {
-        toast.error('Bạn không có quyền tạo lớp học')
+        toast.error('Bạn không có quyền thực hiện thao tác này')
       } else {
         toast.error('Lỗi kết nối. Vui lòng thử lại.')
       }
@@ -207,6 +286,14 @@ export function Step1BasicInfo({ onSuccess, onCancel }: Step1BasicInfoProps) {
         <p className="text-muted-foreground">
           Nhập thông tin cơ bản về lớp học. Tất cả các trường đều bắt buộc.
         </p>
+        {isEditLocked && (
+          <Alert className="mt-4 border-amber-300 bg-amber-50 text-amber-900">
+            <AlertDescription className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+              <span>{editLockMessage}</span>
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
 
       {/* Two-column layout */}
@@ -216,7 +303,12 @@ export function Step1BasicInfo({ onSuccess, onCancel }: Step1BasicInfoProps) {
           <Label htmlFor="branchId">
             Chi nhánh <span className="text-destructive">*</span>
           </Label>
-          <Select onValueChange={(val) => setValue('branchId', parseInt(val), { shouldValidate: true })}>
+          <Select
+            value={selectedBranchId?.toString() ?? ''}
+            onValueChange={(val) => {
+              if (val) setValue('branchId', parseInt(val), { shouldValidate: true })
+            }}
+          >
             <SelectTrigger id="branchId">
               <SelectValue placeholder="Chọn chi nhánh" />
             </SelectTrigger>
@@ -236,7 +328,12 @@ export function Step1BasicInfo({ onSuccess, onCancel }: Step1BasicInfoProps) {
           <Label htmlFor="courseId">
             Khóa học <span className="text-destructive">*</span>
           </Label>
-          <Select onValueChange={(val) => setValue('courseId', parseInt(val), { shouldValidate: true })}>
+          <Select
+            value={selectedCourseId?.toString() ?? ''}
+            onValueChange={(val) => {
+              if (val) setValue('courseId', parseInt(val), { shouldValidate: true })
+            }}
+          >
             <SelectTrigger id="courseId">
               <SelectValue placeholder="Chọn khóa học" />
             </SelectTrigger>
@@ -428,14 +525,27 @@ export function Step1BasicInfo({ onSuccess, onCancel }: Step1BasicInfoProps) {
         <Button type="button" variant="ghost" disabled={isLoading} onClick={onCancel}>
           Hủy &amp; về danh sách
         </Button>
-        <Button type="submit" disabled={isLoading} className="min-w-[150px]">
+        {classId && (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isLoading || isEditLocked}
+            onClick={() => {
+              const totalSessions = existingClassData?.data?.sessionSummary?.totalSessions ?? 0
+              onSuccess(classId, totalSessions)
+            }}
+          >
+            Tiếp tục
+          </Button>
+        )}
+        <Button type="submit" disabled={isLoading || isEditLocked} className="min-w-[150px]">
           {isLoading ? (
             <>
               <span className="animate-spin mr-2">⏳</span>
-              Đang tạo...
+              {classId ? 'Đang cập nhật...' : 'Đang tạo...'}
             </>
           ) : (
-            'Tạo lớp học'
+            classId ? 'Cập nhật lớp học' : 'Tạo lớp học'
           )}
         </Button>
       </div>

@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
   Users,
   Calendar,
@@ -27,7 +28,9 @@ import {
   FileUp,
   UserPlus,
   ChevronDown,
-  ArrowLeft
+  ArrowLeft,
+  AlertCircle,
+  Edit
 } from 'lucide-react'
 import { useGetClassByIdQuery, useGetClassStudentsQuery } from '@/store/services/classApi'
 import type { ClassStudentDTO, TeacherSummaryDTO } from '@/store/services/classApi'
@@ -53,20 +56,30 @@ export default function ClassDetailPage() {
     data: classResponse,
     isLoading: isLoadingClass,
     error: classError
-  } = useGetClassByIdQuery(classId)
+  } = useGetClassByIdQuery(classId, {
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  })
+
+  const classData = classResponse?.data
 
   const {
     data: studentsResponse,
     isLoading: isLoadingStudents
-  } = useGetClassStudentsQuery({ classId, page: 0, size: 10 })
+  } = useGetClassStudentsQuery(
+    { classId, page: 0, size: 10 },
+    { skip: !classData || classData.status === 'DRAFT' }
+  )
 
-  const classData = classResponse?.data
   const students = studentsResponse?.data?.content || []
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'DRAFT':
         return 'bg-slate-100 text-slate-800 border-slate-200'
+      case 'SUBMITTED':
+        return 'bg-amber-100 text-amber-800 border-amber-200'
       case 'ONGOING':
         return 'bg-green-100 text-green-800 border-green-200'
       case 'SCHEDULED':
@@ -87,7 +100,7 @@ export default function ClassDetailPage() {
     return 'bg-red-100 text-red-800 border-red-200'
   }
 
-  const getApprovalColor = (status: string) => {
+  const getApprovalColor = (status?: string | null) => {
     switch (status) {
       case 'APPROVED':
         return 'bg-green-100 text-green-800 border-green-200'
@@ -98,6 +111,48 @@ export default function ClassDetailPage() {
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200'
     }
+  }
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'DRAFT':
+        return 'Bản nháp'
+      case 'SUBMITTED':
+        return 'Đã gửi duyệt'
+      case 'SCHEDULED':
+        return 'Đã lên lịch'
+      case 'ONGOING':
+        return 'Đang diễn ra'
+      case 'COMPLETED':
+        return 'Đã kết thúc'
+      case 'CANCELLED':
+        return 'Đã hủy'
+      default:
+        return status
+    }
+  }
+
+  const getApprovalLabel = (status?: string | null) => {
+    switch (status) {
+      case 'PENDING':
+        return 'Chờ duyệt'
+      case 'APPROVED':
+        return 'Đã duyệt'
+      case 'REJECTED':
+        return 'Bị từ chối'
+      default:
+        return undefined
+    }
+  }
+
+  const getUnifiedStatus = (status: string, approval?: string | null) => {
+    if (approval === 'PENDING') {
+      return { label: 'Chờ duyệt', color: 'bg-amber-100 text-amber-800 border-amber-200' }
+    }
+    if (approval === 'REJECTED') {
+      return { label: 'Bị từ chối', color: 'bg-red-100 text-red-800 border-red-200' }
+    }
+    return { label: getStatusLabel(status), color: getStatusColor(status) }
   }
 
   if (classError) {
@@ -140,6 +195,17 @@ export default function ClassDetailPage() {
     )
   }
 
+  const canEdit =
+    (classData.status === 'DRAFT' &&
+      classData.approvalStatus !== 'PENDING' &&
+      classData.approvalStatus !== 'APPROVED') ||
+    classData.approvalStatus === 'REJECTED'
+
+  const editDisabledReason =
+    classData.approvalStatus === 'PENDING'
+      ? 'Lớp đang chờ duyệt, không thể chỉnh sửa.'
+      : 'Lớp đã được duyệt, không thể chỉnh sửa.'
+
   return (
     <DashboardLayout>
       <div className="flex flex-col gap-6">
@@ -157,42 +223,74 @@ export default function ClassDetailPage() {
               <p className="text-muted-foreground">{classData.code}</p>
             </div>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button>
-                Ghi danh Học viên
-                <ChevronDown className="ml-2 h-4 w-4" />
+          <div className="flex items-center gap-2">
+            {canEdit ? (
+              <Link to={`/academic/classes/${classId}/edit`}>
+                <Button variant="outline">
+                  <Edit className="mr-2 h-4 w-4" />
+                  Chỉnh sửa
+                </Button>
+              </Link>
+            ) : (
+              <Button
+                variant="outline"
+                disabled
+                title={editDisabledReason}
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Chỉnh sửa
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={() => setStudentSelectionOpen(true)}>
-                <Users className="mr-2 h-4 w-4" />
-                Chọn từ học viên có sẵn
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setCreateStudentOpen(true)}>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Tạo học viên mới
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setEnrollmentDialogOpen(true)}>
-                <FileUp className="mr-2 h-4 w-4" />
-                Nhập từ Excel
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button>
+                  Ghi danh Học viên
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => setStudentSelectionOpen(true)}>
+                  <Users className="mr-2 h-4 w-4" />
+                  Chọn từ học viên có sẵn
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setCreateStudentOpen(true)}>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Tạo học viên mới
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setEnrollmentDialogOpen(true)}>
+                  <FileUp className="mr-2 h-4 w-4" />
+                  Nhập từ Excel
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Status Badges */}
         <div className="flex items-center gap-4">
-          <Badge variant="outline" className={getStatusColor(classData.status)}>
-            {classData.status}
-          </Badge>
-          <Badge variant="outline" className={getApprovalColor(classData.approvalStatus)}>
-            {classData.approvalStatus}
-          </Badge>
+          {(() => {
+            const unified = getUnifiedStatus(classData.status, classData.approvalStatus)
+            return (
+              <Badge variant="outline" className={unified.color}>
+                {unified.label}
+              </Badge>
+            )
+          })()}
           <Badge variant="secondary">
             {classData.modality}
           </Badge>
         </div>
+
+        {/* Rejection Alert */}
+        {classData.approvalStatus === 'REJECTED' && classData.rejectionReason && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Lớp học bị từ chối</AlertTitle>
+            <AlertDescription>
+              Lý do: {classData.rejectionReason}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Main Info Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

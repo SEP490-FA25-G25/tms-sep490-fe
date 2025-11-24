@@ -20,8 +20,10 @@ export interface CreateClassFormData {
   name: string
   modality: ClassModality
   startDate: string // ISO date string
+  plannedEndDate?: string // dùng cho update, backend yêu cầu
   scheduleDays: number[] // 0-6 (Sunday-Saturday)
   maxCapacity: number
+  regenerateSessions?: boolean // dùng cho update khi đổi lịch
 }
 
 export interface CreateClassResponse {
@@ -51,8 +53,10 @@ export interface GeneratedClassSession {
   hasResource: boolean
   hasTeacher: boolean
   timeSlotInfo: Record<string, unknown> | null
+  timeSlotTemplateId?: number | null
   timeSlotName?: string
   timeSlotLabel?: string
+  resourceId?: number | null
   resourceName?: string
   resourceDisplayName?: string
   resourceInfo?: Record<string, unknown> | null
@@ -62,6 +66,7 @@ export interface GeneratedClassSession {
   teacherName?: string
   teacherNames?: string
   teachers?: Array<{ teacherId: number; fullName?: string; name?: string }>
+  teacherIds?: number[]
   teacherAssignments?: Array<{ teacherId?: number; fullName?: string; name?: string }>
   teacherInfo?: Array<{ teacherId?: number; fullName?: string; name?: string }>
   assignedTeachers?: Array<{ teacherId?: number; fullName?: string; name?: string }>

@@ -91,6 +91,18 @@ export const classCreationApi = createApi({
     }),
 
     /**
+     * Update existing class (DRAFT/REJECTED)
+     */
+    updateClass: builder.mutation<CreateClassResponse, { classId: number; data: CreateClassFormData }>({
+      query: ({ classId, data }) => ({
+        url: `/classes/${classId}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['Class'],
+    }),
+
+    /**
      * Preview class code before submission
      */
     previewClassCode: builder.mutation<PreviewClassCodeResponse, PreviewClassCodeRequest>({
@@ -106,7 +118,7 @@ export const classCreationApi = createApi({
     /**
      * STEP 2: Get generated sessions for review
      */
-  getClassSessions: builder.query<GetClassSessionsResponse, number>({
+    getClassSessions: builder.query<GetClassSessionsResponse, number>({
       query: (classId) => `/classes/${classId}/sessions`,
       providesTags: ['ClassSessions'],
     }),
@@ -265,6 +277,7 @@ export const {
   useGetResourcesQuery,
   useLazyGetResourcesQuery,
   useCreateClassMutation,
+  useUpdateClassMutation,
   usePreviewClassCodeMutation,
   useGetClassSessionsQuery,
   useAssignTimeSlotsMutation,

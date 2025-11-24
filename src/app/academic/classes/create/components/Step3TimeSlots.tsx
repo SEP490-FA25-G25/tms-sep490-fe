@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useAssignTimeSlotsMutation, useGetTimeSlotsQuery } from '@/store/services/classCreationApi'
+import { useAssignTimeSlotsMutation, useGetTimeSlotsQuery, useGetClassSessionsQuery } from '@/store/services/classCreationApi'
 import { useGetClassByIdQuery } from '@/store/services/classApi'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -41,6 +41,7 @@ export function Step3TimeSlots({
   const { data: classDetail } = useGetClassByIdQuery(classId ?? 0, {
     skip: !classId,
   })
+  const { data: sessionsData } = useGetClassSessionsQuery(classId ?? 0, { skip: !classId })
   const branchId = classDetail?.data?.branch?.id
   const { data: timeSlotResponse, isLoading: isTimeSlotLoading } = useGetTimeSlotsQuery(
     branchId ? { branchId } : { branchId: 0 },
@@ -57,11 +58,28 @@ export function Step3TimeSlots({
 
   useEffect(() => {
     const initial: Record<number, number | ''> = {}
+    // Prefill từ session hiện có: lấy timeSlotTemplateId phổ biến nhất theo từng day
+    const sessions = sessionsData?.data?.sessions ?? []
+    const dayToSlots: Record<number, Record<number, number>> = {}
+    sessions.forEach((session) => {
+      if (session.dayOfWeekNumber === undefined || session.dayOfWeekNumber === null) return
+      const day = session.dayOfWeekNumber
+      const slotId = session.timeSlotTemplateId
+      if (!slotId) return
+      if (!dayToSlots[day]) dayToSlots[day] = {}
+      dayToSlots[day][slotId] = (dayToSlots[day][slotId] || 0) + 1
+    })
     sortedDays.forEach((day) => {
-      initial[day] = ''
+      const slotCounts = dayToSlots[day]
+      if (slotCounts) {
+        const best = Object.entries(slotCounts).sort((a, b) => b[1] - a[1])[0]
+        initial[day] = best ? Number(best[0]) : ''
+      } else {
+        initial[day] = ''
+      }
     })
     setSelectedSlots(initial)
-  }, [sortedDays])
+  }, [sortedDays, sessionsData])
 
   const timeSlotOptions = timeSlotResponse?.data ?? []
 

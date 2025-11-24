@@ -40,7 +40,8 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ["persist/PERSIST", "persist/REHYDRATE"],
+        ignoredActions: ["persist/PERSIST", "persist/REHYDRATE", "enrollmentApi/executeQuery/fulfilled"],
+        ignoredPaths: ["enrollmentApi"],
       },
     })
       .concat(authApi.middleware)

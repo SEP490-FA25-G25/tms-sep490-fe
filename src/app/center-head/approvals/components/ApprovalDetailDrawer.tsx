@@ -152,6 +152,9 @@ export function ApprovalDetailDrawer({ classId, open, onClose, onActionComplete 
   const groupedWeeks = sessionsResponse?.data?.groupedByWeek ?? []
   const sessionMap = useMemo(() => buildSessionMap(sessions), [sessions])
 
+  const submittedAtValue = useMemo(() => overview?.submittedAt, [overview])
+  const decidedAtValue = useMemo(() => overview?.decidedAt, [overview])
+
   const summary = useMemo(() => {
     if (!sessions.length) {
       return {
@@ -351,12 +354,18 @@ export function ApprovalDetailDrawer({ classId, open, onClose, onActionComplete 
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Gửi duyệt lúc</p>
-                        <p className="font-semibold">{formatDate(overview.submittedAt, 'HH:mm dd/MM/yyyy')}</p>
+                        <p className="font-semibold">
+                          {submittedAtValue
+                            ? formatDate(submittedAtValue, 'HH:mm dd/MM/yyyy')
+                            : overview.status === 'DRAFT'
+                              ? 'Chưa gửi duyệt'
+                              : '--'}
+                        </p>
                       </div>
-                      {overview.decidedAt && (
+                      {decidedAtValue && (
                         <div>
                           <p className="text-xs text-muted-foreground">Quyết định lúc</p>
-                          <p className="font-semibold">{formatDate(overview.decidedAt, 'HH:mm dd/MM/yyyy')}</p>
+                          <p className="font-semibold">{formatDate(decidedAtValue, 'HH:mm dd/MM/yyyy')}</p>
                         </div>
                       )}
                     </div>
@@ -371,6 +380,7 @@ export function ApprovalDetailDrawer({ classId, open, onClose, onActionComplete 
                 )}
               </CardContent>
             </Card>
+
 
             <Card>
               <CardHeader>
@@ -396,30 +406,38 @@ export function ApprovalDetailDrawer({ classId, open, onClose, onActionComplete 
               <CardHeader>
                 <CardTitle>Giáo viên & tài nguyên</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <p className="text-xs text-muted-foreground">Khung giờ học</p>
-                  <p className="font-semibold">{timeSlotSummary || 'Chưa gán khung giờ'}</p>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Khung giờ học</p>
+                    <p className="font-semibold">{timeSlotSummary || 'Chưa gán khung giờ'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Phòng / tài nguyên chính</p>
+                    <p className="font-semibold">{resourceSummary || 'Chưa gán tài nguyên'}</p>
+                  </div>
                 </div>
+
                 <Separator />
-                {teacherSummaries.length ? (
-                  teacherSummaries.map((teacher) => (
-                    <div key={teacher.id} className="rounded-lg border p-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="font-semibold">{teacher.fullName}</p>
-                        <p className="text-sm text-muted-foreground">{teacher.sessionCount} buổi</p>
-                      </div>
-                      {teacher.email && <p className="text-sm text-muted-foreground">{teacher.email}</p>}
-                      {teacher.employeeCode && <p className="text-xs text-muted-foreground">Mã NV: {teacher.employeeCode}</p>}
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">Chưa có giáo viên nào được phân công.</p>
-                )}
-                <Separator />
+
                 <div>
-                  <p className="text-xs text-muted-foreground">Phòng / tài nguyên chính</p>
-                  <p className="font-semibold">{resourceSummary || 'Chưa gán tài nguyên'}</p>
+                  <p className="mb-2 text-xs text-muted-foreground">Danh sách giáo viên</p>
+                  {teacherSummaries.length ? (
+                    <div className="space-y-2">
+                      {teacherSummaries.map((teacher) => (
+                        <div key={teacher.id} className="flex items-center justify-between rounded-lg border p-3">
+                          <div>
+                            <p className="font-semibold">{teacher.fullName}</p>
+                            {teacher.email && <p className="text-xs text-muted-foreground">{teacher.email}</p>}
+                            {teacher.employeeCode && <p className="text-xs text-muted-foreground">Mã NV: {teacher.employeeCode}</p>}
+                          </div>
+                          <Badge variant="secondary">{teacher.sessionCount} buổi</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Chưa có giáo viên nào được phân công.</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -490,9 +508,9 @@ export function ApprovalDetailDrawer({ classId, open, onClose, onActionComplete 
                 </Button>
               </div>
             </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+          </div >
+        </SheetContent >
+      </Sheet >
 
       <Dialog open={isRejectDialogOpen} onOpenChange={(openDialog) => (!openDialog ? resetRejectState() : setIsRejectDialogOpen(true))}>
         <DialogContent className="sm:max-w-lg">

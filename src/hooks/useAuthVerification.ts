@@ -19,22 +19,26 @@ export function useAuthVerification() {
             refreshToken: localStorage.getItem('refreshToken') || ''
           }).unwrap()
 
-          if (refreshResult?.success && refreshResult?.data) {
-            // Update auth state with fresh tokens
-            dispatch({
-              type: 'auth/setCredentials',
-              payload: {
-                accessToken: refreshResult.data.accessToken,
-                refreshToken: refreshResult.data.refreshToken,
-                user: {
-                  id: refreshResult.data.userId,
-                  email: refreshResult.data.email,
-                  fullName: refreshResult.data.fullName,
-                  roles: refreshResult.data.roles,
-                },
-              },
-            })
+          if (!refreshResult?.success || !refreshResult?.data) {
+            // Refresh token invalid or expired -> clear auth state
+            dispatch(logout())
+            return
           }
+
+          // Update auth state with fresh tokens
+          dispatch({
+            type: 'auth/setCredentials',
+            payload: {
+              accessToken: refreshResult.data.accessToken,
+              refreshToken: refreshResult.data.refreshToken,
+              user: {
+                id: refreshResult.data.userId,
+                email: refreshResult.data.email,
+                fullName: refreshResult.data.fullName,
+                roles: refreshResult.data.roles,
+              },
+            },
+          })
         } catch {
           // Token is invalid, clear auth state
           dispatch(logout())
