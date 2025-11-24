@@ -54,12 +54,14 @@ const SessionsTab: React.FC<SessionsTabProps> = ({ sessionsData, isLoading, repo
 
   const summary = useMemo(() => {
     const total = allSessions.length;
-    const present = studentSessions.filter((s) => s.attendanceStatus === 'PRESENT').length;
+    const regularPresent = studentSessions.filter((s) => s.attendanceStatus === 'PRESENT' && !s.isMakeup).length;
+    const makeupPresent = studentSessions.filter((s) => s.attendanceStatus === 'PRESENT' && s.isMakeup).length;
+    const present = regularPresent + makeupPresent;
     const absent = studentSessions.filter((s) => s.attendanceStatus === 'ABSENT').length;
     const upcomingCount = upcomingSessions.length;
     const completed = present + absent;
     const attendanceRate = completed > 0 ? (present / completed) * 100 : 0;
-    return { total, present, absent, upcomingCount, completed, attendanceRate };
+    return { total, present, regularPresent, makeupPresent, absent, upcomingCount, completed, attendanceRate };
   }, [allSessions.length, studentSessions, upcomingSessions.length]);
 
   if (isLoading) {
@@ -108,7 +110,7 @@ const SessionsTab: React.FC<SessionsTabProps> = ({ sessionsData, isLoading, repo
         </ToggleGroup>
       </div>
 
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-5">
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-6">
         <div className="rounded-lg border bg-muted/10 p-3">
           <p className="text-xs text-muted-foreground">Tổng số buổi</p>
           <p className="text-sm font-semibold text-foreground">
@@ -117,11 +119,15 @@ const SessionsTab: React.FC<SessionsTabProps> = ({ sessionsData, isLoading, repo
         </div>
         <div className="rounded-lg border bg-muted/10 p-3">
           <p className="text-xs text-muted-foreground">Có mặt</p>
-          <p className="text-sm font-semibold text-foreground">{summary.present}</p>
+          <p className="text-sm font-semibold text-emerald-700">{summary.regularPresent}</p>
+        </div>
+        <div className="rounded-lg border bg-muted/10 p-3">
+          <p className="text-xs text-muted-foreground">Học bù</p>
+          <p className="text-sm font-semibold text-blue-700">{summary.makeupPresent}</p>
         </div>
         <div className="rounded-lg border bg-muted/10 p-3">
           <p className="text-xs text-muted-foreground">Vắng</p>
-          <p className="text-sm font-semibold text-foreground">{summary.absent}</p>
+          <p className="text-sm font-semibold text-rose-700">{summary.absent}</p>
         </div>
         <div className="rounded-lg border bg-muted/10 p-3">
           <p className="text-xs text-muted-foreground">Sắp tới</p>
@@ -155,6 +161,10 @@ const SessionsTab: React.FC<SessionsTabProps> = ({ sessionsData, isLoading, repo
             teacher: reportSession?.teacherName ?? session.teachers[0],
             attendanceStatus,
             note: reportSession?.note ?? session.teacherNote ?? studentSession?.note,
+            // Makeup session fields
+            isMakeup: studentSession?.isMakeup ?? false,
+            makeupSessionId: studentSession?.makeupSessionId,
+            originalSessionId: studentSession?.originalSessionId,
           } as AttendanceSessionRow;
         })}
         emptyMessage="Không có buổi học trong bộ lọc này."

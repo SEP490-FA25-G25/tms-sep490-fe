@@ -22,7 +22,6 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -488,30 +487,28 @@ function CreateRequestDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl rounded-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <DialogHeader>
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Tạo yêu cầu mới</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="flex-1">
-          <div className="pr-4">
-            {activeType === null ? (
-              <TypeSelection onSelect={handleTypeSelect} />
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between border-b pb-2">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Loại yêu cầu</p>
-                    <h3 className="text-base font-semibold">{REQUEST_TYPE_LABELS[activeType]}</h3>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => onSelectType(null)}>
-                    Chọn loại khác
-                  </Button>
+        <div className="flex-1 overflow-y-auto pr-4 pb-4" style={{ height: 'calc(90vh - 8rem)' }}>
+          {activeType === null ? (
+            <TypeSelection onSelect={handleTypeSelect} />
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between border-b pb-2">
+                <div>
+                  <p className="text-xs text-muted-foreground">Loại yêu cầu</p>
+                  <h3 className="text-base font-semibold">{REQUEST_TYPE_LABELS[activeType]}</h3>
                 </div>
-
-                <UnifiedRequestFlow type={activeType} onSuccess={onSuccess} />
+                <Button variant="ghost" size="sm" onClick={() => onSelectType(null)}>
+                  Chọn loại khác
+                </Button>
               </div>
-            )}
-          </div>
-        </ScrollArea>
+
+              <UnifiedRequestFlow type={activeType} onSuccess={onSuccess} />
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   )

@@ -197,11 +197,11 @@ export function BaseFlowComponent({
 }) {
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 min-h-0">
       {children}
 
       {/* Submit Actions */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-shrink-0">
         <Button
           onClick={onSubmit}
           disabled={isSubmitDisabled || isSubmitting}
@@ -227,7 +227,7 @@ export function Section({
   className?: string
 }) {
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn('space-y-4 min-h-0', className)}>
       {children}
     </div>
   )

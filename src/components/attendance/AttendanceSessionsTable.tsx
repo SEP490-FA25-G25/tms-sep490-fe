@@ -2,6 +2,7 @@ import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 type AttendanceStatus =
@@ -23,6 +24,10 @@ export interface AttendanceSessionRow {
   teacher?: string | null;
   attendanceStatus?: AttendanceStatus | null;
   note?: string | null;
+  // Makeup session fields
+  isMakeup?: boolean;
+  makeupSessionId?: number;
+  originalSessionId?: number;
 }
 
 interface AttendanceSessionsTableProps {
@@ -57,6 +62,10 @@ const STATUS_META: Record<
     label: "Chưa diễn ra",
     className: "bg-slate-50 text-slate-700 border-slate-200",
   },
+  PRESENT_MAKEUP: {
+    label: "Đã học bù",
+    className: "bg-blue-50 text-blue-700 border-blue-200",
+  },
 };
 
 function formatDateLabel(dateString: string) {
@@ -82,69 +91,93 @@ export function AttendanceSessionsTable({
   emptyMessage = "Chưa có dữ liệu buổi học.",
 }: AttendanceSessionsTableProps) {
   return (
-    <div className="rounded-lg border overflow-hidden">
-      {rows.length > 0 ? (
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50">
-              <TableHead className="w-[72px] text-center">Buổi</TableHead>
-              <TableHead>Ngày</TableHead>
-              <TableHead>Giờ học</TableHead>
-              <TableHead>Phòng học</TableHead>
-              <TableHead>Giảng viên</TableHead>
-              <TableHead>Trạng thái điểm danh</TableHead>
-              <TableHead>Ghi chú từ giảng viên</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((row, idx) => {
-              const statusKey = row.attendanceStatus ?? "UNKNOWN";
-              const statusMeta = STATUS_META[statusKey] ?? null;
+    <TooltipProvider>
+      <div className="rounded-lg border overflow-hidden">
+        {rows.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50">
+                <TableHead className="w-[72px] text-center">Buổi</TableHead>
+                <TableHead>Ngày</TableHead>
+                <TableHead>Giờ học</TableHead>
+                <TableHead>Phòng học</TableHead>
+                <TableHead>Giảng viên</TableHead>
+                <TableHead>Trạng thái điểm danh</TableHead>
+                <TableHead>Ghi chú từ giảng viên</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row, idx) => {
+                // Determine status key based on makeup session
+                let statusKey = row.attendanceStatus ?? "UNKNOWN";
+                if (row.isMakeup && row.attendanceStatus === "PRESENT") {
+                  statusKey = "PRESENT_MAKEUP";
+                }
+                const statusMeta = STATUS_META[statusKey] ?? null;
 
-              return (
-                <TableRow key={row.id}>
-                  <TableCell className="text-center text-xs text-muted-foreground">
-                    {row.order ?? idx + 1}
-                  </TableCell>
-                  <TableCell className="text-sm text-foreground">
-                    {formatDateLabel(row.date)}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatTimeRange(row.startTime, row.endTime)}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {row.room || "Chưa cập nhật"}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {row.teacher || "Chưa cập nhật"}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {statusMeta ? (
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "px-2 py-0.5 text-[11px] font-medium",
-                          statusMeta.className
+                return (
+                  <TableRow key={row.id}>
+                    <TableCell className="text-center text-xs text-muted-foreground">
+                      {row.order ?? idx + 1}
+                    </TableCell>
+                    <TableCell className="text-sm text-foreground">
+                      {formatDateLabel(row.date)}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {formatTimeRange(row.startTime, row.endTime)}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {row.room || "Chưa cập nhật"}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {row.teacher || "Chưa cập nhật"}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        {statusMeta ? (
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "px-2 py-0.5 text-[11px] font-medium",
+                              statusMeta.className
+                            )}
+                          >
+                            {statusMeta.label}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Chưa có dữ liệu</span>
                         )}
-                      >
-                        {statusMeta.label}
-                      </Badge>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">Chưa có dữ liệu</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {row.note?.trim() || "Không có ghi chú"}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      ) : (
-        <div className="py-10 text-center text-sm text-muted-foreground">{emptyMessage}</div>
-      )}
-    </div>
+                        {row.isMakeup && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
+                                Học bù
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">
+                                {row.originalSessionId
+                                  ? `Buổi học bù cho buổi #${row.originalSessionId}`
+                                  : "Buổi học bù"}
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {row.note?.trim() || "Không có ghi chú"}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        ) : (
+          <div className="py-10 text-center text-sm text-muted-foreground">{emptyMessage}</div>
+        )}
+      </div>
+    </TooltipProvider>
   );
 }
 
