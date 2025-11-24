@@ -21,6 +21,8 @@ import RequestDetailPage from "./app/teacher/requests/[id]/page";
 import TeacherGradesListPage from "./app/teacher/grades/page";
 import TeacherGradesPage from "./app/teacher/classes/[classId]/grades/page";
 import AssessmentScoresPage from "./app/teacher/assessments/[assessmentId]/scores/page";
+import TeacherStudentsPage from "./app/teacher/students/page";
+import TeacherProfilePage from "./app/teacher/profile/page";
 import StudentSchedulePage from "./app/student/schedule/page";
 import StudentRequestsPage from "./app/student/requests/page";
 import StudentAttendanceReportOverviewPage from "./app/student/attendance-report/page";
@@ -158,6 +160,38 @@ function App() {
                   ]}
                 >
                   <TeacherClassesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/teacher/students"
+              element={
+                <ProtectedRoute
+                  requiredRoles={[
+                    "TEACHER",
+                    "ADMIN",
+                    "MANAGER",
+                    "CENTER_HEAD",
+                    "SUBJECT_LEADER",
+                  ]}
+                >
+                  <TeacherStudentsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/teacher/profile"
+              element={
+                <ProtectedRoute
+                  requiredRoles={[
+                    "TEACHER",
+                    "ADMIN",
+                    "MANAGER",
+                    "CENTER_HEAD",
+                    "SUBJECT_LEADER",
+                  ]}
+                >
+                  <TeacherProfilePage />
                 </ProtectedRoute>
               }
             />
