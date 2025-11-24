@@ -77,9 +77,7 @@ export const baseQueryWithReauth: BaseQueryFn<
     )
 
     const refreshData = refreshResult.data as LoginResponse | undefined
-    const refreshSucceeded = Boolean(refreshData?.success && refreshData.data)
-
-    if (!refreshSucceeded || refreshResult.error) {
+    if (!refreshData || !refreshData.success || !refreshData.data) {
       // Refresh failed => token hết hạn/không hợp lệ -> đăng xuất và trả lỗi
       api.dispatch({ type: 'auth/logout' })
       return result

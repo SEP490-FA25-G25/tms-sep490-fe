@@ -50,6 +50,7 @@ export interface MakeupInfoDTO {
 export interface SessionSummaryDTO {
   sessionId: number
   studentSessionId: number
+  classId: number
   date: string
   dayOfWeek: DayOfWeek
   timeSlotTemplateId: number

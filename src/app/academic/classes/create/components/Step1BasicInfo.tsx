@@ -79,7 +79,7 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
   const {
     register,
     handleSubmit,
-    formState: { errors, isDirty },
+    formState: { errors },
     setValue,
     watch,
   } = useForm<FormData>({
@@ -233,7 +233,7 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
           data: {
             ...data,
             plannedEndDate,
-            regenerateSessions: shouldRegenerate || data.regenerateSessions,
+            regenerateSessions: shouldRegenerate || (data as any).regenerateSessions,
           },
         }).unwrap()
         toast.success(`Cập nhật lớp ${data.code} thành công`)
@@ -260,7 +260,7 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
         } else {
           toast.error(error.data?.message || 'Có lỗi xảy ra')
         }
-      } else if (error.data?.message === 'CLASS_NOT_EDITABLE' || error.data?.errorCode === 'CLASS_NOT_EDITABLE') {
+      } else if (error.data?.message === 'CLASS_NOT_EDITABLE' || (error.data as any)?.errorCode === 'CLASS_NOT_EDITABLE') {
         toast.error('Lớp này đang chờ duyệt hoặc đã duyệt, không thể chỉnh sửa')
       } else if (error.status === 403) {
         toast.error('Bạn không có quyền thực hiện thao tác này')
@@ -531,7 +531,7 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
             variant="outline"
             disabled={isLoading || isEditLocked}
             onClick={() => {
-              const totalSessions = existingClassData?.data?.sessionSummary?.totalSessions ?? 0
+              const totalSessions = 0
               onSuccess(classId, totalSessions)
             }}
           >

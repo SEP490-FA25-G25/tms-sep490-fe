@@ -39,20 +39,20 @@ import {
   useGetRequestByIdQuery,
   useApproveRequestMutation,
   useRejectRequestMutation,
-  useGetSwapCandidatesQuery,
+  useGetReplacementCandidatesQuery,
   useGetModalityResourcesQuery,
   useGetRescheduleResourcesQuery,
   type RequestType as TeacherRequestType,
   type RequestStatus as TeacherRequestStatus,
   type TeacherRequestDTO,
-  type SwapCandidateDTO,
+  type ReplacementCandidateDTO,
 } from "@/store/services/teacherRequestApi";
 import { TeacherRequestDetailContent } from "@/app/teacher/requests/page";
 
 const TEACHER_REQUEST_TYPE_LABELS: Record<TeacherRequestType, string> = {
   MODALITY_CHANGE: "Thay đổi phương thức",
   RESCHEDULE: "Đổi lịch",
-  SWAP: "Nhờ dạy thay",
+  REPLACEMENT: "Nhờ dạy thay",
 };
 
 // Helper function to format error messages from backend to user-friendly Vietnamese
@@ -66,7 +66,7 @@ const formatBackendError = (
 
   // Map common error codes to user-friendly messages
   if (errorMessage.includes("SESSION_NOT_IN_TIME_WINDOW")) {
-    return "Ngày session đề xuất không nằm trong khoảng thời gian cho phép (trong vòng 7 ngày từ hôm nay).";
+    return "Ngày buổi học đề xuất không nằm trong khoảng thời gian cho phép (trong vòng 7 ngày từ hôm nay).";
   }
 
   if (errorMessage.includes("INVALID_DATE")) {
@@ -74,7 +74,7 @@ const formatBackendError = (
   }
 
   if (errorMessage.includes("NO_AVAILABLE_RESOURCES")) {
-    return "Không tìm thấy resource phù hợp cho thời gian này.";
+    return "Không tìm thấy phòng học/phương tiện phù hợp cho khung giờ này.";
   }
 
   if (errorMessage.includes("TEACHER_NOT_FOUND")) {
@@ -82,7 +82,7 @@ const formatBackendError = (
   }
 
   if (errorMessage.includes("RESOURCE_NOT_AVAILABLE")) {
-    return "Resource không khả dụng tại thời gian đã chỉ định. Vui lòng chọn resource khác hoặc thời gian khác.";
+    return "Phòng học/phương tiện không khả dụng tại thời gian đã chỉ định. Vui lòng chọn lựa chọn khác.";
   }
 
   // If it's a technical error code, try to extract a more readable part
@@ -124,7 +124,7 @@ const TEACHER_REQUEST_STATUS_META: Record<
 };
 
 const getCandidateSkills = (
-  candidate: SwapCandidateDTO
+  candidate: ReplacementCandidateDTO
 ): string | undefined => {
   // Helper to format skill with level
   const formatSkillWithLevel = (skill: unknown): string | null => {
@@ -422,22 +422,23 @@ export default function AcademicTeacherRequestsPage() {
   }, [selectedRequestFromDetail, selectedRequestFromList]);
 
   const canDecide = selectedRequest?.status === "PENDING";
-  const isSwapRequest = selectedRequest?.requestType === "SWAP" && canDecide;
+  const isReplacementRequest =
+    selectedRequest?.requestType === "REPLACEMENT" && canDecide;
   const isModalityChangeRequest =
     selectedRequest?.requestType === "MODALITY_CHANGE" && canDecide;
   const isRescheduleRequest =
     selectedRequest?.requestType === "RESCHEDULE" && canDecide;
 
-  // Get requestId for swap candidates API
+  // Get requestId for replacement candidates API
   const requestId = selectedRequest?.id;
 
-  // Get swap candidates if this is a SWAP request
-  const shouldFetchCandidates = isSwapRequest && !!requestId;
+  // Get replacement candidates if this is a REPLACEMENT request
+  const shouldFetchCandidates = isReplacementRequest && !!requestId;
   const {
-    data: swapCandidatesResponse,
+    data: replacementCandidatesResponse,
     isFetching: isLoadingCandidates,
-    error: swapCandidatesError,
-  } = useGetSwapCandidatesQuery(
+    error: replacementCandidatesError,
+  } = useGetReplacementCandidatesQuery(
     shouldFetchCandidates && requestId ? { requestId } : skipToken
   );
 
@@ -471,7 +472,7 @@ export default function AcademicTeacherRequestsPage() {
       : skipToken
   );
 
-  const swapCandidates = swapCandidatesResponse?.data ?? [];
+  const replacementCandidates = replacementCandidatesResponse?.data ?? [];
   const modalityResources = modalityResourcesResponse?.data ?? [];
   const rescheduleResources = rescheduleResourcesResponse?.data ?? [];
 
@@ -558,9 +559,9 @@ export default function AcademicTeacherRequestsPage() {
     }
   }, [selectedRequestId, refetchRequestDetail]);
 
-  // Reset replacement teacher when switching to non-SWAP request
+  // Reset replacement teacher when switching to non-REPLACEMENT request
   useEffect(() => {
-    if (selectedRequest?.requestType !== "SWAP") {
+    if (selectedRequest?.requestType !== "REPLACEMENT") {
       setSelectedReplacementTeacherId(null);
     }
   }, [selectedRequest]);
@@ -594,11 +595,11 @@ export default function AcademicTeacherRequestsPage() {
       return;
     }
 
-    // Validate replacement teacher for SWAP requests
+    // Validate replacement teacher for REPLACEMENT requests
     // Only require selection if request doesn't already have a replacement teacher
     if (
       action === "approve" &&
-      selectedRequest.requestType === "SWAP" &&
+      selectedRequest.requestType === "REPLACEMENT" &&
       !selectedReplacementTeacherId &&
       !selectedRequest.replacementTeacherId
     ) {
@@ -615,7 +616,7 @@ export default function AcademicTeacherRequestsPage() {
           body: {
             note: trimmedNote || undefined,
             replacementTeacherId:
-              selectedRequest.requestType === "SWAP"
+              selectedRequest.requestType === "REPLACEMENT"
                 ? selectedReplacementTeacherId ??
                   selectedRequest.replacementTeacherId ??
                   undefined
@@ -689,8 +690,8 @@ export default function AcademicTeacherRequestsPage() {
                   <SelectItem value="RESCHEDULE">
                     {TEACHER_REQUEST_TYPE_LABELS.RESCHEDULE}
                   </SelectItem>
-                  <SelectItem value="SWAP">
-                    {TEACHER_REQUEST_TYPE_LABELS.SWAP}
+                  <SelectItem value="REPLACEMENT">
+                    {TEACHER_REQUEST_TYPE_LABELS.REPLACEMENT}
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -736,8 +737,16 @@ export default function AcademicTeacherRequestsPage() {
                   return (
                     <div
                       key={request.id}
-                      className="cursor-pointer rounded-lg border p-4 transition-colors hover:border-primary/60 hover:bg-primary/5"
+                      role="button"
+                      tabIndex={0}
+                      className="cursor-pointer rounded-2xl border border-border/60 bg-card/40 p-4 text-left transition hover:border-primary/60 hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                       onClick={() => handleOpenRequestDetail(request.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          handleOpenRequestDetail(request.id);
+                        }
+                      }}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
@@ -803,7 +812,7 @@ export default function AcademicTeacherRequestsPage() {
                       </div>
 
                       {request.requestType === "MODALITY_CHANGE" && (
-                        <div className="mt-3 rounded-lg border bg-muted/30 p-3">
+                        <div className="mt-3 rounded-xl bg-muted/40 p-3">
                           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/70">
                             Thay đổi phương thức
                           </p>
@@ -813,7 +822,7 @@ export default function AcademicTeacherRequestsPage() {
                           </p>
                           {request.currentResourceName && (
                             <p className="text-sm text-muted-foreground">
-                              Resource: {request.currentResourceName} →{" "}
+                              Phòng/phương tiện: {request.currentResourceName} →{" "}
                               {request.newResourceName || "—"}
                             </p>
                           )}
@@ -821,7 +830,7 @@ export default function AcademicTeacherRequestsPage() {
                       )}
 
                       {request.requestType === "RESCHEDULE" && (
-                        <div className="mt-3 rounded-lg border bg-muted/30 p-3">
+                        <div className="mt-3 rounded-xl bg-muted/40 p-3">
                           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/70">
                             Lịch mới
                           </p>
@@ -852,8 +861,8 @@ export default function AcademicTeacherRequestsPage() {
                         </div>
                       )}
 
-                      {request.requestType === "SWAP" && (
-                        <div className="mt-3 rounded-lg border bg-muted/30 p-3">
+                      {request.requestType === "REPLACEMENT" && (
+                        <div className="mt-3 rounded-xl bg-muted/40 p-3">
                           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground/70">
                             <span>Giáo viên dạy thay:</span>
                             {request.replacementTeacherName ? (
@@ -912,8 +921,8 @@ export default function AcademicTeacherRequestsPage() {
                   <SelectItem value="RESCHEDULE">
                     {TEACHER_REQUEST_TYPE_LABELS.RESCHEDULE}
                   </SelectItem>
-                  <SelectItem value="SWAP">
-                    {TEACHER_REQUEST_TYPE_LABELS.SWAP}
+                  <SelectItem value="REPLACEMENT">
+                    {TEACHER_REQUEST_TYPE_LABELS.REPLACEMENT}
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -981,8 +990,16 @@ export default function AcademicTeacherRequestsPage() {
                       return (
                         <TableRow
                           key={request.id}
-                          className="cursor-pointer hover:bg-primary/5"
+                          role="button"
+                          tabIndex={0}
+                          className="cursor-pointer hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                           onClick={() => handleOpenRequestDetail(request.id)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              handleOpenRequestDetail(request.id);
+                            }
+                          }}
                         >
                           <TableCell>
                             <Badge variant="outline" className="rounded-full">
@@ -1159,7 +1176,7 @@ export default function AcademicTeacherRequestsPage() {
               {(isModalityChangeRequest || isRescheduleRequest) && (
                 <div className="space-y-2">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Chọn resource
+                    Chọn phòng học / phương tiện
                   </p>
                   {isRescheduleRequest && !selectedRequestId ? (
                     <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
@@ -1168,7 +1185,7 @@ export default function AcademicTeacherRequestsPage() {
                   ) : isLoadingModalityResources ||
                     isLoadingRescheduleResources ? (
                     <div className="rounded-lg border p-4 text-center text-sm text-muted-foreground">
-                      Đang tải danh sách resource...
+                      Đang tải danh sách phòng học/phương tiện...
                     </div>
                   ) : modalityResourcesError || rescheduleResourcesError ? (
                     <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
@@ -1183,12 +1200,12 @@ export default function AcademicTeacherRequestsPage() {
                               data?: { message?: string };
                             }
                           )?.data?.message,
-                        "Có lỗi khi tải danh sách resource. Vui lòng thử lại sau."
+                        "Có lỗi khi tải danh sách phòng học/phương tiện. Vui lòng thử lại sau."
                       )}
                     </div>
                   ) : availableResources.length === 0 ? (
                     <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
-                      Không tìm thấy resource phù hợp.
+                      Không tìm thấy phòng học/phương tiện phù hợp.
                     </div>
                   ) : (
                     <Select
@@ -1201,7 +1218,7 @@ export default function AcademicTeacherRequestsPage() {
                       disabled={isActionLoading}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Chọn resource...">
+                        <SelectValue placeholder="Chọn phòng học/phương tiện...">
                           {selectedResourceId
                             ? (() => {
                                 const selectedResource =
@@ -1252,7 +1269,7 @@ export default function AcademicTeacherRequestsPage() {
                 </div>
               )}
 
-              {isSwapRequest && (
+              {isReplacementRequest && (
                 <div className="space-y-2">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Chọn giáo viên dạy thay
@@ -1265,15 +1282,18 @@ export default function AcademicTeacherRequestsPage() {
                     <div className="rounded-lg border p-4 text-center text-sm text-muted-foreground">
                       Đang tải danh sách giáo viên...
                     </div>
-                  ) : swapCandidatesError ? (
+                  ) : replacementCandidatesError ? (
                     <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
                       {formatBackendError(
-                        (swapCandidatesError as { data?: { message?: string } })
-                          ?.data?.message,
+                        (
+                          replacementCandidatesError as {
+                            data?: { message?: string };
+                          }
+                        )?.data?.message,
                         "Có lỗi khi tải danh sách giáo viên. Vui lòng thử lại sau."
                       )}
                     </div>
-                  ) : swapCandidates.length === 0 ? (
+                  ) : replacementCandidates.length === 0 ? (
                     <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
                       Không tìm thấy giáo viên phù hợp để dạy thay.
                     </div>
@@ -1294,12 +1314,13 @@ export default function AcademicTeacherRequestsPage() {
                           {selectedReplacementTeacherId
                             ? (() => {
                                 // First try to find in candidates list
-                                const selectedCandidate = swapCandidates.find(
-                                  (c) =>
-                                    (c.teacherId ??
-                                      (c as { id?: number }).id) ===
-                                    selectedReplacementTeacherId
-                                );
+                                const selectedCandidate =
+                                  replacementCandidates.find(
+                                    (c) =>
+                                      (c.teacherId ??
+                                        (c as { id?: number }).id) ===
+                                      selectedReplacementTeacherId
+                                  );
                                 if (selectedCandidate) {
                                   return (
                                     selectedCandidate.fullName ||
@@ -1314,7 +1335,7 @@ export default function AcademicTeacherRequestsPage() {
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        {swapCandidates.map((candidate) => {
+                        {replacementCandidates.map((candidate) => {
                           const teacherId =
                             candidate.teacherId ??
                             (candidate as { id?: number }).id;

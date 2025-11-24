@@ -237,68 +237,67 @@ export default function StudentSchedulePage() {
         <SidebarInset>
           <SiteHeader />
           <main className="flex flex-1 flex-col">
-            <div className="@container/main flex flex-1 flex-col gap-2">
-              <section className="flex flex-col gap-4 px-4 pb-6 pt-4 lg:px-6">
-                <header className="flex flex-col gap-3">
-                  <div className="flex flex-col gap-1">
-                    <h1 className="text-3xl font-semibold tracking-tight">Thời khóa biểu của tôi</h1>
-                    <p className="text-muted-foreground">
-                      Theo dõi lịch học từng buổi, di chuyển giữa các tuần và mở chi tiết để xem tài liệu, bài tập cùng
-                      tình trạng tham gia.
-                    </p>
+            <header className="flex flex-col gap-2 border-b border-border px-6 py-5">
+              <div className="flex flex-col gap-2">
+                <h1 className="text-2xl font-semibold tracking-tight">Thời khóa biểu của tôi</h1>
+                <p className="text-sm text-muted-foreground">
+                  Theo dõi lịch học từng buổi, di chuyển giữa các tuần và mở chi tiết để xem tài liệu, bài tập cùng
+                  tình trạng tham gia.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border/60 bg-background/50 px-4 py-3">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <CalendarIcon className="h-4 w-4" />
+                  <span>
+                    Tuần: <span className="font-medium text-foreground">{weekRangeLabel ?? 'Đang xác định...'}</span>
+                  </span>
+                </div>
+                {scheduleData?.studentName ? (
+                  <div className="text-sm text-muted-foreground">
+                    Sinh viên: <span className="font-medium text-foreground">{scheduleData.studentName}</span>
                   </div>
-                  <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border/60 bg-background/50 px-4 py-3">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <CalendarIcon className="h-4 w-4" />
-                      <span>
-                        Tuần: <span className="font-medium text-foreground">{weekRangeLabel ?? 'Đang xác định...'}</span>
-                      </span>
-                    </div>
-                    {scheduleData?.studentName ? (
-                      <div className="text-sm text-muted-foreground">
-                        Sinh viên: <span className="font-medium text-foreground">{scheduleData.studentName}</span>
-                      </div>
-                    ) : null}
-                    <div className="flex flex-wrap items-center gap-2 ml-auto">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleWeekChange('prev')}
-                        disabled={!scheduleData || isScheduleFetching}
-                        aria-label="Tuần trước"
-                      >
-                        <ChevronLeftIcon className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleWeekChange('next')}
-                        disabled={!scheduleData || isScheduleFetching}
-                        aria-label="Tuần tiếp theo"
-                      >
-                        <ChevronRightIcon className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        onClick={() => handleWeekChange('current')}
-                        disabled={!currentWeekResponse?.data || isScheduleFetching}
-                      >
-                        <RefreshCcwIcon className="mr-2 h-4 w-4" />
-                        Tuần hiện tại
-                      </Button>
-                    </div>
-                  </div>
-                </header>
+                ) : null}
+                <div className="flex flex-wrap items-center gap-2 ml-auto">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleWeekChange('prev')}
+                    disabled={!scheduleData || isScheduleFetching}
+                    aria-label="Tuần trước"
+                  >
+                    <ChevronLeftIcon className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleWeekChange('next')}
+                    disabled={!scheduleData || isScheduleFetching}
+                    aria-label="Tuần tiếp theo"
+                  >
+                    <ChevronRightIcon className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => handleWeekChange('current')}
+                    disabled={!currentWeekResponse?.data || isScheduleFetching}
+                  >
+                    <RefreshCcwIcon className="mr-2 h-4 w-4" />
+                    Tuần hiện tại
+                  </Button>
+                </div>
+              </div>
+            </header>
 
-                {isLoading && (
-                  <div className="space-y-3 rounded-3xl border border-border/60 bg-card/30 p-6">
-                    <Skeleton className="h-6 w-48" />
-                    <Skeleton className="h-40 w-full" />
-                    <Skeleton className="h-40 w-full" />
-                  </div>
-                )}
+            <div className="flex-1 px-6 py-6">
+              {isLoading && (
+                <div className="space-y-3 rounded-3xl border border-border/60 bg-card/30 p-6">
+                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="h-40 w-full" />
+                  <Skeleton className="h-40 w-full" />
+                </div>
+              )}
 
-                {hasError && (
+              {hasError && (
                   <div className="rounded-3xl border border-destructive/40 bg-destructive/5 p-6">
                     <p className="font-medium text-destructive">Không thể tải thời khóa biểu.</p>
                     <p className="mt-1 text-sm text-destructive/80">
@@ -327,18 +326,18 @@ export default function StudentSchedulePage() {
                 {!isLoading && !hasError && hasContent && scheduleData && dayDateMap && (
                   <section className="rounded-3xl border border-border/60 bg-card/30">
                     <div className="overflow-x-auto">
-                      <div className="min-w-[960px] divide-y divide-border/60">
+                      <div className="min-w-[800px] sm:min-w-[960px] divide-y divide-border/60">
                         <div
                           className="grid"
                           style={{
-                            gridTemplateColumns: `160px repeat(${DAYS.length}, minmax(0, 1fr))`,
+                            gridTemplateColumns: `120px repeat(${DAYS.length}, minmax(80px, 1fr))`,
                           }}
                         >
                           <div className="bg-muted/40 px-4 py-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                             Khung giờ
                           </div>
                           {DAYS.map((day) => (
-                            <div key={day} className="bg-muted/40 px-4 py-4">
+                            <div key={day} className="bg-muted/40 px-3 py-3 sm:px-4 sm:py-4">
                               <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                                 {DAY_LABELS[day]}
                               </div>
@@ -358,7 +357,7 @@ export default function StudentSchedulePage() {
                               key={slotKey}
                               className="grid"
                               style={{
-                                gridTemplateColumns: `160px repeat(${DAYS.length}, minmax(0, 1fr))`,
+                                gridTemplateColumns: `120px repeat(${DAYS.length}, minmax(80px, 1fr))`,
                               }}
                           >
                             <div className="border-r border-border/60 bg-muted/20 px-4 py-5">
@@ -444,7 +443,6 @@ export default function StudentSchedulePage() {
                     </div>
                   </section>
                 )}
-              </section>
             </div>
           </main>
         </SidebarInset>

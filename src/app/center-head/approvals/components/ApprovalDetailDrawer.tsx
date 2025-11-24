@@ -322,9 +322,9 @@ export function ApprovalDetailDrawer({ classId, open, onClose, onActionComplete 
                 {overview && (
                   <>
                     <div className="flex flex-wrap gap-2">
-                      <Badge variant="outline">{getClassStatusLabel(overview.status)}</Badge>
-                      <Badge variant={getApprovalBadgeVariant(overview.approvalStatus)}>
-                        {getApprovalStatusLabel(overview.approvalStatus)}
+                      <Badge variant="outline">{getClassStatusLabel(overview.status ?? undefined)}</Badge>
+                      <Badge variant={getApprovalBadgeVariant(overview.approvalStatus ?? undefined)}>
+                        {getApprovalStatusLabel(overview.approvalStatus ?? undefined)}
                       </Badge>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2">

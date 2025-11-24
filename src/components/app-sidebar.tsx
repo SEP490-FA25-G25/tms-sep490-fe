@@ -16,6 +16,8 @@ import {
   AwardIcon,
   ClipboardCheckIcon,
   NotebookPenIcon,
+  SchoolIcon,
+  UserCircleIcon,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -166,6 +168,11 @@ const roleBasedNav = {
       {
         title: "Lớp học của tôi",
         url: "/teacher/classes",
+        icon: SchoolIcon,
+      },
+      {
+        title: "Lịch dạy",
+        url: "/teacher/schedule",
         icon: CalendarIcon,
       },
       {
@@ -179,19 +186,14 @@ const roleBasedNav = {
         icon: ClipboardCheckIcon,
       },
       {
-        title: "Bài tập",
-        url: "/teacher/assignments",
-        icon: FileTextIcon,
-      },
-      {
         title: "Quản lý điểm",
         url: "/teacher/grades",
         icon: AwardIcon,
       },
       {
-        title: "Tiến độ học sinh",
-        url: "/teacher/students",
-        icon: UsersIcon,
+        title: "Hồ sơ cá nhân",
+        url: "/teacher/profile",
+        icon: UserCircleIcon,
       },
     ],
   },
@@ -203,9 +205,14 @@ const roleBasedNav = {
         icon: HomeIcon,
       },
       {
-        title: "Khóa học của tôi",
-        url: "/student/courses",
-        icon: BookOpenIcon,
+        title: "Thời khóa biểu",
+        url: "/student/schedule",
+        icon: CalendarIcon,
+      },
+      {
+        title: "Lớp của tôi",
+        url: "/student/my-classes",
+        icon: SchoolIcon,
       },
       {
         title: "Báo cáo điểm danh",
@@ -213,24 +220,19 @@ const roleBasedNav = {
         icon: BarChartIcon,
       },
       {
-        title: "Bài tập",
-        url: "/student/assignments",
-        icon: FileTextIcon,
-      },
-      {
-        title: "Điểm số",
-        url: "/student/grades",
-        icon: AwardIcon,
-      },
-      {
-        title: "Thời khóa biểu",
-        url: "/student/schedule",
-        icon: CalendarIcon,
+        title: "Bảng điểm",
+        url: "/student/transcript",
+        icon: GraduationCapIcon,
       },
       {
         title: "Yêu cầu của tôi",
         url: "/student/requests",
         icon: NotebookPenIcon,
+      },
+      {
+        title: "Hồ sơ cá nhân",
+        url: "/student/profile",
+        icon: UserCircleIcon,
       },
     ],
   },

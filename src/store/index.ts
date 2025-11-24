@@ -10,6 +10,11 @@ import { studentRequestApi } from './services/studentRequestApi'
 import { teacherRequestApi } from './services/teacherRequestApi'
 import { attendanceApi } from './services/attendanceApi'
 import { courseApi } from './services/courseApi'
+import { studentClassApi } from './services/studentClassApi'
+import { studentProfileApi } from './services/studentProfileApi'
+import { teacherScheduleApi } from './services/teacherScheduleApi'
+import { teacherGradeApi } from './services/teacherGradeApi'
+import { teacherProfileApi } from './services/teacherProfileApi'
 import authSlice, {
   setCredentials,
   logout,
@@ -36,6 +41,11 @@ export const store = configureStore({
     [teacherRequestApi.reducerPath]: teacherRequestApi.reducer,
     [attendanceApi.reducerPath]: attendanceApi.reducer,
     [courseApi.reducerPath]: courseApi.reducer,
+    [studentClassApi.reducerPath]: studentClassApi.reducer,
+    [studentProfileApi.reducerPath]: studentProfileApi.reducer,
+    [teacherScheduleApi.reducerPath]: teacherScheduleApi.reducer,
+    [teacherGradeApi.reducerPath]: teacherGradeApi.reducer,
+    [teacherProfileApi.reducerPath]: teacherProfileApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -54,7 +64,12 @@ export const store = configureStore({
       .concat(studentRequestApi.middleware)
       .concat(teacherRequestApi.middleware)
       .concat(attendanceApi.middleware)
-      .concat(courseApi.middleware),
+      .concat(courseApi.middleware)
+      .concat(studentClassApi.middleware)
+      .concat(studentProfileApi.middleware)
+      .concat(teacherScheduleApi.middleware)
+      .concat(teacherGradeApi.middleware)
+      .concat(teacherProfileApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

@@ -8,7 +8,23 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { PlusCircleIcon, XIcon } from 'lucide-react'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
+import {
+  PlusCircleIcon,
+  XIcon,
+  ClockIcon,
+  AlertTriangleIcon,
+  CalendarXIcon,
+  CalendarCheckIcon,
+  ArrowRightLeftIcon
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { DataTable } from './components/DataTable'
 import { pendingColumns, historyColumns } from './components/columns'
@@ -146,28 +162,43 @@ export default function AcademicRequestsPage() {
 
         {/* Summary Stats */}
         {summary && (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="rounded-lg bg-muted/30 p-4">
-              <p className="text-xs text-muted-foreground">Chờ duyệt</p>
-              <p className="text-2xl font-bold mt-1">{summary.totalPending}</p>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+            <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <ClockIcon className="h-4 w-4" />
+                <span className="text-sm">Chờ duyệt</span>
+              </div>
+              <p className="text-2xl font-semibold">{summary.totalPending}</p>
             </div>
-            <div className="rounded-lg bg-amber-50/50 dark:bg-amber-950/20 p-4">
-              <p className="text-xs text-amber-700 dark:text-amber-400">Khẩn cấp</p>
-              <p className="text-2xl font-bold text-amber-700 dark:text-amber-400 mt-1">
+            <div className="rounded-lg border border-border/70 bg-amber-50 dark:bg-amber-950/20 p-4">
+              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                <AlertTriangleIcon className="h-4 w-4" />
+                <span className="text-sm">Khẩn cấp</span>
+              </div>
+              <p className="text-2xl font-semibold text-amber-700 dark:text-amber-400">
                 {summary.needsUrgentReview}
               </p>
             </div>
-            <div className="rounded-lg bg-muted/30 p-4">
-              <p className="text-xs text-muted-foreground">Xin nghỉ</p>
-              <p className="text-2xl font-bold mt-1">{summary.absenceRequests}</p>
+            <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <CalendarXIcon className="h-4 w-4" />
+                <span className="text-sm">Xin nghỉ</span>
+              </div>
+              <p className="text-2xl font-semibold">{summary.absenceRequests}</p>
             </div>
-            <div className="rounded-lg bg-muted/30 p-4">
-              <p className="text-xs text-muted-foreground">Học bù</p>
-              <p className="text-2xl font-bold mt-1">{summary.makeupRequests}</p>
+            <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <CalendarCheckIcon className="h-4 w-4" />
+                <span className="text-sm">Học bù</span>
+              </div>
+              <p className="text-2xl font-semibold">{summary.makeupRequests}</p>
             </div>
-            <div className="rounded-lg bg-muted/30 p-4">
-              <p className="text-xs text-muted-foreground">Chuyển lớp</p>
-              <p className="text-2xl font-bold mt-1">{summary.transferRequests}</p>
+            <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <ArrowRightLeftIcon className="h-4 w-4" />
+                <span className="text-sm">Chuyển lớp</span>
+              </div>
+              <p className="text-2xl font-semibold">{summary.transferRequests}</p>
             </div>
           </div>
         )}
@@ -336,31 +367,49 @@ export default function AcademicRequestsPage() {
               )}
 
               {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between text-sm">
-                  <p className="text-muted-foreground">
-                    Trang {page + 1} / {totalPages} · {pendingData?.totalElements ?? 0} yêu cầu
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={page === 0 || isLoadingPending}
-                      onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
-                    >
-                      Trước
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={page + 1 >= totalPages || isLoadingPending}
-                      onClick={() => setPage((prev) => Math.min(prev + 1, totalPages - 1))}
-                    >
-                      Sau
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <div className="flex items-center justify-between text-sm">
+                <p className="text-muted-foreground">
+                  Trang {page + 1} / {totalPages} · {pendingData?.totalElements ?? 0} yêu cầu
+                </p>
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setPage((prev) => Math.max(prev - 1, 0))
+                        }}
+                        disabled={page === 0 || isLoadingPending}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: totalPages }, (_, i) => i).map((pageNum) => (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setPage(pageNum)
+                          }}
+                          isActive={pageNum === page}
+                        >
+                          {pageNum + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setPage((prev) => Math.min(prev + 1, totalPages - 1))
+                        }}
+                        disabled={page + 1 >= totalPages || isLoadingPending}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
             </div>
           </TabsContent>
 
@@ -378,31 +427,49 @@ export default function AcademicRequestsPage() {
               )}
 
               {/* History Pagination */}
-              {historyTotalPages > 1 && (
-                <div className="flex items-center justify-between text-sm">
-                  <p className="text-muted-foreground">
-                    Trang {historyPage + 1} / {historyTotalPages} · {historyData?.page?.totalElements ?? 0} yêu cầu
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={historyPage === 0 || isLoadingHistory}
-                      onClick={() => setHistoryPage((prev) => Math.max(prev - 1, 0))}
-                    >
-                      Trước
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={historyPage + 1 >= historyTotalPages || isLoadingHistory}
-                      onClick={() => setHistoryPage((prev) => Math.min(prev + 1, historyTotalPages - 1))}
-                    >
-                      Sau
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <div className="flex items-center justify-between text-sm">
+                <p className="text-muted-foreground">
+                  Trang {historyPage + 1} / {historyTotalPages} · {historyData?.page?.totalElements ?? 0} yêu cầu
+                </p>
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setHistoryPage((prev) => Math.max(prev - 1, 0))
+                        }}
+                        disabled={historyPage === 0 || isLoadingHistory}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: historyTotalPages }, (_, i) => i).map((pageNum) => (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setHistoryPage(pageNum)
+                          }}
+                          isActive={pageNum === historyPage}
+                        >
+                          {pageNum + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setHistoryPage((prev) => Math.min(prev + 1, historyTotalPages - 1))
+                        }}
+                        disabled={historyPage + 1 >= historyTotalPages || isLoadingHistory}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
             </div>
           </TabsContent>
         </Tabs>

@@ -1,12 +1,17 @@
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import {
   ArrowRightIcon,
+  CheckCircleIcon,
+  ClockIcon,
   NotebookPenIcon,
   PlusIcon,
   RefreshCcwIcon,
+  SearchIcon,
+  XCircleIcon,
+  XIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -17,7 +22,6 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +33,16 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
 import { cn } from '@/lib/utils'
 import UnifiedRequestFlow from '@/components/requests/UnifiedRequestFlow'
 import {
@@ -41,6 +54,9 @@ import {
   type RequestType,
 } from '@/store/services/studentRequestApi'
 import { REQUEST_STATUS_META } from '@/constants/absence'
+import { DataTable } from './components/DataTable'
+import { columns } from './components/columns'
+import { RequestDetailDialog } from './components/RequestDetailDialog'
 const REQUEST_TYPE_LABELS: Record<RequestType, string> = {
   ABSENCE: 'Xin nghỉ',
   MAKEUP: 'Học bù',
@@ -69,6 +85,8 @@ type StatusFilter = 'ALL' | RequestStatus
 export default function StudentRequestsPage() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('ALL')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
   const [page, setPage] = useState(0)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [activeType, setActiveType] = useState<RequestType | null>(null)
@@ -77,6 +95,16 @@ export default function StudentRequestsPage() {
   const [successRequest, setSuccessRequest] = useState<StudentRequest | null>(null)
   const [cancelConfirmRequest, setCancelConfirmRequest] = useState<StudentRequest | null>(null)
 
+  // Debounce search query to avoid excessive API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery)
+      setPage(0) // Reset to first page when search changes
+    }, 500) // 500ms debounce delay
+
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
   const {
     data: requestsResponse,
     isFetching: isLoadingRequests,
@@ -84,6 +112,7 @@ export default function StudentRequestsPage() {
   } = useGetMyRequestsQuery({
     requestType: typeFilter === 'ALL' ? undefined : typeFilter,
     status: statusFilter === 'ALL' ? undefined : statusFilter,
+    search: debouncedSearchQuery || undefined,
     page,
     size: REQUEST_PAGE_SIZE,
     sort: 'submittedAt,desc',
@@ -134,37 +163,52 @@ export default function StudentRequestsPage() {
         <AppSidebar variant="inset" />
         <SidebarInset>
           <SiteHeader />
-          <div className="flex flex-1 flex-col gap-6 p-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-semibold tracking-tight">Yêu cầu của tôi</h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Quản lý yêu cầu xin nghỉ, học bù, chuyển lớp
-                </p>
+          <main className="flex flex-1 flex-col">
+            <header className="flex flex-col gap-2 border-b border-border px-6 py-5">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-2">
+                  <h1 className="text-2xl font-semibold tracking-tight">Yêu cầu của tôi</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Quản lý yêu cầu xin nghỉ, học bù, chuyển lớp
+                  </p>
+                </div>
+                <Button onClick={() => setIsCreateOpen(true)} size="sm">
+                  <PlusIcon className="h-4 w-4" />
+                  Tạo yêu cầu
+                </Button>
               </div>
-              <Button onClick={() => setIsCreateOpen(true)} size="sm">
-                <PlusIcon className="h-4 w-4" />
-                Tạo yêu cầu
-              </Button>
-            </div>
+            </header>
 
-            {/* Summary Stats - NO WRAPPER CARD */}
-            <div className="grid gap-4 md:grid-cols-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Tổng số yêu cầu</p>
+            <div className="flex flex-1 flex-col gap-6 px-6 py-6">
+
+            {/* Summary Stats */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <NotebookPenIcon className="h-4 w-4" />
+                  <span className="text-sm">Tổng số yêu cầu</span>
+                </div>
                 <p className="text-2xl font-semibold">{summary?.totalRequests ?? 0}</p>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Đang chờ</p>
+              <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <ClockIcon className="h-4 w-4" />
+                  <span className="text-sm">Đang chờ</span>
+                </div>
                 <p className="text-2xl font-semibold text-sky-600">{summary?.pending ?? 0}</p>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Đã duyệt</p>
+              <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <CheckCircleIcon className="h-4 w-4" />
+                  <span className="text-sm">Đã duyệt</span>
+                </div>
                 <p className="text-2xl font-semibold text-emerald-600">{summary?.approved ?? 0}</p>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Bị từ chối</p>
+              <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <XCircleIcon className="h-4 w-4" />
+                  <span className="text-sm">Bị từ chối</span>
+                </div>
                 <p className="text-2xl font-semibold text-rose-600">{summary?.rejected ?? 0}</p>
               </div>
             </div>
@@ -172,275 +216,152 @@ export default function StudentRequestsPage() {
             <div className="h-px bg-border" />
 
             {/* Filters */}
-            <div className="flex items-center gap-2">
-              <Select
-                value={typeFilter}
-                onValueChange={(value: TypeFilter) => {
-                  setTypeFilter(value)
-                  setPage(0)
-                }}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TYPE_FILTERS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex items-center justify-between gap-4">
+              {/* Search Input - Left side */}
+              <div className="flex-1 max-w-md">
+                <div className="relative">
+                  <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Tìm kiếm theo lý do, mã lớp, hoặc tên buổi học..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-10"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      <XIcon className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
 
-              <Select
-                value={statusFilter}
-                onValueChange={(value: StatusFilter) => {
-                  setStatusFilter(value)
-                  setPage(0)
-                }}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_FILTERS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* Filter Controls - Right side */}
+              <div className="flex items-center gap-2">
+                <Select
+                  value={typeFilter}
+                  onValueChange={(value: TypeFilter) => {
+                    setTypeFilter(value)
+                    setPage(0)
+                  }}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TYPE_FILTERS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              <Button variant="outline" size="icon" onClick={() => refetchRequests()}>
-                <RefreshCcwIcon className="h-4 w-4" />
-              </Button>
+                <Select
+                  value={statusFilter}
+                  onValueChange={(value: StatusFilter) => {
+                    setStatusFilter(value)
+                    setPage(0)
+                  }}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_FILTERS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Button variant="outline" size="icon" onClick={() => refetchRequests()}>
+                  <RefreshCcwIcon className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
-            {/* Request List - Enhanced with ScrollArea */}
-            <ScrollArea className="h-[calc(100vh-350px)]">
-              <div className="pr-4">
-                {isLoadingRequests ? (
-                  <div className="space-y-3">
-                    {[...Array(3)].map((_, index) => (
-                      <Skeleton key={index} className="h-32 w-full" />
-                    ))}
-                  </div>
-                ) : requests.length === 0 ? (
-                  <div className="flex flex-col items-center gap-2 py-12 text-center">
-                    <NotebookPenIcon className="h-12 w-12 text-muted-foreground/50" />
-                    <p className="font-medium">Chưa có yêu cầu nào</p>
-                    <p className="text-sm text-muted-foreground">
-                      Tạo yêu cầu mới để xin nghỉ, học bù hoặc chuyển lớp
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {requests.map((request) => {
-                  const submittedAtLabel = format(parseISO(request.submittedAt), 'HH:mm dd/MM/yyyy', { locale: vi })
-                  const decidedAtLabel = request.decidedAt
-                    ? format(parseISO(request.decidedAt), 'HH:mm dd/MM/yyyy', { locale: vi })
-                    : null
-                  return (
-                    <div
-                      key={request.id}
-                      className="rounded-lg border bg-card p-4 transition-colors hover:bg-muted/30"
-                    >
-                      {/* Request Header */}
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="secondary" className="font-medium">
-                            {REQUEST_TYPE_LABELS[request.requestType]}
-                          </Badge>
-                          <Badge
-                            className={cn(
-                              'font-semibold',
-                              REQUEST_STATUS_META[request.status].badgeClass
-                            )}
-                          >
-                            {REQUEST_STATUS_META[request.status].label}
-                          </Badge>
-                          <span className="text-xs font-semibold text-muted-foreground">#{request.id}</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          Gửi {submittedAtLabel}
-                          {request.submittedBy?.fullName ? ` • ${request.submittedBy.fullName}` : ''}
-                        </span>
-                      </div>
-
-                      {/* Request Content */}
-                      <div className="mt-3 grid gap-4 md:grid-cols-3">
-                        {request.requestType === 'MAKEUP' ? (
-                          <>
-                            <div>
-                              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                Buổi đã vắng ({request.currentClass.code})
-                              </p>
-                              <p className="mt-1 font-medium">
-                                {format(parseISO(request.targetSession.date), 'EEEE, dd/MM', { locale: vi })}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                Buổi {request.targetSession.courseSessionNumber}: {request.targetSession.courseSessionTitle}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {request.targetSession.timeSlot.startTime} - {request.targetSession.timeSlot.endTime}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                Buổi học bù
-                              </p>
-                              {request.makeupSession ? (
-                                <>
-                                  <p className="mt-1 font-medium">
-                                    {request.makeupSession.classInfo?.classCode
-                                      ? `${request.makeupSession.classInfo.classCode} · ${format(
-                                          parseISO(request.makeupSession.date),
-                                          'dd/MM',
-                                          { locale: vi }
-                                        )}`
-                                      : format(parseISO(request.makeupSession.date), 'EEEE, dd/MM', { locale: vi })}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">
-                                    Buổi {request.makeupSession.courseSessionNumber}:{' '}
-                                    {request.makeupSession.courseSessionTitle}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {request.makeupSession.timeSlot.startTime} - {request.makeupSession.timeSlot.endTime}
-                                  </p>
-                                </>
-                              ) : (
-                                <p className="mt-1 text-sm text-muted-foreground">Chưa có buổi học bù</p>
-                              )}
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="space-y-3">
-                              <div>
-                                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                  Lớp hiện tại
-                                </p>
-                                <p className="mt-1 font-medium">{request.currentClass.code}</p>
-                              </div>
-                              {request.targetClass && (
-                                <div>
-                                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                    Lớp mục tiêu
-                                  </p>
-                                  <p className="mt-1 text-sm font-medium">{request.targetClass.code}</p>
-                                  {request.effectiveDate && (
-                                    <p className="text-xs text-muted-foreground">
-                                      Hiệu lực: {format(parseISO(request.effectiveDate), 'dd/MM/yyyy', { locale: vi })}
-                                    </p>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                            <div>
-                              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                Buổi học
-                              </p>
-                              <p className="mt-1 font-medium">
-                                {request.currentClass.code} · {format(parseISO(request.targetSession.date), 'dd/MM', {
-                                  locale: vi,
-                                })}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                Buổi {request.targetSession.courseSessionNumber}: {request.targetSession.courseSessionTitle}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {request.targetSession.timeSlot.startTime} - {request.targetSession.timeSlot.endTime}
-                              </p>
-                            </div>
-                          </>
-                        )}
-
-                        <div className="space-y-3">
-                          <div>
-                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                              Lý do
-                            </p>
-                            <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">
-                              {request.requestReason}
-                            </p>
-                          </div>
-                          {request.note && (
-                            <div>
-                              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                Ghi chú
-                              </p>
-                              <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{request.note}</p>
-                            </div>
-                          )}
-                          {request.rejectionReason && (
-                            <div>
-                              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground text-rose-500">
-                                Lý do từ chối
-                              </p>
-                              <p className="mt-1 line-clamp-2 text-sm text-rose-500">{request.rejectionReason}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t pt-3">
-                        <span className="text-xs text-muted-foreground">
-                          {decidedAtLabel
-                            ? `Cập nhật ${decidedAtLabel}${request.decidedBy?.fullName ? ` • ${request.decidedBy.fullName}` : ''}`
-                            : 'Chưa được xử lý'}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          {request.status === 'PENDING' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setCancelConfirmRequest(request)}
-                              disabled={isCancelling && cancelingId === request.id}
-                            >
-                              {isCancelling && cancelingId === request.id ? 'Đang hủy...' : 'Hủy yêu cầu'}
-                            </Button>
-                          )}
-                          <Button variant="ghost" size="sm" onClick={() => setDetailId(request.id)}>
-                            Chi tiết
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
+            {/* Request Table */}
+            <div className="space-y-4">
+              {isLoadingRequests ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-64 w-full" />
+                </div>
+              ) : requests.length === 0 ? (
+                <div className="flex flex-col items-center gap-2 py-12 text-center">
+                  <NotebookPenIcon className="h-12 w-12 text-muted-foreground/50" />
+                  <p className="font-medium">Chưa có yêu cầu nào</p>
+                  <p className="text-sm text-muted-foreground">
+                    Tạo yêu cầu mới để xin nghỉ, học bù hoặc chuyển lớp
+                  </p>
+                </div>
+              ) : (
+                <DataTable
+                  columns={columns}
+                  data={requests}
+                  onViewDetail={(id) => setDetailId(id)}
+                  onCancelRequest={(id) => {
+                    const request = requests.find(r => r.id === id)
+                    if (request) setCancelConfirmRequest(request)
+                  }}
+                  isCancelling={isCancelling}
+                  cancelingId={cancelingId}
+                />
+              )}
+            </div>
 
             {/* Pagination */}
-            {pagination && pagination.totalPages > 1 && (
+            {pagination && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">
                   Trang {pagination.number + 1} / {pagination.totalPages}
                 </span>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
-                    disabled={pagination.number === 0}
-                  >
-                    Trước
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setPage((prev) => Math.min(prev + 1, pagination.totalPages - 1))}
-                    disabled={pagination.number + 1 >= pagination.totalPages}
-                  >
-                    Sau
-                  </Button>
-                </div>
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setPage((prev) => Math.max(prev - 1, 0))
+                        }}
+                        disabled={pagination.number === 0}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: pagination.totalPages }, (_, i) => i).map((pageNum) => (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setPage(pageNum)
+                          }}
+                          isActive={pageNum === pagination.number}
+                        >
+                          {pageNum + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setPage((prev) => Math.min(prev + 1, pagination.totalPages - 1))
+                        }}
+                        disabled={pagination.number + 1 >= pagination.totalPages}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
               </div>
             )}
-          </div>
+            </div>
+          </main>
         </SidebarInset>
       </SidebarProvider>
       <CreateRequestDialog
@@ -460,31 +381,15 @@ export default function StudentRequestsPage() {
         }}
       />
 
-      <Dialog
+      <RequestDetailDialog
+        requestId={detailId}
         open={detailId !== null}
         onOpenChange={(open) => {
           if (!open) setDetailId(null)
         }}
-      >
-        <DialogContent className="max-w-2xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh]">
-          <DialogHeader>
-            <DialogTitle>Chi tiết yêu cầu</DialogTitle>
-          </DialogHeader>
-          <ScrollArea className="flex-1">
-            <div className="pr-4">
-              {isLoadingDetail || !detailResponse?.data ? (
-                <div className="space-y-3">
-                  <Skeleton className="h-4 w-2/3" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-32 w-full" />
-                </div>
-              ) : (
-                <RequestDetail request={detailResponse.data} />
-              )}
-            </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
+        isLoading={isLoadingDetail}
+        request={detailResponse?.data}
+      />
 
   
       <Dialog
@@ -582,30 +487,28 @@ function CreateRequestDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl rounded-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <DialogHeader>
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Tạo yêu cầu mới</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="flex-1">
-          <div className="pr-4">
-            {activeType === null ? (
-              <TypeSelection onSelect={handleTypeSelect} />
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between border-b pb-2">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Loại yêu cầu</p>
-                    <h3 className="text-base font-semibold">{REQUEST_TYPE_LABELS[activeType]}</h3>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => onSelectType(null)}>
-                    Chọn loại khác
-                  </Button>
+        <div className="flex-1 overflow-y-auto pr-4 pb-4" style={{ height: 'calc(90vh - 8rem)' }}>
+          {activeType === null ? (
+            <TypeSelection onSelect={handleTypeSelect} />
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between border-b pb-2">
+                <div>
+                  <p className="text-xs text-muted-foreground">Loại yêu cầu</p>
+                  <h3 className="text-base font-semibold">{REQUEST_TYPE_LABELS[activeType]}</h3>
                 </div>
-
-                <UnifiedRequestFlow type={activeType} onSuccess={onSuccess} />
+                <Button variant="ghost" size="sm" onClick={() => onSelectType(null)}>
+                  Chọn loại khác
+                </Button>
               </div>
-            )}
-          </div>
-        </ScrollArea>
+
+              <UnifiedRequestFlow type={activeType} onSuccess={onSuccess} />
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   )
@@ -664,7 +567,7 @@ function TypeSelection({ onSelect }: { onSelect: (type: RequestType) => void }) 
   )
 }
 
-function RequestDetail({ request }: { request: StudentRequest }) {
+export function RequestDetail({ request }: { request: StudentRequest }) {
   const submittedLabel = request.submittedAt
     ? format(parseISO(request.submittedAt), 'HH:mm dd/MM/yyyy', { locale: vi })
     : null

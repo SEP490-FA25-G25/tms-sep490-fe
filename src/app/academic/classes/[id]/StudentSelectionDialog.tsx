@@ -25,6 +25,14 @@ import { useEnrollExistingStudentsMutation } from "@/store/services/enrollmentAp
 import type { AvailableStudentDTO } from "@/store/services/classApi";
 import { toast } from "sonner";
 import { ReplacementAssessmentsPopover } from "@/components/ReplacementAssessmentsPopover";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface StudentSelectionDialogProps {
   classId: number;
@@ -282,33 +290,50 @@ export function StudentSelectionDialog({
               </div>
 
               {/* Pagination */}
-              {pagination && pagination.totalPages > 1 && (
+              {pagination && (
                 <div className="flex items-center justify-between pt-4 pb-4">
                   <div className="text-sm text-muted-foreground">
                     Hiển thị {students.length} trên {pagination.totalElements}{" "}
                     học sinh
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={pagination.number === 0}
-                      onClick={() => setPage(page - 1)}
-                    >
-                      Trang trước
-                    </Button>
-                    <span className="text-sm text-muted-foreground">
-                      Trang {pagination.number + 1} trên {pagination.totalPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={pagination.number >= pagination.totalPages - 1}
-                      onClick={() => setPage(page + 1)}
-                    >
-                      Trang sau
-                    </Button>
-                  </div>
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setPage(page - 1)
+                          }}
+                          disabled={pagination.number === 0}
+                        />
+                      </PaginationItem>
+                      {Array.from({ length: pagination.totalPages }, (_, i) => i).map((pageNum) => (
+                        <PaginationItem key={pageNum}>
+                          <PaginationLink
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              setPage(pageNum)
+                            }}
+                            isActive={pageNum === pagination.number}
+                          >
+                            {pageNum + 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setPage(page + 1)
+                          }}
+                          disabled={pagination.number >= pagination.totalPages - 1}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
                 </div>
               )}
             </div>

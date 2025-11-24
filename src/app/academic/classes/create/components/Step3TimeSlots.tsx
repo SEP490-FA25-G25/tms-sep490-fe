@@ -62,8 +62,8 @@ export function Step3TimeSlots({
     const sessions = sessionsData?.data?.sessions ?? []
     const dayToSlots: Record<number, Record<number, number>> = {}
     sessions.forEach((session) => {
-      if (session.dayOfWeekNumber === undefined || session.dayOfWeekNumber === null) return
-      const day = session.dayOfWeekNumber
+      if (!session.date) return
+      const day = new Date(session.date).getDay()
       const slotId = session.timeSlotTemplateId
       if (!slotId) return
       if (!dayToSlots[day]) dayToSlots[day] = {}

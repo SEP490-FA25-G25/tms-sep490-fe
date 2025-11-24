@@ -295,6 +295,7 @@ export interface StudentSessionQuery {
 export interface StudentRequestsQuery {
   requestType?: RequestType
   status?: RequestStatus
+  search?: string
   page?: number
   size?: number
   sort?: string

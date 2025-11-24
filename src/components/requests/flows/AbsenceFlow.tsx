@@ -127,7 +127,7 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
   )
   const displayedGroups = groupedSessions.filter((group) => group.sessions.length > 0)
   const selectedSession = allSessions.find((session) => session.sessionId === selectedSessionId) ?? null
-  const selectedClassId = selectedSession?.sessionId ?? null
+  const selectedClassId = selectedSession?.classId ?? null
 
   const weekRangeLabel = weekData
     ? `${format(parseISO(weekData.weekStart), 'dd/MM', { locale: vi })} - ${format(parseISO(weekData.weekEnd), 'dd/MM', { locale: vi })}`
@@ -274,6 +274,9 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
                               : 'cursor-not-allowed border-dashed opacity-50',
                             isActive && 'border-primary bg-primary/5'
                           )}
+                          role="radio"
+                          aria-checked={isActive}
+                          aria-disabled={!session.isSelectable}
                         >
                           <input
                             type="radio"

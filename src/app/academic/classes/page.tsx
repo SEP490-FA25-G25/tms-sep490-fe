@@ -24,6 +24,14 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
+import {
   Search,
   Plus,
   Users,
@@ -129,18 +137,7 @@ export default function ClassListPage() {
     }
   }
 
-  const getApprovalLabel = (status?: string | null) => {
-    switch (status) {
-      case 'PENDING':
-        return 'Chờ duyệt'
-      case 'APPROVED':
-        return 'Đã duyệt'
-      case 'REJECTED':
-        return 'Bị từ chối'
-      default:
-        return undefined
-    }
-  }
+
 
   // Gộp hiển thị: ưu tiên approvalStatus; nếu APPROVED thì hiển thị trạng thái vận hành
   const getUnifiedStatus = (status: string, approval?: string | null) => {
@@ -431,29 +428,49 @@ export default function ClassListPage() {
         </div>
 
         {/* Pagination */}
-        {response?.data?.page && response.data.page.totalPages > 1 && (
+        {response?.data?.page && (
           <div className="flex items-center justify-between pt-4 border-t">
             <div className="text-sm text-muted-foreground">
               Trang {response.data.page.number + 1} của {response.data.page.totalPages}
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={response.data.page.number === 0}
-                onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
-              >
-                Trang trước
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={response.data.page.number >= response.data.page.totalPages - 1}
-                onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
-              >
-                Trang sau
-              </Button>
-            </div>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setPagination(prev => ({ ...prev, page: prev.page - 1 }))
+                    }}
+                    disabled={response.data.page.number === 0}
+                  />
+                </PaginationItem>
+                {Array.from({ length: response.data.page.totalPages }, (_, i) => i).map((pageNum) => (
+                  <PaginationItem key={pageNum}>
+                    <PaginationLink
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setPagination(prev => ({ ...prev, page: pageNum }))
+                      }}
+                      isActive={pageNum === response.data.page.number}
+                    >
+                      {pageNum + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setPagination(prev => ({ ...prev, page: prev.page + 1 }))
+                    }}
+                    disabled={response.data.page.number >= response.data.page.totalPages - 1}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
         )}
       </div>

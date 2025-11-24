@@ -105,7 +105,8 @@ export function Step4Resources({
     const sessions = sessionsData?.data?.sessions ?? []
     const dayToResource: Record<number, Record<number, number>> = {}
     sessions.forEach((session) => {
-      const day = session.dayOfWeekNumber
+      if (!session.date) return
+      const day = new Date(session.date).getDay()
       const resourceId = session.resourceId
       if (day === undefined || day === null || !resourceId) return
       if (!dayToResource[day]) dayToResource[day] = {}

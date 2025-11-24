@@ -134,14 +134,14 @@ export default function CenterHeadApprovalsPage() {
       page,
       size: PAGE_SIZE,
       search: debouncedSearch || undefined,
-    status: statusFilter === 'all' ? undefined : statusFilter,
-    approvalStatus: approvalFilter === 'all' ? undefined : approvalFilter,
-    branchIds: branchFilter === 'all' ? undefined : [Number(branchFilter)],
-    sort: 'submittedAt',
-    sortDir: 'desc',
-  }),
-  [page, debouncedSearch, statusFilter, approvalFilter, branchFilter]
-)
+      status: statusFilter === 'all' ? undefined : statusFilter,
+      approvalStatus: approvalFilter === 'all' ? undefined : approvalFilter,
+      branchIds: branchFilter === 'all' ? undefined : [Number(branchFilter)],
+      sort: 'submittedAt',
+      sortDir: 'desc',
+    }),
+    [page, debouncedSearch, statusFilter, approvalFilter, branchFilter]
+  )
 
   const { data: listResponse, isLoading, isFetching, refetch } = useGetClassesQuery(queryArgs)
   const { data: branchesResponse } = useGetBranchesQuery()
@@ -352,8 +352,8 @@ function ApprovalClassCard({ item, onOpenDetail }: { item: ClassListItemDTO; onO
             <p className="text-sm text-muted-foreground">{item.courseName}</p>
           </div>
           <div className="flex flex-col items-end gap-2">
-            <Badge variant="outline">{classStatusLabel(item.status)}</Badge>
-            <Badge variant={approvalBadgeVariant(item.approvalStatus)}>{approvalStatusLabel(item.approvalStatus)}</Badge>
+            <Badge variant="outline">{classStatusLabel(item.status ?? undefined)}</Badge>
+            <Badge variant={approvalBadgeVariant(item.approvalStatus ?? undefined)}>{approvalStatusLabel(item.approvalStatus ?? undefined)}</Badge>
           </div>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">

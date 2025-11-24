@@ -8,7 +8,7 @@ import type {
 } from "@reduxjs/toolkit/query";
 
 // Types based on backend API
-export type RequestType = "MODALITY_CHANGE" | "RESCHEDULE" | "SWAP";
+export type RequestType = "MODALITY_CHANGE" | "RESCHEDULE" | "REPLACEMENT";
 export type RequestStatus =
   | "PENDING"
   | "APPROVED"
@@ -206,7 +206,7 @@ export interface RescheduleResourcesResponse {
   data: RescheduleResourceDTO[];
 }
 
-export interface SwapCandidateSkillDTO {
+export interface ReplacementCandidateSkillDTO {
   id?: number;
   name?: string;
   skillName?: string;
@@ -217,7 +217,7 @@ export interface SwapCandidateSkillDTO {
   description?: string;
 }
 
-export interface SwapCandidateDTO {
+export interface ReplacementCandidateDTO {
   teacherId?: number;
   teacherName?: string;
   fullName?: string;
@@ -233,14 +233,14 @@ export interface SwapCandidateDTO {
   tags?: string[];
   skillSummary?: string;
   skillsDescription?: string;
-  teacherSkills?: Array<string | SwapCandidateSkillDTO>;
-  skills?: SwapCandidateSkillDTO[];
+  teacherSkills?: Array<string | ReplacementCandidateSkillDTO>;
+  skills?: ReplacementCandidateSkillDTO[];
 }
 
-export interface SwapCandidatesResponse {
+export interface ReplacementCandidatesResponse {
   success: boolean;
   message: string;
-  data: SwapCandidateDTO[];
+  data: ReplacementCandidateDTO[];
 }
 
 export interface CreateRequestRequest {
@@ -443,7 +443,12 @@ export const teacherRequestApi = createApi({
     // For sessionId: need to provide date and timeSlotId
     getRescheduleResources: builder.query<
       RescheduleResourcesResponse,
-      { requestId?: number; sessionId?: number; date?: string; timeSlotId?: number }
+      {
+        requestId?: number;
+        sessionId?: number;
+        date?: string;
+        timeSlotId?: number;
+      }
     >({
       query: ({ requestId, sessionId, date, timeSlotId }) => {
         if (requestId) {
@@ -456,7 +461,9 @@ export const teacherRequestApi = createApi({
         if (sessionId) {
           // For new requests, need to provide date and timeSlotId
           if (!date || timeSlotId === undefined) {
-            throw new Error("date and timeSlotId are required when using sessionId");
+            throw new Error(
+              "date and timeSlotId are required when using sessionId"
+            );
           }
           return {
             url: `/teacher-requests/${sessionId}/reschedule/suggestions`,
@@ -471,22 +478,22 @@ export const teacherRequestApi = createApi({
       },
     }),
 
-    // Get swap candidates for substitute request
+    // Get replacement candidates for substitute request
     // Supports both requestId (for existing requests) and sessionId (for new requests)
-    getSwapCandidates: builder.query<
-      SwapCandidatesResponse,
+    getReplacementCandidates: builder.query<
+      ReplacementCandidatesResponse,
       { requestId?: number; sessionId?: number }
     >({
       query: ({ requestId, sessionId }) => {
         if (requestId) {
           return {
-            url: `/teacher-requests/${requestId}/swap/candidates`,
+            url: `/teacher-requests/${requestId}/replacement/candidates`,
             method: "GET",
           };
         }
         if (sessionId) {
           return {
-            url: `/teacher-requests/${sessionId}/swap/candidates`,
+            url: `/teacher-requests/${sessionId}/replacement/candidates`,
             method: "GET",
           };
         }
@@ -561,8 +568,8 @@ export const teacherRequestApi = createApi({
       ],
     }),
 
-    // Teacher: Confirm swap request
-    confirmSwapRequest: builder.mutation<
+    // Teacher: Confirm replacement request
+    confirmReplacementRequest: builder.mutation<
       TeacherRequestDetailResponse,
       { id: number; body?: { note?: string } }
     >({
@@ -577,8 +584,8 @@ export const teacherRequestApi = createApi({
       ],
     }),
 
-    // Teacher: Reject swap request (decline)
-    rejectSwapRequest: builder.mutation<
+    // Teacher: Reject replacement request (decline)
+    rejectReplacementRequest: builder.mutation<
       TeacherRequestDetailResponse,
       { id: number; body: RejectRequestRequest }
     >({
@@ -602,12 +609,12 @@ export const {
   useGetModalityResourcesQuery,
   useGetRescheduleSlotsQuery,
   useGetRescheduleResourcesQuery,
-  useGetSwapCandidatesQuery,
+  useGetReplacementCandidatesQuery,
   useGetRequestByIdQuery,
   useCreateRequestMutation,
   useGetStaffRequestsQuery,
   useApproveRequestMutation,
   useRejectRequestMutation,
-  useConfirmSwapRequestMutation,
-  useRejectSwapRequestMutation,
+  useConfirmReplacementRequestMutation,
+  useRejectReplacementRequestMutation,
 } = teacherRequestApi;

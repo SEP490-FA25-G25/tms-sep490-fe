@@ -33,6 +33,51 @@ import {
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 
+// Helper function to format error messages from backend to user-friendly Vietnamese
+const formatBackendError = (
+  errorMessage?: string,
+  defaultMessage?: string
+): string => {
+  if (!errorMessage) {
+    return defaultMessage || "Có lỗi xảy ra. Vui lòng thử lại sau.";
+  }
+
+  // Map common error codes to user-friendly messages
+  if (errorMessage.includes("SESSION_ALREADY_DONE")) {
+    return "Không được sửa điểm danh hoặc nộp báo cáo cho buổi học đã kết thúc";
+  }
+
+  if (errorMessage.includes("ATTENDANCE_RECORDS_EMPTY")) {
+    return "Vui lòng chọn trạng thái điểm danh cho ít nhất một học sinh";
+  }
+
+  if (errorMessage.includes("HOMEWORK_STATUS_INVALID")) {
+    return "Trạng thái bài tập về nhà không hợp lệ. Vui lòng kiểm tra lại.";
+  }
+
+  if (
+    errorMessage.includes("Internal Server Error") ||
+    errorMessage.includes("500")
+  ) {
+    return "Lỗi máy chủ. Vui lòng thử lại sau hoặc liên hệ quản trị viên nếu vấn đề vẫn tiếp tục.";
+  }
+
+  // If it's a technical error code, try to extract a more readable part
+  if (errorMessage.includes(":")) {
+    const parts = errorMessage.split(":");
+    if (parts.length > 1) {
+      // Use the part after the colon if it's more readable
+      const readablePart = parts.slice(1).join(":").trim();
+      if (readablePart.length > 0 && !readablePart.includes("_")) {
+        return readablePart;
+      }
+    }
+  }
+
+  // Return the original message if no mapping found
+  return errorMessage;
+};
+
 type SessionInfo = {
   sessionId: number;
   classId: number;
@@ -143,6 +188,21 @@ export default function AttendanceDetailPage() {
   const [notes, setNotes] = useState<Record<number, string>>({});
   const isInitialized = useRef(false);
 
+  const sessionHasHomeworkFlag = (
+    studentsResponse?.data as { hasHomework?: boolean } | undefined
+  )?.hasHomework;
+
+  const hasHomework = useMemo(() => {
+    if (typeof sessionHasHomeworkFlag === "boolean") {
+      return sessionHasHomeworkFlag;
+    }
+    return students.some(
+      (student) =>
+        typeof student.homeworkStatus === "string" &&
+        student.homeworkStatus.trim().length > 0
+    );
+  }, [sessionHasHomeworkFlag, students]);
+
   // Report dialog state
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const { data: reportResponse, isLoading: isLoadingReport } =
@@ -181,14 +241,17 @@ export default function AttendanceDetailPage() {
           initialAttendance[student.studentId] = "ABSENT";
         }
 
-        // Initialize homework status (only if homework exists)
-        if (student.homeworkStatus) {
-          // Convert existing status to COMPLETED or INCOMPLETE
-          if (
-            student.homeworkStatus === "COMPLETED" ||
-            student.homeworkStatus === "DONE"
-          ) {
-            initialHomework[student.studentId] = "COMPLETED";
+        // Initialize homework status (only if session có bài tập)
+        if (hasHomework) {
+          if (student.homeworkStatus) {
+            if (
+              student.homeworkStatus === "COMPLETED" ||
+              student.homeworkStatus === "DONE"
+            ) {
+              initialHomework[student.studentId] = "COMPLETED";
+            } else {
+              initialHomework[student.studentId] = "INCOMPLETE";
+            }
           } else {
             initialHomework[student.studentId] = "INCOMPLETE";
           }
@@ -205,13 +268,10 @@ export default function AttendanceDetailPage() {
       setNotes(initialNotes);
       isInitialized.current = true;
     }
-  }, [students]);
+  }, [students, hasHomework]);
 
   const presentCount = Object.values(attendanceStatus).filter(
     (status) => status === "PRESENT"
-  ).length;
-  const absentCount = Object.values(attendanceStatus).filter(
-    (status) => status === "ABSENT"
   ).length;
 
   const handleStatusChange = (
@@ -324,6 +384,13 @@ export default function AttendanceDetailPage() {
         const updatedHomework: Record<number, "COMPLETED" | "INCOMPLETE"> = {};
         const updatedNotes: Record<number, string> = {};
 
+        const refetchHasHomeworkFlag =
+          (
+            refetchResult.data.data as {
+              hasHomework?: boolean;
+            }
+          )?.hasHomework ?? hasHomework;
+
         updatedStudents.forEach((student) => {
           // Update attendance status
           if (student.attendanceStatus) {
@@ -335,12 +402,16 @@ export default function AttendanceDetailPage() {
           }
 
           // Update homework status
-          if (student.homeworkStatus) {
-            if (
-              student.homeworkStatus === "COMPLETED" ||
-              student.homeworkStatus === "DONE"
-            ) {
-              updatedHomework[student.studentId] = "COMPLETED";
+          if (refetchHasHomeworkFlag) {
+            if (student.homeworkStatus) {
+              if (
+                student.homeworkStatus === "COMPLETED" ||
+                student.homeworkStatus === "DONE"
+              ) {
+                updatedHomework[student.studentId] = "COMPLETED";
+              } else {
+                updatedHomework[student.studentId] = "INCOMPLETE";
+              }
             } else {
               updatedHomework[student.studentId] = "INCOMPLETE";
             }
@@ -367,12 +438,9 @@ export default function AttendanceDetailPage() {
         apiError?.data?.message ||
         apiError?.data?.error ||
         "Có lỗi xảy ra khi lưu điểm danh";
-      toast.error(errorMessage);
+      toast.error(formatBackendError(errorMessage, "Có lỗi xảy ra khi lưu điểm danh"));
     }
   };
-
-  // Check if session has homework (you may need to adjust this based on your API)
-  const hasHomework = true; // TODO: Get this from session data hoặc API
 
   if (!isSessionIdValid) {
     return (
@@ -460,7 +528,7 @@ export default function AttendanceDetailPage() {
                 {(session.resourceName || session.modality) && (
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     {session.resourceName && (
-                      <span>Resource: {session.resourceName}</span>
+                      <span>Phòng/phương tiện: {session.resourceName}</span>
                     )}
                     {session.modality && (
                       <span className="capitalize">
@@ -675,12 +743,9 @@ export default function AttendanceDetailPage() {
                 <div className="space-y-1">
                   <p className="text-sm font-medium">Tổng kết</p>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span>
-                      <Users className="inline h-4 w-4 mr-1" />
+                    <span className="flex items-center">
+                      <Users className="mr-1 inline h-4 w-4" />
                       Có mặt: {presentCount}/{students.length}
-                    </span>
-                    <span>
-                      Vắng: {absentCount}/{students.length}
                     </span>
                   </div>
                 </div>
@@ -843,7 +908,7 @@ export default function AttendanceDetailPage() {
                             apiError?.data?.message ||
                             apiError?.data?.error ||
                             "Có lỗi xảy ra khi nộp báo cáo";
-                          toast.error(errorMessage);
+                          toast.error(formatBackendError(errorMessage, "Có lỗi xảy ra khi nộp báo cáo"));
                         }
                       }}
                       disabled={isSubmittingReport || !teacherNote.trim()}
