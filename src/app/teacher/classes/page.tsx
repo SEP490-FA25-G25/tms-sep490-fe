@@ -428,11 +428,6 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
     navigate(`/teacher/attendance/classes/${classItem.id}/matrix`);
   };
 
-  const handleViewSchedule = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigate(`/teacher/schedule?classId=${classItem.id}`);
-  };
-
   // Color coding for attendance rate
   const getAttendanceRateColor = (rate: number | undefined) => {
     if (rate === undefined || rate === null) return "text-muted-foreground";
@@ -567,15 +562,6 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
 
         {/* Action buttons */}
         <div className="flex flex-wrap gap-2 pt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleViewSchedule}
-            className="gap-2"
-          >
-            <Calendar className="h-4 w-4" />
-            Xem lịch dạy
-          </Button>
         <Button
           variant="outline"
           size="sm"
