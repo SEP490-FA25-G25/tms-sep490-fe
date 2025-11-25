@@ -8,9 +8,20 @@ import {
   useGetAttendanceClassesQuery,
   type AttendanceClassDTO,
 } from "@/store/services/attendanceApi";
-import { BookOpen, Search, Calendar, MapPin, GraduationCap, Award } from "lucide-react";
+import {
+  BookOpen,
+  Search,
+  Calendar,
+  MapPin,
+  GraduationCap,
+  Award,
+  TrendingUp,
+  ClipboardList,
+  AlertTriangle,
+  Clock9,
+} from "lucide-react";
 import { useMemo, useState } from "react";
-import { format, parseISO } from "date-fns";
+import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -26,7 +37,13 @@ const MODALITY_LABELS: Record<string, string> = {
   HYBRID: "Kết hợp",
 };
 
-function ClassCard({ classItem, onSelect }: { classItem: AttendanceClassDTO; onSelect: (classId: number) => void }) {
+function ClassCard({
+  classItem,
+  onSelect,
+}: {
+  classItem: AttendanceClassDTO;
+  onSelect: (classId: number) => void;
+}) {
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case "ONGOING":
@@ -52,8 +69,10 @@ function ClassCard({ classItem, onSelect }: { classItem: AttendanceClassDTO; onS
   const totalSessions = classItem.totalSessions ?? 0;
 
   return (
-    <div className="rounded-lg border p-5 transition-colors hover:border-primary/60 hover:bg-primary/5 cursor-pointer"
-         onClick={() => onSelect(classItem.id)}>
+    <div
+      className="rounded-lg border p-5 transition-colors hover:border-primary/60 hover:bg-primary/5 cursor-pointer"
+      onClick={() => onSelect(classItem.id)}
+    >
       <div className="space-y-4">
         {/* Header: Class Name and Status */}
         <div className="flex items-start justify-between gap-4">
@@ -140,9 +159,34 @@ function ClassCard({ classItem, onSelect }: { classItem: AttendanceClassDTO; onS
   );
 }
 
+const formatPercent = (value?: number | null) => {
+  if (typeof value !== "number") {
+    return "--";
+  }
+  return `${Math.round(value * 1000) / 10}%`;
+};
+
+const safeParseDate = (value?: string | null) => {
+  if (!value) return null;
+  try {
+    return parseISO(value);
+  } catch {
+    return null;
+  }
+};
+
+const getDaysUntil = (value?: string | null) => {
+  const parsed = safeParseDate(value);
+  if (!parsed) return null;
+  return differenceInCalendarDays(parsed, new Date());
+};
+
+type StatusFilter = "ALL" | "ONGOING" | "SCHEDULED" | "COMPLETED";
+
 export default function TeacherGradesPage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
 
   const {
     data: classesResponse,
@@ -177,8 +221,87 @@ export default function TeacherGradesPage() {
       );
     }
 
+    if (statusFilter !== "ALL") {
+      filtered = filtered.filter((item) => item.status === statusFilter);
+    }
+
     return filtered;
-  }, [allClasses, searchTerm]);
+  }, [allClasses, searchTerm, statusFilter]);
+
+  const summaryStats = useMemo(() => {
+    const now = new Date();
+    const ongoing = allClasses.filter(
+      (item) => item.status === "ONGOING"
+    ).length;
+    const scheduled = allClasses.filter(
+      (item) => item.status === "SCHEDULED"
+    ).length;
+    const completed = allClasses.filter(
+      (item) => item.status === "COMPLETED"
+    ).length;
+
+    const endingSoon = allClasses.filter((item) => {
+      if (item.status !== "ONGOING") return false;
+      const endDate = safeParseDate(item.plannedEndDate);
+      if (!endDate) return false;
+      const diff = differenceInCalendarDays(endDate, now);
+      return diff >= 0 && diff <= 7;
+    }).length;
+
+    const attendanceRates = allClasses
+      .map((item) =>
+        typeof item.attendanceRate === "number" ? item.attendanceRate : null
+      )
+      .filter((rate): rate is number => rate !== null);
+
+    const avgAttendance =
+      attendanceRates.length > 0
+        ? attendanceRates.reduce((sum, rate) => sum + rate, 0) /
+          attendanceRates.length
+        : null;
+
+    return {
+      total: allClasses.length,
+      ongoing,
+      scheduled,
+      completed,
+      endingSoon,
+      avgAttendance,
+    };
+  }, [allClasses]);
+
+  const attentionClasses = useMemo(() => {
+    const now = new Date();
+    return allClasses
+      .filter((item) => {
+        if (item.status !== "ONGOING") return false;
+        const endDate = safeParseDate(item.plannedEndDate);
+        if (!endDate) return false;
+        const diff = differenceInCalendarDays(endDate, now);
+        return diff >= 0 && diff <= 7;
+      })
+      .sort((a, b) => {
+        const aTime =
+          safeParseDate(a.plannedEndDate)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        const bTime =
+          safeParseDate(b.plannedEndDate)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        return aTime - bTime;
+      })
+      .slice(0, 4);
+  }, [allClasses]);
+
+  const upcomingClasses = useMemo(() => {
+    return allClasses
+      .filter((item) => item.status === "SCHEDULED")
+      .sort((a, b) => {
+        const aTime =
+          safeParseDate(a.startDate)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        const bTime =
+          safeParseDate(b.startDate)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        return aTime - bTime;
+      })
+      .slice(0, 4);
+  }, [allClasses]);
 
   const handleSelectClass = (classId: number) => {
     navigate(`/teacher/classes/${classId}/grades`);
@@ -188,31 +311,227 @@ export default function TeacherGradesPage() {
     setSearchTerm(value);
   };
 
+  const statusFilters: { label: string; value: StatusFilter }[] = [
+    { label: "Tất cả", value: "ALL" },
+    { label: "Đang diễn ra", value: "ONGOING" },
+    { label: "Sắp bắt đầu", value: "SCHEDULED" },
+    { label: "Đã kết thúc", value: "COMPLETED" },
+  ];
+
   return (
     <DashboardLayout
       title="Quản lý điểm"
-      description="Chọn lớp học để xem và quản lý điểm số của học sinh"
+      description="Tổng quan các lớp đang được phân công và truy cập nhanh đến bảng điểm chi tiết"
     >
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Badge variant="outline" className="text-sm">
-              {classes.length} lớp học
-            </Badge>
+      <div className="space-y-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">
+              Theo dõi tiến độ nhập điểm và tình trạng lớp đang dạy
+            </p>
+          </div>
+          <Badge variant="outline" className="text-sm">
+            {summaryStats.total} lớp học
+          </Badge>
+        </div>
+
+        {/* Summary cards */}
+        {isLoadingClasses ? (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {[...Array(4)].map((_, index) => (
+              <Skeleton key={index} className="h-28 w-full rounded-lg" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {[
+              {
+                label: "Đang diễn ra",
+                value: summaryStats.ongoing,
+                helper: "Lớp cần theo sát điểm số",
+                icon: TrendingUp,
+              },
+              {
+                label: "Sắp kết thúc",
+                value: summaryStats.endingSoon,
+                helper: "≤ 7 ngày nữa",
+                icon: AlertTriangle,
+              },
+              {
+                label: "Lớp sắp bắt đầu",
+                value: summaryStats.scheduled,
+                helper: "Đã lên lịch",
+                icon: Clock9,
+              },
+              {
+                label: "Điểm chuyên cần TB",
+                value: formatPercent(summaryStats.avgAttendance),
+                helper: "Dựa trên dữ liệu điểm danh",
+                icon: ClipboardList,
+              },
+            ].map((card, index) => (
+              <div key={index} className="rounded-lg border p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      {card.label}
+                    </p>
+                    <p className="text-2xl font-semibold mt-1">{card.value}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {card.helper}
+                    </p>
+                  </div>
+                  <div className="rounded-full bg-primary/10 p-2 text-primary">
+                    <card.icon className="h-5 w-5" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Search + filters */}
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Tìm kiếm theo tên lớp, mã lớp, khóa học hoặc chi nhánh..."
+              value={searchTerm}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {statusFilters.map((filter) => (
+              <Button
+                key={filter.value}
+                type="button"
+                variant={statusFilter === filter.value ? "default" : "outline"}
+                size="sm"
+                className="rounded-full"
+                onClick={() => setStatusFilter(filter.value)}
+              >
+                {filter.label}
+              </Button>
+            ))}
           </div>
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Tìm kiếm theo tên lớp, mã lớp, khóa học hoặc chi nhánh..."
-            value={searchTerm}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="pl-10"
-          />
+        {/* Highlight sections */}
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="rounded-lg border p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold">Lớp cần chú ý</p>
+                <p className="text-xs text-muted-foreground">
+                  Sắp kết thúc và cần hoàn tất việc nhập điểm
+                </p>
+              </div>
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+            </div>
+            {isLoadingClasses ? (
+              <div className="space-y-3">
+                {[...Array(3)].map((_, index) => (
+                  <Skeleton key={index} className="h-16 w-full rounded-md" />
+                ))}
+              </div>
+            ) : attentionClasses.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Chưa có lớp nào cần chú ý ngay lúc này.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {attentionClasses.map((item) => {
+                  const daysLeft = getDaysUntil(item.plannedEndDate);
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => handleSelectClass(item.id)}
+                      className="w-full text-left rounded-md border border-border/80 p-4 hover:bg-muted/40 transition"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium truncate">{item.name}</p>
+                        <Badge variant="outline" className="text-xs">
+                          {STATUS_LABELS[item.status] || item.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {item.courseName}
+                      </p>
+                      <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                        <Clock9 className="h-3.5 w-3.5" />
+                        {typeof daysLeft === "number" && daysLeft >= 0 ? (
+                          <span>Còn {daysLeft} ngày đến ngày kết thúc</span>
+                        ) : (
+                          <span>Đã vượt quá kế hoạch ban đầu</span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-lg border p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold">Lớp sắp bắt đầu</p>
+                <p className="text-xs text-muted-foreground">
+                  Chuẩn bị kế hoạch nhập điểm và tài liệu
+                </p>
+              </div>
+              <Clock9 className="h-5 w-5 text-primary" />
+            </div>
+            {isLoadingClasses ? (
+              <div className="space-y-3">
+                {[...Array(3)].map((_, index) => (
+                  <Skeleton key={index} className="h-16 w-full rounded-md" />
+                ))}
+              </div>
+            ) : upcomingClasses.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Không có lớp nào chuẩn bị khai giảng.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {upcomingClasses.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => handleSelectClass(item.id)}
+                    className="w-full text-left rounded-md border border-border/80 p-4 hover:bg-muted/40 transition"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-medium truncate">{item.name}</p>
+                      <Badge variant="outline" className="text-xs">
+                        {STATUS_LABELS[item.status] || item.status}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {item.courseName}
+                    </p>
+                    <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                      <Calendar className="h-3.5 w-3.5" />
+                      <span>
+                        {item.startDate
+                          ? `Bắt đầu ${format(
+                              parseISO(item.startDate),
+                              "dd/MM/yyyy",
+                              {
+                                locale: vi,
+                              }
+                            )}`
+                          : "Chưa có lịch cụ thể"}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Classes List */}
@@ -224,7 +543,9 @@ export default function TeacherGradesPage() {
           </div>
         ) : classesError ? (
           <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center text-sm text-destructive">
-            <p>Có lỗi xảy ra khi tải danh sách lớp học. Vui lòng thử lại sau.</p>
+            <p>
+              Có lỗi xảy ra khi tải danh sách lớp học. Vui lòng thử lại sau.
+            </p>
           </div>
         ) : classes.length === 0 ? (
           <div className="rounded-lg border border-dashed p-12 text-center">
@@ -250,4 +571,3 @@ export default function TeacherGradesPage() {
     </DashboardLayout>
   );
 }
-
