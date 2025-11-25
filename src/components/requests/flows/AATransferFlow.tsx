@@ -18,11 +18,11 @@ import {
   type TransferOption
 } from '@/store/services/studentRequestApi'
 import {
-  StepHeader,
   Section,
   ReasonInput,
   NoteInput,
-  BaseFlowComponent
+  BaseFlowComponent,
+  SelectionCard
 } from '../UnifiedRequestFlow'
 import {
   useDebouncedValue,
@@ -42,6 +42,9 @@ interface AATransferFlowProps {
 }
 
 export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
+  // Wizard State
+  const [currentStep, setCurrentStep] = useState(1)
+
   const [studentSearch, setStudentSearch] = useState('')
   const [selectedStudent, setSelectedStudent] = useState<StudentSearchResult | null>(null)
   const [selectedCurrentClass, setSelectedCurrentClass] = useState<TransferEligibility | null>(null)
@@ -165,17 +168,6 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
     setNote('')
   }
 
-  const handleSelectCurrentClass = (classData: TransferEligibility) => {
-    setSelectedCurrentClass(classData)
-    setSelectedTargetClass(null)
-  }
-
-  const handleSelectTargetClass = (classData: TransferOption) => {
-    setSelectedTargetClass(classData)
-    setWeekOffset(0)
-    setSelectedSessionIndex(null)
-  }
-
   const handleChangeWeek = useCallback((direction: 'prev' | 'next') => {
     setWeekOffset(prev => {
       const newOffset = direction === 'next' ? prev + 1 : prev - 1
@@ -194,6 +186,15 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
     setRequestReason('')
     setNote('')
   }, [])
+
+  const handleNext = () => {
+    if (currentStep === 1 && selectedStudent) setCurrentStep(2)
+    else if (currentStep === 2 && selectedCurrentClass) setCurrentStep(3)
+  }
+
+  const handleBack = () => {
+    if (currentStep > 1) setCurrentStep(currentStep - 1)
+  }
 
   const handleSubmit = async () => {
     const reasonValidationError = Validation.reason(requestReason)
@@ -229,7 +230,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
     }
   }
 
-  
+
   // Step states
   const step1Complete = !!selectedStudent
   const step2Complete = !!(selectedStudent && selectedCurrentClass)
@@ -261,77 +262,74 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
 
   return (
     <BaseFlowComponent
+      steps={steps}
+      currentStep={currentStep}
+      onNext={handleNext}
+      onBack={handleBack}
       onSubmit={handleSubmit}
-      submitButtonText="Tạo yêu cầu"
+      isNextDisabled={
+        (currentStep === 1 && !selectedStudent) ||
+        (currentStep === 2 && !selectedCurrentClass)
+      }
       isSubmitDisabled={!step3Complete}
       isSubmitting={isSubmitting}
-      onReset={handleReset}
+      submitLabel="Tạo yêu cầu"
     >
       {/* Step 1: Student selection */}
-      <Section>
-        <StepHeader step={steps[0]} stepNumber={1} />
-
-        <div className="space-y-3">
-          <Input
-            placeholder="Nhập tên hoặc mã học viên (tối thiểu 2 ký tự)"
-            value={studentSearch}
-            onChange={(event) => setStudentSearch(event.target.value)}
-          />
-          {studentSearch.trim().length > 0 && studentOptions.length > 0 && (
-            <div className="space-y-2">
-              {isSearchingStudents ? (
-                <Skeleton className="h-20 w-full" />
-              ) : (
-                studentOptions.map((student) => (
-                  <button
-                    key={student.id}
-                    type="button"
-                    onClick={() => handleSelectStudent(student)}
-                    className="w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30"
-                  >
-                    <p className="font-medium">
-                      {student.fullName} <span className="text-muted-foreground">({student.studentCode})</span>
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {student.email} · {student.phone}
-                    </p>
-                  </button>
-                ))
-              )}
-            </div>
-          )}
-          {selectedStudent && (
-            <div className="border-t pt-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">Học viên đã chọn</p>
-                  <p className="font-semibold">{selectedStudent.fullName}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedStudent.studentCode} · {selectedStudent.email}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedStudent(null)
-                    setStudentSearch('')
-                    handleReset()
-                  }}
-                >
-                  Đổi
-                </Button>
+      {currentStep === 1 && (
+        <Section>
+          <div className="space-y-3">
+            <Input
+              placeholder="Nhập tên hoặc mã học viên (tối thiểu 2 ký tự)"
+              value={studentSearch}
+              onChange={(event) => setStudentSearch(event.target.value)}
+            />
+            {studentSearch.trim().length > 0 && studentOptions.length > 0 && (
+              <div className="space-y-2">
+                {isSearchingStudents ? (
+                  <Skeleton className="h-20 w-full" />
+                ) : (
+                  studentOptions.map((student) => (
+                    <button
+                      key={student.id}
+                      type="button"
+                      onClick={() => handleSelectStudent(student)}
+                      className={cn(
+                        "w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30",
+                        selectedStudent?.id === student.id && "border-primary bg-primary/5"
+                      )}
+                    >
+                      <p className="font-medium">
+                        {student.fullName} <span className="text-muted-foreground">({student.studentCode})</span>
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {student.email} · {student.phone}
+                      </p>
+                    </button>
+                  ))
+                )}
               </div>
-            </div>
-          )}
-        </div>
-      </Section>
+            )}
+            {selectedStudent && (
+              <div className="border-t pt-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Học viên đã chọn</p>
+                    <p className="font-semibold">{selectedStudent.fullName}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedStudent.studentCode} · {selectedStudent.email}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </Section>
+      )}
 
       {/* Step 2: Current class selection */}
-      <Section className={!step1Complete ? 'opacity-50' : ''}>
-        <StepHeader step={steps[1]} stepNumber={2} />
-
-        {step1Complete && (
+      {currentStep === 2 && selectedStudent && (
+        <Section>
           <div className="space-y-3">
             {isLoadingEligibility ? (
               <div className="space-y-2">
@@ -346,14 +344,14 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
             ) : (
               <div className="space-y-2">
                 {eligibilityOptions.map((cls: TransferEligibility) => (
-                  <button
+                  <SelectionCard
                     key={cls.enrollmentId}
-                    type="button"
-                    onClick={() => handleSelectCurrentClass(cls)}
-                    className={cn(
-                      'w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30',
-                      selectedCurrentClass?.enrollmentId === cls.enrollmentId && 'border-primary bg-primary/5'
-                    )}
+                    item={cls}
+                    isSelected={selectedCurrentClass?.enrollmentId === cls.enrollmentId}
+                    onSelect={() => {
+                      setSelectedCurrentClass(cls)
+                      setSelectedTargetClass(null)
+                    }}
                   >
                     <p className="font-medium">
                       {cls.classCode} · {cls.className}
@@ -365,19 +363,17 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                       Quota chuyển: {cls.transferQuota.used}/{cls.transferQuota.limit}
                       {!cls.canTransfer && <span className="text-rose-600"> · Đã hết quota</span>}
                     </p>
-                  </button>
+                  </SelectionCard>
                 ))}
               </div>
             )}
           </div>
-        )}
-      </Section>
+        </Section>
+      )}
 
       {/* Step 3: Target class selection */}
-      <Section className={!step2Complete ? 'opacity-50' : ''}>
-        <StepHeader step={steps[2]} stepNumber={3} />
-
-        {step2Complete && (
+      {currentStep === 3 && selectedCurrentClass && (
+        <Section>
           <div className="space-y-4">
             {/* Filters */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -422,7 +418,51 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
               <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
                 Không có lớp mục tiêu phù hợp với bộ lọc hiện tại
               </div>
-            ) : selectedTargetClass ? (
+            ) : (
+              <div className="space-y-2">
+                {transferOptions.map((option: TransferOption) => {
+                  const gapText = getContentGapText(option.contentGapAnalysis)
+                  const { hasBranchChange, hasModalityChange } = getChangeIndicators(option.changes)
+                  const isScheduled = option.classStatus === 'SCHEDULED'
+                  const startDate = option.startDate ? new Date(option.startDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : null
+
+                  return (
+                    <SelectionCard
+                      key={option.classId}
+                      item={option}
+                      isSelected={selectedTargetClass?.classId === option.classId}
+                      onSelect={() => {
+                        setSelectedTargetClass(option)
+                        setWeekOffset(0)
+                        setSelectedSessionIndex(null)
+                      }}
+                    >
+                      <div className="space-y-1">
+                        <p className="font-medium">
+                          {option.classCode} · {option.className}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {hasBranchChange && <span className="text-blue-600">→ </span>}
+                          {option.branchName} · {hasModalityChange && <span className="text-blue-600">→ </span>}
+                          {getModalityLabel(option.modality)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {option.scheduleInfo ?? option.scheduleDays + ' ' + option.scheduleTime} · {getCapacityText(option.availableSlots, option.maxCapacity)}
+                          {isScheduled && startDate && <span> · Bắt đầu {startDate}</span>}
+                        </p>
+                        {gapText && (
+                          <p className="text-xs text-amber-600">
+                            {gapText}
+                          </p>
+                        )}
+                      </div>
+                    </SelectionCard>
+                  )
+                })}
+              </div>
+            )}
+
+            {selectedTargetClass && (
               <div className="border-t pt-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1">
@@ -433,13 +473,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                     <p className="text-sm text-muted-foreground">
                       {selectedTargetClass.branchName} · {getModalityLabel(selectedTargetClass.modality)}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {getCapacityText(selectedTargetClass.availableSlots, selectedTargetClass.maxCapacity)}
-                    </p>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => setSelectedTargetClass(null)}>
-                    Đổi lớp
-                  </Button>
                 </div>
 
                 <div className="mt-4 space-y-4">
@@ -494,27 +528,12 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                             const sessionDate = parseISO(session.date)
 
                             return (
-                              <label
+                              <SelectionCard
                                 key={index}
-                                className={cn(
-                                  'flex gap-3 rounded-lg border px-4 py-3 transition cursor-pointer hover:border-primary/50 hover:bg-muted/30',
-                                  isActive && 'border-primary bg-primary/5'
-                                )}
+                                item={session}
+                                isSelected={isActive}
+                                onSelect={() => setSelectedSessionIndex(index)}
                               >
-                                <input
-                                  type="radio"
-                                  className="sr-only"
-                                  checked={isActive}
-                                  onChange={() => setSelectedSessionIndex(index)}
-                                />
-                                <div className="flex h-5 w-5 items-center justify-center">
-                                  <span
-                                    className={cn(
-                                      'h-4 w-4 rounded-full border-2',
-                                      isActive ? 'border-primary bg-primary' : 'border-muted-foreground/40'
-                                    )}
-                                  />
-                                </div>
                                 <div className="flex-1 space-y-1">
                                   <p className="font-medium text-sm">
                                     Buổi {session.courseSessionNumber} · {format(sessionDate, 'dd/MM/yyyy (EEEE)', { locale: vi })}
@@ -522,7 +541,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                                   <p className="text-sm text-muted-foreground">{session.courseSessionTitle}</p>
                                   <p className="text-xs text-muted-foreground">{session.timeSlot}</p>
                                 </div>
-                              </label>
+                              </SelectionCard>
                             )
                           })}
                         </div>
@@ -544,48 +563,10 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                   />
                 </div>
               </div>
-            ) : (
-              <div className="space-y-2">
-                {transferOptions.map((option: TransferOption) => {
-                  const gapText = getContentGapText(option.contentGapAnalysis)
-                  const { hasBranchChange, hasModalityChange } = getChangeIndicators(option.changes)
-                  const isScheduled = option.classStatus === 'SCHEDULED'
-                  const startDate = option.startDate ? new Date(option.startDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : null
-
-                  return (
-                    <button
-                      key={option.classId}
-                      type="button"
-                      onClick={() => handleSelectTargetClass(option)}
-                      className="w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30"
-                    >
-                      <div className="space-y-1">
-                        <p className="font-medium">
-                          {option.classCode} · {option.className}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {hasBranchChange && <span className="text-blue-600">→ </span>}
-                          {option.branchName} · {hasModalityChange && <span className="text-blue-600">→ </span>}
-                          {getModalityLabel(option.modality)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {option.scheduleInfo ?? option.scheduleDays + ' ' + option.scheduleTime} · {getCapacityText(option.availableSlots, option.maxCapacity)}
-                          {isScheduled && startDate && <span> · Bắt đầu {startDate}</span>}
-                        </p>
-                        {gapText && (
-                          <p className="text-xs text-amber-600">
-                            {gapText}
-                          </p>
-                        )}
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
             )}
           </div>
-        )}
-      </Section>
+        </Section>
+      )}
     </BaseFlowComponent>
   )
 }

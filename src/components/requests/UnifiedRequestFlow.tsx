@@ -1,6 +1,9 @@
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { Progress } from '@/components/ui/progress'
+import { ArrowLeftIcon, CheckIcon } from 'lucide-react'
 
 // Types
 export type FlowType = 'ABSENCE' | 'MAKEUP' | 'TRANSFER'
@@ -36,31 +39,26 @@ export interface UnifiedRequestFlowProps {
   onSuccess: () => void
 }
 
-// Shared Step Header Component
+// Shared Step Header Component (Wizard Style)
 interface StepHeaderProps {
-  step: StepConfig
-  stepNumber: number
+  steps: StepConfig[]
+  currentStep: number
 }
 
-function StepHeader({ step, stepNumber }: StepHeaderProps) {
+function StepHeader({ steps, currentStep }: StepHeaderProps) {
+  const progress = Math.round(((currentStep - 1) / (steps.length - 1)) * 100)
+
   return (
-    <div className="flex items-center gap-3">
-      <div
-        className={cn(
-          'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
-          step.isComplete
-            ? 'bg-primary text-primary-foreground'
-            : step.isAvailable
-              ? 'border-2 border-primary text-primary'
-              : 'border-2 border-muted-foreground/30 text-muted-foreground'
-        )}
-      >
-        {step.isComplete ? '✓' : stepNumber}
+    <div className="space-y-4 mb-6">
+      <div className="flex items-center justify-between text-sm">
+        <span className="font-medium text-muted-foreground">
+          Bước {currentStep} / {steps.length}
+        </span>
+        <span className="font-medium text-primary">
+          {steps[currentStep - 1]?.title}
+        </span>
       </div>
-      <div>
-        <h3 className="font-semibold">{step.title}</h3>
-        <p className="text-sm text-muted-foreground">{step.description}</p>
-      </div>
+      <Progress value={progress} className="h-2" />
     </div>
   )
 }
@@ -115,7 +113,7 @@ export function ReasonInput({
   )
 }
 
-function NoteInput({
+export function NoteInput({
   value,
   onChange,
   placeholder = 'Ghi chú thêm (tùy chọn)...',
@@ -169,7 +167,7 @@ export function SelectionCard<T>({
         'w-full rounded-lg border px-4 py-3 text-left transition',
         !disabled && 'cursor-pointer hover:border-primary/50 hover:bg-muted/30',
         disabled && 'cursor-not-allowed border-dashed opacity-50',
-        isSelected && 'border-primary bg-primary/5'
+        isSelected && 'border-primary bg-primary/5 ring-1 ring-primary'
       )}
     >
       {children}
@@ -177,40 +175,67 @@ export function SelectionCard<T>({
   )
 }
 
-// Base Flow Component
+// Base Flow Component (Wizard Logic)
 export function BaseFlowComponent({
   children,
+  steps,
+  currentStep,
+  onNext,
+  onBack,
   onSubmit,
-  submitButtonText,
+  isNextDisabled = false,
   isSubmitDisabled = false,
   isSubmitting = false,
-  resetButton = true,
-  onReset
+  nextLabel = 'Tiếp tục',
+  submitLabel = 'Gửi yêu cầu'
 }: {
   children: React.ReactNode
+  steps: StepConfig[]
+  currentStep: number
+  onNext: () => void
+  onBack: () => void
   onSubmit: () => void
-  submitButtonText: string
+  isNextDisabled?: boolean
   isSubmitDisabled?: boolean
   isSubmitting?: boolean
-  resetButton?: boolean
-  onReset?: () => void
+  nextLabel?: string
+  submitLabel?: string
 }) {
+  const isLastStep = currentStep === steps.length
 
   return (
-    <div className="space-y-8 min-h-0">
-      {children}
+    <div className="flex flex-col h-full min-h-[400px]">
+      <StepHeader steps={steps} currentStep={currentStep} />
 
-      {/* Submit Actions */}
-      <div className="flex gap-2 flex-shrink-0">
+      <div className="flex-1 overflow-y-auto min-h-0 px-1">
+        {children}
+      </div>
+
+      <div className="mt-6 flex items-center justify-between pt-4 border-t">
         <Button
-          onClick={onSubmit}
-          disabled={isSubmitDisabled || isSubmitting}
+          variant="ghost"
+          onClick={onBack}
+          disabled={currentStep === 1 || isSubmitting}
+          className={cn(currentStep === 1 && 'invisible')}
         >
-          {isSubmitting ? 'Đang gửi...' : submitButtonText}
+          <ArrowLeftIcon className="mr-2 h-4 w-4" />
+          Quay lại
         </Button>
-        {resetButton && onReset && (
-          <Button variant="outline" onClick={onReset}>
-            Làm lại
+
+        {isLastStep ? (
+          <Button
+            onClick={onSubmit}
+            disabled={isSubmitDisabled || isSubmitting}
+          >
+            {isSubmitting ? 'Đang gửi...' : submitLabel}
+          </Button>
+        ) : (
+          <Button
+            onClick={onNext}
+            disabled={isNextDisabled}
+          >
+            {nextLabel}
+            <ArrowLeftIcon className="ml-2 h-4 w-4 rotate-180" />
           </Button>
         )}
       </div>
@@ -227,16 +252,11 @@ export function Section({
   className?: string
 }) {
   return (
-    <div className={cn('space-y-4 min-h-0', className)}>
+    <div className={cn('space-y-4 animate-in fade-in slide-in-from-right-4 duration-300', className)}>
       {children}
     </div>
   )
 }
-
-
-
-// Export components for individual flows
-export { StepHeader, NoteInput }
 
 // Import individual flow components
 import AbsenceFlow from './flows/AbsenceFlow'
@@ -245,7 +265,6 @@ import TransferFlow from './flows/TransferFlow'
 
 // Main Unified Request Flow Component
 export default function UnifiedRequestFlow({ type, onSuccess }: UnifiedRequestFlowProps) {
-  // This will be implemented based on the type
   switch (type) {
     case 'ABSENCE':
       return <AbsenceFlow onSuccess={onSuccess} />

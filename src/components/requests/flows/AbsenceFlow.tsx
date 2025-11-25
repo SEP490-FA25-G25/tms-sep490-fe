@@ -1,362 +1,389 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
-import { addDays, addMonths, format, parseISO } from 'date-fns'
+import { useState, useMemo } from 'react'
+import { addMonths, format, parseISO, startOfToday } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { Button } from '@/components/ui/button'
+import { Clock4Icon, MapPinIcon } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
-import { ArrowRightIcon } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Calendar } from '@/components/ui/calendar'
+import { Badge } from '@/components/ui/badge'
 import {
   useGetCurrentWeekQuery,
   useGetWeeklyScheduleQuery,
   type SessionSummaryDTO
 } from '@/store/services/studentScheduleApi'
-import { useSubmitStudentRequestMutation } from '@/store/services/studentRequestApi'
 import {
-  StepHeader,
+  useGetAvailableSessionsQuery,
+  useSubmitStudentRequestMutation,
+  type StudentClassSessions
+} from '@/store/services/studentRequestApi'
+import {
+  BaseFlowComponent,
   Section,
   ReasonInput,
-  BaseFlowComponent
+  NoteInput,
+  SelectionCard,
+  type AbsenceFlowProps
 } from '../UnifiedRequestFlow'
 import {
   useSuccessHandler,
   useErrorHandler,
   Validation,
-  WEEK_DAYS,
-  WEEK_DAY_LABELS
+  WEEK_DAYS
 } from '../utils'
-import type { AbsenceFlowProps } from '../UnifiedRequestFlow'
 
-interface SessionWithAvailability extends SessionSummaryDTO {
-  isSelectable: boolean
-  disabledReason: string | null
-}
-
+// Helper to parse session time
 function parseSessionDateTime(dateStr: string, timeStr?: string) {
-  if (!timeStr) {
-    return parseISO(dateStr)
-  }
-  const normalizedTime =
-    timeStr.length === 5 ? `${timeStr}:00` : timeStr.length === 8 ? timeStr : `${timeStr}:00`
+  if (!timeStr) return parseISO(dateStr)
+  const normalizedTime = timeStr.length === 5 ? `${timeStr}:00` : timeStr
   return parseISO(`${dateStr}T${normalizedTime}`)
 }
 
-function getSessionAvailability(session: SessionSummaryDTO, futureLimit: Date) {
-  const sessionDateTime = parseSessionDateTime(session.date, session.startTime)
+// Helper to check availability
+function getSessionAvailability(session: SessionSummaryDTO | StudentClassSessions['sessions'][number], futureLimit: Date) {
+  const dateStr = 'date' in session ? session.date : (session as any).date // Handle both types if needed, but they share 'date'
+  const timeStr = 'startTime' in session ? session.startTime : (session as any).timeSlot.startTime
+
+  const sessionDateTime = parseSessionDateTime(dateStr, timeStr)
   const now = new Date()
   const isPast = sessionDateTime.getTime() <= now.getTime()
   const isTooFar = sessionDateTime.getTime() > futureLimit.getTime()
-  const hasAttendanceRecord = session.attendanceStatus && session.attendanceStatus !== 'PLANNED'
-  const isInactiveStatus = session.sessionStatus !== 'PLANNED'
+
+  // Check specific fields depending on the type
+  const hasAttendance = 'attendanceStatus' in session && session.attendanceStatus && session.attendanceStatus !== 'PLANNED'
+  const isInactive = 'sessionStatus' in session && session.sessionStatus !== 'PLANNED'
 
   let disabledReason: string | null = null
-  if (isPast) {
-    disabledReason = 'Buổi đã diễn ra'
-  } else if (isTooFar) {
-    disabledReason = 'Chỉ có thể xin nghỉ trong 30 ngày tới'
-  } else if (hasAttendanceRecord) {
-    disabledReason = 'Đã điểm danh'
-  } else if (isInactiveStatus) {
-    disabledReason = 'Buổi không khả dụng'
-  }
+  if (isPast) disabledReason = 'Buổi đã diễn ra'
+  else if (isTooFar) disabledReason = 'Chỉ có thể xin nghỉ trong 30 ngày tới'
+  else if (hasAttendance) disabledReason = 'Đã điểm danh'
+  else if (isInactive) disabledReason = 'Buổi không khả dụng'
 
   return {
-    isSelectable: !isPast && !isTooFar && !hasAttendanceRecord && !isInactiveStatus,
-    disabledReason,
+    isSelectable: !isPast && !isTooFar && !hasAttendance && !isInactive,
+    disabledReason
   }
 }
 
 export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
-  const [weekStart, setWeekStart] = useState<string | null>(null)
-  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null)
+  // State
+  const [currentStep, setCurrentStep] = useState(1)
+  const [activeTab, setActiveTab] = useState('upcoming')
+  const [selectedDate, setSelectedDate] = useState<Date>(startOfToday())
+
+  // Selection State
+  const [selectedSession, setSelectedSession] = useState<{
+    sessionId: number
+    classId: number
+    classCode: string
+    date: string
+    startTime: string
+    endTime: string
+    title: string
+  } | null>(null)
+
   const [reason, setReason] = useState('')
+  const [note, setNote] = useState('')
   const [reasonError, setReasonError] = useState<string | null>(null)
+
+  // Data Fetching
   const futureLimitDate = useMemo(() => addMonths(new Date(), 1), [])
 
-  const { data: currentWeekResponse, isFetching: isLoadingCurrentWeek } = useGetCurrentWeekQuery()
-  const {
-    data: weeklyScheduleResponse,
-    isFetching: isLoadingSchedule,
-  } = useGetWeeklyScheduleQuery(
-    {
-      weekStart: weekStart ?? '',
-    },
-    {
-      skip: !weekStart,
-    }
+  // 1. Upcoming Data (Weekly Schedule)
+  const { data: currentWeekResponse } = useGetCurrentWeekQuery()
+  const currentWeekStart = currentWeekResponse?.data
+  const { data: weeklyScheduleResponse, isFetching: isLoadingSchedule } = useGetWeeklyScheduleQuery(
+    { weekStart: currentWeekStart ?? '' },
+    { skip: !currentWeekStart }
   )
-  
-  const [submitRequest, { isLoading }] = useSubmitStudentRequestMutation()
+
+  // 2. Calendar Data (Available Sessions for Date)
+  const formattedDate = format(selectedDate, 'yyyy-MM-dd')
+  const { data: availableSessionsResponse, isFetching: isLoadingCalendar } = useGetAvailableSessionsQuery(
+    { date: formattedDate, requestType: 'ABSENCE' },
+    { skip: activeTab !== 'calendar' || !formattedDate }
+  )
+
+  const [submitRequest, { isLoading: isSubmitting }] = useSubmitStudentRequestMutation()
   const { handleSuccess } = useSuccessHandler(onSuccess)
   const { handleError } = useErrorHandler()
 
-  useEffect(() => {
-    if (!weekStart && currentWeekResponse?.data) {
-      setWeekStart(currentWeekResponse.data)
-    }
-  }, [currentWeekResponse?.data, weekStart])
+  // Process Upcoming Sessions
+  const upcomingSessions = useMemo(() => {
+    if (!weeklyScheduleResponse?.data) return []
+    const schedule = weeklyScheduleResponse.data.schedule
+    const sessions: SessionSummaryDTO[] = []
 
-  useEffect(() => {
-    setSelectedSessionId(null)
-  }, [weekStart])
-
-  const weekData = weeklyScheduleResponse?.data
-  const groupedSessions = useMemo(() => {
-    if (!weekData) return []
-    const startDate = parseISO(weekData.weekStart)
-    return WEEK_DAYS.map((day, index) => {
-      const dayDate = addDays(startDate, index)
-      const sessions: SessionWithAvailability[] = (weekData.schedule?.[day] ?? []).map((session) => {
-        const { isSelectable, disabledReason } = getSessionAvailability(session, futureLimitDate)
-        return {
-          ...session,
-          isSelectable,
-          disabledReason,
-        }
-      })
-      return {
-        day,
-        date: dayDate,
-        sessions,
+    WEEK_DAYS.forEach(day => {
+      if (schedule[day]) {
+        sessions.push(...schedule[day])
       }
     })
-  }, [weekData, futureLimitDate])
 
-  const allSessions = useMemo(
-    () => groupedSessions.flatMap((group) => group.sessions),
-    [groupedSessions]
-  )
-  const displayedGroups = groupedSessions.filter((group) => group.sessions.length > 0)
-  const selectedSession = allSessions.find((session) => session.sessionId === selectedSessionId) ?? null
-  const selectedClassId = selectedSession?.classId ?? null
+    // Filter and Sort
+    return sessions
+      .map(session => ({
+        ...session,
+        ...getSessionAvailability(session, futureLimitDate)
+      }))
+      .filter(s => s.isSelectable) // Only show selectable in "Upcoming"
+      .sort((a, b) => {
+        const dateA = parseSessionDateTime(a.date, a.startTime)
+        const dateB = parseSessionDateTime(b.date, b.startTime)
+        return dateA.getTime() - dateB.getTime()
+      })
+      .slice(0, 5) // Take top 5
+  }, [weeklyScheduleResponse, futureLimitDate])
 
-  const weekRangeLabel = weekData
-    ? `${format(parseISO(weekData.weekStart), 'dd/MM', { locale: vi })} - ${format(parseISO(weekData.weekEnd), 'dd/MM', { locale: vi })}`
-    : 'Đang tải tuần...'
+  // Process Calendar Sessions
+  const calendarSessions = useMemo(() => {
+    if (!availableSessionsResponse?.data) return []
+    return availableSessionsResponse.data.flatMap(cls =>
+      cls.sessions.map(session => ({
+        ...session,
+        classId: cls.classId,
+        classCode: cls.classCode,
+        className: cls.className,
+        branchName: cls.branchName,
+        // Adapt to common shape
+        sessionId: session.sessionId,
+        date: session.date,
+        startTime: session.timeSlot.startTime,
+        endTime: session.timeSlot.endTime,
+        topic: session.courseSessionTitle,
+        isSelectable: true // API returns available ones usually, but we can double check if needed
+      }))
+    )
+  }, [availableSessionsResponse])
 
-  const handleChangeWeek = useCallback((direction: 'prev' | 'next') => {
-    if (!weekStart) return
-    const nextStart = addDays(parseISO(weekStart), direction === 'next' ? 7 : -7)
-    setWeekStart(format(nextStart, 'yyyy-MM-dd'))
-  }, [weekStart])
+  // Handlers
+  const handleNext = () => {
+    if (currentStep === 1 && selectedSession) {
+      setCurrentStep(2)
+    }
+  }
 
-  const handleReset = useCallback(() => {
-    setSelectedSessionId(null)
-    setReason('')
-    setReasonError(null)
-  }, [])
+  const handleBack = () => {
+    if (currentStep === 2) {
+      setCurrentStep(1)
+    }
+  }
 
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = async () => {
     const reasonValidationError = Validation.reason(reason)
     if (reasonValidationError) {
       setReasonError(reasonValidationError)
       return
     }
 
-    if (!selectedSession) {
-      handleError(new Error('Vui lòng chọn buổi học muốn xin nghỉ'))
-      return
-    }
-
-    if (!selectedClassId) {
-      handleError(new Error('Không thể xác định lớp học của buổi này. Vui lòng thử lại.'))
-      return
-    }
+    if (!selectedSession) return
 
     try {
       await submitRequest({
         requestType: 'ABSENCE',
-        currentClassId: selectedClassId,
+        currentClassId: selectedSession.classId,
         targetSessionId: selectedSession.sessionId,
         requestReason: reason.trim(),
+        note: note.trim() || undefined
       }).unwrap()
 
-      handleReset()
       handleSuccess()
     } catch (error) {
       handleError(error)
     }
-  }, [selectedSession, selectedClassId, reason, submitRequest, handleReset, handleSuccess, handleError])
+  }
 
-  // Step states
-  const step1Complete = !!selectedSession
-  const step2Complete = step1Complete && reason.trim().length >= 10
-
+  // Steps Config
   const steps = [
     {
       id: 1,
-      title: 'Chọn buổi muốn xin nghỉ',
-      description: 'Chỉ hiển thị buổi chưa diễn ra, trong 30 ngày tới và chưa điểm danh',
-      isComplete: step1Complete,
+      title: 'Chọn buổi nghỉ',
+      description: 'Chọn buổi học bạn muốn xin nghỉ',
+      isComplete: !!selectedSession,
       isAvailable: true
     },
     {
       id: 2,
-      title: 'Điền lý do xin nghỉ',
-      description: 'Kiểm tra lại thông tin buổi học trước khi gửi',
-      isComplete: step2Complete,
-      isAvailable: step1Complete
+      title: 'Lý do',
+      description: 'Nhập lý do xin nghỉ',
+      isComplete: reason.length >= 10,
+      isAvailable: !!selectedSession
     }
   ]
 
   return (
     <BaseFlowComponent
+      steps={steps}
+      currentStep={currentStep}
+      onNext={handleNext}
+      onBack={handleBack}
       onSubmit={handleSubmit}
-      submitButtonText="Gửi yêu cầu"
-      isSubmitDisabled={!step2Complete}
-      isSubmitting={isLoading}
-      onReset={handleReset}
+      isNextDisabled={!selectedSession}
+      isSubmitDisabled={reason.length < 10}
+      isSubmitting={isSubmitting}
     >
-      {/* Step 1: Chọn buổi */}
-      <Section>
-        <StepHeader step={steps[0]} stepNumber={1} />
+      {currentStep === 1 && (
+        <Section>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="upcoming">Gợi ý (Sắp tới)</TabsTrigger>
+              <TabsTrigger value="calendar">Chọn theo lịch</TabsTrigger>
+            </TabsList>
 
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-3">
-            <div>
-              <p className="text-xs text-muted-foreground">Tuần đang xem</p>
-              <p className="font-medium">{weekRangeLabel}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleChangeWeek('prev')}
-                disabled={!weekStart}
-              >
-                <ArrowRightIcon className="h-4 w-4 rotate-180" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  if (currentWeekResponse?.data) {
-                    setWeekStart(currentWeekResponse.data)
-                  }
-                }}
-                disabled={!currentWeekResponse?.data}
-              >
-                Tuần hiện tại
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleChangeWeek('next')}
-                disabled={!weekStart}
-              >
-                <ArrowRightIcon className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            {isLoadingCurrentWeek || isLoadingSchedule || !weekData ? (
-              <div className="space-y-2">
-                {[...Array(3)].map((_, index) => (
-                  <Skeleton key={index} className="h-20 w-full" />
-                ))}
-              </div>
-            ) : displayedGroups.length > 0 ? (
-              displayedGroups.map((group) => (
-                <div key={group.day} className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    {WEEK_DAY_LABELS[group.day]} · {format(group.date, 'dd/MM', { locale: vi })}
-                  </p>
-                  <div className="space-y-2">
-                    {group.sessions.map((session) => {
-                      const isActive = selectedSessionId === session.sessionId
-                      return (
-                        <label
-                          key={session.sessionId}
-                          className={cn(
-                            'flex gap-3 rounded-lg border px-4 py-3 transition',
-                            session.isSelectable
-                              ? 'cursor-pointer hover:border-primary/50 hover:bg-muted/30'
-                              : 'cursor-not-allowed border-dashed opacity-50',
-                            isActive && 'border-primary bg-primary/5'
-                          )}
-                          role="radio"
-                          aria-checked={isActive}
-                          aria-disabled={!session.isSelectable}
-                        >
-                          <input
-                            type="radio"
-                            className="sr-only"
-                            disabled={!session.isSelectable}
-                            checked={isActive}
-                            onChange={() => {
-                              if (session.isSelectable) {
-                                setSelectedSessionId(session.sessionId)
-                              }
-                            }}
-                          />
-                          <div className="flex h-5 w-5 items-center justify-center">
-                            <span
-                              className={cn(
-                                'h-4 w-4 rounded-full border-2',
-                                isActive ? 'border-primary bg-primary' : 'border-muted-foreground/40'
-                              )}
-                            />
-                          </div>
-                          <div className="flex-1 space-y-1">
-                            <p className="font-medium">
-                              {session.classCode} · {session.startTime} - {session.endTime}
-                            </p>
-                            <p className="text-sm text-muted-foreground">{session.topic}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {session.branchName} · {session.modality === 'ONLINE' ? 'Trực tuyến' : 'Tại trung tâm'}
-                            </p>
-                            {!session.isSelectable && session.disabledReason && (
-                              <p className="text-xs font-medium text-rose-600">{session.disabledReason}</p>
-                            )}
-                          </div>
-                        </label>
-                      )
-                    })}
-                  </div>
+            <TabsContent value="upcoming" className="space-y-3 mt-0">
+              {isLoadingSchedule ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
                 </div>
-              ))
-            ) : (
-              <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
-                Tuần này chưa có buổi học nào trong lịch cá nhân
+              ) : upcomingSessions.length > 0 ? (
+                upcomingSessions.map(session => (
+                  <SelectionCard
+                    key={session.sessionId}
+                    item={session}
+                    isSelected={selectedSession?.sessionId === session.sessionId}
+                    onSelect={() => setSelectedSession({
+                      sessionId: session.sessionId,
+                      classId: session.classId,
+                      classCode: session.classCode,
+                      date: session.date,
+                      startTime: session.startTime,
+                      endTime: session.endTime,
+                      title: session.topic
+                    })}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant="outline" className="font-mono text-xs">
+                            {session.classCode}
+                          </Badge>
+                          <span className="text-xs font-medium text-muted-foreground">
+                            {format(parseISO(session.date), 'EEEE, dd/MM', { locale: vi })}
+                          </span>
+                        </div>
+                        <p className="font-semibold text-sm">{session.topic}</p>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Clock4Icon className="h-3 w-3" />
+                            {session.startTime} - {session.endTime}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MapPinIcon className="h-3 w-3" />
+                            {session.branchName}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </SelectionCard>
+                ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground text-sm border border-dashed rounded-lg">
+                  Không có buổi học nào sắp tới trong tuần này.
+                  <br />
+                  Vui lòng chuyển sang tab <b>Chọn theo lịch</b>.
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="calendar" className="space-y-4 mt-0">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="rounded-lg border p-3 bg-background">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => date && setSelectedDate(date)}
+                    locale={vi}
+                    className="mx-auto"
+                  />
+                </div>
+
+                <div className="flex-1 space-y-3">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Buổi học ngày {format(selectedDate, 'dd/MM/yyyy')}
+                  </p>
+
+                  {isLoadingCalendar ? (
+                    <Skeleton className="h-20 w-full" />
+                  ) : calendarSessions.length > 0 ? (
+                    calendarSessions.map(session => (
+                      <SelectionCard
+                        key={session.sessionId}
+                        item={session}
+                        isSelected={selectedSession?.sessionId === session.sessionId}
+                        onSelect={() => setSelectedSession({
+                          sessionId: session.sessionId,
+                          classId: session.classId,
+                          classCode: session.classCode,
+                          date: session.date,
+                          startTime: session.startTime,
+                          endTime: session.endTime,
+                          title: session.topic
+                        })}
+                      >
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center justify-between">
+                            <Badge variant="outline">{session.classCode}</Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {session.startTime} - {session.endTime}
+                            </span>
+                          </div>
+                          <p className="font-medium text-sm mt-1">{session.topic}</p>
+                          <p className="text-xs text-muted-foreground">{session.branchName}</p>
+                        </div>
+                      </SelectionCard>
+                    ))
+                  ) : (
+                    <div className="text-center py-6 text-sm text-muted-foreground border border-dashed rounded-lg">
+                      Không có buổi học nào trong ngày này.
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-        </div>
-      </Section>
+            </TabsContent>
+          </Tabs>
+        </Section>
+      )}
 
-      {/* Step 2: Điền lý do */}
-      <Section className={!step1Complete ? 'opacity-50' : ''}>
-        <StepHeader step={steps[1]} stepNumber={2} />
-
-        {selectedSession && (
-          <div className="space-y-4">
-            <div className="border-t pt-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">Buổi đã chọn</p>
-                  <p className="font-semibold">
-                    {selectedSession.classCode} · {selectedSession.startTime} - {selectedSession.endTime}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {format(parseISO(selectedSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })}
-                  </p>
-                  <p className="text-sm text-muted-foreground">{selectedSession.topic}</p>
-                                  </div>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedSessionId(null)}>
-                  Chọn lại
-                </Button>
+      {currentStep === 2 && selectedSession && (
+        <Section>
+          <div className="rounded-lg bg-muted/30 p-4 border mb-4">
+            <h4 className="font-medium text-sm mb-2">Thông tin buổi nghỉ</h4>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-xs text-muted-foreground">Lớp học</p>
+                <p className="font-medium">{selectedSession.classCode}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Thời gian</p>
+                <p className="font-medium">
+                  {format(parseISO(selectedSession.date), 'dd/MM/yyyy')}
+                  <br />
+                  {selectedSession.startTime} - {selectedSession.endTime}
+                </p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-xs text-muted-foreground">Nội dung</p>
+                <p className="font-medium">{selectedSession.title}</p>
               </div>
             </div>
-
-            <ReasonInput
-              value={reason}
-              onChange={setReason}
-              placeholder="Nhập lý do xin nghỉ..."
-              error={reasonError}
-            />
           </div>
-        )}
-      </Section>
+
+          <ReasonInput
+            value={reason}
+            onChange={(val) => {
+              setReason(val)
+              if (reasonError) setReasonError(null)
+            }}
+            placeholder="Nhập lý do xin nghỉ (ví dụ: Ốm, bận việc gia đình...)"
+            error={reasonError}
+          />
+
+          <NoteInput
+            value={note}
+            onChange={setNote}
+          />
+        </Section>
+      )}
     </BaseFlowComponent>
   )
 }

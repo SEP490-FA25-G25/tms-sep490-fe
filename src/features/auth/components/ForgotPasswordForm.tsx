@@ -140,7 +140,7 @@ export function ForgotPasswordForm({ className }: ForgotPasswordFormProps) {
             disabled={isLoading}
             className="w-full"
           >
-            {isLoading ? "Đang gửi..." : "Gửi hướng dẫn"}
+            {isLoading ? "Đang gửi..." : "Gửi link đặt lại mật khẩu"}
           </Button>
         </Field>
 

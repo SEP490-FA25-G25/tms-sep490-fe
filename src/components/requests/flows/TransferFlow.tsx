@@ -15,7 +15,6 @@ import {
   type TransferOption
 } from '@/store/services/studentRequestApi'
 import {
-  StepHeader,
   Section,
   ReasonInput,
   NoteInput,
@@ -30,7 +29,7 @@ import {
 import type { SessionModality } from '@/store/services/studentRequestApi'
 import type { TransferFlowProps } from '../UnifiedRequestFlow'
 
-// AAContactModal component (simplified version)
+// AAContactModal component
 function AAContactModal({
   open,
   onOpenChange,
@@ -40,7 +39,7 @@ function AAContactModal({
   onOpenChange: (open: boolean) => void
   currentEnrollment: TransferEligibility
 }) {
-  
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -78,6 +77,9 @@ function AAContactModal({
 }
 
 export default function TransferFlow({ onSuccess }: TransferFlowProps) {
+  // Wizard State
+  const [currentStep, setCurrentStep] = useState(1)
+
   const [selectedEnrollment, setSelectedEnrollment] = useState<TransferEligibility | null>(null)
   const [selectedClass, setSelectedClass] = useState<TransferOption | null>(null)
   const [transferType, setTransferType] = useState<'schedule' | 'branch-modality'>('schedule')
@@ -128,7 +130,22 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
     setRequestReason('')
     setReasonError(null)
     setNote('')
+    setCurrentStep(1)
   }, [])
+
+  const handleNext = () => {
+    if (currentStep === 1 && selectedEnrollment) {
+      setCurrentStep(2)
+    } else if (currentStep === 2) {
+      if (transferType === 'schedule' && selectedClass && selectedSession) {
+        setCurrentStep(3)
+      }
+    }
+  }
+
+  const handleBack = () => {
+    if (currentStep > 1) setCurrentStep(currentStep - 1)
+  }
 
   const handleSubmit = useCallback(async () => {
     const reasonValidationError = Validation.reason(requestReason)
@@ -177,29 +194,29 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
 
   // Step states
   const step1Complete = !!selectedEnrollment
-  const step2Complete = step1Complete && (transferType === 'branch-modality' || !!selectedClass)
-  const step3Complete = step2Complete && requestReason.trim().length >= 10 && !!selectedSession
+  const step2Complete = step1Complete && (transferType === 'branch-modality' || (!!selectedClass && !!selectedSession))
+  const step3Complete = step2Complete && requestReason.trim().length >= 10
 
   const steps = [
     {
       id: 1,
-      title: 'Chọn lớp hiện tại & loại chuyển',
+      title: 'Chọn lớp & loại chuyển',
       description: 'Chọn lớp muốn chuyển và loại chuyển lớp phù hợp',
       isComplete: step1Complete,
       isAvailable: true
     },
     {
       id: 2,
-      title: transferType === 'branch-modality' ? 'Liên hệ Phòng Học vụ' : 'Chọn lớp mục tiêu',
+      title: transferType === 'branch-modality' ? 'Liên hệ' : 'Chọn lớp mới',
       description: transferType === 'branch-modality'
-        ? 'Để thay đổi cơ sở/hình thức, cần liên hệ Phòng Học vụ'
-        : 'Chọn lớp mới phù hợp với lịch học của bạn',
+        ? 'Thông tin liên hệ Phòng Học vụ'
+        : 'Chọn lớp mới và ngày bắt đầu',
       isComplete: step2Complete,
       isAvailable: step1Complete
     },
     {
       id: 3,
-      title: 'Xác nhận và điền lý do',
+      title: 'Xác nhận',
       description: 'Kiểm tra lại thông tin và lý do chuyển lớp',
       isComplete: step3Complete,
       isAvailable: step2Complete
@@ -235,19 +252,25 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
 
   return (
     <BaseFlowComponent
+      steps={steps}
+      currentStep={currentStep}
+      onNext={handleNext}
+      onBack={handleBack}
       onSubmit={handleSubmit}
-      submitButtonText="Gửi yêu cầu chuyển lớp"
+      isNextDisabled={
+        (currentStep === 1 && !selectedEnrollment) ||
+        (currentStep === 2 && (transferType === 'branch-modality' || !selectedClass || !selectedSession))
+      }
       isSubmitDisabled={!step3Complete}
       isSubmitting={isLoading}
-      onReset={handleReset}
+      // Hide submit button for branch-modality flow since it ends at step 2
+      submitLabel={transferType === 'branch-modality' ? undefined : 'Gửi yêu cầu'}
     >
       {/* Step 1: Chọn lớp hiện tại & loại chuyển */}
-      <Section>
-        <StepHeader step={steps[0]} stepNumber={1} />
-
-        <div className="space-y-6">
+      {currentStep === 1 && (
+        <Section>
           {/* Transfer Policy Info */}
-          <div className="space-y-2 border-b pb-4">
+          <div className="space-y-2 border-b pb-4 mb-4">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>Chính sách chuyển lớp</span>
               <span>Tối đa {eligibilityData.data.policyInfo?.maxTransfersPerCourse ?? 1} lần/khóa</span>
@@ -264,7 +287,7 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
 
           {/* Class Selection */}
           <div className="space-y-3">
-            <h3 className="font-medium">Chọn lớp muốn chuyển</h3>
+            <h3 className="font-medium text-sm">Chọn lớp muốn chuyển</h3>
             <div className="space-y-3">
               {normalizedEnrollments.map((enrollment) => {
                 const canTransfer = enrollment.canTransfer && !enrollment.hasPendingTransfer
@@ -300,12 +323,12 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
                       <span className={cn(
                         'text-xs font-medium',
                         !canTransfer ? 'text-rose-600' :
-                        enrollment.hasPendingTransfer ? 'text-amber-600' :
-                        'text-emerald-600'
+                          enrollment.hasPendingTransfer ? 'text-amber-600' :
+                            'text-emerald-600'
                       )}>
                         {!canTransfer ? 'Không đủ điều kiện' :
-                         enrollment.hasPendingTransfer ? 'Đang chờ duyệt' :
-                         'Có thể chuyển'}
+                          enrollment.hasPendingTransfer ? 'Đang chờ duyệt' :
+                            'Có thể chuyển'}
                       </span>
                     </div>
 
@@ -340,8 +363,8 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
 
           {/* Transfer Type Selection */}
           {selectedEnrollment && (
-            <div className="space-y-3 border-t pt-4">
-              <h3 className="font-medium">Chọn loại chuyển lớp</h3>
+            <div className="space-y-3 border-t pt-4 mt-4">
+              <h3 className="font-medium text-sm">Chọn loại chuyển lớp</h3>
 
               <RadioGroup value={transferType} onValueChange={(value: 'schedule' | 'branch-modality') => setTransferType(value)}>
                 {/* Schedule Only Option */}
@@ -382,109 +405,62 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
               </RadioGroup>
             </div>
           )}
-        </div>
-      </Section>
+        </Section>
+      )}
 
       {/* Step 2: Chọn lớp mục tiêu hoặc liên hệ AA */}
-      <Section className={!step1Complete ? 'opacity-50' : ''}>
-        <StepHeader step={steps[1]} stepNumber={2} />
-
-        {step1Complete && transferType === 'branch-modality' && (
-          <div className="space-y-4">
-            <Alert>
-              <AlertDescription>
-                Để thay đổi cơ sở hoặc hình thức học, bạn cần liên hệ trực tiếp với Phòng Học vụ để được tư vấn và hỗ trợ.
-              </AlertDescription>
-            </Alert>
-            <Button onClick={() => setIsContactModalOpen(true)} variant="outline">
-              Liên hệ Phòng Học vụ
-            </Button>
-            <AAContactModal
-              open={isContactModalOpen}
-              onOpenChange={setIsContactModalOpen}
-              currentEnrollment={selectedEnrollment!}
-            />
-          </div>
-        )}
-
-        {step1Complete && transferType === 'schedule' && (
-          <div className="space-y-4">
-            {isLoadingTransferOptions ? (
-              <div className="space-y-2">
-                {[...Array(2)].map((_, index) => (
-                  <Skeleton key={index} className="h-20 w-full" />
-                ))}
-              </div>
-            ) : transferOptionsError ? (
+      {currentStep === 2 && (
+        <Section>
+          {transferType === 'branch-modality' ? (
+            <div className="space-y-4">
               <Alert>
                 <AlertDescription>
-                  Không thể tải danh sách lớp chuyển. Vui lòng thử lại.
+                  Để thay đổi cơ sở hoặc hình thức học, bạn cần liên hệ trực tiếp với Phòng Học vụ để được tư vấn và hỗ trợ.
                 </AlertDescription>
               </Alert>
-            ) : transferOptions.length === 0 ? (
-              <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
-                Chưa có lớp phù hợp để chuyển trong cùng cơ sở và hình thức học
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {transferOptions.map((option) => {
-                  const isSelected = selectedClass?.classId === option.classId
-                  return (
-                    <label
-                      key={option.classId}
-                      className={cn(
-                        'block cursor-pointer rounded-lg border px-4 py-3 transition hover:border-primary/50 hover:bg-muted/30',
-                        isSelected && 'border-primary bg-primary/5'
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        name="targetClass"
-                        className="sr-only"
-                        checked={isSelected}
-                        onChange={() => setSelectedClass(option)}
-                      />
-                      <div className="space-y-1">
-                        <p className="font-medium">{option.classCode}</p>
-                        <p className="text-sm text-muted-foreground">{option.className}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {option.branchName} · {getModalityLabel(option.modality)}
-                        </p>
-                        {option.scheduleInfo && (
-                          <p className="text-xs text-muted-foreground">{option.scheduleInfo}</p>
-                        )}
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className={cn(
-                            option.availableSlots > 0 ? 'text-emerald-600' : 'text-rose-600'
-                          )}>
-                            {option.availableSlots > 0 ? `Còn ${option.availableSlots} chỗ` : 'Hết chỗ'}
-                          </span>
-                          {option.availableSlots > 0 && option.maxCapacity && (
-                            <span className="text-muted-foreground">/ {option.maxCapacity} chỗ</span>
-                          )}
-                        </div>
-                      </div>
-                    </label>
-                  )
-                })}
-              </div>
-            )}
 
-            {/* Session Selection */}
-            {selectedClass && selectedClass.upcomingSessions && selectedClass.upcomingSessions.length > 0 && (
-              <div className="space-y-3 border-t pt-4">
-                <h3 className="font-medium">Chọn buổi học bắt đầu</h3>
-                <p className="text-sm text-muted-foreground">
-                  Chọn buổi học đầu tiên bạn sẽ tham gia ở lớp mới
-                </p>
-                <div className="grid gap-2">
-                  {selectedClass.upcomingSessions.map((session) => {
-                    const isSelected = selectedSession?.sessionId === session.sessionId
-                    const sessionDate = new Date(session.date)
-
+              <div className="rounded-lg border p-4 bg-muted/30">
+                <h4 className="font-medium mb-2">Thông tin liên hệ</h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li>• Hotline: 1900-xxxx</li>
+                  <li>• Email: hotro@tms.edu.vn</li>
+                  <li>• Đến trực tiếp văn phòng tại cơ sở của bạn</li>
+                </ul>
+              </div>
+              <Button onClick={() => setIsContactModalOpen(true)} variant="outline">
+                Xem chi tiết liên hệ
+              </Button>
+              <AAContactModal
+                open={isContactModalOpen}
+                onOpenChange={setIsContactModalOpen}
+                currentEnrollment={selectedEnrollment!}
+              />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {isLoadingTransferOptions ? (
+                <div className="space-y-2">
+                  {[...Array(2)].map((_, index) => (
+                    <Skeleton key={index} className="h-20 w-full" />
+                  ))}
+                </div>
+              ) : transferOptionsError ? (
+                <Alert>
+                  <AlertDescription>
+                    Không thể tải danh sách lớp chuyển. Vui lòng thử lại.
+                  </AlertDescription>
+                </Alert>
+              ) : transferOptions.length === 0 ? (
+                <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
+                  Chưa có lớp phù hợp để chuyển trong cùng cơ sở và hình thức học
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {transferOptions.map((option) => {
+                    const isSelected = selectedClass?.classId === option.classId
                     return (
                       <label
-                        key={session.sessionId}
+                        key={option.classId}
                         className={cn(
                           'block cursor-pointer rounded-lg border px-4 py-3 transition hover:border-primary/50 hover:bg-muted/30',
                           isSelected && 'border-primary bg-primary/5'
@@ -492,80 +468,133 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
                       >
                         <input
                           type="radio"
-                          name="session"
+                          name="targetClass"
                           className="sr-only"
                           checked={isSelected}
-                          onChange={() => setSelectedSession({
-                            sessionId: session.sessionId,
-                            date: session.date
-                          })}
+                          onChange={() => {
+                            setSelectedClass(option)
+                            setSelectedSession(null) // Reset session when class changes
+                          }}
                         />
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">
-                              {sessionDate.toLocaleDateString('vi-VN', {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                              })}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {session.timeSlot || 'Thời gian chưa xác định'}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Buổi {session.courseSessionNumber}: {session.courseSessionTitle}
-                            </p>
-                          </div>
-                          {isSelected && (
-                            <div className="text-primary">
-                              <div className="w-2 h-2 rounded-full bg-primary"></div>
-                            </div>
+                        <div className="space-y-1">
+                          <p className="font-medium">{option.classCode}</p>
+                          <p className="text-sm text-muted-foreground">{option.className}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {option.branchName} · {getModalityLabel(option.modality)}
+                          </p>
+                          {option.scheduleInfo && (
+                            <p className="text-xs text-muted-foreground">{option.scheduleInfo}</p>
                           )}
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className={cn(
+                              option.availableSlots > 0 ? 'text-emerald-600' : 'text-rose-600'
+                            )}>
+                              {option.availableSlots > 0 ? `Còn ${option.availableSlots} chỗ` : 'Hết chỗ'}
+                            </span>
+                            {option.availableSlots > 0 && option.maxCapacity && (
+                              <span className="text-muted-foreground">/ {option.maxCapacity} chỗ</span>
+                            )}
+                          </div>
                         </div>
                       </label>
                     )
                   })}
                 </div>
-              </div>
-            )}
-          </div>
-        )}
-      </Section>
+              )}
+
+              {/* Session Selection */}
+              {selectedClass && selectedClass.upcomingSessions && selectedClass.upcomingSessions.length > 0 && (
+                <div className="space-y-3 border-t pt-4 mt-4">
+                  <h3 className="font-medium text-sm">Chọn buổi học bắt đầu</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Chọn buổi học đầu tiên bạn sẽ tham gia ở lớp mới
+                  </p>
+                  <div className="grid gap-2">
+                    {selectedClass.upcomingSessions.map((session) => {
+                      const isSelected = selectedSession?.sessionId === session.sessionId
+                      const sessionDate = new Date(session.date)
+
+                      return (
+                        <label
+                          key={session.sessionId}
+                          className={cn(
+                            'block cursor-pointer rounded-lg border px-4 py-3 transition hover:border-primary/50 hover:bg-muted/30',
+                            isSelected && 'border-primary bg-primary/5'
+                          )}
+                        >
+                          <input
+                            type="radio"
+                            name="session"
+                            className="sr-only"
+                            checked={isSelected}
+                            onChange={() => setSelectedSession({
+                              sessionId: session.sessionId,
+                              date: session.date
+                            })}
+                          />
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">
+                                {sessionDate.toLocaleDateString('vi-VN', {
+                                  weekday: 'long',
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric'
+                                })}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {session.timeSlot || 'Thời gian chưa xác định'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Buổi {session.courseSessionNumber}: {session.courseSessionTitle}
+                              </p>
+                            </div>
+                            {isSelected && (
+                              <div className="text-primary">
+                                <div className="w-2 h-2 rounded-full bg-primary"></div>
+                              </div>
+                            )}
+                          </div>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </Section>
+      )}
 
       {/* Step 3: Xác nhận và lý do */}
-      <Section className={!step2Complete ? 'opacity-50' : ''}>
-        <StepHeader step={steps[2]} stepNumber={3} />
-
-        {step2Complete && (
+      {currentStep === 3 && transferType === 'schedule' && (
+        <Section>
           <div className="space-y-4">
             {/* Summary */}
-            <div className="border-t pt-4">
-              <div className="space-y-3">
-                <h4 className="font-medium">Tóm tắt thông tin chuyển lớp</h4>
+            <div className="rounded-lg bg-muted/30 p-4 border mb-4">
+              <h4 className="font-medium text-sm mb-3">Tóm tắt thông tin chuyển lớp</h4>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Lớp hiện tại</p>
-                    <p className="font-semibold">{selectedEnrollment!.classCode}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedEnrollment!.branchName} · {getModalityLabel(selectedEnrollment!.modality)}
-                    </p>
-                  </div>
-
-                  {transferType === 'schedule' && selectedClass && (
-                    <div>
-                      <p className="text-xs text-muted-foreground">Lớp mục tiêu</p>
-                      <p className="font-semibold">{selectedClass.classCode}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {selectedClass.branchName} · {getModalityLabel(selectedClass.modality)}
-                      </p>
-                    </div>
-                  )}
+              <div className="grid gap-4 md:grid-cols-2 text-sm">
+                <div>
+                  <p className="text-xs text-muted-foreground">Lớp hiện tại</p>
+                  <p className="font-semibold">{selectedEnrollment!.classCode}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedEnrollment!.branchName} · {getModalityLabel(selectedEnrollment!.modality)}
+                  </p>
                 </div>
 
-                {transferType === 'schedule' && selectedSession && (
+                {selectedClass && (
                   <div>
+                    <p className="text-xs text-muted-foreground">Lớp mục tiêu</p>
+                    <p className="font-semibold">{selectedClass.classCode}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedClass.branchName} · {getModalityLabel(selectedClass.modality)}
+                    </p>
+                  </div>
+                )}
+
+                {selectedSession && (
+                  <div className="col-span-2 border-t pt-2 mt-2">
                     <p className="text-xs text-muted-foreground">Buổi học bắt đầu</p>
                     <p className="font-medium">
                       {new Date(selectedSession.date).toLocaleDateString('vi-VN', {
@@ -575,9 +604,9 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
                         day: 'numeric'
                       })}
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       {selectedClass?.upcomingSessions?.find(s => s.sessionId === selectedSession.sessionId)?.timeSlot ||
-                       'Thời gian chưa xác định'}
+                        'Thời gian chưa xác định'}
                     </p>
                   </div>
                 )}
@@ -597,8 +626,8 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
               placeholder="Ghi chú thêm về yêu cầu chuyển lớp..."
             />
           </div>
-        )}
-      </Section>
+        </Section>
+      )}
     </BaseFlowComponent>
   )
 }
