@@ -18,7 +18,13 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
   type DayOfWeek,
@@ -56,9 +62,18 @@ const SESSION_STATUS_STYLES: Record<
     className: string;
   }
 > = {
-  PLANNED: { label: "Đã lên lịch", className: "text-amber-600 bg-amber-50 ring-amber-200" },
-  DONE: { label: "Hoàn thành", className: "text-emerald-600 bg-emerald-50 ring-emerald-200" },
-  CANCELLED: { label: "Đã hủy", className: "text-rose-600 bg-rose-50 ring-rose-200" },
+  PLANNED: {
+    label: "Đã lên lịch",
+    className: "text-amber-600 bg-amber-50 ring-amber-200",
+  },
+  DONE: {
+    label: "Hoàn thành",
+    className: "text-emerald-600 bg-emerald-50 ring-emerald-200",
+  },
+  CANCELLED: {
+    label: "Đã hủy",
+    className: "text-rose-600 bg-rose-50 ring-rose-200",
+  },
 };
 
 const MODALITY_LABELS: Record<string, string> = {
@@ -79,15 +94,36 @@ const MATERIAL_TYPE_STYLES: Record<
   }
 > = {
   pdf: { label: "PDF", className: "bg-rose-50 text-rose-600 ring-rose-200" },
-  ppt: { label: "Slide", className: "bg-amber-50 text-amber-600 ring-amber-200" },
-  pptx: { label: "Slide", className: "bg-amber-50 text-amber-600 ring-amber-200" },
+  ppt: {
+    label: "Slide",
+    className: "bg-amber-50 text-amber-600 ring-amber-200",
+  },
+  pptx: {
+    label: "Slide",
+    className: "bg-amber-50 text-amber-600 ring-amber-200",
+  },
   doc: { label: "Tài liệu", className: "bg-sky-50 text-sky-600 ring-sky-200" },
   docx: { label: "Tài liệu", className: "bg-sky-50 text-sky-600 ring-sky-200" },
-  xls: { label: "Bảng tính", className: "bg-emerald-50 text-emerald-600 ring-emerald-200" },
-  xlsx: { label: "Bảng tính", className: "bg-emerald-50 text-emerald-600 ring-emerald-200" },
-  mp4: { label: "Video", className: "bg-purple-50 text-purple-600 ring-purple-200" },
-  mov: { label: "Video", className: "bg-purple-50 text-purple-600 ring-purple-200" },
-  txt: { label: "Ghi chú", className: "bg-slate-50 text-slate-600 ring-slate-200" },
+  xls: {
+    label: "Bảng tính",
+    className: "bg-emerald-50 text-emerald-600 ring-emerald-200",
+  },
+  xlsx: {
+    label: "Bảng tính",
+    className: "bg-emerald-50 text-emerald-600 ring-emerald-200",
+  },
+  mp4: {
+    label: "Video",
+    className: "bg-purple-50 text-purple-600 ring-purple-200",
+  },
+  mov: {
+    label: "Video",
+    className: "bg-purple-50 text-purple-600 ring-purple-200",
+  },
+  txt: {
+    label: "Ghi chú",
+    className: "bg-slate-50 text-slate-600 ring-slate-200",
+  },
 };
 
 function getMaterialTypeMeta(fileName: string) {
@@ -121,7 +157,9 @@ const getTimeSlotLabel = (slot: TimeSlotDTO) =>
 export default function TeacherSchedulePage() {
   const navigate = useNavigate();
   const [weekStart, setWeekStart] = useState<string | null>(null);
-  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
+    null
+  );
 
   const {
     data: currentWeekResponse,
@@ -160,13 +198,10 @@ export default function TeacherSchedulePage() {
       return null;
     }
     const startDate = parseISO(scheduleData.weekStart);
-    return DAYS.reduce<Record<DayOfWeek, Date>>(
-      (acc, day, index) => {
-        acc[day] = addDays(startDate, index);
-        return acc;
-      },
-      {} as Record<DayOfWeek, Date>
-    );
+    return DAYS.reduce<Record<DayOfWeek, Date>>((acc, day, index) => {
+      acc[day] = addDays(startDate, index);
+      return acc;
+    }, {} as Record<DayOfWeek, Date>);
   }, [scheduleData]);
 
   const weekRangeLabel = useMemo(() => {
@@ -175,7 +210,9 @@ export default function TeacherSchedulePage() {
     }
     const start = parseISO(scheduleData.weekStart);
     const end = parseISO(scheduleData.weekEnd);
-    return `${format(start, "dd/MM", { locale: vi })} - ${format(end, "dd/MM", { locale: vi })}`;
+    return `${format(start, "dd/MM", { locale: vi })} - ${format(end, "dd/MM", {
+      locale: vi,
+    })}`;
   }, [scheduleData]);
 
   const handleWeekChange = useCallback(
@@ -317,140 +354,146 @@ export default function TeacherSchedulePage() {
             </div>
           )}
 
-          {!isLoading && !hasError && hasContent && scheduleData && dayDateMap && (
-            <section className="rounded-lg border bg-card/30">
-              <div className="overflow-x-auto">
-                <div className="min-w-[960px] divide-y divide-border/60">
-                  <div
-                    className="grid"
-                    style={{
-                      gridTemplateColumns: `160px repeat(${DAYS.length}, minmax(0, 1fr))`,
-                    }}
-                  >
-                    <div className="bg-muted/40 px-4 py-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                      Khung giờ
+          {!isLoading &&
+            !hasError &&
+            hasContent &&
+            scheduleData &&
+            dayDateMap && (
+              <section className="rounded-lg border bg-card/30">
+                <div className="overflow-x-auto">
+                  <div className="min-w-[960px] divide-y divide-border/60">
+                    <div
+                      className="grid"
+                      style={{
+                        gridTemplateColumns: `160px repeat(${DAYS.length}, minmax(0, 1fr))`,
+                      }}
+                    >
+                      <div className="bg-muted/40 px-4 py-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                        Khung giờ
+                      </div>
+                      {DAYS.map((day) => (
+                        <div key={day} className="bg-muted/40 px-4 py-4">
+                          <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                            {DAY_LABELS[day]}
+                          </div>
+                          <div className="text-base font-semibold text-foreground">
+                            {format(dayDateMap[day], "dd/MM", { locale: vi })}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    {DAYS.map((day) => (
-                      <div key={day} className="bg-muted/40 px-4 py-4">
-                        <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                          {DAY_LABELS[day]}
-                        </div>
-                        <div className="text-base font-semibold text-foreground">
-                          {format(dayDateMap[day], "dd/MM", { locale: vi })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
 
-                  {scheduleData.timeSlots.map((slot, slotIndex) => {
-                    const slotId = getTimeSlotId(slot);
-                    const slotKey =
-                      slotId !== null
-                        ? slotId
-                        : `slot-${slotIndex}-${slot.startTime}-${slot.endTime}`;
-                    return (
-                      <div
-                        key={slotKey}
-                        className="grid"
-                        style={{
-                          gridTemplateColumns: `160px repeat(${DAYS.length}, minmax(0, 1fr))`,
-                        }}
-                      >
-                        <div className="border-r border-border/60 bg-muted/20 px-4 py-5">
-                          <p className="text-sm font-semibold text-foreground">
-                            {getTimeSlotLabel(slot)}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {slot.startTime.slice(0, 5)} - {slot.endTime.slice(0, 5)}
-                          </p>
+                    {scheduleData.timeSlots.map((slot, slotIndex) => {
+                      const slotId = getTimeSlotId(slot);
+                      const slotKey =
+                        slotId !== null
+                          ? slotId
+                          : `slot-${slotIndex}-${slot.startTime}-${slot.endTime}`;
+                      return (
+                        <div
+                          key={slotKey}
+                          className="grid"
+                          style={{
+                            gridTemplateColumns: `160px repeat(${DAYS.length}, minmax(0, 1fr))`,
+                          }}
+                        >
+                          <div className="border-r border-border/60 bg-muted/20 px-4 py-5">
+                            <p className="text-sm font-semibold text-foreground">
+                              {getTimeSlotLabel(slot)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {slot.startTime.slice(0, 5)} -{" "}
+                              {slot.endTime.slice(0, 5)}
+                            </p>
+                          </div>
+                          {DAYS.map((day) => {
+                            const session = getSessionForCell(day, slot);
+                            const sessionStatus = session
+                              ? SESSION_STATUS_STYLES[session.sessionStatus]
+                              : null;
+                            const locationLabel = session
+                              ? session.location?.trim() ||
+                                (session.modality === "ONLINE"
+                                  ? "Học trực tuyến"
+                                  : session.branchName)
+                              : "";
+                            return (
+                              <button
+                                key={`${day}-${slotKey}`}
+                                type="button"
+                                onClick={() =>
+                                  session &&
+                                  setSelectedSessionId(session.sessionId)
+                                }
+                                disabled={!session}
+                                className={cn(
+                                  "group flex h-full w-full flex-col border-r border-border/60 p-4 text-left transition",
+                                  session
+                                    ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                                    : "opacity-80"
+                                )}
+                              >
+                                {session ? (
+                                  <div className="flex flex-1 flex-col rounded-lg bg-primary/5 p-3 ring-1 ring-primary/15 group-hover:bg-primary/10">
+                                    <div className="flex items-center gap-2 text-xs font-semibold text-primary">
+                                      <span>{session.classCode}</span>
+                                      {session.isMakeup && (
+                                        <Badge
+                                          variant="outline"
+                                          className="border-purple-300 bg-purple-50 text-[10px] text-purple-700"
+                                        >
+                                          Buổi bù
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <p className="mt-1 text-sm font-semibold text-foreground line-clamp-2">
+                                      {session.topic || session.className}
+                                    </p>
+                                    <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
+                                      {locationLabel}
+                                    </p>
+                                    <div className="mt-auto flex flex-wrap items-center gap-2 pt-3">
+                                      {sessionStatus ? (
+                                        <span
+                                          className={cn(
+                                            "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1",
+                                            sessionStatus.className
+                                          )}
+                                        >
+                                          {sessionStatus.label}
+                                        </span>
+                                      ) : null}
+                                      <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                                        <UsersIcon className="h-3 w-3" />
+                                        {session.totalStudents} học sinh
+                                      </span>
+                                      {session.attendanceSubmitted ? (
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                                          <CheckCircle2Icon className="h-3 w-3" />
+                                          Đã điểm danh
+                                        </span>
+                                      ) : (
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                                          Chưa điểm danh
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex h-full flex-col items-center justify-center rounded-lg border border-dashed border-muted-foreground/50 text-xs text-muted-foreground transition group-hover:border-muted-foreground/80">
+                                    Không có buổi dạy
+                                  </div>
+                                )}
+                              </button>
+                            );
+                          })}
                         </div>
-                        {DAYS.map((day) => {
-                          const session = getSessionForCell(day, slot);
-                          const sessionStatus = session
-                            ? SESSION_STATUS_STYLES[session.sessionStatus]
-                            : null;
-                          const locationLabel = session
-                            ? session.location?.trim() ||
-                              (session.modality === "ONLINE"
-                                ? "Học trực tuyến"
-                                : session.branchName)
-                            : "";
-                          return (
-                            <button
-                              key={`${day}-${slotKey}`}
-                              type="button"
-                              onClick={() =>
-                                session && setSelectedSessionId(session.sessionId)
-                              }
-                              disabled={!session}
-                              className={cn(
-                                "group flex h-full w-full flex-col border-r border-border/60 p-4 text-left transition",
-                                session
-                                  ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-                                  : "opacity-80"
-                              )}
-                            >
-                              {session ? (
-                                <div className="flex flex-1 flex-col rounded-lg bg-primary/5 p-3 ring-1 ring-primary/15 group-hover:bg-primary/10">
-                                  <div className="flex items-center gap-2 text-xs font-semibold text-primary">
-                                    <span>{session.classCode}</span>
-                                    {session.isMakeup && (
-                                      <Badge
-                                        variant="outline"
-                                        className="border-purple-300 bg-purple-50 text-[10px] text-purple-700"
-                                      >
-                                        Buổi bù
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <p className="mt-1 text-sm font-semibold text-foreground line-clamp-2">
-                                    {session.topic || session.className}
-                                  </p>
-                                  <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
-                                    {locationLabel}
-                                  </p>
-                                  <div className="mt-auto flex flex-wrap items-center gap-2 pt-3">
-                                    {sessionStatus ? (
-                                      <span
-                                        className={cn(
-                                          "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1",
-                                          sessionStatus.className
-                                        )}
-                                      >
-                                        {sessionStatus.label}
-                                      </span>
-                                    ) : null}
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                                      <UsersIcon className="h-3 w-3" />
-                                      {session.totalStudents} học sinh
-                                    </span>
-                                    {session.attendanceSubmitted ? (
-                                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                                        <CheckCircle2Icon className="h-3 w-3" />
-                                        Đã điểm danh
-                                      </span>
-                                    ) : (
-                                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                                        Chưa điểm danh
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="flex h-full flex-col items-center justify-center rounded-lg border border-dashed border-muted-foreground/50 text-xs text-muted-foreground transition group-hover:border-muted-foreground/80">
-                                  Không có buổi dạy
-                                </div>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            </section>
-          )}
+              </section>
+            )}
         </div>
       </DashboardLayout>
       <SessionDetailDialog
@@ -485,6 +528,16 @@ function SessionDetailDialog({
   const sessionStatus = detail
     ? SESSION_STATUS_STYLES[detail.sessionInfo.sessionStatus]
     : null;
+
+  // Determine session modality from resource type, fallback to class modality
+  const sessionModality = detail
+    ? classroomResource?.resourceType === "VIRTUAL"
+      ? "ONLINE"
+      : classroomResource?.resourceType === "ROOM"
+      ? "OFFLINE"
+      : detail.classInfo.modality
+    : null;
+
   const locationDisplay = detail
     ? classroomResource?.resourceType === "VIRTUAL"
       ? classroomResource?.onlineLink ||
@@ -495,7 +548,7 @@ function SessionDetailDialog({
       : classroomResource?.location ||
         detail.sessionInfo.location ||
         detail.sessionInfo.onlineLink ||
-        (detail.classInfo.modality === "ONLINE"
+        (sessionModality === "ONLINE"
           ? "Học trực tuyến"
           : detail.classInfo.branchName || "")
     : "Chưa cập nhật";
@@ -578,8 +631,10 @@ function SessionDetailDialog({
                 </span>
               ) : null}
               <span className="inline-flex items-center rounded-full bg-muted px-3 py-0.5 text-xs font-medium text-muted-foreground">
-                {MODALITY_LABELS[detail.classInfo.modality] ??
-                  detail.classInfo.modality}
+                {sessionModality
+                  ? MODALITY_LABELS[sessionModality] ?? sessionModality
+                  : MODALITY_LABELS[detail.classInfo.modality] ??
+                    detail.classInfo.modality}
               </span>
               {detail.makeupInfo?.isMakeup && (
                 <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-0.5 text-xs font-semibold text-purple-700">
@@ -592,12 +647,16 @@ function SessionDetailDialog({
               <InfoRow
                 title="Chủ đề"
                 value={detail.sessionInfo.topic || "Chưa cập nhật"}
-                icon={<NotebookPenIcon className="h-4 w-4 text-muted-foreground" />}
+                icon={
+                  <NotebookPenIcon className="h-4 w-4 text-muted-foreground" />
+                }
               />
               <InfoRow
                 title="Lớp học"
                 value={detail.classInfo.className}
-                icon={<CalendarIcon className="h-4 w-4 text-muted-foreground" />}
+                icon={
+                  <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                }
               />
               <InfoRow
                 title="Địa điểm / link"
@@ -619,7 +678,10 @@ function SessionDetailDialog({
                     Thông tin phòng học
                   </h3>
                   {resourceTypeLabel && (
-                    <Badge variant="outline" className="border-border/60 text-xs">
+                    <Badge
+                      variant="outline"
+                      className="border-border/60 text-xs"
+                    >
                       {resourceTypeLabel}
                     </Badge>
                   )}
@@ -793,17 +855,23 @@ function SessionDetailDialog({
                   {detail.makeupInfo.originalDate && (
                     <p>
                       Ngày gốc:{" "}
-                      {format(parseISO(detail.makeupInfo.originalDate), "dd/MM/yyyy", {
-                        locale: vi,
-                      })}
+                      {format(
+                        parseISO(detail.makeupInfo.originalDate),
+                        "dd/MM/yyyy",
+                        {
+                          locale: vi,
+                        }
+                      )}
                     </p>
                   )}
-                  {detail.makeupInfo.originalStartTime && detail.makeupInfo.originalEndTime && (
-                    <p>
-                      Giờ học gốc: {detail.makeupInfo.originalStartTime.slice(0, 5)} -{" "}
-                      {detail.makeupInfo.originalEndTime.slice(0, 5)}
-                    </p>
-                  )}
+                  {detail.makeupInfo.originalStartTime &&
+                    detail.makeupInfo.originalEndTime && (
+                      <p>
+                        Giờ học gốc:{" "}
+                        {detail.makeupInfo.originalStartTime.slice(0, 5)} -{" "}
+                        {detail.makeupInfo.originalEndTime.slice(0, 5)}
+                      </p>
+                    )}
                   {detail.makeupInfo.reason && (
                     <p>Lý do: {detail.makeupInfo.reason}</p>
                   )}
