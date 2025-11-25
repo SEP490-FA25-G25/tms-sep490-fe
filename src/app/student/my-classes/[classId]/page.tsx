@@ -28,7 +28,7 @@ const ClassDetailPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const studentId = user?.id || 0;
+  // studentId not needed - backend gets it from JWT token via StudentContextHelper
 
   // Read tab from URL query param, fallback to 'sessions'
   const tabFromUrl = searchParams.get('tab') || 'sessions';
@@ -57,7 +57,7 @@ const ClassDetailPage = () => {
     isLoading: isSessionsLoading,
     error: sessionsError,
   } = useGetClassSessionsQuery(
-    { classId: classIdNumber, studentId },
+    { classId: classIdNumber },
     { skip: !classDetailResponse || !isValidClassId }
   );
 
@@ -72,7 +72,7 @@ const ClassDetailPage = () => {
   const {
     data: scoresResponse,
   } = useGetStudentAssessmentScoresQuery(
-    { classId: classIdNumber, studentId },
+    { classId: classIdNumber, studentId: user?.id || 0 },
     { skip: !classDetailResponse || !isValidClassId }
   );
 

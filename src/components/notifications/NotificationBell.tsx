@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,85 +14,13 @@ import { SidebarMenuButton, useSidebar } from "@/components/ui/sidebar"
 import type { Notification } from "@/store/services/notificationApi"
 import {
   BellIcon,
-  CheckIcon,
   ExternalLinkIcon,
   ClockIcon,
-  AlertTriangleIcon,
-  InfoIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  AlertCircleIcon,
-  MegaphoneIcon,
 } from "lucide-react"
 import { useGetRecentNotificationsQuery, useMarkAsReadMutation } from "@/store/services/notificationApi"
 import { useNavigate } from "react-router-dom"
 import { formatDistanceToNow } from "date-fns"
 import { vi } from "date-fns/locale"
-
-// Type mapping for icons and colors
-const notificationTypeConfig = {
-  INFO: {
-    icon: InfoIcon,
-    className: "text-blue-600",
-    bgClassName: "bg-blue-100",
-    label: "Thông tin"
-  },
-  SUCCESS: {
-    icon: CheckCircleIcon,
-    className: "text-green-600",
-    bgClassName: "bg-green-100",
-    label: "Thành công"
-  },
-  WARNING: {
-    icon: AlertTriangleIcon,
-    className: "text-yellow-600",
-    bgClassName: "bg-yellow-100",
-    label: "Cảnh báo"
-  },
-  ERROR: {
-    icon: XCircleIcon,
-    className: "text-red-600",
-    bgClassName: "bg-red-100",
-    label: "Lỗi"
-  },
-  URGENT: {
-    icon: AlertCircleIcon,
-    className: "text-red-600",
-    bgClassName: "bg-red-100",
-    label: "Khẩn cấp"
-  },
-  SYSTEM: {
-    icon: MegaphoneIcon,
-    className: "text-purple-600",
-    bgClassName: "bg-purple-100",
-    label: "Hệ thống"
-  },
-  ANNOUNCEMENT: {
-    icon: MegaphoneIcon,
-    className: "text-indigo-600",
-    bgClassName: "bg-indigo-100",
-    label: "Thông báo"
-  },
-}
-
-const priorityConfig = {
-  LOW: {
-    className: "border-gray-200",
-    badgeVariant: "secondary" as const,
-  },
-  MEDIUM: {
-    className: "border-blue-200",
-    badgeVariant: "default" as const,
-  },
-  HIGH: {
-    className: "border-orange-200",
-    badgeVariant: "destructive" as const,
-  },
-  URGENT: {
-    className: "border-red-200",
-    badgeVariant: "destructive" as const,
-  },
-}
 
 export function NotificationBell() {
   const { isMobile } = useSidebar()
@@ -170,7 +97,7 @@ export function NotificationBell() {
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
-              className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
+              className="ml-auto h-4 w-4 rounded-full p-0 text-[10px] flex items-center justify-center"
             >
               {unreadCount > 99 ? "99+" : unreadCount}
             </Badge>
@@ -220,24 +147,14 @@ export function NotificationBell() {
                 </div>
               ) : (
                 notifications.map((notification) => {
-                  const typeConfig = notificationTypeConfig[notification.type as keyof typeof notificationTypeConfig]
-                  const priorityConfigValue = priorityConfig[notification.priority as keyof typeof priorityConfig]
-                  const TypeIcon = typeConfig.icon
-
                   return (
                     <DropdownMenuItem
                       key={notification.id}
                       className="p-0 cursor-pointer"
                       onClick={(e) => handleNotificationClick(notification, e)}
                     >
-                      <div className={`w-full px-4 py-3 border-b last:border-b-0 ${priorityConfigValue.className} ${
-                        !notification.isRead ? 'bg-muted/30' : ''
-                      }`}>
+                      <div className="w-full px-4 py-3 border-b last:border-b-0">
                         <div className="flex items-start gap-3">
-                          <div className={`p-1.5 rounded-full ${typeConfig.bgClassName} flex-shrink-0`}>
-                            <TypeIcon className={`h-3 w-3 ${typeConfig.className}`} />
-                          </div>
-
                           <div className="flex-1 min-w-0 space-y-1">
                             <div className="flex items-center justify-between gap-2">
                               <p className={`text-sm font-medium truncate ${
@@ -246,7 +163,7 @@ export function NotificationBell() {
                                 {notification.title}
                               </p>
                               {!notification.isRead && (
-                                <div className="h-2 w-2 rounded-full bg-blue-600 flex-shrink-0"></div>
+                                <div className="h-1.5 w-1.5 rounded-full bg-blue-600 flex-shrink-0"></div>
                               )}
                             </div>
 
@@ -260,29 +177,12 @@ export function NotificationBell() {
                                 {formatTimeAgo(notification.createdAt)}
                               </div>
 
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="text-xs px-1.5 py-0">
-                                  {typeConfig.label}
-                                </Badge>
-                                {notification.actionUrl && (
-                                  <ExternalLinkIcon className="h-3 w-3 text-muted-foreground" />
-                                )}
-                              </div>
+                              {notification.actionUrl && (
+                                <ExternalLinkIcon className="h-3 w-3 text-muted-foreground" />
+                              )}
                             </div>
                           </div>
                         </div>
-
-                        {!notification.isRead && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="mt-2 h-6 px-2 text-xs"
-                            onClick={(e) => handleMarkAsRead(notification.id, e)}
-                          >
-                            <CheckIcon className="h-3 w-3 mr-1" />
-                            Đã đọc
-                          </Button>
-                        )}
                       </div>
                     </DropdownMenuItem>
                   )

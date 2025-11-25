@@ -56,9 +56,9 @@ export const studentClassApi = createApi({
       ApiResponse<ClassSessionsResponseDTO>,
       GetClassSessionsRequest
     >({
-      query: ({ classId, studentId }) => ({
+      query: ({ classId }) => ({
         url: `/student-portal/classes/${classId}/sessions`,
-        params: { studentId },
+        // studentId not needed - backend gets it from JWT token via StudentContextHelper
       }),
       providesTags: ['ClassSessions'],
     }),

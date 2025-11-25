@@ -207,12 +207,12 @@ export interface GetStudentClassesRequest {
 
 export interface GetClassSessionsRequest {
   classId: number;
-  studentId: number;
+  // studentId not needed - backend gets it from JWT token via StudentContextHelper
 }
 
 export interface GetStudentScoresRequest {
   classId: number;
-  studentId: number;
+  studentId: number; // Required in URL path: /classes/{classId}/students/{studentId}/assessment-scores
 }
 
 // Vietnamese constants for UI
