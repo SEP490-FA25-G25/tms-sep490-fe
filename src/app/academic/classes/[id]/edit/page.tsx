@@ -11,11 +11,11 @@ export default function EditClassPage() {
     const { id } = useParams<{ id: string }>()
     const classId = id ? parseInt(id) : undefined
 
+    const { data, isLoading, error } = useGetClassByIdQuery(classId!)
+
     if (!classId || isNaN(classId)) {
         return <div>Invalid Class ID</div>
     }
-
-    const { data, isLoading, error } = useGetClassByIdQuery(classId)
 
     if (isLoading) {
         return <div>Đang tải thông tin lớp...</div>

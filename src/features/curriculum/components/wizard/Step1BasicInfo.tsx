@@ -11,7 +11,39 @@ import { Textarea } from "@/components/ui/textarea";
 import { useGetSubjectsWithLevelsQuery, useGetTimeslotDurationQuery } from "@/store/services/curriculumApi";
 import { useMemo, useEffect } from "react";
 
-export function Step1BasicInfo({ data, setData }: any) {
+interface BasicInfo {
+    courseCode?: string;
+    courseName?: string;
+    name?: string;
+    code?: string;
+    description?: string;
+    subjectId?: string;
+    levelId?: string;
+    durationWeeks?: number;
+    sessionPerWeek?: number;
+    hoursPerSession?: number;
+    durationHours?: number;
+    effectiveDate?: string;
+    scoreScale?: string;
+    targetAudience?: string;
+    teachingMethods?: string;
+    prerequisites?: string;
+}
+
+interface CourseData {
+    basicInfo: BasicInfo;
+    clos: unknown[];
+    structure: unknown[];
+    assessments: unknown[];
+    materials: unknown[];
+}
+
+interface Step1BasicInfoProps {
+    data: CourseData;
+    setData: (data: CourseData | ((prev: CourseData) => CourseData)) => void;
+}
+
+export function Step1BasicInfo({ data, setData }: Step1BasicInfoProps) {
     const { data: subjectsData, isLoading } = useGetSubjectsWithLevelsQuery();
     const { data: durationData } = useGetTimeslotDurationQuery();
 
@@ -19,8 +51,8 @@ export function Step1BasicInfo({ data, setData }: any) {
         return subjectsData?.data?.find(s => s.id.toString() === data.basicInfo?.subjectId);
     }, [subjectsData, data.basicInfo?.subjectId]);
 
-    const handleChange = (field: string, value: any) => {
-        setData((prev: any) => ({
+    const handleChange = (field: string, value: string | number) => {
+        setData((prev: CourseData) => ({
             ...prev,
             basicInfo: {
                 ...prev.basicInfo,

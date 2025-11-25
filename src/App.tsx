@@ -45,6 +45,7 @@ import CreateSubjectPage from './features/curriculum/pages/CreateSubjectPage'
 import CreateLevelPage from './features/curriculum/pages/CreateLevelPage'
 import CurriculumCourseDetailPage from './features/curriculum/pages/CourseDetailPage'
 import EditCoursePage from './features/curriculum/pages/EditCoursePage'
+import NotificationsPage from './app/notifications/page'
 import { Toaster } from '@/components/ui/sonner'
 
 function App() {
@@ -62,6 +63,16 @@ function App() {
               element={
                 <ProtectedRoute>
                   <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Notifications */}
+            <Route
+              path="/notifications"
+              element={
+                <ProtectedRoute>
+                  <NotificationsPage />
                 </ProtectedRoute>
               }
             />

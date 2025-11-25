@@ -9,8 +9,6 @@ import {
   GraduationCapIcon,
   HomeIcon,
   UsersIcon,
-  SettingsIcon,
-  SearchIcon,
   HelpCircleIcon,
   BuildingIcon,
   AwardIcon,
@@ -23,6 +21,7 @@ import {
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import {
   Sidebar,
   SidebarContent,
@@ -34,6 +33,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { ROLES } from "@/hooks/useRoleBasedAccess";
+import { Bell } from "lucide-react";
 
 // Role-based navigation configuration
 const roleBasedNav = {
@@ -308,19 +308,10 @@ const roleBasedNav = {
 
 const navSecondary = [
   {
-    title: "Cài đặt",
-    url: "/settings",
-    icon: SettingsIcon,
-  },
-  {
-    title: "Trợ giúp",
-    url: "/help",
-    icon: HelpCircleIcon,
-  },
-  {
-    title: "Tìm kiếm",
-    url: "/search",
-    icon: SearchIcon,
+    title: "Thông báo",
+    url: "#",
+    icon: Bell,
+    component: <NotificationBell />,
   },
 ];
 

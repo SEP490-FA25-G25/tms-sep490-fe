@@ -1,0 +1,310 @@
+"use client"
+
+import * as React from "react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { SidebarMenuButton, useSidebar } from "@/components/ui/sidebar"
+import type { Notification } from "@/store/services/notificationApi"
+import {
+  BellIcon,
+  CheckIcon,
+  ExternalLinkIcon,
+  ClockIcon,
+  AlertTriangleIcon,
+  InfoIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  AlertCircleIcon,
+  MegaphoneIcon,
+} from "lucide-react"
+import { useGetRecentNotificationsQuery, useMarkAsReadMutation } from "@/store/services/notificationApi"
+import { useNavigate } from "react-router-dom"
+import { formatDistanceToNow } from "date-fns"
+import { vi } from "date-fns/locale"
+
+// Type mapping for icons and colors
+const notificationTypeConfig = {
+  INFO: {
+    icon: InfoIcon,
+    className: "text-blue-600",
+    bgClassName: "bg-blue-100",
+    label: "Thông tin"
+  },
+  SUCCESS: {
+    icon: CheckCircleIcon,
+    className: "text-green-600",
+    bgClassName: "bg-green-100",
+    label: "Thành công"
+  },
+  WARNING: {
+    icon: AlertTriangleIcon,
+    className: "text-yellow-600",
+    bgClassName: "bg-yellow-100",
+    label: "Cảnh báo"
+  },
+  ERROR: {
+    icon: XCircleIcon,
+    className: "text-red-600",
+    bgClassName: "bg-red-100",
+    label: "Lỗi"
+  },
+  URGENT: {
+    icon: AlertCircleIcon,
+    className: "text-red-600",
+    bgClassName: "bg-red-100",
+    label: "Khẩn cấp"
+  },
+  SYSTEM: {
+    icon: MegaphoneIcon,
+    className: "text-purple-600",
+    bgClassName: "bg-purple-100",
+    label: "Hệ thống"
+  },
+  ANNOUNCEMENT: {
+    icon: MegaphoneIcon,
+    className: "text-indigo-600",
+    bgClassName: "bg-indigo-100",
+    label: "Thông báo"
+  },
+}
+
+const priorityConfig = {
+  LOW: {
+    className: "border-gray-200",
+    badgeVariant: "secondary" as const,
+  },
+  MEDIUM: {
+    className: "border-blue-200",
+    badgeVariant: "default" as const,
+  },
+  HIGH: {
+    className: "border-orange-200",
+    badgeVariant: "destructive" as const,
+  },
+  URGENT: {
+    className: "border-red-200",
+    badgeVariant: "destructive" as const,
+  },
+}
+
+export function NotificationBell() {
+  const { isMobile } = useSidebar()
+  const navigate = useNavigate()
+
+  // Skip fetching until dropdown opens
+  const [isOpen, setIsOpen] = React.useState(false)
+
+  const {
+    data: notifications = [],
+    isLoading,
+    error,
+    refetch,
+  } = useGetRecentNotificationsQuery(undefined, {
+    skip: !isOpen, // Only fetch when dropdown is open
+  })
+
+  const [markAsRead] = useMarkAsReadMutation()
+
+  const handleMarkAsRead = async (notificationId: number, e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    try {
+      await markAsRead(notificationId).unwrap()
+      // Refetch to update the list
+      refetch()
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error)
+    }
+  }
+
+  const handleNotificationClick = async (notification: Notification, e: React.MouseEvent) => {
+    e.stopPropagation()
+
+    // Mark as read if unread
+    if (!notification.isRead) {
+      await handleMarkAsRead(notification.id)
+    }
+
+    // Navigate to action URL if available
+    if (notification.actionUrl) {
+      navigate(notification.actionUrl)
+      setIsOpen(false) // Close dropdown
+    }
+  }
+
+  const formatTimeAgo = (dateString: string) => {
+    try {
+      const date = new Date(dateString)
+      const now = new Date()
+      const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
+
+      if (diffInMinutes < 1) return "Vừa xong"
+      if (diffInMinutes < 60) return `${diffInMinutes} phút trước`
+      if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} giờ trước`
+      if (diffInMinutes < 10080) return `${Math.floor(diffInMinutes / 1440)} ngày trước`
+
+      return formatDistanceToNow(date, {
+        addSuffix: true,
+        locale: vi
+      })
+    } catch {
+      return "Không xác định"
+    }
+  }
+
+  const unreadCount = notifications.filter(n => !n.isRead).length
+
+  return (
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenuTrigger asChild>
+        <SidebarMenuButton className="relative">
+          <BellIcon className="h-4 w-4" />
+          <span>Thông báo</span>
+          {unreadCount > 0 && (
+            <Badge
+              variant="destructive"
+              className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
+            >
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </Badge>
+          )}
+        </SidebarMenuButton>
+      </DropdownMenuTrigger>
+          <DropdownMenuContent
+            className="w-80 rounded-lg"
+            side={isMobile ? "bottom" : "right"}
+            align="end"
+            sideOffset={4}
+          >
+            <DropdownMenuLabel className="px-4 py-3">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Thông báo</span>
+                {unreadCount > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {unreadCount} chưa đọc
+                  </Badge>
+                )}
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+
+            <div className="max-h-96 overflow-y-auto">
+              {isLoading ? (
+                <div className="px-4 py-8 text-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+                  <p className="text-sm text-muted-foreground mt-2">Đang tải thông báo...</p>
+                </div>
+              ) : error ? (
+                <div className="px-4 py-8 text-center">
+                  <p className="text-sm text-destructive">Không thể tải thông báo</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => refetch()}
+                  >
+                    Thử lại
+                  </Button>
+                </div>
+              ) : notifications.length === 0 ? (
+                <div className="px-4 py-8 text-center">
+                  <BellIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Không có thông báo mới</p>
+                </div>
+              ) : (
+                notifications.map((notification) => {
+                  const typeConfig = notificationTypeConfig[notification.type as keyof typeof notificationTypeConfig]
+                  const priorityConfigValue = priorityConfig[notification.priority as keyof typeof priorityConfig]
+                  const TypeIcon = typeConfig.icon
+
+                  return (
+                    <DropdownMenuItem
+                      key={notification.id}
+                      className="p-0 cursor-pointer"
+                      onClick={(e) => handleNotificationClick(notification, e)}
+                    >
+                      <div className={`w-full px-4 py-3 border-b last:border-b-0 ${priorityConfigValue.className} ${
+                        !notification.isRead ? 'bg-muted/30' : ''
+                      }`}>
+                        <div className="flex items-start gap-3">
+                          <div className={`p-1.5 rounded-full ${typeConfig.bgClassName} flex-shrink-0`}>
+                            <TypeIcon className={`h-3 w-3 ${typeConfig.className}`} />
+                          </div>
+
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className={`text-sm font-medium truncate ${
+                                !notification.isRead ? 'font-semibold' : ''
+                              }`}>
+                                {notification.title}
+                              </p>
+                              {!notification.isRead && (
+                                <div className="h-2 w-2 rounded-full bg-blue-600 flex-shrink-0"></div>
+                              )}
+                            </div>
+
+                            <p className="text-xs text-muted-foreground line-clamp-2">
+                              {notification.message}
+                            </p>
+
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <ClockIcon className="h-3 w-3" />
+                                {formatTimeAgo(notification.createdAt)}
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-xs px-1.5 py-0">
+                                  {typeConfig.label}
+                                </Badge>
+                                {notification.actionUrl && (
+                                  <ExternalLinkIcon className="h-3 w-3 text-muted-foreground" />
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {!notification.isRead && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="mt-2 h-6 px-2 text-xs"
+                            onClick={(e) => handleMarkAsRead(notification.id, e)}
+                          >
+                            <CheckIcon className="h-3 w-3 mr-1" />
+                            Đã đọc
+                          </Button>
+                        )}
+                      </div>
+                    </DropdownMenuItem>
+                  )
+                })
+              )}
+            </div>
+
+            {notifications.length > 0 && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => {
+                    navigate("/notifications")
+                    setIsOpen(false)
+                  }}
+                >
+                  <span className="text-sm text-center w-full">Xem tất cả thông báo</span>
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+  )
+}

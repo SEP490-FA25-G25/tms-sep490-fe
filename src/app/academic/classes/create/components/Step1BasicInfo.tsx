@@ -233,7 +233,7 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
           data: {
             ...data,
             plannedEndDate,
-            regenerateSessions: shouldRegenerate || (data as any).regenerateSessions,
+            regenerateSessions: shouldRegenerate || false,
           },
         }).unwrap()
         toast.success(`Cập nhật lớp ${data.code} thành công`)
@@ -260,7 +260,7 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
         } else {
           toast.error(error.data?.message || 'Có lỗi xảy ra')
         }
-      } else if (error.data?.message === 'CLASS_NOT_EDITABLE' || (error.data as any)?.errorCode === 'CLASS_NOT_EDITABLE') {
+      } else if (error.data?.message === 'CLASS_NOT_EDITABLE' || (error.data as { errorCode?: string })?.errorCode === 'CLASS_NOT_EDITABLE') {
         toast.error('Lớp này đang chờ duyệt hoặc đã duyệt, không thể chỉnh sửa')
       } else if (error.status === 403) {
         toast.error('Bạn không có quyền thực hiện thao tác này')

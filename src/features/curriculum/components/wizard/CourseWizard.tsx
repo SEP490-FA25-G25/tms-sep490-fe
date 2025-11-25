@@ -22,8 +22,116 @@ const STEPS = [
     { id: 6, title: "Xem lại" },
 ];
 
+interface CourseBasicInfo {
+    subjectId?: string;
+    levelId?: string;
+    code?: string;
+    name?: string;
+    courseCode?: string;
+    courseName?: string;
+    description?: string;
+    prerequisites?: string;
+    credits?: number;
+    hoursPerSession?: number;
+    durationHours?: number;
+    durationWeeks?: number;
+    sessionPerWeek?: number;
+    scoreScale?: string;
+    targetAudience?: string;
+    teachingMethods?: string;
+    effectiveDate?: string;
+}
+
+interface CLO {
+    id: string;
+    code: string;
+    description: string;
+    category: 'KIEN_THUC' | 'KY_NANG';
+    level: 'NHAP_MON' | 'CO_BAN' | 'TRUNG_BINH' | 'NANG_CAO';
+}
+
+interface Assessment {
+    id?: string;
+    name: string;
+    type: string;
+    weight: number;
+    description?: string;
+    cloIds?: string[];
+    durationMinutes?: number;
+}
+
+interface Material {
+    id?: string;
+    title?: string;
+    name?: string;
+    type: string;
+    url: string;
+    scope?: string;
+    description?: string;
+}
+
+interface CourseData {
+    basicInfo: CourseBasicInfo;
+    clos: CLO[];
+    structure: any[];
+    assessments: Assessment[];
+    materials: Material[];
+}
+
+interface InitialCourseData {
+    id?: number;
+    basicInfo?: {
+        subjectId?: number | string;
+        levelId?: number | string;
+        durationHours?: number;
+        durationWeeks?: number;
+        courseCode?: string;
+        courseName?: string;
+        description?: string;
+        credits?: number;
+        hoursPerSession?: number;
+    };
+    clos?: Array<{
+        id: string;
+        code: string;
+        description: string;
+        ploIds?: string[];
+        category?: string;
+        level?: string;
+    }>;
+    structure?: {
+        phases?: Array<{
+            name: string;
+            sessions?: Array<{
+                topic: string;
+                studentTask?: string;
+                mappedCLOs?: string[];
+            }>;
+        }>;
+    };
+    assessments?: Array<{
+        id?: string;
+        name: string;
+        type: string;
+        weight: number;
+        durationMinutes?: number;
+        mappedCLOs?: string[];
+        description?: string;
+    }>;
+    materials?: Array<{
+        id?: string;
+        name?: string;
+        title?: string;
+        type: string;
+        scope?: string;
+        url: string;
+        description?: string;
+    }>;
+    status?: string;
+}
+
 interface CourseWizardProps {
-    initialData?: any;
+    initialData?: InitialCourseData;
     isEditMode?: boolean;
 }
 
@@ -35,8 +143,19 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
     const isLoading = isCreating || isUpdating;
 
     // Global form state
-    const [formData, setFormData] = useState<any>({
-        basicInfo: {},
+    const [formData, setFormData] = useState<CourseData>({
+        basicInfo: {
+            subjectId: '',
+            levelId: '',
+            courseCode: '',
+            courseName: '',
+            description: '',
+            credits: 0,
+            hoursPerSession: 0,
+            durationHours: 0,
+            durationWeeks: 0,
+            sessionPerWeek: 0,
+        },
         clos: [],
         structure: [],
         assessments: [],
@@ -51,31 +170,39 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                     subjectId: initialData.basicInfo.subjectId?.toString(),
                     levelId: initialData.basicInfo.levelId?.toString(),
                 },
-                clos: initialData.clos?.map((clo: any) => ({
+                clos: initialData.clos?.map((clo) => ({
+                    id: clo.id,
                     code: clo.code,
                     description: clo.description,
-                    mappedPLOs: clo.mappedPLOs || [],
+                    ploIds: clo.ploIds || [],
+                    category: clo.category,
+                    level: clo.level,
                 })) || [],
-                structure: initialData.structure?.phases?.map((phase: any) => ({
+                structure: initialData.structure?.phases?.map((phase) => ({
                     name: phase.name,
-                    sessions: phase.sessions?.map((session: any) => ({
+                    sessions: phase.sessions?.map((session) => ({
                         topic: session.topic,
                         studentTask: session.studentTask,
                         cloIds: session.mappedCLOs || [],
                     })) || [],
                 })) || [],
-                assessments: initialData.assessments?.map((assessment: any) => ({
+                assessments: initialData.assessments?.map((assessment) => ({
+                    id: assessment.id,
                     name: assessment.name,
                     type: assessment.type,
                     weight: assessment.weight,
                     durationMinutes: assessment.durationMinutes,
+                    description: assessment.description,
                     cloIds: assessment.mappedCLOs || [],
                 })) || [],
-                materials: initialData.materials?.map((material: any) => ({
+                materials: initialData.materials?.map((material) => ({
+                    id: material.id,
+                    title: material.title || material.name,
                     name: material.name,
                     type: material.type,
                     scope: material.scope,
                     url: material.url,
+                    description: material.description,
                 })) || [],
             });
         }
@@ -100,29 +227,29 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                     durationHours: formData.basicInfo.durationHours ? Number(formData.basicInfo.durationHours) : undefined,
                     durationWeeks: formData.basicInfo.durationWeeks ? Number(formData.basicInfo.durationWeeks) : undefined,
                 },
-                clos: formData.clos.map((clo: any) => ({
+                clos: formData.clos.map((clo) => ({
                     code: clo.code,
                     description: clo.description,
                     mappedPLOs: clo.mappedPLOs || [],
                 })),
                 structure: {
-                    phases: formData.structure.map((phase: any) => ({
+                    phases: formData.structure.map((phase) => ({
                         name: phase.name,
-                        sessions: phase.sessions.map((session: any) => ({
+                        sessions: phase.sessions.map((session) => ({
                             topic: session.topic,
                             studentTask: session.studentTask,
                             mappedCLOs: session.cloIds || [],
                         })),
                     })),
                 },
-                assessments: formData.assessments.map((assessment: any) => ({
+                assessments: formData.assessments.map((assessment) => ({
                     name: assessment.name,
                     type: assessment.type,
                     weight: Number(assessment.weight),
                     durationMinutes: assessment.durationMinutes ? Number(assessment.durationMinutes) : undefined,
                     mappedCLOs: assessment.cloIds || [],
                 })),
-                materials: formData.materials?.map((material: any) => ({
+                materials: formData.materials?.map((material) => ({
                     name: material.name,
                     type: material.type,
                     scope: material.scope,
@@ -171,7 +298,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
             structure: {
                 phases: formData.structure?.map((phase: any) => ({
                     name: phase.name,
-                    sessions: phase.sessions.map((session: any) => ({
+                    sessions: phase.sessions.map((session) => ({
                         topic: session.topic,
                         studentTask: session.studentTask,
                         mappedCLOs: session.cloIds || [],
@@ -185,7 +312,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                 durationMinutes: assessment.durationMinutes ? Number(assessment.durationMinutes) : undefined,
                 mappedCLOs: assessment.cloIds || [],
             })) || [],
-            materials: formData.materials?.map((material: any) => ({
+            materials: formData.materials?.map((material) => ({
                 name: material.name,
                 type: material.type,
                 scope: material.scope,

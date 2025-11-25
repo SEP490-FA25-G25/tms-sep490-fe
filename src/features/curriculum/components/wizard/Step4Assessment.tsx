@@ -24,7 +24,29 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function Step4Assessment({ data, setData }: any) {
+interface Assessment {
+    id: string;
+    name: string;
+    type: string;
+    weight: number;
+    durationMinutes?: number;
+    cloIds: string[];
+}
+
+interface CourseData {
+    basicInfo: unknown;
+    clos: Array<{ id: string; code: string; description: string }>;
+    structure: unknown[];
+    assessments: Assessment[];
+    materials: unknown[];
+}
+
+interface Step4AssessmentProps {
+    data: CourseData;
+    setData: (data: CourseData | ((prev: CourseData) => CourseData)) => void;
+}
+
+export function Step4Assessment({ data, setData }: Step4AssessmentProps) {
     const addAssessment = () => {
         const newAssessment = {
             id: crypto.randomUUID(),
@@ -34,7 +56,7 @@ export function Step4Assessment({ data, setData }: any) {
             durationMinutes: 60,
             cloIds: [],
         };
-        setData((prev: any) => ({
+        setData((prev: CourseData) => ({
             ...prev,
             assessments: [...(prev.assessments || []), newAssessment],
         }));
@@ -43,7 +65,7 @@ export function Step4Assessment({ data, setData }: any) {
     const updateAssessment = (index: number, field: string, value: any) => {
         const newAssessments = [...(data.assessments || [])];
         newAssessments[index] = { ...newAssessments[index], [field]: value };
-        setData((prev: any) => ({ ...prev, assessments: newAssessments }));
+        setData((prev: CourseData) => ({ ...prev, assessments: newAssessments }));
     };
 
     const toggleAssessmentClo = (index: number, cloCode: string) => {
@@ -57,7 +79,7 @@ export function Step4Assessment({ data, setData }: any) {
 
     const removeAssessment = (index: number) => {
         const newAssessments = data.assessments.filter((_: any, i: number) => i !== index);
-        setData((prev: any) => ({ ...prev, assessments: newAssessments }));
+        setData((prev: CourseData) => ({ ...prev, assessments: newAssessments }));
     };
 
     const totalWeight = data.assessments?.reduce((sum: number, a: any) => sum + (Number(a.weight) || 0), 0) || 0;

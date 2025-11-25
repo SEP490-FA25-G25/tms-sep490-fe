@@ -11,7 +11,29 @@ import {
 } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
 
-export function Step5Materials({ data, setData }: any) {
+interface Material {
+    id: string;
+    name?: string;
+    title?: string;
+    type: string;
+    url: string;
+    scope?: string;
+}
+
+interface CourseData {
+    basicInfo: unknown;
+    clos: unknown[];
+    structure: unknown[];
+    assessments: unknown[];
+    materials: Material[];
+}
+
+interface Step5MaterialsProps {
+    data: CourseData;
+    setData: (data: CourseData | ((prev: CourseData) => CourseData)) => void;
+}
+
+export function Step5Materials({ data, setData }: Step5MaterialsProps) {
     const addMaterial = () => {
         const newMaterial = {
             id: crypto.randomUUID(),
@@ -20,21 +42,21 @@ export function Step5Materials({ data, setData }: any) {
             url: "",
             scope: "COURSE",
         };
-        setData((prev: any) => ({
+        setData((prev: CourseData) => ({
             ...prev,
             materials: [...(prev.materials || []), newMaterial],
         }));
     };
 
-    const updateMaterial = (index: number, field: string, value: any) => {
+    const updateMaterial = (index: number, field: string, value: string) => {
         const newMaterials = [...(data.materials || [])];
         newMaterials[index] = { ...newMaterials[index], [field]: value };
-        setData((prev: any) => ({ ...prev, materials: newMaterials }));
+        setData((prev: CourseData) => ({ ...prev, materials: newMaterials }));
     };
 
     const removeMaterial = (index: number) => {
         const newMaterials = data.materials.filter((_: any, i: number) => i !== index);
-        setData((prev: any) => ({ ...prev, materials: newMaterials }));
+        setData((prev: CourseData) => ({ ...prev, materials: newMaterials }));
     };
 
     return (

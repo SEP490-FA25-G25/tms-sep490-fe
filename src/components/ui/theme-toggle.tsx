@@ -1,8 +1,11 @@
-import { useTheme } from "@/components/theme-provider"
+import { useTheme } from "@/components/hooks/use-theme"
 import { Switch } from "@/components/ui/switch"
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
+  const themeState = useTheme()
+  if (!themeState) return null
+
+  const { theme, setTheme } = themeState
   const isDarkMode = theme === "dark"
 
   return (

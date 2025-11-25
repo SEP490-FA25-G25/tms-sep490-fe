@@ -23,14 +23,40 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function Step3Structure({ data, setData }: any) {
+interface Session {
+    id: string;
+    topic: string;
+    studentTask?: string;
+    cloIds?: string[];
+}
+
+interface Phase {
+    id: string;
+    name: string;
+    sessions: Session[];
+}
+
+interface CourseData {
+    basicInfo: unknown;
+    clos: Array<{ id: string; code: string; description: string }>;
+    structure: Phase[];
+    assessments: unknown[];
+    materials: unknown[];
+}
+
+interface Step3StructureProps {
+    data: CourseData;
+    setData: (data: CourseData | ((prev: CourseData) => CourseData)) => void;
+}
+
+export function Step3Structure({ data, setData }: Step3StructureProps) {
     const addPhase = () => {
         const newPhase = {
             id: crypto.randomUUID(),
             name: `Phase ${(data.structure?.length || 0) + 1}`,
             sessions: [],
         };
-        setData((prev: any) => ({
+        setData((prev: CourseData) => ({
             ...prev,
             structure: [...(prev.structure || []), newPhase],
         }));
@@ -47,13 +73,13 @@ export function Step3Structure({ data, setData }: any) {
 
         const newStructure = [...(data.structure || [])];
         newStructure[phaseIndex].sessions = [...(newStructure[phaseIndex].sessions || []), newSession];
-        setData((prev: any) => ({ ...prev, structure: newStructure }));
+        setData((prev: CourseData) => ({ ...prev, structure: newStructure }));
     };
 
     const updatePhaseName = (index: number, name: string) => {
         const newStructure = [...data.structure];
         newStructure[index].name = name;
-        setData((prev: any) => ({ ...prev, structure: newStructure }));
+        setData((prev: CourseData) => ({ ...prev, structure: newStructure }));
     };
 
     const updateSession = (phaseIndex: number, sessionIndex: number, field: string, value: any) => {
@@ -62,7 +88,7 @@ export function Step3Structure({ data, setData }: any) {
             ...newStructure[phaseIndex].sessions[sessionIndex],
             [field]: value,
         };
-        setData((prev: any) => ({ ...prev, structure: newStructure }));
+        setData((prev: CourseData) => ({ ...prev, structure: newStructure }));
     };
 
     const toggleSessionClo = (phaseIndex: number, sessionIndex: number, cloCode: string) => {
@@ -83,7 +109,7 @@ export function Step3Structure({ data, setData }: any) {
         newStructure[phaseIndex].sessions.forEach((s: any, i: number) => {
             s.sequence = i + 1;
         });
-        setData((prev: any) => ({ ...prev, structure: newStructure }));
+        setData((prev: CourseData) => ({ ...prev, structure: newStructure }));
     };
 
     return (

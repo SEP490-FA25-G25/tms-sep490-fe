@@ -12,7 +12,29 @@ const MOCK_PLOS = [
     { id: "PLO3", code: "PLO3", description: "Hiểu bối cảnh văn hóa" },
 ];
 
-export function Step2CLO({ data, setData }: any) {
+interface CLO {
+    id: string;
+    code: string;
+    description: string;
+    ploIds: string[];
+    category?: 'KIEN_THUC' | 'KY_NANG';
+    level?: 'NHAP_MON' | 'CO_BAN' | 'TRUNG_BINH' | 'NANG_CAO';
+}
+
+interface CourseData {
+    basicInfo: unknown;
+    clos: CLO[];
+    structure: unknown[];
+    assessments: unknown[];
+    materials: unknown[];
+}
+
+interface Step2CLOProps {
+    data: CourseData;
+    setData: (data: CourseData | ((prev: CourseData) => CourseData)) => void;
+}
+
+export function Step2CLO({ data, setData }: Step2CLOProps) {
     const [selectedCloIndex, setSelectedCloIndex] = useState<number | null>(null);
 
     const addClo = () => {
@@ -22,17 +44,17 @@ export function Step2CLO({ data, setData }: any) {
             description: "",
             ploIds: [],
         };
-        setData((prev: any) => ({
+        setData((prev: CourseData) => ({
             ...prev,
             clos: [...(prev.clos || []), newClo],
         }));
         setSelectedCloIndex((data.clos?.length || 0));
     };
 
-    const updateClo = (index: number, field: string, value: any) => {
+    const updateClo = (index: number, field: keyof CLO, value: string | string[]) => {
         const newClos = [...(data.clos || [])];
         newClos[index] = { ...newClos[index], [field]: value };
-        setData((prev: any) => ({ ...prev, clos: newClos }));
+        setData((prev: CourseData) => ({ ...prev, clos: newClos }));
     };
 
     const togglePloMapping = (cloIndex: number, ploId: string) => {

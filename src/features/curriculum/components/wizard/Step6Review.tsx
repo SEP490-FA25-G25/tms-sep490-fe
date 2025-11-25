@@ -2,9 +2,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 
-export function Step6Review({ data }: any) {
+interface CourseData {
+    basicInfo?: {
+        name?: string;
+        code?: string;
+        [key: string]: any;
+    };
+    clos?: Array<{ id: string; code: string; description: string }>;
+    structure?: unknown[];
+    assessments?: Array<{ weight?: number; [key: string]: any }>;
+    materials?: unknown[];
+}
+
+interface Step6ReviewProps {
+    data: CourseData;
+}
+
+export function Step6Review({ data }: Step6ReviewProps) {
     // Validation Logic
-    const totalWeight = data.assessments?.reduce((sum: number, assessment: any) => sum + (assessment.weight || 0), 0) || 0;
+    const totalWeight = data.assessments?.reduce((sum: number, assessment) => sum + (assessment.weight || 0), 0) || 0;
 
     const checklist = [
         { label: "Thông tin cơ bản (Tên, Mã, Mô tả)", valid: !!(data.basicInfo?.name && data.basicInfo?.code) },
