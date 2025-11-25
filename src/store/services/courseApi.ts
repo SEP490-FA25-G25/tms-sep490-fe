@@ -213,13 +213,14 @@ export interface ApiResponse<T = unknown> {
 export interface CreateCourseRequest {
   basicInfo: {
     subjectId: number;
-    levelId: number;
+    levelId?: number;
     code: string;
     name: string;
     description?: string;
     prerequisites?: string;
-    durationHours: number;
-    durationWeeks: number;
+    durationHours?: number;
+    durationWeeks?: number;
+    numberOfSessions?: number;
     scoreScale?: string;
     targetAudience?: string;
     teachingMethods?: string;
@@ -244,7 +245,7 @@ export interface CreateCourseRequest {
   assessments?: {
     name: string;
     type: string;
-    durationMinutes: number;
+    durationMinutes?: number;
     mappedCLOs?: string[];
   }[];
   materials?: {
@@ -340,7 +341,21 @@ export const courseApi = createApi({
       }),
       invalidatesTags: (_result, _error, { id }) => [{ type: 'Course', id }],
     }),
-    getCourseDetails: builder.query<ApiResponse<any>, number>({
+    deactivateCourse: builder.mutation<void, number>({
+      query: (id) => ({
+        url: `/courses/${id}/deactivate`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: (_result, _error, id) => [{ type: 'Course', id }],
+    }),
+    reactivateCourse: builder.mutation<void, number>({
+      query: (id) => ({
+        url: `/courses/${id}/reactivate`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: (_result, _error, id) => [{ type: 'Course', id }],
+    }),
+    getCourseDetails: builder.query<ApiResponse<CourseDetail>, number>({
       query: (id) => `/courses/${id}`,
       providesTags: (_result, _error, id) => [{ type: 'Course', id }],
     }),
@@ -371,4 +386,6 @@ export const {
   useUpdateCourseMutation,
   useGetAllCoursesQuery,
   useGetCourseDetailsQuery,
+  useDeactivateCourseMutation,
+  useReactivateCourseMutation,
 } = courseApi;

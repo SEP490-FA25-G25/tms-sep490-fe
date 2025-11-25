@@ -5,9 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Save, Loader2, Plus, Trash2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useCreateSubjectMutation } from "@/store/services/curriculumApi";
-import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useGetSubjectQuery, useUpdateSubjectMutation } from "@/store/services/curriculumApi";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
     Table,
@@ -18,15 +18,35 @@ import {
     TableRow,
 } from "@/components/ui/table";
 
-export default function CreateSubjectPage() {
+export default function EditSubjectPage() {
     const navigate = useNavigate();
-    const [createSubject, { isLoading }] = useCreateSubjectMutation();
+    const { id } = useParams<{ id: string }>();
+    const subjectId = Number(id);
+
+    const { data: subjectData, isLoading: isFetching } = useGetSubjectQuery(subjectId, {
+        skip: !subjectId,
+    });
+
+    const [updateSubject, { isLoading: isUpdating }] = useUpdateSubjectMutation();
+
     const [formData, setFormData] = useState({
         code: "",
         name: "",
         description: "",
         plos: [] as { code: string; description: string }[],
     });
+
+    useEffect(() => {
+        if (subjectData?.data) {
+            const { code, name, description, plos } = subjectData.data;
+            setFormData({
+                code: code || "",
+                name: name || "",
+                description: description || "",
+                plos: plos || [],
+            });
+        }
+    }, [subjectData]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { id, value } = e.target;
@@ -59,19 +79,29 @@ export default function CreateSubjectPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await createSubject(formData).unwrap();
-            toast.success("Tạo môn học thành công!");
+            await updateSubject({ id: subjectId, data: formData }).unwrap();
+            toast.success("Cập nhật môn học thành công!");
             navigate("/curriculum");
         } catch (error) {
-            console.error("Failed to create subject:", error);
-            toast.error("Tạo môn học thất bại. Vui lòng thử lại.");
+            console.error("Failed to update subject:", error);
+            toast.error("Cập nhật môn học thất bại. Vui lòng thử lại.");
         }
     };
 
+    if (isFetching) {
+        return (
+            <DashboardLayout title="Chỉnh sửa Môn học" description="Đang tải dữ liệu...">
+                <div className="flex justify-center items-center h-64">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+            </DashboardLayout>
+        );
+    }
+
     return (
         <DashboardLayout
-            title="Tạo Môn học Mới"
-            description="Thêm môn học mới vào hệ thống."
+            title="Chỉnh sửa Môn học"
+            description="Cập nhật thông tin môn học."
         >
             <div className="max-w-4xl mx-auto">
                 <Button
@@ -189,13 +219,13 @@ export default function CreateSubjectPage() {
                                 <Button type="button" variant="outline" onClick={() => navigate("/curriculum")}>
                                     Hủy
                                 </Button>
-                                <Button type="submit" disabled={isLoading}>
-                                    {isLoading ? (
+                                <Button type="submit" disabled={isUpdating}>
+                                    {isUpdating ? (
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     ) : (
                                         <Save className="mr-2 h-4 w-4" />
                                     )}
-                                    Lưu Môn học
+                                    Lưu Thay đổi
                                 </Button>
                             </div>
                         </form>

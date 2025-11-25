@@ -168,7 +168,7 @@ export function ResetPasswordForm({ className }: ResetPasswordFormProps) {
         {error && !errors.token && (
           <Alert variant="destructive">
             <AlertDescription>
-              {typeof error === 'string' ? error : error?.data?.message || "Đã có lỗi xảy ra"}
+              {typeof error === 'string' ? error : (error as any)?.data?.message || "Đã có lỗi xảy ra"}
             </AlertDescription>
           </Alert>
         )}

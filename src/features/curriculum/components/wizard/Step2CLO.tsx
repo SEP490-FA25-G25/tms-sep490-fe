@@ -1,74 +1,58 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+
 import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import type { CourseData, CLO } from "@/types/course";
 
+// Mock PLOs (replace with API call)
 const MOCK_PLOS = [
-    { id: "PLO1", code: "PLO1", description: "Thể hiện kỹ năng giao tiếp cơ bản" },
-    { id: "PLO2", code: "PLO2", description: "Áp dụng đúng các quy tắc ngữ pháp" },
+    { id: "PLO1", code: "PLO1", description: "Áp dụng kiến thức cơ bản" },
+    { id: "PLO2", code: "PLO2", description: "Phân tích vấn đề kỹ thuật" },
     { id: "PLO3", code: "PLO3", description: "Hiểu bối cảnh văn hóa" },
 ];
 
-interface CLO {
-    id: string;
-    code: string;
-    description: string;
-    ploIds: string[];
-    category?: 'KIEN_THUC' | 'KY_NANG';
-    level?: 'NHAP_MON' | 'CO_BAN' | 'TRUNG_BINH' | 'NANG_CAO';
-}
-
-interface CourseData {
-    basicInfo: unknown;
-    clos: CLO[];
-    structure: unknown[];
-    assessments: unknown[];
-    materials: unknown[];
-}
-
-interface Step2CLOProps {
+interface Step2Props {
     data: CourseData;
-    setData: (data: CourseData | ((prev: CourseData) => CourseData)) => void;
+    setData: React.Dispatch<React.SetStateAction<CourseData>>;
 }
 
-export function Step2CLO({ data, setData }: Step2CLOProps) {
+export function Step2CLO({ data, setData }: Step2Props) {
     const [selectedCloIndex, setSelectedCloIndex] = useState<number | null>(null);
 
     const addClo = () => {
-        const newClo = {
+        const newClo: CLO = {
             id: crypto.randomUUID(),
-            code: `CLO${(data.clos?.length || 0) + 1} `,
+            code: "",
             description: "",
-            ploIds: [],
+            mappedPLOs: [],
         };
-        setData((prev: CourseData) => ({
+        setData((prev) => ({
             ...prev,
             clos: [...(prev.clos || []), newClo],
         }));
-        setSelectedCloIndex((data.clos?.length || 0));
     };
 
     const updateClo = (index: number, field: keyof CLO, value: string | string[]) => {
         const newClos = [...(data.clos || [])];
         newClos[index] = { ...newClos[index], [field]: value };
-        setData((prev: CourseData) => ({ ...prev, clos: newClos }));
+        setData((prev) => ({ ...prev, clos: newClos }));
     };
 
     const togglePloMapping = (cloIndex: number, ploId: string) => {
-        const currentPloIds = data.clos[cloIndex].ploIds || [];
+        const currentPloIds = data.clos[cloIndex].mappedPLOs || [];
         const newPloIds = currentPloIds.includes(ploId)
-            ? currentPloIds.filter((id: string) => id !== ploId)
+            ? currentPloIds.filter((id) => id !== ploId)
             : [...currentPloIds, ploId];
 
-        updateClo(cloIndex, "ploIds", newPloIds);
+        updateClo(cloIndex, "mappedPLOs", newPloIds);
     };
 
     const removeClo = (index: number) => {
-        const newClos = data.clos.filter((_: any, i: number) => i !== index);
-        setData((prev: any) => ({ ...prev, clos: newClos }));
+        const newClos = data.clos.filter((_, i) => i !== index);
+        setData((prev) => ({ ...prev, clos: newClos }));
         if (selectedCloIndex === index) setSelectedCloIndex(null);
     };
 
@@ -85,13 +69,13 @@ export function Step2CLO({ data, setData }: Step2CLOProps) {
                 </div>
 
                 <div className="space-y-3">
-                    {data.clos?.map((clo: any, index: number) => (
+                    {data.clos?.map((clo, index) => (
                         <div
-                            key={clo.id}
-                            className={`p-4 rounded-lg border cursor-pointer transition-all ${selectedCloIndex === index
+                            key={clo.id || index}
+                            className={`p - 4 rounded - lg border cursor - pointer transition - all ${selectedCloIndex === index
                                 ? "border-primary bg-primary/5 ring-1 ring-primary"
                                 : "hover:border-primary/50"
-                                }`}
+                                } `}
                             onClick={() => setSelectedCloIndex(index)}
                         >
                             <div className="flex gap-3 items-start">
@@ -109,12 +93,12 @@ export function Step2CLO({ data, setData }: Step2CLOProps) {
                                         />
                                     </div>
                                     <div className="flex gap-2 flex-wrap">
-                                        {clo.ploIds?.map((ploId: string) => (
+                                        {clo.mappedPLOs?.map((ploId) => (
                                             <span key={ploId} className="text-xs bg-secondary px-2 py-1 rounded-full text-secondary-foreground">
                                                 {ploId}
                                             </span>
                                         ))}
-                                        {(!clo.ploIds || clo.ploIds.length === 0) && (
+                                        {(!clo.mappedPLOs || clo.mappedPLOs.length === 0) && (
                                             <span className="text-xs text-destructive italic">Chưa map PLO</span>
                                         )}
                                     </div>
@@ -160,7 +144,7 @@ export function Step2CLO({ data, setData }: Step2CLOProps) {
                             >
                                 <Checkbox
                                     id={plo.id}
-                                    checked={data.clos[selectedCloIndex].ploIds?.includes(plo.id)}
+                                    checked={data.clos[selectedCloIndex].mappedPLOs?.includes(plo.id)}
                                     onCheckedChange={() => togglePloMapping(selectedCloIndex, plo.id)}
                                 />
                                 <div className="grid gap-1.5 leading-none">

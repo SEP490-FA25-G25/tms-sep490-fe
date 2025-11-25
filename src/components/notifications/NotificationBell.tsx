@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -104,107 +105,106 @@ export function NotificationBell() {
           )}
         </SidebarMenuButton>
       </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-80 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
-            align="end"
-            sideOffset={4}
-          >
-            <DropdownMenuLabel className="px-4 py-3">
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Thông báo</span>
-                {unreadCount > 0 && (
-                  <Badge variant="secondary" className="ml-2">
-                    {unreadCount} chưa đọc
-                  </Badge>
-                )}
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
+      <DropdownMenuContent
+        className="w-80 rounded-lg"
+        side={isMobile ? "bottom" : "right"}
+        align="end"
+        sideOffset={4}
+      >
+        <DropdownMenuLabel className="px-4 py-3">
+          <div className="flex items-center justify-between">
+            <span className="font-medium">Thông báo</span>
+            {unreadCount > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {unreadCount} chưa đọc
+              </Badge>
+            )}
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
 
-            <div className="max-h-96 overflow-y-auto">
-              {isLoading ? (
-                <div className="px-4 py-8 text-center">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
-                  <p className="text-sm text-muted-foreground mt-2">Đang tải thông báo...</p>
-                </div>
-              ) : error ? (
-                <div className="px-4 py-8 text-center">
-                  <p className="text-sm text-destructive">Không thể tải thông báo</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-2"
-                    onClick={() => refetch()}
-                  >
-                    Thử lại
-                  </Button>
-                </div>
-              ) : notifications.length === 0 ? (
-                <div className="px-4 py-8 text-center">
-                  <BellIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Không có thông báo mới</p>
-                </div>
-              ) : (
-                notifications.map((notification) => {
-                  return (
-                    <DropdownMenuItem
-                      key={notification.id}
-                      className="p-0 cursor-pointer"
-                      onClick={(e) => handleNotificationClick(notification, e)}
-                    >
-                      <div className="w-full px-4 py-3 border-b last:border-b-0">
-                        <div className="flex items-start gap-3">
-                          <div className="flex-1 min-w-0 space-y-1">
-                            <div className="flex items-center justify-between gap-2">
-                              <p className={`text-sm font-medium truncate ${
-                                !notification.isRead ? 'font-semibold' : ''
-                              }`}>
-                                {notification.title}
-                              </p>
-                              {!notification.isRead && (
-                                <div className="h-1.5 w-1.5 rounded-full bg-blue-600 flex-shrink-0"></div>
-                              )}
-                            </div>
+        <div className="max-h-96 overflow-y-auto">
+          {isLoading ? (
+            <div className="px-4 py-8 text-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+              <p className="text-sm text-muted-foreground mt-2">Đang tải thông báo...</p>
+            </div>
+          ) : error ? (
+            <div className="px-4 py-8 text-center">
+              <p className="text-sm text-destructive">Không thể tải thông báo</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => refetch()}
+              >
+                Thử lại
+              </Button>
+            </div>
+          ) : notifications.length === 0 ? (
+            <div className="px-4 py-8 text-center">
+              <BellIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Không có thông báo mới</p>
+            </div>
+          ) : (
+            notifications.map((notification) => {
+              return (
+                <DropdownMenuItem
+                  key={notification.id}
+                  className="p-0 cursor-pointer"
+                  onClick={(e) => handleNotificationClick(notification, e)}
+                >
+                  <div className="w-full px-4 py-3 border-b last:border-b-0">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className={`text-sm font-medium truncate ${!notification.isRead ? 'font-semibold' : ''
+                            }`}>
+                            {notification.title}
+                          </p>
+                          {!notification.isRead && (
+                            <div className="h-1.5 w-1.5 rounded-full bg-blue-600 flex-shrink-0"></div>
+                          )}
+                        </div>
 
-                            <p className="text-xs text-muted-foreground line-clamp-2">
-                              {notification.message}
-                            </p>
+                        <p className="text-xs text-muted-foreground line-clamp-2">
+                          {notification.message}
+                        </p>
 
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <ClockIcon className="h-3 w-3" />
-                                {formatTimeAgo(notification.createdAt)}
-                              </div>
-
-                              {notification.actionUrl && (
-                                <ExternalLinkIcon className="h-3 w-3 text-muted-foreground" />
-                              )}
-                            </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <ClockIcon className="h-3 w-3" />
+                            {formatTimeAgo(notification.createdAt)}
                           </div>
+
+                          {notification.actionUrl && (
+                            <ExternalLinkIcon className="h-3 w-3 text-muted-foreground" />
+                          )}
                         </div>
                       </div>
-                    </DropdownMenuItem>
-                  )
-                })
-              )}
-            </div>
-
-            {notifications.length > 0 && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() => {
-                    navigate("/notifications")
-                    setIsOpen(false)
-                  }}
-                >
-                  <span className="text-sm text-center w-full">Xem tất cả thông báo</span>
+                    </div>
+                  </div>
                 </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+              )
+            })
+          )}
+        </div>
+
+        {notifications.length > 0 && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => {
+                navigate("/notifications")
+                setIsOpen(false)
+              }}
+            >
+              <span className="text-sm text-center w-full">Xem tất cả thông báo</span>
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

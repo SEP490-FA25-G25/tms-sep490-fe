@@ -17,6 +17,7 @@ export interface LevelDTO {
   sortOrder: number
   subjectName?: string
   subjectCode?: string
+  status?: string
 }
 
 export interface SubjectWithLevelsDTO {
@@ -27,12 +28,15 @@ export interface SubjectWithLevelsDTO {
   status: string
   createdAt: string
   levels: LevelDTO[]
+  plos?: { code: string; description: string }[]
+  levelCount?: number
 }
 
 export interface CreateSubjectRequest {
   code: string
   name: string
   description?: string
+  plos?: { code: string; description: string }[]
 }
 
 export interface CreateLevelRequest {
@@ -132,6 +136,39 @@ export const curriculumApi = createApi({
       }),
       invalidatesTags: ['Curriculum'],
     }),
+    // Get subject details
+    getSubject: builder.query<ApiResponse<SubjectWithLevelsDTO>, number>({
+      query: (id) => ({
+        url: `/curriculum/subjects/${id}`,
+        method: 'GET',
+      }),
+      providesTags: (_result, _error, id) => [{ type: 'Curriculum', id }],
+    }),
+    // Update subject
+    updateSubject: builder.mutation<ApiResponse<SubjectWithLevelsDTO>, { id: number; data: CreateSubjectRequest }>({
+      query: ({ id, data }) => ({
+        url: `/curriculum/subjects/${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['Curriculum'],
+    }),
+    // Deactivate subject
+    deactivateSubject: builder.mutation<ApiResponse<void>, number>({
+      query: (id) => ({
+        url: `/curriculum/subjects/${id}/deactivate`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: ['Curriculum'],
+    }),
+    // Reactivate subject
+    reactivateSubject: builder.mutation<ApiResponse<void>, number>({
+      query: (id) => ({
+        url: `/curriculum/subjects/${id}/reactivate`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: ['Curriculum'],
+    }),
     // Create new level
     createLevel: builder.mutation<ApiResponse<LevelDTO>, CreateLevelRequest>({
       query: (body) => ({
@@ -139,6 +176,7 @@ export const curriculumApi = createApi({
         method: 'POST',
         body,
       }),
+      invalidatesTags: ['Curriculum'],
     }),
     // Get levels (optionally filtered by subject)
     getLevels: builder.query<ApiResponse<LevelDTO[]>, number | undefined>({
@@ -148,6 +186,48 @@ export const curriculumApi = createApi({
         params: subjectId ? { subjectId } : undefined,
       }),
       providesTags: ['Curriculum'],
+    }),
+    // Get level details
+    getLevel: builder.query<ApiResponse<LevelDTO>, number>({
+      query: (id) => ({
+        url: `/curriculum/levels/${id}`,
+        method: 'GET',
+      }),
+      providesTags: (_result, _error, id) => [{ type: 'Curriculum', id }],
+    }),
+    // Update level
+    updateLevel: builder.mutation<ApiResponse<LevelDTO>, { id: number; data: CreateLevelRequest }>({
+      query: ({ id, data }) => ({
+        url: `/curriculum/levels/${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['Curriculum'],
+    }),
+    // Deactivate level
+    deactivateLevel: builder.mutation<ApiResponse<void>, number>({
+      query: (id) => ({
+        url: `/curriculum/levels/${id}/deactivate`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: ['Curriculum'],
+    }),
+    // Reactivate level
+    reactivateLevel: builder.mutation<ApiResponse<void>, number>({
+      query: (id) => ({
+        url: `/curriculum/levels/${id}/reactivate`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: ['Curriculum'],
+    }),
+    // Update level sort order
+    updateLevelSortOrder: builder.mutation<ApiResponse<void>, { subjectId: number; levelIds: number[] }>({
+      query: ({ subjectId, levelIds }) => ({
+        url: `/curriculum/subjects/${subjectId}/levels/sort-order`,
+        method: 'PUT',
+        body: levelIds,
+      }),
+      invalidatesTags: ['Curriculum'],
     }),
     // Get standard timeslot duration
     getTimeslotDuration: builder.query<ApiResponse<number>, void>({
@@ -162,7 +242,16 @@ export const curriculumApi = createApi({
 export const {
   useGetSubjectsWithLevelsQuery,
   useCreateSubjectMutation,
+  useGetSubjectQuery,
+  useUpdateSubjectMutation,
+  useDeactivateSubjectMutation,
+  useReactivateSubjectMutation,
   useCreateLevelMutation,
   useGetLevelsQuery,
+  useGetLevelQuery,
+  useUpdateLevelMutation,
+  useDeactivateLevelMutation,
+  useReactivateLevelMutation,
+  useUpdateLevelSortOrderMutation,
   useGetTimeslotDurationQuery,
 } = curriculumApi

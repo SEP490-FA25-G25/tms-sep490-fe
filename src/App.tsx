@@ -42,13 +42,19 @@ import EditClassPage from './app/academic/classes/[id]/edit/page'
 
 import CenterHeadApprovalsPage from './app/center-head/approvals/page'
 import CurriculumPage from './features/curriculum/pages/CurriculumPage'
-import CreateCoursePage from './features/curriculum/pages/CreateCoursePage'
 import CreateSubjectPage from './features/curriculum/pages/CreateSubjectPage'
-import CreateLevelPage from './features/curriculum/pages/CreateLevelPage'
+import EditSubjectPage from './features/curriculum/pages/EditSubjectPage'
+// import SubjectDetailPage from '@/features/curriculum/pages/SubjectDetailPage'
 import CurriculumCourseDetailPage from './features/curriculum/pages/CourseDetailPage'
 import EditCoursePage from './features/curriculum/pages/EditCoursePage'
 import NotificationsPage from './app/notifications/page'
 import { Toaster } from '@/components/ui/sonner'
+import { lazy } from 'react'
+
+// const CreateLevelPage = lazy(() => import('./features/curriculum/pages/CreateLevelPage'))
+const LevelDetailPage = lazy(() => import("@/features/curriculum/pages/LevelDetailPage"));
+const EditLevelPage = lazy(() => import("@/features/curriculum/pages/EditLevelPage"));
+const CreateCoursePage = lazy(() => import('./features/curriculum/pages/CreateCoursePage'))
 
 function App() {
   return (
@@ -418,6 +424,7 @@ function App() {
                     "ADMIN",
                     "MANAGER",
                     "CENTER_HEAD",
+                    "SUBJECT_LEADER",
                   ]}
                 >
                   <AcademicClassesPage />
@@ -441,6 +448,7 @@ function App() {
                     "ADMIN",
                     "MANAGER",
                     "CENTER_HEAD",
+                    "SUBJECT_LEADER",
                   ]}
                 >
                   <AcademicClassDetailPage />
@@ -464,6 +472,7 @@ function App() {
                     "ADMIN",
                     "MANAGER",
                     "CENTER_HEAD",
+                    "SUBJECT_LEADER",
                   ]}
                 >
                   <AcademicStudentRequestsPage />
@@ -479,6 +488,7 @@ function App() {
                     "ADMIN",
                     "MANAGER",
                     "CENTER_HEAD",
+                    "SUBJECT_LEADER",
                   ]}
                 >
                   <AcademicTeacherRequestsPage />
@@ -511,11 +521,43 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            {/* <Route
+              path="/curriculum/subjects/:id"
+              element={
+                <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
+                  <SubjectDetailPage />
+                </ProtectedRoute>
+              }
+            /> */}
             <Route
+              path="/curriculum/subjects/:id/edit"
+              element={
+                <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
+                  <EditSubjectPage />
+                </ProtectedRoute>
+              }
+            />
+            {/* <Route
               path="/curriculum/levels/create"
               element={
                 <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
                   <CreateLevelPage />
+                </ProtectedRoute>
+              }
+            /> */}
+            <Route
+              path="/curriculum/levels/:id"
+              element={
+                <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
+                  <LevelDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/curriculum/levels/:id/edit"
+              element={
+                <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
+                  <EditLevelPage />
                 </ProtectedRoute>
               }
             />
@@ -555,8 +597,8 @@ function App() {
           </Routes>
           <Toaster />
         </AuthProvider>
-      </ApiSetup>
-    </BrowserRouter>
+      </ApiSetup >
+    </BrowserRouter >
   );
 }
 

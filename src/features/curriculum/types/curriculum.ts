@@ -33,6 +33,7 @@ export interface CourseSession {
   topic: string;
   studentTask: string;
   cloIds: string[]; // Mapped CLOs
+  skillSets?: string[];
 }
 
 export interface CoursePhase {
@@ -72,16 +73,16 @@ export interface CourseFormValues {
     sessionsPerWeek: number;
     hoursPerSession: number;
   };
-  
+
   // Step 2
   clos: CLO[];
-  
+
   // Step 3
   phases: CoursePhase[];
-  
+
   // Step 4
   assessments: Assessment[];
-  
+
   // Step 5
   materials: CourseMaterial[];
 }

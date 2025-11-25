@@ -102,7 +102,7 @@ export function ForgotPasswordForm({ className }: ForgotPasswordFormProps) {
         {error && (
           <Alert variant="destructive">
             <AlertDescription>
-              {typeof error === 'string' ? error : error?.data?.message || "Đã có lỗi xảy ra"}
+              {typeof error === 'string' ? error : (error as any)?.data?.message || "Đã có lỗi xảy ra"}
             </AlertDescription>
           </Alert>
         )}

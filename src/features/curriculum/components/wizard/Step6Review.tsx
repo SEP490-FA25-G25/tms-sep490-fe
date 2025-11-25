@@ -1,26 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, AlertCircle } from "lucide-react";
+import type { CourseData, Assessment, Phase } from "@/types/course";
 
-interface CourseData {
-    basicInfo?: {
-        name?: string;
-        code?: string;
-        [key: string]: any;
-    };
-    clos?: Array<{ id: string; code: string; description: string }>;
-    structure?: unknown[];
-    assessments?: Array<{ weight?: number; [key: string]: any }>;
-    materials?: unknown[];
-}
-
-interface Step6ReviewProps {
+interface Step6Props {
     data: CourseData;
 }
 
-export function Step6Review({ data }: Step6ReviewProps) {
+export function Step6Review({ data }: Step6Props) {
     // Validation Logic
-    const totalWeight = data.assessments?.reduce((sum: number, assessment) => sum + (assessment.weight || 0), 0) || 0;
+    const totalWeight = data.assessments?.reduce((sum: number, assessment: Assessment) => sum + (Number(assessment.weight) || 0), 0) || 0;
 
     const checklist = [
         { label: "Thông tin cơ bản (Tên, Mã, Mô tả)", valid: !!(data.basicInfo?.name && data.basicInfo?.code) },
@@ -65,7 +54,7 @@ export function Step6Review({ data }: Step6ReviewProps) {
                                     <Badge variant="outline">{data.clos?.length || 0} CLOs</Badge>
                                     <Badge variant="outline">{data.structure?.length || 0} Giai đoạn</Badge>
                                     <Badge variant="outline">
-                                        {data.structure?.reduce((acc: number, p: any) => acc + (p.sessions?.length || 0), 0) || 0} Buổi học
+                                        {data.structure?.reduce((acc: number, p: Phase) => acc + (p.sessions?.length || 0), 0) || 0} Buổi học
                                     </Badge>
                                     <Badge variant="outline">{data.assessments?.length || 0} Bài kiểm tra</Badge>
                                 </div>
@@ -87,13 +76,13 @@ export function Step6Review({ data }: Step6ReviewProps) {
                                     ) : (
                                         <AlertCircle className="w-5 h-5 text-destructive shrink-0" />
                                     )}
-                                    <span className={`text-sm ${item.valid ? "text-foreground" : "text-destructive font-medium"}`}>
+                                    <span className={`text - sm ${item.valid ? "text-foreground" : "text-destructive font-medium"} `}>
                                         {item.label}
                                     </span>
                                 </div>
                             ))}
 
-                            <div className={`mt-6 p-3 rounded-md text-center text-sm font-medium ${allValid ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+                            <div className={`mt - 6 p - 3 rounded - md text - center text - sm font - medium ${allValid ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"} `}>
                                 {allValid ? "Tất cả điều kiện đã thỏa mãn. Bạn có thể tạo khóa học." : "Vui lòng hoàn thành các mục còn thiếu trước khi tạo khóa học."}
                             </div>
                         </CardContent>

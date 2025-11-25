@@ -23,32 +23,16 @@ import {
     DropdownMenuContent,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { CourseData, Assessment } from "@/types/course";
 
-interface Assessment {
-    id: string;
-    name: string;
-    type: string;
-    weight: number;
-    durationMinutes?: number;
-    cloIds: string[];
-}
-
-interface CourseData {
-    basicInfo: unknown;
-    clos: Array<{ id: string; code: string; description: string }>;
-    structure: unknown[];
-    assessments: Assessment[];
-    materials: unknown[];
-}
-
-interface Step4AssessmentProps {
+interface Step4Props {
     data: CourseData;
-    setData: (data: CourseData | ((prev: CourseData) => CourseData)) => void;
+    setData: React.Dispatch<React.SetStateAction<CourseData>>;
 }
 
-export function Step4Assessment({ data, setData }: Step4AssessmentProps) {
+export function Step4Assessment({ data, setData }: Step4Props) {
     const addAssessment = () => {
-        const newAssessment = {
+        const newAssessment: Assessment = {
             id: crypto.randomUUID(),
             name: "",
             type: "QUIZ",
@@ -56,33 +40,33 @@ export function Step4Assessment({ data, setData }: Step4AssessmentProps) {
             durationMinutes: 60,
             cloIds: [],
         };
-        setData((prev: CourseData) => ({
+        setData((prev) => ({
             ...prev,
             assessments: [...(prev.assessments || []), newAssessment],
         }));
     };
 
-    const updateAssessment = (index: number, field: string, value: any) => {
+    const updateAssessment = (index: number, field: keyof Assessment, value: string | number | string[]) => {
         const newAssessments = [...(data.assessments || [])];
         newAssessments[index] = { ...newAssessments[index], [field]: value };
-        setData((prev: CourseData) => ({ ...prev, assessments: newAssessments }));
+        setData((prev) => ({ ...prev, assessments: newAssessments }));
     };
 
     const toggleAssessmentClo = (index: number, cloCode: string) => {
         const currentClos = data.assessments[index].cloIds || [];
         const newClos = currentClos.includes(cloCode)
-            ? currentClos.filter((c: string) => c !== cloCode)
+            ? currentClos.filter((c) => c !== cloCode)
             : [...currentClos, cloCode];
 
         updateAssessment(index, "cloIds", newClos);
     };
 
     const removeAssessment = (index: number) => {
-        const newAssessments = data.assessments.filter((_: any, i: number) => i !== index);
-        setData((prev: CourseData) => ({ ...prev, assessments: newAssessments }));
+        const newAssessments = data.assessments.filter((_, i) => i !== index);
+        setData((prev) => ({ ...prev, assessments: newAssessments }));
     };
 
-    const totalWeight = data.assessments?.reduce((sum: number, a: any) => sum + (Number(a.weight) || 0), 0) || 0;
+    const totalWeight = data.assessments?.reduce((sum, a) => sum + (Number(a.weight) || 0), 0) || 0;
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -112,8 +96,8 @@ export function Step4Assessment({ data, setData }: Step4AssessmentProps) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {data.assessments?.map((assessment: any, index: number) => (
-                            <TableRow key={assessment.id}>
+                        {data.assessments?.map((assessment, index) => (
+                            <TableRow key={assessment.id || index}>
                                 <TableCell>
                                     <Input
                                         value={assessment.name}
@@ -161,7 +145,7 @@ export function Step4Assessment({ data, setData }: Step4AssessmentProps) {
                                             <Button variant="outline" size="sm" className="h-8 w-full justify-start">
                                                 {assessment.cloIds?.length > 0 ? (
                                                     <div className="flex gap-1 flex-wrap">
-                                                        {assessment.cloIds.map((c: string) => (
+                                                        {assessment.cloIds.map((c) => (
                                                             <Badge key={c} variant="secondary" className="text-[10px] px-1 py-0">
                                                                 {c}
                                                             </Badge>
@@ -173,7 +157,7 @@ export function Step4Assessment({ data, setData }: Step4AssessmentProps) {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="start" className="w-[200px]">
-                                            {data.clos?.map((clo: any) => (
+                                            {data.clos?.map((clo) => (
                                                 <DropdownMenuCheckboxItem
                                                     key={clo.id}
                                                     checked={assessment.cloIds?.includes(clo.code)}

@@ -26,7 +26,7 @@ export default function EditCoursePage() {
     return (
         <DashboardLayout
             title="Chỉnh sửa Khóa học"
-            description={`Cập nhật thông tin khóa học: ${courseData?.data?.basicInfo?.name || ''}`}
+            description={`Cập nhật thông tin khóa học: ${courseData?.data?.name || ''}`}
         >
             <div className="space-y-6">
                 <Button variant="outline" onClick={() => navigate("/curriculum")}>

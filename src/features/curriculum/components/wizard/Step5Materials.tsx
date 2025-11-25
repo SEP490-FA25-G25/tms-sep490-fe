@@ -10,53 +10,37 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
+import type { CourseData, Material } from "@/types/course";
 
-interface Material {
-    id: string;
-    name?: string;
-    title?: string;
-    type: string;
-    url: string;
-    scope?: string;
-}
-
-interface CourseData {
-    basicInfo: unknown;
-    clos: unknown[];
-    structure: unknown[];
-    assessments: unknown[];
-    materials: Material[];
-}
-
-interface Step5MaterialsProps {
+interface Step5Props {
     data: CourseData;
-    setData: (data: CourseData | ((prev: CourseData) => CourseData)) => void;
+    setData: React.Dispatch<React.SetStateAction<CourseData>>;
 }
 
-export function Step5Materials({ data, setData }: Step5MaterialsProps) {
+export function Step5Materials({ data, setData }: Step5Props) {
     const addMaterial = () => {
-        const newMaterial = {
+        const newMaterial: Material = {
             id: crypto.randomUUID(),
             name: "",
             type: "PDF",
             url: "",
             scope: "COURSE",
         };
-        setData((prev: CourseData) => ({
+        setData((prev) => ({
             ...prev,
             materials: [...(prev.materials || []), newMaterial],
         }));
     };
 
-    const updateMaterial = (index: number, field: string, value: string) => {
+    const updateMaterial = (index: number, field: keyof Material, value: string) => {
         const newMaterials = [...(data.materials || [])];
         newMaterials[index] = { ...newMaterials[index], [field]: value };
-        setData((prev: CourseData) => ({ ...prev, materials: newMaterials }));
+        setData((prev) => ({ ...prev, materials: newMaterials }));
     };
 
     const removeMaterial = (index: number) => {
-        const newMaterials = data.materials.filter((_: any, i: number) => i !== index);
-        setData((prev: CourseData) => ({ ...prev, materials: newMaterials }));
+        const newMaterials = data.materials.filter((_, i) => i !== index);
+        setData((prev) => ({ ...prev, materials: newMaterials }));
     };
 
     return (
@@ -70,8 +54,8 @@ export function Step5Materials({ data, setData }: Step5MaterialsProps) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {data.materials?.map((material: any, index: number) => (
-                    <div key={material.id} className="border rounded-lg p-4 space-y-4 relative group">
+                {data.materials?.map((material, index) => (
+                    <div key={material.id || index} className="border rounded-lg p-4 space-y-4 relative group">
                         <Button
                             variant="ghost"
                             size="icon"

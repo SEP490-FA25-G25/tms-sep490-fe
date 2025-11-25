@@ -10,40 +10,14 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useGetSubjectsWithLevelsQuery, useGetTimeslotDurationQuery } from "@/store/services/curriculumApi";
 import { useMemo, useEffect } from "react";
+import type { CourseData } from "@/types/course";
 
-interface BasicInfo {
-    courseCode?: string;
-    courseName?: string;
-    name?: string;
-    code?: string;
-    description?: string;
-    subjectId?: string;
-    levelId?: string;
-    durationWeeks?: number;
-    sessionPerWeek?: number;
-    hoursPerSession?: number;
-    durationHours?: number;
-    effectiveDate?: string;
-    scoreScale?: string;
-    targetAudience?: string;
-    teachingMethods?: string;
-    prerequisites?: string;
-}
-
-interface CourseData {
-    basicInfo: BasicInfo;
-    clos: unknown[];
-    structure: unknown[];
-    assessments: unknown[];
-    materials: unknown[];
-}
-
-interface Step1BasicInfoProps {
+interface Step1Props {
     data: CourseData;
-    setData: (data: CourseData | ((prev: CourseData) => CourseData)) => void;
+    setData: React.Dispatch<React.SetStateAction<CourseData>>;
 }
 
-export function Step1BasicInfo({ data, setData }: Step1BasicInfoProps) {
+export function Step1BasicInfo({ data, setData }: Step1Props) {
     const { data: subjectsData, isLoading } = useGetSubjectsWithLevelsQuery();
     const { data: durationData } = useGetTimeslotDurationQuery();
 
@@ -52,7 +26,7 @@ export function Step1BasicInfo({ data, setData }: Step1BasicInfoProps) {
     }, [subjectsData, data.basicInfo?.subjectId]);
 
     const handleChange = (field: string, value: string | number) => {
-        setData((prev: CourseData) => ({
+        setData((prev) => ({
             ...prev,
             basicInfo: {
                 ...prev.basicInfo,
@@ -68,17 +42,16 @@ export function Step1BasicInfo({ data, setData }: Step1BasicInfoProps) {
     }, [durationData]);
 
     useEffect(() => {
-        const weeks = data.basicInfo?.durationWeeks || 0;
-        const sessions = data.basicInfo?.sessionPerWeek || 0;
+        const sessions = data.basicInfo?.numberOfSessions || 0;
         const hours = data.basicInfo?.hoursPerSession || 0;
 
-        if (weeks > 0 && sessions > 0 && hours > 0) {
-            const totalHours = weeks * sessions * hours;
+        if (sessions > 0 && hours > 0) {
+            const totalHours = sessions * hours;
             if (data.basicInfo?.durationHours !== totalHours) {
                 handleChange("durationHours", totalHours);
             }
         }
-    }, [data.basicInfo?.durationWeeks, data.basicInfo?.sessionPerWeek, data.basicInfo?.hoursPerSession]);
+    }, [data.basicInfo?.numberOfSessions, data.basicInfo?.hoursPerSession]);
 
     // Auto-generate course code
     useEffect(() => {
@@ -166,7 +139,7 @@ export function Step1BasicInfo({ data, setData }: Step1BasicInfoProps) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                     <Label>Tổng giờ</Label>
                     <Input
@@ -178,21 +151,12 @@ export function Step1BasicInfo({ data, setData }: Step1BasicInfoProps) {
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label>Thời lượng (Tuần)</Label>
+                    <Label>Tổng số buổi</Label>
                     <Input
                         type="number"
-                        placeholder="12"
-                        value={data.basicInfo?.durationWeeks || ""}
-                        onChange={(e) => handleChange("durationWeeks", Number(e.target.value))}
-                    />
-                </div>
-                <div className="space-y-2">
-                    <Label>Buổi/Tuần</Label>
-                    <Input
-                        type="number"
-                        placeholder="2"
-                        value={data.basicInfo?.sessionPerWeek || ""}
-                        onChange={(e) => handleChange("sessionPerWeek", Number(e.target.value))}
+                        placeholder="24"
+                        value={data.basicInfo?.numberOfSessions || ""}
+                        onChange={(e) => handleChange("numberOfSessions", Number(e.target.value))}
                     />
                 </div>
                 <div className="space-y-2">
