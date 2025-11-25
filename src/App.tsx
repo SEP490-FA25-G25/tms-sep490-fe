@@ -4,6 +4,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AuthRedirect } from '@/components/AuthRedirect'
 import { ApiSetup } from '@/components/ApiSetup'
 import LandingPage from './app/page'
+import PublicCourseDetailPage from './app/public-course-detail/page'
 import DashboardPage from './app/dashboard/page'
 import LoginPage from './app/login/page'
 import ForgotPasswordPage from './features/auth/pages/ForgotPasswordPage'
@@ -63,6 +64,7 @@ function App() {
         <AuthProvider>
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/courses/:id" element={<PublicCourseDetailPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />

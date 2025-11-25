@@ -176,17 +176,6 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
     setSelectedSessionIndex(null)
   }, [sessionsByWeek.length])
 
-  const handleReset = useCallback(() => {
-    setSelectedCurrentClass(null)
-    setSelectedTargetClass(null)
-    setTargetBranchId(undefined)
-    setTargetModality(undefined)
-    setWeekOffset(0)
-    setSelectedSessionIndex(null)
-    setRequestReason('')
-    setNote('')
-  }, [])
-
   const handleNext = () => {
     if (currentStep === 1 && selectedStudent) setCurrentStep(2)
     else if (currentStep === 2 && selectedCurrentClass) setCurrentStep(3)
