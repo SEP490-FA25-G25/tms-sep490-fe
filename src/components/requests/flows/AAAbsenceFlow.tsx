@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo } from 'react'
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { skipToken } from '@reduxjs/toolkit/query'
@@ -15,11 +15,11 @@ import {
 } from '@/store/services/studentRequestApi'
 import { type SessionSummaryDTO } from '@/store/services/studentScheduleApi'
 import {
-  StepHeader,
   Section,
   ReasonInput,
   NoteInput,
-  BaseFlowComponent
+  BaseFlowComponent,
+  SelectionCard
 } from '../UnifiedRequestFlow'
 import {
   useDebouncedValue,
@@ -71,6 +71,9 @@ function getAAAbsenceAvailability(session: SessionSummaryDTO) {
 }
 
 export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
+  // Wizard State
+  const [currentStep, setCurrentStep] = useState(1)
+
   const [studentSearch, setStudentSearch] = useState('')
   const [selectedStudent, setSelectedStudent] = useState<StudentSearchResult | null>(null)
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null)
@@ -78,6 +81,7 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null)
   const [reason, setReason] = useState('')
   const [note, setNote] = useState('')
+  const [reasonError, setReasonError] = useState<string | null>(null)
 
   const debouncedStudentSearch = useDebouncedValue(studentSearch)
   const trimmedSearch = debouncedStudentSearch.trim()
@@ -103,10 +107,10 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
   const { data: scheduleResponse, isFetching: isLoadingSchedule } = useGetAcademicWeeklyScheduleQuery(
     selectedStudent && selectedClass
       ? {
-          studentId: selectedStudent.id,
-          classId: selectedClass.classId,
-          weekStart: weekCursor ?? undefined,
-        }
+        studentId: selectedStudent.id,
+        classId: selectedClass.classId,
+        weekStart: weekCursor ?? undefined,
+      }
       : skipToken,
     { skip: !selectedStudent || !selectedClass }
   )
@@ -164,10 +168,19 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
     setSelectedSessionId(null)
   }
 
+  const handleNext = () => {
+    if (currentStep === 1 && selectedStudent) setCurrentStep(2)
+    else if (currentStep === 2 && selectedClass) setCurrentStep(3)
+  }
+
+  const handleBack = () => {
+    if (currentStep > 1) setCurrentStep(currentStep - 1)
+  }
+
   const handleSubmit = async () => {
     const reasonValidationError = Validation.reason(reason)
     if (reasonValidationError) {
-      handleError(new Error(reasonValidationError))
+      setReasonError(reasonValidationError)
       return
     }
 
@@ -191,12 +204,6 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
       handleError(error)
     }
   }
-
-  const handleReset = useCallback(() => {
-    setSelectedSessionId(null)
-    setReason('')
-    setNote('')
-  }, [])
 
   // Step states
   const step1Complete = !!selectedStudent
@@ -229,84 +236,77 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
 
   return (
     <BaseFlowComponent
+      steps={steps}
+      currentStep={currentStep}
+      onNext={handleNext}
+      onBack={handleBack}
       onSubmit={handleSubmit}
-      submitButtonText="Tạo yêu cầu"
+      isNextDisabled={
+        (currentStep === 1 && !selectedStudent) ||
+        (currentStep === 2 && !selectedClass)
+      }
       isSubmitDisabled={!step3Complete}
       isSubmitting={isSubmitting}
-      onReset={handleReset}
+      submitLabel="Tạo yêu cầu"
     >
       {/* Step 1: Student selection */}
-      <Section>
-        <StepHeader step={steps[0]} stepNumber={1} />
-
-        <div className="space-y-3">
-          <Input
-            placeholder="Nhập tên hoặc mã học viên (tối thiểu 2 ký tự)"
-            value={studentSearch}
-            onChange={(event) => setStudentSearch(event.target.value)}
-          />
-          {studentSearch.trim().length > 0 && studentOptions.length > 0 && (
-            <div className="space-y-2">
-              {isSearchingStudents ? (
-                <Skeleton className="h-20 w-full" />
-              ) : (
-                studentOptions.map((student) => (
-                  <button
-                    key={student.id}
-                    type="button"
-                    onClick={() => handleSelectStudent(student)}
-                    className="w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30"
-                  >
-                    <p className="font-medium">
-                      {student.fullName} <span className="text-muted-foreground">({student.studentCode})</span>
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {student.email} · {student.phone}
-                    </p>
-                  </button>
-                ))
-              )}
-            </div>
-          )}
-          {selectedStudent && (
-            <div className="border-t pt-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">Học viên đã chọn</p>
-                  <p className="font-semibold">{selectedStudent.fullName}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedStudent.studentCode} · {selectedStudent.email}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Chi nhánh: {selectedStudent.branchName} · Đang học: {selectedStudent.activeEnrollments} lớp
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedStudent(null)
-                    setStudentSearch('')
-                    setSelectedClassId(null)
-                    setSelectedSessionId(null)
-                    setWeekCursor(null)
-                    setReason('')
-                    setNote('')
-                  }}
-                >
-                  Đổi
-                </Button>
+      {currentStep === 1 && (
+        <Section>
+          <div className="space-y-3">
+            <Input
+              placeholder="Nhập tên hoặc mã học viên (tối thiểu 2 ký tự)"
+              value={studentSearch}
+              onChange={(event) => setStudentSearch(event.target.value)}
+            />
+            {studentSearch.trim().length > 0 && studentOptions.length > 0 && (
+              <div className="space-y-2">
+                {isSearchingStudents ? (
+                  <Skeleton className="h-20 w-full" />
+                ) : (
+                  studentOptions.map((student) => (
+                    <button
+                      key={student.id}
+                      type="button"
+                      onClick={() => handleSelectStudent(student)}
+                      className={cn(
+                        "w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30",
+                        selectedStudent?.id === student.id && "border-primary bg-primary/5"
+                      )}
+                    >
+                      <p className="font-medium">
+                        {student.fullName} <span className="text-muted-foreground">({student.studentCode})</span>
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {student.email} · {student.phone}
+                      </p>
+                    </button>
+                  ))
+                )}
               </div>
-            </div>
-          )}
-        </div>
-      </Section>
+            )}
+            {selectedStudent && (
+              <div className="border-t pt-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Học viên đã chọn</p>
+                    <p className="font-semibold">{selectedStudent.fullName}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedStudent.studentCode} · {selectedStudent.email}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Chi nhánh: {selectedStudent.branchName} · Đang học: {selectedStudent.activeEnrollments} lớp
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </Section>
+      )}
 
       {/* Step 2: Class selection */}
-      <Section className={!step1Complete ? 'opacity-50' : ''}>
-        <StepHeader step={steps[1]} stepNumber={2} />
-
-        {step1Complete && (
+      {currentStep === 2 && selectedStudent && (
+        <Section>
           <div className="space-y-3">
             {isLoadingClasses ? (
               <div className="space-y-2">
@@ -321,18 +321,15 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
             ) : (
               <div className="space-y-2">
                 {classOptions.map((cls) => (
-                  <button
+                  <SelectionCard
                     key={cls.classId}
-                    type="button"
-                    onClick={() => {
+                    item={cls}
+                    isSelected={selectedClassId === cls.classId}
+                    onSelect={() => {
                       setSelectedClassId(cls.classId)
                       setSelectedSessionId(null)
                       setWeekCursor(null)
                     }}
-                    className={cn(
-                      'w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30',
-                      selectedClassId === cls.classId && 'border-primary bg-primary/5'
-                    )}
                   >
                     <p className="font-medium">
                       {cls.classCode} · {cls.className}
@@ -340,19 +337,17 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
                     <p className="text-sm text-muted-foreground">
                       {cls.branchName} · {cls.scheduleSummary}
                     </p>
-                  </button>
+                  </SelectionCard>
                 ))}
               </div>
             )}
           </div>
-        )}
-      </Section>
+        </Section>
+      )}
 
       {/* Step 3: Weekly schedule + reason */}
-      <Section className={!step2Complete ? 'opacity-50' : ''}>
-        <StepHeader step={steps[2]} stepNumber={3} />
-
-        {step2Complete && (
+      {currentStep === 3 && selectedClass && (
+        <Section>
           <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-3">
               <div>
@@ -411,48 +406,32 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
                       {group.sessions.map((session) => {
                         const isActive = selectedSessionId === session.sessionId
                         return (
-                          <label
+                          <SelectionCard
                             key={session.sessionId}
-                            className={cn(
-                              'flex gap-3 rounded-lg border px-4 py-3 transition',
-                              session.isSelectable
-                                ? 'cursor-pointer hover:border-primary/50 hover:bg-muted/30'
-                                : 'cursor-not-allowed border-dashed opacity-50',
-                              isActive && 'border-primary bg-primary/5'
-                            )}
+                            item={session}
+                            isSelected={isActive}
+                            onSelect={() => {
+                              if (session.isSelectable) {
+                                setSelectedSessionId(session.sessionId)
+                              }
+                            }}
+                            disabled={!session.isSelectable}
                           >
-                            <input
-                              type="radio"
-                              className="sr-only"
-                              disabled={!session.isSelectable}
-                              checked={isActive}
-                              onChange={() => {
-                                if (session.isSelectable) {
-                                  setSelectedSessionId(session.sessionId)
-                                }
-                              }}
-                            />
-                            <div className="flex h-5 w-5 items-center justify-center">
-                              <span
-                                className={cn(
-                                  'h-4 w-4 rounded-full border-2',
-                                  isActive ? 'border-primary bg-primary' : 'border-muted-foreground/40'
+                            <div className="flex items-center gap-3">
+                              <div className="flex-1 space-y-1">
+                                <p className="font-medium">
+                                  {session.classCode} · {session.startTime} - {session.endTime}
+                                </p>
+                                <p className="text-sm text-muted-foreground">{session.topic}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {session.branchName} · {session.modality === 'ONLINE' ? 'Trực tuyến' : 'Tại trung tâm'}
+                                </p>
+                                {!session.isSelectable && session.disabledReason && (
+                                  <p className="text-xs font-medium text-rose-600">{session.disabledReason}</p>
                                 )}
-                              />
+                              </div>
                             </div>
-                            <div className="flex-1 space-y-1">
-                              <p className="font-medium">
-                                {session.classCode} · {session.startTime} - {session.endTime}
-                              </p>
-                              <p className="text-sm text-muted-foreground">{session.topic}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {session.branchName} · {session.modality === 'ONLINE' ? 'Trực tuyến' : 'Tại trung tâm'}
-                              </p>
-                              {!session.isSelectable && session.disabledReason && (
-                                <p className="text-xs font-medium text-rose-600">{session.disabledReason}</p>
-                              )}
-                            </div>
-                          </label>
+                          </SelectionCard>
                         )
                       })}
                     </div>
@@ -482,9 +461,12 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
                 <div className="mt-4 space-y-4">
                   <ReasonInput
                     value={reason}
-                    onChange={setReason}
+                    onChange={(val) => {
+                      setReason(val)
+                      if (reasonError) setReasonError(null)
+                    }}
                     placeholder="Chia sẻ lý do cụ thể để lưu vào hồ sơ..."
-                    error={null}
+                    error={reasonError}
                   />
 
                   <NoteInput
@@ -496,8 +478,8 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
               </div>
             )}
           </div>
-        )}
-      </Section>
+        </Section>
+      )}
     </BaseFlowComponent>
   )
 }

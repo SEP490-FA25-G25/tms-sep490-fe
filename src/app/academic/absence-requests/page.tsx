@@ -39,7 +39,7 @@ import {
   useApproveRequestMutation,
   useRejectRequestMutation,
   type RequestStatus,
-} from '@/store/services/studentAbsenceRequestApi'
+} from '@/store/services/studentRequestApi'
 import { ABSENCE_STATUS_META } from '@/constants/absence'
 
 type HistoryFilter = RequestStatus | 'ALL'
@@ -255,9 +255,8 @@ export default function AcademicAbsenceRequestsPage() {
                 <Button variant="outline" className="gap-2">
                   <FilterIcon className="h-4 w-4" />
                   {dateRange?.from
-                    ? `${format(dateRange.from, 'dd/MM')} - ${
-                        dateRange.to ? format(dateRange.to, 'dd/MM') : '...'
-                      }`
+                    ? `${format(dateRange.from, 'dd/MM')} - ${dateRange.to ? format(dateRange.to, 'dd/MM') : '...'
+                    }`
                     : 'Khoảng ngày buổi học'}
                 </Button>
               </PopoverTrigger>
