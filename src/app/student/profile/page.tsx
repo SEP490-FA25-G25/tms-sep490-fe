@@ -143,7 +143,7 @@ export default function StudentProfilePage() {
           <div className="flex flex-1 flex-col">
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b bg-white">
+      <div className="border-b bg-background">
         <div className="@container/main py-6 md:py-8">
           <div className="px-4 lg:px-6 max-w-7xl mx-auto space-y-8">
             {/* Row 1: Title + Actions */}
