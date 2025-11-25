@@ -6,6 +6,8 @@ import { ApiSetup } from '@/components/ApiSetup'
 import LandingPage from './app/page'
 import DashboardPage from './app/dashboard/page'
 import LoginPage from './app/login/page'
+import ForgotPasswordPage from './features/auth/pages/ForgotPasswordPage'
+import ResetPasswordPage from './features/auth/pages/ResetPasswordPage'
 import AdminUsersPage from './app/admin/users/page'
 import TeacherClassesPage from './app/teacher/classes/page'
 import TeacherSchedulePage from './app/teacher/schedule/page'
@@ -56,6 +58,8 @@ function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
 
             {/* Dashboard */}
             <Route

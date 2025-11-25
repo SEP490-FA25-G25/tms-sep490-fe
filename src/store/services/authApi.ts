@@ -6,6 +6,12 @@ import type {
   FetchBaseQueryError,
   FetchBaseQueryMeta,
 } from '@reduxjs/toolkit/query'
+import type {
+  ForgotPasswordRequest,
+  ForgotPasswordResponse,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
+} from '@/features/auth/types'
 
 // Types based on backend API documentation
 export interface LoginRequest {
@@ -160,6 +166,24 @@ export const authApi = createApi({
         method: 'POST',
       }),
     }),
+    forgotPassword: builder.mutation<ApiResponse<ForgotPasswordResponse>, ForgotPasswordRequest>({
+      query: (request) => ({
+        url: '/auth/forgot-password',
+        method: 'POST',
+        body: request,
+      }),
+    }),
+    resetPassword: builder.mutation<ApiResponse<ResetPasswordResponse>, ResetPasswordRequest>({
+      query: (request) => ({
+        url: '/auth/reset-password',
+        method: 'POST',
+        body: {
+          token: request.token,
+          newPassword: request.newPassword,
+          confirmPassword: request.confirmPassword,
+        },
+      }),
+    }),
   }),
 })
 
@@ -168,4 +192,6 @@ export const {
   useLoginMutation,
   useRefreshTokenMutation,
   useLogoutMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
 } = authApi

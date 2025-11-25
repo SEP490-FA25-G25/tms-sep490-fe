@@ -100,12 +100,11 @@ export function LoginForm({
           <div className="flex items-center">
             <FieldLabel htmlFor="password">Mật khẩu</FieldLabel>
             <a
-              href="#"
+              href="/forgot-password"
               className="ml-auto text-sm underline-offset-4 hover:underline"
               onClick={(e) => {
                 e.preventDefault()
-                // TODO: Implement forgot password functionality
-                alert("Tính năng quên mật khẩu sẽ được triển khai")
+                navigate("/forgot-password")
               }}
             >
               Quên mật khẩu?
