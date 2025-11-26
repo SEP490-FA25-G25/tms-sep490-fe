@@ -16,6 +16,7 @@ import {
   NotebookPenIcon,
   SchoolIcon,
   UserCircleIcon,
+  SlidersHorizontalIcon,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -63,6 +64,11 @@ const roleBasedNav = {
         title: "Quản lý môn học",
         url: "/admin/subjects",
         icon: BookOpenIcon,
+      },
+      {
+        title: "Chính sách hệ thống",
+        url: "/admin/policies",
+        icon: SlidersHorizontalIcon,
       },
     ],
   },
@@ -338,14 +344,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     return user.roles.reduce((highest, current) =>
       rolePriorities[current as keyof typeof rolePriorities] >
-        rolePriorities[highest as keyof typeof rolePriorities]
+      rolePriorities[highest as keyof typeof rolePriorities]
         ? current
         : highest
     );
   };
 
   const highestRole = getHighestRole();
-  const navMain = highestRole ? roleBasedNav[highestRole as keyof typeof roleBasedNav]?.navMain || [] : [];
+  const navMain = highestRole
+    ? roleBasedNav[highestRole as keyof typeof roleBasedNav]?.navMain || []
+    : [];
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>

@@ -1,61 +1,68 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { AuthProvider } from '@/contexts/AuthContext'
-import { ProtectedRoute } from '@/components/ProtectedRoute'
-import { AuthRedirect } from '@/components/AuthRedirect'
-import { ApiSetup } from '@/components/ApiSetup'
-import LandingPage from './app/page'
-import PublicCourseDetailPage from './app/public-course-detail/page'
-import DashboardPage from './app/dashboard/page'
-import LoginPage from './app/login/page'
-import ForgotPasswordPage from './features/auth/pages/ForgotPasswordPage'
-import ResetPasswordPage from './features/auth/pages/ResetPasswordPage'
-import AdminUsersPage from './app/admin/users/page'
-import TeacherClassesPage from './app/teacher/classes/page'
-import TeacherSchedulePage from './app/teacher/schedule/page'
-import TeacherAttendancePage from './app/teacher/attendance/page'
-import TeacherAttendanceDetailPage from './app/teacher/attendance/[sessionId]/page'
-import ClassAttendanceMatrixPage from './app/teacher/attendance/classes/[classId]/matrix/page'
-import TeacherRequestsPage from './app/teacher/requests/page'
-import SelectRequestTypePage from './app/teacher/requests/create/select-type/page'
-import SelectSessionPage from './app/teacher/requests/create/select-session/page'
-import SelectResourcePage from './app/teacher/requests/create/select-resource/page'
-import RequestFormPage from './app/teacher/requests/create/form/page'
-import RequestDetailPage from './app/teacher/requests/[id]/page'
-import TeacherGradesListPage from './app/teacher/grades/page'
-import TeacherGradesPage from './app/teacher/classes/[classId]/grades/page'
-import AssessmentScoresPage from './app/teacher/assessments/[assessmentId]/scores/page'
-import TeacherStudentsPage from './app/teacher/students/page'
-import TeacherProfilePage from './app/teacher/profile/page'
-import StudentSchedulePage from './app/student/schedule/page'
-import StudentRequestsPage from './app/student/requests/page'
-import StudentAttendanceReportOverviewPage from './app/student/attendance-report/page'
-import StudentMyClassesPage from './app/student/my-classes/page'
-import StudentClassDetailPage from './app/student/my-classes/[classId]/page'
-import StudentProfilePage from './app/student/profile/page'
-import StudentTranscriptPage from './app/student/transcript/page'
-import AcademicClassesPage from './app/academic/classes/page'
-import AcademicClassDetailPage from './app/academic/classes/[id]/page'
-import AcademicStudentRequestsPage from './app/academic/student-requests/page'
-import AcademicTeacherRequestsPage from './app/academic/teacher-requests/page'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AuthRedirect } from "@/components/AuthRedirect";
+import { ApiSetup } from "@/components/ApiSetup";
+import LandingPage from "./app/page";
+import PublicCourseDetailPage from "./app/public-course-detail/page";
+import DashboardPage from "./app/dashboard/page";
+import LoginPage from "./app/login/page";
+import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage";
+import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage";
+import AdminUsersPage from "./app/admin/users/page";
+import AdminPoliciesPage from "./app/admin/policies/page";
+import TeacherClassesPage from "./app/teacher/classes/page";
+import TeacherSchedulePage from "./app/teacher/schedule/page";
+import TeacherAttendancePage from "./app/teacher/attendance/page";
+import TeacherAttendanceDetailPage from "./app/teacher/attendance/[sessionId]/page";
+import ClassAttendanceMatrixPage from "./app/teacher/attendance/classes/[classId]/matrix/page";
+import TeacherRequestsPage from "./app/teacher/requests/page";
+import SelectRequestTypePage from "./app/teacher/requests/create/select-type/page";
+import SelectSessionPage from "./app/teacher/requests/create/select-session/page";
+import SelectResourcePage from "./app/teacher/requests/create/select-resource/page";
+import RequestFormPage from "./app/teacher/requests/create/form/page";
+import RequestDetailPage from "./app/teacher/requests/[id]/page";
+import TeacherGradesListPage from "./app/teacher/grades/page";
+import TeacherGradesPage from "./app/teacher/classes/[classId]/grades/page";
+import AssessmentScoresPage from "./app/teacher/assessments/[assessmentId]/scores/page";
+import TeacherStudentsPage from "./app/teacher/students/page";
+import TeacherProfilePage from "./app/teacher/profile/page";
+import StudentSchedulePage from "./app/student/schedule/page";
+import StudentRequestsPage from "./app/student/requests/page";
+import StudentAttendanceReportOverviewPage from "./app/student/attendance-report/page";
+import StudentMyClassesPage from "./app/student/my-classes/page";
+import StudentClassDetailPage from "./app/student/my-classes/[classId]/page";
+import StudentProfilePage from "./app/student/profile/page";
+import StudentTranscriptPage from "./app/student/transcript/page";
+import AcademicClassesPage from "./app/academic/classes/page";
+import AcademicClassDetailPage from "./app/academic/classes/[id]/page";
+import AcademicStudentRequestsPage from "./app/academic/student-requests/page";
+import AcademicTeacherRequestsPage from "./app/academic/teacher-requests/page";
 
-import CreateClassPage from './app/academic/classes/create/page'
-import EditClassPage from './app/academic/classes/[id]/edit/page'
+import CreateClassPage from "./app/academic/classes/create/page";
+import EditClassPage from "./app/academic/classes/[id]/edit/page";
 
-import CenterHeadApprovalsPage from './app/center-head/approvals/page'
-import CurriculumPage from './features/curriculum/pages/CurriculumPage'
-import CreateSubjectPage from './features/curriculum/pages/CreateSubjectPage'
-import EditSubjectPage from './features/curriculum/pages/EditSubjectPage'
+import CenterHeadApprovalsPage from "./app/center-head/approvals/page";
+import CurriculumPage from "./features/curriculum/pages/CurriculumPage";
+import CreateSubjectPage from "./features/curriculum/pages/CreateSubjectPage";
+import EditSubjectPage from "./features/curriculum/pages/EditSubjectPage";
 // import SubjectDetailPage from '@/features/curriculum/pages/SubjectDetailPage'
-import CurriculumCourseDetailPage from './features/curriculum/pages/CourseDetailPage'
-import EditCoursePage from './features/curriculum/pages/EditCoursePage'
-import NotificationsPage from './app/notifications/page'
-import { Toaster } from '@/components/ui/sonner'
-import { lazy } from 'react'
+import CurriculumCourseDetailPage from "./features/curriculum/pages/CourseDetailPage";
+import EditCoursePage from "./features/curriculum/pages/EditCoursePage";
+import NotificationsPage from "./app/notifications/page";
+import { Toaster } from "@/components/ui/sonner";
+import { lazy } from "react";
 
 // const CreateLevelPage = lazy(() => import('./features/curriculum/pages/CreateLevelPage'))
-const LevelDetailPage = lazy(() => import("@/features/curriculum/pages/LevelDetailPage"));
-const EditLevelPage = lazy(() => import("@/features/curriculum/pages/EditLevelPage"));
-const CreateCoursePage = lazy(() => import('./features/curriculum/pages/CreateCoursePage'))
+const LevelDetailPage = lazy(
+  () => import("@/features/curriculum/pages/LevelDetailPage")
+);
+const EditLevelPage = lazy(
+  () => import("@/features/curriculum/pages/EditLevelPage")
+);
+const CreateCoursePage = lazy(
+  () => import("./features/curriculum/pages/CreateCoursePage")
+);
 
 function App() {
   return (
@@ -95,6 +102,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={["ADMIN"]}>
                   <AdminUsersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/policies"
+              element={
+                <ProtectedRoute requiredRoles={["ADMIN"]}>
+                  <AdminPoliciesPage />
                 </ProtectedRoute>
               }
             />
@@ -436,7 +451,14 @@ function App() {
             <Route
               path="/academic/classes/create"
               element={
-                <ProtectedRoute requiredRoles={['ACADEMIC_AFFAIR', 'ADMIN', 'MANAGER', 'CENTER_HEAD']}>
+                <ProtectedRoute
+                  requiredRoles={[
+                    "ACADEMIC_AFFAIR",
+                    "ADMIN",
+                    "MANAGER",
+                    "CENTER_HEAD",
+                  ]}
+                >
                   <CreateClassPage />
                 </ProtectedRoute>
               }
@@ -460,7 +482,14 @@ function App() {
             <Route
               path="/academic/classes/:id/edit"
               element={
-                <ProtectedRoute requiredRoles={['ACADEMIC_AFFAIR', 'ADMIN', 'MANAGER', 'CENTER_HEAD']}>
+                <ProtectedRoute
+                  requiredRoles={[
+                    "ACADEMIC_AFFAIR",
+                    "ADMIN",
+                    "MANAGER",
+                    "CENTER_HEAD",
+                  ]}
+                >
                   <EditClassPage />
                 </ProtectedRoute>
               }
@@ -502,7 +531,9 @@ function App() {
             <Route
               path="/curriculum"
               element={
-                <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
+                <ProtectedRoute
+                  requiredRoles={["SUBJECT_LEADER", "MANAGER", "ADMIN"]}
+                >
                   <CurriculumPage />
                 </ProtectedRoute>
               }
@@ -510,7 +541,7 @@ function App() {
             <Route
               path="/curriculum/courses/create"
               element={
-                <ProtectedRoute requiredRoles={['SUBJECT_LEADER']}>
+                <ProtectedRoute requiredRoles={["SUBJECT_LEADER"]}>
                   <CreateCoursePage />
                 </ProtectedRoute>
               }
@@ -518,7 +549,9 @@ function App() {
             <Route
               path="/curriculum/subjects/create"
               element={
-                <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
+                <ProtectedRoute
+                  requiredRoles={["SUBJECT_LEADER", "MANAGER", "ADMIN"]}
+                >
                   <CreateSubjectPage />
                 </ProtectedRoute>
               }
@@ -534,7 +567,9 @@ function App() {
             <Route
               path="/curriculum/subjects/:id/edit"
               element={
-                <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
+                <ProtectedRoute
+                  requiredRoles={["SUBJECT_LEADER", "MANAGER", "ADMIN"]}
+                >
                   <EditSubjectPage />
                 </ProtectedRoute>
               }
@@ -550,7 +585,9 @@ function App() {
             <Route
               path="/curriculum/levels/:id"
               element={
-                <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
+                <ProtectedRoute
+                  requiredRoles={["SUBJECT_LEADER", "MANAGER", "ADMIN"]}
+                >
                   <LevelDetailPage />
                 </ProtectedRoute>
               }
@@ -558,7 +595,9 @@ function App() {
             <Route
               path="/curriculum/levels/:id/edit"
               element={
-                <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
+                <ProtectedRoute
+                  requiredRoles={["SUBJECT_LEADER", "MANAGER", "ADMIN"]}
+                >
                   <EditLevelPage />
                 </ProtectedRoute>
               }
@@ -566,7 +605,9 @@ function App() {
             <Route
               path="/curriculum/courses/:id"
               element={
-                <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
+                <ProtectedRoute
+                  requiredRoles={["SUBJECT_LEADER", "MANAGER", "ADMIN"]}
+                >
                   <CurriculumCourseDetailPage />
                 </ProtectedRoute>
               }
@@ -574,7 +615,7 @@ function App() {
             <Route
               path="/curriculum/courses/:id/edit"
               element={
-                <ProtectedRoute requiredRoles={['SUBJECT_LEADER']}>
+                <ProtectedRoute requiredRoles={["SUBJECT_LEADER"]}>
                   <EditCoursePage />
                 </ProtectedRoute>
               }
@@ -584,7 +625,7 @@ function App() {
             <Route
               path="/center-head/approvals"
               element={
-                <ProtectedRoute requiredRoles={['CENTER_HEAD']}>
+                <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
                   <CenterHeadApprovalsPage />
                 </ProtectedRoute>
               }
@@ -599,8 +640,8 @@ function App() {
           </Routes>
           <Toaster />
         </AuthProvider>
-      </ApiSetup >
-    </BrowserRouter >
+      </ApiSetup>
+    </BrowserRouter>
   );
 }
 
