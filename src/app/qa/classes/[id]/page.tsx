@@ -4,7 +4,9 @@ import { useParams } from "react-router-dom"
 import { useGetQAClassDetailQuery } from "@/store/services/qaApi"
 import { DashboardLayout } from "@/components/DashboardLayout"
 import { ClassStatusBadge } from "@/components/qa/ClassStatusBadge"
-import { QAReportStatusBadge } from "@/components/qa/QAReportStatusBadge"
+import { SessionsListTab } from "@/components/qa/SessionsListTab"
+import { QAReportsListTab } from "@/components/qa/QAReportsListTab"
+import { StudentFeedbackTab } from "@/components/qa/StudentFeedbackTab"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,7 +18,6 @@ import {
     CheckCircle,
     FileText,
     MessageSquare,
-    Plus,
     Users,
     Loader2,
     AlertTriangle,
@@ -139,11 +140,11 @@ export default function ClassDetailsPage() {
 
                 {/* Tabs */}
                 <Tabs defaultValue="overview" className="space-y-6">
-                    <TabsList>
+                    <TabsList className="grid w-full grid-cols-4">
                         <TabsTrigger value="overview">Tổng quan</TabsTrigger>
                         <TabsTrigger value="sessions">Buổi học</TabsTrigger>
                         <TabsTrigger value="reports">Báo cáo QA</TabsTrigger>
-                        <TabsTrigger value="teachers">Giáo viên</TabsTrigger>
+                        <TabsTrigger value="feedback">Phản hồi HV</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="overview" className="space-y-6">
@@ -215,122 +216,32 @@ export default function ClassDetailsPage() {
                     </TabsContent>
 
                     <TabsContent value="sessions" className="space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Tổng Quan Buổi Học</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Tổng số buổi</p>
-                                        <p className="text-2xl font-bold">{classInfo.sessionSummary?.totalSessions || 0}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Đã hoàn thành</p>
-                                        <p className="text-2xl font-bold text-green-600">
-                                            {classInfo.sessionSummary?.completedSessions || 0}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Sắp tới</p>
-                                        <p className="text-2xl font-bold text-blue-600">
-                                            {classInfo.sessionSummary?.upcomingSessions || 0}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Đã hủy</p>
-                                        <p className="text-2xl font-bold text-red-600">
-                                            {classInfo.sessionSummary?.cancelledSessions || 0}
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Sessions list would go here */}
-                        <Alert>
-                            <MessageSquare className="h-4 w-4" />
-                            <AlertDescription>
-                                Chi tiết buổi học sẽ được hiển thị trong phiên bản tiếp theo.
-                            </AlertDescription>
-                        </Alert>
+                        <SessionsListTab classId={classInfo.classId} />
                     </TabsContent>
 
                     <TabsContent value="reports" className="space-y-6">
-                        <div className="flex justify-between items-center">
-                            <h3 className="text-lg font-semibold">Báo Cáo QA</h3>
-                            <Button asChild>
-                                <Link to={`/qa/reports/create?classId=${classInfo.classId}`}>
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Tạo Báo Cáo Mới
-                                </Link>
-                            </Button>
-                        </div>
-
-                        {classInfo.qaReports?.length > 0 ? (
-                            <div className="space-y-4">
-                                {classInfo.qaReports.map((report) => (
-                                    <Card key={report.reportId}>
-                                        <CardContent className="p-6">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <h4 className="font-semibold">{report.reportType}</h4>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        Tạo bởi {report.reportedByName} • {new Date(report.createdAt).toLocaleDateString('vi-VN')}
-                                                    </p>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <QAReportStatusBadge status={report.status} />
-                                                    <Badge variant="outline">{report.reportLevel}</Badge>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                ))}
-                            </div>
-                        ) : (
-                            <Alert>
-                                <FileText className="h-4 w-4" />
-                                <AlertDescription>
-                                    Chưa có báo cáo QA nào cho lớp này.
-                                </AlertDescription>
-                            </Alert>
-                        )}
+                        <QAReportsListTab
+                            classId={classInfo.classId}
+                            onNavigateToCreate={() => window.location.href = `/qa/reports/create?classId=${classInfo.classId}`}
+                        />
                     </TabsContent>
 
-                    <TabsContent value="teachers" className="space-y-6">
+                    <TabsContent value="feedback" className="space-y-6">
+                        <StudentFeedbackTab classId={classInfo.classId} />
+                    </TabsContent>
+
+                    <TabsContent value="statistics" className="space-y-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Giáo Viên Phụ Trách</CardTitle>
+                                <CardTitle>Thống Kê Hiệu Suất</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                {classInfo.teachers?.length > 0 ? (
-                                    <div className="space-y-4">
-                                        {classInfo.teachers.map((teacher) => (
-                                            <div key={teacher.teacherId} className="flex items-center justify-between p-4 border rounded-lg">
-                                                <div>
-                                                    <h4 className="font-semibold">{teacher.teacherName}</h4>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        ID: {teacher.teacherId}
-                                                    </p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="text-sm text-muted-foreground">Phân công</p>
-                                                    <p className="font-medium">{teacher.sessionsAssigned} buổi</p>
-                                                    <p className="text-sm text-muted-foreground">Hoàn thành</p>
-                                                    <p className="font-medium text-green-600">{teacher.sessionsCompleted} buổi</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <Alert>
-                                        <Users className="h-4 w-4" />
-                                        <AlertDescription>
-                                            Chưa có giáo viên nào được phân công cho lớp này.
-                                        </AlertDescription>
-                                    </Alert>
-                                )}
+                                <Alert>
+                                    <MessageSquare className="h-4 w-4" />
+                                    <AlertDescription>
+                                        Biểu đồ thống kê sẽ được triển khai trong Phase 2.
+                                    </AlertDescription>
+                                </Alert>
                             </CardContent>
                         </Card>
                     </TabsContent>

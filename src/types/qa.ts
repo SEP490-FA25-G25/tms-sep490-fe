@@ -283,21 +283,23 @@ export interface FeedbackFilters {
 }
 
 // Enums
-// Update enum definitions to match backend values
+// Update enum definitions to match backend UPPERCASE values
 export const QAReportType = {
-  CLASSROOM_OBSERVATION: "classroom_observation",
-  PHASE_REVIEW: "phase_review",
-  CLO_ACHIEVEMENT_ANALYSIS: "clo_achievement_analysis",
-  STUDENT_FEEDBACK_ANALYSIS: "student_feedback_analysis",
-  ATTENDANCE_ENGAGEMENT_REVIEW: "attendance_engagement_review",
-  TEACHING_QUALITY_ASSESSMENT: "teaching_quality_assessment"
+  CLASSROOM_OBSERVATION: "CLASSROOM_OBSERVATION",
+  PHASE_REVIEW: "PHASE_REVIEW",
+  CLO_ACHIEVEMENT_ANALYSIS: "CLO_ACHIEVEMENT_ANALYSIS",
+  STUDENT_FEEDBACK_ANALYSIS: "STUDENT_FEEDBACK_ANALYSIS",
+  ATTENDANCE_ENGAGEMENT_REVIEW: "ATTENDANCE_ENGAGEMENT_REVIEW",
+  TEACHING_QUALITY_ASSESSMENT: "TEACHING_QUALITY_ASSESSMENT"
 } as const
 
 export type QAReportType = typeof QAReportType[keyof typeof QAReportType]
 
 export const QAReportStatus = {
-  DRAFT: "draft",
-  SUBMITTED: "submitted"
+  DRAFT: "DRAFT",
+  SUBMITTED: "SUBMITTED",
+  REVIEWED: "REVIEWED",
+  CLOSED: "CLOSED"
 } as const
 
 export type QAReportStatus = typeof QAReportStatus[keyof typeof QAReportStatus]
@@ -307,9 +309,9 @@ export const getQAReportTypeDisplayName = (type: QAReportType): string => {
   const displayNames: Record<QAReportType, string> = {
     [QAReportType.CLASSROOM_OBSERVATION]: "Quan sát lớp học",
     [QAReportType.PHASE_REVIEW]: "Đánh giá giai đoạn",
-    [QAReportType.CLO_ACHIEVEMENT_ANALYSIS]: "Phân tích CLO",
+    [QAReportType.CLO_ACHIEVEMENT_ANALYSIS]: "Phân tích kết quả CLO",
     [QAReportType.STUDENT_FEEDBACK_ANALYSIS]: "Phân tích phản hồi học viên",
-    [QAReportType.ATTENDANCE_ENGAGEMENT_REVIEW]: "Đánh giá điểm danh",
+    [QAReportType.ATTENDANCE_ENGAGEMENT_REVIEW]: "Đánh giá chuyên cần & tham gia",
     [QAReportType.TEACHING_QUALITY_ASSESSMENT]: "Đánh giá chất lượng giảng dạy"
   };
   return displayNames[type] || type;
@@ -318,7 +320,9 @@ export const getQAReportTypeDisplayName = (type: QAReportType): string => {
 export const getQAReportStatusDisplayName = (status: QAReportStatus): string => {
   const displayNames: Record<QAReportStatus, string> = {
     [QAReportStatus.DRAFT]: "Bản nháp",
-    [QAReportStatus.SUBMITTED]: "Đã nộp"
+    [QAReportStatus.SUBMITTED]: "Đã nộp",
+    [QAReportStatus.REVIEWED]: "Đã duyệt",
+    [QAReportStatus.CLOSED]: "Đã đóng"
   };
   return displayNames[status] || status;
 };

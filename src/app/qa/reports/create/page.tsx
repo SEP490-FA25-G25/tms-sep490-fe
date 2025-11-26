@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { useCreateQAReportMutation } from "@/store/services/qaApi"
 import { DashboardLayout } from "@/components/DashboardLayout"
 import { Button } from "@/components/ui/button"
@@ -18,10 +18,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ArrowLeft, Save, Send, Loader2, AlertTriangle } from "lucide-react"
 import { Link } from "react-router-dom"
-import { QAReportType, QAReportStatus } from "@/types/qa"
+import { QAReportType, QAReportStatus, qaReportTypeOptions, isValidQAReportType } from "@/types/qa"
 
 export default function CreateQAReportPage() {
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
     const [createReport, { isLoading, error }] = useCreateQAReportMutation()
 
     const [formData, setFormData] = useState({
@@ -34,6 +35,25 @@ export default function CreateQAReportPage() {
         status: QAReportStatus.DRAFT as QAReportStatus,
     })
 
+    useEffect(() => {
+        // Parse query parameters
+        const classIdParam = searchParams.get('classId')
+        const sessionIdParam = searchParams.get('sessionId')
+        const phaseIdParam = searchParams.get('phaseId')
+        const reportTypeParam = searchParams.get('reportType')
+
+        setFormData(prev => ({
+            ...prev,
+            classId: classIdParam ? parseInt(classIdParam) : 0,
+            sessionId: sessionIdParam ? parseInt(sessionIdParam) : undefined,
+            phaseId: phaseIdParam ? parseInt(phaseIdParam) : undefined,
+            reportType: reportTypeParam && isValidQAReportType(reportTypeParam)
+                ? reportTypeParam as QAReportType
+                : QAReportType.CLASSROOM_OBSERVATION,
+        }))
+    }, [searchParams])
+
+  
     const handleSubmit = async (isDraft: boolean = true) => {
         try {
             const reportData = {
@@ -121,24 +141,11 @@ export default function CreateQAReportPage() {
                                         <SelectValue placeholder="Chọn loại báo cáo" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value={QAReportType.CLASSROOM_OBSERVATION}>
-                                            Classroom Observation
-                                        </SelectItem>
-                                        <SelectItem value={QAReportType.PHASE_REVIEW}>
-                                            Phase Review
-                                        </SelectItem>
-                                        <SelectItem value={QAReportType.CLO_ACHIEVEMENT_ANALYSIS}>
-                                            CLO Achievement Analysis
-                                        </SelectItem>
-                                        <SelectItem value={QAReportType.STUDENT_FEEDBACK_ANALYSIS}>
-                                            Student Feedback Analysis
-                                        </SelectItem>
-                                        <SelectItem value={QAReportType.ATTENDANCE_ENGAGEMENT_REVIEW}>
-                                            Attendance & Engagement Review
-                                        </SelectItem>
-                                        <SelectItem value={QAReportType.TEACHING_QUALITY_ASSESSMENT}>
-                                            Teaching Quality Assessment
-                                        </SelectItem>
+                                        {qaReportTypeOptions.map((option) => (
+                                            <SelectItem key={option.value} value={option.value}>
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>

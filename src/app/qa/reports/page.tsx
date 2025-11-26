@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useGetQAReportsQuery } from "@/store/services/qaApi"
+import type { QAReportListItemDTO } from "@/types/qa"
 import { DashboardLayout } from "@/components/DashboardLayout"
 import { QAReportStatusBadge } from "@/components/qa/QAReportStatusBadge"
 import { Button } from "@/components/ui/button"
@@ -30,8 +31,8 @@ export default function QAReportsListPage() {
         sortDir: 'desc',
     })
 
-    const reports = reportsData?.data || []
-    const totalCount = reportsData?.total || 0
+    const reports = Array.isArray(reportsData) ? reportsData : []
+    const totalCount = reports.length
 
     if (isLoading) {
         return (
@@ -104,7 +105,7 @@ export default function QAReportsListPage() {
                         </TableHeader>
                         <TableBody>
                             {reports.length > 0 ? (
-                                reports.map((report) => (
+                                reports.map((report: QAReportListItemDTO) => (
                                     <TableRow key={report.id} className="hover:bg-muted/50">
                                         <TableCell className="font-medium">#{report.id}</TableCell>
                                         <TableCell>

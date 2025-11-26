@@ -4,6 +4,7 @@ import { useParams, Link } from "react-router-dom"
 import { useGetQAReportDetailQuery } from "@/store/services/qaApi"
 import { DashboardLayout } from "@/components/DashboardLayout"
 import { QAReportStatusBadge } from "@/components/qa/QAReportStatusBadge"
+import { QAReportStatus } from "@/types/qa"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -64,7 +65,7 @@ export default function QAReportDetailsPage() {
                             <ArrowLeft className="h-4 w-4" /> Quay lại danh sách
                         </Button>
                     </Link>
-                    {report.status === "draft" && (
+                    {report.status === QAReportStatus.DRAFT && (
                         <Link to={`/qa/reports/${report.id}/edit`}>
                             <Button variant="outline" size="sm" className="gap-2">
                                 <Edit className="h-4 w-4" /> Chỉnh Sửa

@@ -23,6 +23,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { QAReportStatus } from "@/types/qa"
 
 // Mock data - sẽ được thay thế bằng API call
 const mockFeedbackData = {
@@ -97,7 +98,7 @@ export default function StudentFeedbackPage() {
     const filteredFeedbacks = feedbacks.filter(feedback => {
         const phaseMatch = selectedPhase === "all" || feedback.phaseName.includes(selectedPhase)
         const statusMatch = selectedStatus === "all" ||
-            (selectedStatus === "submitted" && feedback.isSubmitted) ||
+            (selectedStatus === QAReportStatus.SUBMITTED && feedback.isSubmitted) ||
             (selectedStatus === "not_submitted" && !feedback.isSubmitted)
         return phaseMatch && statusMatch
     })
@@ -265,7 +266,7 @@ export default function StudentFeedbackPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                                    <SelectItem value="submitted">Đã nộp</SelectItem>
+                                    <SelectItem value={QAReportStatus.SUBMITTED}>Đã nộp</SelectItem>
                                     <SelectItem value="not_submitted">Chưa nộp</SelectItem>
                                 </SelectContent>
                             </Select>
