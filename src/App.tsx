@@ -43,6 +43,18 @@ import EditClassPage from './app/academic/classes/[id]/edit/page'
 
 import CenterHeadApprovalsPage from './app/center-head/approvals/page'
 import CurriculumPage from './features/curriculum/pages/CurriculumPage'
+
+// QA imports
+import QARootPage from './app/qa/page'
+import QADashboardPage from './app/qa/dashboard/page'
+import QAClassesPage from './app/qa/classes/page'
+import QAClassDetailPage from './app/qa/classes/[id]/page'
+import QASessionDetailPage from './app/qa/sessions/[id]/page'
+import QAReportsPage from './app/qa/reports/page'
+import QAReportCreatePage from './app/qa/reports/create/page'
+import QAReportDetailPage from './app/qa/reports/[id]/page'
+import QAReportEditPage from './app/qa/reports/[id]/edit/page'
+import QAStudentFeedbackPage from './app/qa/student-feedback/page'
 import CreateSubjectPage from './features/curriculum/pages/CreateSubjectPage'
 import EditSubjectPage from './features/curriculum/pages/EditSubjectPage'
 // import SubjectDetailPage from '@/features/curriculum/pages/SubjectDetailPage'
@@ -586,6 +598,88 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={['CENTER_HEAD']}>
                   <CenterHeadApprovalsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* QA routes */}
+            <Route
+              path="/qa"
+              element={
+                <ProtectedRoute requiredRoles={['QA']}>
+                  <QARootPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/qa/dashboard"
+              element={
+                <ProtectedRoute requiredRoles={['QA']}>
+                  <QADashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/qa/classes"
+              element={
+                <ProtectedRoute requiredRoles={['QA']}>
+                  <QAClassesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/qa/classes/:id"
+              element={
+                <ProtectedRoute requiredRoles={['QA']}>
+                  <QAClassDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/qa/sessions/:id"
+              element={
+                <ProtectedRoute requiredRoles={['QA']}>
+                  <QASessionDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/qa/reports"
+              element={
+                <ProtectedRoute requiredRoles={['QA']}>
+                  <QAReportsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/qa/reports/create"
+              element={
+                <ProtectedRoute requiredRoles={['QA']}>
+                  <QAReportCreatePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/qa/reports/:id"
+              element={
+                <ProtectedRoute requiredRoles={['QA']}>
+                  <QAReportDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/qa/reports/:id/edit"
+              element={
+                <ProtectedRoute requiredRoles={['QA']}>
+                  <QAReportEditPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/qa/student-feedback"
+              element={
+                <ProtectedRoute requiredRoles={['QA']}>
+                  <QAStudentFeedbackPage />
                 </ProtectedRoute>
               }
             />

@@ -16,6 +16,8 @@ import {
   NotebookPenIcon,
   SchoolIcon,
   UserCircleIcon,
+  PlusIcon,
+  MessageCircleIcon,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -239,29 +241,29 @@ const roleBasedNav = {
   [ROLES.QA]: {
     navMain: [
       {
-        title: "Bảng điều khiển",
-        url: "/dashboard",
-        icon: HomeIcon,
+        title: "Tổng quan QA",
+        url: "/qa/dashboard",
+        icon: BarChartIcon,
       },
       {
-        title: "Kiểm tra chất lượng",
-        url: "/qa/audits",
+        title: "Danh sách lớp học",
+        url: "/qa/classes",
+        icon: SchoolIcon,
+      },
+      {
+        title: "Tạo báo cáo QA",
+        url: "/qa/reports/create",
+        icon: PlusIcon,
+      },
+      {
+        title: "Danh sách báo cáo",
+        url: "/qa/reports",
         icon: ClipboardCheckIcon,
       },
       {
-        title: "Đánh giá khóa học",
-        url: "/qa/courses",
-        icon: BookOpenIcon,
-      },
-      {
-        title: "Đánh giá giáo viên",
-        url: "/qa/teachers",
-        icon: GraduationCapIcon,
-      },
-      {
-        title: "Báo cáo",
-        url: "/qa/reports",
-        icon: FileTextIcon,
+        title: "Phân hồi học viên",
+        url: "/qa/student-feedback",
+        icon: MessageCircleIcon,
       },
     ],
   },
@@ -358,7 +360,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <a href="/dashboard">
                 <ArrowUpCircleIcon className="h-5 w-5" />
-                <span className="text-base font-semibold">TMS</span>
+                <span className="text-base font-semibold">Training Management</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
