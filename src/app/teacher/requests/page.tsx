@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format, parseISO, startOfToday } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
@@ -12,6 +12,7 @@ import {
   useCreateRequestMutation,
   useConfirmReplacementRequestMutation,
   useRejectReplacementRequestMutation,
+  useGetTeacherRequestConfigQuery,
   type RequestType,
   type RequestStatus,
   type ResourceDTO,
@@ -947,6 +948,17 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
   const [reason, setReason] = useState("");
   const [step, setStep] = useState<"session" | "resource" | "form">("session");
 
+  // Load config from policy for modality change
+  const { data: teacherConfig, refetch: refetchTeacherConfig } =
+    useGetTeacherRequestConfigQuery();
+
+  // Khi mở flow MODALITY_CHANGE, luôn refetch config mới nhất
+  useEffect(() => {
+    refetchTeacherConfig();
+  }, [refetchTeacherConfig]);
+  const requireResourceAtModalityChangeCreate =
+    teacherConfig?.data?.requireResourceAtModalityChangeCreate ?? true;
+
   const formattedDate = selectedDate
     ? format(selectedDate, "yyyy-MM-dd")
     : undefined;
@@ -1060,8 +1072,14 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
   };
 
   const step1Complete = !!selectedSessionId;
-  const step2Complete = step === "form"; // Đã qua step resource
-  const step3Complete = step === "form" && reason.trim().length >= 10;
+  const step2Complete =
+    step === "form" ||
+    (!!selectedResourceId && step === "resource") ||
+    (!requireResourceAtModalityChangeCreate && step === "resource");
+  const step3Complete =
+    step === "form" &&
+    (requireResourceAtModalityChangeCreate ? !!selectedResourceId : true) &&
+    reason.trim().length >= 10;
 
   return (
     <div className="space-y-4">
@@ -1191,7 +1209,7 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
         )}
       </div>
 
-      {/* Step 2: Chọn resource (optional) */}
+      {/* Step 2: Chọn resource */}
       {step1Complete && (
         <div className={cn("space-y-2", step === "session" && "opacity-50")}>
           <div className="flex items-center gap-2">
@@ -1207,7 +1225,11 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
             >
               {step2Complete ? "✓" : "2"}
             </div>
-            <h3 className="text-sm font-semibold">Chọn resource (Tùy chọn)</h3>
+            <h3 className="text-sm font-semibold">
+              {requireResourceAtModalityChangeCreate
+                ? "Chọn resource"
+                : "Chọn resource (Tùy chọn)"}
+            </h3>
           </div>
 
           {step === "resource" && (
@@ -1227,7 +1249,13 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
                     }
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Chọn resource (tùy chọn)">
+                      <SelectValue
+                        placeholder={
+                          requireResourceAtModalityChangeCreate
+                            ? "Chọn resource mới"
+                            : "Chọn resource (tùy chọn)"
+                        }
+                      >
                         {selectedResource?.name || ""}
                       </SelectValue>
                     </SelectTrigger>
@@ -1259,14 +1287,16 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
                       })}
                     </SelectContent>
                   </Select>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleResourceSelect(undefined)}
-                    className="mt-2"
-                  >
-                    Bỏ qua - Để staff quyết định
-                  </Button>
+                  {!requireResourceAtModalityChangeCreate && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleResourceSelect(undefined)}
+                      className="mt-2"
+                    >
+                      Bỏ qua - Để staff quyết định
+                    </Button>
+                  )}
                 </>
               ) : (
                 <div className="space-y-2">
@@ -1274,14 +1304,16 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
                     Không có resource nào khả dụng tại thời điểm này. Staff sẽ
                     chọn resource phù hợp cho bạn.
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleResourceSelect(undefined)}
-                    className="w-full"
-                  >
-                    Tiếp tục - Để staff quyết định resource
-                  </Button>
+                  {!requireResourceAtModalityChangeCreate && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleResourceSelect(undefined)}
+                      className="w-full"
+                    >
+                      Tiếp tục - Để staff quyết định resource
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
@@ -1539,6 +1571,17 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
     ) ?? null;
   const selectedSlotLabel = selectedSlot ? resolveSlotLabel(selectedSlot) : "";
 
+  // Load teacher request config controlled by policy
+  const { data: teacherConfig, refetch: refetchTeacherConfig } =
+    useGetTeacherRequestConfigQuery();
+
+  // Mỗi lần flow RESCHEDULE mount, luôn refetch config mới nhất
+  useEffect(() => {
+    refetchTeacherConfig();
+  }, [refetchTeacherConfig]);
+  const requireResourceAtRescheduleCreate =
+    teacherConfig?.data?.requireResourceAtRescheduleCreate ?? true;
+
   const resourceQueryArg =
     selectedSessionId && newDateFormatted && selectedSlot
       ? {
@@ -1623,11 +1666,6 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
       return;
     }
 
-    if (!selectedResourceId) {
-      toast.error("Vui lòng chọn resource mới");
-      return;
-    }
-
     if (reason.trim().length < 10) {
       toast.error("Lý do phải có tối thiểu 10 ký tự");
       return;
@@ -1682,7 +1720,11 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
   const sessionStepComplete = !!selectedSessionId;
   const dateStepComplete = sessionStepComplete && !!selectedNewDate;
   const slotStepComplete = dateStepComplete && !!selectedSlotId;
-  const resourceStepComplete = slotStepComplete && !!selectedResourceId;
+  // Với RESCHEDULE: nếu policy không bắt buộc resource, coi bước resource là hoàn thành dù không chọn
+  const resourceStepComplete =
+    slotStepComplete &&
+    (requireResourceAtRescheduleCreate ? !!selectedResourceId : true);
+  // Bước lý do hiển thị khi đã tới step "form" và các bước trước đã OK
   const formStepReady = step === "form" && resourceStepComplete;
   const reasonValid = reason.trim().length >= 10;
 
@@ -2030,7 +2072,11 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
             >
               {resourceStepComplete ? "✓" : "4"}
             </div>
-            <h3 className="text-sm font-semibold">Chọn resource mới</h3>
+            <h3 className="text-sm font-semibold">
+              {requireResourceAtRescheduleCreate
+                ? "Chọn resource mới"
+                : "Chọn resource mới (tùy chọn)"}
+            </h3>
           </div>
 
           {step === "resource" && (
@@ -2052,7 +2098,13 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
                     }
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Chọn resource mới">
+                      <SelectValue
+                        placeholder={
+                          requireResourceAtRescheduleCreate
+                            ? "Chọn resource mới"
+                            : "Chọn resource mới (tùy chọn)"
+                        }
+                      >
                         {selectedRescheduleResource?.name || ""}
                       </SelectValue>
                     </SelectTrigger>
@@ -2083,11 +2135,33 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
                       })}
                     </SelectContent>
                   </Select>
+                  {!requireResourceAtRescheduleCreate && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleResourceSelect(undefined)}
+                      className="mt-2"
+                    >
+                      Bỏ qua - Để staff quyết định
+                    </Button>
+                  )}
                 </>
               ) : (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 py-4 text-center text-sm text-amber-700">
-                  Không có resource nào khả dụng cho thời gian này. Vui lòng
-                  chọn ngày hoặc khung giờ khác.
+                <div className="space-y-2">
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 py-4 text-center text-sm text-amber-700">
+                    Không có resource nào khả dụng cho thời gian này. Vui lòng
+                    chọn ngày hoặc khung giờ khác.
+                  </div>
+                  {!requireResourceAtRescheduleCreate && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleResourceSelect(undefined)}
+                      className="w-full"
+                    >
+                      Tiếp tục - Để staff quyết định resource
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
@@ -2149,7 +2223,10 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
               </p>
               <p>
                 <span className="font-medium text-foreground">Resource:</span>{" "}
-                {selectedRescheduleResource?.name ?? "Chưa chọn"}
+                {selectedRescheduleResource?.name ??
+                  (requireResourceAtRescheduleCreate
+                    ? "Chưa chọn"
+                    : "Để staff quyết định")}
               </p>
             </div>
 

@@ -304,6 +304,15 @@ export interface TeacherRequestDetailResponse {
   data: TeacherRequestDTO;
 }
 
+export interface TeacherRequestConfigResponse {
+  success: boolean;
+  message: string;
+  data: {
+    requireResourceAtRescheduleCreate: boolean;
+    requireResourceAtModalityChangeCreate: boolean;
+  };
+}
+
 // Base query with token injection
 const baseQuery = fetchBaseQuery({
   baseUrl: "/api/v1",
@@ -391,6 +400,20 @@ export const teacherRequestApi = createApi({
         method: "GET",
       }),
       providesTags: ["TeacherRequest"],
+    }),
+
+    // Get teacher request configuration (policies exposed to teacher)
+    getTeacherRequestConfig: builder.query<
+      TeacherRequestConfigResponse,
+      void
+    >({
+      query: () => ({
+        url: "/teacher-requests/config",
+        method: "GET",
+      }),
+      // Luôn refetch khi component mount lại hoặc window lấy lại focus
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
     }),
 
     // Get teacher's sessions (for creating request)
@@ -612,6 +635,7 @@ export const {
   useGetReplacementCandidatesQuery,
   useGetRequestByIdQuery,
   useCreateRequestMutation,
+  useGetTeacherRequestConfigQuery,
   useGetStaffRequestsQuery,
   useApproveRequestMutation,
   useRejectRequestMutation,

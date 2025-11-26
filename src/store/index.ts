@@ -1,22 +1,23 @@
-import { configureStore } from '@reduxjs/toolkit'
-import { authApi } from './services/authApi'
-import { classApi } from './services/classApi'
-import { classCreationApi } from './services/classCreationApi'
-import { studentApi } from './services/studentApi'
-import { enrollmentApi } from './services/enrollmentApi'
-import { curriculumApi } from './services/curriculumApi'
-import { studentScheduleApi } from './services/studentScheduleApi'
-import { studentRequestApi } from './services/studentRequestApi'
-import { teacherRequestApi } from './services/teacherRequestApi'
-import { attendanceApi } from './services/attendanceApi'
-import { courseApi } from './services/courseApi'
-import { studentClassApi } from './services/studentClassApi'
-import { studentProfileApi } from './services/studentProfileApi'
-import { teacherScheduleApi } from './services/teacherScheduleApi'
-import { teacherGradeApi } from './services/teacherGradeApi'
-import { teacherProfileApi } from './services/teacherProfileApi'
-import { notificationApi } from './services/notificationApi'
-import { userApi } from './services/userApi'
+import { configureStore } from "@reduxjs/toolkit";
+import { authApi } from "./services/authApi";
+import { classApi } from "./services/classApi";
+import { classCreationApi } from "./services/classCreationApi";
+import { studentApi } from "./services/studentApi";
+import { enrollmentApi } from "./services/enrollmentApi";
+import { curriculumApi } from "./services/curriculumApi";
+import { studentScheduleApi } from "./services/studentScheduleApi";
+import { studentRequestApi } from "./services/studentRequestApi";
+import { teacherRequestApi } from "./services/teacherRequestApi";
+import { attendanceApi } from "./services/attendanceApi";
+import { courseApi } from "./services/courseApi";
+import { studentClassApi } from "./services/studentClassApi";
+import { studentProfileApi } from "./services/studentProfileApi";
+import { teacherScheduleApi } from "./services/teacherScheduleApi";
+import { teacherGradeApi } from "./services/teacherGradeApi";
+import { teacherProfileApi } from "./services/teacherProfileApi";
+import { notificationApi } from "./services/notificationApi";
+import { userApi } from "./services/userApi";
+import { policyApi } from "./services/policyApi";
 import authSlice, {
   setCredentials,
   logout,
@@ -50,11 +51,16 @@ export const store = configureStore({
     [teacherProfileApi.reducerPath]: teacherProfileApi.reducer,
     [notificationApi.reducerPath]: notificationApi.reducer,
     [userApi.reducerPath]: userApi.reducer,
+    [policyApi.reducerPath]: policyApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ["persist/PERSIST", "persist/REHYDRATE", "enrollmentApi/executeQuery/fulfilled"],
+        ignoredActions: [
+          "persist/PERSIST",
+          "persist/REHYDRATE",
+          "enrollmentApi/executeQuery/fulfilled",
+        ],
         ignoredPaths: ["enrollmentApi"],
       },
     })
@@ -75,7 +81,8 @@ export const store = configureStore({
       .concat(teacherGradeApi.middleware)
       .concat(teacherProfileApi.middleware)
       .concat(notificationApi.middleware)
-      .concat(userApi.middleware),
+      .concat(userApi.middleware)
+      .concat(policyApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
