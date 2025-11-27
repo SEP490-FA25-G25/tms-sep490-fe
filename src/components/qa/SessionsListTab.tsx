@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useGetQASessionListQuery } from "@/store/services/qaApi"
+import { SessionStatus, getSessionStatusDisplayName, sessionStatusOptions } from "@/types/qa"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -94,15 +95,18 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
     }
 
     const getStatusBadge = (status: string) => {
+        // Use display function for consistent Vietnamese labels
+        const displayStatus = getSessionStatusDisplayName(status)
+
         switch (status) {
-            case "DONE":
-                return <Badge variant="default" className="bg-green-100 text-green-700">Đã hoàn thành</Badge>
-            case "PLANNED":
-                return <Badge variant="outline">Đã lên lịch</Badge>
-            case "CANCELLED":
-                return <Badge variant="destructive">Đã hủy</Badge>
+            case SessionStatus.DONE:
+                return <Badge variant="default" className="bg-green-100 text-green-700">{displayStatus}</Badge>
+            case SessionStatus.PLANNED:
+                return <Badge variant="outline">{displayStatus}</Badge>
+            case SessionStatus.CANCELLED:
+                return <Badge variant="destructive">{displayStatus}</Badge>
             default:
-                return <Badge variant="outline">{status}</Badge>
+                return <Badge variant="outline">{displayStatus}</Badge>
         }
     }
 
@@ -175,9 +179,11 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                            <SelectItem value="DONE">Đã hoàn thành</SelectItem>
-                            <SelectItem value="PLANNED">Đã lên lịch</SelectItem>
-                            <SelectItem value="CANCELLED">Đã hủy</SelectItem>
+                            {sessionStatusOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                 </div>

@@ -62,11 +62,11 @@ export const qaApi = createApi({
 
     // Session Detail
     getSessionDetail: builder.query<SessionDetailDTO, number>({
-      query: (sessionId) => `/sessions/${sessionId}`,
+      query: (sessionId) => `/qa/sessions/${sessionId}`,
       providesTags: (_result, _error, sessionId) => [{ type: 'QASession', id: sessionId }],
     }),
 
-    // QA Reports CRUD
+    // QA Rereports CRUD
     getQAReports: builder.query<{ data: QAReportListItemDTO[]; total: number; page: number; size: number }, QAReportFilters>({
       query: ({ classId, sessionId, phaseId, reportType, status, reportedBy, page = 0, size = 20, sort = 'createdAt', sortDir = 'desc' }) => ({
         url: '/qa/reports',

@@ -19,6 +19,7 @@ export interface QADashboardDTO {
     courseName: string;
     branchName: string;
     attendanceRate: number;
+    homeworkCompletionRate: number;
     qaReportCount: number;
     warningReason: string;
   }>;
@@ -57,14 +58,16 @@ export interface QAClassDetailDTO {
   className: string;
   courseName: string;
   courseId: number;
-  branchName: string;
   branchId: number;
+  branchName: string;
   modality: string;
   status: string;
   startDate: string;
   endDate?: string;
   maxCapacity: number;
   currentEnrollment: number;
+
+  // Session Summary
   sessionSummary: {
     totalSessions: number;
     completedSessions: number;
@@ -72,12 +75,16 @@ export interface QAClassDetailDTO {
     cancelledSessions: number;
     nextSessionDate?: string;
   };
+
+  // QA Performance Metrics
   performanceMetrics: {
     attendanceRate: number;
     homeworkCompletionRate: number;
     totalAbsences: number;
     studentsAtRisk: number;
   };
+
+  // QA Reports
   qaReports: Array<{
     reportId: number;
     reportType: string;
@@ -86,6 +93,8 @@ export interface QAClassDetailDTO {
     createdAt: string;
     reportedByName: string;
   }>;
+
+  // Teachers
   teachers: Array<{
     teacherId: number;
     teacherName: string;
@@ -95,42 +104,6 @@ export interface QAClassDetailDTO {
 }
 
 // Session Types
-export interface SessionDetailDTO {
-  sessionId: number;
-  classId: number;
-  classCode: string;
-  courseName: string;
-  date: string;
-  timeSlot: string;
-  topic: string;
-  studentTask: string;
-  status: string;
-  teacherName: string;
-  teacherNote: string;
-  attendanceStats: {
-    totalStudents: number;
-    presentCount: number;
-    absentCount: number;
-    attendanceRate: number;
-    homeworkCompletedCount: number;
-    homeworkCompletionRate: number;
-  };
-  students: Array<{
-    studentId: number;
-    studentCode: string;
-    studentName: string;
-    attendanceStatus: string;
-    homeworkStatus: string;
-    isMakeup: boolean;
-    note: string;
-  }>;
-  closCovered: Array<{
-    cloId: number;
-    cloCode: string;
-    description: string;
-  }>;
-}
-
 export interface QASessionListResponse {
   classId: number;
   classCode: string;
@@ -155,28 +128,50 @@ export interface QASessionListResponse {
   }>;
 }
 
-// QA Report Types
-export interface CreateQAReportRequest {
+export interface SessionDetailDTO {
+  sessionId: number;
   classId: number;
-  sessionId?: number;
-  phaseId?: number;
-  reportType: string;
-  findings: string;
-  actionItems?: string;
+  classCode: string;
+  courseName: string;
+  date: string;
+  timeSlot: string;
+  topic: string;
+  studentTask?: string;
   status: string;
+  teacherName: string;
+  teacherNote?: string;
+  attendanceStats: {
+    totalStudents: number;
+    presentCount: number;
+    absentCount: number;
+    attendanceRate: number;
+    homeworkCompletedCount: number;
+    homeworkCompletionRate: number;
+  };
+  students: Array<{
+    studentId: number;
+    studentCode: string;
+    studentName: string;
+    attendanceStatus?: string;
+    homeworkStatus?: string;
+    isMakeup?: boolean;
+    note?: string;
+  }>;
+  closCovered: Array<{
+    cloId: number;
+    cloCode: string;
+    description?: string;
+  }>;
+  studentFeedbackSummary?: {
+    totalStudents: number;
+    feedbackSubmissions: number;
+    feedbackRate: number;
+    averageRating?: number;
+    commonFeedback?: string;
+  };
 }
 
-export interface UpdateQAReportRequest {
-  reportType: string;
-  findings: string;
-  actionItems?: string;
-  status: string;
-}
-
-export interface ChangeQAReportStatusRequest {
-  status: string;
-}
-
+// QA Report Types
 export interface QAReportListItemDTO {
   id: number;
   reportType: string;
@@ -211,6 +206,38 @@ export interface QAReportDetailDTO {
   reportedByName: string;
   createdAt: string;
   updatedAt: string;
+
+  // Class metrics at report creation time
+  classMetrics?: {
+    attendanceRate: number;
+    homeworkCompletionRate: number;
+    totalSessions: number;
+    completedSessions: number;
+    totalStudents: number;
+    presentStudents: number;
+    completedHomeworkStudents: number;
+  };
+}
+
+export interface CreateQAReportRequest {
+  classId: number;
+  sessionId?: number;
+  phaseId?: number;
+  reportType: string;
+  status: string;
+  findings: string;
+  actionItems: string;
+}
+
+export interface UpdateQAReportRequest {
+  reportType: string;
+  status: string;
+  findings: string;
+  actionItems: string;
+}
+
+export interface ChangeQAReportStatusRequest {
+  status: string;
 }
 
 // Student Feedback Types
@@ -282,6 +309,30 @@ export interface FeedbackFilters {
   size?: number;
 }
 
+export interface QASessionListResponse {
+  classId: number;
+  classCode: string;
+  totalSessions: number;
+  sessions: Array<{
+    sessionId: number;
+    sequenceNumber?: number;
+    date: string;
+    dayOfWeek?: string;
+    timeSlot: string;
+    topic: string;
+    status: string;
+    teacherName: string;
+    totalStudents: number;
+    presentCount: number;
+    absentCount: number;
+    attendanceRate: number;
+    homeworkCompletedCount: number;
+    homeworkCompletionRate: number;
+    hasQAReport: boolean;
+    qaReportCount: number;
+  }>;
+}
+
 // Enums
 // Update enum definitions to match backend UPPERCASE values
 export const QAReportType = {
@@ -291,54 +342,137 @@ export const QAReportType = {
   STUDENT_FEEDBACK_ANALYSIS: "STUDENT_FEEDBACK_ANALYSIS",
   ATTENDANCE_ENGAGEMENT_REVIEW: "ATTENDANCE_ENGAGEMENT_REVIEW",
   TEACHING_QUALITY_ASSESSMENT: "TEACHING_QUALITY_ASSESSMENT"
-} as const
+} as const;
 
 export type QAReportType = typeof QAReportType[keyof typeof QAReportType]
 
 export const QAReportStatus = {
   DRAFT: "DRAFT",
-  SUBMITTED: "SUBMITTED"
-} as const
+  SUBMITTED: "SUBMITTED",
+  UNDER_REVIEW: "UNDER_REVIEW",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED"
+} as const;
 
 export type QAReportStatus = typeof QAReportStatus[keyof typeof QAReportStatus]
 
-// Helper functions for display names (Vietnamese)
-export const getQAReportTypeDisplayName = (type: QAReportType): string => {
-  const displayNames: Record<QAReportType, string> = {
-    [QAReportType.CLASSROOM_OBSERVATION]: "Quan sát lớp học",
-    [QAReportType.PHASE_REVIEW]: "Đánh giá giai đoạn",
-    [QAReportType.CLO_ACHIEVEMENT_ANALYSIS]: "Phân tích kết quả CLO",
-    [QAReportType.STUDENT_FEEDBACK_ANALYSIS]: "Phân tích phản hồi học viên",
-    [QAReportType.ATTENDANCE_ENGAGEMENT_REVIEW]: "Đánh giá chuyên cần & tham gia",
-    [QAReportType.TEACHING_QUALITY_ASSESSMENT]: "Đánh giá chất lượng giảng dạy"
-  };
-  return displayNames[type] || type;
-};
+// Helper function for display names
+export const getQAReportStatusDisplayName = (status: QAReportStatus | string): string => {
+  const normalizedStatus = (status as string).toUpperCase()
 
-export const getQAReportStatusDisplayName = (status: QAReportStatus): string => {
-  const displayNames: Record<QAReportStatus, string> = {
-    [QAReportStatus.DRAFT]: "Bản nháp",
-    [QAReportStatus.SUBMITTED]: "Đã nộp"
-  };
-  return displayNames[status] || status;
-};
+  switch (normalizedStatus) {
+    case QAReportStatus.DRAFT:
+      return "Nháp"
+    case QAReportStatus.SUBMITTED:
+      return "Đã nộp"
+    case QAReportStatus.UNDER_REVIEW:
+      return "Đang xem xét"
+    case QAReportStatus.APPROVED:
+      return "Đã duyệt"
+    case QAReportStatus.REJECTED:
+      return "Đã từ chối"
+    default:
+      return status
+  }
+}
 
-// Options for form selects (Vietnamese)
-export const qaReportTypeOptions = Object.values(QAReportType).map(type => ({
-  value: type,
-  label: getQAReportTypeDisplayName(type)
-}));
+export const getQAReportTypeDisplayName = (reportType: QAReportType | string): string => {
+  const normalizedType = (reportType as string).toUpperCase()
 
-export const qaReportStatusOptions = Object.values(QAReportStatus).map(status => ({
-  value: status,
-  label: getQAReportStatusDisplayName(status)
-}));
+  switch (normalizedType) {
+    case QAReportType.CLASSROOM_OBSERVATION:
+      return "Giám sát lớp học"
+    case QAReportType.PHASE_REVIEW:
+      return "Đánh giá giai đoạn"
+    case QAReportType.CLO_ACHIEVEMENT_ANALYSIS:
+      return "Phân tích đạt được CLO"
+    case QAReportType.STUDENT_FEEDBACK_ANALYSIS:
+      return "Phân tích phản hồi sinh viên"
+    case QAReportType.ATTENDANCE_ENGAGEMENT_REVIEW:
+      return "Đánh giá chuyên cần & tham gia"
+    case QAReportType.TEACHING_QUALITY_ASSESSMENT:
+      return "Đánh giá chất lượng giảng dạy"
+    default:
+      return reportType
+  }
+}
 
-// Validation helper
-export const isValidQAReportType = (value: string): value is QAReportType => {
-  return Object.values(QAReportType).includes(value as QAReportType);
-};
+export const qaReportTypeOptions = [
+  {
+    value: QAReportType.CLASSROOM_OBSERVATION,
+    label: getQAReportTypeDisplayName(QAReportType.CLASSROOM_OBSERVATION)
+  },
+  {
+    value: QAReportType.PHASE_REVIEW,
+    label: getQAReportTypeDisplayName(QAReportType.PHASE_REVIEW)
+  },
+  {
+    value: QAReportType.CLO_ACHIEVEMENT_ANALYSIS,
+    label: getQAReportTypeDisplayName(QAReportType.CLO_ACHIEVEMENT_ANALYSIS)
+  },
+  {
+    value: QAReportType.STUDENT_FEEDBACK_ANALYSIS,
+    label: getQAReportTypeDisplayName(QAReportType.STUDENT_FEEDBACK_ANALYSIS)
+  },
+  {
+    value: QAReportType.ATTENDANCE_ENGAGEMENT_REVIEW,
+    label: getQAReportTypeDisplayName(QAReportType.ATTENDANCE_ENGAGEMENT_REVIEW)
+  },
+  {
+    value: QAReportType.TEACHING_QUALITY_ASSESSMENT,
+    label: getQAReportTypeDisplayName(QAReportType.TEACHING_QUALITY_ASSESSMENT)
+  }
+]
 
-export const isValidQAReportStatus = (value: string): value is QAReportStatus => {
-  return Object.values(QAReportStatus).includes(value as QAReportStatus);
-};
+export const isValidQAReportType = (reportType: string | undefined): boolean => {
+  if (!reportType) return false
+
+  const normalizedType = reportType.toUpperCase()
+  return Object.values(QAReportType).includes(normalizedType as QAReportType)
+}
+
+// Session Status enum and utilities
+export const SessionStatus = {
+  PLANNED: "PLANNED",
+  CANCELLED: "CANCELLED",
+  DONE: "DONE"
+} as const
+
+export type SessionStatusType = typeof SessionStatus[keyof typeof SessionStatus]
+
+export const getSessionStatusDisplayName = (status: SessionStatusType | string): string => {
+  const normalizedStatus = (status as string).toUpperCase()
+
+  switch (normalizedStatus) {
+    case SessionStatus.PLANNED:
+      return "Đã lên lịch"
+    case SessionStatus.CANCELLED:
+      return "Đã hủy"
+    case SessionStatus.DONE:
+      return "Đã hoàn thành"
+    default:
+      return status
+  }
+}
+
+export const isValidSessionStatus = (status: string | undefined): boolean => {
+  if (!status) return false
+
+  const normalizedStatus = status.toUpperCase()
+  return Object.values(SessionStatus).includes(normalizedStatus as SessionStatusType)
+}
+
+export const sessionStatusOptions = [
+  {
+    value: SessionStatus.PLANNED,
+    label: getSessionStatusDisplayName(SessionStatus.PLANNED)
+  },
+  {
+    value: SessionStatus.CANCELLED,
+    label: getSessionStatusDisplayName(SessionStatus.CANCELLED)
+  },
+  {
+    value: SessionStatus.DONE,
+    label: getSessionStatusDisplayName(SessionStatus.DONE)
+  }
+]
