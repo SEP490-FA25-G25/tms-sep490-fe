@@ -20,6 +20,7 @@ import {
   type RescheduleSlotDTO,
   type ReplacementCandidateDTO,
 } from "@/store/services/teacherRequestApi";
+import { useGetAttendanceClassesQuery } from "@/store/services/attendanceApi";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { TeacherRoute } from "@/components/ProtectedRoute";
 import { Button } from "@/components/ui/button";
@@ -156,12 +157,28 @@ const formatBackendError = (
     return "Bạn phải gửi yêu cầu dời buổi trước ít nhất số ngày tối thiểu theo quy định.";
   }
 
+  if (errorMessage.includes("Reschedule request must be submitted earlier")) {
+    return "Bạn phải gửi yêu cầu dời buổi trước ít nhất số ngày tối thiểu theo quy định.";
+  }
+
   if (errorMessage.includes("TEACHER_REPLACEMENT_MIN_DAYS_NOT_MET")) {
+    return "Bạn phải gửi yêu cầu nhờ dạy thay trước ít nhất số ngày tối thiểu theo quy định.";
+  }
+
+  if (errorMessage.includes("Replacement request must be submitted earlier")) {
     return "Bạn phải gửi yêu cầu nhờ dạy thay trước ít nhất số ngày tối thiểu theo quy định.";
   }
 
   if (errorMessage.includes("TEACHER_RESCHEDULE_MONTHLY_LIMIT_REACHED")) {
     return "Bạn đã đạt giới hạn số lần xin dời buổi trong tháng này. Vui lòng thử lại vào tháng sau.";
+  }
+
+  if (errorMessage.includes("TEACHER_RESCHEDULE_COURSE_LIMIT_REACHED")) {
+    return "Bạn đã đạt giới hạn số lần xin dời buổi cho khóa học này.";
+  }
+
+  if (errorMessage.includes("Reschedule limit for this course reached")) {
+    return "Bạn đã đạt giới hạn số lần xin dời buổi cho khóa học này.";
   }
 
   if (errorMessage.includes("TEACHER_MODALITY_CHANGE_COURSE_LIMIT_REACHED")) {
@@ -170,6 +187,14 @@ const formatBackendError = (
 
   if (errorMessage.includes("TEACHER_REPLACEMENT_MONTHLY_LIMIT_REACHED")) {
     return "Bạn đã đạt giới hạn số lần xin thay giáo viên trong tháng này. Vui lòng thử lại vào tháng sau.";
+  }
+
+  if (errorMessage.includes("TEACHER_REQUEST_DAILY_LIMIT_REACHED")) {
+    return "Bạn đã đạt giới hạn số lượng yêu cầu có thể tạo trong ngày hôm nay.";
+  }
+
+  if (errorMessage.includes("Daily request limit reached")) {
+    return "Bạn đã đạt giới hạn số lượng yêu cầu có thể tạo trong ngày hôm nay.";
   }
 
   if (errorMessage.includes("TEACHER_REQUEST_REASON_REQUIRED")) {
@@ -967,6 +992,9 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
   const today = startOfToday();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedClassId, setSelectedClassId] = useState<number | undefined>(
+    undefined
+  );
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
     null
   );
@@ -980,6 +1008,9 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
   const { data: teacherConfig, refetch: refetchTeacherConfig } =
     useGetTeacherRequestConfigQuery();
 
+  // Load teacher classes
+  const { data: classesData } = useGetAttendanceClassesQuery();
+
   // Khi mở flow MODALITY_CHANGE, luôn refetch config mới nhất
   useEffect(() => {
     refetchTeacherConfig();
@@ -991,15 +1022,21 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
     ? format(selectedDate, "yyyy-MM-dd")
     : undefined;
 
-  const sessionsQueryArg = formattedDate ? { date: formattedDate } : {};
+  const sessionsQueryArg: { date?: string; classId?: number } = {};
+  if (formattedDate) sessionsQueryArg.date = formattedDate;
+  if (selectedClassId) sessionsQueryArg.classId = selectedClassId;
+
   const {
     data: sessionsData,
     isLoading: isLoadingSessions,
     isFetching: isFetchingSessions,
-  } = useGetMySessionsQuery(sessionsQueryArg, {
-    refetchOnMountOrArgChange: true,
-    refetchOnReconnect: true,
-  });
+  } = useGetMySessionsQuery(
+    Object.keys(sessionsQueryArg).length > 0 ? sessionsQueryArg : {},
+    {
+      refetchOnMountOrArgChange: true,
+      refetchOnReconnect: true,
+    }
+  );
   // Get modality resources using sessionId when creating new request
   const resourceQueryArg = selectedSessionId
     ? { sessionId: selectedSessionId }
@@ -1030,12 +1067,14 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
     setSelectedDate(date);
     setShowDatePicker(false);
     setSelectedSessionId(null);
+    setSelectedClassId(undefined);
     setStep("session");
   };
 
   const handleClearDate = () => {
     setSelectedDate(undefined);
     setSelectedSessionId(null);
+    setSelectedClassId(undefined);
     setStep("session");
   };
 
@@ -1143,6 +1182,22 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
                 </Button>
               </div>
             )}
+            {selectedClassId && classesData?.data && (
+              <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-2 py-1 text-xs">
+                {classesData.data.find((c) => c.id === selectedClassId)?.name ||
+                  classesData.data.find((c) => c.id === selectedClassId)
+                    ?.code ||
+                  "Lớp đã chọn"}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedClassId(undefined)}
+                  className="h-5 w-5 p-0"
+                >
+                  ×
+                </Button>
+              </div>
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -1150,6 +1205,24 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
             >
               {selectedDate ? "Đổi ngày" : "Chọn ngày"}
             </Button>
+            <Select
+              value={selectedClassId ? selectedClassId.toString() : "ALL"}
+              onValueChange={(value) =>
+                setSelectedClassId(value === "ALL" ? undefined : Number(value))
+              }
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Chọn lớp" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Tất cả lớp</SelectItem>
+                {classesData?.data?.map((cls) => (
+                  <SelectItem key={cls.id} value={cls.id.toString()}>
+                    {cls.name || cls.code}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -1442,6 +1515,9 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
     Date | undefined
   >();
   const [showSessionFilterPicker, setShowSessionFilterPicker] = useState(false);
+  const [selectedClassId, setSelectedClassId] = useState<number | undefined>(
+    undefined
+  );
   const [selectedNewDate, setSelectedNewDate] = useState<Date | undefined>();
   const [showNewDatePicker, setShowNewDatePicker] = useState(false);
   const [selectedSlotId, setSelectedSlotId] = useState<number | null>(null);
@@ -1453,6 +1529,9 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
     "session" | "date" | "slot" | "resource" | "form"
   >("session");
 
+  // Load teacher classes
+  const { data: classesData } = useGetAttendanceClassesQuery();
+
   const newDateFormatted = selectedNewDate
     ? format(selectedNewDate, "yyyy-MM-dd")
     : undefined;
@@ -1460,17 +1539,21 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
     ? format(sessionFilterDate, "yyyy-MM-dd")
     : undefined;
 
-  const sessionsQueryArg = sessionFilterFormatted
-    ? { date: sessionFilterFormatted }
-    : {};
+  const sessionsQueryArg: { date?: string; classId?: number } = {};
+  if (sessionFilterFormatted) sessionsQueryArg.date = sessionFilterFormatted;
+  if (selectedClassId) sessionsQueryArg.classId = selectedClassId;
+
   const {
     data: sessionsData,
     isLoading: isLoadingSessions,
     isFetching: isFetchingSessions,
-  } = useGetMySessionsQuery(sessionsQueryArg, {
-    refetchOnMountOrArgChange: true,
-    refetchOnReconnect: true,
-  });
+  } = useGetMySessionsQuery(
+    Object.keys(sessionsQueryArg).length > 0 ? sessionsQueryArg : {},
+    {
+      refetchOnMountOrArgChange: true,
+      refetchOnReconnect: true,
+    }
+  );
 
   const selectedSession = sessionsData?.data?.find(
     (session) => (session.sessionId || session.id) === selectedSessionId
@@ -1641,6 +1724,7 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
     setSelectedNewDate(undefined);
     setSelectedSlotId(null);
     setSelectedResourceId(undefined);
+    setSelectedClassId(undefined);
     setReason("");
     setStep("session");
   };
@@ -1657,6 +1741,7 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
     setSelectedNewDate(undefined);
     setSelectedSlotId(null);
     setSelectedResourceId(undefined);
+    setSelectedClassId(undefined);
     setShowSessionFilterPicker(false);
   };
 
@@ -1788,6 +1873,22 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
                 </Button>
               </div>
             )}
+            {selectedClassId && classesData?.data && (
+              <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-2 py-1 text-xs">
+                {classesData.data.find((c) => c.id === selectedClassId)?.name ||
+                  classesData.data.find((c) => c.id === selectedClassId)
+                    ?.code ||
+                  "Lớp đã chọn"}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedClassId(undefined)}
+                  className="h-5 w-5 p-0"
+                >
+                  ×
+                </Button>
+              </div>
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -1795,6 +1896,24 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
             >
               {sessionFilterDate ? "Đổi ngày" : "Chọn ngày"}
             </Button>
+            <Select
+              value={selectedClassId ? selectedClassId.toString() : "ALL"}
+              onValueChange={(value) =>
+                setSelectedClassId(value === "ALL" ? undefined : Number(value))
+              }
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Chọn lớp" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Tất cả lớp</SelectItem>
+                {classesData?.data?.map((cls) => (
+                  <SelectItem key={cls.id} value={cls.id.toString()}>
+                    {cls.name || cls.code}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -2301,6 +2420,9 @@ function ReplacementFlow({ onSuccess }: FlowProps) {
   );
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedClassId, setSelectedClassId] = useState<number | undefined>(
+    undefined
+  );
   const [selectedCandidateId, setSelectedCandidateId] = useState<number | null>(
     null
   );
@@ -2309,19 +2431,28 @@ function ReplacementFlow({ onSuccess }: FlowProps) {
   const [reason, setReason] = useState("");
   const [step, setStep] = useState<"session" | "candidate" | "form">("session");
 
+  // Load teacher classes
+  const { data: classesData } = useGetAttendanceClassesQuery();
+
   const formattedDate = selectedDate
     ? format(selectedDate, "yyyy-MM-dd")
     : undefined;
 
-  const sessionsQueryArg = formattedDate ? { date: formattedDate } : {};
+  const sessionsQueryArg: { date?: string; classId?: number } = {};
+  if (formattedDate) sessionsQueryArg.date = formattedDate;
+  if (selectedClassId) sessionsQueryArg.classId = selectedClassId;
+
   const {
     data: sessionsData,
     isLoading: isLoadingSessions,
     isFetching: isFetchingSessions,
-  } = useGetMySessionsQuery(sessionsQueryArg, {
-    refetchOnMountOrArgChange: true,
-    refetchOnReconnect: true,
-  });
+  } = useGetMySessionsQuery(
+    Object.keys(sessionsQueryArg).length > 0 ? sessionsQueryArg : {},
+    {
+      refetchOnMountOrArgChange: true,
+      refetchOnReconnect: true,
+    }
+  );
 
   const selectedSession = sessionsData?.data?.find(
     (session) => (session.sessionId || session.id) === selectedSessionId
@@ -2453,6 +2584,7 @@ function ReplacementFlow({ onSuccess }: FlowProps) {
   const resetToSessionStep = () => {
     setSelectedSessionId(null);
     setSelectedDate(undefined);
+    setSelectedClassId(undefined);
     setSelectedCandidateId(null);
     setCandidateSearch("");
     setIsCandidateDropdownOpen(false);
@@ -2473,6 +2605,7 @@ function ReplacementFlow({ onSuccess }: FlowProps) {
     setSelectedDate(date);
     setShowDatePicker(false);
     setSelectedSessionId(null);
+    setSelectedClassId(undefined);
     setSelectedCandidateId(null);
     setCandidateSearch("");
     setIsCandidateDropdownOpen(false);
@@ -2569,10 +2702,27 @@ function ReplacementFlow({ onSuccess }: FlowProps) {
                   size="sm"
                   onClick={() => {
                     setSelectedDate(undefined);
+                    setSelectedClassId(undefined);
                     setSelectedSessionId(null);
                     setSelectedCandidateId(null);
                     setStep("session");
                   }}
+                  className="h-5 w-5 p-0"
+                >
+                  ×
+                </Button>
+              </div>
+            )}
+            {selectedClassId && classesData?.data && (
+              <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-2 py-1 text-xs">
+                {classesData.data.find((c) => c.id === selectedClassId)?.name ||
+                  classesData.data.find((c) => c.id === selectedClassId)
+                    ?.code ||
+                  "Lớp đã chọn"}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedClassId(undefined)}
                   className="h-5 w-5 p-0"
                 >
                   ×
@@ -2586,6 +2736,24 @@ function ReplacementFlow({ onSuccess }: FlowProps) {
             >
               {selectedDate ? "Đổi ngày" : "Chọn ngày"}
             </Button>
+            <Select
+              value={selectedClassId ? selectedClassId.toString() : "ALL"}
+              onValueChange={(value) =>
+                setSelectedClassId(value === "ALL" ? undefined : Number(value))
+              }
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Chọn lớp" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Tất cả lớp</SelectItem>
+                {classesData?.data?.map((cls) => (
+                  <SelectItem key={cls.id} value={cls.id.toString()}>
+                    {cls.name || cls.code}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

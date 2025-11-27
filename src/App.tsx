@@ -13,6 +13,7 @@ import AdminUsersPage from "./app/admin/users/page";
 import AdminPoliciesPage from "./app/admin/policies/page";
 import AdminCentersPage from "./app/admin/centers/page";
 import AdminSubjectsPage from "./app/admin/subjects/page";
+import AdminAnalyticsPage from "./app/admin/analytics/page";
 import TeacherClassesPage from "./app/teacher/classes/page";
 import TeacherSchedulePage from "./app/teacher/schedule/page";
 import TeacherAttendancePage from "./app/teacher/attendance/page";
@@ -120,6 +121,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={["ADMIN"]}>
                   <AdminCentersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/analytics"
+              element={
+                <ProtectedRoute requiredRoles={["ADMIN"]}>
+                  <AdminAnalyticsPage />
                 </ProtectedRoute>
               }
             />
