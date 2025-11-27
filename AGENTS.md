@@ -198,25 +198,113 @@ The project follows a modern minimal design philosophy inspired by shadcn/ui, Op
 - Design system documented in `docs/uiux-design.md` with comprehensive guidelines
 - Product requirements documented in `docs/prd.md` for TMS system context
 
-## Implementation Plan: Core Principles
+## Implementation Philosophy: Student Capstone Project
 
-**1. Code Quality & Structure:**
-- **Clean Implementation:** Avoid unnecessary code, complexity, and "code smells." Adhere to SOLID, DRY principles.
-- **No Redundancy:** Actively prevent code duplication. Abstract and reuse components, functions, and logic.
-- **Logical Soundness:** Ensure all logic is correct and algorithms are efficient.
+### Project Context
+This is a **student capstone project** (đồ án tốt nghiệp), NOT a high-enterprise production system. The focus is on delivering functional, demonstrable features that serve real user needs within academic scope.
 
-**2. System Integrity & Performance:**
-- **Prevent Race Conditions:** Ensure data integrity in concurrent operations.
-- **Avoid Over-engineering:** Implement what is necessary without speculative features.
+### Core Principles
 
-**3. Development Approach:**
-- **Maintain Holistic View:** Consider overall architecture and impact on the entire system.
-- **Focus on MVP Scope:** Deliver the user story at hand within defined scope. Primary goal is functional, demonstrable features.
+**1. User-Role-Centric Thinking**
+- Always think from the **role's perspective**: "If I am a STUDENT, what do I actually need?", "If I am a QA, what tasks do I need to complete?"
+- Example: A student needs to see their classes, schedule, and grades - NOT complex analytics or AI-powered recommendations.
+- Example: Academic Affairs needs to approve/reject student requests - NOT a multi-level approval workflow with delegation features.
 
-**4. UI/UX Requirements:**
+**2. Scope-Appropriate Complexity**
+- ✅ **Build what users actually use**: Core CRUD operations, simple workflows, clear data presentation
+- ❌ **Avoid speculative features**: "What if we need...", "In the future we might...", "Enterprise systems have..."
+- ❌ **Don't over-engineer**: Complex state machines, custom design systems, elaborate animation frameworks when simple solutions work
+
+**3. Practical Implementation Guidelines**
+
+**Clean & Simple Code:**
+- Follow React best practices, but don't force complex patterns where they add no value
+- A straightforward component with clear props is better than an over-abstracted generic component
+- Inline 3 lines of JSX is sometimes better than creating a micro-component
+
+**Real Business Logic:**
+- Understand the actual workflow: How does a student view their schedule? What does Academic Affairs need to see?
+- Don't add features "just in case" - only what's needed NOW for the feature to work
+- Example: Don't build "customizable dashboards" if users only need one fixed view
+
+**Avoid Unnecessary Complexity:**
+- ❌ Don't implement complex state management (Zustand, Jotai, MobX) when Redux Toolkit + Context works
+- ❌ Don't add real-time updates (WebSocket, SSE) if periodic refresh is sufficient
+- ❌ Don't create elaborate form builders if simple react-hook-form works
+- ❌ Don't add virtual scrolling if lists are under 100 items
+
+**Focus on MVP Delivery:**
+- Each feature should be **demonstrable and functional**
+- Student can log in → see classes table → click to see details → submit request (DONE)
+- Don't add: infinite scroll, drag-to-reorder, keyboard shortcuts, advanced filters, data export
+
+**4. Code Quality ≠ Complexity**
+- **Clean code** means readable, maintainable, correct - NOT necessarily "production-grade"
+- **Best practices** for capstone projects: Component composition, proper TypeScript types, error boundaries, loading states
+- **NOT required**: Custom hook libraries, higher-order components everywhere, render props pattern, compound components
+
+**5. UI/UX Requirements:**
 - **Vietnamese Language**: All UI text must be in Vietnamese 100%
 - **Minimal Cards/Borders**: Only use cards when necessary for visual grouping
 - **Clean Interface**: Prioritize direct content presentation over unnecessary containers
+
+**6. When in Doubt, Ask:**
+- "Do users (Student/Teacher/QA/Academic Affairs) actually need this UI feature?"
+- "Is this solving a real UX problem or adding 'nice-to-have' complexity?"
+- "Can this be simpler and still meet the requirement?"
+
+### Examples of Right-Sized Implementation
+
+**✅ GOOD - Appropriate for Capstone:**
+```typescript
+// Simple, clear, meets the need
+export function StudentClassList() {
+  const { data: classes, isLoading } = useGetStudentClassesQuery();
+
+  if (isLoading) return <div>Đang tải...</div>;
+
+  return (
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold">Lớp học của tôi</h1>
+      <div className="space-y-2">
+        {classes?.map((cls) => (
+          <div key={cls.id} className="border p-4 rounded">
+            <h3>{cls.name}</h3>
+            <p>{cls.schedule}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+**❌ BAD - Over-engineered for Capstone:**
+```typescript
+// Unnecessary complexity
+interface DataTableConfig<T> {
+  columns: ColumnDef<T>[];
+  data: T[];
+  filterConfig: FilterConfig;
+  sortConfig: SortConfig;
+  paginationConfig: PaginationConfig;
+  virtualScrollConfig: VirtualScrollConfig;
+}
+
+export function AdvancedDataTable<T>({ config }: { config: DataTableConfig<T> }) {
+  const [state, dispatch] = useReducer(tableReducer, initialState);
+  const virtualizer = useVirtualizer({ ... });
+  const debouncedFilter = useDebouncedCallback( ... );
+
+  // ... 200+ lines of generic table logic
+}
+```
+
+### Remember
+- **This is a capstone project to demonstrate learning**, not a production system for 10,000 users
+- **Focus on core features working correctly**, not on perfect UX for edge cases
+- **Deliver working software that can be demo'd**, not pixel-perfect design for all screen sizes
+- **Think like a user of the system**, not a UX designer optimizing for milliseconds
 
 ## Acknowledging Correct Feedback
 
