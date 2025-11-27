@@ -136,8 +136,6 @@ export function QAReportsListTab({ classId, onNavigateToCreate }: QAReportsListT
                             <SelectItem value="all">Tất cả trạng thái</SelectItem>
                             <SelectItem value="DRAFT">Bản nháp</SelectItem>
                             <SelectItem value="SUBMITTED">Đã nộp</SelectItem>
-                            <SelectItem value="REVIEWED">Đã duyệt</SelectItem>
-                            <SelectItem value="CLOSED">Đã đóng</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>

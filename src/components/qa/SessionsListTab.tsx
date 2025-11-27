@@ -94,12 +94,12 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
     }
 
     const getStatusBadge = (status: string) => {
-        switch (status.toLowerCase()) {
-            case "done":
+        switch (status) {
+            case "DONE":
                 return <Badge variant="default" className="bg-green-100 text-green-700">Đã hoàn thành</Badge>
-            case "planned":
+            case "PLANNED":
                 return <Badge variant="outline">Đã lên lịch</Badge>
-            case "cancelled":
+            case "CANCELLED":
                 return <Badge variant="destructive">Đã hủy</Badge>
             default:
                 return <Badge variant="outline">{status}</Badge>
@@ -129,7 +129,7 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
                             <div>
                                 <p className="text-sm text-muted-foreground">Đã hoàn thành</p>
                                 <p className="text-2xl font-bold text-green-600">
-                                    {sessions.filter(s => s.status === "done").length}
+                                    {sessions.filter(s => s.status === "DONE").length}
                                 </p>
                             </div>
                         </div>
@@ -175,9 +175,9 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                            <SelectItem value="done">Đã hoàn thành</SelectItem>
-                            <SelectItem value="planned">Đã lên lịch</SelectItem>
-                            <SelectItem value="cancelled">Đã hủy</SelectItem>
+                            <SelectItem value="DONE">Đã hoàn thành</SelectItem>
+                            <SelectItem value="PLANNED">Đã lên lịch</SelectItem>
+                            <SelectItem value="CANCELLED">Đã hủy</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>

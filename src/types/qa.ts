@@ -297,9 +297,7 @@ export type QAReportType = typeof QAReportType[keyof typeof QAReportType]
 
 export const QAReportStatus = {
   DRAFT: "DRAFT",
-  SUBMITTED: "SUBMITTED",
-  REVIEWED: "REVIEWED",
-  CLOSED: "CLOSED"
+  SUBMITTED: "SUBMITTED"
 } as const
 
 export type QAReportStatus = typeof QAReportStatus[keyof typeof QAReportStatus]
@@ -320,9 +318,7 @@ export const getQAReportTypeDisplayName = (type: QAReportType): string => {
 export const getQAReportStatusDisplayName = (status: QAReportStatus): string => {
   const displayNames: Record<QAReportStatus, string> = {
     [QAReportStatus.DRAFT]: "Bản nháp",
-    [QAReportStatus.SUBMITTED]: "Đã nộp",
-    [QAReportStatus.REVIEWED]: "Đã duyệt",
-    [QAReportStatus.CLOSED]: "Đã đóng"
+    [QAReportStatus.SUBMITTED]: "Đã nộp"
   };
   return displayNames[status] || status;
 };
