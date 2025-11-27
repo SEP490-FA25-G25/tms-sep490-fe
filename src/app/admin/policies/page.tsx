@@ -200,16 +200,6 @@ export default function AdminPoliciesPage() {
                 {/* Table */}
                 <div className="px-4 lg:px-6">
                   <div className="overflow-hidden rounded-xl border bg-card">
-                    <div className="border-b px-4 py-3 flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">
-                        Tổng số: {pageData?.totalElements ?? 0} policy
-                      </span>
-                      {isFetching && (
-                        <span className="text-xs text-muted-foreground">
-                          Đang tải...
-                        </span>
-                      )}
-                    </div>
                     <div className="overflow-x-auto">
                       {isLoading ? (
                         <div className="space-y-2 p-4">

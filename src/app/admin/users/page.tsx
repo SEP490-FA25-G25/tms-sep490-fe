@@ -247,12 +247,6 @@ export default function AdminUsersPage() {
                   <Card>
                     <CardHeader>
                       <CardTitle>Tất cả Người dùng</CardTitle>
-                      <CardDescription>
-                        Tổng số: {totalElements || users.length} người dùng
-                        {totalElements === 0 &&
-                          users.length > 0 &&
-                          " (API chưa trả về totalElements)"}
-                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       {isLoadingUsers ? (
