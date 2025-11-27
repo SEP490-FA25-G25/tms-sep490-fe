@@ -147,7 +147,7 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
                             <div>
                                 <p className="text-sm text-muted-foreground">Sắp tới</p>
                                 <p className="text-2xl font-bold text-blue-600">
-                                    {sessions.filter(s => s.status === "planned").length}
+                                    {sessions.filter(s => s.status === "PLANNED").length}
                                 </p>
                             </div>
                         </div>
@@ -161,7 +161,7 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
                             <div>
                                 <p className="text-sm text-muted-foreground">Đã hủy</p>
                                 <p className="text-2xl font-bold text-red-600">
-                                    {sessions.filter(s => s.status === "cancelled").length}
+                                    {sessions.filter(s => s.status === "CANCELLED").length}
                                 </p>
                             </div>
                         </div>

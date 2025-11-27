@@ -348,10 +348,7 @@ export type QAReportType = typeof QAReportType[keyof typeof QAReportType]
 
 export const QAReportStatus = {
   DRAFT: "DRAFT",
-  SUBMITTED: "SUBMITTED",
-  UNDER_REVIEW: "UNDER_REVIEW",
-  APPROVED: "APPROVED",
-  REJECTED: "REJECTED"
+  SUBMITTED: "SUBMITTED"
 } as const;
 
 export type QAReportStatus = typeof QAReportStatus[keyof typeof QAReportStatus]
@@ -365,12 +362,6 @@ export const getQAReportStatusDisplayName = (status: QAReportStatus | string): s
       return "Nháp"
     case QAReportStatus.SUBMITTED:
       return "Đã nộp"
-    case QAReportStatus.UNDER_REVIEW:
-      return "Đang xem xét"
-    case QAReportStatus.APPROVED:
-      return "Đã duyệt"
-    case QAReportStatus.REJECTED:
-      return "Đã từ chối"
     default:
       return status
   }
