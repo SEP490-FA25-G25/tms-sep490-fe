@@ -35,6 +35,7 @@ import {
   useDownloadClassEnrollmentTemplateQuery,
   type ClassEnrollmentImportPreview,
   type EnrollmentStrategy,
+  type StudentEnrollmentData,
 } from '@/store/services/enrollmentApi'
 import { toast } from 'sonner'
 import { Download } from 'lucide-react'
@@ -151,9 +152,19 @@ export function EnrollmentImportDialog({
   const handleExecute = async () => {
     if (!preview) return
 
+    // Check if there are any valid students to enroll
+    const validStudents = preview.students.filter(student =>
+      student.status !== 'ERROR' && student.status !== 'DUPLICATE'
+    )
+
+    if (validStudents.length === 0) {
+      toast.error('Không có sinh viên hợp lệ để đăng ký')
+      return
+    }
+
     // Validate strategy requirements
     if (strategy === 'PARTIAL' && selectedStudents.size === 0) {
-      toast.error('Vui lòng chọn ít nhất một sinh viên để đăng ký')
+      toast.error('Vui lòng chọn ít nhất một sinh viên hợp lệ để đăng ký')
       return
     }
 
@@ -163,10 +174,24 @@ export function EnrollmentImportDialog({
     }
 
     try {
-      // For PARTIAL strategy, filter students to only include selected ones
+      // Filter out ERROR and DUPLICATE students, then apply strategy logic
       const studentsToEnroll = strategy === 'PARTIAL'
-        ? preview.students.filter((_, idx) => selectedStudents.has(idx))
-        : preview.students
+        ? preview.students.filter((student, idx) => {
+            // First filter out ERROR and DUPLICATE students
+            if (student.status === 'ERROR' || student.status === 'DUPLICATE') {
+              return false
+            }
+
+            // Then check if student is selected
+            const studentId = student.status === 'FOUND'
+              ? student.resolvedStudentId
+              : -idx - 1
+
+            return selectedStudents.has(studentId)
+          })
+        : preview.students.filter(student =>
+            student.status !== 'ERROR' && student.status !== 'DUPLICATE'
+          )
 
       const result = await executeMutation({
         classId: preview.classId,
@@ -199,8 +224,19 @@ export function EnrollmentImportDialog({
     onOpenChange(false)
   }
 
-  const toggleStudentSelection = (studentId: number) => {
+  const toggleStudentSelection = (student: StudentEnrollmentData, idx: number) => {
     const newSet = new Set(selectedStudents)
+
+    // Determine the unique identifier for this student
+    let studentId: number
+    if (student.status === 'FOUND' && student.resolvedStudentId) {
+      // For FOUND students, use resolvedStudentId (positive)
+      studentId = student.resolvedStudentId
+    } else {
+      // For CREATE students, use negative array index + 1 to avoid conflicts
+      studentId = -idx - 1
+    }
+
     if (newSet.has(studentId)) {
       newSet.delete(studentId)
     } else {
@@ -352,6 +388,21 @@ export function EnrollmentImportDialog({
                 </div>
               )}
 
+              {/* Warning for ERROR/DUPLICATE students */}
+              {(() => {
+                const invalidStudentsCount = preview.students.filter(s =>
+                  s.status === 'ERROR' || s.status === 'DUPLICATE'
+                ).length
+
+                return invalidStudentsCount > 0 && (
+                  <div className="text-sm p-3 rounded-md bg-amber-50 text-amber-800 border border-amber-200">
+                    <AlertCircle className="inline h-4 w-4 mr-2" />
+                    <span className="font-medium">Lưu ý:</span>
+                    {' '}{invalidStudentsCount} sinh viên có lỗi hoặc trùng lặp sẽ không được đăng ký.
+                  </div>
+                )
+              })()}
+
               {/* Strategy Selection */}
               <div className="space-y-2">
                 <Label htmlFor="strategy">Chiến lược đăng ký</Label>
@@ -421,8 +472,12 @@ export function EnrollmentImportDialog({
                               {student.status !== 'ERROR' && student.status !== 'DUPLICATE' && (
                                 <input
                                   type="checkbox"
-                                  checked={selectedStudents.has(idx)}
-                                  onChange={() => toggleStudentSelection(idx)}
+                                  checked={
+                                    student.status === 'FOUND' && student.resolvedStudentId
+                                      ? selectedStudents.has(student.resolvedStudentId)
+                                      : selectedStudents.has(-idx - 1)
+                                  }
+                                  onChange={() => toggleStudentSelection(student, idx)}
                                   className="h-4 w-4"
                                 />
                               )}
@@ -437,7 +492,10 @@ export function EnrollmentImportDialog({
                                 student.status === 'DUPLICATE' ? 'bg-yellow-100 text-yellow-700' :
                                 'bg-red-100 text-red-700'
                               }`}>
-                                {student.status}
+                                {student.status === 'FOUND' ? 'Tìm thấy' :
+                                 student.status === 'CREATE' ? 'Tạo mới' :
+                                 student.status === 'DUPLICATE' ? 'Trùng lặp' :
+                                 'Lỗi'}
                               </span>
                             </div>
                           </TableCell>
