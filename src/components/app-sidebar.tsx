@@ -80,9 +80,9 @@ const roleBasedNav = {
         icon: HomeIcon,
       },
       {
-        title: "Phê duyệt khóa học",
-        url: "/manager/courses/approve",
-        icon: CheckCircleIcon,
+        title: "Quản lý môn học",
+        url: "/curriculum",
+        icon: BookOpenIcon,
       },
       {
         title: "Quản lý giáo viên",

@@ -22,6 +22,11 @@ import { subjectAdminApi } from "./services/subjectAdminApi";
 import { analyticsApi } from "./services/analyticsApi";
 import { centerApi } from "./services/centerApi";
 import { branchApi } from "./services/branchApi";
+<<<<<<< HEAD
+=======
+import { enumApi } from './services/enumApi'
+import { uploadApi } from './services/uploadApi'
+>>>>>>> b505a36 (Hoàn thiện các chức năng cho workflow quản lý chương trình đào tạo)
 import authSlice, {
   setCredentials,
   logout,
@@ -60,6 +65,11 @@ export const store = configureStore({
     [branchApi.reducerPath]: branchApi.reducer,
     [subjectAdminApi.reducerPath]: subjectAdminApi.reducer,
     [analyticsApi.reducerPath]: analyticsApi.reducer,
+<<<<<<< HEAD
+=======
+    [enumApi.reducerPath]: enumApi.reducer,
+    [uploadApi.reducerPath]: uploadApi.reducer,
+>>>>>>> b505a36 (Hoàn thiện các chức năng cho workflow quản lý chương trình đào tạo)
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -94,7 +104,13 @@ export const store = configureStore({
       .concat(centerApi.middleware)
       .concat(branchApi.middleware)
       .concat(subjectAdminApi.middleware)
+<<<<<<< HEAD
       .concat(analyticsApi.middleware),
+=======
+      .concat(analyticsApi.middleware)
+      .concat(enumApi.middleware)
+      .concat(uploadApi.middleware),
+>>>>>>> b505a36 (Hoàn thiện các chức năng cho workflow quản lý chương trình đào tạo)
 });
 
 export type RootState = ReturnType<typeof store.getState>;

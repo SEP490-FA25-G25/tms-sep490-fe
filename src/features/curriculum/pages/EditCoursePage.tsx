@@ -23,10 +23,15 @@ export default function EditCoursePage() {
         );
     }
 
+    const pageTitle = courseData?.data?.status === 'DRAFT' ? "Tiếp tục tạo Khóa học" : "Chỉnh sửa Khóa học";
+    const pageDescription = courseData?.data?.status === 'DRAFT'
+        ? "Hoàn thiện các thông tin để tạo khóa học."
+        : `Cập nhật thông tin khóa học: ${courseData?.data?.name || ''}`;
+
     return (
         <DashboardLayout
-            title="Chỉnh sửa Khóa học"
-            description={`Cập nhật thông tin khóa học: ${courseData?.data?.name || ''}`}
+            title={pageTitle}
+            description={pageDescription}
         >
             <div className="space-y-6">
                 <Button variant="outline" onClick={() => navigate("/curriculum")}>

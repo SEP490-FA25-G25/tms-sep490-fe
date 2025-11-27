@@ -51,12 +51,15 @@ import CreateSubjectPage from "./features/curriculum/pages/CreateSubjectPage";
 import EditSubjectPage from "./features/curriculum/pages/EditSubjectPage";
 // import SubjectDetailPage from '@/features/curriculum/pages/SubjectDetailPage'
 import CurriculumCourseDetailPage from "./features/curriculum/pages/CourseDetailPage";
+import SubjectDetailPage from '@/features/curriculum/pages/SubjectDetailPage'
+import CourseLearningPage from './features/curriculum/pages/CourseLearningPage'
 import EditCoursePage from "./features/curriculum/pages/EditCoursePage";
 import NotificationsPage from "./app/notifications/page";
 import { Toaster } from "@/components/ui/sonner";
 import { lazy } from "react";
 
 // const CreateLevelPage = lazy(() => import('./features/curriculum/pages/CreateLevelPage'))
+const CreateLevelPage = lazy(() => import('./features/curriculum/pages/CreateLevelPage'))
 const LevelDetailPage = lazy(
   () => import("@/features/curriculum/pages/LevelDetailPage")
 );
@@ -582,14 +585,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/* <Route
+            <Route
               path="/curriculum/subjects/:id"
               element={
                 <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
                   <SubjectDetailPage />
                 </ProtectedRoute>
               }
-            /> */}
+            />
             <Route
               path="/curriculum/subjects/:id/edit"
               element={
@@ -600,14 +603,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/* <Route
+            <Route
               path="/curriculum/levels/create"
               element={
                 <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
                   <CreateLevelPage />
                 </ProtectedRoute>
               }
-            /> */}
+            />
             <Route
               path="/curriculum/levels/:id"
               element={
@@ -643,6 +646,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={["SUBJECT_LEADER"]}>
                   <EditCoursePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/curriculum/courses/:id/learn"
+              element={
+                <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
+                  <CourseLearningPage />
                 </ProtectedRoute>
               }
             />

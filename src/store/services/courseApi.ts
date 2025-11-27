@@ -39,7 +39,9 @@ export interface CourseDetail {
   code: string;
   name: string;
   description?: string;
+  subjectId?: number;
   subjectName?: string;
+  levelId?: number;
   levelName?: string;
   logicalCourseCode?: string;
   version?: number;
@@ -54,6 +56,7 @@ export interface CourseDetail {
   effectiveDate?: string;
   status: string;
   approvalStatus: string;
+  rejectionReason?: string;
   phases?: CoursePhase[];
   materials?: CourseMaterial[];
   clos?: CourseCLO[];
@@ -62,6 +65,21 @@ export interface CourseDetail {
   totalMaterials?: number;
   progressPercentage?: number;
   completedSessions?: number;
+  basicInfo?: {
+    subjectId: number;
+    levelId?: number;
+    name: string;
+    code: string;
+    description?: string;
+    prerequisites?: string;
+    durationHours?: number;
+    scoreScale?: string;
+    targetAudience?: string;
+    teachingMethods?: string;
+    effectiveDate?: string;
+    numberOfSessions?: number;
+    hoursPerSession?: number;
+  };
 }
 
 export interface CoursePhase {
@@ -80,6 +98,7 @@ export interface CourseSession {
   id: number;
   sequenceNo: number;
   topic: string;
+  studentTask?: string;
   description?: string;
   objectives?: string;
   skillSets?: string[];
@@ -91,8 +110,12 @@ export interface CourseSession {
 export interface CourseMaterial {
   id: number;
   title: string;
+  name?: string; // Alias for title
   description?: string;
   materialType?: string;
+  type?: string; // Alias for materialType
+  scope?: string; // e.g. 'COURSE', 'PHASE', 'SESSION'
+  url?: string; // Alias for fileUrl
   fileName?: string;
   filePath?: string;
   fileUrl?: string;
@@ -112,6 +135,7 @@ export interface CourseCLO {
   description: string;
   competencyLevel?: string;
   relatedPLOs?: CoursePLO[];
+  mappedPLOs?: string[];
   isAchieved?: boolean;
   achievementRate?: number;
 }
@@ -128,10 +152,12 @@ export interface CourseAssessment {
   name: string;
   description?: string;
   assessmentType: string;
-  maxScore: number;
+  type?: string; // Alias for assessmentType if needed, or specific type
+  maxScore?: number;
   duration?: string;
   sessionIds?: number[];
   cloMappings?: string[];
+  mappedCLOs?: string[];
 }
 
 export interface CourseProgress {
@@ -202,6 +228,8 @@ export interface CourseDTO {
   name: string;
   status?: string;
   approvalStatus?: string;
+  requesterName?: string;
+  rejectionReason?: string;
 }
 
 export interface ApiResponse<T = unknown> {
@@ -325,12 +353,13 @@ export const courseApi = createApi({
     }),
 
     // Create new course
-    createCourse: builder.mutation<void, CreateCourseRequest>({
+    createCourse: builder.mutation<CourseDTO, CreateCourseRequest>({
       query: (body) => ({
         url: '/courses',
         method: 'POST',
         body,
       }),
+      transformResponse: (response: { data: CourseDTO }) => response.data,
       invalidatesTags: ['Course'],
     }),
     updateCourse: builder.mutation<void, { id: number; data: CreateCourseRequest }>({
@@ -369,6 +398,31 @@ export const courseApi = createApi({
       transformResponse: (response: { data: CourseDTO[] }) => response.data,
       providesTags: ['Course'],
     }),
+    submitCourse: builder.mutation<void, number>({
+      query: (id) => ({
+        url: `/courses/${id}/submit`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['Course'],
+    }),
+    approveCourse: builder.mutation<void, number>({
+      query: (id) => ({
+        url: `/courses/${id}/approve`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['Course'],
+    }),
+    rejectCourse: builder.mutation<void, { id: number; reason: string }>({
+      query: ({ id, reason }) => ({
+        url: `/courses/${id}/reject`,
+        method: 'POST',
+        body: reason,
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+      }),
+      invalidatesTags: ['Course'],
+    }),
   }),
 });
 
@@ -388,4 +442,7 @@ export const {
   useGetCourseDetailsQuery,
   useDeactivateCourseMutation,
   useReactivateCourseMutation,
+  useSubmitCourseMutation,
+  useApproveCourseMutation,
+  useRejectCourseMutation,
 } = courseApi;

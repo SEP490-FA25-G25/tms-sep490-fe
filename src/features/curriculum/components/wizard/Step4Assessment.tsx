@@ -15,15 +15,12 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+
 import { Plus, Trash2 } from "lucide-react";
-import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { MultiSelect } from "@/components/ui/multi-select";
 import type { CourseData, Assessment } from "@/types/course";
+import { useGetSkillsQuery } from "@/store/services/enumApi";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Step4Props {
     data: CourseData;
@@ -31,13 +28,18 @@ interface Step4Props {
 }
 
 export function Step4Assessment({ data, setData }: Step4Props) {
+    const { data: skillsList } = useGetSkillsQuery();
+
     const addAssessment = () => {
         const newAssessment: Assessment = {
             id: crypto.randomUUID(),
             name: "",
             type: "QUIZ",
-            weight: 0,
             durationMinutes: 60,
+            maxScore: 0,
+            skills: [],
+            description: "",
+            note: "",
             cloIds: [],
         };
         setData((prev) => ({
@@ -46,36 +48,24 @@ export function Step4Assessment({ data, setData }: Step4Props) {
         }));
     };
 
-    const updateAssessment = (index: number, field: keyof Assessment, value: string | number | string[]) => {
+    const updateAssessment = (index: number, field: keyof Assessment, value: string | number | string[] | undefined) => {
         const newAssessments = [...(data.assessments || [])];
         newAssessments[index] = { ...newAssessments[index], [field]: value };
         setData((prev) => ({ ...prev, assessments: newAssessments }));
     };
 
-    const toggleAssessmentClo = (index: number, cloCode: string) => {
-        const currentClos = data.assessments[index].cloIds || [];
-        const newClos = currentClos.includes(cloCode)
-            ? currentClos.filter((c) => c !== cloCode)
-            : [...currentClos, cloCode];
 
-        updateAssessment(index, "cloIds", newClos);
-    };
 
     const removeAssessment = (index: number) => {
         const newAssessments = data.assessments.filter((_, i) => i !== index);
         setData((prev) => ({ ...prev, assessments: newAssessments }));
     };
 
-    const totalWeight = data.assessments?.reduce((sum, a) => sum + (Number(a.weight) || 0), 0) || 0;
-
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex justify-between items-center">
                 <h3 className="text-lg font-medium">Danh sách bài kiểm tra</h3>
                 <div className="flex items-center gap-4">
-                    <span className={`text-sm font-medium ${totalWeight !== 100 ? "text-destructive" : "text-green-600"}`}>
-                        Tổng trọng số: {totalWeight}%
-                    </span>
                     <Button onClick={addAssessment}>
                         <Plus className="w-4 h-4 mr-2" />
                         Thêm Bài kiểm tra
@@ -89,9 +79,12 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                         <TableRow>
                             <TableHead>Tên bài kiểm tra</TableHead>
                             <TableHead className="w-[150px]">Loại</TableHead>
-                            <TableHead className="w-[100px]">Trọng số (%)</TableHead>
                             <TableHead className="w-[100px]">Thời lượng (phút)</TableHead>
+                            <TableHead className="w-[100px]">Điểm tối đa</TableHead>
+                            <TableHead className="w-[200px]">Kỹ năng</TableHead>
                             <TableHead className="w-[200px]">Map CLO</TableHead>
+                            <TableHead className="w-[200px]">Mô tả</TableHead>
+                            <TableHead className="w-[150px]">Ghi chú</TableHead>
                             <TableHead className="w-[50px]"></TableHead>
                         </TableRow>
                     </TableHeader>
@@ -118,56 +111,84 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                                             <SelectItem value="QUIZ">Quiz</SelectItem>
                                             <SelectItem value="MIDTERM">Giữa kỳ</SelectItem>
                                             <SelectItem value="FINAL">Cuối kỳ</SelectItem>
-                                            <SelectItem value="ASSIGNMENT">Bài tập lớn</SelectItem>
-                                            <SelectItem value="PROJECT">Dự án</SelectItem>
+                                            <SelectItem value="MOCK_TEST">Thi thử</SelectItem>
+                                            <SelectItem value="PHASE_TEST">Kiểm tra giai đoạn</SelectItem>
+                                            <SelectItem value="PLACEMENT_TEST">Kiểm tra đầu vào</SelectItem>
+                                            <SelectItem value="HOMEWORK">Bài tập về nhà</SelectItem>
+                                            <SelectItem value="ORAL">Vấn đáp</SelectItem>
+                                            <SelectItem value="PRACTICE">Thực hành</SelectItem>
+                                            <SelectItem value="OTHER">Khác</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </TableCell>
                                 <TableCell>
                                     <Input
                                         type="number"
-                                        value={assessment.weight}
-                                        onChange={(e) => updateAssessment(index, "weight", Number(e.target.value))}
-                                        className="h-8"
+                                        min="0"
+                                        value={assessment.durationMinutes ?? ""}
+                                        onChange={(e) => updateAssessment(index, "durationMinutes", e.target.value === "" ? undefined : Number(e.target.value))}
+                                        className="h-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        placeholder="Phút"
                                     />
                                 </TableCell>
                                 <TableCell>
                                     <Input
                                         type="number"
-                                        value={assessment.durationMinutes}
-                                        onChange={(e) => updateAssessment(index, "durationMinutes", Number(e.target.value))}
-                                        className="h-8"
+                                        min="0"
+                                        step="0.01"
+                                        value={assessment.maxScore ?? ""}
+                                        onChange={(e) => updateAssessment(index, "maxScore", e.target.value === "" ? undefined : Number(e.target.value))}
+                                        className="h-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        placeholder="Điểm"
+                                    />
+                                </TableCell>
+
+                                <TableCell>
+                                    <MultiSelect
+                                        options={skillsList?.map((skill: string) => ({
+                                            label: skill,
+                                            value: skill,
+                                        })) || []}
+                                        selected={assessment.skills || []}
+                                        onChange={(selected) => updateAssessment(index, "skills", selected)}
+                                        placeholder="Chọn Kỹ năng"
+                                        searchPlaceholder="Tìm kỹ năng..."
+                                        emptyMessage="Không tìm thấy kỹ năng."
+                                        badgeClassName="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
                                     />
                                 </TableCell>
                                 <TableCell>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="outline" size="sm" className="h-8 w-full justify-start">
-                                                {assessment.cloIds?.length > 0 ? (
-                                                    <div className="flex gap-1 flex-wrap">
-                                                        {assessment.cloIds.map((c) => (
-                                                            <Badge key={c} variant="secondary" className="text-[10px] px-1 py-0">
-                                                                {c}
-                                                            </Badge>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-muted-foreground text-xs">Select CLOs</span>
-                                                )}
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="start" className="w-[200px]">
-                                            {data.clos?.map((clo) => (
-                                                <DropdownMenuCheckboxItem
-                                                    key={clo.id}
-                                                    checked={assessment.cloIds?.includes(clo.code)}
-                                                    onCheckedChange={() => toggleAssessmentClo(index, clo.code)}
-                                                >
-                                                    {clo.code}
-                                                </DropdownMenuCheckboxItem>
-                                            ))}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                                    <MultiSelect
+                                        options={data.clos?.map((clo) => ({
+                                            label: clo.code,
+                                            value: clo.code,
+                                            description: clo.description,
+                                        })) || []}
+                                        selected={assessment.cloIds || []}
+                                        onChange={(selected) => updateAssessment(index, "cloIds", selected)}
+                                        placeholder="Chọn CLO"
+                                        searchPlaceholder="Tìm CLO..."
+                                        emptyMessage="Không tìm thấy CLO."
+                                        badgeClassName="bg-green-50 text-green-700 hover:bg-green-100 border-green-200"
+                                    />
+                                </TableCell>
+                                <TableCell>
+                                    <Textarea
+                                        value={assessment.description || ""}
+                                        onChange={(e) => updateAssessment(index, "description", e.target.value)}
+                                        placeholder="Mô tả..."
+                                        className="min-h-[40px] resize-none"
+                                        rows={1}
+                                    />
+                                </TableCell>
+                                <TableCell>
+                                    <Textarea
+                                        value={assessment.note || ""}
+                                        onChange={(e) => updateAssessment(index, "note", e.target.value)}
+                                        placeholder="Ghi chú..."
+                                        className="min-h-[40px] resize-none"
+                                        rows={1}
+                                    />
                                 </TableCell>
                                 <TableCell>
                                     <Button

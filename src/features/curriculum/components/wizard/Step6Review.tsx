@@ -9,13 +9,38 @@ interface Step6Props {
 
 export function Step6Review({ data }: Step6Props) {
     // Validation Logic
-    const totalWeight = data.assessments?.reduce((sum: number, assessment: Assessment) => sum + (Number(assessment.weight) || 0), 0) || 0;
+    // Helper to get all sessions
+    const allSessions = data.structure?.flatMap(p => p.sessions || []) || [];
 
     const checklist = [
-        { label: "Thông tin cơ bản (Tên, Mã, Mô tả)", valid: !!(data.basicInfo?.name && data.basicInfo?.code) },
-        { label: "Ít nhất 1 CLO được định nghĩa", valid: (data.clos?.length || 0) > 0 },
-        { label: "Cấu trúc chương trình (Ít nhất 1 giai đoạn)", valid: (data.structure?.length || 0) > 0 },
-        { label: "Tổng trọng số đánh giá là 100%", valid: totalWeight === 100 },
+        {
+            label: "Thông tin cơ bản (Tên, Mã, Môn học, Cấp độ)",
+            valid: !!(data.basicInfo?.name && data.basicInfo?.code && data.basicInfo?.subjectId && data.basicInfo?.levelId)
+        },
+
+        {
+            label: "Không để trống Tài liệu, CLO, Bài kiểm tra",
+            valid: (data.clos?.length || 0) > 0 && (data.materials?.length || 0) > 0 && (data.assessments?.length || 0) > 0
+        },
+        {
+            label: "Đủ số buổi học đã được quyết định ở bước 1",
+            valid: (data.structure?.reduce((acc, p) => acc + (p.sessions?.length || 0), 0) || 0) === (Number(data.basicInfo?.numberOfSessions) || 0)
+        },
+
+        // New Validations
+        {
+            label: "Tất cả CLO đều được map với ít nhất 1 PLO",
+            valid: (data.clos?.length || 0) > 0 && data.clos.every(clo => clo.mappedPLOs && clo.mappedPLOs.length > 0)
+        },
+        {
+            label: "Tất cả CLO đều được map với ít nhất 1 buổi học",
+            valid: (data.clos?.length || 0) > 0 && data.clos.every(clo => allSessions.some(s => s.cloIds && s.cloIds.includes(clo.code)))
+        },
+        {
+            id: "clo-assessment-mapping",
+            label: "Tất cả CLO đều được map với ít nhất 1 bài kiểm tra",
+            valid: (data.clos?.length || 0) > 0 && data.clos.every(clo => data.assessments?.some(a => a.cloIds && a.cloIds.includes(clo.code)))
+        }
     ];
 
     const allValid = checklist.every((v) => v.valid);
@@ -57,8 +82,35 @@ export function Step6Review({ data }: Step6Props) {
                                         {data.structure?.reduce((acc: number, p: Phase) => acc + (p.sessions?.length || 0), 0) || 0} Buổi học
                                     </Badge>
                                     <Badge variant="outline">{data.assessments?.length || 0} Bài kiểm tra</Badge>
+                                    <Badge variant="outline">{data.materials?.length || 0} Tài liệu</Badge>
                                 </div>
                             </div>
+
+                            {data.materials && data.materials.length > 0 && (
+                                <div>
+                                    <p className="text-sm text-muted-foreground mb-2">Tài liệu đính kèm</p>
+                                    <div className="space-y-2">
+                                        {data.materials.map((material, idx) => (
+                                            <div key={idx} className="flex items-center justify-between p-2 border rounded-md text-sm">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-medium">{material.name}</span>
+                                                    <Badge variant="secondary" className="text-xs">{material.type}</Badge>
+                                                </div>
+                                                {material.url && (
+                                                    <a
+                                                        href={material.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-600 hover:underline text-xs truncate max-w-[200px]"
+                                                    >
+                                                        {material.url}
+                                                    </a>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>

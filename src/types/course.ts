@@ -3,8 +3,6 @@ export interface CourseBasicInfo {
     levelId: string;
     name: string;
     code: string;
-    durationHours?: number;
-    numberOfSessions?: number;
     hoursPerSession?: number;
     scoreScale?: string;
     effectiveDate?: string;
@@ -12,7 +10,8 @@ export interface CourseBasicInfo {
     teachingMethods?: string;
     description?: string;
     prerequisites?: string;
-    durationWeeks?: number;
+    durationHours?: number;
+    numberOfSessions?: number;
 }
 
 export interface CLO {
@@ -34,15 +33,19 @@ export interface Session {
 export interface Phase {
     id: string;
     name: string;
+    description?: string;
     sessions: Session[];
 }
 
 export interface Assessment {
     id?: string;
     name: string;
-    type: string;
-    weight: number;
+    type: "QUIZ" | "MIDTERM" | "FINAL" | "MOCK_TEST" | "PHASE_TEST" | "PLACEMENT_TEST" | "HOMEWORK" | "ORAL" | "PRACTICE" | "OTHER";
     durationMinutes?: number;
+    maxScore?: number;
+    skills?: string[];
+    description?: string;
+    note?: string;
     cloIds: string[];
 }
 
@@ -52,6 +55,8 @@ export interface Material {
     type: string;
     scope: string;
     url: string;
+    phaseId?: string;
+    sessionId?: string;
 }
 
 export interface CourseData {

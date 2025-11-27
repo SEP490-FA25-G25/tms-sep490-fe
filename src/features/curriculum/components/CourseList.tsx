@@ -1,12 +1,5 @@
 import { useState } from "react";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,8 +29,15 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+import { useAuth } from "@/contexts/AuthContext";
+import { DataTable } from "@/components/data-table";
+import { type ColumnDef } from "@tanstack/react-table";
+import { ArrowUpDown } from "lucide-react";
+
 export function CourseList() {
     const navigate = useNavigate();
+    const { user } = useAuth();
+    const isSubjectLeader = user?.roles?.includes("SUBJECT_LEADER");
     const [selectedSubjectId, setSelectedSubjectId] = useState<number | undefined>(undefined);
     const [selectedLevelId, setSelectedLevelId] = useState<number | undefined>(undefined);
     const [courseToDelete, setCourseToDelete] = useState<number | null>(null);
@@ -95,6 +95,126 @@ export function CourseList() {
         }
     };
 
+    const columns: ColumnDef<any>[] = [
+        {
+            accessorKey: "code",
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        Mã khóa học
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                )
+            },
+            cell: ({ row }) => <div className="font-medium pl-4">{row.getValue("code")}</div>,
+        },
+        {
+            accessorKey: "name",
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        Tên khóa học
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                )
+            },
+            cell: ({ row }) => <div className="pl-4">{row.getValue("name")}</div>,
+        },
+        {
+            accessorKey: "status",
+            header: "Trạng thái",
+            cell: ({ row }) => {
+                const status = row.getValue("status") as string;
+                const approvalStatus = row.original.approvalStatus;
+                return (
+                    <div className="flex gap-2 items-center">
+                        <Badge variant={status === 'ACTIVE' ? 'default' : 'secondary'}>
+                            {status}
+                        </Badge>
+                        {approvalStatus === 'REJECTED' && (
+                            <Badge variant="destructive">
+                                {approvalStatus}
+                            </Badge>
+                        )}
+                    </div>
+                );
+            },
+        },
+        {
+            id: "actions",
+            cell: ({ row }) => {
+                const course = row.original;
+                return (
+                    <div className="flex justify-end gap-2">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => navigate(`/curriculum/courses/${course.id}`)}
+                            title="Xem chi tiết"
+                        >
+                            <Eye className="h-4 w-4" />
+                        </Button>
+                        {isSubjectLeader && (
+                            <>
+                                {course.status === 'DRAFT' && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium w-auto px-2"
+                                        onClick={() => navigate(`/curriculum/courses/${course.id}/edit`)}
+                                        title="Tiếp tục tạo khóa học"
+                                    >
+                                        <Edit className="h-4 w-4 mr-1" />
+                                        Tiếp tục tạo khóa học
+                                    </Button>
+                                )}
+                                {course.status === 'REJECTED' && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 font-medium w-auto px-2"
+                                        onClick={() => navigate(`/curriculum/courses/${course.id}/edit`)}
+                                        title="Chỉnh sửa khóa học"
+                                    >
+                                        <Edit className="h-4 w-4 mr-1" />
+                                        Chỉnh sửa khóa học
+                                    </Button>
+                                )}
+                                {course.status === 'INACTIVE' ? (
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                        onClick={() => setCourseToReactivate(course.id)}
+                                        title="Kích hoạt lại"
+                                    >
+                                        <RotateCcw className="h-4 w-4" />
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="text-destructive"
+                                        onClick={() => setCourseToDelete(course.id)}
+                                        title="Hủy kích hoạt"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </>
+                        )}
+                    </div>
+                );
+            },
+        },
+    ];
+
     return (
         <div className="space-y-4">
             {/* Filter Section */}
@@ -141,84 +261,12 @@ export function CourseList() {
 
             {/* Table Section */}
             <div className="rounded-md border">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Mã khóa học</TableHead>
-                            <TableHead>Tên khóa học</TableHead>
-                            <TableHead>Trạng thái</TableHead>
-                            <TableHead className="text-right">Thao tác</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {isLoading ? (
-                            <TableRow>
-                                <TableCell colSpan={4} className="h-24 text-center">
-                                    <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
-                                </TableCell>
-                            </TableRow>
-                        ) : courses && courses.length > 0 ? (
-                            courses.map((course) => (
-                                <TableRow key={course.id}>
-                                    <TableCell className="font-medium">{course.code}</TableCell>
-                                    <TableCell>{course.name}</TableCell>
-                                    <TableCell>
-                                        <Badge variant={course.status === 'ACTIVE' ? 'default' : 'secondary'}>
-                                            {course.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => navigate(`/curriculum/courses/${course.id}`)}
-                                                title="Xem chi tiết"
-                                            >
-                                                <Eye className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => navigate(`/curriculum/courses/${course.id}/edit`)}
-                                                title="Chỉnh sửa"
-                                            >
-                                                <Edit className="h-4 w-4" />
-                                            </Button>
-                                            {course.status === 'INACTIVE' ? (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                                    onClick={() => setCourseToReactivate(course.id)}
-                                                    title="Kích hoạt lại"
-                                                >
-                                                    <RotateCcw className="h-4 w-4" />
-                                                </Button>
-                                            ) : (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-destructive"
-                                                    onClick={() => setCourseToDelete(course.id)}
-                                                    title="Hủy kích hoạt"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                                    Chưa có khóa học nào.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
+                <DataTable
+                    columns={columns}
+                    data={courses || []}
+                    searchKey="name"
+                    searchPlaceholder="Tìm kiếm theo tên khóa học..."
+                />
             </div>
 
             <AlertDialog open={!!courseToDelete} onOpenChange={(open) => !open && setCourseToDelete(null)}>

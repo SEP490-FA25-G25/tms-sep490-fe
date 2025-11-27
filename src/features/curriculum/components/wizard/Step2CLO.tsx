@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -23,9 +24,10 @@ export function Step2CLO({ data, setData }: Step2Props) {
     const [selectedCloIndex, setSelectedCloIndex] = useState<number | null>(null);
 
     const addClo = () => {
+        const nextIndex = (data.clos?.length || 0) + 1;
         const newClo: CLO = {
             id: crypto.randomUUID(),
-            code: "",
+            code: `CLO${nextIndex}`,
             description: "",
             mappedPLOs: [],
         };
@@ -86,10 +88,12 @@ export function Step2CLO({ data, setData }: Step2Props) {
                                             onChange={(e) => updateClo(index, "code", e.target.value)}
                                             className="w-24 font-bold"
                                         />
-                                        <Input
+                                        <Textarea
                                             value={clo.description}
                                             onChange={(e) => updateClo(index, "description", e.target.value)}
                                             placeholder="Nhập mô tả chuẩn đầu ra..."
+                                            className="min-h-[40px] resize-none"
+                                            rows={2}
                                         />
                                     </div>
                                     <div className="flex gap-2 flex-wrap">

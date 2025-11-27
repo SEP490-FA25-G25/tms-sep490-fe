@@ -9,17 +9,23 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useGetSubjectsWithLevelsQuery, useGetTimeslotDurationQuery } from "@/store/services/curriculumApi";
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import type { CourseData } from "@/types/course";
 
 interface Step1Props {
     data: CourseData;
     setData: React.Dispatch<React.SetStateAction<CourseData>>;
+    courseStatus?: string;
 }
 
-export function Step1BasicInfo({ data, setData }: Step1Props) {
+export function Step1BasicInfo({ data, setData, courseStatus }: Step1Props) {
     const { data: subjectsData, isLoading } = useGetSubjectsWithLevelsQuery();
     const { data: durationData } = useGetTimeslotDurationQuery();
+
+    // Refs to track previous values for change detection
+    const prevSubjectId = useRef(data.basicInfo?.subjectId);
+    const prevLevelId = useRef(data.basicInfo?.levelId);
+    const prevEffectiveDate = useRef(data.basicInfo?.effectiveDate);
 
     const selectedSubject = useMemo(() => {
         return subjectsData?.data?.find(s => s.id.toString() === data.basicInfo?.subjectId);
@@ -55,21 +61,49 @@ export function Step1BasicInfo({ data, setData }: Step1Props) {
 
     // Auto-generate course code
     useEffect(() => {
-        if (data.basicInfo?.subjectId && data.basicInfo?.levelId) {
-            const subject = subjectsData?.data?.find(s => s.id.toString() === data.basicInfo?.subjectId);
-            const level = subject?.levels?.find(l => l.id.toString() === data.basicInfo?.levelId);
+        const currentSubjectId = data.basicInfo?.subjectId;
+        const currentLevelId = data.basicInfo?.levelId;
+        const currentEffectiveDate = data.basicInfo?.effectiveDate;
+
+        // Check if any relevant field has changed
+        const hasChanged =
+            currentSubjectId !== prevSubjectId.current ||
+            currentLevelId !== prevLevelId.current ||
+            currentEffectiveDate !== prevEffectiveDate.current;
+
+        if (hasChanged && currentSubjectId && currentLevelId && subjectsData?.data) {
+            // Check if we are in an update mode (either Continue Creating or Edit)
+            const isUpdate = !!courseStatus;
+
+            // Special handling for initial load in Update Mode
+            // If we are updating and transitioning from empty state to populated state, it's the data load.
+            // We should NOT overwrite the existing code.
+            if (isUpdate && (!prevSubjectId.current || prevSubjectId.current === "")) {
+                prevSubjectId.current = currentSubjectId;
+                prevLevelId.current = currentLevelId;
+                prevEffectiveDate.current = currentEffectiveDate;
+                return;
+            }
+
+            const subject = subjectsData.data.find(s => s.id.toString() === currentSubjectId);
+            const level = subject?.levels?.find(l => l.id.toString() === currentLevelId);
 
             if (subject && level) {
                 let year = new Date().getFullYear();
-                if (data.basicInfo?.effectiveDate) {
-                    year = new Date(data.basicInfo.effectiveDate).getFullYear();
+                if (currentEffectiveDate) {
+                    year = new Date(currentEffectiveDate).getFullYear();
                 }
 
                 const generatedCode = `${subject.code}-${level.code}-${year}`;
                 handleChange("code", generatedCode);
+
+                // Update refs only after successful generation trigger
+                prevSubjectId.current = currentSubjectId;
+                prevLevelId.current = currentLevelId;
+                prevEffectiveDate.current = currentEffectiveDate;
             }
         }
-    }, [data.basicInfo?.subjectId, data.basicInfo?.levelId, data.basicInfo?.effectiveDate, subjectsData]);
+    }, [data.basicInfo?.subjectId, data.basicInfo?.levelId, data.basicInfo?.effectiveDate, subjectsData, courseStatus]);
 
     const handleSubjectChange = (val: string) => {
         handleChange("subjectId", val);
