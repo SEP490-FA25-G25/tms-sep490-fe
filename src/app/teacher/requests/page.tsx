@@ -152,6 +152,34 @@ const formatBackendError = (
     return "Ngày session đề xuất không nằm trong khoảng thời gian cho phép (trong vòng 14 ngày từ hôm nay).";
   }
 
+  if (errorMessage.includes("TEACHER_RESCHEDULE_MIN_DAYS_NOT_MET")) {
+    return "Bạn phải gửi yêu cầu dời buổi trước ít nhất số ngày tối thiểu theo quy định.";
+  }
+
+  if (errorMessage.includes("TEACHER_REPLACEMENT_MIN_DAYS_NOT_MET")) {
+    return "Bạn phải gửi yêu cầu nhờ dạy thay trước ít nhất số ngày tối thiểu theo quy định.";
+  }
+
+  if (errorMessage.includes("TEACHER_RESCHEDULE_MONTHLY_LIMIT_REACHED")) {
+    return "Bạn đã đạt giới hạn số lần xin dời buổi trong tháng này. Vui lòng thử lại vào tháng sau.";
+  }
+
+  if (errorMessage.includes("TEACHER_MODALITY_CHANGE_COURSE_LIMIT_REACHED")) {
+    return "Bạn đã đạt giới hạn số lần đổi hình thức dạy cho khóa học này. Vui lòng liên hệ giáo vụ nếu cần thay đổi thêm.";
+  }
+
+  if (errorMessage.includes("TEACHER_REPLACEMENT_MONTHLY_LIMIT_REACHED")) {
+    return "Bạn đã đạt giới hạn số lần xin thay giáo viên trong tháng này. Vui lòng thử lại vào tháng sau.";
+  }
+
+  if (errorMessage.includes("TEACHER_REQUEST_REASON_REQUIRED")) {
+    return "Vui lòng nhập lý do cho yêu cầu này.";
+  }
+
+  if (errorMessage.includes("TEACHER_REQUEST_REASON_TOO_SHORT")) {
+    return "Lý do yêu cầu quá ngắn. Vui lòng nhập lý do chi tiết hơn.";
+  }
+
   if (
     errorMessage.includes("Internal Server Error") ||
     errorMessage.includes("500")

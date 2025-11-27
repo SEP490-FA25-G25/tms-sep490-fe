@@ -56,7 +56,7 @@ const roleBasedNav = {
         icon: BarChartIcon,
       },
       {
-        title: "Quản lý trung tâm",
+        title: "Quản lý trung tâm và chi nhánh",
         url: "/admin/centers",
         icon: BuildingIcon,
       },
