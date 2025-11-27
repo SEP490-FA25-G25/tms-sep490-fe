@@ -70,9 +70,14 @@ export const analyticsApi = createApi({
       transformResponse: (response: ApiResponse<AnalyticsResponse>) => response.data,
       providesTags: ['Analytics'],
     }),
+    getManagerAnalytics: builder.query<AnalyticsResponse, void>({
+      query: () => '/manager/analytics',
+      transformResponse: (response: ApiResponse<AnalyticsResponse>) => response.data,
+      providesTags: ['Analytics'],
+    }),
   }),
 })
 
-export const { useGetAnalyticsQuery } = analyticsApi
+export const { useGetAnalyticsQuery, useGetManagerAnalyticsQuery } = analyticsApi
 
 
