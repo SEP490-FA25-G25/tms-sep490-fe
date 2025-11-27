@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Search, Filter, Eye, Loader2, AlertTriangle } from "lucide-react"
+import { Search, Filter, Eye, MessageSquareIcon, Loader2, AlertTriangle } from "lucide-react"
 import { Link } from "react-router-dom"
 
 export default function ClassesListPage() {
@@ -94,6 +94,12 @@ export default function ClassesListPage() {
                                         <Link to={`/qa/classes/${classItem.classId}`}>
                                             <Eye className="h-4 w-4 mr-2" />
                                             Xem chi tiết
+                                        </Link>
+                                    </Button>
+                                    <Button variant="secondary" size="sm" asChild>
+                                        <Link to={`/qa/student-feedback?classId=${classItem.classId}`}>
+                                            <MessageSquareIcon className="h-4 w-4 mr-2" />
+                                            Phản hồi
                                         </Link>
                                     </Button>
                                 </div>

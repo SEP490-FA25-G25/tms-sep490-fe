@@ -153,3 +153,22 @@ export const {
   useGetClassFeedbacksQuery,
   useGetFeedbackDetailQuery,
 } = qaApi;
+
+// Export types for external use
+export type {
+  QADashboardDTO,
+  QAClassListItemDTO,
+  QAClassDetailDTO,
+  SessionDetailDTO,
+  QAReportListItemDTO,
+  QAReportDetailDTO,
+  CreateQAReportRequest,
+  UpdateQAReportRequest,
+  ChangeQAReportStatusRequest,
+  StudentFeedbackListResponse,
+  StudentFeedbackDetailDTO,
+  QAListParams,
+  QAReportFilters,
+  FeedbackFilters,
+  QASessionListResponse
+} from '@/types/qa';

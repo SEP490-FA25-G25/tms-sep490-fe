@@ -247,6 +247,9 @@ export interface StudentFeedbackListResponse {
     submittedCount: number;
     notSubmittedCount: number;
     submissionRate: number;
+    averageRating: number;
+    positiveFeedbackCount: number;
+    negativeFeedbackCount: number;
   };
   feedbacks: Array<{
     feedbackId: number;
@@ -257,6 +260,8 @@ export interface StudentFeedbackListResponse {
     isFeedback: boolean;
     submittedAt?: string;
     responsePreview: string;
+    rating: number;
+    sentiment: 'positive' | 'negative' | 'neutral';
   }>;
 }
 
