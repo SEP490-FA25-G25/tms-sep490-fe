@@ -417,12 +417,17 @@ export const teacherRequestApi = createApi({
     }),
 
     // Get teacher's sessions (for creating request)
-    getMySessions: builder.query<MySessionsResponse, { date?: string }>({
-      query: ({ date }) => ({
-        url: "/teacher-requests/my-sessions",
-        method: "GET",
-        params: date ? { date } : {},
-      }),
+    getMySessions: builder.query<MySessionsResponse, { date?: string; classId?: number }>({
+      query: ({ date, classId }) => {
+        const params: Record<string, string | number> = {};
+        if (date) params.date = date;
+        if (classId) params.classId = classId;
+        return {
+          url: "/teacher-requests/my-sessions",
+          method: "GET",
+          params: Object.keys(params).length > 0 ? params : undefined,
+        };
+      },
     }),
 
     // Get available resources for modality change
