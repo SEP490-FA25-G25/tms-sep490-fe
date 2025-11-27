@@ -63,7 +63,7 @@ export default function EditQAReportPage() {
         }
     }
 
-    const handleInputChange = (field: string, value: any) => {
+    const handleInputChange = (field: string, value: string | QAReportType | QAReportStatus) => {
         setFormData(prev => ({
             ...prev,
             [field]: value
