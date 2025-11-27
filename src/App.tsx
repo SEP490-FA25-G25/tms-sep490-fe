@@ -11,6 +11,8 @@ import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage";
 import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage";
 import AdminUsersPage from "./app/admin/users/page";
 import AdminPoliciesPage from "./app/admin/policies/page";
+import AdminCentersPage from "./app/admin/centers/page";
+import AdminSubjectsPage from "./app/admin/subjects/page";
 import TeacherClassesPage from "./app/teacher/classes/page";
 import TeacherSchedulePage from "./app/teacher/schedule/page";
 import TeacherAttendancePage from "./app/teacher/attendance/page";
@@ -113,7 +115,22 @@ function App() {
                 </ProtectedRoute>
               }
             />
-
+            <Route
+              path="/admin/centers"
+              element={
+                <ProtectedRoute requiredRoles={["ADMIN"]}>
+                  <AdminCentersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/subjects"
+              element={
+                <ProtectedRoute requiredRoles={["ADMIN"]}>
+                  <AdminSubjectsPage />
+                </ProtectedRoute>
+              }
+            />
             {/* Teacher routes */}
             {/* Specific routes must come before general routes */}
             <Route

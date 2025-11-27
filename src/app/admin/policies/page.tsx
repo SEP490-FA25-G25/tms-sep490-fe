@@ -21,9 +21,20 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGetPoliciesQuery, useUpdatePolicyMutation, type Policy } from "@/store/services/policyApi";
+import {
+  useGetPoliciesQuery,
+  useUpdatePolicyMutation,
+  type Policy,
+} from "@/store/services/policyApi";
 import { toast } from "sonner";
 import { Search } from "lucide-react";
 
@@ -69,9 +80,22 @@ export default function AdminPoliciesPage() {
   const pageData = data?.data;
   const policies = pageData?.content ?? [];
 
+  const normalizeBooleanValue = (
+    value?: string | null,
+    fallback: string = "true"
+  ) => {
+    if (!value) return fallback;
+    const lower = value.toLowerCase();
+    return lower === "true" || lower === "false" ? lower : fallback;
+  };
+
   const handleOpenEdit = (policy: Policy) => {
+    const initialValue =
+      policy.valueType === "BOOLEAN"
+        ? normalizeBooleanValue(policy.currentValue ?? policy.defaultValue)
+        : policy.currentValue ?? "";
     setEditingPolicy(policy);
-    setNewValue(policy.currentValue ?? "");
+    setNewValue(initialValue);
     setReason("");
   };
 
@@ -113,7 +137,8 @@ export default function AdminPoliciesPage() {
                       Quản lý Policy hệ thống
                     </h1>
                     <p className="text-muted-foreground">
-                      Thay đổi nhanh các business rule mà không cần deploy lại hệ thống
+                      Thay đổi nhanh các business rule mà không cần deploy lại
+                      hệ thống
                     </p>
                   </div>
                 </div>
@@ -288,17 +313,14 @@ export default function AdminPoliciesPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              Cập nhật policy:{" "}
-              <span className="font-mono text-sm">
-                {editingPolicy?.policyKey}
-              </span>
-            </DialogTitle>
+            <DialogTitle>Cập nhật policy: </DialogTitle>
           </DialogHeader>
           {editingPolicy && (
             <div className="space-y-4">
               <div className="space-y-1">
-                <p className="text-sm font-medium">{editingPolicy.policyName}</p>
+                <p className="text-sm font-medium">
+                  {editingPolicy.policyName}
+                </p>
                 {editingPolicy.description && (
                   <p className="text-xs text-muted-foreground">
                     {editingPolicy.description}
@@ -310,21 +332,45 @@ export default function AdminPoliciesPage() {
                 <label className="text-sm font-medium">
                   Giá trị mới ({editingPolicy.valueType})
                 </label>
-                <Input
-                  value={newValue}
-                  onChange={(e) => setNewValue(e.target.value)}
-                />
+                {editingPolicy.valueType === "BOOLEAN" ? (
+                  <Select
+                    value={newValue || undefined}
+                    onValueChange={(value) => setNewValue(value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn giá trị" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="true">Bật</SelectItem>
+                      <SelectItem value="false">Tắt</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    value={newValue}
+                    onChange={(e) => setNewValue(e.target.value)}
+                  />
+                )}
                 <p className="text-xs text-muted-foreground">
                   Mặc định: {editingPolicy.defaultValue}
                   {editingPolicy.unit ? ` ${editingPolicy.unit}` : ""}
-                  {editingPolicy.minValue && editingPolicy.maxValue && (
-                    <> — Khoảng cho phép: {editingPolicy.minValue} - {editingPolicy.maxValue}</>
-                  )}
+                  {editingPolicy.minValue !== null &&
+                    editingPolicy.minValue !== undefined &&
+                    editingPolicy.maxValue !== null &&
+                    editingPolicy.maxValue !== undefined && (
+                      <>
+                        {" "}
+                        — Khoảng cho phép: {editingPolicy.minValue} -{" "}
+                        {editingPolicy.maxValue}
+                      </>
+                    )}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Lý do thay đổi (tùy chọn)</label>
+                <label className="text-sm font-medium">
+                  Lý do thay đổi (tùy chọn)
+                </label>
                 <Input
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
@@ -350,5 +396,3 @@ export default function AdminPoliciesPage() {
     </AdminRoute>
   );
 }
-
-
