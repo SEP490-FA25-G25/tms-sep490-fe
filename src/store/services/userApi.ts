@@ -34,6 +34,18 @@ export interface UpdateUserStatusRequest {
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
 }
 
+export interface UpdateUserRequest {
+  fullName?: string
+  phone?: string
+  facebookUrl?: string
+  dob?: string
+  gender?: 'MALE' | 'FEMALE' | 'OTHER'
+  address?: string
+  status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
+  roleIds?: number[]
+  branchIds?: number[]
+}
+
 export interface PageableResponse<T> {
   content: T[]
   pageable: {
@@ -143,6 +155,19 @@ export const userApi = createApi({
     }),
 
     /**
+     * Update user (ADMIN only)
+     * PUT /api/v1/users/{id}
+     */
+    updateUser: builder.mutation<ApiResponse<UserResponse>, { id: number; data: UpdateUserRequest }>({
+      query: ({ id, data }) => ({
+        url: `/users/${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [{ type: 'User', id }, 'User'],
+    }),
+
+    /**
      * Delete user (soft delete)
      * DELETE /api/v1/users/{id}
      */
@@ -170,6 +195,7 @@ export const {
   useGetUserByEmailQuery,
   useCreateUserMutation,
   useUpdateUserStatusMutation,
+  useUpdateUserMutation,
   useDeleteUserMutation,
   useCheckEmailExistsQuery,
   useLazyGetUsersQuery,

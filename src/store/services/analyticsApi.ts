@@ -43,6 +43,8 @@ export interface ClassAnalytics {
 export interface BranchStat {
   branchId: number
   branchName: string
+  centerId: number
+  centerName: string
   studentCount: number
   teacherCount: number
   classCount: number

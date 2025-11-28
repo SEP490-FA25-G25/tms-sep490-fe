@@ -3,7 +3,9 @@ import { vi } from 'date-fns/locale'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import type { UserResponse } from '@/store/services/userApi'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useGetUserByIdQuery, type UserResponse } from '@/store/services/userApi'
+import { useEffect } from 'react'
 
 interface UserDetailDialogProps {
   user: UserResponse | null
@@ -23,37 +25,62 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 export function UserDetailDialog({ user, open, onOpenChange }: UserDetailDialogProps) {
+  // Fetch fresh user data when dialog opens
+  const {
+    data: userResponse,
+    isLoading,
+    refetch,
+  } = useGetUserByIdQuery(user?.id ?? 0, {
+    skip: !user?.id || !open, // Skip if no user ID or dialog is closed
+  })
+
+  // Refetch when dialog opens or user changes
+  useEffect(() => {
+    if (open && user?.id) {
+      refetch()
+    }
+  }, [open, user?.id, refetch])
+
+  // Use fetched data if available, otherwise fallback to prop
+  const displayUser = userResponse?.data ?? user
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg p-0">
         <DialogHeader className="px-6 pb-0 pt-6">
           <DialogTitle className="text-xl font-semibold">
-            {user ? user.fullName : 'Chi tiết người dùng'}
+            {displayUser ? displayUser.fullName : 'Chi tiết người dùng'}
           </DialogTitle>
         </DialogHeader>
         <ScrollArea className="max-h-[70vh] px-6 pb-6">
-          {!user ? (
+          {isLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+          ) : !displayUser ? (
             <p className="text-sm text-muted-foreground">Không có dữ liệu người dùng.</p>
           ) : (
             <div className="space-y-5 text-sm">
               <section className="grid gap-3 rounded-lg border bg-muted/20 p-4">
-                <InfoItem label="Email" value={user.email} />
-                <InfoItem label="Số điện thoại" value={user.phone || '—'} />
-                <InfoItem label="Giới tính" value={mapGender(user.gender)} />
+                <InfoItem label="Email" value={displayUser.email} />
+                <InfoItem label="Số điện thoại" value={displayUser.phone || '—'} />
+                <InfoItem label="Giới tính" value={mapGender(displayUser.gender)} />
                 <InfoItem
                   label="Ngày sinh"
-                  value={user.dob ? format(parseISO(user.dob), 'dd/MM/yyyy', { locale: vi }) : '—'}
+                  value={displayUser.dob ? format(parseISO(displayUser.dob), 'dd/MM/yyyy', { locale: vi }) : '—'}
                 />
-                <InfoItem label="Trạng thái" value={renderStatus(user.status)} raw />
-                <InfoItem label="Địa chỉ" value={user.address || '—'} />
-                <InfoItem label="Facebook" value={user.facebookUrl || '—'} />
+                <InfoItem label="Trạng thái" value={renderStatus(displayUser.status)} raw />
+                <InfoItem label="Địa chỉ" value={displayUser.address || '—'} />
+                <InfoItem label="Facebook" value={displayUser.facebookUrl || '—'} />
               </section>
 
               <section className="rounded-lg border bg-muted/20 p-4">
                 <p className="text-xs font-semibold uppercase text-muted-foreground">Vai trò</p>
-                {user.roles?.length ? (
+                {displayUser.roles?.length ? (
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {user.roles.map((role) => (
+                    {displayUser.roles.map((role) => (
                       <Badge key={role} variant="secondary">
                         {ROLE_LABELS[role] || role}
                       </Badge>
@@ -66,9 +93,9 @@ export function UserDetailDialog({ user, open, onOpenChange }: UserDetailDialogP
 
               <section className="rounded-lg border bg-muted/20 p-4">
                 <p className="text-xs font-semibold uppercase text-muted-foreground">Chi nhánh</p>
-                {user.branches?.length ? (
+                {displayUser.branches?.length ? (
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {user.branches.map((branch, index) => (
+                    {displayUser.branches.map((branch, index) => (
                       <Badge key={`${branch}-${index}`} variant="outline">
                         {branch}
                       </Badge>
