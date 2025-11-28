@@ -24,7 +24,14 @@ export default function QAReportsListPage() {
     const [searchTerm, setSearchTerm] = useState("")
     const [page, setPage] = useState(0)
 
+    // Reset page to 0 when search term changes
+    const handleSearchChange = (value: string) => {
+        setSearchTerm(value)
+        setPage(0)
+    }
+
     const { data: reportsData, isLoading, error } = useGetQAReportsQuery({
+        search: searchTerm,
         page,
         size: 20,
         sort: 'createdAt',
@@ -33,6 +40,7 @@ export default function QAReportsListPage() {
 
     const reports = reportsData?.data || []
     const totalCount = reportsData?.total || 0
+    const totalPages = Math.ceil(totalCount / 20)
 
     if (isLoading) {
         return (
@@ -76,7 +84,7 @@ export default function QAReportsListPage() {
                         <Input
                             placeholder="Tìm báo cáo QA..."
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e) => handleSearchChange(e.target.value)}
                             className="pl-8"
                         />
                     </div>
@@ -167,12 +175,12 @@ export default function QAReportsListPage() {
                             Trang trước
                         </Button>
                         <span className="text-sm text-muted-foreground">
-                            Trang {page + 1}
+                            Trang {page + 1} / {totalPages}
                         </span>
                         <Button
                             variant="outline"
                             onClick={() => setPage(page + 1)}
-                            disabled={reports.length < 20}
+                            disabled={page >= totalPages - 1 || reports.length === 0}
                         >
                             Trang tiếp
                         </Button>

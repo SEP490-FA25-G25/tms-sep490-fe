@@ -305,6 +305,7 @@ export interface QAReportFilters {
   reportType?: string;
   status?: string;
   reportedBy?: number;
+  search?: string;
   page?: number;
   size?: number;
   sort?: string;

@@ -259,16 +259,10 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-2">
-                                                <p className="text-sm text-gray-700 line-clamp-2">
+                                            <div>
+                                                <p className="text-sm text-gray-700 line-clamp-3">
                                                     {feedback.responsePreview}
                                                 </p>
-                                                <Button variant="link" className="p-0 h-auto text-sm" asChild>
-                                                    <Link to={`/qa/student-feedback/${feedback.feedbackId}`}>
-                                                        <Eye className="h-4 w-4 mr-1" />
-                                                        Xem chi tiết
-                                                    </Link>
-                                                </Button>
                                             </div>
                                         </>
                                     ) : (
