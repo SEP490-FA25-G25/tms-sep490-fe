@@ -78,7 +78,10 @@ export function CreateCenterDialog({
       reset();
       onSuccess();
     } catch (error: unknown) {
-      toast.error((error as { data?: { message?: string } })?.data?.message || "Tạo trung tâm thất bại");
+      toast.error(
+        (error as { data?: { message?: string } })?.data?.message ||
+          "Tạo trung tâm thất bại"
+      );
     }
   };
 
@@ -183,4 +186,3 @@ export function CreateCenterDialog({
     </Dialog>
   );
 }
-

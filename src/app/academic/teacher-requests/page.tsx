@@ -1,7 +1,13 @@
 import { useMemo, useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
-import { SearchIcon } from "lucide-react";
+import {
+  SearchIcon,
+  Clock3,
+  ArrowLeftRight,
+  CalendarClock,
+  UserRoundCheck,
+} from "lucide-react";
 import { skipToken } from "@reduxjs/toolkit/query";
 
 import { DashboardLayout } from "@/components/DashboardLayout";
@@ -24,6 +30,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import {
   Select,
   SelectContent,
@@ -290,61 +304,6 @@ const getFirstStringFromPaths = (
   return undefined;
 };
 
-const getRescheduleInfo = (request: TeacherRequestDTO) => {
-  const newSessionDate =
-    getFirstStringFromPaths(request, [
-      ["newDate"],
-      ["newSessionDate"],
-      ["newSession", "date"],
-      ["newSession", "sessionDate"],
-      ["newSlot", "date"],
-      ["newSchedule", "date"],
-      ["selectedSlot", "date"],
-      ["selectedSlot", "sessionDate"],
-      ["selectedTimeSlot", "date"],
-    ]) ?? undefined;
-
-  const newSessionStart =
-    getFirstStringFromPaths(request, [
-      ["newTimeSlotStartTime"],
-      ["newStartTime"],
-      ["newSessionStartTime"],
-      ["newSlot", "startTime"],
-      ["newTimeSlot", "startTime"],
-      ["newTimeSlot", "startAt"],
-      ["newSession", "startTime"],
-      ["newSession", "timeSlot", "startTime"],
-      ["newSession", "timeSlot", "startAt"],
-      ["newSchedule", "startTime"],
-      ["timeSlot", "startTime"],
-      ["selectedSlot", "startTime"],
-      ["selectedSlot", "startAt"],
-      ["selectedTimeSlot", "startTime"],
-      ["selectedTimeSlot", "startAt"],
-    ]) ?? undefined;
-
-  const newSessionEnd =
-    getFirstStringFromPaths(request, [
-      ["newTimeSlotEndTime"],
-      ["newEndTime"],
-      ["newSessionEndTime"],
-      ["newSlot", "endTime"],
-      ["newTimeSlot", "endTime"],
-      ["newTimeSlot", "endAt"],
-      ["newSession", "endTime"],
-      ["newSession", "timeSlot", "endTime"],
-      ["newSession", "timeSlot", "endAt"],
-      ["newSchedule", "endTime"],
-      ["timeSlot", "endTime"],
-      ["selectedSlot", "endTime"],
-      ["selectedSlot", "endAt"],
-      ["selectedTimeSlot", "endTime"],
-      ["selectedTimeSlot", "endAt"],
-    ]) ?? undefined;
-
-  return { newSessionDate, newSessionStart, newSessionEnd };
-};
-
 export default function AcademicTeacherRequestsPage() {
   // Teacher request filter states
   const [teacherTypeFilter, setTeacherTypeFilter] = useState<
@@ -366,6 +325,9 @@ export default function AcademicTeacherRequestsPage() {
   const [selectedResourceId, setSelectedResourceId] = useState<number | null>(
     null
   );
+  const [pendingPage, setPendingPage] = useState(0);
+  const [historyPage, setHistoryPage] = useState(0);
+  const PAGE_SIZE = 10;
 
   // Teacher requests queries
   const {
@@ -552,6 +514,45 @@ export default function AcademicTeacherRequestsPage() {
     [filteredTeacherRequests]
   );
 
+  // Summary for teacher pending requests
+  const totalPending = teacherPendingRequests.length;
+  const pendingModalityChange = teacherPendingRequests.filter(
+    (r) => r.requestType === "MODALITY_CHANGE"
+  ).length;
+  const pendingReschedule = teacherPendingRequests.filter(
+    (r) => r.requestType === "RESCHEDULE"
+  ).length;
+  const pendingReplacement = teacherPendingRequests.filter(
+    (r) => r.requestType === "REPLACEMENT"
+  ).length;
+
+  // Pagination helpers
+  useEffect(() => {
+    setPendingPage(0);
+    setHistoryPage(0);
+  }, [teacherTypeFilter, teacherStatusFilter, teacherSearchKeyword]);
+
+  const pendingTotalPages = Math.max(
+    1,
+    Math.ceil(teacherPendingRequests.length / PAGE_SIZE)
+  );
+  const historyTotalPages = Math.max(
+    1,
+    Math.ceil(teacherHistoryRequests.length / PAGE_SIZE)
+  );
+
+  const paginatedPendingRequests = useMemo(() => {
+    const safePage = Math.min(pendingPage, pendingTotalPages - 1);
+    const start = safePage * PAGE_SIZE;
+    return teacherPendingRequests.slice(start, start + PAGE_SIZE);
+  }, [teacherPendingRequests, pendingPage, pendingTotalPages]);
+
+  const paginatedHistoryRequests = useMemo(() => {
+    const safePage = Math.min(historyPage, historyTotalPages - 1);
+    const start = safePage * PAGE_SIZE;
+    return teacherHistoryRequests.slice(start, start + PAGE_SIZE);
+  }, [teacherHistoryRequests, historyPage, historyTotalPages]);
+
   // Refetch detail when opening dialog to ensure we have the latest data
   useEffect(() => {
     if (selectedRequestId !== null) {
@@ -660,250 +661,58 @@ export default function AcademicTeacherRequestsPage() {
       description="Xét duyệt yêu cầu của giáo viên."
     >
       <div className="space-y-6">
+        {/* Summary cards for teacher requests (similar to student page) */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Clock3 className="h-4 w-4" />
+              <span className="text-sm">Đang chờ duyệt</span>
+            </div>
+            <p className="text-2xl font-semibold">{totalPending}</p>
+          </div>
+          <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <ArrowLeftRight className="h-4 w-4" />
+              <span className="text-sm">Thay đổi phương thức</span>
+            </div>
+            <p className="text-2xl font-semibold text-sky-600">
+              {pendingModalityChange}
+            </p>
+          </div>
+          <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <CalendarClock className="h-4 w-4" />
+              <span className="text-sm">Đổi lịch</span>
+            </div>
+            <p className="text-2xl font-semibold text-amber-600">
+              {pendingReschedule}
+            </p>
+          </div>
+          <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <UserRoundCheck className="h-4 w-4" />
+              <span className="text-sm">Nhờ dạy thay</span>
+            </div>
+            <p className="text-2xl font-semibold text-purple-600">
+              {pendingReplacement}
+            </p>
+          </div>
+        </div>
+
         <Tabs defaultValue="pending" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="pending">
-              Hàng đợi ({teacherPendingRequests.length})
-            </TabsTrigger>
-            <TabsTrigger value="history">
-              Lịch sử ({teacherHistoryRequests.length})
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Teacher Pending Requests Tab */}
-          <TabsContent value="pending" className="space-y-4">
+          {/* Tabs + filters in one row (like student requests page) */}
+          <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-3">
-              <Select
-                value={teacherTypeFilter}
-                onValueChange={(value) =>
-                  setTeacherTypeFilter(value as "ALL" | TeacherRequestType)
-                }
-              >
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Tất cả loại</SelectItem>
-                  <SelectItem value="MODALITY_CHANGE">
-                    {TEACHER_REQUEST_TYPE_LABELS.MODALITY_CHANGE}
-                  </SelectItem>
-                  <SelectItem value="RESCHEDULE">
-                    {TEACHER_REQUEST_TYPE_LABELS.RESCHEDULE}
-                  </SelectItem>
-                  <SelectItem value="REPLACEMENT">
-                    {TEACHER_REQUEST_TYPE_LABELS.REPLACEMENT}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <TabsList>
+                <TabsTrigger value="pending">
+                  Hàng đợi ({teacherPendingRequests.length})
+                </TabsTrigger>
+                <TabsTrigger value="history">
+                  Lịch sử ({teacherHistoryRequests.length})
+                </TabsTrigger>
+              </TabsList>
 
-              <div className="relative flex-1 min-w-60">
-                <Input
-                  placeholder="Tìm theo giáo viên, lớp học, khóa học..."
-                  value={teacherSearchKeyword}
-                  onChange={(event) =>
-                    setTeacherSearchKeyword(event.target.value)
-                  }
-                  className="pl-9"
-                />
-                <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {teacherRequestsError ? (
-                <div className="rounded-lg border border-dashed border-rose-200 bg-rose-50 p-8 text-center text-sm text-rose-700">
-                  {formatBackendError(
-                    (teacherRequestsError as { data?: { message?: string } })
-                      ?.data?.message,
-                    "Có lỗi xảy ra khi tải danh sách yêu cầu. Vui lòng thử lại."
-                  )}
-                </div>
-              ) : isLoadingTeacherRequests ? (
-                <div className="space-y-3">
-                  {[...Array(3)].map((_, index) => (
-                    <Skeleton key={index} className="h-36 w-full rounded-lg" />
-                  ))}
-                </div>
-              ) : teacherPendingRequests.length === 0 ? (
-                <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-                  Không có yêu cầu nào đang chờ duyệt.
-                </div>
-              ) : (
-                teacherPendingRequests.map((request) => {
-                  const topic = getRequestTopic(request);
-                  const { newSessionDate, newSessionStart, newSessionEnd } =
-                    getRescheduleInfo(request);
-
-                  return (
-                    <div
-                      key={request.id}
-                      role="button"
-                      tabIndex={0}
-                      className="cursor-pointer rounded-2xl border border-border/60 bg-card/40 p-4 text-left transition hover:border-primary/60 hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                      onClick={() => handleOpenRequestDetail(request.id)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          handleOpenRequestDetail(request.id);
-                        }
-                      }}
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Badge variant="outline" className="rounded-full">
-                              {TEACHER_REQUEST_TYPE_LABELS[request.requestType]}
-                            </Badge>
-                            <Badge
-                              className={cn(
-                                "rounded-full text-xs font-medium",
-                                TEACHER_REQUEST_STATUS_META[request.status]
-                                  .badgeClass
-                              )}
-                            >
-                              {
-                                TEACHER_REQUEST_STATUS_META[request.status]
-                                  .label
-                              }
-                            </Badge>
-                            {request.submittedAt && (
-                              <span className="text-xs text-muted-foreground">
-                                Gửi lúc{" "}
-                                {format(
-                                  parseISO(request.submittedAt),
-                                  "dd/MM/yyyy HH:mm",
-                                  {
-                                    locale: vi,
-                                  }
-                                )}
-                              </span>
-                            )}
-                          </div>
-                          <div className="mt-2 space-y-1">
-                            {request.teacherName && (
-                              <p className="text-sm font-semibold text-foreground">
-                                {request.teacherName}
-                              </p>
-                            )}
-                            <p className="text-sm font-medium">
-                              {request.className}{" "}
-                              <span className="font-medium">
-                                ·{" "}
-                                {format(
-                                  parseISO(request.sessionDate),
-                                  "dd/MM/yyyy",
-                                  {
-                                    locale: vi,
-                                  }
-                                )}
-                              </span>
-                            </p>
-                            {topic && (
-                              <p className="text-sm text-muted-foreground">
-                                {topic}
-                              </p>
-                            )}
-                            <p className="text-sm text-muted-foreground">
-                              {request.sessionStartTime} -{" "}
-                              {request.sessionEndTime}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {request.requestType === "MODALITY_CHANGE" && (
-                        <div className="mt-3 rounded-xl bg-muted/40 p-3">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/70">
-                            Thay đổi phương thức
-                          </p>
-                          <p className="text-sm">
-                            {request.currentModality || "—"} →{" "}
-                            {request.newModality || "—"}
-                          </p>
-                          {request.currentResourceName && (
-                            <p className="text-sm text-muted-foreground">
-                              Phòng/phương tiện: {request.currentResourceName} →{" "}
-                              {request.newResourceName || "—"}
-                            </p>
-                          )}
-                        </div>
-                      )}
-
-                      {request.requestType === "RESCHEDULE" && (
-                        <div className="mt-3 rounded-xl bg-muted/40 p-3">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/70">
-                            Lịch mới
-                          </p>
-                          <div className="mt-2 space-y-1 text-sm">
-                            {newSessionDate && (
-                              <p>
-                                Ngày mới:{" "}
-                                <span className="font-medium text-foreground">
-                                  {format(
-                                    parseISO(newSessionDate),
-                                    "dd/MM/yyyy",
-                                    { locale: vi }
-                                  )}
-                                </span>
-                              </p>
-                            )}
-                            {newSessionStart || newSessionEnd ? (
-                              <p>
-                                Giờ mới:{" "}
-                                <span className="font-medium text-foreground">
-                                  {newSessionStart && newSessionEnd
-                                    ? `${newSessionStart} - ${newSessionEnd}`
-                                    : newSessionStart || newSessionEnd}
-                                </span>
-                              </p>
-                            ) : null}
-                          </div>
-                        </div>
-                      )}
-
-                      {request.requestType === "REPLACEMENT" && (
-                        <div className="mt-3 rounded-xl bg-muted/40 p-3">
-                          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground/70">
-                            <span>Giáo viên dạy thay:</span>
-                            {request.replacementTeacherName ? (
-                              <span className="text-sm font-medium normal-case text-foreground">
-                                {request.replacementTeacherName}
-                                {request.replacementTeacherEmail && (
-                                  <span className="ml-2 text-xs font-normal text-muted-foreground">
-                                    ({request.replacementTeacherEmail})
-                                  </span>
-                                )}
-                              </span>
-                            ) : (
-                              <span className="text-sm font-normal normal-case text-muted-foreground">
-                                Đang tìm giáo viên dạy thay
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="mt-3 flex justify-end">
-                        <Button
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenRequestDetail(request.id);
-                          }}
-                        >
-                          Xem & xử lý
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Teacher History Tab */}
-          <TabsContent value="history" className="space-y-4">
-            <div className="flex flex-wrap items-center gap-3">
+              {/* Shared filters */}
               <Select
                 value={teacherTypeFilter}
                 onValueChange={(value) =>
@@ -962,7 +771,210 @@ export default function AcademicTeacherRequestsPage() {
                 <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               </div>
             </div>
+          </div>
 
+          {/* Teacher Pending Requests Tab */}
+          <TabsContent value="pending" className="space-y-4">
+            <div className="rounded-lg border">
+              {teacherRequestsError ? (
+                <div className="rounded-lg border border-dashed border-rose-200 bg-rose-50 p-8 text-center text-sm text-rose-700">
+                  {formatBackendError(
+                    (teacherRequestsError as { data?: { message?: string } })
+                      ?.data?.message,
+                    "Có lỗi xảy ra khi tải danh sách yêu cầu. Vui lòng thử lại."
+                  )}
+                </div>
+              ) : isLoadingTeacherRequests ? (
+                <div className="space-y-3 p-4">
+                  {[...Array(5)].map((_, index) => (
+                    <Skeleton key={index} className="h-12 w-full rounded-lg" />
+                  ))}
+                </div>
+              ) : paginatedPendingRequests.length === 0 ? (
+                <div className="p-8 text-center text-sm text-muted-foreground">
+                  Không có yêu cầu nào đang chờ duyệt.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Loại</TableHead>
+                      <TableHead>Giáo viên</TableHead>
+                      <TableHead>Lớp học / Buổi</TableHead>
+                      <TableHead>Trạng thái</TableHead>
+                      <TableHead>Lý do</TableHead>
+                      <TableHead>Ngày gửi</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedPendingRequests.map((request) => {
+                      const topic = getRequestTopic(request);
+                      const reason =
+                        (request as { reason?: string }).reason ??
+                        (request as { requestReason?: string }).requestReason ??
+                        "";
+                      const truncatedReason =
+                        reason.length > 80
+                          ? `${reason.slice(0, 80)}...`
+                          : reason;
+
+                      return (
+                        <TableRow
+                          key={request.id}
+                          role="button"
+                          tabIndex={0}
+                          className="cursor-pointer hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                          onClick={() => handleOpenRequestDetail(request.id)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              handleOpenRequestDetail(request.id);
+                            }
+                          }}
+                        >
+                          <TableCell>
+                            <Badge variant="outline" className="rounded-full">
+                              {TEACHER_REQUEST_TYPE_LABELS[request.requestType]}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-semibold">
+                                {request.teacherName ?? "—"}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <p className="font-medium">
+                                {request.className}{" "}
+                                <span className="font-medium">
+                                  ·{" "}
+                                  {format(
+                                    parseISO(request.sessionDate),
+                                    "dd/MM/yyyy",
+                                    { locale: vi }
+                                  )}
+                                </span>
+                              </p>
+                              {topic && (
+                                <p className="text-xs text-muted-foreground">
+                                  {topic}
+                                </p>
+                              )}
+                              <p className="text-xs text-muted-foreground">
+                                {request.sessionStartTime} -{" "}
+                                {request.sessionEndTime}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={cn(
+                                "rounded-full text-xs font-medium",
+                                TEACHER_REQUEST_STATUS_META[request.status]
+                                  .badgeClass
+                              )}
+                            >
+                              {
+                                TEACHER_REQUEST_STATUS_META[request.status]
+                                  .label
+                              }
+                            </Badge>
+                          </TableCell>
+                          <TableCell
+                            className="text-sm text-muted-foreground"
+                            title={reason}
+                          >
+                            {truncatedReason || "Không có lý do"}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {request.submittedAt
+                              ? format(
+                                  parseISO(request.submittedAt),
+                                  "HH:mm dd/MM",
+                                  { locale: vi }
+                                )
+                              : "—"}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenRequestDetail(request.id);
+                              }}
+                            >
+                              Xem & xử lý
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+
+            {/* Pending pagination */}
+            <div className="flex items-center justify-between text-sm">
+              <p className="text-muted-foreground">
+                Trang {pendingPage + 1} / {pendingTotalPages} ·{" "}
+                {teacherPendingRequests.length} yêu cầu
+              </p>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        setPendingPage((prev) => Math.max(prev - 1, 0));
+                      }}
+                      disabled={pendingPage === 0 || isLoadingTeacherRequests}
+                    />
+                  </PaginationItem>
+                  {Array.from(
+                    { length: pendingTotalPages },
+                    (_, index) => index
+                  ).map((pageNum) => (
+                    <PaginationItem key={pageNum}>
+                      <PaginationLink
+                        href="#"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          setPendingPage(pageNum);
+                        }}
+                        isActive={pageNum === pendingPage}
+                      >
+                        {pageNum + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        setPendingPage((prev) =>
+                          Math.min(prev + 1, pendingTotalPages - 1)
+                        );
+                      }}
+                      disabled={
+                        pendingPage >= pendingTotalPages - 1 ||
+                        isLoadingTeacherRequests
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          </TabsContent>
+
+          {/* Teacher History Tab */}
+          <TabsContent value="history" className="space-y-4">
             <div className="rounded-lg border">
               {isLoadingTeacherRequests ? (
                 <div className="space-y-3 p-4">
@@ -970,7 +982,7 @@ export default function AcademicTeacherRequestsPage() {
                     <Skeleton key={index} className="h-12 w-full rounded-lg" />
                   ))}
                 </div>
-              ) : teacherHistoryRequests.length ? (
+              ) : paginatedHistoryRequests.length ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -984,7 +996,7 @@ export default function AcademicTeacherRequestsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {teacherHistoryRequests.map((request) => {
+                    {paginatedHistoryRequests.map((request) => {
                       const topic = getRequestTopic(request);
 
                       return (
@@ -1089,6 +1101,60 @@ export default function AcademicTeacherRequestsPage() {
                   Không có lịch sử phù hợp với bộ lọc.
                 </div>
               )}
+            </div>
+
+            {/* History pagination */}
+            <div className="flex items-center justify-between text-sm">
+              <p className="text-muted-foreground">
+                Trang {historyPage + 1} / {historyTotalPages} ·{" "}
+                {teacherHistoryRequests.length} yêu cầu
+              </p>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        setHistoryPage((prev) => Math.max(prev - 1, 0));
+                      }}
+                      disabled={historyPage === 0 || isLoadingTeacherRequests}
+                    />
+                  </PaginationItem>
+                  {Array.from(
+                    { length: historyTotalPages },
+                    (_, index) => index
+                  ).map((pageNum) => (
+                    <PaginationItem key={pageNum}>
+                      <PaginationLink
+                        href="#"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          setHistoryPage(pageNum);
+                        }}
+                        isActive={pageNum === historyPage}
+                      >
+                        {pageNum + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        setHistoryPage((prev) =>
+                          Math.min(prev + 1, historyTotalPages - 1)
+                        );
+                      }}
+                      disabled={
+                        historyPage >= historyTotalPages - 1 ||
+                        isLoadingTeacherRequests
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
             </div>
           </TabsContent>
         </Tabs>

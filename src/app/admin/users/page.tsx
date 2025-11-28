@@ -1,15 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type CSSProperties } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdminRoute } from "@/components/ProtectedRoute";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -102,11 +97,14 @@ export default function AdminUsersPage() {
 
   const [updateUserStatus] = useUpdateUserStatusMutation();
   const [deleteUser] = useDeleteUserMutation();
-  
+
   // Get refetch function for user detail if userDetail is open
-  const { refetch: refetchUserDetail } = useGetUserByIdQuery(userDetail?.id ?? 0, {
-    skip: !userDetail?.id,
-  });
+  const { refetch: refetchUserDetail } = useGetUserByIdQuery(
+    userDetail?.id ?? 0,
+    {
+      skip: !userDetail?.id,
+    }
+  );
 
   // Extract users from API response
   // Response structure: { success, message, data: PageableResponse<UserResponse> }
@@ -164,7 +162,7 @@ export default function AdminUsersPage() {
           {
             "--sidebar-width": "calc(var(--spacing) * 72)",
             "--header-height": "calc(var(--spacing) * 12)",
-          } as React.CSSProperties
+          } as CSSProperties
         }
       >
         <AppSidebar variant="inset" />
@@ -181,8 +179,8 @@ export default function AdminUsersPage() {
                         Quản lý Người dùng
                       </h1>
                       <p className="text-muted-foreground mt-1">
-                      Quản lý người dùng, vai trò và quyền hạn trong hệ thống
-                    </p>
+                        Quản lý người dùng, vai trò và quyền hạn trong hệ thống
+                      </p>
                     </div>
                     <Button
                       onClick={() => setShowCreateDialog(true)}
@@ -352,7 +350,7 @@ export default function AdminUsersPage() {
                                   </PaginationItem>
                                 </PaginationContent>
                               </Pagination>
-                      </div>
+                            </div>
                           )}
                         </>
                       )}
