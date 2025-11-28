@@ -464,6 +464,20 @@ export const isValidSessionStatus = (status: string | undefined): boolean => {
   return Object.values(SessionStatus).includes(normalizedStatus as SessionStatusType)
 }
 
+// Export Types for QA Export Feature
+export interface QAExportRequest {
+  dateFrom: string
+  dateTo: string
+  format: string // "EXCEL" or "CSV" (currently only EXCEL supported)
+  includeSections: string[] // Array of section IDs
+  branchIds?: number[] // Optional: filter by specific branches
+}
+
+export interface QAExportResponse {
+  filename: string
+  content: Blob // File content
+}
+
 export const sessionStatusOptions = [
   {
     value: SessionStatus.PLANNED,

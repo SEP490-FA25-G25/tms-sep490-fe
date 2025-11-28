@@ -261,7 +261,7 @@ const roleBasedNav = {
         icon: ClipboardCheckIcon,
       },
       {
-        title: "Phân hồi học viên",
+        title: "Phản Hồi Học Viên",
         url: "/qa/student-feedback",
         icon: MessageCircleIcon,
       },

@@ -143,7 +143,7 @@ export default function StudentFeedbackPage() {
     if (classesLoading) {
         return (
             <DashboardLayout
-                title="Phân Hồi Học Viên"
+                title="Phản Hồi Học Viên"
                 description="Phân tích phản hồi từ học viên để cải thiện chất lượng giảng dạy"
             >
                 <div className="flex items-center justify-center h-64">
@@ -155,7 +155,7 @@ export default function StudentFeedbackPage() {
 
     return (
         <DashboardLayout
-            title="Phân Hồi Học Viên"
+            title="Phản Hồi Học Viên"
             description="Phân tích phản hồi từ học viên để cải thiện chất lượng giảng dạy"
         >
             <div className="space-y-6">

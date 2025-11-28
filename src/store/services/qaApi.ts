@@ -15,7 +15,8 @@ import type {
   QAListParams,
   QAReportFilters,
   FeedbackFilters,
-  QASessionListResponse
+  QASessionListResponse,
+  QAExportRequest
 } from '@/types/qa';
 
 export const qaApi = createApi({
@@ -134,6 +135,42 @@ export const qaApi = createApi({
       query: (feedbackId) => `/feedbacks/${feedbackId}`,
       providesTags: (_result, _error, feedbackId) => [{ type: 'QAFeedback', id: feedbackId }],
     }),
+
+    // QA Export
+    exportQAData: builder.mutation<Blob, QAExportRequest>({
+      query: (data) => ({
+        url: '/qa/export',
+        method: 'POST',
+        body: data,
+        responseHandler: async (response) => {
+          // Get filename from Content-Disposition header
+          const contentDisposition = response.headers.get('content-disposition')
+          let filename = 'qa-dashboard-export.xlsx'
+          if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/)
+            if (filenameMatch) {
+              filename = filenameMatch[1]
+            }
+          }
+
+          // Create blob from response
+          const blob = await response.blob()
+
+          // Create download link and trigger download
+          const downloadUrl = window.URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = downloadUrl
+          link.download = filename
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          window.URL.revokeObjectURL(downloadUrl)
+
+          return blob
+        },
+      }),
+      invalidatesTags: [], // Export doesn't invalidate any caches
+    }),
   }),
 });
 
@@ -152,6 +189,7 @@ export const {
   useDeleteQAReportMutation,
   useGetClassFeedbacksQuery,
   useGetFeedbackDetailQuery,
+  useExportQADataMutation,
 } = qaApi;
 
 // Export types for external use
@@ -170,5 +208,6 @@ export type {
   QAListParams,
   QAReportFilters,
   FeedbackFilters,
-  QASessionListResponse
+  QASessionListResponse,
+  QAExportRequest
 } from '@/types/qa';

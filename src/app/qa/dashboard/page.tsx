@@ -6,6 +6,7 @@ import { useGetQADashboardQuery } from "@/store/services/qaApi"
 import { DashboardLayout } from "@/components/DashboardLayout"
 import { QAStatsCard } from "@/components/qa/QAStatsCard"
 import { QAReportStatusBadge } from "@/components/qa/QAReportStatusBadge"
+import { QAExportButton } from "@/components/qa/QAExportButton"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -123,7 +124,8 @@ export default function QADashboardPage() {
                             </span>
                         )}
                     </div>
-                    <div className="w-full sm:w-auto">
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <QAExportButton variant="outline" size="sm" />
                         <DateRangePicker
                             value={initialDateRange}
                             onChange={handleDateRangeChange}
