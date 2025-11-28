@@ -367,10 +367,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <a href="/dashboard" className="flex items-center gap-2">
                 <img
                   src="/logo.jpg"
-                  alt="TMS Logo"
+                  alt="Anh ngữ Pinnacle Logo"
                   className="h-8 w-auto"
                 />
-                <span className="text-base font-semibold">Training Management</span>
+                <span className="text-base font-semibold">Anh ngữ Pinnacle</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

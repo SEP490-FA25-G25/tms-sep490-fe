@@ -11,10 +11,10 @@ export default function LoginPage() {
           <a href="#" className="flex items-center gap-2 font-medium">
             <img
               src="/logo.jpg"
-              alt="TMS Logo"
+              alt="Anh ngữ Pinnacle Logo"
               className="h-8 w-auto"
             />
-           Hệ Thống Quản Lý Đào Tạo
+           Anh ngữ Pinnacle
           </a>
         </div>
         <div className="flex flex-1 items-center justify-center">
