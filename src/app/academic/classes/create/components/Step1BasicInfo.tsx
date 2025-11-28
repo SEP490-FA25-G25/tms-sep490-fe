@@ -252,15 +252,21 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
 
       onSuccess(resultClassId, totalSessions)
     } catch (err: unknown) {
-      const error = err as { status?: number; data?: { message?: string; data?: unknown } }
+      const error = err as {
+        status?: number
+        data?: { message?: string; data?: unknown; errorCode?: string }
+      }
+      const message = error.data?.message
+      const errorCode = error.data?.errorCode
+
       if (error.status === 400) {
         if (error.data?.data && typeof error.data.data === 'object') {
           // Field-level errors
-          toast.error(error.data.message || 'Dữ liệu không hợp lệ')
+          toast.error(message || 'Dữ liệu không hợp lệ')
         } else {
-          toast.error(error.data?.message || 'Có lỗi xảy ra')
+          toast.error(message || 'Có lỗi xảy ra')
         }
-      } else if (error.data?.message === 'CLASS_NOT_EDITABLE' || (error.data as { errorCode?: string })?.errorCode === 'CLASS_NOT_EDITABLE') {
+      } else if (message === 'CLASS_NOT_EDITABLE' || errorCode === 'CLASS_NOT_EDITABLE') {
         toast.error('Lớp này đang chờ duyệt hoặc đã duyệt, không thể chỉnh sửa')
       } else if (error.status === 403) {
         toast.error('Bạn không có quyền thực hiện thao tác này')

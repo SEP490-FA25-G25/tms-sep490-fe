@@ -21,6 +21,7 @@ import {
     useApproveCourseMutation,
     useRejectCourseMutation
 } from "@/store/services/courseApi";
+import type { CourseDTO } from "@/store/services/courseApi";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -105,7 +106,7 @@ export function CourseApprovalList({ readOnly = false }: CourseApprovalListProps
         }
     };
 
-    const getStatusBadge = (course: any) => {
+    const getStatusBadge = (course: CourseDTO) => {
         const status = course.status || "";
         const approvalStatus = course.approvalStatus || "";
 

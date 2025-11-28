@@ -36,12 +36,22 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 
+type ReportFormState = {
+    classId: number;
+    sessionId?: number;
+    phaseId?: number;
+    reportType: QAReportType;
+    findings: string;
+    actionItems: string;
+    status: QAReportStatus;
+}
+
 export default function CreateQAReportPage() {
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
     const [createReport, { isLoading, error }] = useCreateQAReportMutation()
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<ReportFormState>({
         classId: 0,
         sessionId: undefined as number | undefined,
         phaseId: undefined as number | undefined,
@@ -126,15 +136,27 @@ export default function CreateQAReportPage() {
         }
     }
 
-    const handleInputChange = (field: string, value: any) => {
+    const handleInputChange = <K extends keyof ReportFormState>(
+        field: K,
+        value: ReportFormState[K] | string
+    ) => {
         // Handle special cases for select values
         if (field === 'sessionId' || field === 'phaseId') {
-            value = value === "none" ? undefined : (value ? parseInt(value) : undefined)
+            const parsedValue =
+                value === "none"
+                    ? undefined
+                    : value
+                    ? parseInt(value as string, 10)
+                    : undefined
+            setFormData(prev => ({
+                ...prev,
+                [field]: parsedValue,
+            }))
+            return
         }
-
         setFormData(prev => ({
             ...prev,
-            [field]: value
+            [field]: value as ReportFormState[K]
         }))
     }
 

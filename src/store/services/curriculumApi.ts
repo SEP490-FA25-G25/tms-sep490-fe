@@ -15,6 +15,7 @@ export interface LevelDTO {
   description: string
   durationHours: number
   sortOrder: number
+  subjectId?: number
   subjectName?: string
   subjectCode?: string
   status?: string

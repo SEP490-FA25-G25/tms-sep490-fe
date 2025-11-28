@@ -47,10 +47,7 @@ export function CenterDetailDialog({
   const [deleteBranch] = useDeleteBranchMutation();
 
   // Extract branches from API response
-  // Response structure: { success, message, data: BranchResponse[] }
-  const branches = Array.isArray(branchesResponse?.data) 
-    ? branchesResponse.data 
-    : branchesResponse?.data?.data || branchesResponse?.data || [];
+  const branches: BranchResponse[] = branchesResponse?.data ?? [];
 
   const handleDeleteBranch = async (branchId: number) => {
     try {
@@ -62,8 +59,8 @@ export function CenterDetailDialog({
       refetchBranches();
       setBranchToDelete(null);
       onSuccess();
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Xóa chi nhánh thất bại");
+    } catch (error: unknown) {
+      toast.error((error as { data?: { message?: string } })?.data?.message || "Xóa chi nhánh thất bại");
     }
   };
 
@@ -182,7 +179,7 @@ export function CenterDetailDialog({
                       </tr>
                     </thead>
                     <tbody>
-                      {branches.map((branch) => (
+                      {branches.map((branch: BranchResponse) => (
                         <tr key={branch.id} className="border-t hover:bg-muted/50">
                           <td className="px-4 py-2 text-sm font-medium">{branch.code}</td>
                           <td className="px-4 py-2 text-sm">{branch.name}</td>
@@ -266,4 +263,3 @@ export function CenterDetailDialog({
     </>
   );
 }
-

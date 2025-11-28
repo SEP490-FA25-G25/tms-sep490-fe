@@ -148,8 +148,14 @@ export function ApprovalDetailDrawer({ classId, open, onClose, onActionComplete 
   const [reasonError, setReasonError] = useState<string | null>(null)
 
   const overview = detailResponse?.data
-  const sessions = sessionsResponse?.data?.sessions ?? []
-  const groupedWeeks = sessionsResponse?.data?.groupedByWeek ?? []
+  const sessions = useMemo(
+    () => sessionsResponse?.data?.sessions ?? [],
+    [sessionsResponse?.data?.sessions]
+  )
+  const groupedWeeks = useMemo(
+    () => sessionsResponse?.data?.groupedByWeek ?? [],
+    [sessionsResponse?.data?.groupedByWeek]
+  )
   const sessionMap = useMemo(() => buildSessionMap(sessions), [sessions])
 
   const submittedAtValue = useMemo(() => overview?.submittedAt, [overview])

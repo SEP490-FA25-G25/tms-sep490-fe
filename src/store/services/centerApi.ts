@@ -59,7 +59,7 @@ export const centerApi = createApi({
 
     getCenterById: builder.query<ApiResponse<CenterResponse>, number>({
       query: (id) => `/centers/${id}`,
-      providesTags: (result, error, id) => [{ type: 'Center', id }],
+      providesTags: (_result, _error, id) => [{ type: 'Center', id }],
     }),
 
     createCenter: builder.mutation<ApiResponse<CenterResponse>, CenterRequest>({
@@ -77,7 +77,7 @@ export const centerApi = createApi({
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: (result, error, { id }) => [{ type: 'Center', id }, 'Center'],
+      invalidatesTags: (_result, _error, { id }) => [{ type: 'Center', id }, 'Center'],
     }),
 
     deleteCenter: builder.mutation<ApiResponse<void>, number>({

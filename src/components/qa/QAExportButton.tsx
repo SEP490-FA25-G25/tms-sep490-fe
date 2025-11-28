@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { CalendarDays, Download, Loader2 } from "lucide-react"
+import { CalendarDays, Download } from "lucide-react"
 import { QAExportDialog } from "@/components/qa/QAExportDialog"
 import { useSearchParams } from "react-router-dom"
 

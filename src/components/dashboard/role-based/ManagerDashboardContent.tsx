@@ -12,7 +12,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Activity,
-  BookOpen,
   CheckCircle,
   CalendarDays,
   Users,

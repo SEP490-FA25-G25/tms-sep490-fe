@@ -14,7 +14,7 @@ import {
 import {
   useGetAvailableSessionsQuery,
   useSubmitStudentRequestMutation,
-  type StudentClassSessions
+  type StudentSessionOption
 } from '@/store/services/studentRequestApi'
 import {
   BaseFlowComponent,
@@ -39,9 +39,11 @@ function parseSessionDateTime(dateStr: string, timeStr?: string) {
 }
 
 // Helper to check availability
-function getSessionAvailability(session: SessionSummaryDTO | StudentClassSessions['sessions'][number], futureLimit: Date) {
-  const dateStr = 'date' in session ? session.date : (session as any).date // Handle both types if needed, but they share 'date'
-  const timeStr = 'startTime' in session ? session.startTime : (session as any).timeSlot.startTime
+type CombinedSession = SessionSummaryDTO | StudentSessionOption
+
+function getSessionAvailability(session: CombinedSession, futureLimit: Date) {
+  const dateStr = session.date
+  const timeStr = 'startTime' in session ? session.startTime : session.timeSlot.startTime
 
   const sessionDateTime = parseSessionDateTime(dateStr, timeStr)
   const now = new Date()

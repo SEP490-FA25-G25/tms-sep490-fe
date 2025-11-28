@@ -62,8 +62,8 @@ export default function AdminCentersPage() {
   // Extract centers from API response
   // Response structure: { success, message, data: PageableResponse<CenterResponse> }
   // RTK Query trả về ApiResponse wrapper, nên cần access .data để lấy PageableResponse
-  const pageData = centersResponse?.data || centersResponse;
-  const centers = pageData?.content || [];
+  const pageData = centersResponse?.data;
+  const centers: CenterResponse[] = pageData?.content || [];
   const totalElements = pageData?.totalElements || 0;
   const totalPages = pageData?.totalPages || 0;
 
@@ -92,8 +92,8 @@ export default function AdminCentersPage() {
       toast.success("Xóa trung tâm thành công");
       refetchCenters();
       setCenterToDelete(null);
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Xóa trung tâm thất bại");
+    } catch (error: unknown) {
+      toast.error((error as { data?: { message?: string } })?.data?.message || "Xóa trung tâm thất bại");
     }
   };
 
@@ -376,4 +376,3 @@ export default function AdminCentersPage() {
     </AdminRoute>
   );
 }
-

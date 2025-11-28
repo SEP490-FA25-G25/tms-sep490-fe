@@ -71,7 +71,8 @@ export default function SessionDetailsPage() {
         );
     }
 
-    const formatDate = (dateString: string) => {
+    const formatDate = (dateString?: string) => {
+        if (!dateString) return "Không xác định"
         return new Date(dateString).toLocaleDateString('vi-VN', {
             day: '2-digit',
             month: '2-digit',
@@ -79,8 +80,9 @@ export default function SessionDetailsPage() {
         })
     }
 
-    const getAttendanceStatusColor = (status: string) => {
-        switch (status.toLowerCase()) {
+    const getAttendanceStatusColor = (status?: string) => {
+        const value = status?.toLowerCase() || 'unknown'
+        switch (value) {
             case 'present':
                 return 'text-green-600 bg-green-50'
             case 'absent':
@@ -94,8 +96,9 @@ export default function SessionDetailsPage() {
         }
     }
 
-    const getHomeworkStatusColor = (status: string) => {
-        switch (status.toLowerCase()) {
+    const getHomeworkStatusColor = (status?: string) => {
+        const value = status?.toLowerCase() || 'unknown'
+        switch (value) {
             case 'completed':
                 return 'text-green-600 bg-green-50'
             case 'incomplete':
@@ -107,7 +110,7 @@ export default function SessionDetailsPage() {
         }
     }
 
-    const getAttendanceStatusBadge = (status: string) => {
+    const getAttendanceStatusBadge = (status?: string) => {
         const statusMap: Record<string, string> = {
             'present': 'Có mặt',
             'absent': 'Vắng mặt',
@@ -116,12 +119,12 @@ export default function SessionDetailsPage() {
         }
         return (
             <Badge className={getAttendanceStatusColor(status)}>
-                {statusMap[status.toLowerCase()] || status}
+                {status ? statusMap[status.toLowerCase()] || status : 'Không xác định'}
             </Badge>
         )
     }
 
-    const getHomeworkStatusBadge = (status: string) => {
+    const getHomeworkStatusBadge = (status?: string) => {
         const statusMap: Record<string, string> = {
             'completed': 'Đã nộp',
             'incomplete': 'Chưa nộp',
@@ -129,7 +132,7 @@ export default function SessionDetailsPage() {
         }
         return (
             <Badge className={getHomeworkStatusColor(status)}>
-                {statusMap[status.toLowerCase()] || status}
+                {status ? statusMap[status.toLowerCase()] || status : 'Không xác định'}
             </Badge>
         )
     }
@@ -285,7 +288,7 @@ export default function SessionDetailsPage() {
                         </div>
                         {session.closCovered && session.closCovered.length > 0 ? (
                             <div className="space-y-2">
-                                {session.closCovered?.map((clo: any) => (
+                                {session.closCovered?.map((clo) => (
                                     <div key={clo.cloId} className="p-3 border rounded-lg">
                                         <div className="flex items-center space-x-2">
                                             <Badge variant="outline">{clo.cloCode}</Badge>
@@ -330,7 +333,7 @@ export default function SessionDetailsPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {session.students.map((student: any) => (
+                                {session.students.map((student) => (
                                     <TableRow key={student.studentId}>
                                         <TableCell className="font-medium">{student.studentCode}</TableCell>
                                         <TableCell>{student.studentName}</TableCell>

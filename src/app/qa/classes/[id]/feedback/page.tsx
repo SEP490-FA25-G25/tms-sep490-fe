@@ -38,15 +38,24 @@ import {
     AlertTriangle,
 } from "lucide-react"
 import { Link } from "react-router-dom"
+import type { StudentFeedbackListResponse } from "@/types/qa"
 
 interface StudentFeedbackTabProps {
     classId: number
 }
 
+type FeedbackDetail = StudentFeedbackListResponse["feedbacks"][number] & {
+    detailedResponses?: Array<{
+        questionId: number;
+        questionText: string;
+        answerText: string;
+    }>;
+}
+
 export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
     const [phaseFilter, setPhaseFilter] = useState<string>("all")
     const [submissionFilter, setSubmissionFilter] = useState<string>("all")
-    const [selectedFeedback, setSelectedFeedback] = useState<any>(null)
+    const [selectedFeedback, setSelectedFeedback] = useState<FeedbackDetail | null>(null)
 
     const { data: feedbackData, isLoading, error } = useGetClassFeedbacksQuery({
         classId,
@@ -94,7 +103,8 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
         return "text-red-600"
     }
 
-    const formatDate = (dateString: string) => {
+    const formatDate = (dateString?: string) => {
+        if (!dateString) return "Không xác định"
         return new Date(dateString).toLocaleDateString('vi-VN', {
             day: '2-digit',
             month: '2-digit',
@@ -104,7 +114,7 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
         })
     }
 
-    const FeedbackDetailModal = ({ feedback }: { feedback: any }) => (
+    const FeedbackDetailModal = ({ feedback }: { feedback: FeedbackDetail }) => (
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
                 <DialogTitle>Phản Hồi Chi Tiết</DialogTitle>
@@ -129,7 +139,7 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
                 <div className="space-y-4">
                     <h4 className="font-medium">Câu trả lời chi tiết</h4>
                     <div className="space-y-3">
-                        {feedback.detailedResponses?.map((response: any) => (
+                        {feedback.detailedResponses?.map((response) => (
                             <div key={response.questionId} className="p-4 border rounded-lg">
                                 <p className="font-medium mb-2">{response.questionText}</p>
                                 <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded">

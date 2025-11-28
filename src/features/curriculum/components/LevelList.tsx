@@ -9,7 +9,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Edit, Trash2, Loader2, Eye, RotateCcw } from "lucide-react";
-import { useGetSubjectsWithLevelsQuery, useGetLevelsQuery, useDeactivateLevelMutation, useReactivateLevelMutation } from "@/store/services/curriculumApi";
+import { useGetSubjectsWithLevelsQuery, useGetLevelsQuery, useDeactivateLevelMutation, useReactivateLevelMutation, type LevelDTO } from "@/store/services/curriculumApi";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import {
@@ -41,7 +41,7 @@ export function LevelList() {
     const { data: subjectsData } = useGetSubjectsWithLevelsQuery();
 
     // Fetch levels filtered by selected subject
-    const { data: levelsData, isLoading } = useGetLevelsQuery(selectedSubjectId);
+    const { data: levelsData } = useGetLevelsQuery(selectedSubjectId);
     const [deactivateLevel, { isLoading: isDeactivating }] = useDeactivateLevelMutation();
     const [reactivateLevel, { isLoading: isReactivating }] = useReactivateLevelMutation();
 
@@ -73,7 +73,7 @@ export function LevelList() {
         }
     };
 
-    const columns: ColumnDef<any>[] = [
+    const columns: ColumnDef<LevelDTO>[] = [
         {
             accessorKey: "code",
             header: ({ column }) => {

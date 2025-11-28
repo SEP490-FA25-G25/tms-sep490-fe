@@ -15,7 +15,7 @@ export function CustomVideoPlayer({ src, autoPlay = false }: CustomVideoPlayerPr
     const [volume, setVolume] = useState(1);
     const [isMuted, setIsMuted] = useState(false);
     const [showControls, setShowControls] = useState(true);
-    const controlsTimeoutRef = useRef<number>();
+    const controlsTimeoutRef = useRef<number | undefined>(undefined);
 
     useEffect(() => {
         const video = videoRef.current;

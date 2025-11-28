@@ -27,11 +27,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
 const formSchema = z.object({
-    subjectId: z.coerce.number().min(1, "Vui lòng chọn môn học"),
+    subjectId: z.number().min(1, "Vui lòng chọn môn học"),
     code: z.string().min(1, "Mã cấp độ là bắt buộc"),
     name: z.string().min(1, "Tên cấp độ là bắt buộc"),
     description: z.string().optional(),
-    durationHours: z.coerce.number().min(1, "Thời lượng phải lớn hơn 0"),
+    durationHours: z.number().min(1, "Thời lượng phải lớn hơn 0"),
 });
 
 type LevelFormValues = z.infer<typeof formSchema>;
@@ -42,7 +42,7 @@ export default function CreateLevelPage() {
     const [createLevel, { isLoading: isCreating }] = useCreateLevelMutation();
 
     const form = useForm<LevelFormValues>({
-        resolver: zodResolver(formSchema) as any,
+        resolver: zodResolver(formSchema),
         defaultValues: {
             subjectId: 0,
             code: "",
@@ -101,8 +101,8 @@ export default function CreateLevelPage() {
                                             <FormItem>
                                                 <FormLabel>Môn học <span className="text-red-500">*</span></FormLabel>
                                                 <Select
-                                                    onValueChange={field.onChange}
-                                                    defaultValue={field.value ? field.value.toString() : undefined}
+                                                    onValueChange={(value) => field.onChange(Number(value))}
+                                                    value={field.value ? field.value.toString() : ""}
                                                 >
                                                     <FormControl>
                                                         <SelectTrigger>
@@ -159,7 +159,11 @@ export default function CreateLevelPage() {
                                             <FormItem>
                                                 <FormLabel>Thời lượng dự kiến (giờ) <span className="text-red-500">*</span></FormLabel>
                                                 <FormControl>
-                                                    <Input type="number" {...field} />
+                                                    <Input
+                                                        type="number"
+                                                        value={field.value || ""}
+                                                        onChange={(e) => field.onChange(Number(e.target.value))}
+                                                    />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>

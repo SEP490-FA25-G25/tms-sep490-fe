@@ -114,8 +114,8 @@ export function EnrollmentImportDialog({
         default:
           setStrategy('ALL')
       }
-    } catch (error: any) {
-      const errorMessage = error?.data?.message || 'Xem trước dữ liệu thất bại'
+    } catch (error: unknown) {
+      const errorMessage = (error as { data?: { message?: string } })?.data?.message || 'Xem trước dữ liệu thất bại'
       toast.error(errorMessage)
       setFile(null) // Reset file on error
     }
@@ -199,8 +199,8 @@ export function EnrollmentImportDialog({
       )
       onSuccess()
       handleClose()
-    } catch (error: any) {
-      toast.error(error?.data?.message || 'Thực hiện đăng ký thất bại')
+    } catch (error: unknown) {
+      toast.error((error as { data?: { message?: string } })?.data?.message || 'Thực hiện đăng ký thất bại')
     }
   }
 

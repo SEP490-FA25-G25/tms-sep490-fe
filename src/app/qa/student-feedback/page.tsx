@@ -36,6 +36,7 @@ import {
     useGetPhasesByCourseIdQuery,
     useGetQAClassDetailQuery
 } from "@/store/services/qaApi"
+import type { CoursePhaseDTO } from "@/types/qa"
 
 export default function StudentFeedbackPage() {
     const [searchParams, setSearchParams] = useSearchParams()
@@ -71,20 +72,24 @@ export default function StudentFeedbackPage() {
     )
 
     // Use course-specific phases if class is selected, otherwise use all phases
-    const availablePhases = selectedClassId ? (coursePhases || allPhases || []) : (allPhases || [])
+    const availablePhases: CoursePhaseDTO[] = selectedClassId ? (coursePhases ?? allPhases ?? []) : (allPhases ?? [])
 
     // Fetch feedback data for selected class
-    const { data: feedbackData, isLoading: feedbackLoading, error: feedbackError } = useGetClassFeedbacksQuery(
-        {
-            classId: selectedClassId!,
+    const feedbackQueryArgs = selectedClassId
+        ? {
+            classId: selectedClassId,
             filters: {
                 phaseId: selectedPhase !== "all" ? parseInt(selectedPhase) : undefined,
                 isFeedback: selectedStatus === "not_submitted" ? false :
-                           selectedStatus === QAReportStatus.SUBMITTED ? true : undefined,
+                    selectedStatus === QAReportStatus.SUBMITTED ? true : undefined,
                 page: 0,
                 size: 100
             }
-        },
+        }
+        : skipToken
+
+    const { data: feedbackData, isLoading: feedbackLoading, error: feedbackError } = useGetClassFeedbacksQuery(
+        feedbackQueryArgs,
         { skip: !selectedClassId }
     )
 
@@ -92,7 +97,6 @@ export default function StudentFeedbackPage() {
     const {
         totalStudents = 0,
         submittedCount = 0,
-        notSubmittedCount = 0,
         submissionRate = 0,
         averageRating = 0,
         positiveFeedbackCount = 0,
@@ -123,8 +127,9 @@ export default function StudentFeedbackPage() {
         }
     }
 
-    const getSentimentIcon = (sentiment: string) => {
-        switch (sentiment) {
+    const getSentimentIcon = (sentiment?: string) => {
+        const value = sentiment || "neutral"
+        switch (value) {
             case "positive":
                 return <CheckCircleIcon className="h-4 w-4 text-green-500" />
             case "negative":
@@ -134,8 +139,9 @@ export default function StudentFeedbackPage() {
         }
     }
 
-    const getSentimentColor = (sentiment: string) => {
-        switch (sentiment) {
+    const getSentimentColor = (sentiment?: string) => {
+        const value = sentiment || "neutral"
+        switch (value) {
             case "positive":
                 return "text-green-700 bg-green-50 border-green-200"
             case "negative":
@@ -156,9 +162,10 @@ export default function StudentFeedbackPage() {
         })
     }
 
-    const getRatingStars = (rating: number) => {
+    const getRatingStars = (rating?: number) => {
+        const value = rating ?? 0
         return Array.from({ length: 5 }, (_, i) => (
-            <span key={i} className={i < rating ? "text-yellow-400" : "text-gray-300"}>
+            <span key={i} className={i < value ? "text-yellow-400" : "text-gray-300"}>
                 ★
             </span>
         ))
@@ -329,7 +336,7 @@ export default function StudentFeedbackPage() {
                                                     <SelectContent>
                                                         <SelectItem value="all">Tất cả giai đoạn</SelectItem>
                                                         {[...availablePhases]
-                                                            .sort((a, b) => a.phaseNumber - b.phaseNumber)
+                                                            .sort((a, b) => (a.phaseNumber ?? 0) - (b.phaseNumber ?? 0))
                                                             .map((phase) => (
                                                                 <SelectItem key={phase.id} value={phase.id.toString()}>
                                                                     {phase.name || `Phase ${phase.phaseNumber}`}
@@ -422,7 +429,9 @@ export default function StudentFeedbackPage() {
                                                                         <span>Đánh giá:</span>
                                                                         <div className="flex items-center">
                                                                             {getRatingStars(feedback.rating)}
-                                                                            <span className="ml-2 font-medium">{feedback.rating}.0</span>
+                                                                            <span className="ml-2 font-medium">
+                                                                                {(feedback.rating ?? 0).toFixed(1)}
+                                                                            </span>
                                                                         </div>
                                                                     </div>
                                                                 </div>

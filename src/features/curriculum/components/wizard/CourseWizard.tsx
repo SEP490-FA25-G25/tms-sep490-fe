@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +13,7 @@ import { Step6Review } from "./Step6Review";
 import { useCreateCourseMutation, useUpdateCourseMutation, useSubmitCourseMutation } from "@/store/services/courseApi";
 import type { CourseDetail } from "@/store/services/courseApi";
 import { toast } from "sonner";
-import type { CourseData, Assessment } from "@/types/course";
+import type { CourseData } from "@/types/course";
 
 const STEPS = [
     { id: 1, title: "Thông tin cơ bản" },

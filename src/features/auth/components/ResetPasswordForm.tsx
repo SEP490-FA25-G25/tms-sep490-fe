@@ -76,8 +76,9 @@ export function ResetPasswordForm({ className }: ResetPasswordFormProps) {
       } else {
         setErrors({ newPassword: result.message || "Đặt lại mật khẩu thất bại" })
       }
-    } catch (err: any) {
-      const errorMessage = err?.data?.message || err?.message || "Đặt lại mật khẩu thất bại. Vui lòng thử lại."
+    } catch (err: unknown) {
+      const apiError = err as { data?: { message?: string }; message?: string }
+      const errorMessage = apiError?.data?.message || apiError?.message || "Đặt lại mật khẩu thất bại. Vui lòng thử lại."
 
       if (errorMessage.includes("token") || errorMessage.includes("hết hạn")) {
         setIsTokenValid(false)
@@ -168,7 +169,11 @@ export function ResetPasswordForm({ className }: ResetPasswordFormProps) {
         {error && !errors.token && (
           <Alert variant="destructive">
             <AlertDescription>
-              {typeof error === 'string' ? error : (error as any)?.data?.message || "Đã có lỗi xảy ra"}
+              {(() => {
+                if (typeof error === 'string') return error
+                const apiError = error as { data?: { message?: string } }
+                return apiError?.data?.message || "Đã có lỗi xảy ra"
+              })()}
             </AlertDescription>
           </Alert>
         )}

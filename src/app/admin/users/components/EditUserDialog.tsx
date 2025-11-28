@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -80,7 +80,7 @@ export function EditUserDialog({ open, onOpenChange, user, onUpdateSuccess }: Ed
   const selectedRoleIds = watch('roleIds') || []
   const selectedBranchIds = watch('branchIds') || []
 
-  const branches = branchesResponse?.data || []
+  const branches = useMemo(() => branchesResponse?.data || [], [branchesResponse?.data])
 
   // Pre-fill form when user changes
   useEffect(() => {
@@ -150,8 +150,8 @@ export function EditUserDialog({ open, onOpenChange, user, onUpdateSuccess }: Ed
       onOpenChange(false)
       // Call callback to refetch data
       onUpdateSuccess?.()
-    } catch (error: any) {
-      toast.error(error?.data?.message || 'Cập nhật người dùng thất bại. Vui lòng thử lại.')
+    } catch (error: unknown) {
+      toast.error((error as { data?: { message?: string } })?.data?.message || 'Cập nhật người dùng thất bại. Vui lòng thử lại.')
     }
   }
 

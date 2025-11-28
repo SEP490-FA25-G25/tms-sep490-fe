@@ -29,7 +29,6 @@ import {
     Calendar,
     TrendingUp,
     Plus,
-    Eye,
     Loader2,
     AlertTriangle,
 } from "lucide-react"

@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { ArrowLeft, Loader2, Edit, BookOpen, Clock, GraduationCap, CheckCircle, XCircle, FileText, Target, PlayCircle, Download } from "lucide-react";
-import { useGetCourseDetailsQuery, useApproveCourseMutation, useRejectCourseMutation, useSubmitCourseMutation } from "@/store/services/courseApi";
+import { useGetCourseDetailsQuery, useApproveCourseMutation, useRejectCourseMutation } from "@/store/services/courseApi";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -58,7 +58,6 @@ export default function CourseDetailPage() {
 
     const [approveCourse, { isLoading: isApproving }] = useApproveCourseMutation();
     const [rejectCourse, { isLoading: isRejecting }] = useRejectCourseMutation();
-    const [submitCourse] = useSubmitCourseMutation();
 
     const handleApprove = async () => {
         if (!course?.id) return;
@@ -82,18 +81,6 @@ export default function CourseDetailPage() {
         } catch (error) {
             console.error("Failed to reject course:", error);
             toast.error("Từ chối thất bại. Vui lòng thử lại.");
-        }
-    };
-
-    const handleSubmit = async () => {
-        if (!course?.id) return;
-        try {
-            await submitCourse(course.id).unwrap();
-            toast.success("Đã nộp khóa học để phê duyệt");
-            refetch();
-        } catch (error) {
-            console.error("Failed to submit course:", error);
-            toast.error("Nộp thất bại. Vui lòng thử lại.");
         }
     };
 

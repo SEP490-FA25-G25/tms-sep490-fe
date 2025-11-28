@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useSearchParams, useNavigate } from "react-router-dom"
+import { useSearchParams } from "react-router-dom"
 import { useGetQAReportsQuery } from "@/store/services/qaApi"
 import type { QAReportListItemDTO } from "@/types/qa"
 import { DashboardLayout } from "@/components/DashboardLayout"
@@ -25,7 +25,6 @@ export default function QAReportsListPage() {
     const [searchParams, setSearchParams] = useSearchParams()
     const [searchTerm, setSearchTerm] = useState("")
     const [page, setPage] = useState(0)
-    const navigate = useNavigate()
 
     // Initialize state from URL parameters
     useEffect(() => {

@@ -130,8 +130,8 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
       toast.success('Tạo người dùng thành công')
       reset()
       onOpenChange(false)
-    } catch (error: any) {
-      toast.error(error?.data?.message || 'Tạo người dùng thất bại. Vui lòng thử lại.')
+    } catch (error: unknown) {
+      toast.error((error as { data?: { message?: string } })?.data?.message || 'Tạo người dùng thất bại. Vui lòng thử lại.')
     }
   }
 

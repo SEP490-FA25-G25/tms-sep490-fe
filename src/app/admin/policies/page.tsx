@@ -67,7 +67,7 @@ export default function AdminPoliciesPage() {
   const [newValue, setNewValue] = useState("");
   const [reason, setReason] = useState("");
 
-  const { data, isLoading, isFetching } = useGetPoliciesQuery({
+  const { data, isLoading } = useGetPoliciesQuery({
     page,
     size: PAGE_SIZE,
     search: search || undefined,

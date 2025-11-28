@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useGetSubjectsWithLevelsQuery, useGetTimeslotDurationQuery } from "@/store/services/curriculumApi";
-import { useMemo, useEffect, useRef } from "react";
+import { useMemo, useEffect, useRef, useCallback } from "react";
 import type { CourseData } from "@/types/course";
 
 interface Step1Props {
@@ -31,7 +31,7 @@ export function Step1BasicInfo({ data, setData, courseStatus }: Step1Props) {
         return subjectsData?.data?.find(s => s.id.toString() === data.basicInfo?.subjectId);
     }, [subjectsData, data.basicInfo?.subjectId]);
 
-    const handleChange = (field: string, value: string | number) => {
+    const handleChange = useCallback((field: string, value: string | number) => {
         setData((prev) => ({
             ...prev,
             basicInfo: {
@@ -39,13 +39,13 @@ export function Step1BasicInfo({ data, setData, courseStatus }: Step1Props) {
                 [field]: value,
             },
         }));
-    };
+    }, [setData]);
 
     useEffect(() => {
         if (durationData?.data && !data.basicInfo?.hoursPerSession) {
             handleChange("hoursPerSession", durationData.data);
         }
-    }, [durationData]);
+    }, [durationData, data.basicInfo?.hoursPerSession, handleChange]);
 
     useEffect(() => {
         const sessions = data.basicInfo?.numberOfSessions || 0;
@@ -57,7 +57,7 @@ export function Step1BasicInfo({ data, setData, courseStatus }: Step1Props) {
                 handleChange("durationHours", totalHours);
             }
         }
-    }, [data.basicInfo?.numberOfSessions, data.basicInfo?.hoursPerSession]);
+    }, [data.basicInfo?.numberOfSessions, data.basicInfo?.hoursPerSession, data.basicInfo?.durationHours, handleChange]);
 
     // Auto-generate course code
     useEffect(() => {
@@ -103,7 +103,7 @@ export function Step1BasicInfo({ data, setData, courseStatus }: Step1Props) {
                 prevEffectiveDate.current = currentEffectiveDate;
             }
         }
-    }, [data.basicInfo?.subjectId, data.basicInfo?.levelId, data.basicInfo?.effectiveDate, subjectsData, courseStatus]);
+    }, [data.basicInfo?.subjectId, data.basicInfo?.levelId, data.basicInfo?.effectiveDate, subjectsData, courseStatus, handleChange]);
 
     const handleSubjectChange = (val: string) => {
         handleChange("subjectId", val);

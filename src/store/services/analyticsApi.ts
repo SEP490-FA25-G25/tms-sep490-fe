@@ -38,6 +38,7 @@ export interface ClassAnalytics {
   classesByStatus: Record<string, number>
   averageEnrollmentRate: number
   totalEnrollments: number
+  scheduledClasses?: number
 }
 
 export interface BranchStat {

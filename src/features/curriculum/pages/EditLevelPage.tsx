@@ -40,7 +40,7 @@ const formSchema = z.object({
     code: z.string().min(1, "Mã cấp độ là bắt buộc"),
     name: z.string().min(1, "Tên cấp độ là bắt buộc"),
     description: z.string().optional(),
-    durationHours: z.coerce.number().min(1, "Thời lượng phải lớn hơn 0"),
+    durationHours: z.number().min(1, "Thời lượng phải lớn hơn 0"),
 });
 
 type LevelFormValues = z.infer<typeof formSchema>;
@@ -56,7 +56,7 @@ export default function EditLevelPage() {
     const [reactivateLevel, { isLoading: isReactivating }] = useReactivateLevelMutation();
 
     const form = useForm<LevelFormValues>({
-        resolver: zodResolver(formSchema) as any,
+        resolver: zodResolver(formSchema),
         defaultValues: {
             code: "",
             name: "",
@@ -82,7 +82,7 @@ export default function EditLevelPage() {
                 id: Number(id),
                 data: {
                     ...values,
-                    subjectId: 0, // Not used in update but required by type if strictly checked, though backend ignores it or we can adjust type
+                    subjectId: levelData?.data?.subjectId ?? 0,
                 },
             }).unwrap();
             toast.success("Cập nhật cấp độ thành công");
@@ -243,7 +243,11 @@ export default function EditLevelPage() {
                                     <FormItem>
                                         <FormLabel>Thời lượng dự kiến (giờ)</FormLabel>
                                         <FormControl>
-                                            <Input type="number" {...field} />
+                                            <Input
+                                                type="number"
+                                                value={field.value || ""}
+                                                onChange={(e) => field.onChange(Number(e.target.value))}
+                                            />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

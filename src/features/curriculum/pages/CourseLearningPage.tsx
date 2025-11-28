@@ -1,22 +1,21 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useGetCourseDetailsQuery } from "@/store/services/courseApi";
-import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Loader2, ArrowLeft, PlayCircle, FileText, CheckCircle, Lock, ChevronRight, Download } from "lucide-react";
+import { Loader2, ArrowLeft, PlayCircle, FileText, ChevronRight, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { CustomVideoPlayer } from "../components/CustomVideoPlayer";
 
 interface VideoMaterial {
     id: number;
-    name: string;
+    name?: string;
+    title?: string;
     url: string;
-    type: string;
+    type?: string;
     duration?: string;
     phaseId?: number;
     sessionId?: number;
@@ -26,7 +25,6 @@ export default function CourseLearningPage() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [currentVideo, setCurrentVideo] = useState<VideoMaterial | null>(null);
-    const [expandedPhases, setExpandedPhases] = useState<string[]>([]);
 
     const { data: courseData, isLoading } = useGetCourseDetailsQuery(Number(id), {
         skip: !id || isNaN(Number(id))
@@ -60,7 +58,7 @@ export default function CourseLearningPage() {
         // Course level materials (both video files and YouTube links)
         course.materials?.forEach(m => {
             if (isVideoFile(m.url) || isYouTubeUrl(m.url)) {
-                videos.push({ ...m, url: m.url || '' });
+                videos.push({ ...m, url: m.url || '', name: m.name || m.title });
             }
         });
 
@@ -69,7 +67,7 @@ export default function CourseLearningPage() {
             // Phase materials
             course.materials?.filter(m => m.scope === 'PHASE' && m.phaseId === phase.id).forEach(m => {
                 if (isVideoFile(m.url) || isYouTubeUrl(m.url)) {
-                    videos.push({ ...m, url: m.url || '' });
+                    videos.push({ ...m, url: m.url || '', name: m.name || m.title });
                 }
             });
 
@@ -77,7 +75,7 @@ export default function CourseLearningPage() {
             phase.sessions?.forEach(session => {
                 course.materials?.filter(m => m.scope === 'SESSION' && m.sessionId === session.id).forEach(m => {
                     if (isVideoFile(m.url) || isYouTubeUrl(m.url)) {
-                        videos.push({ ...m, url: m.url || '' });
+                        videos.push({ ...m, url: m.url || '', name: m.name || m.title });
                     }
                 });
             });
@@ -92,12 +90,8 @@ export default function CourseLearningPage() {
     useEffect(() => {
         if (allVideos.length > 0 && !currentVideo) {
             setCurrentVideo(allVideos[0]);
-            // Expand the phase containing the first video if applicable
-            if (allVideos[0].phaseId) {
-                setExpandedPhases([`phase-${allVideos[0].phaseId}`]);
-            }
         }
-    }, [course]);
+    }, [course, allVideos, currentVideo]);
 
     const handleVideoSelect = (video: VideoMaterial) => {
         setCurrentVideo(video);
@@ -180,7 +174,7 @@ export default function CourseLearningPage() {
                     <div className="p-6 space-y-6">
                         <div className="flex items-start justify-between gap-4">
                             <div>
-                                <h2 className="text-2xl font-bold mb-2">{currentVideo?.name || "Chọn bài học"}</h2>
+                                <h2 className="text-2xl font-bold mb-2">{currentVideo?.name || currentVideo?.title || "Chọn bài học"}</h2>
                                 <p className="text-muted-foreground">{currentVideo?.type || "Video"}</p>
                             </div>
                             {currentVideo && (
@@ -295,7 +289,7 @@ export default function CourseLearningPage() {
 
                     <ScrollArea className="flex-1">
                         <Accordion type="multiple" defaultValue={course.phases?.map(p => `phase-${p.id}`)} className="w-full">
-                            {course.phases?.map((phase, index) => (
+                            {course.phases?.map((phase) => (
                                 <AccordionItem key={phase.id} value={`phase-${phase.id}`} className="border-b-0">
                                     <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 hover:no-underline">
                                         <div className="text-left">

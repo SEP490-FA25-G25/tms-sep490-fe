@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { cn } from "@/lib/utils"
-import { CalendarIcon, Download, Loader2, AlertTriangle, Check } from "lucide-react"
+import { CalendarIcon, Download, Loader2, AlertTriangle } from "lucide-react"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import { useExportQADataMutation } from "@/store/services/qaApi"

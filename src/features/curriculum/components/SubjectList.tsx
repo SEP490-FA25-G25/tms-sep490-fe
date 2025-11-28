@@ -1,10 +1,9 @@
-import {
-    ColumnDef,
-} from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, Eye, Trash2, Loader2, RotateCcw, ArrowUpDown } from "lucide-react";
-import { useGetSubjectsWithLevelsQuery, useDeactivateSubjectMutation, useReactivateSubjectMutation, SubjectWithLevelsDTO } from "@/store/services/curriculumApi";
+import { useGetSubjectsWithLevelsQuery, useDeactivateSubjectMutation, useReactivateSubjectMutation } from "@/store/services/curriculumApi";
+import type { SubjectWithLevelsDTO } from "@/store/services/curriculumApi";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import {

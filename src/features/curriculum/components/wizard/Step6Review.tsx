@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, AlertCircle } from "lucide-react";
-import type { CourseData, Assessment, Phase } from "@/types/course";
+import type { CourseData, Phase } from "@/types/course";
 
 interface Step6Props {
     data: CourseData;

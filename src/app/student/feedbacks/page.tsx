@@ -26,7 +26,7 @@ import {
 
 export default function StudentPendingFeedbackPage() {
   const { data: pending = [], isLoading, isFetching, refetch } = useGetPendingFeedbacksQuery()
-  const { data: questions = [], isLoading: isLoadingQuestions } = useGetQuestionsQuery()
+  const { data: questions = [] } = useGetQuestionsQuery()
   const [selected, setSelected] = useState<PendingFeedback | null>(null)
   const [ratings, setRatings] = useState<Record<number, number>>({})
   const [comment, setComment] = useState('')

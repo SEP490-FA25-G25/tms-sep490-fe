@@ -144,17 +144,12 @@ export const qaApi = createApi({
         url: `/classes/${classId}/feedbacks`,
         params: filters,
       }),
-      transformResponse: (response: {
-        data: {
-          statistics: any;
-          feedbacks: { content: any[]; totalElements: number; number: number; size: number }
-        }
-      }) => ({
+      transformResponse: (response: { data: StudentFeedbackListResponse }) => ({
         statistics: response.data.statistics,
-        feedbacks: response.data.feedbacks.content,
-        total: response.data.feedbacks.totalElements,
-        page: response.data.feedbacks.number,
-        size: response.data.feedbacks.size
+        feedbacks: response.data.feedbacks,
+        total: response.data.total,
+        page: response.data.page,
+        size: response.data.size
       }),
       providesTags: ['QAFeedback'],
     }),

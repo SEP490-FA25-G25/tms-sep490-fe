@@ -79,7 +79,10 @@ export function StudentSelectionDialog({
     }
   }, [open]);
 
-  const students = response?.data?.content || [];
+  const students = useMemo(
+    () => response?.data?.content ?? [],
+    [response?.data?.content]
+  );
   const pagination = response?.data?.page;
 
   const filteredStudents = useMemo(() => {
@@ -88,7 +91,7 @@ export function StudentSelectionDialog({
       const priority = s.classMatchInfo?.matchPriority || s.matchPriority;
       return priority.toString() === priorityFilter;
     });
-  }, [students, priorityFilter]);
+  }, [priorityFilter, students]);
 
   const toggleStudent = (studentId: number) => {
     const newSet = new Set(selectedStudents);
@@ -134,9 +137,9 @@ export function StudentSelectionDialog({
 
       handleClose();
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Enrollment error:", error);
-      toast.error(error?.data?.message || "Ghi danh thất bại");
+      toast.error((error as { data?: { message?: string } })?.data?.message || "Ghi danh thất bại");
     }
   };
 

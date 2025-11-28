@@ -411,9 +411,6 @@ export const teacherRequestApi = createApi({
         url: "/teacher-requests/config",
         method: "GET",
       }),
-      // Luôn refetch khi component mount lại hoặc window lấy lại focus
-      refetchOnMountOrArgChange: true,
-      refetchOnFocus: true,
     }),
 
     // Get teacher's sessions (for creating request)

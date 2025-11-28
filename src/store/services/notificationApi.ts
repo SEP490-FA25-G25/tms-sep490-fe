@@ -15,6 +15,7 @@ export interface Notification {
   status: 'UNREAD' | 'READ' | 'ARCHIVED';
   statusDisplayName?: string;
   actionUrl?: string;
+  actionText?: string;
   referenceType?: string;
   referenceId?: number;
   metadata?: string;
@@ -24,10 +25,12 @@ export interface Notification {
   readAt?: string;
   expired: boolean;
   unread: boolean; // true = chưa đọc, false = đã đọc
+  isRead?: boolean;
 }
 
 export interface NotificationFilter {
   status?: 'UNREAD' | 'READ' | 'ARCHIVED';
+  isRead?: boolean;
   type?: Notification['type'];
   priority?: Notification['priority'];
   search?: string;
@@ -62,7 +65,9 @@ export const notificationApi = createApi({
     getNotifications: builder.query<NotificationResponse, NotificationFilter>({
       query: (filters) => {
         const params = new URLSearchParams();
-        if (filters.status) {
+        if (filters.isRead !== undefined) {
+          params.append('status', filters.isRead ? 'READ' : 'UNREAD');
+        } else if (filters.status) {
           params.append('status', filters.status);
         }
         if (filters.type) {

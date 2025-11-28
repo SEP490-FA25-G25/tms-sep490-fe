@@ -108,6 +108,8 @@ function NotificationCard({ notification }: { notification: Notification }) {
   const navigate = useNavigate()
   const [markAsRead] = useMarkAsReadMutation()
   const [deleteNotification] = useDeleteNotificationMutation()
+  const isRead = notification.isRead ?? (notification.status === 'READ' || notification.unread === false)
+  const actionText = notification.actionText || "Xem chi tiết"
 
   const typeConfig = notificationTypeConfig[notification.type as keyof typeof notificationTypeConfig]
   const priorityConfigValue = priorityConfig[notification.priority as keyof typeof priorityConfig]
@@ -137,7 +139,7 @@ function NotificationCard({ notification }: { notification: Notification }) {
 
   const handleCardClick = async () => {
     // Mark as read if unread
-    if (!notification.isRead) {
+    if (!isRead) {
       await handleMarkAsRead({ stopPropagation: () => {} } as React.MouseEvent)
     }
 
@@ -170,7 +172,7 @@ function NotificationCard({ notification }: { notification: Notification }) {
   return (
     <Card
       className={`cursor-pointer transition-all hover:shadow-md ${
-        !notification.isRead ? 'bg-muted/30 border-primary/50' : ''
+        !isRead ? 'bg-muted/30 border-primary/50' : ''
       } ${priorityConfigValue.className}`}
       onClick={handleCardClick}
     >
@@ -184,11 +186,11 @@ function NotificationCard({ notification }: { notification: Notification }) {
             <div className="flex-1 min-w-0 space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className={`text-base truncate ${
-                  !notification.isRead ? 'font-semibold' : ''
+                  !isRead ? 'font-semibold' : ''
                 }`}>
                   {notification.title}
                 </CardTitle>
-                {!notification.isRead && (
+                {!isRead && (
                   <div className="h-2 w-2 rounded-full bg-blue-600 flex-shrink-0"></div>
                 )}
               </div>
@@ -220,7 +222,7 @@ function NotificationCard({ notification }: { notification: Notification }) {
 
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            {!notification.isRead && (
+            {!isRead && (
               <Button
                 variant="outline"
                 size="sm"
@@ -239,7 +241,7 @@ function NotificationCard({ notification }: { notification: Notification }) {
                 className="h-8 px-3 text-xs"
               >
                 <ExternalLinkIcon className="h-3 w-3 mr-1" />
-                {notification.actionText || "Xem chi tiết"}
+                {actionText}
               </Button>
             )}
           </div>

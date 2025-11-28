@@ -49,8 +49,9 @@ export function ForgotPasswordForm({ className }: ForgotPasswordFormProps) {
       } else {
         setErrors({ email: result.message || "Gửi yêu cầu thất bại" })
       }
-    } catch (err: any) {
-      const errorMessage = err?.data?.message || err?.message || "Gửi yêu cầu thất bại. Vui lòng thử lại."
+    } catch (err: unknown) {
+      const apiError = err as { data?: { message?: string }; message?: string }
+      const errorMessage = apiError?.data?.message || apiError?.message || "Gửi yêu cầu thất bại. Vui lòng thử lại."
       setErrors({ email: errorMessage })
     }
   }
@@ -102,7 +103,11 @@ export function ForgotPasswordForm({ className }: ForgotPasswordFormProps) {
         {error && (
           <Alert variant="destructive">
             <AlertDescription>
-              {typeof error === 'string' ? error : (error as any)?.data?.message || "Đã có lỗi xảy ra"}
+              {(() => {
+                if (typeof error === 'string') return error
+                const apiError = error as { data?: { message?: string } }
+                return apiError?.data?.message || "Đã có lỗi xảy ra"
+              })()}
             </AlertDescription>
           </Alert>
         )}

@@ -121,8 +121,8 @@ export function EditBranchDialog({
       }
       toast.success("Cập nhật chi nhánh thành công");
       onSuccess();
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Cập nhật chi nhánh thất bại");
+    } catch (error: unknown) {
+      toast.error((error as { data?: { message?: string } })?.data?.message || "Cập nhật chi nhánh thất bại");
     }
   };
 

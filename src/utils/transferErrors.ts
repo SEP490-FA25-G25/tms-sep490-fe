@@ -173,149 +173,143 @@ interface FetchError {
 }
 
 export function parseTransferError(error: unknown): TransferError {
-  // Handle network errors
   if (!error) {
     return {
       code: 'UNKNOWN_ERROR',
       message: 'Unknown error occurred.',
       userMessage: 'Đã xảy ra lỗi không xác định. Vui lòng thử lại.',
       severity: 'error',
-      action: { type: 'retry' }
+      action: { type: 'retry' },
     }
   }
 
-  // Type guard
   const isFetchError = (err: unknown): err is FetchError =>
     typeof err === 'object' && err !== null && 'status' in err
 
-  // Handle fetch/base query errors
   if (isFetchError(error)) {
-    if (error.status === 'FETCH_ERROR' || error.status === 'TIMEOUT_ERROR') {
+    const { status, data, error: fetchErr } = error
+
+    if (status === 'FETCH_ERROR' || status === 'TIMEOUT_ERROR') {
       return {
         code: 'NETWORK_ERROR',
-        message: error.error?.message || 'Network error',
+        message: fetchErr?.message || 'Network error',
         userMessage: TRANSFER_ERROR_CODES.NETWORK_ERROR.userMessage,
         severity: TRANSFER_ERROR_CODES.NETWORK_ERROR.severity,
-        action: TRANSFER_ERROR_CODES.NETWORK_ERROR.action
+        action: TRANSFER_ERROR_CODES.NETWORK_ERROR.action,
       }
     }
 
-    if (error.status === 401) {
+    if (status === 401) {
       return {
         code: 'UNAUTHORIZED',
-        message: error.data?.message || 'Unauthorized',
+        message: data?.message || 'Unauthorized',
         userMessage: TRANSFER_ERROR_CODES.UNAUTHORIZED.userMessage,
         severity: TRANSFER_ERROR_CODES.UNAUTHORIZED.severity,
-        action: TRANSFER_ERROR_CODES.UNAUTHORIZED.action
+        action: TRANSFER_ERROR_CODES.UNAUTHORIZED.action,
       }
     }
 
-    if (error.status === 403) {
+    if (status === 403) {
       return {
         code: 'FORBIDDEN',
-        message: error.data?.message || 'Forbidden',
+        message: data?.message || 'Forbidden',
         userMessage: TRANSFER_ERROR_CODES.FORBIDDEN.userMessage,
         severity: TRANSFER_ERROR_CODES.FORBIDDEN.severity,
-        action: TRANSFER_ERROR_CODES.FORBIDDEN.action
+        action: TRANSFER_ERROR_CODES.FORBIDDEN.action,
       }
     }
 
-    if (error.status === 404) {
+    if (status === 404) {
       return {
         code: 'NOT_FOUND',
-        message: error.data?.message || 'Not found',
+        message: data?.message || 'Not found',
         userMessage: TRANSFER_ERROR_CODES.NOT_FOUND.userMessage,
         severity: TRANSFER_ERROR_CODES.NOT_FOUND.severity,
-        action: TRANSFER_ERROR_CODES.NOT_FOUND.action
+        action: TRANSFER_ERROR_CODES.NOT_FOUND.action,
       }
     }
 
-    if (error.status === 409) {
+    if (status === 409) {
       return {
         code: 'TRF_CONCURRENT_UPDATE',
-        message: error.data?.message || 'Conflict',
+        message: data?.message || 'Conflict',
         userMessage: TRANSFER_ERROR_CODES.TRF_CONCURRENT_UPDATE.userMessage,
         severity: TRANSFER_ERROR_CODES.TRF_CONCURRENT_UPDATE.severity,
-        action: TRANSFER_ERROR_CODES.TRF_CONCURRENT_UPDATE.action
+        action: TRANSFER_ERROR_CODES.TRF_CONCURRENT_UPDATE.action,
       }
     }
 
-    if (error.status === 500) {
+    if (status === 500) {
       return {
         code: 'INTERNAL_SERVER_ERROR',
-        message: error.data?.message || 'Internal server error',
+        message: data?.message || 'Internal server error',
         userMessage: TRANSFER_ERROR_CODES.INTERNAL_SERVER_ERROR.userMessage,
         severity: TRANSFER_ERROR_CODES.INTERNAL_SERVER_ERROR.severity,
-        action: TRANSFER_ERROR_CODES.INTERNAL_SERVER_ERROR.action
+        action: TRANSFER_ERROR_CODES.INTERNAL_SERVER_ERROR.action,
       }
     }
 
-    // Handle API response errors (400 with business rule errors)
-    if (error.data?.success === false && error.data.message) {
-      const errorCode = error.data.message // Backend sends error code in message field
+    if (data?.success === false && data.message) {
+      const errorCode = data.message
       if (TRANSFER_ERROR_CODES[errorCode]) {
         return {
           code: errorCode,
-          message: error.data.message,
+          message: data.message,
           userMessage: TRANSFER_ERROR_CODES[errorCode].userMessage,
           severity: TRANSFER_ERROR_CODES[errorCode].severity,
-          action: TRANSFER_ERROR_CODES[errorCode].action
+          action: TRANSFER_ERROR_CODES[errorCode].action,
         }
       }
 
-      // Handle validation errors with field details
-      if (error.data.data && typeof error.data.data === 'object') {
-        const validationFields = Object.keys(error.data.data)
+      if (data.data && typeof data.data === 'object') {
+        const validationFields = Object.keys(data.data)
         if (validationFields.includes('requestReason')) {
           return {
             code: 'REQUEST_REASON_TOO_SHORT',
-            message: error.data.message,
+            message: data.message,
             userMessage: TRANSFER_ERROR_CODES.REQUEST_REASON_TOO_SHORT.userMessage,
             severity: TRANSFER_ERROR_CODES.REQUEST_REASON_TOO_SHORT.severity,
-            action: TRANSFER_ERROR_CODES.REQUEST_REASON_TOO_SHORT.action
+            action: TRANSFER_ERROR_CODES.REQUEST_REASON_TOO_SHORT.action,
           }
         }
 
         return {
           code: 'VALIDATION_FAILED',
-          message: error.data.message,
-          userMessage: 'Thông tin không hợp lệ: ' + Object.values(error.data.data).join(', '),
+          message: data.message,
+          userMessage: 'Thông tin không hợp lệ: ' + Object.values(data.data).join(', '),
           severity: TRANSFER_ERROR_CODES.VALIDATION_FAILED.severity,
-          action: TRANSFER_ERROR_CODES.VALIDATION_FAILED.action
+          action: TRANSFER_ERROR_CODES.VALIDATION_FAILED.action,
         }
       }
     }
   }
 
-  // Handle generic JavaScript errors
   if (error instanceof Error) {
     return {
       code: 'UNKNOWN_ERROR',
-      message: error.message,
+      message: error.message || 'Unknown error occurred.',
       userMessage: 'Đã xảy ra lỗi không xác định. Vui lòng thử lại.',
       severity: 'error',
-      action: { type: 'retry' }
+      action: { type: 'retry' },
     }
   }
 
-  // Fallback for string errors
   if (typeof error === 'string') {
     return {
       code: 'UNKNOWN_ERROR',
       message: error,
       userMessage: error || 'Đã xảy ra lỗi. Vui lòng thử lại.',
       severity: 'error',
-      action: { type: 'retry' }
+      action: { type: 'retry' },
     }
   }
 
-  // Final fallback
   return {
     code: 'UNKNOWN_ERROR',
     message: 'Unknown error occurred.',
     userMessage: 'Đã xảy ra lỗi không xác định. Vui lòng thử lại.',
     severity: 'error',
-    action: { type: 'retry' }
+    action: { type: 'retry' },
   }
 }
 

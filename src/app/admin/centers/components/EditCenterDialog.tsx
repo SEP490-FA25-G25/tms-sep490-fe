@@ -93,8 +93,8 @@ export function EditCenterDialog({
       }
       toast.success("Cập nhật trung tâm thành công");
       onSuccess();
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Cập nhật trung tâm thất bại");
+    } catch (error: unknown) {
+      toast.error((error as { data?: { message?: string } })?.data?.message || "Cập nhật trung tâm thất bại");
     }
   };
 

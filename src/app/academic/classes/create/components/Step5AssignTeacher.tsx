@@ -428,8 +428,14 @@ export function Step5AssignTeacher({
 
   const teachers = useMemo(() => data?.data ?? [], [data])
   const teacherAvailabilityByDay = useMemo(() => dayAvailabilityData?.data ?? [], [dayAvailabilityData])
-  const scheduleDays = classDetail?.data?.scheduleDays ?? []
-  const allowedDays = (scheduleDays.length ? [...scheduleDays] : [1, 2, 3, 4, 5, 6, 0]).sort((a, b) => a - b)
+  const scheduleDays = useMemo(
+    () => classDetail?.data?.scheduleDays ?? [],
+    [classDetail?.data?.scheduleDays]
+  )
+  const allowedDays = useMemo(
+    () => (scheduleDays.length ? [...scheduleDays] : [1, 2, 3, 4, 5, 6, 0]).sort((a, b) => a - b),
+    [scheduleDays]
+  )
   const allowedDaysSet = useMemo(() => new Set(allowedDays), [allowedDays])
   const teachersByDay = useMemo(() => {
     const map: Record<number, { info: TeacherDayAvailabilityInfo; teachers: DayTeacherEntry[] }> = {}
@@ -452,7 +458,7 @@ export function Step5AssignTeacher({
       })
     })
     return map
-  }, [teacherAvailabilityByDay])
+  }, [teacherAvailabilityByDay, allowedDaysSet])
   const { fullyAvailable, unavailable } = useMemo(() => {
     const fully = []
     const unavailableCombined = []

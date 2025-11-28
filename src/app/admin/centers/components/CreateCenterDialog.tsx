@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -78,8 +77,8 @@ export function CreateCenterDialog({
       toast.success("Tạo trung tâm thành công");
       reset();
       onSuccess();
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Tạo trung tâm thất bại");
+    } catch (error: unknown) {
+      toast.error((error as { data?: { message?: string } })?.data?.message || "Tạo trung tâm thất bại");
     }
   };
 

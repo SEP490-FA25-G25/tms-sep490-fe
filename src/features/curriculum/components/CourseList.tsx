@@ -15,6 +15,7 @@ import {
     useDeactivateCourseMutation,
     useReactivateCourseMutation
 } from "@/store/services/courseApi";
+import type { CourseDTO } from "@/store/services/courseApi";
 import { useGetSubjectsWithLevelsQuery } from "@/store/services/curriculumApi";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -47,7 +48,7 @@ export function CourseList() {
     const { data: subjectsData } = useGetSubjectsWithLevelsQuery();
 
     // Fetch courses with filters
-    const { data: courses, isLoading } = useGetAllCoursesQuery({
+    const { data: courses } = useGetAllCoursesQuery({
         subjectId: selectedSubjectId,
         levelId: selectedLevelId
     });
@@ -95,7 +96,7 @@ export function CourseList() {
         }
     };
 
-    const columns: ColumnDef<any>[] = [
+    const columns: ColumnDef<CourseDTO>[] = [
         {
             accessorKey: "code",
             header: ({ column }) => {

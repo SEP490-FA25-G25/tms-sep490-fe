@@ -53,10 +53,13 @@ export const subjectAdminApi = createApi({
   tagTypes: ['Subjects'],
   endpoints: (builder) => ({
     getSubjectSummaries: builder.query<SubjectSummary[], { status?: SubjectStatus; search?: string } | void>({
-      query: (params) => ({
-        url: '/admin/subjects',
-        params,
-      }),
+      query: (params) => {
+        const queryParams = params ?? {}
+        return {
+          url: '/admin/subjects',
+          params: queryParams,
+        }
+      },
       transformResponse: (response: ApiResponse<SubjectSummary[]>) => response.data,
       providesTags: ['Subjects'],
     }),
@@ -64,7 +67,7 @@ export const subjectAdminApi = createApi({
     getSubjectDetail: builder.query<SubjectDetail, number>({
       query: (subjectId) => `/admin/subjects/${subjectId}`,
       transformResponse: (response: ApiResponse<SubjectDetail>) => response.data,
-      providesTags: (result, error, id) => [{ type: 'Subjects', id }],
+      providesTags: (_result, _error, id) => [{ type: 'Subjects', id }],
     }),
   }),
 })

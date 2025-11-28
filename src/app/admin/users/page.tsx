@@ -7,7 +7,6 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -77,6 +76,8 @@ export default function AdminUsersPage() {
   const [userToEdit, setUserToEdit] = useState<UserResponse | null>(null);
   const [userToDelete, setUserToDelete] = useState<UserResponse | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const extractErrorMessage = (error: unknown, fallback: string) =>
+    (error as { data?: { message?: string } })?.data?.message || fallback;
 
   // Fetch users with server-side filtering
   const {
@@ -111,7 +112,6 @@ export default function AdminUsersPage() {
   // Response structure: { success, message, data: PageableResponse<UserResponse> }
   const pageData = usersResponse?.data;
   const users = pageData?.content || [];
-  const totalElements = pageData?.totalElements || 0;
   const totalPages = pageData?.totalPages || 0;
 
   // Reset page to 0 when filters change
@@ -138,8 +138,8 @@ export default function AdminUsersPage() {
           } tài khoản`
         );
         refetchUsers();
-      } catch (error: any) {
-        toast.error(error?.data?.message || "Cập nhật trạng thái thất bại");
+      } catch (error: unknown) {
+        toast.error(extractErrorMessage(error, "Cập nhật trạng thái thất bại"));
       }
     },
     onDelete: (user) => {
@@ -152,8 +152,8 @@ export default function AdminUsersPage() {
       await deleteUser(userId).unwrap();
       toast.success("Xóa người dùng thành công");
       refetchUsers();
-    } catch (error: any) {
-      toast.error(error?.data?.message || "Xóa người dùng thất bại");
+    } catch (error: unknown) {
+      toast.error(extractErrorMessage(error, "Xóa người dùng thất bại"));
     }
   };
 
@@ -267,11 +267,19 @@ export default function AdminUsersPage() {
                             Lỗi khi tải danh sách người dùng
                           </p>
                           <p className="text-sm text-muted-foreground mt-2">
-                            {usersError && "data" in usersError
-                              ? (usersError.data as any)?.message ||
-                                "Vui lòng thử lại sau"
-                              : "Không thể kết nối đến máy chủ"}
-                        </p>
+                            {(() => {
+                              if (usersError && "data" in usersError) {
+                                const parsedError = usersError as {
+                                  data?: { message?: string };
+                                };
+                                return (
+                                  parsedError.data?.message ||
+                                  "Vui lòng thử lại sau"
+                                );
+                              }
+                              return "Không thể kết nối đến máy chủ";
+                            })()}
+                          </p>
                           <Button
                             onClick={() => refetchUsers()}
                             variant="outline"

@@ -45,7 +45,7 @@ export const branchApi = createApi({
 
     getBranchesByCenterId: builder.query<ApiResponse<BranchResponse[]>, number>({
       query: (centerId) => `/branches/center/${centerId}`,
-      providesTags: (result, error, centerId) => [
+      providesTags: (_result, _error, centerId) => [
         { type: 'Branch', id: `center-${centerId}` },
         'Branch',
       ],
@@ -53,7 +53,7 @@ export const branchApi = createApi({
 
     getBranchById: builder.query<ApiResponse<BranchResponse>, number>({
       query: (id) => `/branches/${id}`,
-      providesTags: (result, error, id) => [{ type: 'Branch', id }],
+      providesTags: (_result, _error, id) => [{ type: 'Branch', id }],
     }),
 
     createBranch: builder.mutation<ApiResponse<BranchResponse>, BranchRequest>({
@@ -62,7 +62,7 @@ export const branchApi = createApi({
         method: 'POST',
         body,
       }),
-      invalidatesTags: (result, error, arg) => [
+      invalidatesTags: (_result, _error, arg) => [
         { type: 'Branch', id: `center-${arg.centerId}` },
         'Branch',
       ],
@@ -74,7 +74,7 @@ export const branchApi = createApi({
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: (result, error, { id, data }) => [
+      invalidatesTags: (_result, _error, { id, data }) => [
         { type: 'Branch', id },
         { type: 'Branch', id: `center-${data.centerId}` },
         'Branch',
@@ -86,7 +86,7 @@ export const branchApi = createApi({
         url: `/branches/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (result, error, { centerId }) => [
+      invalidatesTags: (_result, _error, { centerId }) => [
         { type: 'Branch', id: `center-${centerId}` },
         'Branch',
       ],

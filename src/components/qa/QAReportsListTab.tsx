@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { getQAReportTypeDisplayName } from "@/types/qa"
+import { getQAReportTypeDisplayName, type QAReportListItemDTO } from "@/types/qa"
 import {
     Select,
     SelectContent,
@@ -37,8 +37,8 @@ export function QAReportsListTab({ classId, onNavigateToCreate }: QAReportsListT
   
     const { data: reportsData, isLoading, error } = useGetQAReportsQuery({
         classId,
-        reportType: reportTypeFilter === "all" ? undefined : reportTypeFilter as any,
-        status: statusFilter === "all" ? undefined : statusFilter as any,
+        reportType: reportTypeFilter === "all" ? undefined : reportTypeFilter,
+        status: statusFilter === "all" ? undefined : statusFilter,
     })
 
     if (isLoading) {
@@ -63,7 +63,6 @@ export function QAReportsListTab({ classId, onNavigateToCreate }: QAReportsListT
     }
 
     const reports = reportsData?.data || []
-    const totalCount = reportsData?.total || 0
 
     const filteredReports = reports.filter(report => {
         const typeMatch = reportTypeFilter === "all" || report.reportType === reportTypeFilter
@@ -71,7 +70,7 @@ export function QAReportsListTab({ classId, onNavigateToCreate }: QAReportsListT
         return typeMatch && statusMatch
     })
 
-    const getReportLevelBadge = (report: any) => {
+    const getReportLevelBadge = (report: QAReportListItemDTO) => {
         if (report.sessionId) {
             return <Badge variant="outline">Buổi học</Badge>
         } else if (report.phaseId) {
@@ -153,7 +152,7 @@ export function QAReportsListTab({ classId, onNavigateToCreate }: QAReportsListT
                                         {/* Header */}
                                         <div className="flex items-center space-x-3">
                                             <h4 className="font-semibold text-lg">
-                                                {getQAReportTypeDisplayName(report.reportType as any)}
+                                                {getQAReportTypeDisplayName(report.reportType)}
                                             </h4>
                                             {getReportLevelBadge(report)}
                                             <QAReportStatusBadge status={report.status} />

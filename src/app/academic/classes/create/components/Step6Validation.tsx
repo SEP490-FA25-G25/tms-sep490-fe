@@ -219,7 +219,7 @@ export function Step6Validation({ classId, onBack, onContinue, onCancelKeepDraft
         return { ...week, sessions }
       })
       .filter((week) => week.sessions.length > 0)
-  }, [overview, selectedWeek, selectedStatus, matchesStatus])
+  }, [overview, selectedWeek, matchesStatus])
 
   const hasSessions = timelineWeeks.some((week) => week.sessions.length > 0)
 

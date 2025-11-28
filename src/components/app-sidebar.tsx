@@ -24,7 +24,7 @@ import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
-import { StudentFeedbackBadge, StudentFeedbackNavBadge } from "@/components/student-feedback/StudentFeedbackBadge";
+import { StudentFeedbackNavBadge } from "@/components/student-feedback/StudentFeedbackBadge";
 import {
   Sidebar,
   SidebarContent,

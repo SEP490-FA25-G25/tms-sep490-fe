@@ -29,13 +29,6 @@ export function useWizardNavigation(initialClassId?: number | null): UseWizardNa
   const paramClassId = searchParams.get('classId') ? parseInt(searchParams.get('classId')!) : null
   const classId = initialClassId ?? paramClassId
 
-  // Validate step is in range 1-7
-  useEffect(() => {
-    if (currentStep < 1 || currentStep > 7) {
-      navigateToStep(1)
-    }
-  }, [currentStep])
-
   /**
    * Navigate to specific step
    */
@@ -70,6 +63,13 @@ export function useWizardNavigation(initialClassId?: number | null): UseWizardNa
   const goToPrevStep = useCallback(() => {
     if (currentStep > 1) {
       navigateToStep((currentStep - 1) as WizardStep)
+    }
+  }, [currentStep, navigateToStep])
+
+  // Validate step is in range 1-7
+  useEffect(() => {
+    if (currentStep < 1 || currentStep > 7) {
+      navigateToStep(1)
     }
   }, [currentStep, navigateToStep])
 

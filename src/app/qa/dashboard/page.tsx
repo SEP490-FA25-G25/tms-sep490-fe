@@ -37,8 +37,14 @@ export default function QADashboardPage() {
     const dateToParam = searchParams.get('dateTo')
 
     // Parse URL dates or use undefined
-    const dateFrom = dateFromParam ? new Date(dateFromParam) : undefined
-    const dateTo = dateToParam ? new Date(dateToParam) : undefined
+    const dateFrom = React.useMemo(
+        () => (dateFromParam ? new Date(dateFromParam) : undefined),
+        [dateFromParam]
+    )
+    const dateTo = React.useMemo(
+        () => (dateToParam ? new Date(dateToParam) : undefined),
+        [dateToParam]
+    )
 
     const initialDateRange = React.useMemo(() => {
         if (dateFrom && dateTo) {
