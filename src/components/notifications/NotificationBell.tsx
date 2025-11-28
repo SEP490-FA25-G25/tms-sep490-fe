@@ -18,7 +18,7 @@ import {
   ExternalLinkIcon,
   ClockIcon,
 } from "lucide-react"
-import { useGetRecentNotificationsQuery, useMarkAsReadMutation } from "@/store/services/notificationApi"
+import { useGetRecentNotificationsQuery, useGetUnreadCountQuery, useMarkAsReadMutation } from "@/store/services/notificationApi"
 import { useNavigate } from "react-router-dom"
 import { formatDistanceToNow } from "date-fns"
 import { vi } from "date-fns/locale"
@@ -29,6 +29,9 @@ export function NotificationBell() {
 
   // Skip fetching until dropdown opens
   const [isOpen, setIsOpen] = React.useState(false)
+
+  // Luôn fetch unread count để hiển thị badge (không skip)
+  const { data: unreadCount = 0 } = useGetUnreadCountQuery()
 
   const {
     data: notifications = [],
@@ -45,8 +48,7 @@ export function NotificationBell() {
     e?.stopPropagation()
     try {
       await markAsRead(notificationId).unwrap()
-      // Refetch to update the list
-      refetch()
+      // RTK Query tự động refetch thông qua invalidatesTags: ['Notification']
     } catch (error) {
       console.error("Failed to mark notification as read:", error)
     }
@@ -56,7 +58,7 @@ export function NotificationBell() {
     e.stopPropagation()
 
     // Mark as read if unread
-    if (!notification.isRead) {
+    if (notification.unread) {
       await handleMarkAsRead(notification.id)
     }
 
@@ -87,7 +89,7 @@ export function NotificationBell() {
     }
   }
 
-  const unreadCount = notifications.filter(n => !n.isRead).length
+  // unreadCount đã được lấy từ useGetUnreadCountQuery ở trên
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -158,11 +160,11 @@ export function NotificationBell() {
                     <div className="flex items-start gap-3">
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center justify-between gap-2">
-                          <p className={`text-sm font-medium truncate ${!notification.isRead ? 'font-semibold' : ''
+                          <p className={`text-sm font-medium truncate ${notification.unread ? 'font-semibold' : ''
                             }`}>
                             {notification.title}
                           </p>
-                          {!notification.isRead && (
+                          {notification.unread && (
                             <div className="h-1.5 w-1.5 rounded-full bg-blue-600 flex-shrink-0"></div>
                           )}
                         </div>

@@ -4,23 +4,33 @@ import { baseQueryWithReauth } from './authApi';
 // Notification interfaces based on backend API
 export interface Notification {
   id: number;
-  userId: number;
+  recipientId: number;
+  recipientName?: string;
   type: 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR' | 'URGENT' | 'SYSTEM' | 'ANNOUNCEMENT';
+  typeDisplayName?: string;
   title: string;
   message: string;
-  actionUrl?: string;
-  actionText?: string;
-  isRead: boolean;
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-  createdBy?: number;
+  priorityDisplayName?: string;
+  status: 'UNREAD' | 'READ' | 'ARCHIVED';
+  statusDisplayName?: string;
+  actionUrl?: string;
+  referenceType?: string;
+  referenceId?: number;
+  metadata?: string;
   createdAt: string;
+  updatedAt?: string;
+  expiresAt?: string;
   readAt?: string;
+  expired: boolean;
+  unread: boolean; // true = chưa đọc, false = đã đọc
 }
 
 export interface NotificationFilter {
-  isRead?: boolean;
+  status?: 'UNREAD' | 'READ' | 'ARCHIVED';
   type?: Notification['type'];
   priority?: Notification['priority'];
+  search?: string;
   page?: number;
   size?: number;
 }
@@ -52,14 +62,17 @@ export const notificationApi = createApi({
     getNotifications: builder.query<NotificationResponse, NotificationFilter>({
       query: (filters) => {
         const params = new URLSearchParams();
-        if (filters.isRead !== undefined) {
-          params.append('isRead', filters.isRead.toString());
+        if (filters.status) {
+          params.append('status', filters.status);
         }
         if (filters.type) {
           params.append('type', filters.type);
         }
         if (filters.priority) {
           params.append('priority', filters.priority);
+        }
+        if (filters.search) {
+          params.append('search', filters.search);
         }
         if (filters.page !== undefined) {
           params.append('page', filters.page.toString());
@@ -77,7 +90,7 @@ export const notificationApi = createApi({
 
     // Get recent unread notifications (for dropdown)
     getRecentNotifications: builder.query<Notification[], void>({
-      query: () => '/notifications?isRead=false&size=5',
+      query: () => '/notifications?status=UNREAD&size=5',
       transformResponse: (response: { data: NotificationResponse }) => response.data.content,
       providesTags: ['Notification'],
     }),
@@ -89,12 +102,49 @@ export const notificationApi = createApi({
       providesTags: ['Notification'],
     }),
 
+    // Get unread notification count (for badge display)
+    getUnreadCount: builder.query<number, void>({
+      query: () => '/notifications/unread-count',
+      transformResponse: (response: { data: number }) => response.data,
+      providesTags: ['Notification'],
+    }),
+
     // Mark notification as read
     markAsRead: builder.mutation<void, number>({
       query: (id) => ({
         url: `/notifications/${id}/read`,
         method: 'PUT',
       }),
+      // Optimistic update: cập nhật cache ngay lập tức trước khi API response
+      async onQueryStarted(notificationId, { dispatch, queryFulfilled }) {
+        // Update getRecentNotifications cache
+        const patchRecentResult = dispatch(
+          notificationApi.util.updateQueryData('getRecentNotifications', undefined, (draft) => {
+            const notification = draft.find((n) => n.id === notificationId);
+            if (notification) {
+              notification.unread = false; // false = đã đọc
+              notification.status = 'READ';
+              notification.readAt = new Date().toISOString();
+            }
+          })
+        );
+
+        // Update getUnreadCount cache (decrement by 1)
+        const patchUnreadCountResult = dispatch(
+          notificationApi.util.updateQueryData('getUnreadCount', undefined, (draft) => {
+            // draft is a number, return new value
+            return Math.max(0, (draft as number) - 1);
+          })
+        );
+
+        try {
+          await queryFulfilled;
+        } catch {
+          // Rollback optimistic update on error
+          patchRecentResult.undo();
+          patchUnreadCountResult.undo();
+        }
+      },
       invalidatesTags: ['Notification'],
     }),
 
@@ -150,6 +200,7 @@ export const {
   useGetNotificationsQuery,
   useGetRecentNotificationsQuery,
   useGetNotificationStatsQuery,
+  useGetUnreadCountQuery,
   useMarkAsReadMutation,
   useMarkMultipleAsReadMutation,
   useMarkAllAsReadMutation,
