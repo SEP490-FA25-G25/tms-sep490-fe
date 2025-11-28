@@ -26,7 +26,10 @@ export function ReplacementAssessmentsPopover({
   assessments,
   className
 }: ReplacementAssessmentsPopoverProps) {
-  const assessmentCount = assessments.length
+  const validAssessments = assessments.filter(
+    (assessment) => skillConfig[assessment.skill as keyof typeof skillConfig]
+  )
+  const assessmentCount = validAssessments.length
 
   if (assessmentCount === 0) {
     return (
@@ -68,10 +71,13 @@ export function ReplacementAssessmentsPopover({
         </div>
 
         <div className="max-h-80 overflow-y-auto">
-          {assessments.map((assessment, index) => {
-            const SkillIcon = skillConfig[assessment.skill].icon
-            const skillName = skillConfig[assessment.skill].name
-            const skillColor = skillConfig[assessment.skill].color
+          {validAssessments.map((assessment, index) => {
+            const skillInfo = skillConfig[assessment.skill as keyof typeof skillConfig]
+            if (!skillInfo) return null
+
+            const SkillIcon = skillInfo.icon
+            const skillName = skillInfo.name
+            const skillColor = skillInfo.color
 
             return (
               <div
