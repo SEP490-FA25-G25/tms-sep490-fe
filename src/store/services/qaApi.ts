@@ -64,6 +64,7 @@ export const qaApi = createApi({
     // Session Detail
     getSessionDetail: builder.query<SessionDetailDTO, number>({
       query: (sessionId) => `/qa/sessions/${sessionId}`,
+      transformResponse: (response: { data: SessionDetailDTO }) => response.data,
       providesTags: (_result, _error, sessionId) => [{ type: 'QASession', id: sessionId }],
     }),
 
@@ -84,6 +85,7 @@ export const qaApi = createApi({
 
     getQAReportDetail: builder.query<QAReportDetailDTO, number>({
       query: (reportId) => `/qa/reports/${reportId}`,
+      transformResponse: (response: { data: QAReportDetailDTO }) => response.data,
       providesTags: (_result, _error, reportId) => [{ type: 'QAReport', id: reportId }],
     }),
 
@@ -127,6 +129,18 @@ export const qaApi = createApi({
       query: ({ classId, filters }) => ({
         url: `/classes/${classId}/feedbacks`,
         params: filters,
+      }),
+      transformResponse: (response: {
+        data: {
+          statistics: any;
+          feedbacks: { content: any[]; totalElements: number; number: number; size: number }
+        }
+      }) => ({
+        statistics: response.data.statistics,
+        feedbacks: response.data.feedbacks.content,
+        total: response.data.feedbacks.totalElements,
+        page: response.data.feedbacks.number,
+        size: response.data.feedbacks.size
       }),
       providesTags: ['QAFeedback'],
     }),

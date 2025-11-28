@@ -31,8 +31,8 @@ export default function QAReportsListPage() {
         sortDir: 'desc',
     })
 
-    const reports = Array.isArray(reportsData) ? reportsData : []
-    const totalCount = reports.length
+    const reports = reportsData?.data || []
+    const totalCount = reportsData?.total || 0
 
     if (isLoading) {
         return (

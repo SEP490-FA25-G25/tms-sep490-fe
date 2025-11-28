@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { useCreateQAReportMutation } from "@/store/services/qaApi"
+import { skipToken } from '@reduxjs/toolkit/query'
+import { useCreateQAReportMutation, useGetQAClassesQuery, useGetQASessionListQuery } from "@/store/services/qaApi"
 import { DashboardLayout } from "@/components/DashboardLayout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -35,6 +36,12 @@ export default function CreateQAReportPage() {
         status: QAReportStatus.DRAFT as QAReportStatus,
     })
 
+    // Fetch real data from APIs
+    const { data: classesData } = useGetQAClassesQuery({ page: 0, size: 100 })
+    const { data: sessionsData } = useGetQASessionListQuery(
+        formData.classId ? formData.classId : skipToken
+    )
+
     useEffect(() => {
         // Parse query parameters
         const classIdParam = searchParams.get('classId')
@@ -53,14 +60,23 @@ export default function CreateQAReportPage() {
         }))
     }, [searchParams])
 
-  
+
     const handleSubmit = async (isDraft: boolean = true) => {
+        // Validation
+        if (!formData.classId) {
+            return // Required field validation handled by button disabled state
+        }
+
+        if (formData.findings.length < 50) {
+            alert('Kết quả đánh giá phải có ít nhất 50 ký tự')
+            return
+        }
+
         try {
             const reportData = {
                 ...formData,
                 status: isDraft ? QAReportStatus.DRAFT : QAReportStatus.SUBMITTED,
-                // Ensure required fields are valid
-                classId: formData.classId || 1, // Default class ID for demo
+                classId: formData.classId,
             }
 
             const result = await createReport(reportData).unwrap()
@@ -117,16 +133,22 @@ export default function CreateQAReportPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="classId">Lớp học *</Label>
                                 <Select
-                                    value={formData.classId.toString()}
+                                    value={formData.classId ? formData.classId.toString() : ""}
                                     onValueChange={(value) => handleInputChange('classId', parseInt(value))}
                                 >
                                     <SelectTrigger id="classId">
                                         <SelectValue placeholder="Chọn lớp học" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="1">CH-A1-001 - Chinese A1</SelectItem>
-                                        <SelectItem value="2">EN-B2-003 - English B2</SelectItem>
-                                        <SelectItem value="3">JP-N3-002 - Japanese N3</SelectItem>
+                                        {classesData?.data && classesData.data.length > 0 ? (
+                                            classesData.data.map((cls) => (
+                                                <SelectItem key={cls.classId} value={cls.classId.toString()}>
+                                                    {cls.classCode} - {cls.className}
+                                                </SelectItem>
+                                            ))
+                                        ) : (
+                                            <SelectItem value="" disabled>Không có lớp học nào</SelectItem>
+                                        )}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -155,15 +177,22 @@ export default function CreateQAReportPage() {
                                 <Select
                                     value={formData.sessionId?.toString() || "none"}
                                     onValueChange={(value) => handleInputChange('sessionId', value)}
+                                    disabled={!formData.classId}
                                 >
                                     <SelectTrigger id="sessionId">
-                                        <SelectValue placeholder="Chọn buổi học" />
+                                        <SelectValue placeholder={formData.classId ? "Chọn buổi học" : "Chọn lớp học trước"} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="none">Không áp dụng</SelectItem>
-                                        <SelectItem value="1">Session 1 - 2025-10-01</SelectItem>
-                                        <SelectItem value="2">Session 2 - 2025-10-08</SelectItem>
-                                        <SelectItem value="3">Session 3 - 2025-10-15</SelectItem>
+                                        {sessionsData?.sessions && sessionsData.sessions.length > 0 ? (
+                                            sessionsData.sessions.map((session) => (
+                                                <SelectItem key={session.sessionId} value={session.sessionId.toString()}>
+                                                    Buổi {session.sequenceNumber || session.sessionId} - {new Date(session.date).toLocaleDateString('vi-VN')} ({session.topic})
+                                                </SelectItem>
+                                            ))
+                                        ) : formData.classId ? (
+                                            <SelectItem value="" disabled>Không có buổi học nào</SelectItem>
+                                        ) : null}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -188,7 +217,7 @@ export default function CreateQAReportPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="findings">Kết quả tìm thấy *</Label>
+                            <Label htmlFor="findings">Kết quả tìm thấy * (tối thiểu 50 ký tự)</Label>
                             <Textarea
                                 id="findings"
                                 placeholder="Mô tả chi tiết các kết quả quan sát, đánh giá được..."
@@ -197,6 +226,14 @@ export default function CreateQAReportPage() {
                                 rows={6}
                                 required
                             />
+                            <p className="text-xs text-muted-foreground">
+                                {formData.findings.length}/50 ký tự tối thiểu
+                                {formData.findings.length < 50 && formData.findings.length > 0 && (
+                                    <span className="text-red-500 ml-2">
+                                        (Còn thiếu {50 - formData.findings.length} ký tự)
+                                    </span>
+                                )}
+                            </p>
                         </div>
 
                         <div className="space-y-2">
@@ -237,7 +274,7 @@ export default function CreateQAReportPage() {
                     <Button
                         variant="outline"
                         onClick={() => handleSubmit(true)}
-                        disabled={isLoading || !formData.classId || !formData.findings}
+                        disabled={isLoading || !formData.classId || !formData.findings || formData.findings.length < 50}
                     >
                         {isLoading ? (
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -248,7 +285,7 @@ export default function CreateQAReportPage() {
                     </Button>
                     <Button
                         onClick={() => handleSubmit(false)}
-                        disabled={isLoading || !formData.classId || !formData.findings}
+                        disabled={isLoading || !formData.classId || !formData.findings || formData.findings.length < 50}
                     >
                         {isLoading ? (
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />

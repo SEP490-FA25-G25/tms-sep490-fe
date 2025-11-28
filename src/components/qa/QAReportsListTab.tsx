@@ -62,7 +62,8 @@ export function QAReportsListTab({ classId, onNavigateToCreate }: QAReportsListT
         )
     }
 
-    const reports = Array.isArray(reportsData) ? reportsData : []
+    const reports = reportsData?.data || []
+    const totalCount = reportsData?.total || 0
 
     const filteredReports = reports.filter(report => {
         const typeMatch = reportTypeFilter === "all" || report.reportType === reportTypeFilter

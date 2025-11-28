@@ -18,7 +18,6 @@ import {
     Users,
     CheckCircle,
     MessageSquare,
-    Star,
     Calendar,
     TrendingUp,
     Plus,
@@ -102,39 +101,6 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
         })
     }
 
-    const getRatingStars = (rating: number) => {
-        return Array.from({ length: 5 }, (_, i) => (
-            <Star
-                key={i}
-                className={`h-4 w-4 ${i < rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
-            />
-        ))
-    }
-
-    const getFeedbackSentiment = (feedback: any) => {
-        // Simple sentiment analysis based on preview text
-        const text = feedback.responsePreview.toLowerCase()
-        const positiveWords = ['hay', 'tốt', 'hài lòng', 'thích', 'hiệu quả', 'rõ ràng', 'nhiệt tình']
-        const negativeWords = ['kém', 'tệ', 'không', 'chưa', 'cần', 'thiếu', 'khó']
-
-        const positiveCount = positiveWords.filter(word => text.includes(word)).length
-        const negativeCount = negativeWords.filter(word => text.includes(word)).length
-
-        if (positiveCount > negativeCount) return 'positive'
-        if (negativeCount > positiveCount) return 'negative'
-        return 'neutral'
-    }
-
-    const getSentimentBadge = (sentiment: string) => {
-        switch (sentiment) {
-            case 'positive':
-                return <Badge className="bg-green-100 text-green-700">Tích cực</Badge>
-            case 'negative':
-                return <Badge className="bg-red-100 text-red-700">Tiêu cực</Badge>
-            default:
-                return <Badge className="bg-yellow-100 text-yellow-700">Trung bình</Badge>
-        }
-    }
 
     return (
         <div className="space-y-6">
@@ -155,16 +121,16 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
                 />
 
                 <QAStatsCard
-                    title="Đánh giá trung bình"
-                    value="4.2/5.0"
-                    subtitle="Chất lượng giảng dạy"
+                    title="Chưa nộp phản hồi"
+                    value={statistics?.notSubmittedCount || 0}
+                    subtitle="Học viên chưa phản hồi"
                     icon={TrendingUp}
                 />
 
                 <QAStatsCard
-                    title="Phản hồi tích cực"
-                    value={statistics?.submittedCount ? Math.round((statistics?.submittedCount * 0.8)) : 0}
-                    subtitle="Phản hồi tốt"
+                    title="Tổng phản hồi"
+                    value={statistics?.submittedCount || 0}
+                    subtitle="Phản hồi đã nhận"
                     icon={MessageSquare}
                 />
             </div>
@@ -184,24 +150,18 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
                             <Progress value={statistics?.submissionRate || 0} className="h-2" />
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4 text-center">
+                        <div className="grid grid-cols-2 gap-4 text-center">
                             <div>
                                 <div className="text-2xl font-bold text-green-600">
-                                    {Math.round((statistics?.submittedCount || 0) * 0.8)}
+                                    {statistics?.submittedCount || 0}
                                 </div>
-                                <p className="text-xs text-muted-foreground">Tích cực</p>
+                                <p className="text-xs text-muted-foreground">Đã nộp</p>
                             </div>
                             <div>
-                                <div className="text-2xl font-bold text-yellow-600">
-                                    {Math.round((statistics?.submittedCount || 0) * 0.15)}
+                                <div className="text-2xl font-bold text-gray-600">
+                                    {statistics?.notSubmittedCount || 0}
                                 </div>
-                                <p className="text-xs text-muted-foreground">Trung bình</p>
-                            </div>
-                            <div>
-                                <div className="text-2xl font-bold text-red-600">
-                                    {Math.round((statistics?.submittedCount || 0) * 0.05)}
-                                </div>
-                                <p className="text-xs text-muted-foreground">Tiêu cực</p>
+                                <p className="text-xs text-muted-foreground">Chưa nộp</p>
                             </div>
                         </div>
                     </div>
@@ -272,28 +232,22 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
                                                 <p className="text-sm text-muted-foreground">{feedback.phaseName}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Badge
-                                                variant={feedback.isFeedback ? "default" : "secondary"}
-                                                className="flex items-center space-x-1"
-                                            >
-                                                {feedback.isFeedback ? (
-                                                    <>
-                                                        <CheckCircle className="h-3 w-3" />
-                                                        <span>Đã nộp</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <AlertTriangle className="h-3 w-3" />
-                                                        <span>Chưa nộp</span>
-                                                    </>
-                                                )}
-                                            </Badge>
-
-                                            {feedback.isFeedback && (
-                                                getSentimentBadge(getFeedbackSentiment(feedback))
+                                        <Badge
+                                            variant={feedback.isFeedback ? "default" : "secondary"}
+                                            className="flex items-center space-x-1"
+                                        >
+                                            {feedback.isFeedback ? (
+                                                <>
+                                                    <CheckCircle className="h-3 w-3" />
+                                                    <span>Đã nộp</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <AlertTriangle className="h-3 w-3" />
+                                                    <span>Chưa nộp</span>
+                                                </>
                                             )}
-                                        </div>
+                                        </Badge>
                                     </div>
 
                                     {feedback.isFeedback ? (
@@ -302,14 +256,6 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
                                                 <div className="flex items-center space-x-1">
                                                     <Calendar className="h-4 w-4" />
                                                     <span>{formatDate(feedback.submittedAt)}</span>
-                                                </div>
-                                                <div className="flex items-center space-x-1">
-                                                    <Star className="h-4 w-4" />
-                                                    <span>Đánh giá:</span>
-                                                    <div className="flex items-center">
-                                                        {getRatingStars(4)} {/* Default rating */}
-                                                        <span className="ml-2 font-medium">4.0</span>
-                                                    </div>
                                                 </div>
                                             </div>
 
