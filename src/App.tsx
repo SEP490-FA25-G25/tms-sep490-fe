@@ -48,6 +48,8 @@ import EditClassPage from "./app/academic/classes/[id]/edit/page";
 
 import CenterHeadApprovalsPage from "./app/center-head/approvals/page";
 import CurriculumPage from "./features/curriculum/pages/CurriculumPage";
+import CreateSubjectPage from "./features/curriculum/pages/CreateSubjectPage";
+import EditSubjectPage from "./features/curriculum/pages/EditSubjectPage";
 
 // QA imports
 import QARootPage from './app/qa/page'
