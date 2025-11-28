@@ -89,15 +89,20 @@ export default function StudentFeedbackPage() {
     )
 
     const feedbacks = feedbackData?.feedbacks || []
-    const statistics = feedbackData?.statistics || {
-        totalStudents: 0,
-        submittedCount: 0,
-        notSubmittedCount: 0,
-        submissionRate: 0,
-        averageRating: 0,
-        positiveFeedbackCount: 0,
-        negativeFeedbackCount: 0
-    }
+    const {
+        totalStudents = 0,
+        submittedCount = 0,
+        notSubmittedCount = 0,
+        submissionRate = 0,
+        averageRating = 0,
+        positiveFeedbackCount = 0,
+        negativeFeedbackCount = 0,
+    } = feedbackData?.statistics || {}
+
+    const neutralFeedbackCount = Math.max(0, submittedCount - positiveFeedbackCount - negativeFeedbackCount)
+    const positiveFeedbackRate = submittedCount > 0
+        ? ((positiveFeedbackCount / submittedCount) * 100)
+        : 0
 
     const filteredFeedbacks = feedbacks.filter(feedback => {
         const phaseMatch = selectedPhase === "all" ||
@@ -229,7 +234,7 @@ export default function StudentFeedbackPage() {
                                             <UsersIcon className="h-4 w-4 text-muted-foreground" />
                                         </CardHeader>
                                         <CardContent>
-                                            <div className="text-2xl font-bold">{statistics.totalStudents}</div>
+                                            <div className="text-2xl font-bold">{totalStudents}</div>
                                             <p className="text-xs text-muted-foreground">
                                                 Trong lớp học
                                             </p>
@@ -241,9 +246,9 @@ export default function StudentFeedbackPage() {
                                             <CheckCircleIcon className="h-4 w-4 text-muted-foreground" />
                                         </CardHeader>
                                         <CardContent>
-                                            <div className="text-2xl font-bold">{statistics.submittedCount}/{statistics.totalStudents}</div>
+                                            <div className="text-2xl font-bold">{submittedCount}/{totalStudents}</div>
                                             <p className="text-xs text-muted-foreground">
-                                                Tỷ lệ {statistics.submissionRate.toFixed(1)}%
+                                                Tỷ lệ {submissionRate.toFixed(1)}%
                                             </p>
                                         </CardContent>
                                     </Card>
@@ -253,9 +258,9 @@ export default function StudentFeedbackPage() {
                                             <TrendingUpIcon className="h-4 w-4 text-muted-foreground" />
                                         </CardHeader>
                                         <CardContent>
-                                            <div className="text-2xl font-bold">{statistics.averageRating}/5.0</div>
+                                            <div className="text-2xl font-bold">{averageRating.toFixed(1)}/5.0</div>
                                             <p className="text-xs text-muted-foreground">
-                                                {getRatingStars(Math.round(statistics.averageRating))}
+                                                {getRatingStars(Math.round(averageRating))}
                                             </p>
                                         </CardContent>
                                     </Card>
@@ -265,9 +270,9 @@ export default function StudentFeedbackPage() {
                                             <BarChart3Icon className="h-4 w-4 text-muted-foreground" />
                                         </CardHeader>
                                         <CardContent>
-                                            <div className="text-2xl font-bold">{statistics.positiveFeedbackCount}</div>
+                                            <div className="text-2xl font-bold">{positiveFeedbackCount}</div>
                                             <p className="text-xs text-muted-foreground">
-                                                {statistics.submittedCount > 0 ? ((statistics.positiveFeedbackCount / statistics.submittedCount) * 100).toFixed(1) : '0'}% tổng phản hồi
+                                                {submittedCount > 0 ? positiveFeedbackRate.toFixed(1) : '0'}% tổng phản hồi
                                             </p>
                                         </CardContent>
                                     </Card>
@@ -286,21 +291,21 @@ export default function StudentFeedbackPage() {
                                             <div className="space-y-2">
                                                 <div className="flex justify-between text-sm">
                                                     <span>Đã nộp</span>
-                                                    <span>{statistics.submissionRate.toFixed(1)}%</span>
+                                                    <span>{submissionRate.toFixed(1)}%</span>
                                                 </div>
-                                                <Progress value={statistics.submissionRate} className="h-2" />
+                                                <Progress value={submissionRate} className="h-2" />
                                             </div>
                                             <div className="grid grid-cols-3 gap-4 text-center">
                                                 <div>
-                                                    <div className="text-2xl font-bold text-green-600">{statistics.positiveFeedbackCount}</div>
+                                                    <div className="text-2xl font-bold text-green-600">{positiveFeedbackCount}</div>
                                                     <p className="text-xs text-muted-foreground">Tích cực</p>
                                                 </div>
                                                 <div>
-                                                    <div className="text-2xl font-bold text-yellow-600">{statistics.submittedCount - statistics.positiveFeedbackCount - statistics.negativeFeedbackCount}</div>
+                                                    <div className="text-2xl font-bold text-yellow-600">{neutralFeedbackCount}</div>
                                                     <p className="text-xs text-muted-foreground">Trung bình</p>
                                                 </div>
                                                 <div>
-                                                    <div className="text-2xl font-bold text-red-600">{statistics.negativeFeedbackCount}</div>
+                                                    <div className="text-2xl font-bold text-red-600">{negativeFeedbackCount}</div>
                                                     <p className="text-xs text-muted-foreground">Tiêu cực</p>
                                                 </div>
                                             </div>
