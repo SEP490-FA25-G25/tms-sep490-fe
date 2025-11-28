@@ -3,7 +3,6 @@ import './landing.css';
 
 // Icons (using Lucide React as it's already in the project)
 import {
-  GraduationCap,
   ArrowRight,
   CheckCircle2,
   Users2,
@@ -55,8 +54,12 @@ export default function LandingPage() {
       <header className="lp-header">
         <div className="lp-container lp-flex lp-justify-between lp-items-center">
           <Link to="/" className="lp-logo">
-            <GraduationCap size={28} />
-            <span>TMS Academy</span>
+            <img
+              src="/logo.jpg"
+              alt="Anh ngữ Pinnacle"
+              style={{ height: '2rem', width: 'auto' }}
+            />
+            <span>Anh ngữ Pinnacle</span>
           </Link>
 
           <nav className="lp-header-nav">
@@ -118,7 +121,7 @@ export default function LandingPage() {
               />
               <div className="lp-floating-badge">
                 <div className="lp-flex lp-items-center" style={{ gap: '0.5rem', marginBottom: '0.25rem' }}>
-                  <Star fill="#F59E0B" color="#F59E0B" size={20} />
+                  <Star fill="#D4E157" color="#D4E157" size={20} />
                   <span style={{ fontWeight: 700 }}>4.9/5.0</span>
                 </div>
                 <span className="text-sm" style={{ color: 'var(--lp-text-light)' }}>Đánh giá từ học viên</span>
@@ -268,8 +271,12 @@ export default function LandingPage() {
       <footer className="lp-footer">
         <div className="lp-container lp-footer-content">
           <div className="lp-flex lp-items-center" style={{ gap: '0.5rem' }}>
-            <GraduationCap size={24} />
-            <span style={{ fontWeight: 700, color: 'var(--lp-primary)' }}>TMS Academy</span>
+            <img
+              src="/logo.jpg"
+              alt="Anh ngữ Pinnacle"
+              style={{ height: '1.5rem', width: 'auto' }}
+            />
+            <span style={{ fontWeight: 700, color: 'var(--lp-primary)' }}>Anh ngữ Pinnacle</span>
           </div>
 
           <div className="lp-footer-links">
@@ -280,7 +287,7 @@ export default function LandingPage() {
           </div>
 
           <div style={{ fontSize: '0.875rem' }}>
-            © 2025 TMS Academy. All rights reserved.
+            © 2025 Anh ngữ Pinnacle. All rights reserved.
           </div>
         </div>
       </footer>

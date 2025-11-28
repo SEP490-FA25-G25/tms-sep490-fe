@@ -1,6 +1,5 @@
 import * as React from "react";
 import {
-  ArrowUpCircleIcon,
   BarChartIcon,
   BookOpenIcon,
   CalendarIcon,
@@ -16,13 +15,16 @@ import {
   NotebookPenIcon,
   SchoolIcon,
   UserCircleIcon,
-  SlidersHorizontalIcon,
+SlidersHorizontalIcon,
+  PlusIcon,
+  MessageCircleIcon,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { StudentFeedbackBadge, StudentFeedbackNavBadge } from "@/components/student-feedback/StudentFeedbackBadge";
 import {
   Sidebar,
   SidebarContent,
@@ -236,6 +238,12 @@ const roleBasedNav = {
         icon: NotebookPenIcon,
       },
       {
+        title: "Phản hồi khóa học",
+        url: "/student/feedbacks",
+        icon: MessageCircleIcon,
+        badge: <StudentFeedbackNavBadge />,
+      },
+      {
         title: "Hồ sơ cá nhân",
         url: "/student/profile",
         icon: UserCircleIcon,
@@ -245,29 +253,29 @@ const roleBasedNav = {
   [ROLES.QA]: {
     navMain: [
       {
-        title: "Bảng điều khiển",
-        url: "/dashboard",
-        icon: HomeIcon,
+        title: "Tổng quan QA",
+        url: "/qa/dashboard",
+        icon: BarChartIcon,
       },
       {
-        title: "Kiểm tra chất lượng",
-        url: "/qa/audits",
+        title: "Danh sách lớp học",
+        url: "/qa/classes",
+        icon: SchoolIcon,
+      },
+      {
+        title: "Tạo báo cáo QA",
+        url: "/qa/reports/create",
+        icon: PlusIcon,
+      },
+      {
+        title: "Danh sách báo cáo",
+        url: "/qa/reports",
         icon: ClipboardCheckIcon,
       },
       {
-        title: "Đánh giá khóa học",
-        url: "/qa/courses",
-        icon: BookOpenIcon,
-      },
-      {
-        title: "Đánh giá giáo viên",
-        url: "/qa/teachers",
-        icon: GraduationCapIcon,
-      },
-      {
-        title: "Báo cáo",
-        url: "/qa/reports",
-        icon: FileTextIcon,
+        title: "Phản Hồi Học Viên",
+        url: "/qa/student-feedback",
+        icon: MessageCircleIcon,
       },
     ],
   },
@@ -362,11 +370,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
+              className="data-[slot=sidebar-menu-button]:!p-1 data-[slot=sidebar-menu-button]:!justify-start"
             >
-              <a href="/dashboard">
-                <ArrowUpCircleIcon className="h-5 w-5" />
-                <span className="text-base font-semibold">TMS</span>
+              <a href="/dashboard" className="flex items-center gap-2">
+                <img
+                  src="/logo.jpg"
+                  alt="Anh ngữ Pinnacle Logo"
+                  className="h-8 w-auto"
+                />
+                <span className="text-base font-semibold">Anh ngữ Pinnacle</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

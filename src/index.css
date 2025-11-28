@@ -44,48 +44,59 @@
 :root {
   --radius: 0.625rem;
 
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* Base - Soft warm white background, Dark green text */
+  --background: #F9FAF9;
+  --foreground: #1A3320;
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  /* Cards - Pure white to pop against the soft background */
+  --card: #FFFFFF;
+  --card-foreground: #1A3320;
 
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  /* Popovers */
+  --popover: #FFFFFF;
+  --popover-foreground: #1A3320;
 
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  /* Primary - Pinnacle Green */
+  --primary: #2E5A34;
+  --primary-foreground: #FFFFFF;
 
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
+  /* Secondary - Very pale green for subtle emphasis */
+  --secondary: #E8F5E9;
+  --secondary-foreground: #1B4D3E;
 
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  /* Muted - Neutral grays for less important text */
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
 
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  /* Accent - Pinnacle Yellow/Lime for highlights */
+  --accent: #D4E157;
+  --accent-foreground: #1A3320;
 
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
+  /* Destructive - Standard Red */
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
 
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.205 0 0);
+  /* Borders & Inputs */
+  --border: #E2E8F0;
+  --input: #E2E8F0;
+  --ring: #2E5A34;
 
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  /* Charts - Adjusted to match the green theme */
+  --chart-1: #2E5A34; /* Primary Green */
+  --chart-2: #D4E157; /* Accent Yellow */
+  --chart-3: #4CAF50; /* Lighter Green */
+  --chart-4: #8BC34A; /* Light Green */
+  --chart-5: #FFC107; /* Amber */
 
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.205 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.205 0 0);
+  /* Sidebar - Dark Green Theme to reduce whiteness */
+  --sidebar: #1A3320; /* Darkest Green (Foreground color) */
+  --sidebar-foreground: #F9FAF9; /* Soft White */
+  --sidebar-primary: #D4E157; /* Accent Yellow for active items */
+  --sidebar-primary-foreground: #1A3320; /* Dark text on yellow */
+  --sidebar-accent: #2E5A34; /* Primary Green for hover */
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #2E5A34; /* Blends with hover */
+  --sidebar-ring: #D4E157;
 }
 
 .dark {

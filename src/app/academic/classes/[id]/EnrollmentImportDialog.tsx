@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   FullScreenModal,
@@ -13,13 +13,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
   Table,
   TableBody,
   TableCell,
@@ -27,7 +20,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Upload, AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
+import {
+  Upload,
+  FileSpreadsheet,
+  Download,
+  Trash2,
+  Info,
+  Users,
+  ArrowRight
+} from 'lucide-react'
 import {
   usePreviewClassEnrollmentImportMutation,
   useExecuteClassEnrollmentImportMutation,
@@ -35,9 +36,16 @@ import {
   useDownloadClassEnrollmentTemplateQuery,
   type ClassEnrollmentImportPreview,
   type EnrollmentStrategy,
+  type StudentEnrollmentData,
 } from '@/store/services/enrollmentApi'
 import { toast } from 'sonner'
-import { Download } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Card, CardContent } from '@/components/ui/card'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
 interface EnrollmentImportDialogProps {
   classId: number
@@ -57,73 +65,41 @@ export function EnrollmentImportDialog({
   const [strategy, setStrategy] = useState<EnrollmentStrategy>('ALL')
   const [overrideReason, setOverrideReason] = useState('')
   const [selectedStudents, setSelectedStudents] = useState<Set<number>>(new Set())
+  const [activeTab, setActiveTab] = useState<string>('valid')
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [previewMutation, { isLoading: isPreviewing }] = usePreviewClassEnrollmentImportMutation()
   const [executeMutation, { isLoading: isExecuting }] = useExecuteClassEnrollmentImportMutation()
 
-  // Template download queries
   const genericTemplateQuery = useDownloadEnrollmentTemplateQuery()
   const classTemplateQuery = useDownloadClassEnrollmentTemplateQuery({ classId }, { skip: !open })
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
-      // Validate file size (10MB limit)
-      if (selectedFile.size > 10 * 1024 * 1024) {
-        toast.error('Kích thước tệp phải nhỏ hơn 10MB')
-        return
-      }
-      setFile(selectedFile)
-      setPreview(null)
-      setStrategy('ALL')
-      setSelectedStudents(new Set())
+      processFile(selectedFile)
     }
   }
 
-  const handleDownloadGenericTemplate = async () => {
-    try {
-      const result = genericTemplateQuery.data
-      if (!result) return
-
-      const url = window.URL.createObjectURL(result)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'mau-danh-sach-sinh-vien.xlsx'
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-    } catch {
-      // Silent fail - user can retry
+  const processFile = (selectedFile: File) => {
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      toast.error('Kích thước tệp phải nhỏ hơn 10MB')
+      return
     }
+    setFile(selectedFile)
+    setPreview(null)
+    setStrategy('ALL')
+    setSelectedStudents(new Set())
+
+    // Auto preview
+    previewFile(selectedFile)
   }
 
-  const handleDownloadClassTemplate = async () => {
+  const previewFile = async (fileToPreview: File) => {
     try {
-      const result = classTemplateQuery.data
-      if (!result) return
-
-      const url = window.URL.createObjectURL(result)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `lop-${classId}-mau-danh-sach.xlsx`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-    } catch {
-      // Silent fail - user can retry
-    }
-  }
-
-  const handlePreview = async () => {
-    if (!file) return
-
-    try {
-      const result = await previewMutation({ classId, file }).unwrap()
+      const result = await previewMutation({ classId, file: fileToPreview }).unwrap()
       setPreview(result.data)
 
-      // Set strategy based on recommendation type
       switch (result.data.recommendation.type) {
         case 'PROCEED':
           setStrategy('ALL')
@@ -138,22 +114,61 @@ export function EnrollmentImportDialog({
         default:
           setStrategy('ALL')
       }
-
-      // Preview loaded silently - user can see results immediately
-    } catch (error) {
-      const errorMessage = error && typeof error === 'object' && 'data' in error && error.data && typeof error.data === 'object' && 'message' in error.data
-        ? String(error.data.message)
-        : 'Xem trước dữ liệu thất bại'
+    } catch (error: any) {
+      const errorMessage = error?.data?.message || 'Xem trước dữ liệu thất bại'
       toast.error(errorMessage)
+      setFile(null) // Reset file on error
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const droppedFile = e.dataTransfer.files?.[0]
+    if (droppedFile && droppedFile.name.endsWith('.xlsx')) {
+      processFile(droppedFile)
+    } else {
+      toast.error('Vui lòng chỉ tải lên file Excel (.xlsx)')
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const handleDownloadTemplate = (type: 'generic' | 'class') => {
+    try {
+      const result = type === 'generic' ? genericTemplateQuery.data : classTemplateQuery.data
+      if (!result) return
+
+      const url = window.URL.createObjectURL(result)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = type === 'generic' ? 'mau-danh-sach-sinh-vien.xlsx' : `lop-${classId}-mau-danh-sach.xlsx`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch {
+      toast.error('Không thể tải xuống mẫu')
     }
   }
 
   const handleExecute = async () => {
     if (!preview) return
 
-    // Validate strategy requirements
+    const validStudents = preview.students.filter(student =>
+      student.status !== 'ERROR' && student.status !== 'DUPLICATE'
+    )
+
+    if (validStudents.length === 0) {
+      toast.error('Không có sinh viên hợp lệ để đăng ký')
+      return
+    }
+
     if (strategy === 'PARTIAL' && selectedStudents.size === 0) {
-      toast.error('Vui lòng chọn ít nhất một sinh viên để đăng ký')
+      toast.error('Vui lòng chọn ít nhất một sinh viên')
       return
     }
 
@@ -163,10 +178,13 @@ export function EnrollmentImportDialog({
     }
 
     try {
-      // For PARTIAL strategy, filter students to only include selected ones
       const studentsToEnroll = strategy === 'PARTIAL'
-        ? preview.students.filter((_, idx) => selectedStudents.has(idx))
-        : preview.students
+        ? preview.students.filter((student, idx) => {
+          if (student.status === 'ERROR' || student.status === 'DUPLICATE') return false
+          const studentId = student.status === 'FOUND' ? student.resolvedStudentId : -idx - 1
+          return selectedStudents.has(studentId!)
+        })
+        : preview.students.filter(student => student.status !== 'ERROR' && student.status !== 'DUPLICATE')
 
       const result = await executeMutation({
         classId: preview.classId,
@@ -177,16 +195,12 @@ export function EnrollmentImportDialog({
       }).unwrap()
 
       toast.success(
-        `Đã đăng ký thành công ${result.data.successfulEnrollments} trên ${result.data.totalAttempted} sinh viên vào lớp ${result.data.className}`
+        `Đã đăng ký thành công ${result.data.successfulEnrollments} sinh viên`
       )
-
       onSuccess()
       handleClose()
-    } catch (error) {
-      const errorMessage = error && typeof error === 'object' && 'data' in error && error.data && typeof error.data === 'object' && 'message' in error.data
-        ? String(error.data.message)
-        : 'Thực hiện đăng ký thất bại'
-      toast.error(errorMessage)
+    } catch (error: any) {
+      toast.error(error?.data?.message || 'Thực hiện đăng ký thất bại')
     }
   }
 
@@ -199,289 +213,341 @@ export function EnrollmentImportDialog({
     onOpenChange(false)
   }
 
-  const toggleStudentSelection = (studentId: number) => {
+  const toggleStudentSelection = (student: StudentEnrollmentData, idx: number) => {
     const newSet = new Set(selectedStudents)
-    if (newSet.has(studentId)) {
-      newSet.delete(studentId)
+    const studentId = student.status === 'FOUND' ? student.resolvedStudentId : -idx - 1
+
+    if (newSet.has(studentId!)) {
+      newSet.delete(studentId!)
     } else {
-      newSet.add(studentId)
+      newSet.add(studentId!)
     }
     setSelectedStudents(newSet)
   }
 
-  
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'FOUND':
-        return <CheckCircle2 className="h-4 w-4 text-green-600" />
-      case 'CREATE':
-        return <AlertCircle className="h-4 w-4 text-blue-600" />
-      case 'DUPLICATE':
-        return <AlertCircle className="h-4 w-4 text-yellow-600" />
-      case 'ERROR':
-        return <XCircle className="h-4 w-4 text-red-600" />
-      default:
-        return null
-    }
+  const toggleAllSelection = () => {
+    if (!preview) return
+    const validStudents = preview.students.filter(s => s.status !== 'ERROR' && s.status !== 'DUPLICATE')
+    const allSelected = validStudents.every((s, idx) => {
+      const id = s.status === 'FOUND' ? s.resolvedStudentId : -idx - 1
+      return selectedStudents.has(id!)
+    })
+
+    const newSet = new Set(selectedStudents)
+    validStudents.forEach((s, idx) => {
+      const id = s.status === 'FOUND' ? s.resolvedStudentId : -idx - 1
+      if (allSelected) {
+        newSet.delete(id!)
+      } else {
+        newSet.add(id!)
+      }
+    })
+    setSelectedStudents(newSet)
   }
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  }
+
+  const validStudentsList = preview?.students.filter(s => s.status !== 'ERROR' && s.status !== 'DUPLICATE') || []
+  const errorStudentsList = preview?.students.filter(s => s.status === 'ERROR' || s.status === 'DUPLICATE') || []
+  const isAllSelected = validStudentsList.length > 0 && validStudentsList.every((s) => {
+    if (!preview) return false
+    const id = s.status === 'FOUND' ? s.resolvedStudentId : -preview.students.indexOf(s) - 1
+    return selectedStudents.has(id!)
+  })
 
   return (
     <FullScreenModal open={open} onOpenChange={onOpenChange}>
-      <FullScreenModalContent>
-        <FullScreenModalHeader>
-          <FullScreenModalTitle>Nhập sinh viên qua Excel</FullScreenModalTitle>
+      <FullScreenModalContent className="bg-muted/10 p-0 gap-0">
+        <FullScreenModalHeader className="bg-background border-b px-6 py-4">
+          <FullScreenModalTitle className="text-xl font-semibold tracking-tight">
+            Nhập sinh viên qua Excel
+          </FullScreenModalTitle>
           <FullScreenModalDescription>
-            Tải lên tệp Excel để đăng ký nhiều sinh viên cùng lúc
+            Tải lên danh sách sinh viên để đăng ký hàng loạt vào lớp học.
           </FullScreenModalDescription>
         </FullScreenModalHeader>
 
-        <FullScreenModalBody className="space-y-6">
-          {/* File Upload - Simplified */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="excel-file" className="text-base font-medium">Tải lên tệp Excel</Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  7 cột: full_name, email, phone, facebook_url, address, gender, dob
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleDownloadGenericTemplate}
-                  disabled={genericTemplateQuery.isLoading}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Mẫu
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleDownloadClassTemplate}
-                  disabled={classTemplateQuery.isLoading}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Mẫu lớp
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <Input
-                id="excel-file"
-                type="file"
-                accept=".xlsx"
-                onChange={handleFileChange}
-                disabled={isPreviewing || isExecuting}
-                className="flex-1"
-              />
-              <Button
-                onClick={handlePreview}
-                disabled={!file || isPreviewing || isExecuting}
-              >
-                {isPreviewing ? (
-                  <>
-                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    Đang xử lý
-                  </>
-                ) : (
-                  <>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Xem trước
-                  </>
+        <FullScreenModalBody className="p-0 flex flex-col h-full overflow-hidden bg-background">
+          {!preview ? (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 animate-in fade-in-50">
+              <div
+                className={cn(
+                  "w-full max-w-xl border-2 border-dashed border-muted-foreground/25 rounded-xl p-10 text-center transition-colors cursor-pointer relative overflow-hidden",
+                  isPreviewing ? "bg-muted/10 pointer-events-none" : "hover:bg-muted/5"
                 )}
-              </Button>
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onClick={() => !isPreviewing && fileInputRef.current?.click()}
+              >
+                {isPreviewing && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm z-10">
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mb-2" />
+                    <p className="text-sm font-medium text-muted-foreground">Đang xử lý...</p>
+                  </div>
+                )}
+
+                <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Upload className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-lg font-medium mb-2">Kéo thả file Excel vào đây</h3>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Hoặc click để chọn file từ máy tính của bạn
+                </p>
+                <Input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx"
+                  className="hidden"
+                  onChange={handleFileChange}
+                  disabled={isPreviewing}
+                />
+                <Button variant="outline" className="pointer-events-none">
+                  Chọn file
+                </Button>
+              </div>
+
+              <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-xl">
+                <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleDownloadTemplate('generic')}>
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="bg-green-100 p-2 rounded-lg">
+                      <FileSpreadsheet className="h-5 w-5 text-green-700" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium text-sm">Mẫu cơ bản</p>
+                      <p className="text-xs text-muted-foreground">Tải xuống mẫu Excel chuẩn</p>
+                    </div>
+                    <Download className="h-4 w-4 ml-auto text-muted-foreground" />
+                  </CardContent>
+                </Card>
+                <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleDownloadTemplate('class')}>
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="bg-blue-100 p-2 rounded-lg">
+                      <FileSpreadsheet className="h-5 w-5 text-blue-700" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium text-sm">Mẫu theo lớp</p>
+                      <p className="text-xs text-muted-foreground">Bao gồm thông tin lớp học</p>
+                    </div>
+                    <Download className="h-4 w-4 ml-auto text-muted-foreground" />
+                  </CardContent>
+                </Card>
+              </div>
             </div>
-          </div>
-
-          {/* Preview Results */}
-          {preview && (
-            <>
-              {/* Summary Stats - Minimal Design */}
-              <div className="flex items-center justify-between py-3 border-b">
-                <div className="flex items-center gap-8">
-                  <div>
-                    <span className="text-sm text-muted-foreground">Tổng sinh viên</span>
-                    <p className="text-lg font-semibold">{preview.totalStudents}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">Hợp lệ</span>
-                    <p className="text-lg font-semibold">{preview.totalValid}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">Mới</span>
-                    <p className="text-lg font-semibold text-blue-600">
-                      {preview.students.filter(s => s.status === 'CREATE').length}
-                    </p>
-                  </div>
-                  {preview.errorCount > 0 && (
+          ) : (
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Summary Header */}
+              <div className="bg-background border-b p-6 pb-2">
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-green-100 p-3 rounded-xl">
+                      <FileSpreadsheet className="h-6 w-6 text-green-700" />
+                    </div>
                     <div>
-                      <span className="text-sm text-muted-foreground">Lỗi</span>
-                      <p className="text-lg font-semibold text-red-600">{preview.errorCount}</p>
+                      <h3 className="font-medium text-lg">{file?.name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {preview.totalStudents} sinh viên tìm thấy • {preview.totalValid} hợp lệ
+                      </p>
                     </div>
-                  )}
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setPreview(null)} className="text-muted-foreground hover:text-destructive">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Hủy bỏ
+                  </Button>
                 </div>
 
-                {/* Capacity Status Inline */}
-                <div className="text-right">
-                  <span className="text-sm text-muted-foreground">Sức chứa lớp</span>
-                  <p className="text-sm font-medium">
-                    {preview.currentEnrolled}/{preview.maxCapacity}
-                    <span className="ml-2 text-muted-foreground">
-                      ({preview.availableSlots} chỗ còn trống)
-                    </span>
-                  </p>
+                <div className="flex gap-2 mb-2">
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="w-full justify-start bg-transparent border-b rounded-none h-auto p-0 gap-6">
+                      <TabsTrigger
+                        value="valid"
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-2"
+                      >
+                        Hợp lệ <Badge variant="secondary" className="ml-2">{validStudentsList.length}</Badge>
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="error"
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-destructive data-[state=active]:bg-transparent px-0 py-2"
+                        disabled={errorStudentsList.length === 0}
+                      >
+                        Lỗi / Trùng lặp <Badge variant="destructive" className="ml-2">{errorStudentsList.length}</Badge>
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
                 </div>
               </div>
 
-              {/* Warnings & Errors - Only show when needed */}
-              {(preview.errors.length > 0 || preview.warnings.length > 0) && (
-                <div className="space-y-2">
-                  {preview.errors.length > 0 && (
-                    <div className="text-sm p-3 rounded-md bg-red-50 text-red-800 border border-red-200">
-                      <span className="font-medium">Lỗi:</span> {preview.errors.join(', ')}
-                    </div>
-                  )}
+              {/* Content Area */}
+              <div className="flex-1 overflow-auto bg-muted/5 p-6">
+                <div className="max-w-5xl mx-auto space-y-6">
 
-                  {preview.warnings.length > 0 && (
-                    <div className="text-sm p-3 rounded-md bg-yellow-50 text-yellow-800 border border-yellow-200">
-                      <span className="font-medium">Cảnh báo:</span> {preview.warnings.join(', ')}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Strategy Selection */}
-              <div className="space-y-2">
-                <Label htmlFor="strategy">Chiến lược đăng ký</Label>
-                <Select value={strategy} onValueChange={(value) => setStrategy(value as EnrollmentStrategy)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">Đăng ký tất cả sinh viên hợp lệ</SelectItem>
-                    <SelectItem value="PARTIAL">Chỉ đăng ký sinh viên đã chọn</SelectItem>
-                    <SelectItem value="OVERRIDE">Ghi đề sức chứa (Cần lý do)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Override Reason - Simplified */}
-              {strategy === 'OVERRIDE' && (
-                <div className="border-t pt-4">
-                  <Label htmlFor="override-reason" className="text-sm font-medium">
-                    Lý do ghi đè (bắt buộc)
-                  </Label>
-                  <Textarea
-                    id="override-reason"
-                    value={overrideReason}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setOverrideReason(e.target.value)}
-                    placeholder="Giải thích tại sao cần ghi đè sức chứa..."
-                    rows={2}
-                    className="mt-2"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {overrideReason.length} / 20 ký tự
-                  </p>
-                </div>
-              )}
-
-              {/* Students Table - Clean Design */}
-              <div className="border-t pt-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium">Sinh viên ({preview.students.length})</h3>
-                  {strategy === 'PARTIAL' && (
-                    <span className="text-xs text-muted-foreground">
-                      {selectedStudents.size} đã chọn
-                    </span>
-                  )}
-                </div>
-                <div className="border rounded-md overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/30">
-                        {strategy === 'PARTIAL' && <TableHead className="w-12"></TableHead>}
-                        <TableHead className="text-xs font-medium">Trạng thái</TableHead>
-                        <TableHead className="text-xs font-medium">Họ và tên</TableHead>
-                        <TableHead className="text-xs font-medium">Email</TableHead>
-                        <TableHead className="text-xs font-medium">Điện thoại</TableHead>
-                        <TableHead className="text-xs font-medium">Facebook</TableHead>
-                        <TableHead className="text-xs font-medium">Địa chỉ</TableHead>
-                        <TableHead className="text-xs font-medium">Giới tính</TableHead>
-                        <TableHead className="text-xs font-medium">Ngày sinh</TableHead>
-                        <TableHead className="text-xs font-medium">Lỗi</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {preview.students.map((student, idx) => (
-                        <TableRow key={idx} className="border-b">
-                          {strategy === 'PARTIAL' && (
-                            <TableCell>
-                              {student.status !== 'ERROR' && student.status !== 'DUPLICATE' && (
-                                <input
-                                  type="checkbox"
-                                  checked={selectedStudents.has(idx)}
-                                  onChange={() => toggleStudentSelection(idx)}
-                                  className="h-4 w-4"
-                                />
-                              )}
-                            </TableCell>
+                  {/* Strategy Selection */}
+                  <Card>
+                    <CardContent className="p-6">
+                      <h4 className="font-medium mb-4 flex items-center gap-2">
+                        <Info className="h-4 w-4 text-primary" />
+                        Tùy chọn đăng ký
+                      </h4>
+                      <RadioGroup value={strategy} onValueChange={(v) => setStrategy(v as EnrollmentStrategy)} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Label
+                          htmlFor="strategy-all"
+                          className={cn(
+                            "flex flex-col p-4 border rounded-lg cursor-pointer transition-all hover:bg-muted/50",
+                            strategy === 'ALL' && "border-primary bg-primary/5 ring-1 ring-primary"
                           )}
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              {getStatusIcon(student.status)}
-                              <span className={`text-xs px-1.5 py-0.5 rounded ${
-                                student.status === 'FOUND' ? 'bg-green-100 text-green-700' :
-                                student.status === 'CREATE' ? 'bg-blue-100 text-blue-700' :
-                                student.status === 'DUPLICATE' ? 'bg-yellow-100 text-yellow-700' :
-                                'bg-red-100 text-red-700'
-                              }`}>
-                                {student.status}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-sm font-medium">{student.fullName}</TableCell>
-                          <TableCell className="text-sm">{student.email}</TableCell>
-                          <TableCell className="text-sm">{student.phone}</TableCell>
-                          <TableCell className="text-sm">
-                            {student.facebookUrl ? (
-                              <a
-                                href={student.facebookUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline text-xs"
-                              >
-                                Hồ sơ
-                              </a>
-                            ) : (
-                              <span className="text-muted-foreground text-xs">-</span>
+                        >
+                          <RadioGroupItem value="ALL" id="strategy-all" className="sr-only" />
+                          <span className="font-medium mb-1">Tất cả hợp lệ</span>
+                          <span className="text-xs text-muted-foreground">Đăng ký toàn bộ {preview.totalValid} sinh viên hợp lệ vào lớp.</span>
+                        </Label>
+
+                        <Label
+                          htmlFor="strategy-partial"
+                          className={cn(
+                            "flex flex-col p-4 border rounded-lg cursor-pointer transition-all hover:bg-muted/50",
+                            strategy === 'PARTIAL' && "border-primary bg-primary/5 ring-1 ring-primary"
+                          )}
+                        >
+                          <RadioGroupItem value="PARTIAL" id="strategy-partial" className="sr-only" />
+                          <span className="font-medium mb-1">Chọn thủ công</span>
+                          <span className="text-xs text-muted-foreground">Chỉ đăng ký những sinh viên được chọn từ danh sách.</span>
+                        </Label>
+
+                        <Label
+                          htmlFor="strategy-override"
+                          className={cn(
+                            "flex flex-col p-4 border rounded-lg cursor-pointer transition-all hover:bg-muted/50",
+                            strategy === 'OVERRIDE' && "border-primary bg-primary/5 ring-1 ring-primary"
+                          )}
+                        >
+                          <RadioGroupItem value="OVERRIDE" id="strategy-override" className="sr-only" />
+                          <span className="font-medium mb-1">Ghi đè sức chứa</span>
+                          <span className="text-xs text-muted-foreground">Cho phép đăng ký vượt quá sĩ số tối đa của lớp.</span>
+                        </Label>
+                      </RadioGroup>
+
+                      {strategy === 'OVERRIDE' && (
+                        <div className="mt-4 pt-4 border-t animate-in slide-in-from-top-2">
+                          <Label className="text-sm font-medium mb-2 block">Lý do ghi đè (Bắt buộc)</Label>
+                          <Textarea
+                            value={overrideReason}
+                            onChange={(e) => setOverrideReason(e.target.value)}
+                            placeholder="Nhập lý do tại sao cần đăng ký vượt quá sức chứa..."
+                            className="resize-none"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1 text-right">
+                            {overrideReason.length} / 20 ký tự
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Student List */}
+                  <Card className="overflow-hidden border-none shadow-none bg-transparent">
+                    <div className="rounded-md border bg-background">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-muted/30">
+                            {activeTab === 'valid' && strategy === 'PARTIAL' && (
+                              <TableHead className="w-[50px] pl-4">
+                                <Checkbox
+                                  checked={isAllSelected}
+                                  onCheckedChange={toggleAllSelection}
+                                />
+                              </TableHead>
                             )}
-                          </TableCell>
-                          <TableCell className="text-sm max-w-xs truncate">{student.address || '-'}</TableCell>
-                          <TableCell className="text-sm">{student.gender}</TableCell>
-                          <TableCell className="text-sm">{student.dob}</TableCell>
-                          <TableCell className="text-xs text-red-600 max-w-xs">
-                            {student.errorMessage || ''}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                            <TableHead className="min-w-[250px]">Sinh viên</TableHead>
+                            <TableHead>Trạng thái</TableHead>
+                            <TableHead>Liên hệ</TableHead>
+                            <TableHead>Thông tin khác</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {(activeTab === 'valid' ? validStudentsList : errorStudentsList).map((student, idx) => (
+                            <TableRow key={idx} className="hover:bg-muted/30">
+                              {activeTab === 'valid' && strategy === 'PARTIAL' && (
+                                <TableCell className="pl-4">
+                                  <Checkbox
+                                    checked={(() => {
+                                      const id = student.status === 'FOUND' ? student.resolvedStudentId : -preview.students.indexOf(student) - 1
+                                      return selectedStudents.has(id!)
+                                    })()}
+                                    onCheckedChange={() => toggleStudentSelection(student, preview.students.indexOf(student))}
+                                  />
+                                </TableCell>
+                              )}
+                              <TableCell>
+                                <div className="flex items-center gap-3">
+                                  <Avatar className="h-9 w-9 border">
+                                    <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                                      {getInitials(student.fullName)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex flex-col">
+                                    <span className="font-medium text-sm">{student.fullName}</span>
+                                    <span className="text-xs text-muted-foreground">{student.dob} • {student.gender}</span>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {student.status === 'FOUND' && <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Đã có hồ sơ</Badge>}
+                                {student.status === 'CREATE' && <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Tạo mới</Badge>}
+                                {student.status === 'DUPLICATE' && <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Trùng lặp</Badge>}
+                                {student.status === 'ERROR' && <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Lỗi dữ liệu</Badge>}
+                                {student.errorMessage && <p className="text-xs text-red-600 mt-1 max-w-[200px]">{student.errorMessage}</p>}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-col text-sm">
+                                  <span>{student.email}</span>
+                                  <span className="text-muted-foreground text-xs">{student.phone}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="text-sm text-muted-foreground max-w-[200px] truncate">
+                                  {student.address || '-'}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </Card>
                 </div>
               </div>
-            </>
+            </div>
           )}
         </FullScreenModalBody>
 
-        <FullScreenModalFooter>
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={handleClose} disabled={isExecuting}>
-              Hủy
+        <FullScreenModalFooter className="bg-background border-t px-6 py-4 flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            {preview && (
+              <span className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Sức chứa lớp: <span className="font-medium text-foreground">{preview.currentEnrolled}/{preview.maxCapacity}</span>
+              </span>
+            )}
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={handleClose}>
+              Đóng
             </Button>
             {preview && (
-              <Button onClick={handleExecute} disabled={isExecuting || (strategy === 'PARTIAL' && selectedStudents.size === 0)}>
-                {isExecuting ? 'Đang đăng ký...' : 'Xác nhận đăng ký'}
+              <Button
+                onClick={handleExecute}
+                disabled={isExecuting || (strategy === 'PARTIAL' && selectedStudents.size === 0)}
+                className="min-w-[140px]"
+              >
+                {isExecuting ? (
+                  "Đang xử lý..."
+                ) : (
+                  <>
+                    Xác nhận đăng ký
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
               </Button>
             )}
           </div>

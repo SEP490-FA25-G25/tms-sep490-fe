@@ -1,3 +1,4 @@
+import { type ReactNode } from "react"
 import { type LucideIcon } from "lucide-react"
 import { Link } from "react-router-dom"
 import {
@@ -15,6 +16,7 @@ export function NavMain({
     title: string
     url: string
     icon?: LucideIcon
+    badge?: ReactNode
   }[]
 }) {
   return (
@@ -24,9 +26,10 @@ export function NavMain({
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild tooltip={item.title}>
-                <Link to={item.url}>
+                <Link to={item.url} className="flex w-full items-center gap-2">
                   {item.icon && <item.icon />}
-                  <span>{item.title}</span>
+                  <span className="flex-1 text-left">{item.title}</span>
+                  {item.badge}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

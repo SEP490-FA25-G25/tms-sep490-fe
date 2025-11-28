@@ -3,16 +3,18 @@
 /* Scope all variables and styles to .landing-container to avoid global pollution */
 .landing-container {
     /* Colors */
-    --lp-primary: #0F172A;
-    /* Deep Blue */
-    --lp-accent: #4F46E5;
-    /* Vibrant Blue/Purple */
-    --lp-accent-hover: #4338ca;
-    --lp-text: #334155;
-    /* Dark Slate */
-    --lp-text-light: #64748b;
-    --lp-bg: #F8FAFC;
-    --lp-white: #ffffff;
+    --lp-primary: #2E5A34;
+    /* Pinnacle Green */
+    --lp-primary-hover: #1B4D3E;
+    /* Darker Green */
+    --lp-accent: #D4E157;
+    /* Pinnacle Yellow */
+    --lp-accent-hover: #C0CA33;
+    --lp-text: #1A3320;
+    /* Dark Green/Black */
+    --lp-text-light: #64748B;
+    --lp-bg: #F9FAF9;
+    --lp-white: #FFFFFF;
     --lp-border: #e2e8f0;
     --lp-success: #10b981;
     --lp-error: #ef4444;
@@ -127,7 +129,7 @@
     letter-spacing: 2px;
     font-size: 0.875rem;
     font-weight: 600;
-    color: var(--lp-accent);
+    color: var(--lp-primary);
     margin-bottom: var(--lp-space-xs);
 }
 
@@ -146,24 +148,24 @@
 }
 
 .landing-container .lp-btn-primary {
-    background-color: var(--lp-accent);
+    background-color: var(--lp-primary);
     color: var(--lp-white);
 }
 
 .landing-container .lp-btn-primary:hover {
-    background-color: var(--lp-accent-hover);
+    background-color: var(--lp-primary-hover);
     transform: translateY(-2px);
     box-shadow: var(--lp-shadow-md);
 }
 
 .landing-container .lp-btn-outline {
     background-color: transparent;
-    border: 2px solid var(--lp-accent);
-    color: var(--lp-accent);
+    border: 2px solid var(--lp-primary);
+    color: var(--lp-primary);
 }
 
 .landing-container .lp-btn-outline:hover {
-    background-color: var(--lp-accent);
+    background-color: var(--lp-primary);
     color: var(--lp-white);
 }
 
@@ -203,7 +205,7 @@
 }
 
 .landing-container .lp-header-nav a:hover {
-    color: var(--lp-accent);
+    color: var(--lp-primary);
 }
 
 .landing-container .lp-logo {
@@ -218,7 +220,7 @@
 /* Hero Section */
 .landing-container .lp-hero {
     padding: var(--lp-space-xl) 0;
-    background: radial-gradient(circle at top right, rgba(79, 70, 229, 0.1), transparent 40%);
+    background: radial-gradient(circle at top right, rgba(46, 90, 52, 0.1), transparent 40%);
     overflow: hidden;
 }
 
