@@ -1,6 +1,5 @@
 import * as React from "react";
 import {
-  ArrowUpCircleIcon,
   BarChartIcon,
   BookOpenIcon,
   CalendarIcon,
@@ -363,10 +362,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
+              className="data-[slot=sidebar-menu-button]:!p-1 data-[slot=sidebar-menu-button]:!justify-start"
             >
-              <a href="/dashboard">
-                <ArrowUpCircleIcon className="h-5 w-5" />
+              <a href="/dashboard" className="flex items-center gap-2">
+                <img
+                  src="/logo.jpg"
+                  alt="TMS Logo"
+                  className="h-8 w-auto"
+                />
                 <span className="text-base font-semibold">Training Management</span>
               </a>
             </SidebarMenuButton>
