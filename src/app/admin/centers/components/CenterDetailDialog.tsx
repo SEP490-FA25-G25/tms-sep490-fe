@@ -39,10 +39,15 @@ export function CenterDetailDialog({
 }: CenterDetailDialogProps) {
   const [showCreateBranch, setShowCreateBranch] = useState(false);
   const [branchToEdit, setBranchToEdit] = useState<BranchResponse | null>(null);
-  const [branchToDelete, setBranchToDelete] = useState<BranchResponse | null>(null);
+  const [branchToDelete, setBranchToDelete] = useState<BranchResponse | null>(
+    null
+  );
 
-  const { data: branchesResponse, isLoading: isLoadingBranches, refetch: refetchBranches } =
-    useGetBranchesByCenterIdQuery(center.id, { skip: !open });
+  const {
+    data: branchesResponse,
+    isLoading: isLoadingBranches,
+    refetch: refetchBranches,
+  } = useGetBranchesByCenterIdQuery(center.id, { skip: !open });
 
   const [deleteBranch] = useDeleteBranchMutation();
 
@@ -51,7 +56,10 @@ export function CenterDetailDialog({
 
   const handleDeleteBranch = async (branchId: number) => {
     try {
-      const result = await deleteBranch({ id: branchId, centerId: center.id }).unwrap();
+      const result = await deleteBranch({
+        id: branchId,
+        centerId: center.id,
+      }).unwrap();
       if (!result.success) {
         throw new Error(result.message || "Xóa chi nhánh thất bại");
       }
@@ -65,13 +73,22 @@ export function CenterDetailDialog({
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+    const statusMap: Record<
+      string,
+      {
+        label: string;
+        variant: "default" | "secondary" | "destructive" | "outline";
+      }
+    > = {
       ACTIVE: { label: "Hoạt động", variant: "default" },
       INACTIVE: { label: "Không hoạt động", variant: "secondary" },
       CLOSED: { label: "Đã đóng", variant: "destructive" },
       PLANNED: { label: "Dự kiến", variant: "outline" },
     };
-    const statusInfo = statusMap[status] || { label: status, variant: "outline" as const };
+    const statusInfo = statusMap[status] || {
+      label: status,
+      variant: "outline" as const,
+    };
     return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
   };
 
@@ -83,7 +100,9 @@ export function CenterDetailDialog({
             <div className="flex items-start justify-between">
               <div>
                 <DialogTitle className="text-2xl">{center.name}</DialogTitle>
-                <p className="text-sm text-muted-foreground mt-1">Mã: {center.code}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Mã: {center.code}
+                </p>
               </div>
               <Button variant="outline" onClick={onEdit}>
                 <Edit className="h-4 w-4 mr-2" />
@@ -127,7 +146,9 @@ export function CenterDetailDialog({
                 {center.description && (
                   <div className="col-span-2">
                     <p className="font-medium mb-1">Mô tả</p>
-                    <p className="text-muted-foreground">{center.description}</p>
+                    <p className="text-muted-foreground">
+                      {center.description}
+                    </p>
                   </div>
                 )}
               </div>
@@ -138,9 +159,7 @@ export function CenterDetailDialog({
             {/* Branches Section */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold">
-                  Chi nhánh ({branches.length})
-                </h3>
+                <h3 className="font-semibold">Chi nhánh ({branches.length})</h3>
                 <Button
                   onClick={() => setShowCreateBranch(true)}
                   size="sm"
@@ -171,11 +190,21 @@ export function CenterDetailDialog({
                   <table className="w-full">
                     <thead className="bg-muted">
                       <tr>
-                        <th className="px-4 py-2 text-left text-sm font-medium">Mã</th>
-                        <th className="px-4 py-2 text-left text-sm font-medium">Tên</th>
-                        <th className="px-4 py-2 text-left text-sm font-medium">Địa chỉ</th>
-                        <th className="px-4 py-2 text-left text-sm font-medium">Trạng thái</th>
-                        <th className="px-4 py-2 text-right text-sm font-medium">Thao tác</th>
+                        <th className="px-4 py-2 text-left text-sm font-medium">
+                          Mã
+                        </th>
+                        <th className="px-4 py-2 text-left text-sm font-medium">
+                          Tên
+                        </th>
+                        <th className="px-4 py-2 text-left text-sm font-medium">
+                          Địa chỉ
+                        </th>
+                        <th className="px-4 py-2 text-left text-sm font-medium">
+                          Trạng thái
+                        </th>
+                        <th className="px-4 py-2 text-right text-sm font-medium">
+                          Thao tác
+                        </th>
                       </tr>
                     </thead>
                     <tbody>

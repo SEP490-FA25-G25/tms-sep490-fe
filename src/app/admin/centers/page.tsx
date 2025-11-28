@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type CSSProperties } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -29,6 +29,7 @@ import {
   useGetCentersQuery,
   useDeleteCenterMutation,
   type CenterResponse,
+  type PageableResponse,
 } from "@/store/services/centerApi";
 import { CreateCenterDialog } from "./components/CreateCenterDialog";
 import { EditCenterDialog } from "./components/EditCenterDialog";
@@ -40,9 +41,13 @@ const PAGE_SIZE = 20;
 export default function AdminCentersPage() {
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCenter, setSelectedCenter] = useState<CenterResponse | null>(null);
+  const [selectedCenter, setSelectedCenter] = useState<CenterResponse | null>(
+    null
+  );
   const [centerToEdit, setCenterToEdit] = useState<CenterResponse | null>(null);
-  const [centerToDelete, setCenterToDelete] = useState<CenterResponse | null>(null);
+  const [centerToDelete, setCenterToDelete] = useState<CenterResponse | null>(
+    null
+  );
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const {
@@ -93,7 +98,10 @@ export default function AdminCentersPage() {
       refetchCenters();
       setCenterToDelete(null);
     } catch (error: unknown) {
-      toast.error((error as { data?: { message?: string } })?.data?.message || "Xóa trung tâm thất bại");
+      toast.error(
+        (error as { data?: { message?: string } })?.data?.message ||
+          "Xóa trung tâm thất bại"
+      );
     }
   };
 
@@ -118,7 +126,7 @@ export default function AdminCentersPage() {
           {
             "--sidebar-width": "calc(var(--spacing) * 72)",
             "--header-height": "calc(var(--spacing) * 12)",
-          } as React.CSSProperties
+          } as CSSProperties
         }
       >
         <AppSidebar variant="inset" />
@@ -184,7 +192,9 @@ export default function AdminCentersPage() {
                         <div className="text-center py-12 text-muted-foreground">
                           <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
                           <p className="text-lg font-medium">
-                            {searchTerm ? "Không tìm thấy trung tâm nào" : "Chưa có trung tâm nào"}
+                            {searchTerm
+                              ? "Không tìm thấy trung tâm nào"
+                              : "Chưa có trung tâm nào"}
                           </p>
                           <p className="text-sm mt-2">
                             {searchTerm
@@ -198,12 +208,24 @@ export default function AdminCentersPage() {
                             <table className="w-full">
                               <thead className="bg-muted">
                                 <tr>
-                                  <th className="px-4 py-3 text-left text-sm font-medium">Mã</th>
-                                  <th className="px-4 py-3 text-left text-sm font-medium">Tên trung tâm</th>
-                                  <th className="px-4 py-3 text-left text-sm font-medium">Địa chỉ</th>
-                                  <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
-                                  <th className="px-4 py-3 text-left text-sm font-medium">Điện thoại</th>
-                                  <th className="px-4 py-3 text-right text-sm font-medium">Thao tác</th>
+                                  <th className="px-4 py-3 text-left text-sm font-medium">
+                                    Mã
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-sm font-medium">
+                                    Tên trung tâm
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-sm font-medium">
+                                    Địa chỉ
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-sm font-medium">
+                                    Email
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-sm font-medium">
+                                    Điện thoại
+                                  </th>
+                                  <th className="px-4 py-3 text-right text-sm font-medium">
+                                    Thao tác
+                                  </th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -216,7 +238,9 @@ export default function AdminCentersPage() {
                                     <td className="px-4 py-3 text-sm font-medium">
                                       {center.code}
                                     </td>
-                                    <td className="px-4 py-3 text-sm">{center.name}</td>
+                                    <td className="px-4 py-3 text-sm">
+                                      {center.name}
+                                    </td>
                                     <td className="px-4 py-3 text-sm text-muted-foreground">
                                       <div className="flex items-center gap-1">
                                         <MapPin className="h-3 w-3" />
@@ -276,9 +300,13 @@ export default function AdminCentersPage() {
                                 <PaginationContent>
                                   <PaginationItem>
                                     <PaginationPrevious
-                                      onClick={() => setPage(Math.max(0, page - 1))}
+                                      onClick={() =>
+                                        setPage(Math.max(0, page - 1))
+                                      }
                                       className={
-                                        page === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"
+                                        page === 0
+                                          ? "pointer-events-none opacity-50"
+                                          : "cursor-pointer"
                                       }
                                     />
                                   </PaginationItem>
@@ -295,7 +323,11 @@ export default function AdminCentersPage() {
                                   ))}
                                   <PaginationItem>
                                     <PaginationNext
-                                      onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+                                      onClick={() =>
+                                        setPage(
+                                          Math.min(totalPages - 1, page + 1)
+                                        )
+                                      }
                                       className={
                                         page >= totalPages - 1
                                           ? "pointer-events-none opacity-50"

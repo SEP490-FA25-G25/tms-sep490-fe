@@ -71,7 +71,10 @@ export const centerApi = createApi({
       invalidatesTags: ['Center'],
     }),
 
-    updateCenter: builder.mutation<ApiResponse<CenterResponse>, { id: number; data: CenterRequest }>({
+    updateCenter: builder.mutation<
+      ApiResponse<CenterResponse>,
+      { id: number; data: CenterRequest }
+    >({
       query: ({ id, data }) => ({
         url: `/centers/${id}`,
         method: 'PUT',

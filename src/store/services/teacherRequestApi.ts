@@ -403,10 +403,7 @@ export const teacherRequestApi = createApi({
     }),
 
     // Get teacher request configuration (policies exposed to teacher)
-    getTeacherRequestConfig: builder.query<
-      TeacherRequestConfigResponse,
-      void
-    >({
+    getTeacherRequestConfig: builder.query<TeacherRequestConfigResponse, void>({
       query: () => ({
         url: "/teacher-requests/config",
         method: "GET",
@@ -414,7 +411,10 @@ export const teacherRequestApi = createApi({
     }),
 
     // Get teacher's sessions (for creating request)
-    getMySessions: builder.query<MySessionsResponse, { date?: string; classId?: number }>({
+    getMySessions: builder.query<
+      MySessionsResponse,
+      { date?: string; classId?: number }
+    >({
       query: ({ date, classId }) => {
         const params: Record<string, string | number> = {};
         if (date) params.date = date;

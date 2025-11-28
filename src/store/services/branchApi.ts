@@ -68,7 +68,10 @@ export const branchApi = createApi({
       ],
     }),
 
-    updateBranch: builder.mutation<ApiResponse<BranchResponse>, { id: number; data: BranchRequest }>({
+    updateBranch: builder.mutation<
+      ApiResponse<BranchResponse>,
+      { id: number; data: BranchRequest }
+    >({
       query: ({ id, data }) => ({
         url: `/branches/${id}`,
         method: 'PUT',
@@ -81,7 +84,10 @@ export const branchApi = createApi({
       ],
     }),
 
-    deleteBranch: builder.mutation<ApiResponse<void>, { id: number; centerId: number }>({
+    deleteBranch: builder.mutation<
+      ApiResponse<void>,
+      { id: number; centerId: number }
+    >({
       query: ({ id }) => ({
         url: `/branches/${id}`,
         method: 'DELETE',
