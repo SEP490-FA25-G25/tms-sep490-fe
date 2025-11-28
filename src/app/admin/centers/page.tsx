@@ -29,7 +29,6 @@ import {
   useGetCentersQuery,
   useDeleteCenterMutation,
   type CenterResponse,
-  type PageableResponse,
 } from "@/store/services/centerApi";
 import { CreateCenterDialog } from "./components/CreateCenterDialog";
 import { EditCenterDialog } from "./components/EditCenterDialog";

@@ -279,31 +279,6 @@ const getRequestTopic = (request: TeacherRequestDTO): string | undefined => {
   return undefined;
 };
 
-const getNestedValue = (source: unknown, path: string[]): unknown => {
-  let value: unknown = source;
-  for (const key of path) {
-    if (value && typeof value === "object" && key in value) {
-      value = (value as Record<string, unknown>)[key];
-    } else {
-      return undefined;
-    }
-  }
-  return value;
-};
-
-const getFirstStringFromPaths = (
-  source: unknown,
-  paths: string[][]
-): string | undefined => {
-  for (const path of paths) {
-    const value = getNestedValue(source, path);
-    if (typeof value === "string" && value.trim().length > 0) {
-      return value.trim();
-    }
-  }
-  return undefined;
-};
-
 export default function AcademicTeacherRequestsPage() {
   // Teacher request filter states
   const [teacherTypeFilter, setTeacherTypeFilter] = useState<
