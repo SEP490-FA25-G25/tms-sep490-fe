@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { MessageCircleIcon, RefreshCcwIcon, StarIcon } from 'lucide-react'
@@ -13,9 +13,9 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 import {
   useGetPendingFeedbacksQuery,
   useSubmitFeedbackMutation,
@@ -162,7 +162,7 @@ export default function StudentPendingFeedbackPage() {
       </SidebarProvider>
 
       <Dialog open={!!selected} onOpenChange={(open) => (!open ? setSelected(null) : null)}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-[70vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Đánh giá phase</DialogTitle>
             {selected && (
@@ -178,33 +178,23 @@ export default function StudentPendingFeedbackPage() {
             )}
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-4  pr-1">
             {ratingQuestions.map((q) => (
               <div key={q.id} className="rounded-lg border border-border/70 bg-muted/10 p-3">
                 <div className="flex items-start justify-between gap-3">
-                  <Label className="text-sm font-semibold leading-tight">{q.questionText}</Label>
+                  <div className="space-y-1">
+                    <Label className="text-sm font-semibold leading-tight">{q.questionText}</Label>
+                    <p className="text-xs text-muted-foreground">Chạm để chọn số sao mong muốn</p>
+                  </div>
                   <Badge variant="outline" className="text-xs">
                     Câu {q.id}
                   </Badge>
                 </div>
-                <RadioGroup
-                  value={ratings[q.id]?.toString() ?? ''}
-                  onValueChange={(value) => setRatings((prev) => ({ ...prev, [q.id]: Number(value) }))}
-                  className="mt-3 flex flex-wrap gap-3"
-                >
-                  {[1, 2, 3, 4, 5].map((val) => (
-                    <Label
-                      key={val}
-                      className="flex cursor-pointer items-center gap-2 rounded-md border border-border/80 px-3 py-2 text-sm hover:border-primary/70 data-[state=checked]:border-primary data-[state=checked]:bg-primary/5"
-                    >
-                      <RadioGroupItem value={val.toString()} />
-                      <div className="flex items-center gap-1">
-                        <StarIcon className="h-4 w-4 text-amber-500" />
-                        <span>{val}</span>
-                      </div>
-                    </Label>
-                  ))}
-                </RadioGroup>
+                <StarRatingRow
+                  value={ratings[q.id] ?? 0}
+                  onChange={(value) => setRatings((prev) => ({ ...prev, [q.id]: value }))}
+                  ariaLabel={`Đánh giá câu ${q.id}`}
+                />
               </div>
             ))}
 
@@ -233,5 +223,49 @@ export default function StudentPendingFeedbackPage() {
         </DialogContent>
       </Dialog>
     </StudentRoute>
+  )
+}
+
+type StarRatingRowProps = {
+  value: number
+  onChange: (value: number) => void
+  ariaLabel?: string
+}
+
+function StarRatingRow({ value, onChange, ariaLabel }: StarRatingRowProps) {
+  const [hovered, setHovered] = useState<number | null>(null)
+  const activeValue = hovered ?? value ?? 0
+
+  return (
+    <div className="mt-3 flex flex-wrap items-center justify-between gap-3" role="group" aria-label={ariaLabel}>
+      <div className="flex items-center gap-2">
+        {[1, 2, 3, 4, 5].map((val) => {
+          const isActive = val <= activeValue
+          return (
+            <button
+              key={val}
+              type="button"
+              onClick={() => onChange(val)}
+              onMouseEnter={() => setHovered(val)}
+              onMouseLeave={() => setHovered(null)}
+              onFocus={() => setHovered(null)}
+              className="flex h-10 w-10 items-center justify-center rounded-md border border-border/70 bg-background transition hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 focus-visible:ring-offset-2"
+              aria-pressed={value === val}
+              aria-label={`${val} sao`}
+            >
+              <StarIcon
+                className={cn(
+                  'h-5 w-5 transition-all',
+                  isActive
+                    ? 'fill-amber-400 text-amber-500 drop-shadow-[0_1px_2px_rgba(0,0,0,0.12)]'
+                    : 'fill-transparent text-muted-foreground/50'
+                )}
+              />
+            </button>
+          )
+        })}
+      </div>
+      <span className="text-xs font-medium text-muted-foreground">{value ? `${value}/5` : 'Chưa chọn'}</span>
+    </div>
   )
 }
