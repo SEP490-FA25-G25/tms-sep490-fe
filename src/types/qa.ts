@@ -263,6 +263,8 @@ export interface StudentFeedbackListResponse {
     isFeedback: boolean;
     submittedAt?: string;
     responsePreview: string;
+    rating?: number;
+    sentiment?: string;
   }>;
   total: number;
   page: number;
@@ -280,6 +282,8 @@ export interface StudentFeedbackDetailDTO {
   isFeedback: boolean;
   submittedAt?: string;
   response: string;
+  rating?: number;
+  sentiment?: string;
   detailedResponses: Array<{
     questionId: number;
     questionText: string;

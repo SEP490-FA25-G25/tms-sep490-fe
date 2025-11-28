@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { useGetClassFeedbacksQuery, useGetFeedbackDetailQuery } from "@/store/services/qaApi"
+import { useGetAllPhasesQuery, useGetClassFeedbacksQuery, useGetFeedbackDetailQuery } from "@/store/services/qaApi"
+import { skipToken } from "@reduxjs/toolkit/query"
 import { QAStatsCard } from "@/components/qa/QAStatsCard"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -43,6 +44,8 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
     const [statusFilter, setStatusFilter] = useState<string>("all")
     const [selectedFeedback, setSelectedFeedback] = useState<number | null>(null)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+    const { data: phases } = useGetAllPhasesQuery()
 
     const handleOpenDialog = (feedbackId: number) => {
         setSelectedFeedback(feedbackId)
@@ -207,9 +210,11 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">Tất cả giai đoạn</SelectItem>
-                                    <SelectItem value="1">Phase 1 - Foundation</SelectItem>
-                                    <SelectItem value="2">Phase 2 - Intermediate</SelectItem>
-                                    <SelectItem value="3">Phase 3 - Advanced</SelectItem>
+                                    {phases?.sort((a, b) => a.phaseNumber - b.phaseNumber).map((phase) => (
+                                        <SelectItem key={phase.id} value={phase.id.toString()}>
+                                            {phase.name || `Phase ${phase.phaseNumber}`}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -233,17 +238,17 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
 
             {/* Feedback List */}
             <Card>
-                <CardHeader>
-                    <div className="flex justify-between items-center">
-                        <CardTitle>Danh Sách Phản Hồi ({filteredFeedbacks.length})</CardTitle>
-                        <Button asChild>
-                            <Link to={`/qa/reports/create?classId=${classId}&reportType=STUDENT_FEEDBACK_ANALYSIS`}>
-                                <Plus className="h-4 w-4 mr-2" />
-                                Tạo Báo Cáo QA
-                            </Link>
-                        </Button>
-                    </div>
-                </CardHeader>
+                        <CardHeader>
+                            <div className="flex justify-between items-center">
+                                <CardTitle>Danh Sách Phản Hồi ({filteredFeedbacks.length})</CardTitle>
+                                <Button asChild>
+                                    <Link to={`/qa/reports/create?classId=${classId}&reportType=STUDENT_FEEDBACK_ANALYSIS`}>
+                                        <Plus className="h-4 w-4 mr-2" />
+                                        Tạo Báo Cáo QA
+                                    </Link>
+                                </Button>
+                            </div>
+                        </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
                         {filteredFeedbacks.length > 0 ? (
@@ -321,6 +326,69 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
                     </div>
                 </CardContent>
             </Card>
+
+            <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
+                <DialogContent className="sm:max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Chi tiết phản hồi</DialogTitle>
+                        <DialogDescription>
+                            Thông tin phản hồi của học viên cho lớp/phase hiện tại.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {isDetailLoading ? (
+                        <div className="flex items-center justify-center py-12">
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                        </div>
+                    ) : feedbackDetail ? (
+                        <div className="space-y-4">
+                            <div className="flex flex-wrap justify-between gap-3 text-sm text-muted-foreground">
+                                <span><strong>Học viên:</strong> {feedbackDetail.studentName}</span>
+                                <span><strong>Giai đoạn:</strong> {feedbackDetail.phaseName || "N/A"}</span>
+                                <span><strong>Thời gian nộp:</strong> {formatDate(feedbackDetail.submittedAt || undefined)}</span>
+                            </div>
+                            {feedbackDetail.rating !== undefined && (
+                                <div className="flex items-center space-x-2 text-sm">
+                                    <span className="font-semibold">Đánh giá:</span>
+                                    <span>{feedbackDetail.rating?.toFixed(1)}/5</span>
+                                    {feedbackDetail.sentiment && (
+                                        <Badge variant="outline">
+                                            {feedbackDetail.sentiment === "positive"
+                                                ? "Tích cực"
+                                                : feedbackDetail.sentiment === "negative"
+                                                    ? "Tiêu cực"
+                                                    : "Trung bình"}
+                                        </Badge>
+                                    )}
+                                </div>
+                            )}
+                            <div className="space-y-2">
+                                <p className="text-sm text-muted-foreground">Nội dung</p>
+                                <div className="rounded-md border p-3 text-sm whitespace-pre-line">
+                                    {feedbackDetail.response || "Không có nội dung"}
+                                </div>
+                            </div>
+                            {feedbackDetail.detailedResponses?.length ? (
+                                <div className="space-y-2">
+                                    <p className="text-sm text-muted-foreground">Câu hỏi chi tiết</p>
+                                    <div className="space-y-2">
+                                        {feedbackDetail.detailedResponses.map((item) => (
+                                            <div key={item.questionId} className="rounded border p-3 text-sm">
+                                                <p className="font-semibold">{item.questionText}</p>
+                                                <p className="text-muted-foreground">{item.answerText || "Không có câu trả lời"}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : null}
+                            <div className="flex justify-end">
+                                <Button variant="outline" onClick={handleCloseDialog}>Đóng</Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-center text-sm text-muted-foreground py-6">Không tìm thấy chi tiết phản hồi.</div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

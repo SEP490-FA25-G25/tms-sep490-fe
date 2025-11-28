@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useSearchParams } from "react-router-dom"
+import { skipToken } from "@reduxjs/toolkit/query"
 import {
     BarChart3Icon,
     UsersIcon,
@@ -32,7 +33,8 @@ import {
     useGetClassFeedbacksQuery,
     useGetQAClassesQuery,
     useGetAllPhasesQuery,
-    useGetPhasesByCourseIdQuery
+    useGetPhasesByCourseIdQuery,
+    useGetQAClassDetailQuery
 } from "@/store/services/qaApi"
 
 export default function StudentFeedbackPage() {
@@ -57,8 +59,15 @@ export default function StudentFeedbackPage() {
 
     // Fetch phases - use all phases for dropdown, or course-specific if class is selected
     const { data: allPhases } = useGetAllPhasesQuery()
+    const { data: classDetail } = useGetQAClassDetailQuery(
+        selectedClassId ? selectedClassId : skipToken,
+        { skip: !selectedClassId }
+    )
+
+    const courseId = classDetail?.courseId
+
     const { data: coursePhases } = useGetPhasesByCourseIdQuery(
-        selectedClassId ? selectedClassId : skipToken
+        courseId ? courseId : skipToken
     )
 
     // Use course-specific phases if class is selected, otherwise use all phases
@@ -92,7 +101,7 @@ export default function StudentFeedbackPage() {
 
     const filteredFeedbacks = feedbacks.filter(feedback => {
         const phaseMatch = selectedPhase === "all" ||
-                          (feedback.phaseName && feedback.phaseName.includes(selectedPhase))
+                          (feedback.phaseId !== undefined && feedback.phaseId?.toString() === selectedPhase)
         const statusMatch = selectedStatus === "all" ||
             (selectedStatus === QAReportStatus.SUBMITTED && feedback.isFeedback) ||
             (selectedStatus === "not_submitted" && !feedback.isFeedback)
@@ -314,14 +323,13 @@ export default function StudentFeedbackPage() {
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         <SelectItem value="all">Tất cả giai đoạn</SelectItem>
-                                                        {availablePhases
+                                                        {[...availablePhases]
                                                             .sort((a, b) => a.phaseNumber - b.phaseNumber)
                                                             .map((phase) => (
                                                                 <SelectItem key={phase.id} value={phase.id.toString()}>
                                                                     {phase.name || `Phase ${phase.phaseNumber}`}
                                                                 </SelectItem>
-                                                            ))
-                                                        }
+                                                            ))}
                                                     </SelectContent>
                                                 </Select>
                                             </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { skipToken } from '@reduxjs/toolkit/query'
-import { useCreateQAReportMutation, useGetQAClassesQuery, useGetQASessionListQuery, useGetAllPhasesQuery, useGetPhasesByCourseIdQuery } from "@/store/services/qaApi"
+import { useCreateQAReportMutation, useGetQAClassesQuery, useGetQASessionListQuery, useGetAllPhasesQuery, useGetPhasesByCourseIdQuery, useGetQAClassDetailQuery } from "@/store/services/qaApi"
 import { DashboardLayout } from "@/components/DashboardLayout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -49,10 +49,17 @@ export default function CreateQAReportPage() {
         formData.classId ? formData.classId : skipToken
     )
 
+    const { data: classDetail } = useGetQAClassDetailQuery(
+        formData.classId ? formData.classId : skipToken,
+        { skip: !formData.classId }
+    )
+
+    const courseId = classDetail?.courseId
+
     // Fetch phases - use all phases for dropdown, or course-specific if class is selected
     const { data: allPhases } = useGetAllPhasesQuery()
     const { data: coursePhases } = useGetPhasesByCourseIdQuery(
-        formData.classId ? formData.classId : skipToken
+        courseId ? courseId : skipToken
     )
 
     // Use course-specific phases if class is selected, otherwise use all phases
