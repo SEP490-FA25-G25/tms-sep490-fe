@@ -33,6 +33,7 @@ import StudentMyClassesPage from './app/student/my-classes/page'
 import StudentClassDetailPage from './app/student/my-classes/[classId]/page'
 import StudentProfilePage from './app/student/profile/page'
 import StudentTranscriptPage from './app/student/transcript/page'
+import StudentPendingFeedbackPage from './app/student/feedbacks/page'
 import AcademicClassesPage from './app/academic/classes/page'
 import AcademicClassDetailPage from './app/academic/classes/[id]/page'
 import AcademicStudentRequestsPage from './app/academic/student-requests/page'
@@ -384,6 +385,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={["STUDENT"]}>
                   <StudentSchedulePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/feedbacks"
+              element={
+                <ProtectedRoute requiredRoles={["STUDENT"]}>
+                  <StudentPendingFeedbackPage />
                 </ProtectedRoute>
               }
             />

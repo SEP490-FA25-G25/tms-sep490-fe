@@ -24,6 +24,7 @@ import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { StudentFeedbackBadge, StudentFeedbackNavBadge } from "@/components/student-feedback/StudentFeedbackBadge";
 import {
   Sidebar,
   SidebarContent,
@@ -230,6 +231,12 @@ const roleBasedNav = {
         title: "Yêu cầu của tôi",
         url: "/student/requests",
         icon: NotebookPenIcon,
+      },
+      {
+        title: "Phản hồi khóa học",
+        url: "/student/feedbacks",
+        icon: MessageCircleIcon,
+        badge: <StudentFeedbackNavBadge />,
       },
       {
         title: "Hồ sơ cá nhân",
