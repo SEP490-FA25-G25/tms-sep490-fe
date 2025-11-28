@@ -6,7 +6,7 @@ import { skipToken } from '@reduxjs/toolkit/query'
 import { useCreateQAReportMutation, useGetQAClassesQuery, useGetQASessionListQuery, useGetAllPhasesQuery, useGetPhasesByCourseIdQuery, useGetQAClassDetailQuery } from "@/store/services/qaApi"
 import { DashboardLayout } from "@/components/DashboardLayout"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import {
@@ -18,9 +18,23 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ArrowLeft, Save, Send, Loader2, AlertTriangle } from "lucide-react"
+import { ArrowLeft, Save, Send, Loader2, AlertTriangle, Check, ChevronsUpDown } from "lucide-react"
 import { Link } from "react-router-dom"
 import { QAReportType, QAReportStatus, qaReportTypeOptions, isValidQAReportType } from "@/types/qa"
+import { cn } from "@/lib/utils"
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
 
 export default function CreateQAReportPage() {
     const navigate = useNavigate()
@@ -37,6 +51,7 @@ export default function CreateQAReportPage() {
         status: QAReportStatus.DRAFT as QAReportStatus,
     })
 
+    const [openClassCombobox, setOpenClassCombobox] = useState(false)
     const [classSearchTerm, setClassSearchTerm] = useState("")
 
     // Fetch real data from APIs
@@ -123,6 +138,8 @@ export default function CreateQAReportPage() {
         }))
     }
 
+    const selectedClass = classesData?.data?.find(c => c.classId === formData.classId)
+
     return (
         <DashboardLayout
             title="Tạo Báo Cáo QA Mới"
@@ -154,35 +171,57 @@ export default function CreateQAReportPage() {
                     <CardContent className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <Label htmlFor="classSearch">Tìm kiếm lớp học</Label>
-                                <Input
-                                    id="classSearch"
-                                    type="text"
-                                    placeholder="Nhập mã lớp học hoặc tên lớp..."
-                                    value={classSearchTerm}
-                                    onChange={(e) => setClassSearchTerm(e.target.value)}
-                                    className="mb-2"
-                                />
                                 <Label htmlFor="classId">Lớp học *</Label>
-                                <Select
-                                    value={formData.classId ? formData.classId.toString() : ""}
-                                    onValueChange={(value) => handleInputChange('classId', parseInt(value))}
-                                >
-                                    <SelectTrigger id="classId">
-                                        <SelectValue placeholder="Chọn lớp học" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {classesData?.data && classesData.data.length > 0 ? (
-                                            classesData.data.map((cls) => (
-                                                <SelectItem key={cls.classId} value={cls.classId.toString()}>
-                                                    {cls.classCode} - {cls.className}
-                                                </SelectItem>
-                                            ))
-                                        ) : (
-                                            <SelectItem value="no-class" disabled>Không có lớp học nào</SelectItem>
-                                        )}
-                                    </SelectContent>
-                                </Select>
+                                <Popover open={openClassCombobox} onOpenChange={setOpenClassCombobox}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            aria-expanded={openClassCombobox}
+                                            className="w-full justify-between font-normal"
+                                        >
+                                            {selectedClass
+                                                ? `${selectedClass.classCode} - ${selectedClass.className}`
+                                                : "Tìm kiếm và chọn lớp học..."}
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[400px] p-0" align="start">
+                                        <Command shouldFilter={false}>
+                                            <CommandInput
+                                                placeholder="Nhập mã lớp hoặc tên lớp..."
+                                                value={classSearchTerm}
+                                                onValueChange={setClassSearchTerm}
+                                            />
+                                            <CommandList>
+                                                <CommandEmpty>Không tìm thấy lớp học.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {classesData?.data?.map((cls) => (
+                                                        <CommandItem
+                                                            key={cls.classId}
+                                                            value={cls.classId.toString()}
+                                                            onSelect={(currentValue) => {
+                                                                handleInputChange('classId', parseInt(currentValue))
+                                                                setOpenClassCombobox(false)
+                                                            }}
+                                                        >
+                                                            <Check
+                                                                className={cn(
+                                                                    "mr-2 h-4 w-4",
+                                                                    formData.classId === cls.classId ? "opacity-100" : "opacity-0"
+                                                                )}
+                                                            />
+                                                            <div className="flex flex-col">
+                                                                <span className="font-medium">{cls.classCode}</span>
+                                                                <span className="text-xs text-muted-foreground">{cls.className}</span>
+                                                            </div>
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
                             </div>
 
                             <div className="space-y-2">
@@ -191,7 +230,7 @@ export default function CreateQAReportPage() {
                                     value={formData.reportType}
                                     onValueChange={(value) => handleInputChange('reportType', value)}
                                 >
-                                    <SelectTrigger id="reportType">
+                                    <SelectTrigger id="reportType" className="w-full">
                                         <SelectValue placeholder="Chọn loại báo cáo" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -211,7 +250,7 @@ export default function CreateQAReportPage() {
                                     onValueChange={(value) => handleInputChange('sessionId', value)}
                                     disabled={!formData.classId}
                                 >
-                                    <SelectTrigger id="sessionId">
+                                    <SelectTrigger id="sessionId" className="w-full">
                                         <SelectValue placeholder={formData.classId ? "Chọn buổi học" : "Chọn lớp học trước"} />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -235,7 +274,7 @@ export default function CreateQAReportPage() {
                                     value={formData.phaseId?.toString() || "none"}
                                     onValueChange={(value) => handleInputChange('phaseId', value)}
                                 >
-                                    <SelectTrigger id="phaseId">
+                                    <SelectTrigger id="phaseId" className="w-full">
                                         <SelectValue placeholder="Chọn giai đoạn" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -290,7 +329,7 @@ export default function CreateQAReportPage() {
                                 value={formData.status}
                                 onValueChange={(value) => handleInputChange('status', value)}
                             >
-                                <SelectTrigger id="status">
+                                <SelectTrigger id="status" className="w-full">
                                     <SelectValue placeholder="Chọn trạng thái" />
                                 </SelectTrigger>
                                 <SelectContent>
