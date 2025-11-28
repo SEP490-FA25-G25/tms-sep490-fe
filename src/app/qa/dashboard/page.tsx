@@ -1,9 +1,12 @@
 "use client"
 
+import * as React from "react"
+import { useSearchParams } from "react-router-dom"
 import { useGetQADashboardQuery } from "@/store/services/qaApi"
 import { DashboardLayout } from "@/components/DashboardLayout"
 import { QAStatsCard } from "@/components/qa/QAStatsCard"
 import { QAReportStatusBadge } from "@/components/qa/QAReportStatusBadge"
+import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
@@ -26,7 +29,41 @@ import {
 import { Link } from "react-router-dom"
 
 export default function QADashboardPage() {
-    const { data: dashboard, isLoading, error } = useGetQADashboardQuery({})
+    const [searchParams, setSearchParams] = useSearchParams()
+
+    // Get date range from URL parameters
+    const dateFromParam = searchParams.get('dateFrom')
+    const dateToParam = searchParams.get('dateTo')
+
+    // Parse URL dates or use undefined
+    const dateFrom = dateFromParam ? new Date(dateFromParam) : undefined
+    const dateTo = dateToParam ? new Date(dateToParam) : undefined
+
+    const initialDateRange = React.useMemo(() => {
+        if (dateFrom && dateTo) {
+            return { from: dateFrom, to: dateTo }
+        }
+        return undefined
+    }, [dateFrom, dateTo])
+
+    const handleDateRangeChange = React.useCallback((range: { from: Date; to: Date } | undefined) => {
+        if (range) {
+            const newParams = new URLSearchParams(searchParams)
+            newParams.set('dateFrom', range.from.toISOString().split('T')[0])
+            newParams.set('dateTo', range.to.toISOString().split('T')[0])
+            setSearchParams(newParams)
+        } else {
+            const newParams = new URLSearchParams(searchParams)
+            newParams.delete('dateFrom')
+            newParams.delete('dateTo')
+            setSearchParams(newParams)
+        }
+    }, [searchParams, setSearchParams])
+
+    const { data: dashboard, isLoading, error } = useGetQADashboardQuery({
+        dateFrom: dateFrom ? dateFrom.toISOString().split('T')[0] : undefined,
+        dateTo: dateTo ? dateTo.toISOString().split('T')[0] : undefined,
+    })
 
     if (isLoading) {
         return (
@@ -76,6 +113,26 @@ export default function QADashboardPage() {
             description="Tổng quan về chất lượng giảng dạy và học tập."
         >
             <div className="space-y-8">
+                {/* Date Range Filter */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-xl font-semibold">Phân tích Khoảng Thời Gian</h1>
+                        {dashboard?.dateRangeInfo && !dashboard.dateRangeInfo.isDefaultRange && (
+                            <span className="text-sm text-muted-foreground">
+                                {dashboard.dateRangeInfo.displayText}
+                            </span>
+                        )}
+                    </div>
+                    <div className="w-full sm:w-auto">
+                        <DateRangePicker
+                            value={initialDateRange}
+                            onChange={handleDateRangeChange}
+                            placeholder="Chọn khoảng thời gian"
+                            className="w-full sm:w-80"
+                        />
+                    </div>
+                </div>
+
                 {/* KPI Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <QAStatsCard
@@ -92,13 +149,13 @@ export default function QADashboardPage() {
                     />
                     <QAStatsCard
                         title="Tỷ lệ điểm danh"
-                        value={`${dashboard.kpiMetrics.averageAttendanceRate}%`}
+                        value={`${dashboard.kpiMetrics.averageAttendanceRate.toFixed(1)}%`}
                         subtitle="Trung bình"
                         icon={TrendingUp}
                     />
                     <QAStatsCard
                         title="Tỷ lệ hoàn thành BT"
-                        value={`${dashboard.kpiMetrics.averageHomeworkCompletionRate}%`}
+                        value={`${dashboard.kpiMetrics.averageHomeworkCompletionRate.toFixed(1)}%`}
                         subtitle="Bài tập về nhà"
                         icon={ClipboardCheck}
                     />

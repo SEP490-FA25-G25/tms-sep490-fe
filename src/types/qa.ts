@@ -33,6 +33,12 @@ export interface QADashboardDTO {
     status: string;
     createdAt: string;
   }>;
+  dateRangeInfo?: {
+    dateFrom: string;
+    dateTo: string;
+    displayText: string;
+    isDefaultRange: boolean;
+  };
 }
 
 // Classes Types
