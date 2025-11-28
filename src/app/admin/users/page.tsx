@@ -35,10 +35,12 @@ import { toast } from "sonner";
 import { DataTable } from "@/app/academic/student-requests/components/DataTable";
 import { createUserColumns } from "./components/userColumns";
 import { CreateUserDialog } from "./components/CreateUserDialog";
+import { EditUserDialog } from "./components/EditUserDialog";
 import { DeleteUserDialog } from "./components/DeleteUserDialog";
 import { UserDetailDialog } from "./components/UserDetailDialog";
 import {
   useGetUsersQuery,
+  useGetUserByIdQuery,
   useUpdateUserStatusMutation,
   useDeleteUserMutation,
   type UserResponse,
@@ -72,6 +74,7 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [userDetail, setUserDetail] = useState<UserResponse | null>(null);
+  const [userToEdit, setUserToEdit] = useState<UserResponse | null>(null);
   const [userToDelete, setUserToDelete] = useState<UserResponse | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
@@ -98,6 +101,11 @@ export default function AdminUsersPage() {
 
   const [updateUserStatus] = useUpdateUserStatusMutation();
   const [deleteUser] = useDeleteUserMutation();
+  
+  // Get refetch function for user detail if userDetail is open
+  const { refetch: refetchUserDetail } = useGetUserByIdQuery(userDetail?.id ?? 0, {
+    skip: !userDetail?.id,
+  });
 
   // Extract users from API response
   // Response structure: { success, message, data: PageableResponse<UserResponse> }
@@ -116,9 +124,7 @@ export default function AdminUsersPage() {
 
   const columns = createUserColumns({
     onView: (user) => setUserDetail(user),
-    onEdit: () => {
-      toast.info("Tính năng chỉnh sửa người dùng sẽ được thêm sau");
-    },
+    onEdit: (user) => setUserToEdit(user),
     onStatusChange: async (user, newStatus) => {
       try {
         await updateUserStatus({ id: user.id, status: newStatus }).unwrap();
@@ -357,6 +363,28 @@ export default function AdminUsersPage() {
           setShowCreateDialog(open);
           if (!open) {
             refetchUsers();
+          }
+        }}
+      />
+
+      <EditUserDialog
+        open={!!userToEdit}
+        onOpenChange={(open) => {
+          if (!open) {
+            setUserToEdit(null);
+            refetchUsers();
+            // If user detail dialog is open for the same user, refetch it
+            if (userDetail && userToEdit && userDetail.id === userToEdit.id) {
+              refetchUserDetail();
+            }
+          }
+        }}
+        user={userToEdit}
+        onUpdateSuccess={() => {
+          refetchUsers();
+          // If user detail dialog is open for the same user, refetch it
+          if (userDetail && userToEdit && userDetail.id === userToEdit.id) {
+            refetchUserDetail();
           }
         }}
       />

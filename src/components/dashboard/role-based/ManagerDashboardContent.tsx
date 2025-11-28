@@ -16,6 +16,7 @@ import {
   CheckCircle,
   CalendarDays,
   Users,
+  Building2,
 } from "lucide-react";
 import { useGetManagerAnalyticsQuery } from "@/store/services/analyticsApi";
 
@@ -31,6 +32,7 @@ export function ManagerDashboardContent() {
   const overview = analytics?.overview;
   const classAnalytics = analytics?.classAnalytics;
   const userAnalytics = analytics?.userAnalytics;
+  const branchAnalytics = analytics?.branchAnalytics;
 
   const summary = useMemo(
     () => ({
@@ -297,6 +299,138 @@ export function ManagerDashboardContent() {
                   Thử lại
                 </button>
               </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Thống kê chi nhánh và trung tâm */}
+      <div className="px-4 lg:px-6 mt-6 mb-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Thống kê chi nhánh và trung tâm</CardTitle>
+            <CardDescription>
+              Chỉ số chi tiết của các chi nhánh thuộc phạm vi quản lý, được nhóm theo trung tâm.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {branchAnalytics && branchAnalytics.branchStats.length > 0 ? (
+              (() => {
+                // Group branches by center
+                const groupedByCenter = branchAnalytics.branchStats.reduce((acc, branch) => {
+                  const centerKey = `${branch.centerId}-${branch.centerName}`;
+                  if (!acc[centerKey]) {
+                    acc[centerKey] = {
+                      centerId: branch.centerId,
+                      centerName: branch.centerName,
+                      branches: [],
+                      totals: { students: 0, teachers: 0, classes: 0, activeClasses: 0 },
+                    };
+                  }
+                  acc[centerKey].branches.push(branch);
+                  acc[centerKey].totals.students += branch.studentCount;
+                  acc[centerKey].totals.teachers += branch.teacherCount;
+                  acc[centerKey].totals.classes += branch.classCount;
+                  acc[centerKey].totals.activeClasses += branch.activeClassCount;
+                  return acc;
+                }, {} as Record<string, {
+                  centerId: number;
+                  centerName: string;
+                  branches: typeof branchAnalytics.branchStats;
+                  totals: { students: number; teachers: number; classes: number; activeClasses: number };
+                }>);
+
+                const centerGroups = Object.values(groupedByCenter);
+
+                return (
+                  <div className="space-y-6">
+                    {centerGroups.map((center) => (
+                      <div key={center.centerId} className="space-y-2">
+                        <div className="flex items-center gap-2 pb-2 border-b">
+                          <Building2 className="h-5 w-5 text-primary" />
+                          <h3 className="font-semibold text-base">{center.centerName}</h3>
+                          <Badge variant="outline" className="ml-auto">
+                            {center.branches.length} chi nhánh
+                          </Badge>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b bg-muted/50">
+                                <th className="text-left p-2 font-semibold">Chi nhánh</th>
+                                <th className="text-right p-2 font-semibold">Học viên</th>
+                                <th className="text-right p-2 font-semibold">Giáo viên</th>
+                                <th className="text-right p-2 font-semibold">Tổng lớp</th>
+                                <th className="text-right p-2 font-semibold">Lớp đang diễn ra</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {center.branches.map((branch) => (
+                                <tr key={branch.branchId} className="border-b hover:bg-muted/50">
+                                  <td className="p-2 font-medium">{branch.branchName}</td>
+                                  <td className="text-right p-2">{branch.studentCount}</td>
+                                  <td className="text-right p-2">{branch.teacherCount}</td>
+                                  <td className="text-right p-2">{branch.classCount}</td>
+                                  <td className="text-right p-2">
+                                    <Badge variant={branch.activeClassCount > 0 ? "default" : "secondary"}>
+                                      {branch.activeClassCount}
+                                    </Badge>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                            <tfoot>
+                              <tr className="border-t font-semibold bg-muted/30">
+                                <td className="p-2">Tổng cộng ({center.centerName})</td>
+                                <td className="text-right p-2">{center.totals.students}</td>
+                                <td className="text-right p-2">{center.totals.teachers}</td>
+                                <td className="text-right p-2">{center.totals.classes}</td>
+                                <td className="text-right p-2">
+                                  <Badge variant={center.totals.activeClasses > 0 ? "default" : "secondary"}>
+                                    {center.totals.activeClasses}
+                                  </Badge>
+                                </td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      </div>
+                    ))}
+                    {/* Grand total */}
+                    <div className="pt-4 border-t-2">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <tfoot>
+                            <tr className="font-semibold bg-primary/10">
+                              <td className="p-2">TỔNG CỘNG TẤT CẢ TRUNG TÂM</td>
+                              <td className="text-right p-2">
+                                {branchAnalytics.branchStats.reduce((sum, b) => sum + b.studentCount, 0)}
+                              </td>
+                              <td className="text-right p-2">
+                                {branchAnalytics.branchStats.reduce((sum, b) => sum + b.teacherCount, 0)}
+                              </td>
+                              <td className="text-right p-2">
+                                {branchAnalytics.branchStats.reduce((sum, b) => sum + b.classCount, 0)}
+                              </td>
+                              <td className="text-right p-2">
+                                <Badge variant="default">
+                                  {branchAnalytics.branchStats.reduce((sum, b) => sum + b.activeClassCount, 0)}
+                                </Badge>
+                              </td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                {isLoading 
+                  ? "Đang tải dữ liệu..." 
+                  : "Chưa có dữ liệu chi nhánh. Vui lòng liên hệ Admin để được phân công chi nhánh."}
+              </p>
             )}
           </CardContent>
         </Card>
