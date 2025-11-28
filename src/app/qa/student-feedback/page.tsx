@@ -30,7 +30,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { QAReportStatus } from "@/types/qa"
 import {
     useGetClassFeedbacksQuery,
-    useGetQAClassesQuery
+    useGetQAClassesQuery,
+    useGetAllPhasesQuery,
+    useGetPhasesByCourseIdQuery
 } from "@/store/services/qaApi"
 
 export default function StudentFeedbackPage() {
@@ -52,6 +54,15 @@ export default function StudentFeedbackPage() {
         sort: 'startDate',
         sortDir: 'desc'
     })
+
+    // Fetch phases - use all phases for dropdown, or course-specific if class is selected
+    const { data: allPhases } = useGetAllPhasesQuery()
+    const { data: coursePhases } = useGetPhasesByCourseIdQuery(
+        selectedClassId ? selectedClassId : skipToken
+    )
+
+    // Use course-specific phases if class is selected, otherwise use all phases
+    const availablePhases = selectedClassId ? (coursePhases || allPhases || []) : (allPhases || [])
 
     // Fetch feedback data for selected class
     const { data: feedbackData, isLoading: feedbackLoading, error: feedbackError } = useGetClassFeedbacksQuery(
@@ -303,9 +314,14 @@ export default function StudentFeedbackPage() {
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         <SelectItem value="all">Tất cả giai đoạn</SelectItem>
-                                                        <SelectItem value="1">Phase 1 - Foundation</SelectItem>
-                                                        <SelectItem value="2">Phase 2 - Intermediate</SelectItem>
-                                                        <SelectItem value="3">Phase 3 - Advanced</SelectItem>
+                                                        {availablePhases
+                                                            .sort((a, b) => a.phaseNumber - b.phaseNumber)
+                                                            .map((phase) => (
+                                                                <SelectItem key={phase.id} value={phase.id.toString()}>
+                                                                    {phase.name || `Phase ${phase.phaseNumber}`}
+                                                                </SelectItem>
+                                                            ))
+                                                        }
                                                     </SelectContent>
                                                 </Select>
                                             </div>

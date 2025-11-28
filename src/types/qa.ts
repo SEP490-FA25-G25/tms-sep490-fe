@@ -491,3 +491,18 @@ export const sessionStatusOptions = [
     label: getSessionStatusDisplayName(SessionStatus.DONE)
   }
 ]
+
+// Course Phase Types
+export interface CoursePhaseDTO {
+  id: number;
+  courseId: number;
+  courseName: string;
+  phaseNumber: number;
+  name: string;
+  durationWeeks?: number;
+  learningFocus?: string;
+
+  // Legacy fields for compatibility
+  description?: string;
+  sequenceNo?: number;
+}

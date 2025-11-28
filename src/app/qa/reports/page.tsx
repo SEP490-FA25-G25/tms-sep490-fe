@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams, useNavigate } from "react-router-dom"
 import { useGetQAReportsQuery } from "@/store/services/qaApi"
 import type { QAReportListItemDTO } from "@/types/qa"
 import { DashboardLayout } from "@/components/DashboardLayout"
@@ -21,13 +22,45 @@ import { Plus, Search, Eye, Loader2, AlertTriangle } from "lucide-react"
 import { Link } from "react-router-dom"
 
 export default function QAReportsListPage() {
+    const [searchParams, setSearchParams] = useSearchParams()
     const [searchTerm, setSearchTerm] = useState("")
     const [page, setPage] = useState(0)
+    const navigate = useNavigate()
+
+    // Initialize state from URL parameters
+    useEffect(() => {
+        const search = searchParams.get('search') || ''
+        const pageNum = parseInt(searchParams.get('page') || '0')
+
+        setSearchTerm(search)
+        setPage(pageNum)
+    }, [searchParams])
 
     // Reset page to 0 when search term changes
     const handleSearchChange = (value: string) => {
         setSearchTerm(value)
         setPage(0)
+
+        // Update URL parameters
+        const newParams = new URLSearchParams(searchParams.toString())
+        if (value.trim()) {
+            newParams.set('search', value)
+            newParams.set('page', '0')
+        } else {
+            newParams.delete('search')
+            newParams.set('page', '0')
+        }
+        setSearchParams(newParams)
+    }
+
+    // Handle page change
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage)
+
+        // Update URL parameters
+        const newParams = new URLSearchParams(searchParams.toString())
+        newParams.set('page', newPage.toString())
+        setSearchParams(newParams)
     }
 
     const { data: reportsData, isLoading, error } = useGetQAReportsQuery({
@@ -101,7 +134,6 @@ export default function QAReportsListPage() {
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted/50">
-                                <TableHead>ID</TableHead>
                                 <TableHead>Loại Báo Cáo</TableHead>
                                 <TableHead>Lớp</TableHead>
                                 <TableHead>Buổi Học</TableHead>
@@ -115,7 +147,6 @@ export default function QAReportsListPage() {
                             {reports.length > 0 ? (
                                 reports.map((report: QAReportListItemDTO) => (
                                     <TableRow key={report.id} className="hover:bg-muted/50">
-                                        <TableCell className="font-medium">#{report.id}</TableCell>
                                         <TableCell>
                                             <div>
                                                 <p className="font-medium">{report.reportType}</p>
@@ -169,7 +200,7 @@ export default function QAReportsListPage() {
                     <div className="flex items-center justify-center space-x-2">
                         <Button
                             variant="outline"
-                            onClick={() => setPage(page - 1)}
+                            onClick={() => handlePageChange(page - 1)}
                             disabled={page === 0}
                         >
                             Trang trước
@@ -179,7 +210,7 @@ export default function QAReportsListPage() {
                         </span>
                         <Button
                             variant="outline"
-                            onClick={() => setPage(page + 1)}
+                            onClick={() => handlePageChange(page + 1)}
                             disabled={page >= totalPages - 1 || reports.length === 0}
                         >
                             Trang tiếp

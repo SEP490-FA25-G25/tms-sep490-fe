@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useGetClassFeedbacksQuery } from "@/store/services/qaApi"
+import { useGetClassFeedbacksQuery, useGetFeedbackDetailQuery } from "@/store/services/qaApi"
 import { QAStatsCard } from "@/components/qa/QAStatsCard"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,6 +14,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 import {
     Users,
     CheckCircle,
@@ -34,6 +41,18 @@ interface StudentFeedbackTabProps {
 export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
     const [phaseFilter, setPhaseFilter] = useState<string>("all")
     const [statusFilter, setStatusFilter] = useState<string>("all")
+    const [selectedFeedback, setSelectedFeedback] = useState<number | null>(null)
+    const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+    const handleOpenDialog = (feedbackId: number) => {
+        setSelectedFeedback(feedbackId)
+        setIsDialogOpen(true)
+    }
+
+    const handleCloseDialog = () => {
+        setSelectedFeedback(null)
+        setIsDialogOpen(false)
+    }
 
     const { data: feedbackData, isLoading, error } = useGetClassFeedbacksQuery({
         classId,
@@ -42,6 +61,11 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
             isFeedback: statusFilter === "all" ? undefined : statusFilter === "submitted",
         },
     })
+
+    // Fetch feedback detail when dialog is opened
+    const { data: feedbackDetail, isLoading: isDetailLoading } = useGetFeedbackDetailQuery(
+        selectedFeedback ? selectedFeedback : skipToken
+    )
 
     if (isLoading) {
         return (
@@ -226,10 +250,21 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
                             filteredFeedbacks.map((feedback) => (
                                 <div key={feedback.feedbackId} className="border rounded-lg p-4 space-y-3 hover:shadow-md transition-shadow">
                                     <div className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-3">
-                                            <div>
-                                                <h4 className="font-semibold">{feedback.studentName}</h4>
-                                                <p className="text-sm text-muted-foreground">{feedback.phaseName}</p>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-3">
+                                                <div>
+                                                    <h4 className="font-semibold">{feedback.studentName}</h4>
+                                                    <p className="text-sm text-muted-foreground">{feedback.phaseName}</p>
+                                                </div>
+                                                {feedback.isFeedback && (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleOpenDialog(feedback.feedbackId)}
+                                                    >
+                                                        Xem chi tiết
+                                                    </Button>
+                                                )}
                                             </div>
                                         </div>
                                         <Badge

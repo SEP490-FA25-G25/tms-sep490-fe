@@ -16,14 +16,28 @@ import type {
   QAReportFilters,
   FeedbackFilters,
   QASessionListResponse,
-  QAExportRequest
+  QAExportRequest,
+  CoursePhaseDTO
 } from '@/types/qa';
 
 export const qaApi = createApi({
   reducerPath: 'qaApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['QADashboard', 'QAClass', 'QAReport', 'QASession', 'QAFeedback'],
+  tagTypes: ['QADashboard', 'QAClass', 'QAReport', 'QASession', 'QAFeedback', 'CoursePhase'],
   endpoints: (builder) => ({
+    // Course Phases
+    getAllPhases: builder.query<CoursePhaseDTO[], void>({
+      query: () => '/phases',
+      transformResponse: (response: { data: CoursePhaseDTO[] }) => response.data,
+      providesTags: ['CoursePhase'],
+    }),
+
+    getPhasesByCourseId: builder.query<CoursePhaseDTO[], number>({
+      query: (courseId) => `/phases/course/${courseId}`,
+      transformResponse: (response: { data: CoursePhaseDTO[] }) => response.data,
+      providesTags: (_result, _error, courseId) => [{ type: 'CoursePhase', id: courseId }],
+    }),
+
     // Dashboard
     getQADashboard: builder.query<QADashboardDTO, { branchIds?: number[]; dateFrom?: string; dateTo?: string }>({
       query: ({ branchIds, dateFrom, dateTo }) => ({
@@ -190,6 +204,8 @@ export const qaApi = createApi({
 
 // Export hooks
 export const {
+  useGetAllPhasesQuery,
+  useGetPhasesByCourseIdQuery,
   useGetQADashboardQuery,
   useGetQAClassesQuery,
   useGetQAClassDetailQuery,
@@ -223,5 +239,6 @@ export type {
   QAReportFilters,
   FeedbackFilters,
   QASessionListResponse,
-  QAExportRequest
+  QAExportRequest,
+  CoursePhaseDTO
 } from '@/types/qa';

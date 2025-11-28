@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { skipToken } from '@reduxjs/toolkit/query'
-import { useCreateQAReportMutation, useGetQAClassesQuery, useGetQASessionListQuery } from "@/store/services/qaApi"
+import { useCreateQAReportMutation, useGetQAClassesQuery, useGetQASessionListQuery, useGetAllPhasesQuery, useGetPhasesByCourseIdQuery } from "@/store/services/qaApi"
 import { DashboardLayout } from "@/components/DashboardLayout"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import {
@@ -36,11 +37,26 @@ export default function CreateQAReportPage() {
         status: QAReportStatus.DRAFT as QAReportStatus,
     })
 
+    const [classSearchTerm, setClassSearchTerm] = useState("")
+
     // Fetch real data from APIs
-    const { data: classesData } = useGetQAClassesQuery({ page: 0, size: 100 })
+    const { data: classesData } = useGetQAClassesQuery({
+        page: 0,
+        size: 100,
+        search: classSearchTerm || undefined
+    })
     const { data: sessionsData } = useGetQASessionListQuery(
         formData.classId ? formData.classId : skipToken
     )
+
+    // Fetch phases - use all phases for dropdown, or course-specific if class is selected
+    const { data: allPhases } = useGetAllPhasesQuery()
+    const { data: coursePhases } = useGetPhasesByCourseIdQuery(
+        formData.classId ? formData.classId : skipToken
+    )
+
+    // Use course-specific phases if class is selected, otherwise use all phases
+    const availablePhases = formData.classId ? (coursePhases || allPhases || []) : (allPhases || [])
 
     useEffect(() => {
         // Parse query parameters
@@ -131,6 +147,15 @@ export default function CreateQAReportPage() {
                     <CardContent className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
+                                <Label htmlFor="classSearch">Tìm kiếm lớp học</Label>
+                                <Input
+                                    id="classSearch"
+                                    type="text"
+                                    placeholder="Nhập mã lớp học hoặc tên lớp..."
+                                    value={classSearchTerm}
+                                    onChange={(e) => setClassSearchTerm(e.target.value)}
+                                    className="mb-2"
+                                />
                                 <Label htmlFor="classId">Lớp học *</Label>
                                 <Select
                                     value={formData.classId ? formData.classId.toString() : ""}
@@ -147,7 +172,7 @@ export default function CreateQAReportPage() {
                                                 </SelectItem>
                                             ))
                                         ) : (
-                                            <SelectItem value="" disabled>Không có lớp học nào</SelectItem>
+                                            <SelectItem value="no-class" disabled>Không có lớp học nào</SelectItem>
                                         )}
                                     </SelectContent>
                                 </Select>
@@ -191,7 +216,7 @@ export default function CreateQAReportPage() {
                                                 </SelectItem>
                                             ))
                                         ) : formData.classId ? (
-                                            <SelectItem value="" disabled>Không có buổi học nào</SelectItem>
+                                            <SelectItem value="no-session" disabled>Không có buổi học nào</SelectItem>
                                         ) : null}
                                     </SelectContent>
                                 </Select>
@@ -208,9 +233,14 @@ export default function CreateQAReportPage() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="none">Không áp dụng</SelectItem>
-                                        <SelectItem value="1">Phase 1</SelectItem>
-                                        <SelectItem value="2">Phase 2</SelectItem>
-                                        <SelectItem value="3">Phase 3</SelectItem>
+                                        {[...availablePhases]
+                                            .sort((a, b) => a.phaseNumber - b.phaseNumber)
+                                            .map((phase) => (
+                                                <SelectItem key={phase.id} value={phase.id.toString()}>
+                                                    {phase.name || `Phase ${phase.phaseNumber}`}
+                                                </SelectItem>
+                                            ))
+                                        }
                                     </SelectContent>
                                 </Select>
                             </div>
