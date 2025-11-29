@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useGetPendingRequestsQuery, useGetAcademicRequestsQuery, useGetAAStaffQuery } from '@/store/services/studentRequestApi'
 import type { RequestStatus } from '@/store/services/studentRequestApi'
 import { DashboardLayout } from '@/components/DashboardLayout'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -162,44 +163,57 @@ export default function AcademicRequestsPage() {
 
         {/* Summary Stats */}
         {summary && (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-            <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <ClockIcon className="h-4 w-4" />
-                <span className="text-sm">Chờ duyệt</span>
-              </div>
-              <p className="text-2xl font-semibold">{summary.totalPending}</p>
-            </div>
-            <div className="rounded-lg border border-border/70 bg-amber-50 dark:bg-amber-950/20 p-4">
-              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
-                <AlertTriangleIcon className="h-4 w-4" />
-                <span className="text-sm">Khẩn cấp</span>
-              </div>
-              <p className="text-2xl font-semibold text-amber-700 dark:text-amber-400">
-                {summary.needsUrgentReview}
-              </p>
-            </div>
-            <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <CalendarXIcon className="h-4 w-4" />
-                <span className="text-sm">Xin nghỉ</span>
-              </div>
-              <p className="text-2xl font-semibold">{summary.absenceRequests}</p>
-            </div>
-            <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <CalendarCheckIcon className="h-4 w-4" />
-                <span className="text-sm">Học bù</span>
-              </div>
-              <p className="text-2xl font-semibold">{summary.makeupRequests}</p>
-            </div>
-            <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <ArrowRightLeftIcon className="h-4 w-4" />
-                <span className="text-sm">Chuyển lớp</span>
-              </div>
-              <p className="text-2xl font-semibold">{summary.transferRequests}</p>
-            </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Chờ duyệt</CardTitle>
+                <ClockIcon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{summary.totalPending}</div>
+                <p className="text-xs text-muted-foreground">Tổng yêu cầu chờ xử lý</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-amber-50 dark:bg-amber-950/20">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-amber-700 dark:text-amber-400">Khẩn cấp</CardTitle>
+                <AlertTriangleIcon className="h-4 w-4 text-amber-700 dark:text-amber-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-amber-700 dark:text-amber-400">{summary.needsUrgentReview}</div>
+                <p className="text-xs text-amber-600 dark:text-amber-500">Cần xử lý gấp</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Xin nghỉ</CardTitle>
+                <CalendarXIcon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{summary.absenceRequests}</div>
+                <p className="text-xs text-muted-foreground">Yêu cầu xin nghỉ</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Học bù</CardTitle>
+                <CalendarCheckIcon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{summary.makeupRequests}</div>
+                <p className="text-xs text-muted-foreground">Yêu cầu học bù</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Chuyển lớp</CardTitle>
+                <ArrowRightLeftIcon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{summary.transferRequests}</div>
+                <p className="text-xs text-muted-foreground">Yêu cầu chuyển lớp</p>
+              </CardContent>
+            </Card>
           </div>
         )}
 

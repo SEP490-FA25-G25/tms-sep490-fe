@@ -21,6 +21,7 @@ import { SiteHeader } from '@/components/site-header'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
   AlertDialog,
@@ -182,35 +183,47 @@ export default function StudentRequestsPage() {
             <div className="flex flex-1 flex-col gap-6 px-6 py-6">
 
             {/* Summary Stats */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <NotebookPenIcon className="h-4 w-4" />
-                  <span className="text-sm">Tổng số yêu cầu</span>
-                </div>
-                <p className="text-2xl font-semibold">{summary?.totalRequests ?? 0}</p>
-              </div>
-              <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <ClockIcon className="h-4 w-4" />
-                  <span className="text-sm">Đang chờ</span>
-                </div>
-                <p className="text-2xl font-semibold text-sky-600">{summary?.pending ?? 0}</p>
-              </div>
-              <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <CheckCircleIcon className="h-4 w-4" />
-                  <span className="text-sm">Đã duyệt</span>
-                </div>
-                <p className="text-2xl font-semibold text-emerald-600">{summary?.approved ?? 0}</p>
-              </div>
-              <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <XCircleIcon className="h-4 w-4" />
-                  <span className="text-sm">Bị từ chối</span>
-                </div>
-                <p className="text-2xl font-semibold text-rose-600">{summary?.rejected ?? 0}</p>
-              </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Tổng số yêu cầu</CardTitle>
+                  <NotebookPenIcon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{summary?.totalRequests ?? 0}</div>
+                  <p className="text-xs text-muted-foreground">Tất cả yêu cầu đã gửi</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Đang chờ</CardTitle>
+                  <ClockIcon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-sky-600">{summary?.pending ?? 0}</div>
+                  <p className="text-xs text-muted-foreground">Chờ phê duyệt</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Đã duyệt</CardTitle>
+                  <CheckCircleIcon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-emerald-600">{summary?.approved ?? 0}</div>
+                  <p className="text-xs text-muted-foreground">Được chấp thuận</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Bị từ chối</CardTitle>
+                  <XCircleIcon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-rose-600">{summary?.rejected ?? 0}</div>
+                  <p className="text-xs text-muted-foreground">Không được duyệt</p>
+                </CardContent>
+              </Card>
             </div>
 
             <div className="h-px bg-border" />
