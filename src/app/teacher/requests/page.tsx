@@ -5,7 +5,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { format, parseISO, startOfToday } from "date-fns";
+import { format, parseISO, startOfToday, differenceInDays } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
   useGetMyRequestsQuery,
@@ -28,11 +28,14 @@ import {
 } from "@/store/services/teacherRequestApi";
 import { useGetAttendanceClassesQuery } from "@/store/services/attendanceApi";
 import { TeacherRoute } from "@/components/ProtectedRoute";
+import { useAuth } from "@/hooks/useAuth";
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -100,7 +103,7 @@ const REQUEST_STATUS_META: Record<
   { label: string; badgeClass: string; tone: string }
 > = {
   PENDING: {
-    label: "Đang chờ duyệt",
+    label: "Đang chờ",
     badgeClass: "bg-amber-100 text-amber-700 border-amber-200",
     tone: "text-amber-600",
   },
@@ -110,12 +113,12 @@ const REQUEST_STATUS_META: Record<
     tone: "text-sky-600",
   },
   APPROVED: {
-    label: "Đã chấp thuận",
+    label: "Đã duyệt",
     badgeClass: "bg-emerald-100 text-emerald-700 border-emerald-200",
     tone: "text-emerald-600",
   },
   REJECTED: {
-    label: "Đã từ chối",
+    label: "Bị từ chối",
     badgeClass: "bg-rose-100 text-rose-700 border-rose-200",
     tone: "text-rose-600",
   },
@@ -193,7 +196,9 @@ const formatBackendError = (
 
   // Map common error codes to user-friendly messages
   if (errorMessage.includes("SESSION_NOT_IN_TIME_WINDOW")) {
-    return "Ngày session đề xuất không nằm trong khoảng thời gian cho phép (trong vòng 14 ngày từ hôm nay).";
+    // Note: timeWindowDays should come from config, but error handler doesn't have access to it
+    // This is a fallback message - actual validation happens in backend
+    return "Ngày session đề xuất không nằm trong khoảng thời gian cho phép.";
   }
 
   if (errorMessage.includes("TEACHER_RESCHEDULE_MIN_DAYS_NOT_MET")) {
@@ -288,6 +293,7 @@ const formatBackendError = (
 };
 
 export default function MyRequestsPage() {
+  const { user } = useAuth();
   const {
     data,
     isFetching: isLoadingRequests,
@@ -297,6 +303,10 @@ export default function MyRequestsPage() {
     refetchOnMountOrArgChange: true,
     refetchOnFocus: true,
   });
+
+  // Load teacher request config for policy values
+  const { data: teacherConfig } = useGetTeacherRequestConfigQuery();
+  const reasonMinLength = teacherConfig?.data?.reasonMinLength ?? 15;
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [activeType, setActiveType] = useState<RequestType | null>(null);
   const [typeFilter, setTypeFilter] = useState<"ALL" | RequestType>("ALL");
@@ -306,6 +316,10 @@ export default function MyRequestsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(0);
   const [detailId, setDetailId] = useState<number | null>(null);
+  const [sortField, setSortField] = useState<"status" | "submittedAt" | null>(
+    null
+  );
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const requests = useMemo(() => data?.data ?? [], [data]);
 
@@ -341,33 +355,62 @@ export default function MyRequestsPage() {
 
   const displayedRequests = useMemo(() => {
     const normalized = searchQuery.trim().toLowerCase();
-    if (!normalized) {
-      return filteredRequests;
+    let result = filteredRequests;
+
+    // Apply search filter
+    if (normalized) {
+      result = result.filter((request) => {
+        const candidates = [
+          request.className,
+          request.courseName,
+          request.reason,
+          request.sessionTopic,
+          request.session?.topic,
+          request.session?.name,
+          request.newResourceName,
+          request.replacementTeacherName,
+          request.id ? `#${request.id}` : undefined,
+        ];
+
+        return candidates.some(
+          (value) =>
+            typeof value === "string" &&
+            value.toLowerCase().includes(normalized)
+        );
+      });
     }
 
-    return filteredRequests.filter((request) => {
-      const candidates = [
-        request.className,
-        request.courseName,
-        request.reason,
-        request.sessionTopic,
-        request.session?.topic,
-        request.session?.name,
-        request.newResourceName,
-        request.replacementTeacherName,
-        request.id ? `#${request.id}` : undefined,
-      ];
+    // Apply sorting
+    if (sortField) {
+      result = [...result].sort((a, b) => {
+        let comparison = 0;
 
-      return candidates.some(
-        (value) =>
-          typeof value === "string" && value.toLowerCase().includes(normalized)
-      );
-    });
-  }, [filteredRequests, searchQuery]);
+        if (sortField === "status") {
+          const statusOrder = [
+            "PENDING",
+            "WAITING_CONFIRM",
+            "APPROVED",
+            "REJECTED",
+          ];
+          const aIndex = statusOrder.indexOf(a.status) ?? -1;
+          const bIndex = statusOrder.indexOf(b.status) ?? -1;
+          comparison = aIndex - bIndex;
+        } else if (sortField === "submittedAt") {
+          const aDate = parseISO(a.submittedAt).getTime();
+          const bDate = parseISO(b.submittedAt).getTime();
+          comparison = aDate - bDate;
+        }
+
+        return sortOrder === "asc" ? comparison : -comparison;
+      });
+    }
+
+    return result;
+  }, [filteredRequests, searchQuery, sortField, sortOrder]);
 
   useEffect(() => {
     setPage(0);
-  }, [typeFilter, statusFilter, searchQuery]);
+  }, [typeFilter, statusFilter, searchQuery, sortField, sortOrder]);
 
   const totalPages = Math.max(
     1,
@@ -426,8 +469,10 @@ export default function MyRequestsPage() {
 
     const trimmedNote = decisionNote.trim();
 
-    if (action === "reject" && trimmedNote.length < 10) {
-      toast.error("Vui lòng nhập lý do từ chối (tối thiểu 10 ký tự).");
+    if (action === "reject" && trimmedNote.length < reasonMinLength) {
+      toast.error(
+        `Vui lòng nhập lý do từ chối (tối thiểu ${reasonMinLength} ký tự).`
+      );
       return;
     }
 
@@ -480,48 +525,74 @@ export default function MyRequestsPage() {
     "--header-height": "calc(var(--spacing) * 12)",
   } as CSSProperties;
 
+  const SummaryCard = ({
+    label,
+    value,
+    icon: Icon,
+    valueColor,
+    borderColor,
+  }: {
+    label: string;
+    value: number;
+    icon: React.ComponentType<{ className?: string }>;
+    valueColor?: string;
+    borderColor: string;
+  }) => {
+    return (
+      <div className="relative group">
+        <Card
+          className={cn(
+            "border-t-2 border-l-2 transition-all duration-300 ease-in-out group-hover:-translate-y-1 group-hover:shadow-md cursor-pointer",
+            `border-t-${borderColor} border-l-${borderColor}`
+          )}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-0.5 relative z-10">
+            <CardTitle className="text-sm font-medium">{label}</CardTitle>
+            <Icon className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="pt-0 pb-2 relative z-10">
+            <div className={cn("text-2xl font-bold", valueColor)}>{value}</div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
   const summaryCards = (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-      <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <NotebookPen className="h-4 w-4" />
-          <span className="text-sm">Tổng số yêu cầu</span>
-        </div>
-        <p className="text-2xl font-semibold">{summary.total}</p>
-      </div>
-      <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Clock3 className="h-4 w-4" />
-          <span className="text-sm">Đang chờ duyệt</span>
-        </div>
-        <p className="text-2xl font-semibold text-amber-600">
-          {summary.pending}
-        </p>
-      </div>
-      <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <CheckCircle2 className="h-4 w-4" />
-          <span className="text-sm">Đã chấp thuận</span>
-        </div>
-        <p className="text-2xl font-semibold text-emerald-600">
-          {summary.approved}
-        </p>
-      </div>
-      <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <XCircle className="h-4 w-4" />
-          <span className="text-sm">Đã từ chối</span>
-        </div>
-        <p className="text-2xl font-semibold text-rose-600">
-          {summary.rejected}
-        </p>
-      </div>
+      <SummaryCard
+        label="Tổng số yêu cầu"
+        value={summary.total}
+        icon={NotebookPen}
+        borderColor="slate-500"
+      />
+      <SummaryCard
+        label="Đang chờ"
+        value={summary.pending}
+        icon={Clock3}
+        valueColor="text-amber-600"
+        borderColor="amber-500"
+      />
+      <SummaryCard
+        label="Đã duyệt"
+        value={summary.approved}
+        icon={CheckCircle2}
+        valueColor="text-emerald-600"
+        borderColor="emerald-500"
+      />
+      <SummaryCard
+        label="Bị từ chối"
+        value={summary.rejected}
+        icon={XCircle}
+        valueColor="text-rose-600"
+        borderColor="rose-500"
+      />
     </div>
   );
 
   const filterControls = (
-    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-      <div className="relative w-full md:max-w-md">
+    <div className="flex items-center gap-4">
+      <div className="flex-1 relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder="Tìm theo lớp, môn, lý do hoặc mã yêu cầu..."
@@ -539,7 +610,7 @@ export default function MyRequestsPage() {
           </button>
         )}
       </div>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-2">
         <Select
           value={typeFilter}
           onValueChange={(value: "ALL" | RequestType) => {
@@ -623,11 +694,61 @@ export default function MyRequestsPage() {
           <TableHeader>
             <TableRow className="bg-muted/40 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               <TableHead>Loại</TableHead>
-              <TableHead>Trạng thái</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="-ml-4 h-8 px-2 font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted/60"
+                  onClick={() => {
+                    if (sortField === "status") {
+                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                    } else {
+                      setSortField("status");
+                      setSortOrder("asc");
+                    }
+                  }}
+                >
+                  Trạng thái
+                  {sortField === "status" ? (
+                    sortOrder === "asc" ? (
+                      <ArrowUp className="ml-2 h-4 w-4" />
+                    ) : (
+                      <ArrowDown className="ml-2 h-4 w-4" />
+                    )
+                  ) : (
+                    <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />
+                  )}
+                </Button>
+              </TableHead>
               <TableHead>Lớp</TableHead>
               <TableHead>Buổi học/Lớp</TableHead>
               <TableHead>Lý do</TableHead>
-              <TableHead>Ngày gửi</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="-ml-4 h-8 px-2 font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted/60"
+                  onClick={() => {
+                    if (sortField === "submittedAt") {
+                      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                    } else {
+                      setSortField("submittedAt");
+                      setSortOrder("asc");
+                    }
+                  }}
+                >
+                  Ngày gửi
+                  {sortField === "submittedAt" ? (
+                    sortOrder === "asc" ? (
+                      <ArrowUp className="ml-2 h-4 w-4" />
+                    ) : (
+                      <ArrowDown className="ml-2 h-4 w-4" />
+                    )
+                  ) : (
+                    <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />
+                  )}
+                </Button>
+              </TableHead>
               <TableHead className="text-right">Hành động</TableHead>
             </TableRow>
           </TableHeader>
@@ -700,14 +821,39 @@ export default function MyRequestsPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-1">
-                      <Badge
-                        className={cn(
-                          "w-fit font-semibold",
-                          REQUEST_STATUS_META[request.status].badgeClass
-                        )}
-                      >
-                        {REQUEST_STATUS_META[request.status].label}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          className={cn(
+                            "w-fit font-semibold",
+                            REQUEST_STATUS_META[request.status].badgeClass
+                          )}
+                        >
+                          {REQUEST_STATUS_META[request.status].label}
+                        </Badge>
+                        {/* Indicator for replacement teacher */}
+                        {request.requestType === "REPLACEMENT" &&
+                          request.status === "WAITING_CONFIRM" &&
+                          request.replacementTeacherId === user?.id && (
+                            <Badge
+                              variant="outline"
+                              className="bg-purple-50 text-purple-700 border-purple-200 text-xs"
+                            >
+                              Bạn được yêu cầu dạy thay
+                            </Badge>
+                          )}
+                        {/* Indicator for request owner waiting for replacement */}
+                        {request.requestType === "REPLACEMENT" &&
+                          request.status === "WAITING_CONFIRM" &&
+                          request.teacherId === user?.id &&
+                          request.replacementTeacherId !== user?.id && (
+                            <Badge
+                              variant="outline"
+                              className="bg-amber-50 text-amber-700 border-amber-200 text-xs"
+                            >
+                              Đang chờ giáo viên dạy thay xác nhận
+                            </Badge>
+                          )}
+                      </div>
                       {request.status === "WAITING_CONFIRM" && (
                         <span className="text-xs text-muted-foreground">
                           Chờ xác nhận
@@ -893,7 +1039,7 @@ export default function MyRequestsPage() {
           }
         }}
       >
-        <DialogContent className="max-w-2xl rounded-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-5xl rounded-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Chi tiết yêu cầu</DialogTitle>
           </DialogHeader>
@@ -914,6 +1060,7 @@ export default function MyRequestsPage() {
                 onDecisionNoteChange={setDecisionNote}
                 isActionLoading={isActionLoading}
                 pendingAction={pendingAction}
+                reasonMinLength={reasonMinLength}
               />
             ) : (
               <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-center text-sm text-destructive">
@@ -930,6 +1077,7 @@ export default function MyRequestsPage() {
               onDecisionNoteChange={setDecisionNote}
               isActionLoading={isActionLoading}
               pendingAction={pendingAction}
+              reasonMinLength={reasonMinLength}
             />
           )}
         </DialogContent>
@@ -961,7 +1109,7 @@ function CreateRequestDialog({
 }: CreateDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl rounded-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-5xl rounded-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Tạo yêu cầu mới</DialogTitle>
         </DialogHeader>
@@ -1056,6 +1204,11 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
   const { data: teacherConfig, refetch: refetchTeacherConfig } =
     useGetTeacherRequestConfigQuery();
 
+  // Get policy values from teacher config
+  const minDaysBeforeSession = teacherConfig?.data?.minDaysBeforeSession ?? 1;
+  const reasonMinLength = teacherConfig?.data?.reasonMinLength ?? 15;
+  const timeWindowDays = teacherConfig?.data?.timeWindowDays ?? 14;
+
   // Load teacher classes
   const { data: classesData } = useGetAttendanceClassesQuery();
 
@@ -1070,21 +1223,49 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
     ? format(selectedDate, "yyyy-MM-dd")
     : undefined;
 
-  const sessionsQueryArg: { date?: string; classId?: number } = {};
-  if (formattedDate) sessionsQueryArg.date = formattedDate;
-  if (selectedClassId) sessionsQueryArg.classId = selectedClassId;
+  // Always query sessions - if no filter, query will return sessions in default time window
+  const sessionsQueryArg = useMemo(() => {
+    const arg: { date?: string; classId?: number } = {};
+    if (formattedDate) arg.date = formattedDate;
+    if (selectedClassId) arg.classId = selectedClassId;
+    return arg;
+  }, [formattedDate, selectedClassId]);
+
+  // Debug log
+  useEffect(() => {
+    console.log("ModalityChangeFlow - Sessions Query:", {
+      sessionsQueryArg,
+      timeWindowDays,
+      teacherConfig: teacherConfig?.data,
+    });
+  }, [sessionsQueryArg, timeWindowDays, teacherConfig]);
 
   const {
     data: sessionsData,
     isLoading: isLoadingSessions,
     isFetching: isFetchingSessions,
-  } = useGetMySessionsQuery(
-    Object.keys(sessionsQueryArg).length > 0 ? sessionsQueryArg : {},
-    {
-      refetchOnMountOrArgChange: true,
-      refetchOnReconnect: true,
+    refetch: refetchSessions,
+  } = useGetMySessionsQuery(sessionsQueryArg, {
+    refetchOnMountOrArgChange: true,
+    refetchOnReconnect: true,
+  });
+
+  // Force refetch when component mounts to ensure we get latest sessions
+  useEffect(() => {
+    if (teacherConfig?.data) {
+      refetchSessions();
     }
-  );
+  }, [teacherConfig?.data, refetchSessions]);
+
+  // Debug log response
+  useEffect(() => {
+    console.log("ModalityChangeFlow - Sessions Response:", {
+      sessionsData,
+      isLoadingSessions,
+      isFetchingSessions,
+      sessionCount: sessionsData?.data?.length ?? 0,
+    });
+  }, [sessionsData, isLoadingSessions, isFetchingSessions]);
   // Get modality resources using sessionId when creating new request
   const resourceQueryArg = selectedSessionId
     ? { sessionId: selectedSessionId }
@@ -1127,6 +1308,37 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
   };
 
   const handleSessionSelect = (sessionId: number) => {
+    const session = sessionsData?.data?.find(
+      (s) => (s.sessionId || s.id) === sessionId
+    );
+
+    if (session?.date) {
+      const sessionDate = parseISO(session.date);
+      const daysUntilSession = differenceInDays(sessionDate, today);
+
+      // Debug log
+      console.log("Validation Debug:", {
+        sessionDate: session.date,
+        today: format(today, "yyyy-MM-dd"),
+        daysUntilSession,
+        minDaysBeforeSession,
+        teacherConfig: teacherConfig?.data,
+      });
+
+      // Validate: session must be in the future and meet minimum days requirement
+      if (daysUntilSession < 0) {
+        toast.error("Không thể chọn session trong quá khứ.");
+        return;
+      }
+
+      if (daysUntilSession < minDaysBeforeSession) {
+        toast.error(
+          `Bạn phải gửi yêu cầu trước ít nhất ${minDaysBeforeSession} ngày so với ngày diễn ra session. Session này còn ${daysUntilSession} ngày nữa.`
+        );
+        return;
+      }
+    }
+
     setSelectedSessionId(sessionId);
     setSelectedResourceId(undefined);
     setStep("resource");
@@ -1194,7 +1406,7 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
   const step3Complete =
     step === "form" &&
     (requireResourceAtModalityChangeCreate ? !!selectedResourceId : true) &&
-    reason.trim().length >= 10;
+    reason.trim().length >= reasonMinLength;
 
   return (
     <div className="space-y-4">
@@ -1327,7 +1539,9 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
               </ul>
             ) : (
               <div className="rounded-lg border border-dashed py-4 text-center text-sm text-muted-foreground">
-                Không có session nào trong ngày đã chọn
+                {selectedDate
+                  ? "Không có session nào trong ngày đã chọn"
+                  : `Không có session nào trong ${timeWindowDays} ngày tới`}
               </div>
             )}
           </div>
@@ -1520,7 +1734,8 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
                   className="resize-none text-sm"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Tối thiểu 10 ký tự · {reason.trim().length}/10
+                  Tối thiểu {reasonMinLength} ký tự · {reason.trim().length}/
+                  {reasonMinLength}
                 </p>
               </div>
 
@@ -1740,6 +1955,9 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
   }, [refetchTeacherConfig]);
   const requireResourceAtRescheduleCreate =
     teacherConfig?.data?.requireResourceAtRescheduleCreate ?? true;
+  const minDaysBeforeSession = teacherConfig?.data?.minDaysBeforeSession ?? 1;
+  const reasonMinLength = teacherConfig?.data?.reasonMinLength ?? 15;
+  const timeWindowDays = teacherConfig?.data?.timeWindowDays ?? 14;
 
   const resourceQueryArg =
     selectedSessionId && newDateFormatted && selectedSlot
@@ -1794,6 +2012,37 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
   };
 
   const handleSessionSelect = (sessionId: number) => {
+    const session = sessionsData?.data?.find(
+      (s) => (s.sessionId || s.id) === sessionId
+    );
+
+    if (session?.date) {
+      const sessionDate = parseISO(session.date);
+      const daysUntilSession = differenceInDays(sessionDate, today);
+
+      // Debug log
+      console.log("Validation Debug (Reschedule):", {
+        sessionDate: session.date,
+        today: format(today, "yyyy-MM-dd"),
+        daysUntilSession,
+        minDaysBeforeSession,
+        teacherConfig: teacherConfig?.data,
+      });
+
+      // Validate: session must be in the future and meet minimum days requirement
+      if (daysUntilSession < 0) {
+        toast.error("Không thể chọn session trong quá khứ.");
+        return;
+      }
+
+      if (daysUntilSession < minDaysBeforeSession) {
+        toast.error(
+          `Bạn phải gửi yêu cầu trước ít nhất ${minDaysBeforeSession} ngày so với ngày diễn ra session. Session này còn ${daysUntilSession} ngày nữa.`
+        );
+        return;
+      }
+    }
+
     setSelectedSessionId(sessionId);
     setSelectedNewDate(undefined);
     setSelectedSlotId(null);
@@ -1827,8 +2076,8 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
       return;
     }
 
-    if (reason.trim().length < 10) {
-      toast.error("Lý do phải có tối thiểu 10 ký tự");
+    if (reason.trim().length < reasonMinLength) {
+      toast.error(`Lý do phải có tối thiểu ${reasonMinLength} ký tự`);
       return;
     }
 
@@ -1887,7 +2136,7 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
     (requireResourceAtRescheduleCreate ? !!selectedResourceId : true);
   // Bước lý do hiển thị khi đã tới step "form" và các bước trước đã OK
   const formStepReady = step === "form" && resourceStepComplete;
-  const reasonValid = reason.trim().length >= 10;
+  const reasonValid = reason.trim().length >= reasonMinLength;
 
   return (
     <div className="space-y-4">
@@ -2011,7 +2260,7 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
                 </ul>
               ) : (
                 <div className="rounded-lg border border-dashed py-4 text-center text-sm text-muted-foreground">
-                  Không có session nào trong 14 ngày tới
+                  Không có session nào trong {timeWindowDays} ngày tới
                 </div>
               )}
             </div>
@@ -2061,7 +2310,7 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
               {dateStepComplete ? "✓" : "2"}
             </div>
             <h3 className="text-sm font-semibold">
-              Chọn ngày mới (trong 14 ngày tới)
+              Chọn ngày mới (trong {timeWindowDays} ngày tới)
             </h3>
           </div>
 
@@ -2427,7 +2676,7 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
 
             <div className="space-y-1.5">
               <Textarea
-                placeholder="Mô tả lý do đổi lịch (tối thiểu 10 ký tự)"
+                placeholder={`Mô tả lý do đổi lịch (tối thiểu ${reasonMinLength} ký tự)`}
                 value={reason}
                 onChange={(event) => setReason(event.target.value)}
                 rows={3}
@@ -2478,6 +2727,12 @@ function ReplacementFlow({ onSuccess }: FlowProps) {
   const [candidateSearch, setCandidateSearch] = useState("");
   const [reason, setReason] = useState("");
   const [step, setStep] = useState<"session" | "candidate" | "form">("session");
+
+  // Load teacher request config (includes minDaysBeforeSession from policy)
+  const { data: teacherConfig } = useGetTeacherRequestConfigQuery();
+  const minDaysBeforeSession = teacherConfig?.data?.minDaysBeforeSession ?? 1;
+  const reasonMinLength = teacherConfig?.data?.reasonMinLength ?? 15;
+  const timeWindowDays = teacherConfig?.data?.timeWindowDays ?? 14;
 
   // Load teacher classes
   const { data: classesData } = useGetAttendanceClassesQuery();
@@ -2641,6 +2896,37 @@ function ReplacementFlow({ onSuccess }: FlowProps) {
   };
 
   const handleSessionSelect = (sessionId: number) => {
+    const session = sessionsData?.data?.find(
+      (s) => (s.sessionId || s.id) === sessionId
+    );
+
+    if (session?.date) {
+      const sessionDate = parseISO(session.date);
+      const daysUntilSession = differenceInDays(sessionDate, today);
+
+      // Debug log
+      console.log("Validation Debug (Replacement):", {
+        sessionDate: session.date,
+        today: format(today, "yyyy-MM-dd"),
+        daysUntilSession,
+        minDaysBeforeSession,
+        teacherConfig: teacherConfig?.data,
+      });
+
+      // Validate: session must be in the future and meet minimum days requirement
+      if (daysUntilSession < 0) {
+        toast.error("Không thể chọn session trong quá khứ.");
+        return;
+      }
+
+      if (daysUntilSession < minDaysBeforeSession) {
+        toast.error(
+          `Bạn phải gửi yêu cầu trước ít nhất ${minDaysBeforeSession} ngày so với ngày diễn ra session. Session này còn ${daysUntilSession} ngày nữa.`
+        );
+        return;
+      }
+    }
+
     setSelectedSessionId(sessionId);
     setSelectedCandidateId(null);
     setCandidateSearch("");
@@ -2673,8 +2959,8 @@ function ReplacementFlow({ onSuccess }: FlowProps) {
       return;
     }
 
-    if (reason.trim().length < 10) {
-      toast.error("Lý do phải có tối thiểu 10 ký tự");
+    if (reason.trim().length < reasonMinLength) {
+      toast.error(`Lý do phải có tối thiểu ${reasonMinLength} ký tự`);
       return;
     }
 
@@ -2719,7 +3005,7 @@ function ReplacementFlow({ onSuccess }: FlowProps) {
 
   const sessionStepComplete = !!selectedSessionId;
   const candidateStepComplete = step === "form" || selectedCandidateId !== null;
-  const reasonValid = reason.trim().length >= 10;
+  const reasonValid = reason.trim().length >= reasonMinLength;
 
   return (
     <div className="space-y-4">
@@ -2853,7 +3139,7 @@ function ReplacementFlow({ onSuccess }: FlowProps) {
                 <div className="rounded-lg border border-dashed py-4 text-center text-sm text-muted-foreground">
                   {selectedDate
                     ? "Không có session nào trong ngày đã chọn"
-                    : "Không có session nào trong 14 ngày tới"}
+                    : `Không có session nào trong ${timeWindowDays} ngày tới`}
                 </div>
               )}
             </div>
@@ -3149,6 +3435,7 @@ export function TeacherRequestDetailContent({
   isActionLoading,
   pendingAction,
   hideRequestType = false,
+  reasonMinLength = 15,
 }: {
   request: TeacherRequestDTO;
   fallbackRequest?: TeacherRequestDTO;
@@ -3159,6 +3446,7 @@ export function TeacherRequestDetailContent({
   isActionLoading?: boolean;
   pendingAction?: "confirm" | "reject" | null;
   hideRequestType?: boolean;
+  reasonMinLength?: number;
 }) {
   const getNestedValue = (source: unknown, path: string[]): unknown => {
     let current: unknown = source;
@@ -3726,8 +4014,8 @@ export function TeacherRequestDetailContent({
                   <Textarea
                     placeholder={
                       pendingAction === "reject"
-                        ? "Nhập lý do từ chối (tối thiểu 10 ký tự)..."
-                        : "Nhập ghi chú hoặc lý do từ chối (tối thiểu 10 ký tự nếu từ chối)..."
+                        ? `Nhập lý do từ chối (tối thiểu ${reasonMinLength} ký tự)...`
+                        : `Nhập ghi chú hoặc lý do từ chối (tối thiểu ${reasonMinLength} ký tự nếu từ chối)...`
                     }
                     rows={4}
                     value={decisionNote || ""}

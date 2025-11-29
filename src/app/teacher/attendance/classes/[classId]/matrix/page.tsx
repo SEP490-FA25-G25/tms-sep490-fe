@@ -283,16 +283,16 @@ export default function ClassAttendanceMatrixPage() {
           <div className="rounded-lg border bg-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
-                <thead className="border-b bg-muted/50">
+                <thead className="border-b bg-muted/50 sticky top-0 z-20">
                   <tr>
-                    <th className="sticky left-0 z-10 bg-muted/50 text-left p-4 font-semibold text-foreground border-r min-w-[200px]">
+                    <th className="sticky left-0 z-30 bg-muted text-left p-4 font-semibold text-foreground border-r min-w-[200px]">
                       Học viên
                     </th>
                     {sessions.map(
                       (session: AttendanceMatrixDTO["sessions"][0]) => (
                         <th
                           key={session.sessionId}
-                          className="text-center p-4 font-semibold text-foreground border-r min-w-[80px]"
+                          className="text-center p-4 font-semibold text-foreground border-r min-w-[80px] bg-muted"
                         >
                           <div className="flex flex-col gap-1">
                             <span className="text-xs">
@@ -304,11 +304,11 @@ export default function ClassAttendanceMatrixPage() {
                             </span>
                             {(session.startTime || session.sessionStartTime) &&
                             (session.endTime || session.sessionEndTime) ? (
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">
                                 {(
                                   session.startTime || session.sessionStartTime
-                                )?.substring(0, 5)}{" "}
-                                -{" "}
+                                )?.substring(0, 5)}
+                                {" - "}
                                 {(
                                   session.endTime || session.sessionEndTime
                                 )?.substring(0, 5)}
@@ -325,7 +325,7 @@ export default function ClassAttendanceMatrixPage() {
                         </th>
                       )
                     )}
-                    <th className="text-center p-4 font-semibold text-foreground min-w-[100px]">
+                    <th className="text-center p-4 font-semibold text-foreground min-w-[100px] bg-muted">
                       Tỷ lệ
                     </th>
                   </tr>
@@ -337,7 +337,7 @@ export default function ClassAttendanceMatrixPage() {
                         key={student.studentId}
                         className="border-b last:border-b-0 hover:bg-muted/30 transition-colors"
                       >
-                        <td className="sticky left-0 z-10 bg-card border-r p-4 min-w-[200px]">
+                        <td className="sticky left-0 z-20 bg-card border-r p-4 min-w-[200px]">
                           <div>
                             <p className="font-medium text-foreground">
                               {student.fullName}

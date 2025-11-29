@@ -310,6 +310,9 @@ export interface TeacherRequestConfigResponse {
   data: {
     requireResourceAtRescheduleCreate: boolean;
     requireResourceAtModalityChangeCreate: boolean;
+    minDaysBeforeSession: number;
+    reasonMinLength: number;
+    timeWindowDays: number;
   };
 }
 
