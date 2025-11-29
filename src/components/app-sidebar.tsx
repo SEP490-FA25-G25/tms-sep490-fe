@@ -121,6 +121,11 @@ const roleBasedNav = {
         icon: ClipboardCheckIcon,
       },
       {
+        title: "Quản lý tài nguyên và khung giờ học",
+        url: "/center-head/resources",
+        icon: BuildingIcon,
+      },
+      {
         title: "Quản lý học sinh",
         url: "/center/students",
         icon: UsersIcon,
@@ -352,7 +357,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     return user.roles.reduce((highest, current) =>
       rolePriorities[current as keyof typeof rolePriorities] >
-      rolePriorities[highest as keyof typeof rolePriorities]
+        rolePriorities[highest as keyof typeof rolePriorities]
         ? current
         : highest
     );

@@ -47,6 +47,7 @@ import CreateClassPage from "./app/academic/classes/create/page";
 import EditClassPage from "./app/academic/classes/[id]/edit/page";
 
 import CenterHeadApprovalsPage from "./app/center-head/approvals/page";
+import CenterHeadResourcesPage from "./app/center-head/resources/page";
 import CurriculumPage from "./features/curriculum/pages/CurriculumPage";
 import CreateSubjectPage from "./features/curriculum/pages/CreateSubjectPage";
 import EditSubjectPage from "./features/curriculum/pages/EditSubjectPage";
@@ -685,6 +686,14 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
                   <CenterHeadApprovalsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/center-head/resources"
+              element={
+                <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
+                  <CenterHeadResourcesPage />
                 </ProtectedRoute>
               }
             />

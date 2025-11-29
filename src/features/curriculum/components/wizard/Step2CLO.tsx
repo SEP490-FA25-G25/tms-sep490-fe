@@ -3,17 +3,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { CourseData, CLO } from "@/types/course";
-
-// Mock PLOs (replace with API call)
-const MOCK_PLOS = [
-    { id: "PLO1", code: "PLO1", description: "Áp dụng kiến thức cơ bản" },
-    { id: "PLO2", code: "PLO2", description: "Phân tích vấn đề kỹ thuật" },
-    { id: "PLO3", code: "PLO3", description: "Hiểu bối cảnh văn hóa" },
-];
+import { useGetSubjectQuery } from "@/store/services/curriculumApi";
 
 interface Step2Props {
     data: CourseData;
@@ -22,6 +17,20 @@ interface Step2Props {
 
 export function Step2CLO({ data, setData }: Step2Props) {
     const [selectedCloIndex, setSelectedCloIndex] = useState<number | null>(null);
+
+    // Fetch Subject Details to get PLOs
+    const subjectId = data.basicInfo.subjectId ? parseInt(data.basicInfo.subjectId) : undefined;
+    const { data: subjectResponse, isLoading: isLoadingSubject } = useGetSubjectQuery(subjectId!, {
+        skip: !subjectId
+    });
+
+    const plos = useMemo(() => {
+        return subjectResponse?.data?.plos?.map(plo => ({
+            id: plo.code, // Use code as ID since backend doesn't provide ID
+            code: plo.code,
+            description: plo.description
+        })) || [];
+    }, [subjectResponse]);
 
     const addClo = () => {
         const nextIndex = (data.clos?.length || 0) + 1;
@@ -74,7 +83,7 @@ export function Step2CLO({ data, setData }: Step2Props) {
                     {data.clos?.map((clo, index) => (
                         <div
                             key={clo.id || index}
-                            className={`p - 4 rounded - lg border cursor - pointer transition - all ${selectedCloIndex === index
+                            className={`p-4 rounded-lg border cursor-pointer transition-all ${selectedCloIndex === index
                                 ? "border-primary bg-primary/5 ring-1 ring-primary"
                                 : "hover:border-primary/50"
                                 } `}
@@ -141,29 +150,48 @@ export function Step2CLO({ data, setData }: Step2Props) {
                                 {data.clos[selectedCloIndex].code}
                             </span>
                         </p>
-                        {MOCK_PLOS.map((plo) => (
-                            <div
-                                key={plo.id}
-                                className="flex items-start space-x-3 p-3 rounded-md border hover:bg-muted/50"
-                            >
-                                <Checkbox
-                                    id={plo.id}
-                                    checked={data.clos[selectedCloIndex].mappedPLOs?.includes(plo.id)}
-                                    onCheckedChange={() => togglePloMapping(selectedCloIndex, plo.id)}
-                                />
-                                <div className="grid gap-1.5 leading-none">
-                                    <Label
-                                        htmlFor={plo.id}
-                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                    >
-                                        {plo.code}
-                                    </Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        {plo.description}
-                                    </p>
-                                </div>
+
+                        {isLoadingSubject ? (
+                            <div className="space-y-3">
+                                {[1, 2, 3].map((i) => (
+                                    <div key={i} className="flex items-start space-x-3 p-3 rounded-md border">
+                                        <Skeleton className="h-4 w-4 rounded" />
+                                        <div className="space-y-2 flex-1">
+                                            <Skeleton className="h-4 w-20" />
+                                            <Skeleton className="h-3 w-full" />
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
+                        ) : plos.length > 0 ? (
+                            plos.map((plo) => (
+                                <div
+                                    key={plo.id}
+                                    className="flex items-start space-x-3 p-3 rounded-md border hover:bg-muted/50"
+                                >
+                                    <Checkbox
+                                        id={plo.id}
+                                        checked={data.clos[selectedCloIndex].mappedPLOs?.includes(plo.id)}
+                                        onCheckedChange={() => togglePloMapping(selectedCloIndex, plo.id)}
+                                    />
+                                    <div className="grid gap-1.5 leading-none">
+                                        <Label
+                                            htmlFor={plo.id}
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                        >
+                                            {plo.code}
+                                        </Label>
+                                        <p className="text-sm text-muted-foreground">
+                                            {plo.description}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-center py-10 text-muted-foreground bg-muted/10 rounded-lg">
+                                Không tìm thấy PLO nào cho môn học này.
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="text-center py-10 text-muted-foreground bg-muted/10 rounded-lg">
