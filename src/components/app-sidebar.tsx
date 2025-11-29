@@ -199,12 +199,12 @@ const roleBasedNav = {
         icon: SchoolIcon,
       },
       {
-        title: "Lịch dạy",
+        title: "Lịch dạy của tôi",
         url: "/teacher/schedule",
         icon: CalendarIcon,
       },
       {
-        title: "Điểm danh",
+        title: "Điểm danh buổi học",
         url: "/teacher/attendance",
         icon: CheckCircleIcon,
       },

@@ -343,6 +343,14 @@ export const attendanceApi = createApi({
       }),
       providesTags: ["AttendanceSession"],
     }),
+    // Get sessions for a specific date
+    getSessionsForDate: builder.query<AttendanceSessionsResponse, string>({
+      query: (date) => ({
+        url: `/attendance/sessions/today?date=${date}`,
+        method: "GET",
+      }),
+      providesTags: ["AttendanceSession"],
+    }),
     // Get students for a specific session
     getSessionStudents: builder.query<
       AttendanceStudentsResponse,
@@ -468,6 +476,7 @@ export const attendanceApi = createApi({
 
 export const {
   useGetTodaySessionsQuery,
+  useGetSessionsForDateQuery,
   useGetSessionStudentsQuery,
   useGetSessionReportQuery,
   useSubmitAttendanceMutation,

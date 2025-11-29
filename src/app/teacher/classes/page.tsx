@@ -6,27 +6,47 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import {
   useGetAttendanceClassesQuery,
   type AttendanceClassDTO,
 } from "@/store/services/attendanceApi";
-import { BookOpen, BarChart3, TrendingUp, Search, Calendar, MapPin, GraduationCap } from "lucide-react";
+import {
+  BookOpen,
+  BarChart3,
+  TrendingUp,
+  Search,
+  Calendar,
+  MapPin,
+  GraduationCap,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface FilterState {
-  status: string[];
-  branchName: string[];
-  courseName: string[];
-  modality: ("ONLINE" | "OFFLINE" | "HYBRID")[];
+  status: string;
+  branchName: string;
+  courseName: string;
+  modality: "ALL" | "ONLINE" | "OFFLINE" | "HYBRID";
   searchTerm: string;
 }
 
@@ -43,15 +63,27 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: "Đã hủy",
 };
 
+type SortField =
+  | "name"
+  | "startDate"
+  | "attendanceRate"
+  | "totalSessions"
+  | "status";
+type SortOrder = "asc" | "desc";
+
 export default function TeacherClassesPage() {
   const [activeStatusTab, setActiveStatusTab] = useState<"all" | string>("all");
   const [filters, setFilters] = useState<FilterState>({
-    status: [],
-    branchName: [],
-    courseName: [],
-    modality: [],
+    status: "ALL",
+    branchName: "ALL",
+    courseName: "ALL",
+    modality: "ALL",
     searchTerm: "",
   });
+  const [sortField, setSortField] = useState<SortField>("name");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const {
     data: classesResponse,
@@ -108,30 +140,26 @@ export default function TeacherClassesPage() {
     }
 
     // Additional status filters
-    if (filters.status.length > 0) {
-      filtered = filtered.filter((item) =>
-        filters.status.includes(item.status)
-      );
+    if (filters.status !== "ALL") {
+      filtered = filtered.filter((item) => item.status === filters.status);
     }
 
     // Modality filter
-    if (filters.modality.length > 0) {
-      filtered = filtered.filter((item) =>
-        filters.modality.includes(item.modality)
-      );
+    if (filters.modality !== "ALL") {
+      filtered = filtered.filter((item) => item.modality === filters.modality);
     }
 
     // Branch filter
-    if (filters.branchName.length > 0) {
-      filtered = filtered.filter((item) =>
-        filters.branchName.includes(item.branchName)
+    if (filters.branchName !== "ALL") {
+      filtered = filtered.filter(
+        (item) => item.branchName === filters.branchName
       );
     }
 
     // Course filter
-    if (filters.courseName.length > 0) {
-      filtered = filtered.filter((item) =>
-        filters.courseName.includes(item.courseName)
+    if (filters.courseName !== "ALL") {
+      filtered = filtered.filter(
+        (item) => item.courseName === filters.courseName
       );
     }
 
@@ -150,22 +178,78 @@ export default function TeacherClassesPage() {
     return filtered;
   }, [allClasses, activeStatusTab, filters]);
 
+  // Apply sorting
+  const sortedClasses = useMemo(() => {
+    const sorted = [...classes];
+
+    sorted.sort((a, b) => {
+      let comparison = 0;
+
+      switch (sortField) {
+        case "name":
+          comparison = a.name.localeCompare(b.name, "vi");
+          break;
+        case "startDate": {
+          const dateA = a.startDate ? parseISO(a.startDate).getTime() : 0;
+          const dateB = b.startDate ? parseISO(b.startDate).getTime() : 0;
+          comparison = dateA - dateB;
+          break;
+        }
+        case "attendanceRate": {
+          const rateA = a.attendanceRate ?? 0;
+          const rateB = b.attendanceRate ?? 0;
+          comparison = rateA - rateB;
+          break;
+        }
+        case "totalSessions": {
+          const sessionsA = a.totalSessions ?? 0;
+          const sessionsB = b.totalSessions ?? 0;
+          comparison = sessionsA - sessionsB;
+          break;
+        }
+        case "status":
+          comparison = a.status.localeCompare(b.status, "vi");
+          break;
+        default:
+          return 0;
+      }
+
+      return sortOrder === "asc" ? comparison : -comparison;
+    });
+
+    return sorted;
+  }, [classes, sortField, sortOrder]);
+
+  // Apply pagination
+  const paginatedClasses = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return sortedClasses.slice(startIndex, endIndex);
+  }, [sortedClasses, currentPage, pageSize]);
+
+  const totalPages = Math.ceil(sortedClasses.length / pageSize);
+
+  // Reset to page 1 when filters or sort change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeStatusTab, filters, sortField, sortOrder]);
+
   const hasActiveFilters = useMemo(() => {
     return (
-      filters.status.length > 0 ||
-      filters.branchName.length > 0 ||
-      filters.courseName.length > 0 ||
-      filters.modality.length > 0 ||
+      filters.status !== "ALL" ||
+      filters.branchName !== "ALL" ||
+      filters.courseName !== "ALL" ||
+      filters.modality !== "ALL" ||
       filters.searchTerm.trim() !== ""
     );
   }, [filters]);
 
   const resetFilters = () => {
     setFilters({
-      status: [],
-      branchName: [],
-      courseName: [],
-      modality: [],
+      status: "ALL",
+      branchName: "ALL",
+      courseName: "ALL",
+      modality: "ALL",
       searchTerm: "",
     });
     setActiveStatusTab("all");
@@ -173,24 +257,6 @@ export default function TeacherClassesPage() {
 
   const handleSearch = (value: string) => {
     setFilters((prev) => ({ ...prev, searchTerm: value }));
-  };
-
-  const toggleFilter = (
-    type: keyof FilterState,
-    value: string | "ONLINE" | "OFFLINE" | "HYBRID"
-  ) => {
-    setFilters((prev) => {
-      const currentValues = prev[type] as (
-        | string
-        | "ONLINE"
-        | "OFFLINE"
-        | "HYBRID"
-      )[];
-      const newValues = currentValues.includes(value)
-        ? currentValues.filter((item) => item !== value)
-        : [...currentValues, value];
-      return { ...prev, [type]: newValues };
-    });
   };
 
   // Debug in development
@@ -211,7 +277,7 @@ export default function TeacherClassesPage() {
       >
         <div className="space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
               {hasActiveFilters && (
                 <Button variant="ghost" size="sm" onClick={resetFilters}>
@@ -219,7 +285,7 @@ export default function TeacherClassesPage() {
                 </Button>
               )}
               <Badge variant="outline" className="text-sm">
-                {classes.length} lớp học
+                {sortedClasses.length} lớp học
               </Badge>
             </div>
           </div>
@@ -241,8 +307,8 @@ export default function TeacherClassesPage() {
             </Tabs>
 
             {/* Search and Dropdown Filters */}
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="relative w-full lg:max-w-md">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Tìm kiếm lớp học..."
@@ -252,124 +318,174 @@ export default function TeacherClassesPage() {
                 />
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      Hình thức
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-40">
-                    {(["ONLINE", "OFFLINE", "HYBRID"] as const).map((key) => (
-                      <DropdownMenuCheckboxItem
-                        key={key}
-                        checked={filters.modality.includes(key)}
-                        onCheckedChange={() => toggleFilter("modality", key)}
-                      >
-                        {MODALITY_LABELS[key]}
-                      </DropdownMenuCheckboxItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Select
+                  value={sortField}
+                  onValueChange={(value) => setSortField(value as SortField)}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Sắp xếp theo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">Tên lớp</SelectItem>
+                    <SelectItem value="startDate">Ngày bắt đầu</SelectItem>
+                    <SelectItem value="attendanceRate">
+                      Tỷ lệ chuyên cần
+                    </SelectItem>
+                    <SelectItem value="totalSessions">Số buổi học</SelectItem>
+                    <SelectItem value="status">Trạng thái</SelectItem>
+                  </SelectContent>
+                </Select>
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      Chi nhánh
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-56">
+                <Select
+                  value={filters.modality}
+                  onValueChange={(value) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      modality: value as
+                        | "ALL"
+                        | "ONLINE"
+                        | "OFFLINE"
+                        | "HYBRID",
+                    }))
+                  }
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Hình thức" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Tất cả hình thức</SelectItem>
+                    <SelectItem value="ONLINE">
+                      {MODALITY_LABELS.ONLINE}
+                    </SelectItem>
+                    <SelectItem value="OFFLINE">
+                      {MODALITY_LABELS.OFFLINE}
+                    </SelectItem>
+                    <SelectItem value="HYBRID">
+                      {MODALITY_LABELS.HYBRID}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={filters.branchName}
+                  onValueChange={(value) =>
+                    setFilters((prev) => ({ ...prev, branchName: value }))
+                  }
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Chi nhánh" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Tất cả chi nhánh</SelectItem>
                     {branchOptions.length > 0 ? (
                       branchOptions.map((branch) => (
-                        <DropdownMenuCheckboxItem
-                          key={branch.name}
-                          checked={filters.branchName.includes(branch.name)}
-                          onCheckedChange={() =>
-                            toggleFilter("branchName", branch.name)
-                          }
-                        >
+                        <SelectItem key={branch.name} value={branch.name}>
                           {branch.name}
-                        </DropdownMenuCheckboxItem>
+                        </SelectItem>
                       ))
                     ) : (
-                      <div className="px-2 py-1 text-xs text-muted-foreground">
+                      <SelectItem value="NO_DATA" disabled>
                         Chưa có dữ liệu chi nhánh
-                      </div>
+                      </SelectItem>
                     )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  </SelectContent>
+                </Select>
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      Khóa học
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-56">
+                <Select
+                  value={filters.courseName}
+                  onValueChange={(value) =>
+                    setFilters((prev) => ({ ...prev, courseName: value }))
+                  }
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Khóa học" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Tất cả khóa học</SelectItem>
                     {courseOptions.length > 0 ? (
                       courseOptions.map((course) => (
-                        <DropdownMenuCheckboxItem
-                          key={course.name}
-                          checked={filters.courseName.includes(course.name)}
-                          onCheckedChange={() =>
-                            toggleFilter("courseName", course.name)
-                          }
-                        >
+                        <SelectItem key={course.name} value={course.name}>
                           {course.name}
-                        </DropdownMenuCheckboxItem>
+                        </SelectItem>
                       ))
                     ) : (
-                      <div className="px-2 py-1 text-xs text-muted-foreground">
+                      <SelectItem value="NO_DATA" disabled>
                         Chưa có dữ liệu khóa học
-                      </div>
+                      </SelectItem>
                     )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                  }
+                  className="gap-2"
+                >
+                  {sortOrder === "asc" ? (
+                    <>
+                      <ArrowUp className="h-4 w-4" />
+                      Tăng dần
+                    </>
+                  ) : (
+                    <>
+                      <ArrowDown className="h-4 w-4" />
+                      Giảm dần
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
 
             {/* Active Filters Badges */}
             {hasActiveFilters && (
               <div className="flex flex-wrap gap-2">
-                {filters.status.map((status) => (
+                {filters.status !== "ALL" && (
                   <Badge
-                    key={status}
                     variant="secondary"
                     className="cursor-pointer"
-                    onClick={() => toggleFilter("status", status)}
+                    onClick={() =>
+                      setFilters((prev) => ({ ...prev, status: "ALL" }))
+                    }
                   >
-                    {STATUS_LABELS[status] || status} · Bỏ
+                    {STATUS_LABELS[filters.status] || filters.status} · Bỏ
                   </Badge>
-                ))}
-                {filters.modality.map((modality) => (
+                )}
+                {filters.modality !== "ALL" && (
                   <Badge
-                    key={modality}
                     variant="secondary"
                     className="cursor-pointer"
-                    onClick={() => toggleFilter("modality", modality)}
+                    onClick={() =>
+                      setFilters((prev) => ({ ...prev, modality: "ALL" }))
+                    }
                   >
-                    {MODALITY_LABELS[modality]} · Bỏ
+                    {MODALITY_LABELS[filters.modality]} · Bỏ
                   </Badge>
-                ))}
-                {filters.branchName.map((branchName) => (
+                )}
+                {filters.branchName !== "ALL" && (
                   <Badge
-                    key={branchName}
                     variant="secondary"
                     className="cursor-pointer"
-                    onClick={() => toggleFilter("branchName", branchName)}
+                    onClick={() =>
+                      setFilters((prev) => ({ ...prev, branchName: "ALL" }))
+                    }
                   >
-                    {branchName} · Bỏ
+                    {filters.branchName} · Bỏ
                   </Badge>
-                ))}
-                {filters.courseName.map((courseName) => (
+                )}
+                {filters.courseName !== "ALL" && (
                   <Badge
-                    key={courseName}
                     variant="secondary"
                     className="cursor-pointer"
-                    onClick={() => toggleFilter("courseName", courseName)}
+                    onClick={() =>
+                      setFilters((prev) => ({ ...prev, courseName: "ALL" }))
+                    }
                   >
-                    {courseName} · Bỏ
+                    {filters.courseName} · Bỏ
                   </Badge>
-                ))}
+                )}
               </div>
             )}
           </div>
@@ -406,11 +522,112 @@ export default function TeacherClassesPage() {
               )}
             </div>
           ) : (
-            <div className="space-y-4">
-              {classes.map((classItem) => (
-                <ClassCard key={classItem.id} classItem={classItem} />
-              ))}
-            </div>
+            <>
+              <div className="space-y-4">
+                {paginatedClasses.map((classItem) => (
+                  <ClassCard key={classItem.id} classItem={classItem} />
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      Hiển thị {(currentPage - 1) * pageSize + 1} -{" "}
+                      {Math.min(currentPage * pageSize, sortedClasses.length)}{" "}
+                      trong tổng số {sortedClasses.length} lớp học
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Select
+                      value={pageSize.toString()}
+                      onValueChange={(value) => {
+                        setPageSize(Number(value));
+                        setCurrentPage(1);
+                      }}
+                    >
+                      <SelectTrigger className="w-[120px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5">5 / trang</SelectItem>
+                        <SelectItem value="10">10 / trang</SelectItem>
+                        <SelectItem value="20">20 / trang</SelectItem>
+                        <SelectItem value="50">50 / trang</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
+                            onClick={() =>
+                              setCurrentPage((prev) => Math.max(1, prev - 1))
+                            }
+                            className={
+                              currentPage === 1
+                                ? "pointer-events-none opacity-50"
+                                : "cursor-pointer"
+                            }
+                          />
+                        </PaginationItem>
+
+                        {Array.from(
+                          { length: totalPages },
+                          (_, i) => i + 1
+                        ).map((page) => {
+                          // Show first page, last page, current page, and pages around current
+                          if (
+                            page === 1 ||
+                            page === totalPages ||
+                            (page >= currentPage - 1 && page <= currentPage + 1)
+                          ) {
+                            return (
+                              <PaginationItem key={page}>
+                                <PaginationLink
+                                  onClick={() => setCurrentPage(page)}
+                                  isActive={currentPage === page}
+                                  className="cursor-pointer"
+                                >
+                                  {page}
+                                </PaginationLink>
+                              </PaginationItem>
+                            );
+                          } else if (
+                            page === currentPage - 2 ||
+                            page === currentPage + 2
+                          ) {
+                            return (
+                              <PaginationItem key={page}>
+                                <PaginationEllipsis />
+                              </PaginationItem>
+                            );
+                          }
+                          return null;
+                        })}
+
+                        <PaginationItem>
+                          <PaginationNext
+                            onClick={() =>
+                              setCurrentPage((prev) =>
+                                Math.min(totalPages, prev + 1)
+                              )
+                            }
+                            className={
+                              currentPage === totalPages
+                                ? "pointer-events-none opacity-50"
+                                : "cursor-pointer"
+                            }
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </DashboardLayout>
@@ -476,12 +693,12 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
     <div className="rounded-lg border p-5 transition-colors hover:border-primary/60 hover:bg-primary/5">
       <div className="space-y-4">
         {/* Header: Class Name and Status */}
-      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-4">
           <div className="flex-1 space-y-2">
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-semibold text-foreground">
-              {classItem.name}
-            </h3>
+                {classItem.name}
+              </h3>
               <Badge variant={getStatusBadgeVariant(classItem.status)}>
                 {STATUS_LABELS[classItem.status] || classItem.status}
               </Badge>
@@ -531,57 +748,52 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
             </div>
           )}
 
-              {/* Total Sessions */}
+          {/* Total Sessions */}
           {totalSessions > 0 && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <BookOpen className="h-4 w-4 flex-shrink-0" />
-                  <span>{totalSessions} buổi học</span>
-                </div>
-              )}
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <BookOpen className="h-4 w-4 flex-shrink-0" />
+              <span>{totalSessions} buổi học</span>
+            </div>
+          )}
         </div>
 
-              {/* Attendance Rate */}
-              {averageAttendanceRate !== undefined && (
+        {/* Attendance Rate */}
+        {averageAttendanceRate !== undefined && (
           <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-3">
-                  <TrendingUp className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+            <TrendingUp className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">
-                    Tỷ lệ chuyên cần:
-                  </span>
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "text-xs font-medium",
-                      getAttendanceRateColor(averageAttendanceRate),
-                      getAttendanceRateBgColor(averageAttendanceRate)
-                    )}
-                  >
-              {averageAttendanceRate.toFixed(1)}%
-                  </Badge>
-                </div>
+              Tỷ lệ chuyên cần:
+            </span>
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-xs font-medium",
+                getAttendanceRateColor(averageAttendanceRate),
+                getAttendanceRateBgColor(averageAttendanceRate)
               )}
+            >
+              {averageAttendanceRate.toFixed(1)}%
+            </Badge>
+          </div>
+        )}
 
         {/* Action buttons */}
         <div className="flex flex-wrap gap-2 pt-2">
-        <Button
-          variant="outline"
-          size="sm"
-            onClick={handleViewMatrix}
-          className="gap-2"
-        >
-          <BarChart3 className="h-4 w-4" />
-            Xem bảng điểm danh
-          </Button>
           <Button
             variant="outline"
             size="sm"
-            asChild
+            onClick={handleViewMatrix}
             className="gap-2"
           >
+            <BarChart3 className="h-4 w-4" />
+            Xem bảng điểm danh
+          </Button>
+          <Button variant="outline" size="sm" asChild className="gap-2">
             <Link to={`/teacher/classes/${classItem.id}/grades`}>
               <BookOpen className="h-4 w-4" />
               Quản lý điểm
             </Link>
-        </Button>
+          </Button>
         </div>
       </div>
     </div>

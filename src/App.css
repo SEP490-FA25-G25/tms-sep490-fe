@@ -40,3 +40,12 @@
 .read-the-docs {
   color: #888;
 }
+
+@keyframes fillBorder {
+  0% {
+    clip-path: polygon(100% 0, 100% 0, 100% 0, 0 100%, 0 100%, 0 100%);
+  }
+  100% {
+    clip-path: polygon(100% 0, 100% 100%, 100% 100%, 0 100%, 0 100%, 0 0);
+  }
+}

@@ -22,14 +22,32 @@ import {
   TrendingDown,
   Users,
   BarChart3,
-  ArrowLeft,
   Edit,
   Table2,
+  Search,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { Input } from "@/components/ui/input";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -46,7 +64,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Award } from "lucide-react";
-import { Input } from "@/components/ui/input";
 
 const ASSESSMENT_KINDS: Record<string, string> = {
   QUIZ: "Quiz",
@@ -62,6 +79,18 @@ export default function TeacherGradesPage() {
   const [filter, setFilter] = useState<
     "all" | "upcoming" | "graded" | "overdue"
   >("all");
+  const [assessmentSearchQuery, setAssessmentSearchQuery] = useState("");
+  const [assessmentPage, setAssessmentPage] = useState(0);
+  const [gradebookSearchQuery, setGradebookSearchQuery] = useState("");
+  const [gradebookPage, setGradebookPage] = useState(0);
+  const [gradebookSortField, setGradebookSortField] = useState<
+    "name" | "averageScore" | "attendanceRate"
+  >("name");
+  const [gradebookSortOrder, setGradebookSortOrder] = useState<"asc" | "desc">(
+    "asc"
+  );
+  const ASSESSMENT_PAGE_SIZE = 5;
+  const GRADEBOOK_PAGE_SIZE = 10;
 
   // Debug: Log when component mounts
   console.log("TeacherGradesPage mounted", { classId });
@@ -87,6 +116,126 @@ export default function TeacherGradesPage() {
     error: gradebookError,
     refetch: refetchGradebook,
   } = useGetClassGradebookQuery(Number(classId), { skip: !classId });
+
+  // Filter and paginate assessments
+  const filteredAndPaginatedAssessments = useMemo(() => {
+    if (!assessments) return [];
+
+    let filtered = assessments;
+
+    // Apply search filter
+    if (assessmentSearchQuery.trim()) {
+      const query = assessmentSearchQuery.trim().toLowerCase();
+      filtered = filtered.filter((assessment) => {
+        const searchFields = [
+          assessment.name,
+          assessment.description,
+          assessment.kind,
+          ASSESSMENT_KINDS[assessment.kind || ""],
+        ];
+        return searchFields.some(
+          (field) => field && field.toString().toLowerCase().includes(query)
+        );
+      });
+    }
+
+    // Apply pagination
+    const startIndex = assessmentPage * ASSESSMENT_PAGE_SIZE;
+    const endIndex = startIndex + ASSESSMENT_PAGE_SIZE;
+    return filtered.slice(startIndex, endIndex);
+  }, [assessments, assessmentSearchQuery, assessmentPage]);
+
+  const totalAssessmentPages = useMemo(() => {
+    if (!assessments) return 0;
+    let filtered = assessments;
+    if (assessmentSearchQuery.trim()) {
+      const query = assessmentSearchQuery.trim().toLowerCase();
+      filtered = assessments.filter((assessment) => {
+        const searchFields = [
+          assessment.name,
+          assessment.description,
+          assessment.kind,
+          ASSESSMENT_KINDS[assessment.kind || ""],
+        ];
+        return searchFields.some(
+          (field) => field && field.toString().toLowerCase().includes(query)
+        );
+      });
+    }
+    return Math.max(1, Math.ceil(filtered.length / ASSESSMENT_PAGE_SIZE));
+  }, [assessments, assessmentSearchQuery]);
+
+  // Filter, sort and paginate gradebook students
+  const filteredAndPaginatedStudents = useMemo(() => {
+    if (!gradebook || !gradebook.students) return [];
+
+    let filtered = gradebook.students;
+
+    // Apply search filter
+    if (gradebookSearchQuery.trim()) {
+      const query = gradebookSearchQuery.trim().toLowerCase();
+      filtered = filtered.filter((student) => {
+        const searchFields = [student.studentName, student.studentCode];
+        return searchFields.some(
+          (field) => field && field.toString().toLowerCase().includes(query)
+        );
+      });
+    }
+
+    // Apply sorting
+    filtered = [...filtered].sort((a, b) => {
+      let comparison = 0;
+
+      switch (gradebookSortField) {
+        case "name": {
+          const nameA = a.studentName?.toLowerCase() || "";
+          const nameB = b.studentName?.toLowerCase() || "";
+          comparison = nameA.localeCompare(nameB, "vi");
+          break;
+        }
+        case "averageScore": {
+          const scoreA = a.averageScore ?? 0;
+          const scoreB = b.averageScore ?? 0;
+          comparison = Number(scoreA) - Number(scoreB);
+          break;
+        }
+        case "attendanceRate": {
+          const rateA = a.attendanceScore ?? 0;
+          const rateB = b.attendanceScore ?? 0;
+          comparison = Number(rateA) - Number(rateB);
+          break;
+        }
+      }
+
+      return gradebookSortOrder === "asc" ? comparison : -comparison;
+    });
+
+    // Apply pagination
+    const startIndex = gradebookPage * GRADEBOOK_PAGE_SIZE;
+    const endIndex = startIndex + GRADEBOOK_PAGE_SIZE;
+    return filtered.slice(startIndex, endIndex);
+  }, [
+    gradebook,
+    gradebookSearchQuery,
+    gradebookPage,
+    gradebookSortField,
+    gradebookSortOrder,
+  ]);
+
+  const totalGradebookPages = useMemo(() => {
+    if (!gradebook || !gradebook.students) return 0;
+    let filtered = gradebook.students;
+    if (gradebookSearchQuery.trim()) {
+      const query = gradebookSearchQuery.trim().toLowerCase();
+      filtered = gradebook.students.filter((student) => {
+        const searchFields = [student.studentName, student.studentCode];
+        return searchFields.some(
+          (field) => field && field.toString().toLowerCase().includes(query)
+        );
+      });
+    }
+    return Math.max(1, Math.ceil(filtered.length / GRADEBOOK_PAGE_SIZE));
+  }, [gradebook, gradebookSearchQuery]);
 
   // Debug: Log gradebook data
   if (gradebook) {
@@ -320,41 +469,6 @@ export default function TeacherGradesPage() {
             </div>
           </div>
           <div className="w-full max-w-[280px] text-right space-y-2">
-            {score && score.isGraded && score.score !== null ? (
-              <div className="flex items-center gap-3 justify-end">
-                <Award
-                  className={cn(
-                    "h-6 w-6",
-                    percentage !== null
-                      ? getScoreColor(Number(score.score), maxScore)
-                      : "text-muted-foreground"
-                  )}
-                />
-                <div className="text-right">
-                  <div
-                    className={cn(
-                      "text-2xl font-bold",
-                      percentage !== null
-                        ? getScoreColor(Number(score.score), maxScore)
-                        : ""
-                    )}
-                  >
-                    {Number(score.score).toFixed(1)}
-                    <span className="text-base font-normal text-muted-foreground ml-1">
-                      /{maxScore}
-                    </span>
-                  </div>
-                  {percentage !== null && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {percentage.toFixed(1)}%
-                    </p>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="text-sm text-muted-foreground">Chưa nhập</div>
-            )}
-
             {isEditing ? (
               <div className="space-y-2">
                 <div className="flex items-center justify-end gap-2">
@@ -370,8 +484,20 @@ export default function TeacherGradesPage() {
                         event.target.value
                       )
                     }
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        if (inputValue.trim() !== "" && !isSavingThisScore) {
+                          handleSaveScore(assessment.assessmentId, maxScore);
+                        }
+                      } else if (event.key === "Escape") {
+                        event.preventDefault();
+                        handleCancelEditing(assessment.assessmentId);
+                      }
+                    }}
                     className="w-28 text-right"
                     placeholder="Nhập điểm"
+                    autoFocus
                   />
                   <Button
                     size="sm"
@@ -392,16 +518,49 @@ export default function TeacherGradesPage() {
                 </Button>
               </div>
             ) : (
-              <div className="flex justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleStartEditing(assessment.assessmentId)}
-                >
-                  {score && score.isGraded && score.score !== null
-                    ? "Chỉnh sửa"
-                    : "Nhập điểm"}
-                </Button>
+              <div
+                className={cn(
+                  "flex items-center gap-3 justify-end cursor-pointer hover:opacity-80 transition-opacity",
+                  score && score.isGraded && score.score !== null
+                    ? ""
+                    : "text-muted-foreground"
+                )}
+                onClick={() => handleStartEditing(assessment.assessmentId)}
+              >
+                {score && score.isGraded && score.score !== null ? (
+                  <>
+                    <Award
+                      className={cn(
+                        "h-6 w-6",
+                        percentage !== null
+                          ? getScoreColor(Number(score.score), maxScore)
+                          : "text-muted-foreground"
+                      )}
+                    />
+                    <div className="text-right">
+                      <div
+                        className={cn(
+                          "text-2xl font-bold",
+                          percentage !== null
+                            ? getScoreColor(Number(score.score), maxScore)
+                            : ""
+                        )}
+                      >
+                        {Number(score.score).toFixed(1)}
+                        <span className="text-base font-normal text-muted-foreground ml-1">
+                          /{maxScore}
+                        </span>
+                      </div>
+                      {percentage !== null && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {percentage.toFixed(1)}%
+                        </p>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-sm">Chưa nhập - Click để nhập</div>
+                )}
               </div>
             )}
 
@@ -506,17 +665,6 @@ export default function TeacherGradesPage() {
       description="Xem và quản lý điểm số của học sinh trong lớp học"
     >
       <div className="space-y-6">
-        {/* Back button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate("/teacher/classes")}
-          className="gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Quay lại danh sách lớp
-        </Button>
-
         <Tabs defaultValue="assessments" className="w-full">
           <TabsList>
             <TabsTrigger value="assessments">
@@ -528,23 +676,37 @@ export default function TeacherGradesPage() {
 
           {/* Tab 1: Assessments List */}
           <TabsContent value="assessments" className="space-y-4">
-            {/* Filter buttons */}
-            <div className="flex flex-wrap gap-2">
-              {[
-                { key: "all", label: "Tất cả" },
-                { key: "upcoming", label: "Sắp tới" },
-                { key: "graded", label: "Đã chấm" },
-                { key: "overdue", label: "Quá hạn" },
-              ].map((tab) => (
-                <Button
-                  key={tab.key}
-                  variant={filter === tab.key ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setFilter(tab.key as typeof filter)}
-                >
-                  {tab.label}
-                </Button>
-              ))}
+            {/* Search and Filter */}
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Tìm kiếm theo tên, mô tả, loại bài kiểm tra..."
+                  value={assessmentSearchQuery}
+                  onChange={(e) => {
+                    setAssessmentSearchQuery(e.target.value);
+                    setAssessmentPage(0);
+                  }}
+                  className="pl-10"
+                />
+              </div>
+              <Select
+                value={filter}
+                onValueChange={(value) => {
+                  setFilter(value as typeof filter);
+                  setAssessmentPage(0);
+                }}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Lọc theo trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả</SelectItem>
+                  <SelectItem value="upcoming">Sắp tới</SelectItem>
+                  <SelectItem value="graded">Đã chấm</SelectItem>
+                  <SelectItem value="overdue">Quá hạn</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Assessments list */}
@@ -571,90 +733,166 @@ export default function TeacherGradesPage() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {assessments.map((assessment) => {
-                  const status = getAssessmentStatus(assessment);
-                  const StatusIcon = status.icon;
+              <>
+                <div className="space-y-4">
+                  {filteredAndPaginatedAssessments.map((assessment) => {
+                    const status = getAssessmentStatus(assessment);
+                    const StatusIcon = status.icon;
 
-                  return (
-                    <Card
-                      key={assessment.id}
-                      className="hover:shadow-md transition-shadow"
-                    >
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 space-y-2">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <CardTitle className="text-lg">
-                                {assessment.name}
-                              </CardTitle>
-                              {assessment.kind && (
+                    return (
+                      <Card
+                        key={assessment.id}
+                        className="hover:shadow-md transition-shadow"
+                      >
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 space-y-2">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <CardTitle className="text-lg">
+                                  {assessment.name}
+                                </CardTitle>
+                                {assessment.kind && (
+                                  <Badge
+                                    className={cn(
+                                      "text-xs",
+                                      getAssessmentKindColor(assessment.kind)
+                                    )}
+                                  >
+                                    {ASSESSMENT_KINDS[assessment.kind] ||
+                                      assessment.kind}
+                                  </Badge>
+                                )}
                                 <Badge
-                                  className={cn(
-                                    "text-xs",
-                                    getAssessmentKindColor(assessment.kind)
-                                  )}
+                                  variant={status.variant}
+                                  className="gap-1"
                                 >
-                                  {ASSESSMENT_KINDS[assessment.kind] ||
-                                    assessment.kind}
+                                  <StatusIcon className="h-3 w-3" />
+                                  {status.label}
                                 </Badge>
+                              </div>
+                              {assessment.description && (
+                                <p className="text-sm text-muted-foreground">
+                                  {assessment.description}
+                                </p>
                               )}
-                              <Badge variant={status.variant} className="gap-1">
-                                <StatusIcon className="h-3 w-3" />
-                                {status.label}
-                              </Badge>
                             </div>
-                            {assessment.description && (
-                              <p className="text-sm text-muted-foreground">
-                                {assessment.description}
-                              </p>
-                            )}
+                            <Button
+                              size="sm"
+                              onClick={() =>
+                                navigate(
+                                  `/teacher/assessments/${assessment.id}/scores`
+                                )
+                              }
+                              className="gap-2"
+                            >
+                              <Edit className="h-4 w-4" />
+                              Nhập điểm
+                            </Button>
                           </div>
-                          <Button
-                            size="sm"
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <Calendar className="h-4 w-4" />
+                              <span>
+                                {formatDate(assessment.scheduledDate)}
+                              </span>
+                            </div>
+                            {assessment.durationMinutes && (
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <Clock className="h-4 w-4" />
+                                <span>{assessment.durationMinutes} phút</span>
+                              </div>
+                            )}
+                            {assessment.maxScore && (
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <FileText className="h-4 w-4" />
+                                <span>Điểm tối đa: {assessment.maxScore}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <Users className="h-4 w-4" />
+                              <span>
+                                {assessment.gradedCount}/
+                                {assessment.totalStudents} đã nhập
+                              </span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+
+                {/* Pagination */}
+                {totalAssessmentPages > 1 && (
+                  <div className="flex items-center justify-center pt-4">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
                             onClick={() =>
-                              navigate(
-                                `/teacher/assessments/${assessment.id}/scores`
+                              setAssessmentPage((prev) => Math.max(0, prev - 1))
+                            }
+                            className={
+                              assessmentPage === 0
+                                ? "pointer-events-none opacity-50"
+                                : "cursor-pointer"
+                            }
+                          />
+                        </PaginationItem>
+                        {Array.from(
+                          { length: totalAssessmentPages },
+                          (_, i) => i + 1
+                        ).map((page) => {
+                          const currentPage = assessmentPage + 1; // Convert 0-based to 1-based
+                          if (
+                            page === 1 ||
+                            page === totalAssessmentPages ||
+                            (page >= currentPage - 1 && page <= currentPage + 1)
+                          ) {
+                            return (
+                              <PaginationItem key={page}>
+                                <PaginationLink
+                                  onClick={() => setAssessmentPage(page - 1)}
+                                  isActive={assessmentPage === page - 1}
+                                  className="cursor-pointer"
+                                >
+                                  {page}
+                                </PaginationLink>
+                              </PaginationItem>
+                            );
+                          } else if (
+                            page === currentPage - 2 ||
+                            page === currentPage + 2
+                          ) {
+                            return (
+                              <PaginationItem key={page}>
+                                <span className="px-2">...</span>
+                              </PaginationItem>
+                            );
+                          }
+                          return null;
+                        })}
+                        <PaginationItem>
+                          <PaginationNext
+                            onClick={() =>
+                              setAssessmentPage((prev) =>
+                                Math.min(totalAssessmentPages - 1, prev + 1)
                               )
                             }
-                            className="gap-2"
-                          >
-                            <Edit className="h-4 w-4" />
-                            Nhập điểm
-                          </Button>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Calendar className="h-4 w-4" />
-                            <span>{formatDate(assessment.scheduledDate)}</span>
-                          </div>
-                          {assessment.durationMinutes && (
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <Clock className="h-4 w-4" />
-                              <span>{assessment.durationMinutes} phút</span>
-                            </div>
-                          )}
-                          {assessment.maxScore && (
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <FileText className="h-4 w-4" />
-                              <span>Điểm tối đa: {assessment.maxScore}</span>
-                            </div>
-                          )}
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Users className="h-4 w-4" />
-                            <span>
-                              {assessment.gradedCount}/
-                              {assessment.totalStudents} đã nhập
-                            </span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
+                            className={
+                              assessmentPage === totalAssessmentPages - 1
+                                ? "pointer-events-none opacity-50"
+                                : "cursor-pointer"
+                            }
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
+              </>
             )}
           </TabsContent>
 
@@ -882,6 +1120,64 @@ export default function TeacherGradesPage() {
 
           {/* Tab 2: Gradebook Matrix */}
           <TabsContent value="gradebook" className="space-y-4">
+            {/* Search and Sort */}
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Tìm kiếm theo tên học sinh, mã học sinh..."
+                  value={gradebookSearchQuery}
+                  onChange={(e) => {
+                    setGradebookSearchQuery(e.target.value);
+                    setGradebookPage(0);
+                  }}
+                  className="pl-10"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={gradebookSortField}
+                  onValueChange={(value) => {
+                    setGradebookSortField(value as typeof gradebookSortField);
+                    setGradebookPage(0);
+                  }}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Sắp xếp theo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">Tên</SelectItem>
+                    <SelectItem value="averageScore">
+                      Điểm trung bình
+                    </SelectItem>
+                    <SelectItem value="attendanceRate">Chuyên cần</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setGradebookSortOrder(
+                      gradebookSortOrder === "asc" ? "desc" : "asc"
+                    );
+                    setGradebookPage(0);
+                  }}
+                  className="gap-2"
+                >
+                  {gradebookSortOrder === "asc" ? (
+                    <>
+                      <ArrowUp className="h-4 w-4" />
+                      Tăng dần
+                    </>
+                  ) : (
+                    <>
+                      <ArrowDown className="h-4 w-4" />
+                      Giảm dần
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
             {isLoadingGradebook ? (
               <div className="space-y-3">
                 {[...Array(5)].map((_, i) => (
@@ -942,7 +1238,7 @@ export default function TeacherGradesPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {gradebook.students.map((student) => {
+                      {filteredAndPaginatedStudents.map((student) => {
                         return (
                           <TableRow
                             key={student.studentId}
@@ -1024,6 +1320,75 @@ export default function TeacherGradesPage() {
                     </TableBody>
                   </Table>
                 </div>
+
+                {/* Pagination */}
+                {totalGradebookPages > 1 && (
+                  <div className="flex items-center justify-center pt-4 border-t">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
+                            onClick={() =>
+                              setGradebookPage((prev) => Math.max(0, prev - 1))
+                            }
+                            className={
+                              gradebookPage === 0
+                                ? "pointer-events-none opacity-50"
+                                : "cursor-pointer"
+                            }
+                          />
+                        </PaginationItem>
+                        {Array.from(
+                          { length: totalGradebookPages },
+                          (_, i) => i + 1
+                        ).map((page) => {
+                          const currentPage = gradebookPage + 1; // Convert 0-based to 1-based
+                          if (
+                            page === 1 ||
+                            page === totalGradebookPages ||
+                            (page >= currentPage - 1 && page <= currentPage + 1)
+                          ) {
+                            return (
+                              <PaginationItem key={page}>
+                                <PaginationLink
+                                  onClick={() => setGradebookPage(page - 1)}
+                                  isActive={gradebookPage === page - 1}
+                                  className="cursor-pointer"
+                                >
+                                  {page}
+                                </PaginationLink>
+                              </PaginationItem>
+                            );
+                          } else if (
+                            page === currentPage - 2 ||
+                            page === currentPage + 2
+                          ) {
+                            return (
+                              <PaginationItem key={page}>
+                                <span className="px-2">...</span>
+                              </PaginationItem>
+                            );
+                          }
+                          return null;
+                        })}
+                        <PaginationItem>
+                          <PaginationNext
+                            onClick={() =>
+                              setGradebookPage((prev) =>
+                                Math.min(totalGradebookPages - 1, prev + 1)
+                              )
+                            }
+                            className={
+                              gradebookPage === totalGradebookPages - 1
+                                ? "pointer-events-none opacity-50"
+                                : "cursor-pointer"
+                            }
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1038,7 +1403,7 @@ export default function TeacherGradesPage() {
                   }
                 }}
               >
-                <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+                <DialogContent className="max-w-5xl sm:max-w-5xl max-h-[85vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="text-xl">
                       Chi tiết điểm - {selectedStudent.studentName}
