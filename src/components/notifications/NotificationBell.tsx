@@ -1,5 +1,3 @@
-"use client"
-
 import * as React from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -20,17 +18,26 @@ import {
 } from "lucide-react"
 import { useGetRecentNotificationsQuery, useGetUnreadCountQuery, useMarkAsReadMutation } from "@/store/services/notificationApi"
 import { useNavigate } from "react-router-dom"
-import { formatDistanceToNow } from "date-fns"
-import { vi } from "date-fns/locale"
+import { formatTimeAgo } from "@/lib/date-utils"
 
-export function NotificationBell() {
-  const { isMobile } = useSidebar()
+interface NotificationBellProps {
+  /**
+   * Variant của component:
+   * - "header": Hiển thị như icon button ở header
+   * - "sidebar": Hiển thị như menu item trong sidebar
+   */
+  variant?: "header" | "sidebar"
+}
+
+export function NotificationBell({ variant = "sidebar" }: NotificationBellProps) {
   const navigate = useNavigate()
-
-  // Skip fetching until dropdown opens
   const [isOpen, setIsOpen] = React.useState(false)
 
-  // Luôn fetch unread count để hiển thị badge (không skip)
+  // Chỉ gọi useSidebar khi variant là sidebar
+  const sidebarContext = variant === "sidebar" ? useSidebar() : null
+  const isMobile = sidebarContext?.isMobile ?? false
+
+  // Luôn fetch unread count để hiển thị badge
   const { data: unreadCount = 0 } = useGetUnreadCountQuery()
 
   const {
@@ -48,7 +55,6 @@ export function NotificationBell() {
     e?.stopPropagation()
     try {
       await markAsRead(notificationId).unwrap()
-      // RTK Query tự động refetch thông qua invalidatesTags: ['Notification']
     } catch (error) {
       console.error("Failed to mark notification as read:", error)
     }
@@ -65,53 +71,65 @@ export function NotificationBell() {
     // Navigate to action URL if available
     if (notification.actionUrl) {
       navigate(notification.actionUrl)
-      setIsOpen(false) // Close dropdown
+      setIsOpen(false)
     }
   }
 
-  const formatTimeAgo = (dateString: string) => {
-    try {
-      const date = new Date(dateString)
-      const now = new Date()
-      const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
-
-      if (diffInMinutes < 1) return "Vừa xong"
-      if (diffInMinutes < 60) return `${diffInMinutes} phút trước`
-      if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} giờ trước`
-      if (diffInMinutes < 10080) return `${Math.floor(diffInMinutes / 1440)} ngày trước`
-
-      return formatDistanceToNow(date, {
-        addSuffix: true,
-        locale: vi
-      })
-    } catch {
-      return "Không xác định"
-    }
-  }
-
-  // unreadCount đã được lấy từ useGetUnreadCountQuery ở trên
-
-  return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
-        <SidebarMenuButton className="relative">
-          <BellIcon className="h-4 w-4" />
-          <span>Thông báo</span>
+  // Render trigger based on variant
+  const renderTrigger = () => {
+    if (variant === "header") {
+      return (
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="relative"
+          aria-label={unreadCount > 0 ? `${unreadCount} thông báo chưa đọc` : "Thông báo"}
+        >
+          <BellIcon className="h-5 w-5" />
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
-              className="ml-auto h-4 w-4 rounded-full p-0 text-[10px] flex items-center justify-center"
+              className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-[10px] flex items-center justify-center"
+              aria-hidden="true"
             >
               {unreadCount > 99 ? "99+" : unreadCount}
             </Badge>
           )}
-        </SidebarMenuButton>
+        </Button>
+      )
+    }
+
+    // Sidebar variant
+    return (
+      <SidebarMenuButton 
+        className="relative"
+        aria-label={unreadCount > 0 ? `Thông báo - ${unreadCount} chưa đọc` : "Thông báo"}
+      >
+        <BellIcon className="h-4 w-4" />
+        <span>Thông báo</span>
+        {unreadCount > 0 && (
+          <Badge
+            variant="destructive"
+            className="ml-auto h-4 w-4 rounded-full p-0 text-[10px] flex items-center justify-center"
+            aria-hidden="true"
+          >
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </Badge>
+        )}
+      </SidebarMenuButton>
+    )
+  }
+
+  return (
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenuTrigger asChild>
+        {renderTrigger()}
       </DropdownMenuTrigger>
       <DropdownMenuContent
         className="w-80 rounded-lg"
-        side={isMobile ? "bottom" : "right"}
+        side={variant === "sidebar" && isMobile ? "bottom" : variant === "sidebar" ? "right" : undefined}
         align="end"
-        sideOffset={4}
+        sideOffset={variant === "header" ? 8 : 4}
       >
         <DropdownMenuLabel className="px-4 py-3">
           <div className="flex items-center justify-between">
@@ -146,41 +164,70 @@ export function NotificationBell() {
           ) : notifications.length === 0 ? (
             <div className="px-4 py-8 text-center">
               <BellIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Không có thông báo mới</p>
+              <p className="text-sm text-muted-foreground">Chưa có thông báo nào</p>
             </div>
           ) : (
             notifications.map((notification) => {
+              const isUnread = notification.unread
               return (
                 <DropdownMenuItem
                   key={notification.id}
-                  className="p-0 cursor-pointer"
+                  className={`p-0 cursor-pointer transition-colors ${
+                    isUnread 
+                      ? 'bg-blue-50/50 dark:bg-blue-950/20' 
+                      : 'opacity-75 hover:opacity-100'
+                  }`}
                   onClick={(e) => handleNotificationClick(notification, e)}
                 >
                   <div className="w-full px-4 py-3 border-b last:border-b-0">
                     <div className="flex items-start gap-3">
+                      {/* Unread indicator dot */}
+                      <div className="flex-shrink-0 pt-1.5">
+                        {isUnread ? (
+                          <div 
+                            className="h-2 w-2 rounded-full bg-blue-600"
+                            aria-label="Chưa đọc"
+                          />
+                        ) : (
+                          <div className="h-2 w-2" /> // Spacer for alignment
+                        )}
+                      </div>
+                      
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center justify-between gap-2">
-                          <p className={`text-sm font-medium truncate ${notification.unread ? 'font-semibold' : ''
-                            }`}>
+                          <p className={`text-sm truncate ${
+                            isUnread 
+                              ? 'font-semibold text-foreground' 
+                              : 'font-normal text-muted-foreground'
+                          }`}>
                             {notification.title}
                           </p>
-                          {notification.unread && (
-                            <div className="h-1.5 w-1.5 rounded-full bg-blue-600 flex-shrink-0"></div>
-                          )}
                         </div>
 
-                        <p className="text-xs text-muted-foreground line-clamp-2">
+                        <p className={`text-xs line-clamp-2 ${
+                          isUnread 
+                            ? 'text-muted-foreground' 
+                            : 'text-muted-foreground/70'
+                        }`}>
                           {notification.message}
                         </p>
 
                         <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <div className={`flex items-center gap-1 text-xs ${
+                            isUnread 
+                              ? 'text-muted-foreground' 
+                              : 'text-muted-foreground/70'
+                          }`}>
                             <ClockIcon className="h-3 w-3" />
                             {formatTimeAgo(notification.createdAt)}
                           </div>
 
                           {notification.actionUrl && (
-                            <ExternalLinkIcon className="h-3 w-3 text-muted-foreground" />
+                            <ExternalLinkIcon className={`h-3 w-3 ${
+                              isUnread 
+                                ? 'text-muted-foreground' 
+                                : 'text-muted-foreground/70'
+                            }`} />
                           )}
                         </div>
                       </div>
@@ -192,21 +239,23 @@ export function NotificationBell() {
           )}
         </div>
 
-        {notifications.length > 0 && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="cursor-pointer"
-              onClick={() => {
-                navigate("/notifications")
-                setIsOpen(false)
-              }}
-            >
-              <span className="text-sm text-center w-full">Xem tất cả thông báo</span>
-            </DropdownMenuItem>
-          </>
-        )}
+        {/* Always show "View all" link */}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onClick={() => {
+            navigate("/notifications")
+            setIsOpen(false)
+          }}
+        >
+          <span className="text-sm text-center w-full text-primary hover:text-primary/80">
+            Xem tất cả thông báo
+          </span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
 }
+
+// Export alias for backwards compatibility
+export { NotificationBell as HeaderNotificationBell }

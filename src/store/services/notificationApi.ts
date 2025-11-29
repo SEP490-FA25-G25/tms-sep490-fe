@@ -93,9 +93,9 @@ export const notificationApi = createApi({
       providesTags: ['Notification'],
     }),
 
-    // Get recent unread notifications (for dropdown)
+    // Get recent notifications for dropdown (all statuses, sorted by date)
     getRecentNotifications: builder.query<Notification[], void>({
-      query: () => '/notifications?status=UNREAD&size=5',
+      query: () => '/notifications?size=5',
       transformResponse: (response: { data: NotificationResponse }) => response.data.content,
       providesTags: ['Notification'],
     }),

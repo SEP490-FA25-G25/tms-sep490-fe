@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { addDays, format, parseISO } from 'date-fns'
+import { addDays, format, parseISO, startOfWeek } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import {
   CalendarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ChevronDownIcon,
   DownloadIcon,
   MapPinIcon,
   NotebookPenIcon,
+  PlusIcon,
   RefreshCcwIcon,
   UsersIcon,
 } from 'lucide-react'
@@ -23,24 +25,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { cn } from '@/lib/utils'
 import {
   type DayOfWeek,
-  type SessionSummaryDTO,
-  type TimeSlotDTO,
   useGetCurrentWeekQuery,
   useGetSessionDetailQuery,
   useGetWeeklyScheduleQuery,
 } from '@/store/services/studentScheduleApi'
-
-const DAYS: DayOfWeek[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
-
-const DAY_LABELS: Record<DayOfWeek, string> = {
-  MONDAY: 'Thứ 2',
-  TUESDAY: 'Thứ 3',
-  WEDNESDAY: 'Thứ 4',
-  THURSDAY: 'Thứ 5',
-  FRIDAY: 'Thứ 6',
-  SATURDAY: 'Thứ 7',
-  SUNDAY: 'Chủ nhật',
-}
+import { CalendarView } from './components/CalendarView'
 
 const SESSION_STATUS_STYLES: Record<
   string,
@@ -120,18 +109,6 @@ const RESOURCE_TYPE_LABELS: Record<string, string> = {
   VIRTUAL: 'Lớp trực tuyến',
 }
 
-const getTimeSlotId = (slot: TimeSlotDTO) => {
-  if (typeof slot.id === 'number') {
-    return slot.id
-  }
-  if (typeof slot.timeSlotTemplateId === 'number') {
-    return slot.timeSlotTemplateId
-  }
-  return null
-}
-
-const getTimeSlotLabel = (slot: TimeSlotDTO) => slot.displayName ?? slot.name ?? 'Khung giờ'
-
 export default function StudentSchedulePage() {
   const [weekStart, setWeekStart] = useState<string | null>(null)
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null)
@@ -144,10 +121,13 @@ export default function StudentSchedulePage() {
   } = useGetCurrentWeekQuery()
 
   useEffect(() => {
-    if (!weekStart && currentWeekResponse?.data) {
+    if (currentWeekResponse?.data && weekStart !== currentWeekResponse.data) {
       setWeekStart(currentWeekResponse.data)
+    } else if (!weekStart && isCurrentWeekError) {
+      const fallbackWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
+      setWeekStart(format(fallbackWeekStart, 'yyyy-MM-dd'))
     }
-  }, [currentWeekResponse?.data, weekStart])
+  }, [currentWeekResponse?.data, isCurrentWeekError, weekStart])
 
   const {
     data: weeklyScheduleResponse,
@@ -166,24 +146,13 @@ export default function StudentSchedulePage() {
 
   const scheduleData = weeklyScheduleResponse?.data
 
-  const dayDateMap = useMemo(() => {
-    if (!scheduleData) {
-      return null
-    }
-    const startDate = parseISO(scheduleData.weekStart)
-    return DAYS.reduce<Record<DayOfWeek, Date>>((acc, day, index) => {
-      acc[day] = addDays(startDate, index)
-      return acc
-    }, {} as Record<DayOfWeek, Date>)
-  }, [scheduleData])
-
   const weekRangeLabel = useMemo(() => {
     if (!scheduleData) {
       return null
     }
     const start = parseISO(scheduleData.weekStart)
     const end = parseISO(scheduleData.weekEnd)
-    return `${format(start, 'dd/MM', { locale: vi })} - ${format(end, 'dd/MM', { locale: vi })}`
+    return `${format(start, 'dd/MM/yyyy', { locale: vi })} - ${format(end, 'dd/MM/yyyy', { locale: vi })}`
   }, [scheduleData])
 
   const handleWeekChange = useCallback(
@@ -205,23 +174,18 @@ export default function StudentSchedulePage() {
     [currentWeekResponse?.data, scheduleData]
   )
 
-  const getSessionForCell = useCallback(
-    (day: DayOfWeek, slot: TimeSlotDTO) => {
-      if (!scheduleData) return null
-      const slotId = getTimeSlotId(slot)
-      if (slotId === null) {
-        return null
-      }
-      return scheduleData.schedule?.[day]?.find(
-        (session: SessionSummaryDTO) => session.timeSlotTemplateId === slotId
-      )
-    },
-    [scheduleData]
-  )
+  const handleRetry = useCallback(() => {
+    refetchCurrentWeek()
+    refetchSchedule()
+  }, [refetchCurrentWeek, refetchSchedule])
 
-  const isLoading = isCurrentWeekLoading || isScheduleLoading || !weekStart
-  const hasError = isCurrentWeekError || isScheduleError
-  const hasContent = !!scheduleData && scheduleData.timeSlots.length > 0
+  const isLoading = (!weekStart && !isCurrentWeekError) || isCurrentWeekLoading || isScheduleLoading
+  const hasError = isScheduleError || (isCurrentWeekError && !weekStart && !isCurrentWeekLoading)
+  const totalSessions = useMemo(() => {
+    if (!scheduleData) return 0
+    return Object.values(scheduleData.schedule ?? {}).reduce((sum, sessions) => sum + sessions.length, 0)
+  }, [scheduleData])
+  const hasContent = !!scheduleData && totalSessions > 0
 
   return (
     <StudentRoute>
@@ -234,215 +198,98 @@ export default function StudentSchedulePage() {
         }
       >
         <AppSidebar variant="inset" />
-        <SidebarInset>
+        <SidebarInset className="min-h-0 flex-1">
           <SiteHeader />
-          <main className="flex flex-1 flex-col">
-            <header className="flex flex-col gap-2 border-b border-border px-6 py-5">
+          <main className="flex flex-1 flex-col h-[calc(100vh-var(--header-height))] overflow-hidden min-h-0">
+            <header className="flex items-center justify-between border-b px-6 py-4 bg-background">
               <div className="flex flex-col gap-2">
-                <h1 className="text-2xl font-semibold tracking-tight">Thời khóa biểu của tôi</h1>
+                <h1 className="text-2xl font-semibold tracking-tight">Lịch học của tôi</h1>
                 <p className="text-sm text-muted-foreground">
-                  Theo dõi lịch học từng buổi, di chuyển giữa các tuần và mở chi tiết để xem tài liệu, bài tập cùng
-                  tình trạng tham gia.
+                  Theo dõi lịch học, tài liệu và trạng thái điểm danh
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border/60 bg-background/50 px-4 py-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <CalendarIcon className="h-4 w-4" />
-                  <span>
-                    Tuần: <span className="font-medium text-foreground">{weekRangeLabel ?? 'Đang xác định...'}</span>
-                  </span>
-                </div>
-                {scheduleData?.studentName ? (
-                  <div className="text-sm text-muted-foreground">
-                    Sinh viên: <span className="font-medium text-foreground">{scheduleData.studentName}</span>
-                  </div>
-                ) : null}
-                <div className="flex flex-wrap items-center gap-2 ml-auto">
-                  <Button
-                    variant="outline"
-                    size="icon"
+              
+              <div className="flex items-center gap-3">
+                <div className="flex items-center rounded-md border bg-background p-1 shadow-sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-7 px-2"
                     onClick={() => handleWeekChange('prev')}
                     disabled={!scheduleData || isScheduleFetching}
-                    aria-label="Tuần trước"
                   >
                     <ChevronLeftIcon className="h-4 w-4" />
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleWeekChange('next')}
-                    disabled={!scheduleData || isScheduleFetching}
-                    aria-label="Tuần tiếp theo"
-                  >
-                    <ChevronRightIcon className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="secondary"
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-7 px-3 font-medium"
                     onClick={() => handleWeekChange('current')}
                     disabled={!currentWeekResponse?.data || isScheduleFetching}
                   >
-                    <RefreshCcwIcon className="mr-2 h-4 w-4" />
-                    Tuần hiện tại
+                    {weekRangeLabel || 'Hôm nay'}
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-7 px-2"
+                    onClick={() => handleWeekChange('next')}
+                    disabled={!scheduleData || isScheduleFetching}
+                  >
+                    <ChevronRightIcon className="h-4 w-4" />
                   </Button>
                 </div>
+
+                <div className="h-8 w-px bg-border mx-1" />
+
+                <Button 
+                  variant="outline" 
+                  className="gap-2 hidden sm:flex"
+                  onClick={() => handleWeekChange('current')}
+                >
+                  <RefreshCcwIcon className="h-4 w-4" />
+                  Hiện tại
+                </Button>
               </div>
             </header>
 
-            <div className="flex-1 px-6 py-6">
-              {isLoading && (
-                <div className="space-y-3 rounded-3xl border border-border/60 bg-card/30 p-6">
-                  <Skeleton className="h-6 w-48" />
-                  <Skeleton className="h-40 w-full" />
-                  <Skeleton className="h-40 w-full" />
+            <div className="flex-1 p-6 overflow-hidden bg-muted/10 min-h-0">
+              {isLoading && !hasError && (
+                <div className="h-full w-full rounded-xl border bg-background p-6">
+                  <Skeleton className="h-full w-full" />
                 </div>
               )}
 
               {hasError && (
-                  <div className="rounded-3xl border border-destructive/40 bg-destructive/5 p-6">
-                    <p className="font-medium text-destructive">Không thể tải thời khóa biểu.</p>
-                    <p className="mt-1 text-sm text-destructive/80">
-                      Vui lòng kiểm tra kết nối và thử lại. Nếu lỗi tiếp diễn, hãy liên hệ bộ phận hỗ trợ.
-                    </p>
-                    <div className="mt-4 flex flex-wrap gap-3">
-                      <Button onClick={() => refetchSchedule()} variant="default">
-                        Thử tải lại lịch
-                      </Button>
-                      <Button onClick={() => refetchCurrentWeek()} variant="outline">
-                        Làm mới tuần hiện tại
-                      </Button>
-                    </div>
+                <div className="flex h-full flex-col items-center justify-center gap-4 rounded-xl border border-dashed p-8 text-center">
+                  <div className="rounded-full bg-destructive/10 p-3">
+                    <RefreshCcwIcon className="h-6 w-6 text-destructive" />
                   </div>
-                )}
-
-                {!isLoading && !hasError && !hasContent && (
-                  <div className="rounded-3xl border border-dashed border-muted-foreground/40 bg-background/60 p-10 text-center">
-                    <p className="text-lg font-medium text-foreground">Hiện chưa có thời khóa biểu</p>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      Hệ thống sẽ hiển thị buổi học ngay khi bạn được xếp lịch. Hãy kiểm tra lại sau.
-                    </p>
+                  <div>
+                    <h3 className="font-semibold">Không thể tải lịch học</h3>
+                    <p className="text-sm text-muted-foreground">Vui lòng kiểm tra kết nối và thử lại.</p>
                   </div>
-                )}
+                  <Button onClick={handleRetry} variant="outline">
+                    Thử lại
+                  </Button>
+                </div>
+              )}
 
-                {!isLoading && !hasError && hasContent && scheduleData && dayDateMap && (
-                  <section className="rounded-3xl border border-border/60 bg-card/30">
-                    <div className="overflow-x-auto">
-                      <div className="min-w-[800px] sm:min-w-[960px] divide-y divide-border/60">
-                        <div
-                          className="grid"
-                          style={{
-                            gridTemplateColumns: `120px repeat(${DAYS.length}, minmax(80px, 1fr))`,
-                          }}
-                        >
-                          <div className="bg-muted/40 px-4 py-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                            Khung giờ
-                          </div>
-                          {DAYS.map((day) => (
-                            <div key={day} className="bg-muted/40 px-3 py-3 sm:px-4 sm:py-4">
-                              <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                                {DAY_LABELS[day]}
-                              </div>
-                              <div className="text-base font-semibold text-foreground">
-                                {format(dayDateMap[day], 'dd/MM', { locale: vi })}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+              {!isLoading && !hasError && !hasContent && (
+                <div className="flex h-full flex-col items-center justify-center gap-4 rounded-xl border border-dashed bg-background p-8 text-center">
+                  <div className="rounded-full bg-muted p-3">
+                    <CalendarIcon className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Không có lịch học</h3>
+                    <p className="text-sm text-muted-foreground">Bạn không có lịch học nào trong tuần này.</p>
+                  </div>
+                </div>
+              )}
 
-                        {scheduleData.timeSlots.map((slot, slotIndex) => {
-                          const slotId = getTimeSlotId(slot)
-                          const slotKey =
-                            slotId !== null ? slotId : `slot-${slotIndex}-${slot.startTime}-${slot.endTime}`
-                          return (
-                            <div
-                              key={slotKey}
-                              className="grid"
-                              style={{
-                                gridTemplateColumns: `120px repeat(${DAYS.length}, minmax(80px, 1fr))`,
-                              }}
-                          >
-                            <div className="border-r border-border/60 bg-muted/20 px-4 py-5">
-                              <p className="text-sm font-semibold text-foreground">{getTimeSlotLabel(slot)}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {slot.startTime.slice(0, 5)} - {slot.endTime.slice(0, 5)}
-                              </p>
-                            </div>
-                            {DAYS.map((day) => {
-                              const session = getSessionForCell(day, slot)
-                              const sessionStatus = session ? SESSION_STATUS_STYLES[session.sessionStatus] : null
-                              const attendanceStatus = session
-                                ? ATTENDANCE_STATUS_STYLES[session.attendanceStatus]
-                                : null
-                              const locationLabel = session
-                                ? session.location?.trim() ||
-                                  (session.modality === 'ONLINE' ? 'Học trực tuyến' : session.branchName)
-                                : ''
-                              return (
-                                <button
-                                  key={`${day}-${slotKey}`}
-                                  type="button"
-                                  onClick={() => session && setSelectedSessionId(session.sessionId)}
-                                  disabled={!session}
-                                  className={cn(
-                                    'group flex h-full w-full flex-col border-r border-border/60 p-4 text-left transition',
-                                    session
-                                      ? 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60'
-                                      : 'opacity-80'
-                                  )}
-                                >
-                                  {session ? (
-                                    <div className="flex flex-1 flex-col rounded-2xl bg-primary/5 p-3 ring-1 ring-primary/15 group-hover:bg-primary/10">
-                                      <div className="flex items-center gap-2 text-xs font-semibold text-primary">
-                                        <span>{session.classCode}</span>
-                                        {session.isMakeup && (
-                                          <Badge variant="outline" className="border-purple-300 bg-purple-50 text-[10px] text-purple-700">
-                                            Buổi bù
-                                          </Badge>
-                                        )}
-                                      </div>
-                                      <p className="mt-1 text-sm font-semibold text-foreground line-clamp-2">
-                                        {session.topic || session.className}
-                                      </p>
-                                      <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
-                                        {locationLabel}
-                                      </p>
-                                      <div className="mt-auto flex flex-wrap items-center gap-2 pt-3">
-                                        {sessionStatus ? (
-                                          <span
-                                            className={cn(
-                                              'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1',
-                                              sessionStatus.className
-                                            )}
-                                          >
-                                            {sessionStatus.label}
-                                          </span>
-                                        ) : null}
-                                        {attendanceStatus ? (
-                                          <span
-                                            className={cn(
-                                              'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold',
-                                              attendanceStatus.className
-                                            )}
-                                          >
-                                            {attendanceStatus.label}
-                                          </span>
-                                        ) : null}
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-muted-foreground/50 text-xs text-muted-foreground transition group-hover:border-muted-foreground/80">
-                                      Không có buổi học
-                                    </div>
-                                  )}
-                                </button>
-                              )
-                            })}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  </section>
-                )}
+              {!isLoading && !hasError && hasContent && scheduleData && (
+                <CalendarView scheduleData={scheduleData} onSessionClick={setSelectedSessionId} className="h-full" />
+              )}
             </div>
           </main>
         </SidebarInset>

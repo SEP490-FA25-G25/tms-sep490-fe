@@ -16,7 +16,7 @@ import {
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { useAuth } from "@/hooks/useAuth"
 import { ROLES } from "@/hooks/useRoleBasedAccess"
-import { HeaderNotificationBell } from "@/components/notifications/HeaderNotificationBell"
+import { NotificationBell } from "@/components/notifications/NotificationBell"
 
 export function SiteHeader() {
   const navigate = useNavigate()
@@ -71,7 +71,7 @@ export function SiteHeader() {
         {/* Right side: Notifications + User dropdown */}
         <div className="flex items-center gap-2">
           {/* Notification Bell */}
-          <HeaderNotificationBell />
+          <NotificationBell variant="header" />
 
           {/* User Dropdown */}
           <DropdownMenu>
