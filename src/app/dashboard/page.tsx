@@ -11,16 +11,19 @@ import { CenterHeadDashboardContent } from '@/components/dashboard/role-based/Ce
 import { SubjectLeaderDashboardContent } from '@/components/dashboard/role-based/SubjectLeaderDashboardContent'
 import { QADashboardContent } from '@/components/dashboard/role-based/QADashboardContent'
 import { AcademicStaffDashboardContent } from '@/components/dashboard/role-based/AcademicStaffDashboardContent'
+import { useParams } from 'react-router-dom'
 
 export default function DashboardPage() {
   const { user } = useAuth()
+  const params = useParams()
+  const roleParam = (params as { role?: string }).role
 
   const getDashboardContent = () => {
     if (!user?.roles || user.roles.length === 0) {
       return <div className="p-6">Không có nội dung dashboard cho vai trò của bạn.</div>
     }
 
-    // Get highest priority role
+    // Get highest priority role (fallback)
     const rolePriorities = {
       [ROLES.ADMIN]: 8,
       [ROLES.MANAGER]: 7,
@@ -37,7 +40,14 @@ export default function DashboardPage() {
       rolePriorities[highest as keyof typeof rolePriorities] ? current : highest
     )
 
-    switch (highestRole) {
+    // If URL specifies a role and user actually has it, use that role
+    const normalizedParam = roleParam?.toUpperCase() as keyof typeof ROLES | undefined
+    const effectiveRole =
+      normalizedParam && user.roles.includes(normalizedParam)
+        ? normalizedParam
+        : (highestRole as keyof typeof ROLES)
+
+    switch (effectiveRole) {
       case ROLES.ADMIN:
         return <AdminDashboardContent />
       case ROLES.MANAGER:

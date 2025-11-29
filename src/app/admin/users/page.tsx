@@ -30,7 +30,6 @@ import { DataTable } from "@/app/academic/student-requests/components/DataTable"
 import { createUserColumns } from "./components/userColumns";
 import { CreateUserDialog } from "./components/CreateUserDialog";
 import { EditUserDialog } from "./components/EditUserDialog";
-import { DeleteUserDialog } from "./components/DeleteUserDialog";
 import { UserDetailDialog } from "./components/UserDetailDialog";
 import {
   useGetUsersQuery,
@@ -69,7 +68,6 @@ export default function AdminUsersPage() {
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [userDetail, setUserDetail] = useState<UserResponse | null>(null);
   const [userToEdit, setUserToEdit] = useState<UserResponse | null>(null);
-  const [userToDelete, setUserToDelete] = useState<UserResponse | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const extractErrorMessage = (error: unknown, fallback: string) =>
     (error as { data?: { message?: string } })?.data?.message || fallback;
@@ -96,7 +94,6 @@ export default function AdminUsersPage() {
   }
 
   const [updateUserStatus] = useUpdateUserStatusMutation();
-  const [deleteUser] = useDeleteUserMutation();
 
   // Get refetch function for user detail if userDetail is open
   const { refetch: refetchUserDetail } = useGetUserByIdQuery(
@@ -140,20 +137,8 @@ export default function AdminUsersPage() {
         toast.error(extractErrorMessage(error, "Cập nhật trạng thái thất bại"));
       }
     },
-    onDelete: (user) => {
-      setUserToDelete(user);
-    },
+    // Xóa người dùng đã được vô hiệu hóa trên UI nên không cần handler
   });
-
-  const handleDeleteUser = async (userId: number) => {
-    try {
-      await deleteUser(userId).unwrap();
-      toast.success("Xóa người dùng thành công");
-      refetchUsers();
-    } catch (error: unknown) {
-      toast.error(extractErrorMessage(error, "Xóa người dùng thất bại"));
-    }
-  };
 
   return (
     <AdminRoute>
@@ -395,7 +380,6 @@ export default function AdminUsersPage() {
         }}
       />
 
-      {/* Delete Confirmation Dialog */}
       <UserDetailDialog
         user={userDetail}
         open={!!userDetail}
@@ -404,19 +388,6 @@ export default function AdminUsersPage() {
         }}
       />
 
-      <DeleteUserDialog
-        user={userToDelete}
-        open={!!userToDelete && !showCreateDialog}
-        onOpenChange={(open) => {
-          if (!open) setUserToDelete(null);
-        }}
-        onConfirm={async () => {
-          if (userToDelete) {
-            await handleDeleteUser(userToDelete.id);
-            setUserToDelete(null);
-          }
-        }}
-      />
     </AdminRoute>
   );
 }

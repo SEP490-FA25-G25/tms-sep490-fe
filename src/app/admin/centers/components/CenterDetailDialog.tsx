@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  FullScreenModal,
+  FullScreenModalContent,
+  FullScreenModalHeader,
+  FullScreenModalBody,
+  FullScreenModalTitle,
+} from "@/components/ui/full-screen-modal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -15,6 +16,7 @@ import { type CenterResponse } from "@/store/services/centerApi";
 import {
   useGetBranchesByCenterIdQuery,
   useDeleteBranchMutation,
+  useUpdateBranchMutation,
   type BranchResponse,
 } from "@/store/services/branchApi";
 import { toast } from "sonner";
@@ -50,6 +52,8 @@ export function CenterDetailDialog({
   } = useGetBranchesByCenterIdQuery(center.id, { skip: !open });
 
   const [deleteBranch] = useDeleteBranchMutation();
+  const [updateBranch, { isLoading: isUpdatingBranch }] =
+    useUpdateBranchMutation();
 
   // Extract branches from API response
   const branches: BranchResponse[] = branchesResponse?.data ?? [];
@@ -68,7 +72,50 @@ export function CenterDetailDialog({
       setBranchToDelete(null);
       onSuccess();
     } catch (error: unknown) {
-      toast.error((error as { data?: { message?: string } })?.data?.message || "Xóa chi nhánh thất bại");
+      toast.error(
+        (error as { data?: { message?: string } })?.data?.message ||
+          "Xóa chi nhánh thất bại"
+      );
+    }
+  };
+
+  const handleToggleBranchStatus = async (branch: BranchResponse) => {
+    const nextStatus = branch.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+    try {
+      const result = await updateBranch({
+        id: branch.id,
+        data: {
+          centerId: branch.centerId,
+          code: branch.code,
+          name: branch.name,
+          address: branch.address,
+          city: branch.city,
+          district: branch.district,
+          phone: branch.phone,
+          email: branch.email,
+          status: nextStatus,
+          openingDate: branch.openingDate,
+        },
+      }).unwrap();
+
+      if (!result.success) {
+        throw new Error(
+          result.message || "Cập nhật trạng thái chi nhánh thất bại"
+        );
+      }
+
+      toast.success(
+        nextStatus === "ACTIVE"
+          ? "Kích hoạt chi nhánh thành công"
+          : "Ngưng hoạt động chi nhánh thành công"
+      );
+      await refetchBranches();
+      onSuccess();
+    } catch (error: unknown) {
+      toast.error(
+        (error as { data?: { message?: string } })?.data?.message ||
+          "Cập nhật trạng thái chi nhánh thất bại"
+      );
     }
   };
 
@@ -94,24 +141,24 @@ export function CenterDetailDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <div className="flex items-start justify-between">
-              <div>
-                <DialogTitle className="text-2xl">{center.name}</DialogTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Mã: {center.code}
-                </p>
-              </div>
-              <Button variant="outline" onClick={onEdit}>
-                <Edit className="h-4 w-4 mr-2" />
-                Chỉnh sửa
-              </Button>
+      <FullScreenModal open={open} onOpenChange={onOpenChange}>
+        <FullScreenModalContent>
+          <FullScreenModalHeader className="flex items-start justify-between">
+            <div>
+              <FullScreenModalTitle className="text-2xl">
+                {center.name}
+              </FullScreenModalTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Mã: {center.code}
+              </p>
             </div>
-          </DialogHeader>
+            <Button variant="outline" onClick={onEdit}>
+              <Edit className="h-4 w-4 mr-2" />
+              Chỉnh sửa
+            </Button>
+          </FullScreenModalHeader>
 
-          <div className="space-y-6">
+          <FullScreenModalBody className="space-y-6">
             {/* Center Information */}
             <div className="space-y-3">
               <h3 className="font-semibold">Thông tin trung tâm</h3>
@@ -186,8 +233,8 @@ export function CenterDetailDialog({
                   </Button>
                 </div>
               ) : (
-                <div className="border rounded-lg overflow-hidden">
-                  <table className="w-full">
+                <div className="border rounded-lg overflow-x-auto">
+                  <table className="w-full min-w-[800px]">
                     <thead className="bg-muted">
                       <tr>
                         <th className="px-4 py-2 text-left text-sm font-medium">
@@ -209,8 +256,13 @@ export function CenterDetailDialog({
                     </thead>
                     <tbody>
                       {branches.map((branch: BranchResponse) => (
-                        <tr key={branch.id} className="border-t hover:bg-muted/50">
-                          <td className="px-4 py-2 text-sm font-medium">{branch.code}</td>
+                        <tr
+                          key={branch.id}
+                          className="border-t hover:bg-muted/50"
+                        >
+                          <td className="px-4 py-2 text-sm font-medium">
+                            {branch.code}
+                          </td>
                           <td className="px-4 py-2 text-sm">{branch.name}</td>
                           <td className="px-4 py-2 text-sm text-muted-foreground">
                             {branch.address || "-"}
@@ -221,6 +273,16 @@ export function CenterDetailDialog({
                           <td className="px-4 py-2 text-right">
                             <div className="flex justify-end gap-2">
                               <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={isUpdatingBranch}
+                                onClick={() => handleToggleBranchStatus(branch)}
+                              >
+                                {branch.status === "ACTIVE"
+                                  ? "Ngưng hoạt động"
+                                  : "Kích hoạt"}
+                              </Button>
+                              <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setBranchToEdit(branch)}
@@ -230,8 +292,8 @@ export function CenterDetailDialog({
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => setBranchToDelete(branch)}
-                                className="text-red-600 hover:text-red-700"
+                                disabled
+                                className="text-red-400 opacity-40 cursor-not-allowed"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -244,9 +306,9 @@ export function CenterDetailDialog({
                 </div>
               )}
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </FullScreenModalBody>
+        </FullScreenModalContent>
+      </FullScreenModal>
 
       {/* Branch Dialogs */}
       {showCreateBranch && (
