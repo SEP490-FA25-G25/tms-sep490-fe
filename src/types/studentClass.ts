@@ -36,7 +36,7 @@ export type SessionType = "CLASS" | "TEACHER_RESCHEDULE";
 export type AssessmentKind = "QUIZ" | "MIDTERM" | "FINAL" | "ASSIGNMENT" | "PROJECT" | "ORAL" | "PRACTICE" | "OTHER";
 
 // Attendance status options
-export type AttendanceStatus = "PLANNED" | "PRESENT" | "ABSENT";
+export type AttendanceStatus = "PLANNED" | "PRESENT" | "ABSENT" | "EXCUSED" | "LATE" | "MAKEUP";
 
 // Homework status options
 export type HomeworkStatus = "COMPLETED" | "INCOMPLETE" | "NO_HOMEWORK";

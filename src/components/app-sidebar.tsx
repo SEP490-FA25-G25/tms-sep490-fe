@@ -15,15 +15,13 @@ import {
   NotebookPenIcon,
   SchoolIcon,
   UserCircleIcon,
-SlidersHorizontalIcon,
+  SlidersHorizontalIcon,
   PlusIcon,
   MessageCircleIcon,
+  LogOutIcon,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
-import { NavSecondary } from "@/components/nav-secondary";
-import { NavUser } from "@/components/nav-user";
-import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { StudentFeedbackNavBadge } from "@/components/student-feedback/StudentFeedbackBadge";
 import {
   Sidebar,
@@ -36,7 +34,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { ROLES } from "@/hooks/useRoleBasedAccess";
-import { Bell } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 // Role-based navigation configuration
 const roleBasedNav = {
@@ -325,17 +323,9 @@ const roleBasedNav = {
   },
 };
 
-const navSecondary = [
-  {
-    title: "Thông báo",
-    url: "#",
-    icon: Bell,
-    component: <NotificationBell />,
-  },
-];
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   // Get navigation items based on user's highest priority role
   const getHighestRole = () => {
@@ -391,17 +381,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMain} />
-        <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser
-          user={{
-            name: user?.fullName || "Người dùng",
-            email: user?.email || "",
-            avatar: "/avatars/default.jpg",
-            role: highestRole,
-          }}
-        />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={() => {
+                logout();
+                navigate("/login");
+              }}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <LogOutIcon className="h-4 w-4" />
+              <span>Đăng xuất</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   );

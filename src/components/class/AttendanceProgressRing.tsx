@@ -3,7 +3,8 @@ import { cn } from '@/lib/utils';
 interface AttendanceProgressRingProps {
   present: number;
   absent: number;
-  future: number;
+  excused?: number;
+  future?: number;
   className?: string;
   size?: number;
   strokeWidth?: number;
@@ -13,36 +14,36 @@ interface AttendanceProgressRingProps {
 export function AttendanceProgressRing({
   present,
   absent,
-  future,
+  excused = 0,
+  future = 0,
   className,
   size = 80,
   strokeWidth = 8,
   textClassName,
 }: AttendanceProgressRingProps) {
-  const total = present + absent + future;
+  const total = present + absent;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
 
   if (total === 0) {
+    const hasFuture = future > 0;
+    const hasExcusedOnly = excused > 0 && !hasFuture;
     return (
       <div className={cn("relative flex items-center justify-center", className)} style={{ width: size, height: size }}>
-        <div className="text-xs text-muted-foreground">N/A</div>
+        <div className="text-xs text-muted-foreground">
+          {hasExcusedOnly ? "Chỉ có phép" : hasFuture ? "Chưa diễn ra" : "N/A"}
+        </div>
       </div>
     );
   }
 
-  // Layering approach:
-  // 1. Gray (Future) - Bottom layer, full circle (represents Total)
-  // 2. Red (Absent) - Middle layer, represents (Present + Absent)
-  // 3. Green (Present) - Top layer, represents Present
-
   const presentPercentage = present / total;
-  const presentAbsentPercentage = (present + absent) / total;
+  const presentAbsentPercentage = 1; // cover full circle for completed sessions
 
   const presentOffset = circumference - (presentPercentage * circumference);
   const presentAbsentOffset = circumference - (presentAbsentPercentage * circumference);
 
-  // Calculate percentage to display (Present / Total)
+  // Calculate percentage to display (Present / (Present + Absent))
   const displayPercentage = Math.round((present / total) * 100);
 
   return (

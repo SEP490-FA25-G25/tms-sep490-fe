@@ -58,10 +58,11 @@ const SessionsTab: React.FC<SessionsTabProps> = ({ sessionsData, isLoading, repo
     const makeupPresent = studentSessions.filter((s) => s.attendanceStatus === 'PRESENT' && s.isMakeup).length;
     const present = regularPresent + makeupPresent;
     const absent = studentSessions.filter((s) => s.attendanceStatus === 'ABSENT').length;
+    const excused = studentSessions.filter((s) => s.attendanceStatus === 'EXCUSED').length;
     const upcomingCount = upcomingSessions.length;
-    const completed = present + absent;
-    const attendanceRate = completed > 0 ? (present / completed) * 100 : 0;
-    return { total, present, regularPresent, makeupPresent, absent, upcomingCount, completed, attendanceRate };
+    const completed = present + absent + excused;
+    const attendanceRate = (present + absent) > 0 ? (present / (present + absent)) * 100 : 0;
+    return { total, present, regularPresent, makeupPresent, absent, excused, upcomingCount, completed, attendanceRate };
   }, [allSessions.length, studentSessions, upcomingSessions.length]);
 
   if (isLoading) {
@@ -110,11 +111,11 @@ const SessionsTab: React.FC<SessionsTabProps> = ({ sessionsData, isLoading, repo
         </ToggleGroup>
       </div>
 
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-6">
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-7">
         <div className="rounded-lg border bg-muted/10 p-3">
           <p className="text-xs text-muted-foreground">Tổng số buổi</p>
           <p className="text-sm font-semibold text-foreground">
-            {summary.total > 0 ? `${summary.total - summary.upcomingCount} / ${summary.total}` : '—'}
+            {summary.total > 0 ? `${summary.completed} / ${summary.total}` : '—'}
           </p>
         </div>
         <div className="rounded-lg border bg-muted/10 p-3">
@@ -126,8 +127,12 @@ const SessionsTab: React.FC<SessionsTabProps> = ({ sessionsData, isLoading, repo
           <p className="text-sm font-semibold text-blue-700">{summary.makeupPresent}</p>
         </div>
         <div className="rounded-lg border bg-muted/10 p-3">
-          <p className="text-xs text-muted-foreground">Vắng</p>
+          <p className="text-xs text-muted-foreground">Vắng không phép</p>
           <p className="text-sm font-semibold text-rose-700">{summary.absent}</p>
+        </div>
+        <div className="rounded-lg border bg-muted/10 p-3">
+          <p className="text-xs text-muted-foreground">Vắng có phép</p>
+          <p className="text-sm font-semibold text-indigo-700">{summary.excused}</p>
         </div>
         <div className="rounded-lg border bg-muted/10 p-3">
           <p className="text-xs text-muted-foreground">Sắp tới</p>

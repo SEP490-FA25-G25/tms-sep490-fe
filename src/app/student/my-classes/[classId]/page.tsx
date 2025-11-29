@@ -96,19 +96,36 @@ const ClassDetailPage = () => {
   const classmates = classmatesResponse?.data;
   const attendanceReportSessions = attendanceReportResponse?.data?.sessions;
 
-  const attendanceRate = useMemo<number | undefined>(() => {
-    if (!sessionsData?.studentSessions || !sessionsData.studentSessions.length) return undefined;
-    const present = sessionsData.studentSessions.filter((s: StudentSessionDTO) => s.attendanceStatus === 'PRESENT').length;
-    return (present / sessionsData.studentSessions.length) * 100;
-  }, [sessionsData]);
-
   const sessionStats = useMemo(() => {
     const sessions = sessionsData?.studentSessions || [];
-    const present = sessions.filter((s: StudentSessionDTO) => s.attendanceStatus === 'PRESENT').length;
-    const absent = sessions.filter((s: StudentSessionDTO) => s.attendanceStatus === 'ABSENT').length;
-    const future = sessions.filter((s: StudentSessionDTO) => s.attendanceStatus === 'PLANNED').length;
-    const completed = present + absent;
-    return { completed, total: sessions.length, present, absent, future };
+    let present = 0;
+    let absent = 0;
+    let excused = 0;
+    let future = 0;
+
+    sessions.forEach((s: StudentSessionDTO) => {
+      switch (s.attendanceStatus) {
+        case 'PRESENT':
+        case 'LATE':
+          present++;
+          break;
+        case 'ABSENT':
+          absent++;
+          break;
+        case 'EXCUSED':
+          excused++;
+          break;
+        case 'PLANNED':
+          future++;
+          break;
+        default:
+          break;
+      }
+    });
+
+    const completed = present + absent + excused;
+    const attendanceRate = (present + absent) > 0 ? (present / (present + absent)) * 100 : 0;
+    return { completed, total: sessions.length, present, absent, excused, future, attendanceRate };
   }, [sessionsData]);
 
   const averageScore = useMemo(() => {
@@ -172,7 +189,7 @@ const ClassDetailPage = () => {
     return (
       <ClassHeader
         classDetail={classDetail}
-        attendanceRate={attendanceRate}
+        attendanceRate={sessionStats?.attendanceRate}
         sessionStats={sessionStats}
         nextSession={classDetail.nextSession}
       />

@@ -31,7 +31,7 @@ const ATTENDANCE_STATUS_META: Record<
     className: "bg-emerald-50 text-emerald-700 border-emerald-200",
   },
   ABSENT: {
-    label: "Vắng",
+    label: "Vắng không phép",
     className: "bg-rose-50 text-rose-700 border-rose-200",
   },
   LATE: {
@@ -90,12 +90,20 @@ export default function StudentClassAttendanceReportPage() {
 
   const attendanceRate = useMemo(() => {
     if (!report) return 0;
-    const { attended, absent, attendanceRate: backendRate } = report.summary;
+    const {
+      attended,
+      absent,
+      attendanceRate: backendRate,
+    } = report.summary;
     if (typeof backendRate === "number") {
       return backendRate * 100;
     }
     return computeAttendanceRate(attended, absent);
   }, [report]);
+
+  const summary = report?.summary;
+  const excused = summary?.excused ?? 0;
+  const completed = summary ? summary.attended + summary.absent + excused : 0;
 
   const hasSessions =
     report && Array.isArray(report.sessions) && report.sessions.length > 0;
@@ -139,32 +147,37 @@ export default function StudentClassAttendanceReportPage() {
                   </div>
 
                   {report && (
-                    <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-border/60 bg-muted/20 px-4 py-3">
-                      <div>
-                        <p className="text-xs text-muted-foreground">
-                          Tổng số buổi đã học
-                        </p>
-                        <p className="text-sm font-semibold text-foreground">
-                          {report.summary.attended + report.summary.absent} /{" "}
-                          {report.summary.totalSessions}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Có mặt</p>
-                        <p className="text-sm font-semibold text-emerald-700">
-                          {report.summary.attended}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Vắng</p>
-                        <p className="text-sm font-semibold text-rose-700">
-                          {report.summary.absent}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">
-                          Buổi sắp tới
-                        </p>
+                  <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-border/60 bg-muted/20 px-4 py-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground">
+                        Tổng số buổi đã học
+                      </p>
+                      <p className="text-sm font-semibold text-foreground">
+                          {completed} / {report.summary.totalSessions}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Có mặt</p>
+                      <p className="text-sm font-semibold text-emerald-700">
+                        {report.summary.attended}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Vắng không phép</p>
+                      <p className="text-sm font-semibold text-rose-700">
+                        {report.summary.absent}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Vắng có phép</p>
+                      <p className="text-sm font-semibold text-indigo-700">
+                        {excused}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">
+                        Buổi sắp tới
+                      </p>
                         <p className="text-sm font-semibold text-sky-700">
                           {report.summary.upcoming}
                         </p>

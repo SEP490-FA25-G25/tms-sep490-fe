@@ -13,7 +13,9 @@ interface ClassHeaderProps {
     total: number;
     present: number;
     absent: number;
+    excused?: number;
     future: number;
+    attendanceRate?: number;
   }
   nextSession?: SessionDTO
 }
@@ -106,6 +108,10 @@ export function ClassHeader({ classDetail, attendanceRate, sessionStats, nextSes
                            <div className="w-2 h-2 rounded-full bg-rose-500" />
                            <span>{sessionStats?.absent ?? 0}</span>
                         </div>
+                        <div className="flex items-center gap-1.5" title="Vắng có phép">
+                           <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                           <span>{sessionStats?.excused ?? 0}</span>
+                        </div>
                         <div className="flex items-center gap-1.5" title="Chưa diễn ra">
                            <div className="w-2 h-2 rounded-full bg-slate-200 dark:bg-slate-700" />
                            <span>{sessionStats?.future ?? 0}</span>
@@ -116,6 +122,7 @@ export function ClassHeader({ classDetail, attendanceRate, sessionStats, nextSes
                   <AttendanceProgressRing 
                     present={sessionStats?.present || 0}
                     absent={sessionStats?.absent || 0}
+                    excused={sessionStats?.excused || 0}
                     future={sessionStats?.future || 0}
                     size={64}
                     strokeWidth={6}

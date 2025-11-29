@@ -136,6 +136,7 @@ export interface StudentAttendanceOverviewClassDTO {
   totalSessions: number;
   attended: number;
   absent: number;
+  excused?: number;
   upcoming: number;
   status: string;
   lastUpdated: string | null;
@@ -183,6 +184,7 @@ export interface StudentAttendanceReportDTO {
     totalSessions: number;
     attended: number;
     absent: number;
+    excused?: number;
     upcoming: number;
     attendanceRate?: number; // rate as decimal (0-1)
   };

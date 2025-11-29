@@ -47,7 +47,7 @@ const STATUS_META: Record<
     className: "bg-emerald-50 text-emerald-700 border-emerald-200",
   },
   ABSENT: {
-    label: "Vắng",
+    label: "Vắng không phép",
     className: "bg-rose-50 text-rose-700 border-rose-200",
   },
   LATE: {

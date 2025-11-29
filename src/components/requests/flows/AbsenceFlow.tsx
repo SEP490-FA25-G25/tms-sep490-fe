@@ -52,17 +52,24 @@ function getSessionAvailability(session: CombinedSession, futureLimit: Date) {
   const isTooFar = sessionDateTime.getTime() > futureLimit.getTime()
 
   // Check specific fields depending on the type
-  const hasAttendance = 'attendanceStatus' in session && session.attendanceStatus && session.attendanceStatus !== 'PLANNED'
+  const attendanceStatus = 'attendanceStatus' in session ? session.attendanceStatus : undefined
+  const isExcused = attendanceStatus === 'EXCUSED'
+  const hasAttendance =
+    attendanceStatus !== undefined &&
+    attendanceStatus !== null &&
+    attendanceStatus !== 'PLANNED' &&
+    attendanceStatus !== 'EXCUSED'
   const isInactive = 'sessionStatus' in session && session.sessionStatus !== 'PLANNED'
 
   let disabledReason: string | null = null
   if (isPast) disabledReason = 'Buổi đã diễn ra'
   else if (isTooFar) disabledReason = 'Chỉ có thể xin nghỉ trong 30 ngày tới'
+  else if (isExcused) disabledReason = 'Đã xin nghỉ (có phép)'
   else if (hasAttendance) disabledReason = 'Đã điểm danh'
   else if (isInactive) disabledReason = 'Buổi không khả dụng'
 
   return {
-    isSelectable: !isPast && !isTooFar && !hasAttendance && !isInactive,
+    isSelectable: !isPast && !isTooFar && !hasAttendance && !isInactive && !isExcused,
     disabledReason
   }
 }
