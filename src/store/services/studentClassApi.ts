@@ -24,10 +24,11 @@ export const studentClassApi = createApi({
       ApiResponse<PaginatedResponse<StudentClassDTO>>,
       GetStudentClassesRequest
     >({
-      query: ({ studentId, status, branchId, courseId, modality, page = 0, size = 20, sort = 'enrollmentDate', direction = 'desc' }) => ({
+      query: ({ studentId, enrollmentStatus, classStatus, branchId, courseId, modality, page = 0, size = 20, sort = 'enrollmentDate', direction = 'desc' }) => ({
         url: `/students/${studentId}/classes`,
         params: {
-          status,
+          enrollmentStatus,
+          classStatus,
           branchId,
           courseId,
           modality,

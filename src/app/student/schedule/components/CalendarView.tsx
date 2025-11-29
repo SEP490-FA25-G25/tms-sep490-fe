@@ -123,7 +123,7 @@ export function CalendarView({ scheduleData, onSessionClick, className }: Calend
       </div>
 
       {/* Calendar Body (Scrollable) */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         <div className="relative grid grid-cols-8 divide-x" style={{ height: `${(endHour - startHour + 1) * HOUR_HEIGHT}px` }}>
           
           {/* Time Column */}

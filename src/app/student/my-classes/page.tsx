@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppSidebar } from '@/components/app-sidebar';
 import { StudentRoute } from '@/components/ProtectedRoute';
@@ -17,7 +17,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { useGetStudentClassesQuery } from '@/store/services/studentClassApi';
-import type { ClassStatus, Modality, StudentClassDTO } from '@/types/studentClass';
+import type { ClassStatus, EnrollmentStatus, Modality, StudentClassDTO } from '@/types/studentClass';
 import { CLASS_STATUSES, MODALITIES } from '@/types/studentClass';
 import { AlertCircle, BookOpen, Search } from 'lucide-react';
 
@@ -42,20 +42,32 @@ const MyClassesPage = () => {
     courseId: 'all',
     searchTerm: '',
   });
+  const [branchOptions, setBranchOptions] = useState<Array<{ id: number; name: string }>>([]);
+  const [courseOptions, setCourseOptions] = useState<Array<{ id: number; name: string }>>([]);
 
   const [page, setPage] = useState(0);
   const [pageSize] = useState(12);
 
-  // Map frontend status tabs to backend enrollment status values
-  const getEnrollmentStatus = (tabStatus: 'all' | ClassStatus): string[] | undefined => {
-    // For tabs, use the tab status, not filter status
+  // Map frontend status tabs to backend filters
+  const getClassStatusFilter = (tabStatus: 'all' | ClassStatus): ClassStatus[] | undefined => {
+    switch (tabStatus) {
+      case 'ONGOING':
+        return ['ONGOING'];
+      case 'COMPLETED':
+        return ['COMPLETED'];
+      case 'SCHEDULED':
+        return ['SCHEDULED'];
+      default:
+        return undefined;
+    }
+  };
+
+  const getEnrollmentStatusFilter = (tabStatus: 'all' | ClassStatus): EnrollmentStatus[] | undefined => {
     switch (tabStatus) {
       case 'ONGOING':
         return ['ENROLLED'];
       case 'COMPLETED':
         return ['COMPLETED'];
-      case 'SCHEDULED':
-        return ['SCHEDULED'];
       default:
         return undefined;
     }
@@ -68,7 +80,8 @@ const MyClassesPage = () => {
     refetch,
   } = useGetStudentClassesQuery({
     studentId,
-    status: getEnrollmentStatus(activeStatusTab),
+    classStatus: getClassStatusFilter(activeStatusTab),
+    enrollmentStatus: getEnrollmentStatusFilter(activeStatusTab),
     modality: filters.modality !== 'all' ? [filters.modality] : undefined,
     branchId: filters.branchId !== 'all' ? [filters.branchId] : undefined,
     courseId: filters.courseId !== 'all' ? [filters.courseId] : undefined,
@@ -108,26 +121,31 @@ const MyClassesPage = () => {
       return 0;
     });
   }, [classesResponse, activeStatusTab]);
-
-  const branchOptions = useMemo(() => {
-    const map = new Map<number, string>();
-    classItems.forEach((item) => {
-      if (item.branchId) {
-        map.set(item.branchId, item.branchName);
-      }
+  useEffect(() => {
+    setBranchOptions((prev) => {
+      const map = new Map<number, string>();
+      prev.forEach((item) => map.set(item.id, item.name));
+      (classesResponse?.data?.content || []).forEach((item) => {
+        if (item.branchId && item.branchName) {
+          map.set(item.branchId, item.branchName);
+        }
+      });
+      return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
     });
-    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
-  }, [classItems]);
+  }, [classesResponse]);
 
-  const courseOptions = useMemo(() => {
-    const map = new Map<number, string>();
-    classItems.forEach((item) => {
-      if (item.courseId) {
-        map.set(item.courseId, item.courseName);
-      }
+  useEffect(() => {
+    setCourseOptions((prev) => {
+      const map = new Map<number, string>();
+      prev.forEach((item) => map.set(item.id, item.name));
+      (classesResponse?.data?.content || []).forEach((item) => {
+        if (item.courseId && item.courseName) {
+          map.set(item.courseId, item.courseName);
+        }
+      });
+      return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
     });
-    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
-  }, [classItems]);
+  }, [classesResponse]);
 
   const hasActiveFilters = useMemo(() => {
     return (

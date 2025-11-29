@@ -195,7 +195,8 @@ export interface ClassmateDTO {
 // Request parameters for API calls
 export interface GetStudentClassesRequest {
   studentId: number;
-  status?: string[]; // Can be ClassStatus[] (for class filtering) OR EnrollmentStatus[] (for enrollment filtering)
+  enrollmentStatus?: EnrollmentStatus[];
+  classStatus?: ClassStatus[];
   branchId?: number[];
   courseId?: number[];
   modality?: Modality[];
