@@ -1,19 +1,30 @@
 
 import { LoginForm } from "@/components/login-form"
+import { useNavigate } from "react-router-dom"
 
 export default function LoginPage() {
+  const navigate = useNavigate()
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    navigate("/")
+  }
+
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
-          <a href="#" className="flex items-center gap-2 font-medium">
+          <button
+            onClick={handleLogoClick}
+            className="flex items-center gap-2 font-medium hover:opacity-80 transition-opacity cursor-pointer"
+          >
             <img
               src="/logo.jpg"
               alt="Anh ngữ Pinnacle Logo"
               className="h-8 w-auto"
             />
            Anh ngữ Pinnacle
-          </a>
+          </button>
         </div>
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-xs">

@@ -63,7 +63,7 @@ export default function CreateSubjectPage() {
             toast.success("Tạo môn học thành công!");
             navigate("/curriculum");
         } catch (error) {
-            console.error("Failed to create subject:", error);
+            console.error("Tạo môn học thất bại:", error);
             toast.error("Tạo môn học thất bại. Vui lòng thử lại.");
         }
     };

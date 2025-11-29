@@ -33,8 +33,8 @@ export function LoginForm({
 
     if (!password) {
       newErrors.password = "Vui lòng nhập mật khẩu"
-    } else if (password.length < 6) {
-      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự"
+    } else if (password.length < 8) {
+      newErrors.password = "Mật khẩu phải có ít nhất 8 ký tự"
     }
 
     setErrors(newErrors)
@@ -80,7 +80,7 @@ export function LoginForm({
           <Input
             id="email"
             type="email"
-            placeholder="m@example.com"
+            placeholder="email@example.com"
             value={email}
             onChange={(e) => {
               setEmail(e.target.value)
@@ -97,22 +97,11 @@ export function LoginForm({
         </Field>
 
         <Field>
-          <div className="flex items-center">
-            <FieldLabel htmlFor="password">Mật khẩu</FieldLabel>
-            <a
-              href="/forgot-password"
-              className="ml-auto text-sm underline-offset-4 hover:underline"
-              onClick={(e) => {
-                e.preventDefault()
-                navigate("/forgot-password")
-              }}
-            >
-              Quên mật khẩu?
-            </a>
-          </div>
+          <FieldLabel htmlFor="password">Mật khẩu</FieldLabel>
           <Input
             id="password"
             type="password"
+            placeholder="Nhập mật khẩu ở đây"
             value={password}
             onChange={(e) => {
               setPassword(e.target.value)
@@ -126,6 +115,18 @@ export function LoginForm({
           {errors.password && (
             <p className="text-sm text-red-500 mt-1">{errors.password}</p>
           )}
+          <div className="flex justify-end mt-1">
+            <a
+              href="/forgot-password"
+              className="text-sm underline-offset-4 hover:underline"
+              onClick={(e) => {
+                e.preventDefault()
+                navigate("/forgot-password")
+              }}
+            >
+              Quên mật khẩu?
+            </a>
+          </div>
         </Field>
 
         <Field>

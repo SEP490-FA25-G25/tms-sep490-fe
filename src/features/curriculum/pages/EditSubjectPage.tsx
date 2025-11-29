@@ -124,7 +124,7 @@ export default function EditSubjectPage() {
             toast.success("Đã kích hoạt lại môn học");
             refetch();
         } catch (error) {
-            console.error("Failed to reactivate subject:", error);
+            console.error("Kích hoạt lại môn học thất bại:", error);
             toast.error("Kích hoạt lại thất bại");
         }
     };

@@ -13,7 +13,7 @@ export interface TransferError {
 export const TRANSFER_ERROR_CODES: Record<string, Omit<TransferError, 'code'>> = {
   // Business Rule Errors
   TRF_QUOTA_EXCEEDED: {
-    message: 'Transfer quota exceeded. Maximum 1 transfer per course.',
+    message: 'Hạn mức chuyển lớp đã hết. Tối đa 1 lần chuyển cho mỗi khóa học.',
     userMessage: 'Bạn đã dùng hết hạn mức chuyển lớp cho khóa học này. Mỗi khóa học chỉ được chuyển 1 lần.',
     severity: 'error',
     action: {
@@ -22,7 +22,7 @@ export const TRANSFER_ERROR_CODES: Record<string, Omit<TransferError, 'code'>> =
     }
   },
   TRF_PENDING_EXISTS: {
-    message: 'You already have a pending transfer request.',
+    message: 'Bạn đã có yêu cầu chuyển lớp đang chờ xử lý.',
     userMessage: 'Bạn đang có yêu cầu chuyển lớp đang chờ duyệt. Vui lòng chờ kết quả trước khi tạo yêu cầu mới.',
     severity: 'warning',
     action: {
@@ -32,7 +32,7 @@ export const TRANSFER_ERROR_CODES: Record<string, Omit<TransferError, 'code'>> =
     }
   },
   TRF_CLASS_FULL: {
-    message: 'Target class is full.',
+    message: 'Lớp mục tiêu đã đầy.',
     userMessage: 'Lớp bạn muốn chuyển đã đủ sĩ số. Vui lòng chọn lớp khác hoặc liên hệ Phòng Học vụ.',
     severity: 'error',
     action: {
@@ -40,7 +40,7 @@ export const TRANSFER_ERROR_CODES: Record<string, Omit<TransferError, 'code'>> =
     }
   },
   TRF_INVALID_DATE: {
-    message: 'No session on effective date.',
+    message: 'Không có buổi học vào ngày có hiệu lực.',
     userMessage: 'Ngày hiệu lực bạn chọn không phải là ngày học của lớp đích. Vui lòng chọn ngày khác.',
     severity: 'error',
     action: {
@@ -48,7 +48,7 @@ export const TRANSFER_ERROR_CODES: Record<string, Omit<TransferError, 'code'>> =
     }
   },
   TRF_PAST_DATE: {
-    message: 'Effective date must be in the future.',
+    message: 'Ngày hiệu lực phải là ngày trong tương lai.',
     userMessage: 'Ngày hiệu lực phải là ngày trong tương lai. Vui lòng chọn lại ngày.',
     severity: 'error',
     action: {
@@ -56,7 +56,7 @@ export const TRANSFER_ERROR_CODES: Record<string, Omit<TransferError, 'code'>> =
     }
   },
   TRF_TIER_VIOLATION: {
-    message: 'You can only change schedule. Contact AA for branch/modality changes.',
+    message: 'Bạn chỉ có thể thay đổi lịch học. Liên hệ Phòng Học vụ để thay đổi cơ sở/hình thức học.',
     userMessage: 'Bạn chỉ có thể thay đổi lịch học. Để chuyển cơ sở hoặc hình thức học, vui lòng liên hệ Phòng Học vụ.',
     severity: 'warning',
     action: {
@@ -65,7 +65,7 @@ export const TRANSFER_ERROR_CODES: Record<string, Omit<TransferError, 'code'>> =
     }
   },
   TRF_SAME_CLASS: {
-    message: 'Cannot transfer to the same class.',
+    message: 'Không thể chuyển đến cùng một lớp.',
     userMessage: 'Không thể chuyển đến cùng một lớp. Vui lòng chọn lớp khác.',
     severity: 'error',
     action: {
@@ -73,7 +73,7 @@ export const TRANSFER_ERROR_CODES: Record<string, Omit<TransferError, 'code'>> =
     }
   },
   TRF_DIFFERENT_COURSE: {
-    message: 'Target class must be for the same course.',
+    message: 'Lớp mục tiêu phải thuộc cùng một khóa học.',
     userMessage: 'Chỉ được chuyển lớp trong cùng một khóa học. Vui lòng chọn lớp cùng khóa học.',
     severity: 'error',
     action: {
@@ -81,7 +81,7 @@ export const TRANSFER_ERROR_CODES: Record<string, Omit<TransferError, 'code'>> =
     }
   },
   TRF_CLASS_STATUS: {
-    message: 'Target class must be SCHEDULED or ONGOING.',
+    message: 'Lớp mục tiêu phải có trạng thái SCHEDULED hoặc ONGOING.',
     userMessage: 'Lớp bạn muốn chuyển chưa bắt đầu hoặc đã kết thúc. Vui lòng chọn lớp đang hoạt động.',
     severity: 'error',
     action: {
@@ -89,7 +89,7 @@ export const TRANSFER_ERROR_CODES: Record<string, Omit<TransferError, 'code'>> =
     }
   },
   TRF_CONCURRENT_UPDATE: {
-    message: 'Target class became full. Please select another class.',
+    message: 'Lớp mục tiêu đã đầy. Vui lòng chọn lớp khác.',
     userMessage: 'Lớp vừa đầy chỗ do người khác đăng ký. Vui lòng chọn lớp khác.',
     severity: 'warning',
     action: {
@@ -99,7 +99,7 @@ export const TRANSFER_ERROR_CODES: Record<string, Omit<TransferError, 'code'>> =
 
   // Validation Errors
   VALIDATION_FAILED: {
-    message: 'Validation failed.',
+    message: 'Xác thực thất bại.',
     userMessage: 'Thông tin không hợp lệ. Vui lòng kiểm tra lại các trường bắt buộc.',
     severity: 'error',
     action: {
@@ -107,7 +107,7 @@ export const TRANSFER_ERROR_CODES: Record<string, Omit<TransferError, 'code'>> =
     }
   },
   REQUEST_REASON_TOO_SHORT: {
-    message: 'Reason must be at least 10 characters.',
+    message: 'Lý do phải có ít nhất 10 ký tự.',
     userMessage: 'Lý do chuyển lớp phải có tối thiểu 10 ký tự.',
     severity: 'error',
     action: {
@@ -117,7 +117,7 @@ export const TRANSFER_ERROR_CODES: Record<string, Omit<TransferError, 'code'>> =
 
   // System Errors
   NETWORK_ERROR: {
-    message: 'Network error occurred.',
+    message: 'Đã xảy ra lỗi mạng.',
     userMessage: 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.',
     severity: 'warning',
     action: {
@@ -125,7 +125,7 @@ export const TRANSFER_ERROR_CODES: Record<string, Omit<TransferError, 'code'>> =
     }
   },
   UNAUTHORIZED: {
-    message: 'Unauthorized access.',
+    message: 'Truy cập chưa được xác thực.',
     userMessage: 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.',
     severity: 'error',
     action: {
@@ -135,7 +135,7 @@ export const TRANSFER_ERROR_CODES: Record<string, Omit<TransferError, 'code'>> =
     }
   },
   FORBIDDEN: {
-    message: 'Access forbidden.',
+    message: 'Truy cập bị cấm.',
     userMessage: 'Bạn không có quyền thực hiện thao tác này.',
     severity: 'error',
     action: {
@@ -143,7 +143,7 @@ export const TRANSFER_ERROR_CODES: Record<string, Omit<TransferError, 'code'>> =
     }
   },
   NOT_FOUND: {
-    message: 'Resource not found.',
+    message: 'Không tìm thấy tài nguyên.',
     userMessage: 'Không tìm thấy thông tin lớp học. Vui lòng tải lại trang và thử lại.',
     severity: 'error',
     action: {
@@ -151,7 +151,7 @@ export const TRANSFER_ERROR_CODES: Record<string, Omit<TransferError, 'code'>> =
     }
   },
   INTERNAL_SERVER_ERROR: {
-    message: 'Internal server error.',
+    message: 'Lỗi máy chủ nội bộ.',
     userMessage: 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau vài phút.',
     severity: 'error',
     action: {
@@ -176,7 +176,7 @@ export function parseTransferError(error: unknown): TransferError {
   if (!error) {
     return {
       code: 'UNKNOWN_ERROR',
-      message: 'Unknown error occurred.',
+      message: 'Đã xảy ra lỗi không xác định.',
       userMessage: 'Đã xảy ra lỗi không xác định. Vui lòng thử lại.',
       severity: 'error',
       action: { type: 'retry' },
@@ -192,7 +192,7 @@ export function parseTransferError(error: unknown): TransferError {
     if (status === 'FETCH_ERROR' || status === 'TIMEOUT_ERROR') {
       return {
         code: 'NETWORK_ERROR',
-        message: fetchErr?.message || 'Network error',
+        message: fetchErr?.message || 'Lỗi mạng',
         userMessage: TRANSFER_ERROR_CODES.NETWORK_ERROR.userMessage,
         severity: TRANSFER_ERROR_CODES.NETWORK_ERROR.severity,
         action: TRANSFER_ERROR_CODES.NETWORK_ERROR.action,
@@ -202,7 +202,7 @@ export function parseTransferError(error: unknown): TransferError {
     if (status === 401) {
       return {
         code: 'UNAUTHORIZED',
-        message: data?.message || 'Unauthorized',
+        message: data?.message || 'Chưa được xác thực',
         userMessage: TRANSFER_ERROR_CODES.UNAUTHORIZED.userMessage,
         severity: TRANSFER_ERROR_CODES.UNAUTHORIZED.severity,
         action: TRANSFER_ERROR_CODES.UNAUTHORIZED.action,
@@ -212,7 +212,7 @@ export function parseTransferError(error: unknown): TransferError {
     if (status === 403) {
       return {
         code: 'FORBIDDEN',
-        message: data?.message || 'Forbidden',
+        message: data?.message || 'Bị cấm truy cập',
         userMessage: TRANSFER_ERROR_CODES.FORBIDDEN.userMessage,
         severity: TRANSFER_ERROR_CODES.FORBIDDEN.severity,
         action: TRANSFER_ERROR_CODES.FORBIDDEN.action,
@@ -222,7 +222,7 @@ export function parseTransferError(error: unknown): TransferError {
     if (status === 404) {
       return {
         code: 'NOT_FOUND',
-        message: data?.message || 'Not found',
+        message: data?.message || 'Không tìm thấy',
         userMessage: TRANSFER_ERROR_CODES.NOT_FOUND.userMessage,
         severity: TRANSFER_ERROR_CODES.NOT_FOUND.severity,
         action: TRANSFER_ERROR_CODES.NOT_FOUND.action,
@@ -242,7 +242,7 @@ export function parseTransferError(error: unknown): TransferError {
     if (status === 500) {
       return {
         code: 'INTERNAL_SERVER_ERROR',
-        message: data?.message || 'Internal server error',
+        message: data?.message || 'Lỗi máy chủ nội bộ',
         userMessage: TRANSFER_ERROR_CODES.INTERNAL_SERVER_ERROR.userMessage,
         severity: TRANSFER_ERROR_CODES.INTERNAL_SERVER_ERROR.severity,
         action: TRANSFER_ERROR_CODES.INTERNAL_SERVER_ERROR.action,
@@ -287,7 +287,7 @@ export function parseTransferError(error: unknown): TransferError {
   if (error instanceof Error) {
     return {
       code: 'UNKNOWN_ERROR',
-      message: error.message || 'Unknown error occurred.',
+      message: error.message || 'Đã xảy ra lỗi không xác định.',
       userMessage: 'Đã xảy ra lỗi không xác định. Vui lòng thử lại.',
       severity: 'error',
       action: { type: 'retry' },
@@ -306,7 +306,7 @@ export function parseTransferError(error: unknown): TransferError {
 
   return {
     code: 'UNKNOWN_ERROR',
-    message: 'Unknown error occurred.',
+    message: 'Đã xảy ra lỗi không xác định.',
     userMessage: 'Đã xảy ra lỗi không xác định. Vui lòng thử lại.',
     severity: 'error',
     action: { type: 'retry' },

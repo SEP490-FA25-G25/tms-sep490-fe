@@ -150,7 +150,7 @@ export default function SubjectDetailPage() {
                 }).unwrap();
                 toast.success("Đã cập nhật thứ tự cấp độ");
             } catch (error) {
-                console.error("Failed to update sort order", error);
+                console.error("Cập nhật thứ tự thất bại", error);
                 toast.error("Cập nhật thứ tự thất bại");
                 refetch(); // Revert on failure
             }
@@ -163,7 +163,7 @@ export default function SubjectDetailPage() {
             toast.success("Đã ngừng hoạt động môn học");
             refetch();
         } catch (error) {
-            console.error("Failed to deactivate subject:", error);
+            console.error("Ngừng hoạt động môn học thất bại:", error);
             toast.error("Ngừng hoạt động thất bại");
         }
     };
@@ -174,7 +174,7 @@ export default function SubjectDetailPage() {
             toast.success("Đã kích hoạt lại môn học");
             refetch();
         } catch (error) {
-            console.error("Failed to reactivate subject:", error);
+            console.error("Kích hoạt lại môn học thất bại:", error);
             toast.error("Kích hoạt lại thất bại");
         }
     };

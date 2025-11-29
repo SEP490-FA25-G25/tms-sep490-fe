@@ -46,14 +46,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: true }
       }
 
-      return { success: false, error: result?.message || 'Invalid response from server' }
+      return { success: false, error: result?.message || 'Phản hồi không hợp lệ từ máy chủ' }
     } catch (error: unknown) {
-      let errorMessage = 'Login failed'
+      let errorMessage = 'Đăng nhập thất bại'
       if (error && typeof error === 'object' && 'data' in error) {
         const errorData = (error as { data?: { message?: string; error?: string } }).data
-        errorMessage = errorData?.message || errorData?.error || 'Login failed'
+        errorMessage = errorData?.message || errorData?.error || 'Đăng nhập thất bại'
       } else if (error && typeof error === 'object' && 'message' in error) {
-        errorMessage = (error as { message?: string }).message || 'Login failed'
+        errorMessage = (error as { message?: string }).message || 'Đăng nhập thất bại'
       }
 
       return { success: false, error: errorMessage }
