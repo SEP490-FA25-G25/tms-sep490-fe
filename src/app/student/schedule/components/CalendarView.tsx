@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { format, addDays, parseISO } from 'date-fns'
+import { useMemo, useState, useEffect } from 'react'
+import { format, addDays, parseISO, isToday } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import {
@@ -48,6 +48,16 @@ const parseTimeToMinutes = (timeStr?: string) => {
 
 export function CalendarView({ scheduleData, onSessionClick, className }: CalendarViewProps) {
   const startDate = useMemo(() => parseISO(scheduleData.weekStart), [scheduleData.weekStart])
+  
+  // Current time indicator
+  const [currentTime, setCurrentTime] = useState(new Date())
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 60000) // Update every minute
+    return () => clearInterval(interval)
+  }, [])
 
   const { startHour, endHour } = useMemo(() => {
     const starts = (scheduleData.timeSlots || [])
@@ -95,6 +105,39 @@ export function CalendarView({ scheduleData, onSessionClick, className }: Calend
     }
   }
 
+  // Calculate current time indicator position
+  const currentTimeIndicator = useMemo(() => {
+    const now = currentTime
+    const currentHour = now.getHours()
+    const currentMinute = now.getMinutes()
+    const totalMinutes = currentHour * 60 + currentMinute
+    
+    // Check if current time is within the displayed range
+    if (currentHour < startHour || currentHour > endHour) {
+      return null
+    }
+    
+    // Find which day column is today
+    const todayIndex = DAYS.findIndex((_, index) => {
+      const date = addDays(startDate, index)
+      return isToday(date)
+    })
+    
+    if (todayIndex === -1) {
+      return null // Today is not in current week view
+    }
+    
+    const offsetFromStart = totalMinutes - startHour * 60
+    const topPosition = (offsetFromStart / 60) * HOUR_HEIGHT
+    const timeLabel = format(now, 'H:mm')
+    
+    return {
+      top: topPosition,
+      dayIndex: todayIndex,
+      timeLabel,
+    }
+  }, [currentTime, startHour, endHour, startDate])
+
   return (
     <div className={cn("flex h-full min-h-0 flex-col overflow-hidden rounded-xl border bg-background shadow-sm", className)}>
       {/* Calendar Header (Days) */}
@@ -139,10 +182,22 @@ export function CalendarView({ scheduleData, onSessionClick, className }: Calend
                 </span>
               </div>
             ))}
+            {/* Current time label in time column */}
+            {currentTimeIndicator && (
+              <div 
+                className="absolute right-0 z-20 flex items-center"
+                style={{ top: `${currentTimeIndicator.top}px`, transform: 'translateY(-50%)' }}
+              >
+                <span className="bg-primary text-primary-foreground text-[10px] font-medium px-1.5 py-0.5 rounded mr-1">
+                  {currentTimeIndicator.timeLabel}
+                </span>
+                <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+              </div>
+            )}
           </div>
 
           {/* Days Columns */}
-          {DAYS.map((day) => (
+          {DAYS.map((day, dayIndex) => (
             <div key={day} className="relative">
               {/* Grid lines for hours */}
               {hours.map((hour) => (
@@ -152,6 +207,18 @@ export function CalendarView({ scheduleData, onSessionClick, className }: Calend
                   style={{ top: `${(hour - startHour) * HOUR_HEIGHT}px`, height: `${HOUR_HEIGHT}px` }}
                 />
               ))}
+
+              {/* Current time indicator line */}
+              {currentTimeIndicator && (
+                <div 
+                  className="absolute left-0 right-0 z-10 pointer-events-none"
+                  style={{ top: `${currentTimeIndicator.top}px` }}
+                >
+                  <div 
+                    className="w-full border-t-2 border-dotted border-primary/60"
+                  />
+                </div>
+              )}
 
               {/* Events */}
               {scheduleData.schedule[day]?.map((session) => {

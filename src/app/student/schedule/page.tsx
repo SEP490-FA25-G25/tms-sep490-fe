@@ -198,9 +198,9 @@ export default function StudentSchedulePage() {
         }
       >
         <AppSidebar variant="inset" />
-        <SidebarInset className="min-h-0 flex-1">
+        <SidebarInset className="h-svh overflow-hidden">
           <SiteHeader />
-          <main className="flex flex-1 flex-col h-[calc(100vh-3.5rem)] overflow-hidden min-h-0">
+          <main className="flex flex-1 flex-col overflow-hidden min-h-0">
             <header className="flex items-center justify-between border-b px-6 py-4 bg-background">
               <div className="flex flex-col gap-2">
                 <h1 className="text-2xl font-semibold tracking-tight">Lịch học của tôi</h1>
