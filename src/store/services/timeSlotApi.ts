@@ -56,7 +56,7 @@ export const timeSlotApi = createApi({
         // Get time slot by ID
         getTimeSlotById: builder.query<TimeSlotTemplate, number>({
             query: (id) => `/time-slots/${id}`,
-            providesTags: (result, error, id) => [{ type: "TimeSlot", id }],
+            providesTags: (_result, _error, id) => [{ type: "TimeSlot", id }],
         }),
 
         // Create new time slot
@@ -76,7 +76,7 @@ export const timeSlotApi = createApi({
                 method: "PUT",
                 body,
             }),
-            invalidatesTags: (result, error, { id }) => [
+            invalidatesTags: (_result, _error, { id }) => [
                 { type: "TimeSlot", id },
                 { type: "TimeSlot", id: "LIST" },
             ],
@@ -88,7 +88,7 @@ export const timeSlotApi = createApi({
                 url: `/time-slots/${id}`,
                 method: "DELETE",
             }),
-            invalidatesTags: (result, error, id) => [
+            invalidatesTags: (_result, _error, id) => [
                 { type: "TimeSlot", id },
                 { type: "TimeSlot", id: "LIST" },
             ],

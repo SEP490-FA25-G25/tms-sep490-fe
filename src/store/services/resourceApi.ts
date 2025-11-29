@@ -86,7 +86,7 @@ export const resourceApi = createApi({
         // Get resource by ID
         getResourceById: builder.query<Resource, number>({
             query: (id) => `/resources/${id}`,
-            providesTags: (result, error, id) => [{ type: "Resource", id }],
+            providesTags: (_result, _error, id) => [{ type: "Resource", id }],
         }),
 
         // Create new resource
@@ -106,7 +106,7 @@ export const resourceApi = createApi({
                 method: "PUT",
                 body,
             }),
-            invalidatesTags: (result, error, { id }) => [
+            invalidatesTags: (_result, _error, { id }) => [
                 { type: "Resource", id },
                 { type: "Resource", id: "LIST" },
             ],
@@ -118,7 +118,7 @@ export const resourceApi = createApi({
                 url: `/resources/${id}`,
                 method: "DELETE",
             }),
-            invalidatesTags: (result, error, id) => [
+            invalidatesTags: (_result, _error, id) => [
                 { type: "Resource", id },
                 { type: "Resource", id: "LIST" },
             ],

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,11 +23,11 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import {
-    ColumnDef,
+    type ColumnDef,
     flexRender,
     getCoreRowModel,
     getSortedRowModel,
-    SortingState,
+    type SortingState,
     useReactTable,
 } from "@tanstack/react-table";
 import { Search, PlusCircleIcon, Building2, Clock, MonitorPlay, XIcon, ArrowUpDown } from "lucide-react";
@@ -53,8 +53,7 @@ export default function CenterHeadResourcesPage() {
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [resourceTypeFilter, setResourceTypeFilter] = useState<ResourceType | "ALL">("ALL");
     const [branchFilter, setBranchFilter] = useState<number | "ALL">("ALL");
-    const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
-    const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlotTemplate | null>(null);
+
 
     // Sorting states
     const [resourceSorting, setResourceSorting] = useState<SortingState>([]);
@@ -69,7 +68,7 @@ export default function CenterHeadResourcesPage() {
     }, [search]);
 
     // Fetch branches
-    const { data: branches } = useGetAllBranchesQuery({});
+    const { data: branches } = useGetAllBranchesQuery();
 
     // Fetch resources
     const { data: resources, isFetching: isFetchingResources } = useGetResourcesQuery(
@@ -475,7 +474,7 @@ export default function CenterHeadResourcesPage() {
                                                     key={row.id}
                                                     data-state={row.getIsSelected() && "selected"}
                                                     className="cursor-pointer hover:bg-muted/50"
-                                                    onClick={() => setSelectedResource(row.original)}
+                                                    onClick={() => { }}
                                                 >
                                                     {row.getVisibleCells().map((cell) => (
                                                         <TableCell key={cell.id}>
@@ -537,7 +536,7 @@ export default function CenterHeadResourcesPage() {
                                                     key={row.id}
                                                     data-state={row.getIsSelected() && "selected"}
                                                     className="cursor-pointer hover:bg-muted/50"
-                                                    onClick={() => setSelectedTimeSlot(row.original)}
+                                                    onClick={() => { }}
                                                 >
                                                     {row.getVisibleCells().map((cell) => (
                                                         <TableCell key={cell.id}>
