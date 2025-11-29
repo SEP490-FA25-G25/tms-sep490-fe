@@ -143,7 +143,6 @@ export default function TeacherSchedulePage() {
 
   const {
     data: weeklyScheduleResponse,
-    isFetching: isScheduleFetching,
     isLoading: isScheduleLoading,
     isError: isScheduleError,
     refetch: refetchSchedule,

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { format, parseISO, startOfToday, isBefore, subDays, isSameDay } from "date-fns";
+import { format, parseISO, startOfToday, subDays, isSameDay } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
-  useGetTodaySessionsQuery,
   useGetSessionsForDateQuery,
   type AttendanceSessionDTO,
 } from "@/store/services/attendanceApi";
@@ -24,7 +23,9 @@ import { Clock, BookOpen, Users, Search } from "lucide-react";
 
 export default function TeacherAttendancePage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [dateFilter, setDateFilter] = useState<"all" | "today" | "yesterday" | "twoDaysAgo">("all");
+  const [dateFilter, setDateFilter] = useState<
+    "all" | "today" | "yesterday" | "twoDaysAgo"
+  >("all");
 
   const today = startOfToday();
   const yesterday = subDays(today, 1);
@@ -78,21 +79,28 @@ export default function TeacherAttendancePage() {
   // Combine all sessions with date info
   const allSessions = useMemo(() => {
     const sessions: (AttendanceSessionDTO & { sessionDate: Date })[] = [];
-    
+
     todaySessions.forEach((session) => {
       sessions.push({ ...session, sessionDate: today });
     });
-    
+
     yesterdaySessions.forEach((session) => {
       sessions.push({ ...session, sessionDate: yesterday });
     });
-    
+
     twoDaysAgoSessions.forEach((session) => {
       sessions.push({ ...session, sessionDate: twoDaysAgo });
     });
-    
+
     return sessions;
-  }, [todaySessions, yesterdaySessions, twoDaysAgoSessions, today, yesterday, twoDaysAgo]);
+  }, [
+    todaySessions,
+    yesterdaySessions,
+    twoDaysAgoSessions,
+    today,
+    yesterday,
+    twoDaysAgo,
+  ]);
 
   // Filter sessions based on search and date filter
   const filteredSessions = useMemo(() => {
@@ -100,11 +108,17 @@ export default function TeacherAttendancePage() {
 
     // Apply date filter
     if (dateFilter === "today") {
-      filtered = filtered.filter((session) => isSameDay(session.sessionDate, today));
+      filtered = filtered.filter((session) =>
+        isSameDay(session.sessionDate, today)
+      );
     } else if (dateFilter === "yesterday") {
-      filtered = filtered.filter((session) => isSameDay(session.sessionDate, yesterday));
+      filtered = filtered.filter((session) =>
+        isSameDay(session.sessionDate, yesterday)
+      );
     } else if (dateFilter === "twoDaysAgo") {
-      filtered = filtered.filter((session) => isSameDay(session.sessionDate, twoDaysAgo));
+      filtered = filtered.filter((session) =>
+        isSameDay(session.sessionDate, twoDaysAgo)
+      );
     }
 
     // Apply search filter
@@ -148,7 +162,9 @@ export default function TeacherAttendancePage() {
       sessions: (AttendanceSessionDTO & { sessionDate: Date })[];
     }[] = [];
 
-    const todayGroup = filteredSessions.filter((s) => isSameDay(s.sessionDate, today));
+    const todayGroup = filteredSessions.filter((s) =>
+      isSameDay(s.sessionDate, today)
+    );
     if (todayGroup.length > 0) {
       groups.push({
         date: today,
@@ -157,7 +173,9 @@ export default function TeacherAttendancePage() {
       });
     }
 
-    const yesterdayGroup = filteredSessions.filter((s) => isSameDay(s.sessionDate, yesterday));
+    const yesterdayGroup = filteredSessions.filter((s) =>
+      isSameDay(s.sessionDate, yesterday)
+    );
     if (yesterdayGroup.length > 0) {
       groups.push({
         date: yesterday,
@@ -166,7 +184,9 @@ export default function TeacherAttendancePage() {
       });
     }
 
-    const twoDaysAgoGroup = filteredSessions.filter((s) => isSameDay(s.sessionDate, twoDaysAgo));
+    const twoDaysAgoGroup = filteredSessions.filter((s) =>
+      isSameDay(s.sessionDate, twoDaysAgo)
+    );
     if (twoDaysAgoGroup.length > 0) {
       groups.push({
         date: twoDaysAgo,
@@ -176,7 +196,15 @@ export default function TeacherAttendancePage() {
     }
 
     return groups;
-  }, [filteredSessions, today, yesterday, twoDaysAgo, formattedToday, formattedYesterday, formattedTwoDaysAgo]);
+  }, [
+    filteredSessions,
+    today,
+    yesterday,
+    twoDaysAgo,
+    formattedToday,
+    formattedYesterday,
+    formattedTwoDaysAgo,
+  ]);
 
   return (
     <TeacherRoute>
@@ -197,7 +225,12 @@ export default function TeacherAttendancePage() {
                 className="pl-10"
               />
             </div>
-            <Select value={dateFilter} onValueChange={(value: "all" | "today" | "yesterday" | "twoDaysAgo") => setDateFilter(value)}>
+            <Select
+              value={dateFilter}
+              onValueChange={(
+                value: "all" | "today" | "yesterday" | "twoDaysAgo"
+              ) => setDateFilter(value)}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Lọc theo ngày" />
               </SelectTrigger>
@@ -238,7 +271,11 @@ export default function TeacherAttendancePage() {
                   key={format(group.date, "yyyy-MM-dd")}
                   title={group.label.split(" - ")[0]}
                   dateLabel={group.label.split(" - ")[1]}
-                  sessions={group.sessions.map(({ sessionDate, ...session }) => session)}
+                  sessions={group.sessions.map((session) => {
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const { sessionDate, ...rest } = session;
+                    return rest;
+                  })}
                   isLoading={false}
                   error={null}
                 />
@@ -262,7 +299,7 @@ function SessionSection({
   dateLabel: string;
   sessions: AttendanceSessionDTO[];
   isLoading: boolean;
-  error: any;
+  error: unknown;
 }) {
   return (
     <div className="space-y-4">
@@ -288,9 +325,7 @@ function SessionSection({
         </div>
       ) : error ? (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center text-sm text-destructive">
-          <p>
-            Có lỗi xảy ra khi tải danh sách buổi học. Vui lòng thử lại sau.
-          </p>
+          <p>Có lỗi xảy ra khi tải danh sách buổi học. Vui lòng thử lại sau.</p>
         </div>
       ) : sessions.length === 0 ? (
         <div className="rounded-lg border border-dashed p-12 text-center">
@@ -315,32 +350,6 @@ function SessionCard({ session }: { session: AttendanceSessionDTO }) {
     locale: vi,
   });
   const timeRange = `${session.startTime} - ${session.endTime}`;
-
-  // Check if session has started (for display purposes only)
-  const hasSessionStarted = useMemo(() => {
-    if (!session.date || !session.startTime) return true; // If no time info, allow by default
-
-    try {
-      const now = new Date();
-      const sessionDateObj = parseISO(session.date);
-
-      // Parse startTime (could be "HH:mm:ss" or "HH:mm")
-      const timeParts = session.startTime.split(":");
-      const hours = parseInt(timeParts[0], 10);
-      const minutes = parseInt(timeParts[1] || "0", 10);
-
-      // Create session start datetime
-      const sessionStartDateTime = new Date(sessionDateObj);
-      sessionStartDateTime.setHours(hours, minutes, 0, 0);
-
-      // Check if current time is before session start time
-      return !isBefore(now, sessionStartDateTime);
-    } catch (error) {
-      // If parsing fails, allow by default
-      console.error("Error parsing session time:", error);
-      return true;
-    }
-  }, [session.date, session.startTime]);
 
   const handleAttendanceClick = () => {
     // Always allow navigation to attendance page
