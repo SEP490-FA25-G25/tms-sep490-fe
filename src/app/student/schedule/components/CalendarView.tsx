@@ -1,6 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
 import { format, addDays, parseISO, isToday } from 'date-fns'
-import { vi } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import {
   type DayOfWeek,
@@ -197,7 +196,7 @@ export function CalendarView({ scheduleData, onSessionClick, className }: Calend
           </div>
 
           {/* Days Columns */}
-          {DAYS.map((day, dayIndex) => (
+          {DAYS.map((day) => (
             <div key={day} className="relative">
               {/* Grid lines for hours */}
               {hours.map((hour) => (

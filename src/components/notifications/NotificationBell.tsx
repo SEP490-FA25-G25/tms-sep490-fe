@@ -33,9 +33,9 @@ export function NotificationBell({ variant = "sidebar" }: NotificationBellProps)
   const navigate = useNavigate()
   const [isOpen, setIsOpen] = React.useState(false)
 
-  // Chỉ gọi useSidebar khi variant là sidebar
-  const sidebarContext = variant === "sidebar" ? useSidebar() : null
-  const isMobile = sidebarContext?.isMobile ?? false
+  // Always call hook unconditionally, then check variant
+  const sidebar = useSidebar()
+  const isMobile = variant === "sidebar" ? sidebar.isMobile : false
 
   // Luôn fetch unread count để hiển thị badge
   const { data: unreadCount = 0 } = useGetUnreadCountQuery()

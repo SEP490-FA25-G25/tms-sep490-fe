@@ -5,11 +5,9 @@ import {
   CalendarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ChevronDownIcon,
   DownloadIcon,
   MapPinIcon,
   NotebookPenIcon,
-  PlusIcon,
   RefreshCcwIcon,
   UsersIcon,
 } from 'lucide-react'
@@ -24,7 +22,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import {
-  type DayOfWeek,
   useGetCurrentWeekQuery,
   useGetSessionDetailQuery,
   useGetWeeklyScheduleQuery,
