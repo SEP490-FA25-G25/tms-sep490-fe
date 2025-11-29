@@ -35,7 +35,6 @@ import {
   useGetUsersQuery,
   useGetUserByIdQuery,
   useUpdateUserStatusMutation,
-  useDeleteUserMutation,
   type UserResponse,
 } from "@/store/services/userApi";
 import { ROLES } from "@/hooks/useRoleBasedAccess";
@@ -387,7 +386,6 @@ export default function AdminUsersPage() {
           if (!open) setUserDetail(null);
         }}
       />
-
     </AdminRoute>
   );
 }
