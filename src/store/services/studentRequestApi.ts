@@ -292,6 +292,11 @@ export interface StudentSessionQuery {
   requestType?: RequestType
 }
 
+export interface StudentMonthSessionQuery {
+  month: string
+  requestType?: RequestType
+}
+
 export interface StudentRequestsQuery {
   requestType?: RequestType
   status?: RequestStatus
@@ -631,6 +636,12 @@ export const studentRequestApi = createApi({
         params: { date, requestType },
       }),
     }),
+    getAvailableSessionsByMonth: builder.query<ApiResponse<StudentClassSessions[]>, StudentMonthSessionQuery>({
+      query: ({ month, requestType = 'ABSENCE' }) => ({
+        url: '/students-request/classes/sessions/month',
+        params: { month, requestType },
+      }),
+    }),
     getMissedSessions: builder.query<ApiResponse<MissedSessionsResponse>, MissedSessionsQuery | void>({
       query: (params) => {
         if (!params) {
@@ -873,6 +884,7 @@ export const {
   useLazyGetMissedSessionsQuery,
   useGetMakeupOptionsQuery,
   useLazyGetMakeupOptionsQuery,
+  useGetAvailableSessionsByMonthQuery,
   useGetMyRequestsQuery,
   useLazyGetMyRequestsQuery,
   useGetMyRequestByIdQuery,

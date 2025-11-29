@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react'
-import { addMonths, format, parseISO, startOfToday } from 'date-fns'
+import { useState, useMemo, useEffect } from 'react'
+import { addMonths, addWeeks, format, parseISO, startOfToday } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { Clock4Icon, MapPinIcon } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Calendar } from '@/components/ui/calendar'
+import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   useGetCurrentWeekQuery,
@@ -12,7 +13,7 @@ import {
   type SessionSummaryDTO
 } from '@/store/services/studentScheduleApi'
 import {
-  useGetAvailableSessionsQuery,
+  useGetAvailableSessionsByMonthQuery,
   useSubmitStudentRequestMutation,
   type StudentSessionOption
 } from '@/store/services/studentRequestApi'
@@ -71,6 +72,8 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
   const [currentStep, setCurrentStep] = useState(1)
   const [activeTab, setActiveTab] = useState('upcoming')
   const [selectedDate, setSelectedDate] = useState<Date>(startOfToday())
+  const [monthCursor, setMonthCursor] = useState<Date>(startOfToday())
+  const [weekStartCursor, setWeekStartCursor] = useState<string | null>(null)
 
   // Selection State
   const [selectedSession, setSelectedSession] = useState<{
@@ -93,16 +96,25 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
   // 1. Upcoming Data (Weekly Schedule)
   const { data: currentWeekResponse } = useGetCurrentWeekQuery()
   const currentWeekStart = currentWeekResponse?.data
+
+  useEffect(() => {
+    if (currentWeekStart) {
+      setWeekStartCursor(currentWeekStart)
+    }
+  }, [currentWeekStart])
+
   const { data: weeklyScheduleResponse, isFetching: isLoadingSchedule } = useGetWeeklyScheduleQuery(
-    { weekStart: currentWeekStart ?? '' },
-    { skip: !currentWeekStart }
+    { weekStart: weekStartCursor ?? '' },
+    { skip: !weekStartCursor }
   )
 
   // 2. Calendar Data (Available Sessions for Date)
   const formattedDate = format(selectedDate, 'yyyy-MM-dd')
-  const { data: availableSessionsResponse, isFetching: isLoadingCalendar } = useGetAvailableSessionsQuery(
-    { date: formattedDate, requestType: 'ABSENCE' },
-    { skip: activeTab !== 'calendar' || !formattedDate }
+
+  const monthKey = format(monthCursor, 'yyyy-MM')
+  const { data: monthSessionsResponse, isFetching: isLoadingMonth } = useGetAvailableSessionsByMonthQuery(
+    { month: monthKey, requestType: 'ABSENCE' },
+    { skip: activeTab !== 'calendar' || !monthKey }
   )
 
   const [submitRequest, { isLoading: isSubmitting }] = useSubmitStudentRequestMutation()
@@ -136,26 +148,35 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
       .slice(0, 5) // Take top 5
   }, [weeklyScheduleResponse, futureLimitDate])
 
-  // Process Calendar Sessions
+  // Process Calendar Sessions (from monthly data)
   const calendarSessions = useMemo(() => {
-    if (!availableSessionsResponse?.data) return []
-    return availableSessionsResponse.data.flatMap(cls =>
+    if (!monthSessionsResponse?.data) return []
+    const today = startOfToday()
+    return monthSessionsResponse.data.flatMap(cls =>
       cls.sessions.map(session => ({
         ...session,
         classId: cls.classId,
         classCode: cls.classCode,
         className: cls.className,
         branchName: cls.branchName,
-        // Adapt to common shape
         sessionId: session.sessionId,
         date: session.date,
         startTime: session.timeSlot.startTime,
         endTime: session.timeSlot.endTime,
         topic: session.courseSessionTitle,
-        isSelectable: true // API returns available ones usually, but we can double check if needed
+        isSelectable: (() => {
+          const sessionDate = parseISO(session.date)
+          return sessionDate >= today && sessionDate <= futureLimitDate
+        })()
       }))
-    )
-  }, [availableSessionsResponse])
+    ).filter(session => session.isSelectable)
+  }, [monthSessionsResponse, futureLimitDate])
+
+  const calendarDatesWithSessions = useMemo(() => new Set(calendarSessions.map(s => s.date)), [calendarSessions])
+  const selectedDateSessions = useMemo(
+    () => calendarSessions.filter(session => session.date === formattedDate),
+    [calendarSessions, formattedDate]
+  )
 
   // Handlers
   const handleNext = () => {
@@ -169,6 +190,25 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
       setCurrentStep(1)
     }
   }
+
+  const handleNextWeek = () => {
+    if (!weekStartCursor) return
+    const nextWeek = format(addWeeks(parseISO(weekStartCursor), 1), 'yyyy-MM-dd')
+    setWeekStartCursor(nextWeek)
+  }
+
+  const handlePrevWeek = () => {
+    if (!weekStartCursor || !currentWeekStart) return
+    const prevWeek = format(addWeeks(parseISO(weekStartCursor), -1), 'yyyy-MM-dd')
+    if (parseISO(prevWeek) >= parseISO(currentWeekStart)) {
+      setWeekStartCursor(prevWeek)
+    }
+  }
+
+  const isPrevWeekDisabled = useMemo(() => {
+    if (!weekStartCursor || !currentWeekStart) return true
+    return parseISO(weekStartCursor) <= parseISO(currentWeekStart)
+  }, [weekStartCursor, currentWeekStart])
 
   const handleSubmit = async () => {
     const reasonValidationError = Validation.reason(reason)
@@ -232,6 +272,19 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
             </TabsList>
 
             <TabsContent value="upcoming" className="space-y-3 mt-0">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Tuần bắt đầu {weekStartCursor ? format(parseISO(weekStartCursor), 'dd/MM/yyyy') : '...'}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={handlePrevWeek} disabled={isPrevWeekDisabled}>
+                    Tuần trước
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleNextWeek} disabled={!weekStartCursor}>
+                    Tuần sau
+                  </Button>
+                </div>
+              </div>
               {isLoadingSchedule ? (
                 <div className="space-y-3">
                   <Skeleton className="h-20 w-full" />
@@ -293,9 +346,16 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
                   <Calendar
                     mode="single"
                     selected={selectedDate}
-                    onSelect={(date) => date && setSelectedDate(date)}
+                    onSelect={(date) => {
+                      if (date) {
+                        setSelectedDate(date)
+                        setMonthCursor(date)
+                      }
+                    }}
+                    onMonthChange={(date) => date && setMonthCursor(date)}
                     locale={vi}
                     className="mx-auto"
+                    disabled={(date) => !calendarDatesWithSessions.has(format(date, 'yyyy-MM-dd'))}
                   />
                 </div>
 
@@ -304,10 +364,10 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
                     Buổi học ngày {format(selectedDate, 'dd/MM/yyyy')}
                   </p>
 
-                  {isLoadingCalendar ? (
+                  {isLoadingMonth ? (
                     <Skeleton className="h-20 w-full" />
-                  ) : calendarSessions.length > 0 ? (
-                    calendarSessions.map(session => (
+                  ) : selectedDateSessions.length > 0 ? (
+                    selectedDateSessions.map(session => (
                       <SelectionCard
                         key={session.sessionId}
                         item={session}
