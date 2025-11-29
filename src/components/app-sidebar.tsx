@@ -15,7 +15,7 @@ import {
   NotebookPenIcon,
   SchoolIcon,
   UserCircleIcon,
-SlidersHorizontalIcon,
+  SlidersHorizontalIcon,
   PlusIcon,
   MessageCircleIcon,
 } from "lucide-react";
@@ -37,6 +37,23 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { ROLES } from "@/hooks/useRoleBasedAccess";
 import { Bell } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
+const roleLabelMap: Record<string, string> = {
+  [ROLES.ADMIN]: "Quản trị hệ thống",
+  [ROLES.MANAGER]: "Quản lý vùng",
+  [ROLES.CENTER_HEAD]: "Trưởng trung tâm",
+  [ROLES.SUBJECT_LEADER]: "Trưởng bộ môn",
+  [ROLES.ACADEMIC_AFFAIR]: "Học vụ",
+  [ROLES.QA]: "Kiểm định chất lượng",
+  [ROLES.TEACHER]: "Giáo viên",
+  [ROLES.STUDENT]: "Học viên",
+};
 
 // Role-based navigation configuration
 const roleBasedNav = {
@@ -44,7 +61,7 @@ const roleBasedNav = {
     navMain: [
       {
         title: "Bảng điều khiển",
-        url: "/dashboard",
+        url: "/admin/dashboard",
         icon: HomeIcon,
       },
       {
@@ -78,7 +95,7 @@ const roleBasedNav = {
     navMain: [
       {
         title: "Bảng điều khiển",
-        url: "/dashboard",
+        url: "/manager/dashboard",
         icon: HomeIcon,
       },
       {
@@ -107,7 +124,7 @@ const roleBasedNav = {
     navMain: [
       {
         title: "Bảng điều khiển",
-        url: "/dashboard",
+        url: "/center_head/dashboard",
         icon: HomeIcon,
       },
       {
@@ -146,7 +163,7 @@ const roleBasedNav = {
     navMain: [
       {
         title: "Bảng điều khiển",
-        url: "/dashboard",
+        url: "/subject_leader/dashboard",
         icon: HomeIcon,
       },
       {
@@ -175,7 +192,7 @@ const roleBasedNav = {
     navMain: [
       {
         title: "Bảng điều khiển",
-        url: "/dashboard",
+        url: "/teacher/dashboard",
         icon: HomeIcon,
       },
       {
@@ -214,7 +231,7 @@ const roleBasedNav = {
     navMain: [
       {
         title: "Bảng điều khiển",
-        url: "/dashboard",
+        url: "/student/dashboard",
         icon: HomeIcon,
       },
       {
@@ -288,7 +305,7 @@ const roleBasedNav = {
     navMain: [
       {
         title: "Bảng điều khiển",
-        url: "/dashboard",
+        url: "/academic_affair/dashboard",
         icon: HomeIcon,
       },
       {
@@ -337,36 +354,31 @@ const navSecondary = [
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
 
-  // Get navigation items based on user's highest priority role
-  const getHighestRole = () => {
-    if (!user?.roles || user.roles.length === 0) {
-      return undefined;
-    }
-
-    // Find highest priority role
-    const rolePriorities = {
-      [ROLES.ADMIN]: 8,
-      [ROLES.MANAGER]: 7,
-      [ROLES.CENTER_HEAD]: 6,
-      [ROLES.SUBJECT_LEADER]: 5,
-      [ROLES.ACADEMIC_AFFAIR]: 4,
-      [ROLES.QA]: 3,
-      [ROLES.TEACHER]: 2,
-      [ROLES.STUDENT]: 1,
-    };
-
-    return user.roles.reduce((highest, current) =>
-      rolePriorities[current as keyof typeof rolePriorities] >
-        rolePriorities[highest as keyof typeof rolePriorities]
-        ? current
-        : highest
-    );
+  const rolePriorities = {
+    [ROLES.ADMIN]: 8,
+    [ROLES.MANAGER]: 7,
+    [ROLES.CENTER_HEAD]: 6,
+    [ROLES.SUBJECT_LEADER]: 5,
+    [ROLES.ACADEMIC_AFFAIR]: 4,
+    [ROLES.QA]: 3,
+    [ROLES.TEACHER]: 2,
+    [ROLES.STUDENT]: 1,
   };
 
-  const highestRole = getHighestRole();
-  const navMain = highestRole
-    ? roleBasedNav[highestRole as keyof typeof roleBasedNav]?.navMain || []
-    : [];
+  const orderedRoles =
+    user?.roles
+      ?.filter((role) => roleBasedNav[role as keyof typeof roleBasedNav])
+      .sort(
+        (a, b) =>
+          (rolePriorities[b as keyof typeof rolePriorities] ?? 0) -
+          (rolePriorities[a as keyof typeof rolePriorities] ?? 0)
+      ) ?? [];
+
+  const navSections = orderedRoles.map((role) => ({
+    role,
+    label: roleLabelMap[role] ?? role,
+    items: roleBasedNav[role as keyof typeof roleBasedNav]?.navMain ?? [],
+  }));
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -383,14 +395,39 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   alt="Anh ngữ Pinnacle Logo"
                   className="h-8 w-auto"
                 />
-                <span className="text-base font-semibold">Anh ngữ Pinnacle</span>
+                <span className="text-base font-semibold">
+                  Anh ngữ Pinnacle
+                </span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navMain} />
+        {navSections.length > 1 ? (
+          <Accordion
+            type="multiple"
+            defaultValue={navSections.map((section) => section.role)}
+            className="w-full space-y-1"
+          >
+            {navSections.map((section) => (
+              <AccordionItem
+                value={section.role}
+                key={section.role}
+                className="border-border/40 rounded-md border px-2"
+              >
+                <AccordionTrigger className="text-sm font-semibold uppercase tracking-wide">
+                  {section.label}
+                </AccordionTrigger>
+                <AccordionContent>
+                  <NavMain items={section.items} />
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        ) : (
+          <NavMain items={navSections[0]?.items ?? []} />
+        )}
         <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
@@ -399,7 +436,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             name: user?.fullName || "Người dùng",
             email: user?.email || "",
             avatar: "/avatars/default.jpg",
-            role: highestRole,
+            roles: orderedRoles,
           }}
         />
       </SidebarFooter>

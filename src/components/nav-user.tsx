@@ -37,7 +37,7 @@ export function NavUser({
     name: string
     email: string
     avatar: string
-    role?: string
+    roles?: string[]
   }
 }) {
   const { isMobile } = useSidebar()
@@ -67,9 +67,11 @@ export function NavUser({
                 <span className="truncate text-xs text-muted-foreground">
                   {user.email}
                 </span>
-                <span className="truncate text-xs text-blue-500 font-semibold">
-                  {user.role}
-                </span>
+                {user.roles && user.roles.length > 0 && (
+                  <span className="truncate text-xs text-blue-500 font-semibold">
+                    {user.roles.join(" • ")}
+                  </span>
+                )}
               </div>
               <MoreVerticalIcon className="ml-auto size-4" />
             </SidebarMenuButton>

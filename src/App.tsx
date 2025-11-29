@@ -53,27 +53,29 @@ import CreateSubjectPage from "./features/curriculum/pages/CreateSubjectPage";
 import EditSubjectPage from "./features/curriculum/pages/EditSubjectPage";
 
 // QA imports
-import QARootPage from './app/qa/page'
-import QADashboardPage from './app/qa/dashboard/page'
-import QAClassesPage from './app/qa/classes/page'
-import QAClassDetailPage from './app/qa/classes/[id]/page'
-import QASessionDetailPage from './app/qa/sessions/[id]/page'
-import QAReportsPage from './app/qa/reports/page'
-import QAReportCreatePage from './app/qa/reports/create/page'
-import QAReportDetailPage from './app/qa/reports/[id]/page'
-import QAReportEditPage from './app/qa/reports/[id]/edit/page'
-import QAStudentFeedbackPage from './app/qa/student-feedback/page'
+import QARootPage from "./app/qa/page";
+import QADashboardPage from "./app/qa/dashboard/page";
+import QAClassesPage from "./app/qa/classes/page";
+import QAClassDetailPage from "./app/qa/classes/[id]/page";
+import QASessionDetailPage from "./app/qa/sessions/[id]/page";
+import QAReportsPage from "./app/qa/reports/page";
+import QAReportCreatePage from "./app/qa/reports/create/page";
+import QAReportDetailPage from "./app/qa/reports/[id]/page";
+import QAReportEditPage from "./app/qa/reports/[id]/edit/page";
+import QAStudentFeedbackPage from "./app/qa/student-feedback/page";
 // import SubjectDetailPage from '@/features/curriculum/pages/SubjectDetailPage'
 import CurriculumCourseDetailPage from "./features/curriculum/pages/CourseDetailPage";
-import SubjectDetailPage from '@/features/curriculum/pages/SubjectDetailPage'
-import CourseLearningPage from './features/curriculum/pages/CourseLearningPage'
+import SubjectDetailPage from "@/features/curriculum/pages/SubjectDetailPage";
+import CourseLearningPage from "./features/curriculum/pages/CourseLearningPage";
 import EditCoursePage from "./features/curriculum/pages/EditCoursePage";
 import NotificationsPage from "./app/notifications/page";
 import { Toaster } from "@/components/ui/sonner";
 import { lazy } from "react";
 
 // const CreateLevelPage = lazy(() => import('./features/curriculum/pages/CreateLevelPage'))
-const CreateLevelPage = lazy(() => import('./features/curriculum/pages/CreateLevelPage'))
+const CreateLevelPage = lazy(
+  () => import("./features/curriculum/pages/CreateLevelPage")
+);
 const LevelDetailPage = lazy(
   () => import("@/features/curriculum/pages/LevelDetailPage")
 );
@@ -96,9 +98,17 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-            {/* Dashboard */}
+            {/* Dashboard - shared and per-role */}
             <Route
               path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/:role/dashboard"
               element={
                 <ProtectedRoute>
                   <DashboardPage />
@@ -610,7 +620,9 @@ function App() {
             <Route
               path="/curriculum/subjects/:id"
               element={
-                <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
+                <ProtectedRoute
+                  requiredRoles={["SUBJECT_LEADER", "MANAGER", "ADMIN"]}
+                >
                   <SubjectDetailPage />
                 </ProtectedRoute>
               }
@@ -628,7 +640,9 @@ function App() {
             <Route
               path="/curriculum/levels/create"
               element={
-                <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
+                <ProtectedRoute
+                  requiredRoles={["SUBJECT_LEADER", "MANAGER", "ADMIN"]}
+                >
                   <CreateLevelPage />
                 </ProtectedRoute>
               }
@@ -674,7 +688,9 @@ function App() {
             <Route
               path="/curriculum/courses/:id/learn"
               element={
-                <ProtectedRoute requiredRoles={['SUBJECT_LEADER', 'MANAGER', 'ADMIN']}>
+                <ProtectedRoute
+                  requiredRoles={["SUBJECT_LEADER", "MANAGER", "ADMIN"]}
+                >
                   <CourseLearningPage />
                 </ProtectedRoute>
               }
@@ -702,7 +718,7 @@ function App() {
             <Route
               path="/qa"
               element={
-                <ProtectedRoute requiredRoles={['QA']}>
+                <ProtectedRoute requiredRoles={["QA"]}>
                   <QARootPage />
                 </ProtectedRoute>
               }
@@ -710,7 +726,7 @@ function App() {
             <Route
               path="/qa/dashboard"
               element={
-                <ProtectedRoute requiredRoles={['QA']}>
+                <ProtectedRoute requiredRoles={["QA"]}>
                   <QADashboardPage />
                 </ProtectedRoute>
               }
@@ -718,7 +734,7 @@ function App() {
             <Route
               path="/qa/classes"
               element={
-                <ProtectedRoute requiredRoles={['QA']}>
+                <ProtectedRoute requiredRoles={["QA"]}>
                   <QAClassesPage />
                 </ProtectedRoute>
               }
@@ -726,7 +742,7 @@ function App() {
             <Route
               path="/qa/classes/:id"
               element={
-                <ProtectedRoute requiredRoles={['QA']}>
+                <ProtectedRoute requiredRoles={["QA"]}>
                   <QAClassDetailPage />
                 </ProtectedRoute>
               }
@@ -734,7 +750,7 @@ function App() {
             <Route
               path="/qa/sessions/:id"
               element={
-                <ProtectedRoute requiredRoles={['QA']}>
+                <ProtectedRoute requiredRoles={["QA"]}>
                   <QASessionDetailPage />
                 </ProtectedRoute>
               }
@@ -742,7 +758,7 @@ function App() {
             <Route
               path="/qa/reports"
               element={
-                <ProtectedRoute requiredRoles={['QA']}>
+                <ProtectedRoute requiredRoles={["QA"]}>
                   <QAReportsPage />
                 </ProtectedRoute>
               }
@@ -750,7 +766,7 @@ function App() {
             <Route
               path="/qa/reports/create"
               element={
-                <ProtectedRoute requiredRoles={['QA']}>
+                <ProtectedRoute requiredRoles={["QA"]}>
                   <QAReportCreatePage />
                 </ProtectedRoute>
               }
@@ -758,7 +774,7 @@ function App() {
             <Route
               path="/qa/reports/:id"
               element={
-                <ProtectedRoute requiredRoles={['QA']}>
+                <ProtectedRoute requiredRoles={["QA"]}>
                   <QAReportDetailPage />
                 </ProtectedRoute>
               }
@@ -766,7 +782,7 @@ function App() {
             <Route
               path="/qa/reports/:id/edit"
               element={
-                <ProtectedRoute requiredRoles={['QA']}>
+                <ProtectedRoute requiredRoles={["QA"]}>
                   <QAReportEditPage />
                 </ProtectedRoute>
               }
@@ -774,7 +790,7 @@ function App() {
             <Route
               path="/qa/student-feedback"
               element={
-                <ProtectedRoute requiredRoles={['QA']}>
+                <ProtectedRoute requiredRoles={["QA"]}>
                   <QAStudentFeedbackPage />
                 </ProtectedRoute>
               }
