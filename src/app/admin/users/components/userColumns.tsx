@@ -46,14 +46,12 @@ export interface UserColumnsProps {
   onView?: (user: UserResponse) => void
   onEdit?: (user: UserResponse) => void
   onStatusChange?: (user: UserResponse, newStatus: string) => void
-  onDelete?: (user: UserResponse) => void
 }
 
 export function createUserColumns({
   onView,
   onEdit,
   onStatusChange,
-  onDelete,
 }: UserColumnsProps): ColumnDef<UserResponse>[] {
   return [
     {
@@ -224,14 +222,6 @@ export function createUserColumns({
                     </DropdownMenuItem>
                   )}
                 </>
-              )}
-              {onDelete && (
-                <DropdownMenuItem
-                  onClick={() => onDelete(user)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  Xóa
-                </DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>

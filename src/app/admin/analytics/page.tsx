@@ -56,6 +56,15 @@ const chartColors = [
   "#a855f7",
 ];
 
+const classStatusLabelMap: Record<string, string> = {
+  COMPLETED: "Đã hoàn thành",
+  DRAFT: "Nháp",
+  SCHEDULED: "Đã lên lịch",
+  ONGOING: "Đang diễn ra",
+  SUBMITTED: "Đã gửi phê duyệt",
+  CANCELLED: "Đã hủy",
+};
+
 const roleLabelMap: Record<string, string> = {
   ADMIN: "Quản trị viên",
   MANAGER: "Quản lý vùng",
@@ -96,6 +105,7 @@ export default function AdminAnalyticsPage() {
       Object.entries(classAnalytics?.classesByStatus ?? {}).map(
         ([status, value], index) => ({
           status,
+          label: classStatusLabelMap[status] ?? status.replaceAll("_", " "),
           value,
           fill: chartColors[index % chartColors.length],
         })
@@ -396,7 +406,7 @@ export default function AdminAnalyticsPage() {
                             Phân bố trạng thái hiện tại
                           </CardDescription>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="flex flex-col items-center justify-center space-y-4">
                           {classStatusData.length === 0 ? (
                             <div className="text-muted-foreground text-sm">
                               Chưa có dữ liệu trạng thái lớp học.
@@ -407,7 +417,7 @@ export default function AdminAnalyticsPage() {
                                 (acc, curr) => ({
                                   ...acc,
                                   [curr.status]: {
-                                    label: curr.status.replaceAll("_", " "),
+                                    label: curr.label,
                                     color: curr.fill,
                                   },
                                 }),
@@ -416,13 +426,13 @@ export default function AdminAnalyticsPage() {
                                   { label: string; color: string }
                                 >
                               )}
-                              className="min-h-[280px]"
+                              className="min-h-[280px] w-full flex items-center justify-center"
                             >
                               <PieChart>
                                 <Pie
                                   data={classStatusData}
                                   dataKey="value"
-                                  nameKey="status"
+                                  nameKey="label"
                                   cx="50%"
                                   cy="50%"
                                   innerRadius={60}
@@ -438,10 +448,14 @@ export default function AdminAnalyticsPage() {
                                 </Pie>
                                 <ChartTooltip
                                   content={
-                                    <ChartTooltipContent labelKey="status" />
+                                    <ChartTooltipContent labelKey="label" />
                                   }
                                 />
-                                <ChartLegend content={<ChartLegendContent />} />
+                                <ChartLegend
+                                  content={
+                                    <ChartLegendContent nameKey="status" />
+                                  }
+                                />
                               </PieChart>
                             </ChartContainer>
                           )}

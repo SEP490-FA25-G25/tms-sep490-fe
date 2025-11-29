@@ -27,13 +27,11 @@ import { Plus, Search, Building2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import {
   useGetCentersQuery,
-  useDeleteCenterMutation,
   type CenterResponse,
 } from "@/store/services/centerApi";
 import { CreateCenterDialog } from "./components/CreateCenterDialog";
 import { EditCenterDialog } from "./components/EditCenterDialog";
 import { CenterDetailDialog } from "./components/CenterDetailDialog";
-import { DeleteCenterDialog } from "./components/DeleteCenterDialog";
 
 const PAGE_SIZE = 20;
 
@@ -44,9 +42,7 @@ export default function AdminCentersPage() {
     null
   );
   const [centerToEdit, setCenterToEdit] = useState<CenterResponse | null>(null);
-  const [centerToDelete, setCenterToDelete] = useState<CenterResponse | null>(
-    null
-  );
+  // Xóa trung tâm đang bị vô hiệu hóa nên không cần state cho centerToDelete
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const {
@@ -60,8 +56,6 @@ export default function AdminCentersPage() {
     size: PAGE_SIZE,
     sort: "createdAt,desc",
   });
-
-  const [deleteCenter] = useDeleteCenterMutation();
 
   // Extract centers from API response
   // Response structure: { success, message, data: PageableResponse<CenterResponse> }
@@ -87,22 +81,7 @@ export default function AdminCentersPage() {
     setPage(0);
   }, [searchTerm]);
 
-  const handleDeleteCenter = async (centerId: number) => {
-    try {
-      const result = await deleteCenter(centerId).unwrap();
-      if (!result.success) {
-        throw new Error(result.message || "Xóa trung tâm thất bại");
-      }
-      toast.success("Xóa trung tâm thành công");
-      refetchCenters();
-      setCenterToDelete(null);
-    } catch (error: unknown) {
-      toast.error(
-        (error as { data?: { message?: string } })?.data?.message ||
-          "Xóa trung tâm thất bại"
-      );
-    }
-  };
+  // Hàm xóa trung tâm tạm thời không được sử dụng vì chức năng xóa đã bị khóa ở UI
 
   if (isCentersError) {
     console.error("Error fetching centers:", centersError);
@@ -277,10 +256,8 @@ export default function AdminCentersPage() {
                                         <Button
                                           variant="destructive"
                                           size="sm"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setCenterToDelete(center);
-                                          }}
+                                          disabled
+                                          className="opacity-40 cursor-not-allowed"
                                         >
                                           Xóa
                                         </Button>
@@ -392,18 +369,7 @@ export default function AdminCentersPage() {
         />
       )}
 
-      {centerToDelete && (
-        <DeleteCenterDialog
-          open={!!centerToDelete}
-          center={centerToDelete}
-          onOpenChange={(open) => {
-            if (!open) setCenterToDelete(null);
-          }}
-          onConfirm={() => {
-            handleDeleteCenter(centerToDelete.id);
-          }}
-        />
-      )}
+      {/* Chức năng xóa trung tâm đang tạm khóa ở UI */}
     </AdminRoute>
   );
 }

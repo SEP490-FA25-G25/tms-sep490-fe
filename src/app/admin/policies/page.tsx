@@ -89,6 +89,110 @@ export default function AdminPoliciesPage() {
     return lower === "true" || lower === "false" ? lower : fallback;
   };
 
+  const formatCurrentValue = (policy: Policy): string => {
+    const value = policy.currentValue ?? "";
+    const unit = policy.unit ?? "";
+
+    // Dịch unit sang tiếng Việt
+    const unitMap: Record<string, string> = {
+      days: "ngày",
+      day: "ngày",
+      times: "lần",
+      time: "lần",
+      hours: "giờ",
+      hour: "giờ",
+      characters: "ký tự",
+      character: "ký tự",
+      minutes: "phút",
+      minute: "phút",
+      seconds: "giây",
+      second: "giây",
+      percent: "phần trăm",
+      percentage: "phần trăm",
+    };
+
+    // Xử lý giá trị boolean
+    if (policy.valueType === "BOOLEAN") {
+      const lowerValue = value.toLowerCase();
+      if (lowerValue === "true") return "Bật";
+      if (lowerValue === "false") return "Tắt";
+    }
+
+    // Kiểm tra xem value có chứa unit không (ví dụ: "15 characters", "24 hours")
+    const valueParts = value.trim().split(/\s+/);
+    if (valueParts.length >= 2) {
+      const lastPart = valueParts[valueParts.length - 1].toLowerCase();
+      if (unitMap[lastPart]) {
+        // Unit đã có trong value, tách ra và dịch
+        const numericValue = valueParts.slice(0, -1).join(" ");
+        const translatedUnit = unitMap[lastPart];
+        return `${numericValue} ${translatedUnit}`;
+      }
+    }
+
+    // Dịch unit từ policy.unit
+    const translatedUnit = unit ? unitMap[unit.toLowerCase()] || unit : "";
+
+    // Kết hợp giá trị và unit
+    if (translatedUnit) {
+      return `${value} ${translatedUnit}`;
+    }
+
+    return value;
+  };
+
+  const formatDefaultValue = (policy: Policy): string => {
+    const value = policy.defaultValue ?? "";
+    const unit = policy.unit ?? "";
+
+    // Dịch unit sang tiếng Việt (dùng cùng unitMap)
+    const unitMap: Record<string, string> = {
+      days: "ngày",
+      day: "ngày",
+      times: "lần",
+      time: "lần",
+      hours: "giờ",
+      hour: "giờ",
+      characters: "ký tự",
+      character: "ký tự",
+      minutes: "phút",
+      minute: "phút",
+      seconds: "giây",
+      second: "giây",
+      percent: "phần trăm",
+      percentage: "phần trăm",
+    };
+
+    // Xử lý giá trị boolean
+    if (policy.valueType === "BOOLEAN") {
+      const lowerValue = value.toLowerCase();
+      if (lowerValue === "true") return "Bật";
+      if (lowerValue === "false") return "Tắt";
+    }
+
+    // Kiểm tra xem value có chứa unit không (ví dụ: "15 characters", "24 hours")
+    const valueParts = value.trim().split(/\s+/);
+    if (valueParts.length >= 2) {
+      const lastPart = valueParts[valueParts.length - 1].toLowerCase();
+      if (unitMap[lastPart]) {
+        // Unit đã có trong value, tách ra và dịch
+        const numericValue = valueParts.slice(0, -1).join(" ");
+        const translatedUnit = unitMap[lastPart];
+        return `${numericValue} ${translatedUnit}`;
+      }
+    }
+
+    // Dịch unit từ policy.unit
+    const translatedUnit = unit ? unitMap[unit.toLowerCase()] || unit : "";
+
+    // Kết hợp giá trị và unit
+    if (translatedUnit) {
+      return `${value} ${translatedUnit}`;
+    }
+
+    return value;
+  };
+
   const handleOpenEdit = (policy: Policy) => {
     const initialValue =
       policy.valueType === "BOOLEAN"
@@ -134,7 +238,7 @@ export default function AdminPoliciesPage() {
                 <div className="px-4 lg:px-6">
                   <div className="flex flex-col gap-1">
                     <h1 className="text-3xl font-bold tracking-tight">
-                      Quản lý Policy hệ thống
+                      Quản lý chính sách hệ thống
                     </h1>
                     <p className="text-muted-foreground">
                       Thay đổi nhanh các business rule mà không cần deploy lại
@@ -208,61 +312,62 @@ export default function AdminPoliciesPage() {
                           ))}
                         </div>
                       ) : (
-                        <Table>
+                        <Table className="table-fixed">
                           <TableHeader>
                             <TableRow>
-                              <TableHead>Key</TableHead>
-                              <TableHead>Tên</TableHead>
-                              <TableHead>Nhóm</TableHead>
-                              <TableHead>Scope</TableHead>
-                              <TableHead>Giá trị hiện tại</TableHead>
-                              <TableHead>Mặc định</TableHead>
-                              <TableHead></TableHead>
+                              <TableHead className="w-[28%]">Key</TableHead>
+                              <TableHead className="w-[32%] border-l border-border/60">
+                                Tên
+                              </TableHead>
+                              <TableHead className="w-[10%] border-l border-border/60 text-center">
+                                Nhóm
+                              </TableHead>
+                              <TableHead className="w-[8%] border-l border-border/60 text-center">
+                                Scope
+                              </TableHead>
+                              <TableHead className="w-[12%] border-l border-border/60">
+                                Giá trị hiện tại
+                              </TableHead>
+                              <TableHead className="w-[8%] border-l border-border/60">
+                                Mặc định
+                              </TableHead>
+                              <TableHead className="w-[12%] border-l border-border/60" />
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {policies.map((p) => (
                               <TableRow key={p.id}>
-                                <TableCell className="font-mono text-xs max-w-[260px] break-words">
+                                <TableCell className="font-mono text-xs break-words whitespace-normal align-top">
                                   {p.policyKey}
                                 </TableCell>
-                                <TableCell className="max-w-[260px]">
+                                <TableCell className="border-l border-border/60 align-top whitespace-normal break-words">
                                   <div className="flex flex-col gap-1">
                                     <span className="font-medium text-sm">
                                       {p.policyName}
                                     </span>
-                                    {p.description && (
-                                      <span className="text-xs text-muted-foreground line-clamp-2">
-                                        {p.description}
-                                      </span>
-                                    )}
                                   </div>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="border-l border-border/60 align-top text-center">
                                   <Badge variant="outline">
                                     {p.policyCategory}
                                   </Badge>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="border-l border-border/60 align-top text-center">
                                   <Badge variant="secondary">{p.scope}</Badge>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="border-l border-border/60 align-top whitespace-normal break-words">
                                   <div className="flex flex-col text-sm">
                                     <span className="font-mono">
-                                      {p.currentValue}
-                                      {p.unit ? ` ${p.unit}` : ""}
-                                    </span>
-                                    <span className="text-xs text-muted-foreground">
-                                      Kiểu: {p.valueType}
+                                      {formatCurrentValue(p)}
                                     </span>
                                   </div>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="border-l border-border/60 align-top whitespace-normal break-words">
                                   <span className="font-mono text-xs text-muted-foreground">
-                                    {p.defaultValue}
+                                    {formatDefaultValue(p)}
                                   </span>
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className="border-l border-border/60 text-right align-top">
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -319,9 +424,7 @@ export default function AdminPoliciesPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Giá trị mới ({editingPolicy.valueType})
-                </label>
+                <label className="text-sm font-medium">Giá trị mới</label>
                 {editingPolicy.valueType === "BOOLEAN" ? (
                   <Select
                     value={newValue || undefined}
