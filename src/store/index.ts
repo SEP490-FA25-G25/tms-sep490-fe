@@ -26,6 +26,8 @@ import { enumApi } from './services/enumApi'
 import { uploadApi } from './services/uploadApi'
 import { qaApi } from './services/qaApi'
 import { studentFeedbackApi } from './services/studentFeedbackApi'
+import { resourceApi } from './services/resourceApi'
+import { timeSlotApi } from './services/timeSlotApi'
 import authSlice, {
   setCredentials,
   logout,
@@ -59,7 +61,7 @@ export const store = configureStore({
     [teacherProfileApi.reducerPath]: teacherProfileApi.reducer,
     [notificationApi.reducerPath]: notificationApi.reducer,
     [userApi.reducerPath]: userApi.reducer,
-  [policyApi.reducerPath]: policyApi.reducer,
+    [policyApi.reducerPath]: policyApi.reducer,
     [centerApi.reducerPath]: centerApi.reducer,
     [branchApi.reducerPath]: branchApi.reducer,
     [subjectAdminApi.reducerPath]: subjectAdminApi.reducer,
@@ -68,6 +70,8 @@ export const store = configureStore({
     [uploadApi.reducerPath]: uploadApi.reducer,
     [qaApi.reducerPath]: qaApi.reducer,
     [studentFeedbackApi.reducerPath]: studentFeedbackApi.reducer,
+    [resourceApi.reducerPath]: resourceApi.reducer,
+    [timeSlotApi.reducerPath]: timeSlotApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -98,7 +102,7 @@ export const store = configureStore({
       .concat(teacherProfileApi.middleware)
       .concat(notificationApi.middleware)
       .concat(userApi.middleware)
-    .concat(policyApi.middleware)
+      .concat(policyApi.middleware)
       .concat(centerApi.middleware)
       .concat(branchApi.middleware)
       .concat(subjectAdminApi.middleware)
@@ -106,7 +110,9 @@ export const store = configureStore({
       .concat(enumApi.middleware)
       .concat(uploadApi.middleware)
       .concat(qaApi.middleware)
-      .concat(studentFeedbackApi.middleware),
+      .concat(studentFeedbackApi.middleware)
+      .concat(resourceApi.middleware)
+      .concat(timeSlotApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
