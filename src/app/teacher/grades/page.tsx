@@ -1,9 +1,19 @@
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import {
   useGetAttendanceClassesQuery,
   type AttendanceClassDTO,
@@ -70,7 +80,7 @@ function ClassCard({
 
   return (
     <div
-      className="rounded-lg border p-5 transition-colors hover:border-primary/60 hover:bg-primary/5 cursor-pointer"
+      className="rounded-lg border p-5 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-md cursor-pointer"
       onClick={() => onSelect(classItem.id)}
     >
       <div className="space-y-4">
@@ -236,9 +246,6 @@ export default function TeacherGradesPage() {
     const scheduled = allClasses.filter(
       (item) => item.status === "SCHEDULED"
     ).length;
-    const completed = allClasses.filter(
-      (item) => item.status === "COMPLETED"
-    ).length;
 
     const endingSoon = allClasses.filter((item) => {
       if (item.status !== "ONGOING") return false;
@@ -264,7 +271,6 @@ export default function TeacherGradesPage() {
       total: allClasses.length,
       ongoing,
       scheduled,
-      completed,
       endingSoon,
       avgAttendance,
     };
@@ -343,56 +349,85 @@ export default function TeacherGradesPage() {
             ))}
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {[
               {
                 label: "Đang diễn ra",
                 value: summaryStats.ongoing,
-                helper: "Lớp cần theo sát điểm số",
                 icon: TrendingUp,
+                borderColor: "emerald-500",
+                valueColor: "text-emerald-600",
+                iconColor: "text-emerald-500",
               },
               {
                 label: "Sắp kết thúc",
                 value: summaryStats.endingSoon,
-                helper: "≤ 7 ngày nữa",
                 icon: AlertTriangle,
+                borderColor: "amber-500",
+                valueColor: "text-amber-600",
+                iconColor: "text-amber-500",
               },
               {
                 label: "Lớp sắp bắt đầu",
                 value: summaryStats.scheduled,
-                helper: "Đã lên lịch",
                 icon: Clock9,
+                borderColor: "sky-500",
+                valueColor: "text-sky-600",
+                iconColor: "text-sky-500",
               },
               {
                 label: "Điểm chuyên cần TB",
                 value: formatPercent(summaryStats.avgAttendance),
-                helper: "Dựa trên dữ liệu điểm danh",
                 icon: ClipboardList,
+                borderColor: "slate-500",
+                iconColor: "text-slate-500",
               },
-            ].map((card, index) => (
-              <div key={index} className="rounded-lg border p-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      {card.label}
-                    </p>
-                    <p className="text-2xl font-semibold mt-1">{card.value}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {card.helper}
-                    </p>
-                  </div>
-                  <div className="rounded-full bg-primary/10 p-2 text-primary">
-                    <card.icon className="h-5 w-5" />
-                  </div>
+            ].map((card, index) => {
+              const borderColorMap: Record<string, string> = {
+                "emerald-500": "#10b981",
+                "amber-500": "#f59e0b",
+                "sky-500": "#0ea5e9",
+                "slate-500": "#64748b",
+              };
+
+              return (
+                <div key={index} className="relative group">
+                  <Card
+                    className={cn(
+                      "border-t-2 border-l-2 transition-all duration-300 ease-in-out group-hover:-translate-y-1 group-hover:shadow-md cursor-pointer"
+                    )}
+                    style={
+                      {
+                        borderTopColor:
+                          borderColorMap[card.borderColor] || "#64748b",
+                        borderLeftColor:
+                          borderColorMap[card.borderColor] || "#64748b",
+                      } as React.CSSProperties
+                    }
+                  >
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-0.5">
+                      <CardTitle className="text-sm font-medium">
+                        {card.label}
+                      </CardTitle>
+                      <card.icon className={cn("h-4 w-4", card.iconColor)} />
+                    </CardHeader>
+                    <CardContent className="pt-0 pb-2">
+                      <div
+                        className={cn("text-2xl font-bold", card.valueColor)}
+                      >
+                        {card.value}
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
         {/* Search + filters */}
-        <div className="space-y-3">
-          <div className="relative">
+        <div className="flex items-center gap-4">
+          <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
@@ -402,25 +437,26 @@ export default function TeacherGradesPage() {
               className="pl-10"
             />
           </div>
-          <div className="flex flex-wrap gap-2">
-            {statusFilters.map((filter) => (
-              <Button
-                key={filter.value}
-                type="button"
-                variant={statusFilter === filter.value ? "default" : "outline"}
-                size="sm"
-                className="rounded-full"
-                onClick={() => setStatusFilter(filter.value)}
-              >
-                {filter.label}
-              </Button>
-            ))}
-          </div>
+          <Select
+            value={statusFilter}
+            onValueChange={(value: StatusFilter) => setStatusFilter(value)}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Lọc theo trạng thái" />
+            </SelectTrigger>
+            <SelectContent>
+              {statusFilters.map((filter) => (
+                <SelectItem key={filter.value} value={filter.value}>
+                  {filter.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Highlight sections */}
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="rounded-lg border p-5 space-y-4">
+          <div className="rounded-lg border p-5 space-y-4 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-md">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold">Lớp cần chú ý</p>
@@ -475,7 +511,7 @@ export default function TeacherGradesPage() {
             )}
           </div>
 
-          <div className="rounded-lg border p-5 space-y-4">
+          <div className="rounded-lg border p-5 space-y-4 transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-md">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold">Lớp sắp bắt đầu</p>
