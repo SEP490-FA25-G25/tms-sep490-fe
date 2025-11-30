@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import {
   Table,
   TableBody,
@@ -26,6 +27,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { ENROLLMENT_STATUS_STYLES, getStatusStyle } from '@/lib/status-colors';
 import { useGetStudentTranscriptQuery } from '@/store/services/studentApi';
 import type { StudentTranscriptDTO } from '@/store/services/studentApi';
 import { AlertCircle, BookOpen, TrendingUp } from 'lucide-react';
@@ -95,19 +97,6 @@ const TranscriptPage = () => {
     return (totalScore / completedClassesWithScores.length).toFixed(2);
   }, [transcriptData]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ONGOING':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case 'COMPLETED':
-        return 'bg-slate-50 text-slate-700 border-slate-200';
-      case 'DROPPED':
-        return 'bg-red-50 text-red-700 border-red-200';
-      default:
-        return 'bg-slate-50 text-slate-700 border-slate-200';
-    }
-  };
-
   const getStatusText = (status: string) => {
     switch (status) {
       case 'ONGOING':
@@ -156,7 +145,7 @@ const TranscriptPage = () => {
                 )}
               </header>
 
-              <main className="flex-1 px-6 py-6 md:px-8 md:py-8">
+              <main className="flex-1 px-4 lg:px-6 py-6">
                 {isLoading && (
                   <Card>
                     <div className="p-4 space-y-3">
@@ -279,7 +268,7 @@ const TranscriptPage = () => {
                                 <Badge
                                   className={cn(
                                     'text-xs',
-                                    getStatusColor(transcriptItem.status)
+                                    getStatusStyle(ENROLLMENT_STATUS_STYLES, transcriptItem.status)
                                   )}
                                 >
                                   {getStatusText(transcriptItem.status)}
@@ -294,19 +283,17 @@ const TranscriptPage = () => {
                 )}
 
                 {!isLoading && !error && transcriptData.length === 0 && (
-                  <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border/80 bg-muted/10 p-10 text-center">
-                    <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-2">
-                      <BookOpen className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-base font-semibold text-foreground">
-                        Chưa có dữ liệu điểm số
-                      </p>
-                      <p className="text-sm text-muted-foreground">
+                  <Empty>
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon">
+                        <BookOpen className="h-10 w-10" />
+                      </EmptyMedia>
+                      <EmptyTitle>Chưa có dữ liệu điểm số</EmptyTitle>
+                      <EmptyDescription>
                         Bạn chưa tham gia lớp học nào hoặc chưa có điểm số.
-                      </p>
-                    </div>
-                  </div>
+                      </EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
                 )}
               </main>
             </div>

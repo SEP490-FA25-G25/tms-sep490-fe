@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { useGetStudentClassesQuery } from '@/store/services/studentClassApi';
 import type { ClassStatus, EnrollmentStatus, Modality, StudentClassDTO } from '@/types/studentClass';
 import { CLASS_STATUSES, MODALITIES } from '@/types/studentClass';
+import { CLASS_STATUS_STYLES, getStatusStyle } from '@/lib/status-colors';
 import { AlertCircle, BookOpen, Search } from 'lucide-react';
 
 interface FilterState {
@@ -178,20 +179,6 @@ const MyClassesPage = () => {
     setPage(0);
   };
 
-  const getStatusColor = (status: ClassStatus) => {
-    switch (status) {
-      case 'ONGOING':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case 'SCHEDULED':
-        return 'bg-indigo-50 text-indigo-700 border-indigo-200';
-      case 'COMPLETED':
-        return 'bg-slate-50 text-slate-700 border-slate-200';
-      case 'CANCELLED':
-        return 'bg-rose-50 text-rose-700 border-rose-200';
-      default:
-        return 'bg-slate-50 text-slate-700 border-slate-200';
-    }
-  };
 
   return (
     <StudentRoute>
@@ -241,7 +228,7 @@ const MyClassesPage = () => {
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <Select value={filters.modality} onValueChange={(value) => setFilter('modality', value as Modality | 'all')}>
-                      <SelectTrigger className="w-[160px] h-8">
+                      <SelectTrigger className="w-[160px] h-9">
                         <SelectValue placeholder="Tất cả hình thức" />
                       </SelectTrigger>
                       <SelectContent>
@@ -253,7 +240,7 @@ const MyClassesPage = () => {
                     </Select>
 
                     <Select value={filters.branchId.toString()} onValueChange={(value) => setFilter('branchId', value === 'all' ? 'all' : parseInt(value))}>
-                      <SelectTrigger className="w-[160px] h-8">
+                      <SelectTrigger className="w-[160px] h-9">
                         <SelectValue placeholder="Tất cả chi nhánh" />
                       </SelectTrigger>
                       <SelectContent>
@@ -271,7 +258,7 @@ const MyClassesPage = () => {
                     </Select>
 
                     <Select value={filters.courseId.toString()} onValueChange={(value) => setFilter('courseId', value === 'all' ? 'all' : parseInt(value))}>
-                      <SelectTrigger className="w-[160px] h-8">
+                      <SelectTrigger className="w-[160px] h-9">
                         <SelectValue placeholder="Tất cả khóa học" />
                       </SelectTrigger>
                       <SelectContent>
@@ -358,7 +345,7 @@ const MyClassesPage = () => {
                                   <p className="text-sm text-muted-foreground font-medium">{classItem.classCode}</p>
                                 </div>
                                 <div className="flex flex-col items-end gap-2">
-                                  <Badge className={cn('text-xs', getStatusColor(classItem.status))}>
+                                  <Badge className={cn('text-xs', getStatusStyle(CLASS_STATUS_STYLES, classItem.status))}>
                                     {CLASS_STATUSES[classItem.status]}
                                   </Badge>
                                   <Badge variant="outline" className="text-xs">

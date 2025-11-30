@@ -8,6 +8,7 @@ import { useGetMyProfileQuery } from '@/store/services/studentProfileApi';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import {
   Table,
@@ -29,6 +30,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { ENROLLMENT_STATUS_STYLES, USER_STATUS_STYLES, getStatusStyle } from '@/lib/status-colors';
 import { useMemo } from 'react';
 
 export default function StudentProfilePage() {
@@ -45,21 +47,6 @@ export default function StudentProfilePage() {
     profile?.enrollments.filter(e => e.enrollmentStatus === 'COMPLETED') || [],
     [profile]
   );
-
-  const getEnrollmentStatusColor = (status: string) => {
-    switch (status) {
-      case 'ENROLLED':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case 'COMPLETED':
-        return 'bg-slate-50 text-slate-700 border-slate-200';
-      case 'DROPPED':
-        return 'bg-red-50 text-red-700 border-red-200';
-      case 'WITHDRAWN':
-        return 'bg-amber-50 text-amber-700 border-amber-200';
-      default:
-        return 'bg-slate-50 text-slate-700 border-slate-200';
-    }
-  };
 
   const getEnrollmentStatusText = (status: string) => {
     switch (status) {
@@ -88,10 +75,52 @@ export default function StudentProfilePage() {
           <AppSidebar variant="inset" />
           <SidebarInset>
             <SiteHeader />
-            <div className="flex flex-1 flex-col items-center justify-center">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Đang tải thông tin hồ sơ...</p>
+            <div className="flex flex-1 flex-col">
+              <div className="min-h-screen bg-background">
+                {/* Header Skeleton */}
+                <div className="border-b bg-background">
+                  <div className="@container/main py-6 md:py-8">
+                    <div className="px-4 lg:px-6 max-w-7xl mx-auto space-y-8">
+                      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="space-y-3">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <Skeleton className="h-6 w-24" />
+                            <Skeleton className="h-6 w-20" />
+                          </div>
+                          <div className="space-y-1">
+                            <Skeleton className="h-8 w-48" />
+                            <Skeleton className="h-4 w-32" />
+                          </div>
+                          <div className="flex flex-wrap gap-4">
+                            <Skeleton className="h-4 w-28" />
+                            <Skeleton className="h-4 w-36" />
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                          <Skeleton className="h-10 w-36" />
+                          <Skeleton className="h-10 w-28" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Content Skeleton */}
+                <div className="@container/main py-6 md:py-8">
+                  <div className="px-4 lg:px-6 max-w-7xl mx-auto space-y-6">
+                    <Card className="p-6">
+                      <Skeleton className="h-6 w-40 mb-4" />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {Array.from({ length: 6 }).map((_, idx) => (
+                          <div key={idx} className="space-y-2">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-5 w-40" />
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                    <Skeleton className="h-64 w-full" />
+                  </div>
+                </div>
               </div>
             </div>
           </SidebarInset>
@@ -151,13 +180,7 @@ export default function StudentProfilePage() {
                     <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                       <div className="space-y-3">
                         <div className="flex flex-wrap items-center gap-3">
-                          <Badge className={
-                            profile.status === 'ACTIVE'
-                              ? 'bg-success/10 text-success border-success/20'
-                              : profile.status === 'SUSPENDED'
-                                ? 'bg-destructive/10 text-destructive border-destructive/20'
-                                : 'bg-muted text-muted-foreground border-muted-foreground/20'
-                          }>
+                          <Badge className={getStatusStyle(USER_STATUS_STYLES, profile.status)}>
                             {profile.status === 'ACTIVE' ? 'Đang hoạt động' : 'Ngưng hoạt động'}
                           </Badge>
                           <Badge variant="secondary">{profile.studentCode}</Badge>
@@ -319,7 +342,7 @@ export default function StudentProfilePage() {
                                   {new Date(cls.startDate).toLocaleDateString('vi-VN')} - {new Date(cls.plannedEndDate).toLocaleDateString('vi-VN')}
                                 </TableCell>
                                 <TableCell className="text-center">
-                                  <Badge className={cn('text-xs', getEnrollmentStatusColor(cls.enrollmentStatus))}>
+                                  <Badge className={cn('text-xs', getStatusStyle(ENROLLMENT_STATUS_STYLES, cls.enrollmentStatus))}>
                                     {getEnrollmentStatusText(cls.enrollmentStatus)}
                                   </Badge>
                                 </TableCell>
@@ -386,7 +409,7 @@ export default function StudentProfilePage() {
                                   {new Date(cls.startDate).toLocaleDateString('vi-VN')} - {new Date(cls.plannedEndDate).toLocaleDateString('vi-VN')}
                                 </TableCell>
                                 <TableCell className="text-center">
-                                  <Badge className={cn('text-xs', getEnrollmentStatusColor(cls.enrollmentStatus))}>
+                                  <Badge className={cn('text-xs', getStatusStyle(ENROLLMENT_STATUS_STYLES, cls.enrollmentStatus))}>
                                     {getEnrollmentStatusText(cls.enrollmentStatus)}
                                   </Badge>
                                 </TableCell>

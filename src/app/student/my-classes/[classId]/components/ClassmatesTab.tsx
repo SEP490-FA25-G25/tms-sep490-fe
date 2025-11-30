@@ -4,10 +4,12 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Search, UserCircle, Users } from 'lucide-react';
 import type { ClassmateDTO } from '@/types/studentClass';
 import { ENROLLMENT_STATUSES } from '@/types/studentClass';
 import { cn } from '@/lib/utils';
+import { ENROLLMENT_STATUS_STYLES, getStatusStyle } from '@/lib/status-colors';
 
 interface ClassmatesTabProps {
   classmates: ClassmateDTO[];
@@ -38,21 +40,6 @@ const ClassmatesTab: React.FC<ClassmatesTabProps> = ({ classmates, isLoading, en
       month: '2-digit',
       year: 'numeric'
     });
-  };
-
-  const getEnrollmentStatusColor = (status: string) => {
-    switch (status) {
-      case 'ENROLLED':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'TRANSFERRED':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'DROPPED':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'COMPLETED':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
   };
 
   if (isLoading) {
@@ -122,7 +109,7 @@ const ClassmatesTab: React.FC<ClassmatesTabProps> = ({ classmates, isLoading, en
                   </TableCell>
                   <TableCell className="font-mono text-sm">{classmate.studentCode}</TableCell>
                   <TableCell>
-                    <Badge className={cn("text-xs", getEnrollmentStatusColor(classmate.enrollmentStatus))}>
+                    <Badge className={cn("text-xs", getStatusStyle(ENROLLMENT_STATUS_STYLES, classmate.enrollmentStatus))}>
                       {ENROLLMENT_STATUSES[classmate.enrollmentStatus]}
                     </Badge>
                   </TableCell>
@@ -142,9 +129,20 @@ const ClassmatesTab: React.FC<ClassmatesTabProps> = ({ classmates, isLoading, en
             </TableBody>
           </Table>
         ) : (
-          <div className="py-10 text-center text-sm text-muted-foreground">
-            <Users className="h-10 w-10 text-muted-foreground/60 mx-auto mb-3" />
-            {searchTerm ? 'Không có thành viên trùng khớp tìm kiếm.' : 'Chưa có thành viên nào.'}
+          <div className="py-10">
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Users className="h-10 w-10" />
+                </EmptyMedia>
+                <EmptyTitle>
+                  {searchTerm ? 'Không tìm thấy thành viên' : 'Chưa có thành viên'}
+                </EmptyTitle>
+                <EmptyDescription>
+                  {searchTerm ? 'Không có thành viên trùng khớp tìm kiếm.' : 'Chưa có thành viên nào trong lớp.'}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           </div>
         )}
       </Card>

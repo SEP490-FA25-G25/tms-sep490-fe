@@ -25,49 +25,40 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import {
+  SESSION_STATUS_STYLES,
+  ATTENDANCE_STATUS_STYLES,
+  HOMEWORK_STATUS_STYLES,
+  MODALITY_STYLES,
+  MATERIAL_TYPE_STYLES,
+  getMaterialTypeMeta,
+  getStatusStyle,
+} from '@/lib/status-colors'
+import {
   useGetCurrentWeekQuery,
   useGetSessionDetailQuery,
   useGetWeeklyScheduleQuery,
 } from '@/store/services/studentScheduleApi'
 import { CalendarView } from './components/CalendarView'
 
-const SESSION_STATUS_STYLES: Record<
-  string,
-  {
-    label: string
-    className: string
-  }
-> = {
-  PLANNED: { label: 'Đã lên lịch', className: 'text-amber-600 bg-amber-50 ring-amber-200' },
-  DONE: { label: 'Hoàn thành', className: 'text-emerald-600 bg-emerald-50 ring-emerald-200' },
-  CANCELLED: { label: 'Đã hủy', className: 'text-rose-600 bg-rose-50 ring-rose-200' },
+const SESSION_STATUS_LABELS: Record<string, string> = {
+  PLANNED: 'Đã lên lịch',
+  DONE: 'Hoàn thành',
+  CANCELLED: 'Đã hủy',
 }
 
-const ATTENDANCE_STATUS_STYLES: Record<
-  string,
-  {
-    label: string
-    className: string
-  }
-> = {
-  PLANNED: { label: 'Chờ điểm danh', className: 'text-slate-600 bg-slate-100' },
-  PRESENT: { label: 'Có mặt', className: 'text-emerald-600 bg-emerald-100' },
-  ABSENT: { label: 'Vắng mặt', className: 'text-rose-600 bg-rose-100' },
-  LATE: { label: 'Đi trễ', className: 'text-amber-600 bg-amber-100' },
-  EXCUSED: { label: 'Có phép', className: 'text-indigo-600 bg-indigo-100' },
-  MAKEUP: { label: 'Buổi bù', className: 'text-purple-600 bg-purple-100' },
+const ATTENDANCE_STATUS_LABELS: Record<string, string> = {
+  PLANNED: 'Chờ điểm danh',
+  PRESENT: 'Có mặt',
+  ABSENT: 'Vắng mặt',
+  LATE: 'Đi trễ',
+  EXCUSED: 'Có phép',
+  MAKEUP: 'Buổi bù',
 }
 
-const HOMEWORK_STATUS_STYLES: Record<
-  string,
-  {
-    label: string
-    className: string
-  }
-> = {
-  COMPLETED: { label: 'Đã hoàn thành', className: 'text-emerald-600 bg-emerald-50 ring-emerald-200' },
-  INCOMPLETE: { label: 'Chưa hoàn thành', className: 'text-amber-600 bg-amber-50 ring-amber-200' },
-  NO_HOMEWORK: { label: 'Không có bài tập', className: 'text-slate-600 bg-slate-100 ring-slate-200' },
+const HOMEWORK_STATUS_LABELS: Record<string, string> = {
+  COMPLETED: 'Đã hoàn thành',
+  INCOMPLETE: 'Chưa hoàn thành',
+  NO_HOMEWORK: 'Không có bài tập',
 }
 
 const MODALITY_LABELS: Record<string, string> = {
@@ -77,32 +68,6 @@ const MODALITY_LABELS: Record<string, string> = {
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8080' : '')
-
-const MATERIAL_TYPE_STYLES: Record<
-  string,
-  {
-    label: string
-    className: string
-  }
-> = {
-  pdf: { label: 'PDF', className: 'bg-rose-50 text-rose-600 ring-rose-200' },
-  ppt: { label: 'Slide', className: 'bg-amber-50 text-amber-600 ring-amber-200' },
-  pptx: { label: 'Slide', className: 'bg-amber-50 text-amber-600 ring-amber-200' },
-  doc: { label: 'Tài liệu', className: 'bg-sky-50 text-sky-600 ring-sky-200' },
-  docx: { label: 'Tài liệu', className: 'bg-sky-50 text-sky-600 ring-sky-200' },
-  xls: { label: 'Bảng tính', className: 'bg-emerald-50 text-emerald-600 ring-emerald-200' },
-  xlsx: { label: 'Bảng tính', className: 'bg-emerald-50 text-emerald-600 ring-emerald-200' },
-  mp4: { label: 'Video', className: 'bg-purple-50 text-purple-600 ring-purple-200' },
-  mov: { label: 'Video', className: 'bg-purple-50 text-purple-600 ring-purple-200' },
-  txt: { label: 'Ghi chú', className: 'bg-slate-50 text-slate-600 ring-slate-200' },
-}
-
-function getMaterialTypeMeta(fileName: string) {
-  const ext = fileName.split('.').pop()?.toLowerCase() ?? ''
-  return (
-    MATERIAL_TYPE_STYLES[ext] ?? { label: 'Tài liệu học tập', className: 'bg-muted text-muted-foreground ring-border/50' }
-  )
-}
 
 const RESOURCE_TYPE_LABELS: Record<string, string> = {
   ROOM: 'Phòng học',
@@ -412,8 +377,8 @@ export default function StudentSchedulePage() {
 
                 <Button 
                   variant="outline" 
-                  size="sm"
-                  className="h-7 gap-2 hidden sm:flex"
+                  size="icon"
+                  className="h-8 w-8"
                   onClick={handleRetry}
                   disabled={isScheduleFetching}
                   title="Làm mới dữ liệu"
@@ -423,7 +388,7 @@ export default function StudentSchedulePage() {
               </div>
             </header>
 
-            <div className="flex-1 p-6 overflow-hidden bg-muted/10 min-h-0">
+            <div className="flex-1 px-4 lg:px-6 py-6 overflow-hidden bg-muted/10 min-h-0">
               {isLoading && !hasError && (
                 <div className="h-full w-full rounded-xl border bg-background p-6">
                   <Skeleton className="h-full w-full" />

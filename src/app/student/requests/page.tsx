@@ -34,7 +34,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Pagination,
@@ -226,7 +228,7 @@ export default function StudentRequestsPage() {
               </Card>
             </div>
 
-            <div className="h-px bg-border" />
+            <Separator />
 
             {/* Filters */}
             <div className="flex items-center justify-between gap-4">
@@ -260,7 +262,7 @@ export default function StudentRequestsPage() {
                     setPage(0)
                   }}
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[160px] h-9">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -279,7 +281,7 @@ export default function StudentRequestsPage() {
                     setPage(0)
                   }}
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[160px] h-9">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -305,13 +307,17 @@ export default function StudentRequestsPage() {
                   <Skeleton className="h-64 w-full" />
                 </div>
               ) : requests.length === 0 ? (
-                <div className="flex flex-col items-center gap-2 py-12 text-center">
-                  <NotebookPenIcon className="h-12 w-12 text-muted-foreground/50" />
-                  <p className="font-medium">Chưa có yêu cầu nào</p>
-                  <p className="text-sm text-muted-foreground">
-                    Tạo yêu cầu mới để xin nghỉ, học bù hoặc chuyển lớp
-                  </p>
-                </div>
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <NotebookPenIcon className="h-10 w-10" />
+                    </EmptyMedia>
+                    <EmptyTitle>Chưa có yêu cầu nào</EmptyTitle>
+                    <EmptyDescription>
+                      Tạo yêu cầu mới để xin nghỉ, học bù hoặc chuyển lớp.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
               ) : (
                 <DataTable
                   columns={columns}
@@ -600,7 +606,7 @@ export function RequestDetail({ request }: { request: StudentRequest }) {
         </div>
       </div>
 
-      <div className="h-px bg-border" />
+      <Separator />
 
       {request.requestType !== 'MAKEUP' && (
         <>
@@ -612,7 +618,7 @@ export function RequestDetail({ request }: { request: StudentRequest }) {
             )}
           </div>
 
-          <div className="h-px bg-border" />
+          <Separator />
         </>
       )}
 
@@ -646,7 +652,7 @@ export function RequestDetail({ request }: { request: StudentRequest }) {
 
       {request.makeupSession && (
         <>
-          <div className="h-px bg-border" />
+          <Separator />
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Buổi học bù</p>
             <p className="mt-1 font-medium">
@@ -673,7 +679,7 @@ export function RequestDetail({ request }: { request: StudentRequest }) {
         </>
       )}
 
-      <div className="h-px bg-border" />
+      <Separator />
 
       <div>
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Lý do</p>
@@ -682,7 +688,7 @@ export function RequestDetail({ request }: { request: StudentRequest }) {
 
       {request.note && (
         <>
-          <div className="h-px bg-border" />
+          <Separator />
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Ghi chú</p>
             <p className="mt-1 text-sm text-muted-foreground">{request.note}</p>
@@ -692,7 +698,7 @@ export function RequestDetail({ request }: { request: StudentRequest }) {
 
       {request.rejectionReason && (
         <>
-          <div className="h-px bg-border" />
+          <Separator />
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Lý do từ chối</p>
             <p className="mt-1 text-sm text-muted-foreground">{request.rejectionReason}</p>
@@ -700,7 +706,7 @@ export function RequestDetail({ request }: { request: StudentRequest }) {
         </>
       )}
 
-      <div className="h-px bg-border" />
+      <Separator />
 
       <div className="space-y-2 text-sm text-muted-foreground">
         <div>

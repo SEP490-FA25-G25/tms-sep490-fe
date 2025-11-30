@@ -9,6 +9,7 @@ import { Calendar, Clock, FileText } from 'lucide-react';
 import type { AssessmentDTO, StudentAssessmentScoreDTO } from '@/types/studentClass';
 import { ASSESSMENT_KINDS } from '@/types/studentClass';
 import { cn } from '@/lib/utils';
+import { ASSESSMENT_KIND_STYLES, getStatusStyle } from '@/lib/status-colors';
 
 interface AssessmentsTabProps {
   assessments: AssessmentDTO[];
@@ -56,23 +57,6 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
       }
     });
   }, [assessments, filter, scoreMap]);
-
-  const getAssessmentKindColor = (kind: string) => {
-    switch (kind) {
-      case 'QUIZ':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'MIDTERM':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'FINAL':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'ASSIGNMENT':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'PROJECT':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
 
   const getStatusBadge = (assessment: AssessmentDTO, score?: StudentAssessmentScoreDTO) => {
     const now = new Date();
@@ -177,7 +161,7 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={cn("text-xs", getAssessmentKindColor(assessment.kind))}>
+                      <Badge className={cn("text-xs", getStatusStyle(ASSESSMENT_KIND_STYLES, assessment.kind))}>
                         {ASSESSMENT_KINDS[assessment.kind]}
                       </Badge>
                     </TableCell>

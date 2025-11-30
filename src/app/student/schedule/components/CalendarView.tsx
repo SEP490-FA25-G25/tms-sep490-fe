@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { format, addDays, parseISO, isToday } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { CALENDAR_SESSION_VARIANTS } from '@/lib/status-colors'
 import {
   type DayOfWeek,
   type SessionSummaryDTO,
@@ -26,14 +27,6 @@ const DAY_LABELS: Record<DayOfWeek, string> = {
   SUNDAY: 'CN',
 }
 
-// Colors for different session statuses or types
-const SESSION_VARIANTS: Record<string, { bg: string; border: string; borderLeft: string; text: string }> = {
-  PLANNED: { bg: 'bg-sky-50', border: 'border-sky-200', borderLeft: 'border-l-sky-600', text: 'text-sky-700' },
-  DONE: { bg: 'bg-emerald-50', border: 'border-emerald-200', borderLeft: 'border-l-emerald-600', text: 'text-emerald-700' },
-  CANCELLED: { bg: 'bg-rose-50', border: 'border-rose-200', borderLeft: 'border-l-rose-600', text: 'text-rose-700' },
-  // Fallback
-  DEFAULT: { bg: 'bg-slate-50', border: 'border-slate-200', borderLeft: 'border-l-slate-600', text: 'text-slate-700' },
-}
 
 const DEFAULT_START_HOUR = 7
 const DEFAULT_END_HOUR = 22
@@ -221,7 +214,7 @@ export function CalendarView({ scheduleData, onSessionClick, className }: Calend
 
               {/* Events */}
               {scheduleData.schedule[day]?.map((session) => {
-                const variant = SESSION_VARIANTS[session.sessionStatus] || SESSION_VARIANTS.DEFAULT
+                const variant = CALENDAR_SESSION_VARIANTS[session.sessionStatus as keyof typeof CALENDAR_SESSION_VARIANTS] || CALENDAR_SESSION_VARIANTS.DEFAULT
 
                 return (
                   <button

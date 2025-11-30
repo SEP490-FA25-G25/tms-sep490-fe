@@ -104,14 +104,6 @@ export function SiteHeader() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => navigate("/profile")}>
-                  <UserCircleIcon className="mr-2 h-4 w-4" />
-                  Tài khoản
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/notifications")}>
-                  <BellIcon className="mr-2 h-4 w-4" />
-                  Thông báo
-                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <div className="flex items-center justify-between w-full cursor-default">
                     <span>Chế độ tối</span>

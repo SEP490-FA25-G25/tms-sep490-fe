@@ -7,11 +7,14 @@ import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import {
   type StudentAttendanceOverviewClassDTO,
   useGetStudentAttendanceOverviewQuery,
   attendanceApi,
 } from "@/store/services/attendanceApi";
+import { ClipboardList, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/store";
 import { AttendanceClassCard } from "@/components/attendance/AttendanceClassCard";
@@ -100,34 +103,34 @@ export default function StudentAttendanceReportOverviewPage() {
                   )}
 
                   {isError && !isLoading && (
-                    <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm">
-                      <p className="font-semibold text-destructive">
-                        Không thể tải báo cáo điểm danh.
-                      </p>
-                      <p className="mt-1 text-destructive/90">
-                        Vui lòng kiểm tra kết nối và thử lại. Nếu lỗi tiếp diễn,
-                        hãy liên hệ bộ phận hỗ trợ.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => refetch()}
-                        className="mt-3 inline-flex items-center rounded-md border border-destructive/40 bg-background px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      >
-                        Thử tải lại
-                      </button>
+                    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-destructive/40 bg-destructive/10 p-6 text-center">
+                      <AlertCircle className="h-6 w-6 text-destructive" />
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">
+                          Không thể tải báo cáo điểm danh
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Vui lòng kiểm tra kết nối và thử lại.
+                        </p>
+                      </div>
+                      <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => refetch()}>
+                        Thử lại
+                      </Button>
                     </div>
                   )}
 
                   {!isLoading && !isError && classes.length === 0 && (
-                    <div className="rounded-lg border border-dashed border-border bg-muted/20 p-8 text-center">
-                      <p className="text-base font-medium text-foreground">
-                        Chưa có dữ liệu điểm danh
-                      </p>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Hệ thống sẽ hiển thị báo cáo ngay khi bạn được xếp vào
-                        lớp và có buổi học phát sinh.
-                      </p>
-                    </div>
+                    <Empty>
+                      <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                          <ClipboardList className="h-10 w-10" />
+                        </EmptyMedia>
+                        <EmptyTitle>Chưa có dữ liệu điểm danh</EmptyTitle>
+                        <EmptyDescription>
+                          Hệ thống sẽ hiển thị báo cáo ngay khi bạn được xếp vào lớp và có buổi học phát sinh.
+                        </EmptyDescription>
+                      </EmptyHeader>
+                    </Empty>
                   )}
                 </section>
               )}
@@ -159,11 +162,17 @@ export default function StudentAttendanceReportOverviewPage() {
                       </div>
 
                       {filteredClasses.length === 0 && (
-                        <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center">
-                          <p className="text-sm text-muted-foreground">
-                            Không có lớp học nào phù hợp với bộ lọc đã chọn
-                          </p>
-                        </div>
+                        <Empty>
+                          <EmptyHeader>
+                            <EmptyMedia variant="icon">
+                              <ClipboardList className="h-10 w-10" />
+                            </EmptyMedia>
+                            <EmptyTitle>Không tìm thấy lớp học</EmptyTitle>
+                            <EmptyDescription>
+                              Không có lớp học nào phù hợp với bộ lọc đã chọn.
+                            </EmptyDescription>
+                          </EmptyHeader>
+                        </Empty>
                       )}
 
                       {filteredClasses.length > 0 && (

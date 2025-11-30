@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { CLASS_STATUS_STYLES, getStatusStyle } from "@/lib/status-colors";
 import { AttendanceCalendarHeatmap } from "./AttendanceCalendarHeatmap";
 import { useGetStudentAttendanceReportQuery } from "@/store/services/attendanceApi";
 
@@ -21,29 +22,18 @@ interface AttendanceClassCardProps {
   onMouseEnter?: () => void;
 }
 
-const STATUS_LABELS: Record<string, { label: string; className: string }> = {
-  ONGOING: {
-    label: "Đang học",
-    className: "text-emerald-700 bg-emerald-50 border-emerald-200",
-  },
-  COMPLETED: {
-    label: "Đã kết thúc",
-    className: "text-slate-700 bg-slate-50 border-slate-200",
-  },
-  UPCOMING: {
-    label: "Sắp diễn ra",
-    className: "text-sky-700 bg-sky-50 border-sky-200",
-  },
+const CLASS_STATUS_LABELS: Record<string, string> = {
+  ONGOING: "Đang học",
+  COMPLETED: "Đã kết thúc",
+  UPCOMING: "Sắp diễn ra",
+  SCHEDULED: "Sắp diễn ra",
+  CANCELLED: "Đã hủy",
+  DRAFT: "Nháp",
 };
 
-function getStatusMeta(status?: string | null) {
+function getStatusLabel(status?: string | null) {
   if (!status) return null;
-  return (
-    STATUS_LABELS[status] ?? {
-      label: status,
-      className: "text-slate-700 bg-slate-50 border-slate-200",
-    }
-  );
+  return CLASS_STATUS_LABELS[status] ?? status;
 }
 
 function formatDate(dateString?: string | null) {
@@ -108,7 +98,8 @@ export function AttendanceClassCard({
   onClick,
   onMouseEnter,
 }: AttendanceClassCardProps) {
-  const statusMeta = getStatusMeta(status);
+  const statusLabel = getStatusLabel(status);
+  const statusClassName = getStatusStyle(CLASS_STATUS_STYLES, status);
 
   // Fetch detailed report data for heatmap
   const { data: reportData, isLoading: isLoadingReport } =
@@ -124,7 +115,7 @@ export function AttendanceClassCard({
 
   return (
     <Card
-      className="group flex flex-col gap-4 p-5 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring h-full cursor-pointer"
+      className="group flex flex-col gap-4 p-5 transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring h-full cursor-pointer"
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       tabIndex={0}
@@ -145,15 +136,15 @@ export function AttendanceClassCard({
           >
             {className}
           </h2>
-          {statusMeta && (
+          {statusLabel && (
             <Badge
               variant="outline"
               className={cn(
                 "shrink-0 text-[10px] px-1.5 py-0 h-5",
-                statusMeta.className
+                statusClassName
               )}
             >
-              {statusMeta.label}
+              {statusLabel}
             </Badge>
           )}
         </div>

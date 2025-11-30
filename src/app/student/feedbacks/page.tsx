@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { cn } from '@/lib/utils'
 import {
   useGetPendingFeedbacksQuery,
@@ -121,19 +122,23 @@ export default function StudentPendingFeedbackPage() {
                   <Skeleton className="h-36 w-full" />
                 </div>
               ) : pending.length === 0 ? (
-                <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border/70 px-6 py-12 text-center">
-                  <MessageCircleIcon className="h-10 w-10 text-muted-foreground/50" />
-                  <p className="text-lg font-semibold">Không có phản hồi cần hoàn thành</p>
-                  <p className="text-sm text-muted-foreground">
-                    Khi phase kết thúc, phản hồi mới sẽ xuất hiện tại đây.
-                  </p>
-                </div>
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <MessageCircleIcon className="h-10 w-10" />
+                    </EmptyMedia>
+                    <EmptyTitle>Không có phản hồi cần hoàn thành</EmptyTitle>
+                    <EmptyDescription>
+                      Khi phase kết thúc, phản hồi mới sẽ xuất hiện tại đây.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
               ) : (
                 <div className="grid gap-3">
                   {pending.map((item) => (
                     <Card
                       key={item.feedbackId}
-                      className="flex flex-col gap-2 p-4 md:flex-row md:items-center md:justify-between"
+                      className="flex flex-col gap-2 p-4 md:flex-row md:items-center md:justify-between transition-shadow hover:shadow-md"
                     >
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
@@ -185,7 +190,6 @@ export default function StudentPendingFeedbackPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1">
                     <Label className="text-sm font-semibold leading-tight">{q.questionText}</Label>
-                    <p className="text-xs text-muted-foreground">Chạm để chọn số sao mong muốn</p>
                   </div>
                   <Badge variant="outline" className="text-xs">
                     Câu {q.id}
