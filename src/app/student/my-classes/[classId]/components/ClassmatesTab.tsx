@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -56,13 +57,13 @@ const ClassmatesTab: React.FC<ClassmatesTabProps> = ({ classmates, isLoading, en
 
   if (isLoading) {
     return (
-      <div className="rounded-lg border">
+      <Card>
         <div className="p-4 space-y-3">
           {Array.from({ length: 6 }).map((_, idx) => (
             <Skeleton key={idx} className="h-12 w-full" />
           ))}
         </div>
-      </div>
+      </Card>
     );
   }
 
@@ -87,7 +88,7 @@ const ClassmatesTab: React.FC<ClassmatesTabProps> = ({ classmates, isLoading, en
         </div>
       </div>
 
-      <div className="rounded-lg border overflow-hidden">
+      <Card className="overflow-hidden">
         {filteredClassmates.length > 0 ? (
           <Table>
             <TableHeader>
@@ -146,7 +147,7 @@ const ClassmatesTab: React.FC<ClassmatesTabProps> = ({ classmates, isLoading, en
             {searchTerm ? 'Không có thành viên trùng khớp tìm kiếm.' : 'Chưa có thành viên nào.'}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 };

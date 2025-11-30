@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -111,13 +112,13 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
   // Loading state
   if (isLoading) {
     return (
-      <div className="rounded-lg border">
+      <Card>
         <div className="p-4 space-y-3">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-12 w-full" />
           ))}
         </div>
-      </div>
+      </Card>
     );
   }
 
@@ -146,7 +147,7 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
         </ToggleGroup>
       </div>
 
-      <div className="rounded-lg border overflow-hidden">
+      <Card className="overflow-hidden">
         {filteredAssessments.length > 0 ? (
           <Table>
             <TableHeader>
@@ -235,7 +236,7 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
             </Empty>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 };

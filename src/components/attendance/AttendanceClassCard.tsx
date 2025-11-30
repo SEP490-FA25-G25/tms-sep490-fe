@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { AttendanceCalendarHeatmap } from "./AttendanceCalendarHeatmap";
@@ -122,8 +123,8 @@ export function AttendanceClassCard({
   const sessions = reportData?.data?.sessions ?? [];
 
   return (
-    <article
-      className="group flex flex-col gap-4 rounded-lg border border-border bg-muted/40 p-5 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring h-full"
+    <Card
+      className="group flex flex-col gap-4 p-5 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring h-full cursor-pointer"
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       tabIndex={0}
@@ -212,6 +213,6 @@ export function AttendanceClassCard({
           />
         )}
       </div>
-    </article>
+    </Card>
   );
 }

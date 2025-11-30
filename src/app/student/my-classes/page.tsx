@@ -210,11 +210,11 @@ const MyClassesPage = () => {
             <div className="@container/main flex flex-1 flex-col">
               <header className="flex flex-col gap-2 border-b border-border px-6 py-5">
                 <div className="flex flex-col gap-2">
-                    <h1 className="text-2xl font-semibold tracking-tight">Lớp của tôi</h1>
-                    <p className="text-sm text-muted-foreground">
-                      Quản lý và xem thông tin các lớp học đã đăng ký
-                    </p>
-                  </div>
+                  <h1 className="text-2xl font-semibold tracking-tight">Lớp của tôi</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Quản lý và xem thông tin các lớp học đã đăng ký
+                  </p>
+                </div>
                 <Tabs value={activeStatusTab} onValueChange={(value) => {
                   setActiveStatusTab(value as 'all' | ClassStatus);
                   setPage(0);
@@ -342,11 +342,11 @@ const MyClassesPage = () => {
                         const teacherSummary = classItem.instructorNames?.length
                           ? `${classItem.instructorNames[0]}${classItem.instructorNames.length > 1 ? ` +${classItem.instructorNames.length - 1}` : ''}`
                           : 'Chưa phân công';
-  
+
                         return (
                           <Card
                             key={classItem.classId}
-                            className="h-full cursor-pointer border border-border/80 transition-shadow hover:shadow-md"
+                            className="h-full cursor-pointer transition-shadow hover:shadow-md"
                             onClick={() => navigate(`/student/my-classes/${classItem.classId}`)}
                           >
                             <CardHeader className="pb-4">

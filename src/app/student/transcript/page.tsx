@@ -6,6 +6,7 @@ import { StudentRoute } from '@/components/ProtectedRoute';
 import { SiteHeader } from '@/components/site-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -157,13 +158,13 @@ const TranscriptPage = () => {
 
               <main className="flex-1 px-6 py-6 md:px-8 md:py-8">
                 {isLoading && (
-                  <div className="rounded-lg border">
+                  <Card>
                     <div className="p-4 space-y-3">
                       {Array.from({ length: 5 }).map((_, idx) => (
                         <Skeleton key={idx} className="h-12 w-full" />
                       ))}
                     </div>
-                  </div>
+                  </Card>
                 )}
 
                 {error && !isLoading && (
@@ -185,7 +186,7 @@ const TranscriptPage = () => {
 
                 {!isLoading && !error && transcriptData.length > 0 && (
                   <div className="space-y-6">
-                    <div className="rounded-lg border overflow-hidden">
+                    <Card className="overflow-hidden p-0">
                       <Table>
                         <TableHeader className="sticky top-0 z-10 bg-background">
                           <TableRow className="bg-muted/50">
@@ -288,7 +289,7 @@ const TranscriptPage = () => {
                           ))}
                         </TableBody>
                       </Table>
-                    </div>
+                    </Card>
                   </div>
                 )}
 

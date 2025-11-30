@@ -1,6 +1,7 @@
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -92,7 +93,7 @@ export function AttendanceSessionsTable({
 }: AttendanceSessionsTableProps) {
   return (
     <TooltipProvider>
-      <div className="rounded-lg border overflow-hidden">
+      <Card className="overflow-hidden">
         {rows.length > 0 ? (
           <Table>
             <TableHeader>
@@ -176,7 +177,7 @@ export function AttendanceSessionsTable({
         ) : (
           <div className="py-10 text-center text-sm text-muted-foreground">{emptyMessage}</div>
         )}
-      </div>
+      </Card>
     </TooltipProvider>
   );
 }

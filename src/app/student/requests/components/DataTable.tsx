@@ -6,7 +6,7 @@ import {
 } from '@tanstack/react-table'
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { useState } from 'react'
-
+import { Card } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -55,7 +55,7 @@ export function DataTable<TData, TValue>({
   })
 
   return (
-    <div className="rounded-lg border overflow-hidden">
+    <Card className="overflow-hidden p-0">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -103,6 +103,6 @@ export function DataTable<TData, TValue>({
           )}
         </TableBody>
       </Table>
-    </div>
+    </Card>
   )
 }

@@ -10,6 +10,7 @@ import { SiteHeader } from '@/components/site-header'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -130,9 +131,9 @@ export default function StudentPendingFeedbackPage() {
               ) : (
                 <div className="grid gap-3">
                   {pending.map((item) => (
-                    <div
+                    <Card
                       key={item.feedbackId}
-                      className="flex flex-col gap-2 rounded-lg border border-border/70 bg-muted/5 p-4 md:flex-row md:items-center md:justify-between"
+                      className="flex flex-col gap-2 p-4 md:flex-row md:items-center md:justify-between"
                     >
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
@@ -152,7 +153,7 @@ export default function StudentPendingFeedbackPage() {
                           Đánh giá
                         </Button>
                       </div>
-                    </div>
+                    </Card>
                   ))}
                 </div>
               )}
@@ -180,7 +181,7 @@ export default function StudentPendingFeedbackPage() {
 
           <div className="space-y-4  pr-1">
             {ratingQuestions.map((q) => (
-              <div key={q.id} className="rounded-lg border border-border/70 bg-muted/10 p-3">
+              <Card key={q.id} className="p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1">
                     <Label className="text-sm font-semibold leading-tight">{q.questionText}</Label>
@@ -195,7 +196,7 @@ export default function StudentPendingFeedbackPage() {
                   onChange={(value) => setRatings((prev) => ({ ...prev, [q.id]: value }))}
                   ariaLabel={`Đánh giá câu ${q.id}`}
                 />
-              </div>
+              </Card>
             ))}
 
             <div className="space-y-2">
