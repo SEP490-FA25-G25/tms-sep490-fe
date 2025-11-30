@@ -111,39 +111,6 @@ const SessionsTab: React.FC<SessionsTabProps> = ({ sessionsData, isLoading, repo
         </ToggleGroup>
       </div>
 
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-7">
-        <div className="rounded-lg border bg-muted/10 p-3 shadow-sm">
-          <p className="text-xs text-muted-foreground">Tổng số buổi</p>
-          <p className="text-sm font-semibold text-foreground">
-            {summary.total > 0 ? `${summary.completed} / ${summary.total}` : '—'}
-          </p>
-        </div>
-        <div className="rounded-lg border bg-muted/10 p-3 shadow-sm">
-          <p className="text-xs text-muted-foreground">Có mặt</p>
-          <p className="text-sm font-semibold text-emerald-700">{summary.regularPresent}</p>
-        </div>
-        <div className="rounded-lg border bg-muted/10 p-3 shadow-sm">
-          <p className="text-xs text-muted-foreground">Học bù</p>
-          <p className="text-sm font-semibold text-blue-700">{summary.makeupPresent}</p>
-        </div>
-        <div className="rounded-lg border bg-muted/10 p-3 shadow-sm">
-          <p className="text-xs text-muted-foreground">Vắng không phép</p>
-          <p className="text-sm font-semibold text-rose-700">{summary.absent}</p>
-        </div>
-        <div className="rounded-lg border bg-muted/10 p-3 shadow-sm">
-          <p className="text-xs text-muted-foreground">Vắng có phép</p>
-          <p className="text-sm font-semibold text-indigo-700">{summary.excused}</p>
-        </div>
-        <div className="rounded-lg border bg-muted/10 p-3 shadow-sm">
-          <p className="text-xs text-muted-foreground">Sắp tới</p>
-          <p className="text-sm font-semibold text-foreground">{summary.upcomingCount}</p>
-        </div>
-        <div className="rounded-lg border bg-muted/10 p-3 md:col-span-1 col-span-2 shadow-sm">
-          <p className="text-xs text-muted-foreground">Chuyên cần</p>
-          <p className="text-sm font-semibold text-foreground">{summary.attendanceRate.toFixed(1)}%</p>
-        </div>
-      </div>
-
       <AttendanceSessionsTable
         rows={filteredSessions.map((session, idx) => {
           const studentSession = studentSessionMap.get(session.id);

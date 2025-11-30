@@ -197,7 +197,7 @@ const MyClassesPage = () => {
             <div className="@container/main flex flex-1 flex-col">
               <header className="flex flex-col gap-2 border-b border-border px-6 py-5">
                 <div className="flex flex-col gap-2">
-                  <h1 className="text-2xl font-semibold tracking-tight">Lớp của tôi</h1>
+                  <h1 className="text-3xl font-bold tracking-tight">Lớp của tôi</h1>
                   <p className="text-sm text-muted-foreground">
                     Quản lý và xem thông tin các lớp học đã đăng ký
                   </p>
@@ -383,18 +383,6 @@ const MyClassesPage = () => {
                                 </div>
                                 <Progress value={progress} className="h-2" />
                               </div>
-
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(`/student/my-classes/${classItem.classId}`);
-                                }}
-                              >
-                                Xem chi tiết
-                              </Button>
                             </CardContent>
                           </Card>
                         );

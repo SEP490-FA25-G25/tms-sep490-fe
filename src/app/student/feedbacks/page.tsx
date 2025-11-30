@@ -105,7 +105,7 @@ export default function StudentPendingFeedbackPage() {
           <main className="flex flex-1 flex-col">
             <header className="flex items-center justify-between border-b border-border px-6 py-5">
               <div className="space-y-1">
-                <h1 className="text-2xl font-semibold tracking-tight">Phản hồi khóa học</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Phản hồi khóa học</h1>
                 <p className="text-sm text-muted-foreground">
                   Danh sách phản hồi sau phase bạn cần hoàn thành
                 </p>

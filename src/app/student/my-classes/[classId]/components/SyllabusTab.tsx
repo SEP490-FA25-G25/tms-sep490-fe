@@ -10,8 +10,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import {
   Download,
   Eye,
-  Lock,
-  Unlock,
   CheckCircle,
   BookOpen,
   FileText,
@@ -253,7 +251,10 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
           <Card className="overflow-hidden">
             <div className="divide-y">
               {courseMaterials.map((material) => (
-                <div key={material.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
+                <div 
+                  key={material.id} 
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
+                >
                   <div className="shrink-0 text-muted-foreground">
                     {getMaterialIcon(material.materialType)}
                   </div>
@@ -268,16 +269,11 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                     <Badge variant="outline" className="text-xs">
                       {getMaterialTypeLabel(material.materialType)}
                     </Badge>
-                    <div className="flex items-center gap-1">
-                      {!material.isAccessible && <Lock className="h-4 w-4 text-muted-foreground" />}
-                      {material.isAccessible && <Unlock className="h-4 w-4 text-muted-foreground" />}
-                    </div>
                     <div className="flex gap-1">
                       <Button
                         size="icon"
                         variant="ghost"
                         aria-label="Xem tài liệu"
-                        disabled={!material.isAccessible}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -285,7 +281,6 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                         size="icon"
                         variant="ghost"
                         aria-label="Tải tài liệu"
-                        disabled={!material.isAccessible}
                       >
                         <Download className="h-4 w-4" />
                       </Button>
@@ -322,7 +317,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
               const phaseId = `phase-${phaseIndex}`;
 
               return (
-                <AccordionItem key={phase.id} value={phaseId} className="rounded-lg border bg-card">
+                <AccordionItem key={phase.id} value={phaseId} className="rounded-lg border bg-card last:border-b">
                   <AccordionTrigger className="px-5 py-4 hover:no-underline">
                     <div className="flex items-start justify-between gap-3 text-left">
                       <div className="space-y-1">
@@ -362,7 +357,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                           {phaseMaterials.map((material) => (
                             <div
                               key={material.id}
-                              className="flex items-center gap-3 px-4 py-3 border-b last:border-b-0"
+                              className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40"
                             >
                               <div className="shrink-0 text-muted-foreground">
                                 {getMaterialIcon(material.materialType)}
@@ -381,16 +376,11 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                                 )}
                               </div>
                               <div className="flex items-center gap-2">
-                                <div className="flex items-center gap-1">
-                                  {!material.isAccessible && <Lock className="h-4 w-4 text-muted-foreground" />}
-                                  {material.isAccessible && <Unlock className="h-4 w-4 text-muted-foreground" />}
-                                </div>
                                 <div className="flex gap-1">
                                   <Button
                                     size="icon"
                                     variant="ghost"
                                     aria-label="Xem tài liệu"
-                                    disabled={!material.isAccessible}
                                   >
                                     <Eye className="h-4 w-4" />
                                   </Button>
@@ -398,7 +388,6 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                                     size="icon"
                                     variant="ghost"
                                     aria-label="Tải tài liệu"
-                                    disabled={!material.isAccessible}
                                   >
                                     <Download className="h-4 w-4" />
                                   </Button>
@@ -419,15 +408,20 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
 
                           return (
                             <div key={session.id} className="border rounded-lg bg-card overflow-hidden">
-                              <Accordion type="single" value={expandedSessions.includes(sessionId) ? sessionId : ''} onValueChange={(value: string | string[] | undefined) => {
-                                if (value) {
-                                  setExpandedSessions(prev => [...prev, sessionId]);
-                                } else {
-                                  setExpandedSessions(prev => prev.filter(id => id !== sessionId));
-                                }
-                              }} className="border-0">
-                                <AccordionItem value={sessionId} className="border-0">
-                                  <AccordionTrigger className="px-4 py-3 hover:no-underline border-0">
+                              <Accordion 
+                                type="single" 
+                                collapsible
+                                value={expandedSessions.includes(sessionId) ? sessionId : undefined} 
+                                onValueChange={(value: string | undefined) => {
+                                  if (value) {
+                                    setExpandedSessions(prev => [...prev, sessionId]);
+                                  } else {
+                                    setExpandedSessions(prev => prev.filter(id => id !== sessionId));
+                                  }
+                                }}
+                              >
+                                <AccordionItem value={sessionId} className="border-b-0">
+                                  <AccordionTrigger className="px-4 py-3 hover:no-underline">
                                     <div className="flex items-start justify-between gap-3 text-left w-full">
                                       <div className="space-y-2">
                                         <div className="flex items-center gap-3">
@@ -455,7 +449,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                                     </div>
                                   </AccordionTrigger>
 
-                                  <AccordionContent className="px-4 pb-4 space-y-4 border-0">
+                                  <AccordionContent className="px-4 pb-4 space-y-4">
                                     {/* Session Objectives */}
                                     {session.objectives && (
                                       <div className="space-y-2">
@@ -500,7 +494,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                                           {sessionMaterials.map((material) => (
                                             <div
                                               key={material.id}
-                                              className="flex items-center gap-3 px-4 py-3 border-b last:border-b-0"
+                                              className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40"
                                             >
                                               <div className="shrink-0 text-muted-foreground">
                                                 {getMaterialIcon(material.materialType)}
@@ -519,16 +513,11 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                                                 )}
                                               </div>
                                               <div className="flex items-center gap-2">
-                                                <div className="flex items-center gap-1">
-                                                  {!material.isAccessible && <Lock className="h-4 w-4 text-muted-foreground" />}
-                                                  {material.isAccessible && <Unlock className="h-4 w-4 text-muted-foreground" />}
-                                                </div>
                                                 <div className="flex gap-1">
                                                   <Button
                                                     size="icon"
                                                     variant="ghost"
                                                     aria-label="Xem tài liệu"
-                                                    disabled={!material.isAccessible}
                                                   >
                                                     <Eye className="h-4 w-4" />
                                                   </Button>
@@ -536,7 +525,6 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                                                     size="icon"
                                                     variant="ghost"
                                                     aria-label="Tải tài liệu"
-                                                    disabled={!material.isAccessible}
                                                   >
                                                     <Download className="h-4 w-4" />
                                                   </Button>

@@ -240,7 +240,7 @@ const ClassDetailPage = () => {
 
                   {!isDetailLoading && classDetail && (
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
-                      <div className="sticky top-[--header-height] bg-background/95 backdrop-blur-sm z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2" style={{ top: 'calc(var(--header-height) + 0.5rem)' }}>
+                      <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2 -mt-6 pt-6">
                         <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted/50">
                           <TabsTrigger
                             value="sessions"
