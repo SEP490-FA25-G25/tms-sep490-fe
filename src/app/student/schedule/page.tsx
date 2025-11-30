@@ -117,12 +117,16 @@ export default function StudentSchedulePage() {
     refetch: refetchCurrentWeek,
   } = useGetCurrentWeekQuery()
 
+  // Initialize weekStart only on first load (when weekStart is null)
+  // Do NOT reset when user navigates to different weeks
   useEffect(() => {
-    if (currentWeekResponse?.data && weekStart !== currentWeekResponse.data) {
-      setWeekStart(currentWeekResponse.data)
-    } else if (!weekStart && isCurrentWeekError) {
-      const fallbackWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
-      setWeekStart(format(fallbackWeekStart, 'yyyy-MM-dd'))
+    if (weekStart === null) {
+      if (currentWeekResponse?.data) {
+        setWeekStart(currentWeekResponse.data)
+      } else if (isCurrentWeekError) {
+        const fallbackWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
+        setWeekStart(format(fallbackWeekStart, 'yyyy-MM-dd'))
+      }
     }
   }, [currentWeekResponse?.data, isCurrentWeekError, weekStart])
 
@@ -138,6 +142,7 @@ export default function StudentSchedulePage() {
     },
     {
       skip: !weekStart,
+      refetchOnMountOrArgChange: true,
     }
   )
 
@@ -154,21 +159,35 @@ export default function StudentSchedulePage() {
 
   const handleWeekChange = useCallback(
     (direction: 'prev' | 'next' | 'current') => {
-      if (!scheduleData && direction !== 'current') {
+      if (direction === 'current') {
+        if (currentWeekResponse?.data) {
+          setWeekStart(currentWeekResponse.data)
+        } else {
+          // Fallback to current week calculation
+          const fallbackWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
+          setWeekStart(format(fallbackWeekStart, 'yyyy-MM-dd'))
+        }
         return
       }
-      if (direction === 'current' && currentWeekResponse?.data) {
-        setWeekStart(currentWeekResponse.data)
-        return
+
+      // For prev/next, use the best available date source
+      // Priority: weekStart state (most current) -> scheduleData -> currentWeek -> fallback
+      let baseDate: Date
+      if (weekStart) {
+        baseDate = parseISO(weekStart)
+      } else if (scheduleData?.weekStart) {
+        baseDate = parseISO(scheduleData.weekStart)
+      } else if (currentWeekResponse?.data) {
+        baseDate = parseISO(currentWeekResponse.data)
+      } else {
+        // Ultimate fallback: calculate from today
+        baseDate = startOfWeek(new Date(), { weekStartsOn: 1 })
       }
-      if (scheduleData) {
-        const baseDate = parseISO(scheduleData.weekStart)
-        const newDate =
-          direction === 'prev' ? addDays(baseDate, -7) : direction === 'next' ? addDays(baseDate, 7) : baseDate
-        setWeekStart(format(newDate, 'yyyy-MM-dd'))
-      }
+
+      const newDate = direction === 'prev' ? addDays(baseDate, -7) : addDays(baseDate, 7)
+      setWeekStart(format(newDate, 'yyyy-MM-dd'))
     },
-    [currentWeekResponse?.data, scheduleData]
+    [currentWeekResponse?.data, scheduleData, weekStart]
   )
 
   const handleRetry = useCallback(() => {
@@ -207,7 +226,6 @@ export default function StudentSchedulePage() {
               </div>
               
               <div className="flex items-center gap-3">
-                <div className="flex items-center rounded-md border bg-background p-1 shadow-sm">
                   <Button 
                     variant="ghost" 
                     size="sm" 
@@ -235,7 +253,6 @@ export default function StudentSchedulePage() {
                   >
                     <ChevronRightIcon className="h-4 w-4" />
                   </Button>
-                </div>
 
                 <div className="h-8 w-px bg-border mx-1" />
 
@@ -245,7 +262,6 @@ export default function StudentSchedulePage() {
                   onClick={() => handleWeekChange('current')}
                 >
                   <RefreshCcwIcon className="h-4 w-4" />
-                  Hiện tại
                 </Button>
               </div>
             </header>
