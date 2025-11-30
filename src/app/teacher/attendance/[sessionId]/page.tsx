@@ -11,7 +11,7 @@ import {
   useSubmitAttendanceMutation,
   useSubmitReportMutation,
 } from "@/store/services/attendanceApi";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, addHours, isAfter } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -32,6 +32,40 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
+
+// Helper function to check if attendance can be edited
+// Returns true if session has already occurred and it's within 48 hours from session end time
+// Works regardless of session status
+const canEditAttendance = (sessionDate: string, endTime?: string): boolean => {
+  if (!endTime) {
+    // If no end time, check if session date has passed
+    try {
+      const sessionDateOnly = parseISO(sessionDate);
+      const now = new Date();
+      return !isAfter(sessionDateOnly, now);
+    } catch {
+      return false;
+    }
+  }
+
+  try {
+    // Parse session date and end time
+    const sessionEndDateTime = parseISO(`${sessionDate}T${endTime}`);
+    const now = new Date();
+
+    // Check if session has ended (not a future session)
+    if (isAfter(sessionEndDateTime, now)) {
+      return false;
+    }
+
+    // Check if it's within 48 hours from session end time
+    const deadline = addHours(sessionEndDateTime, 48);
+    return isAfter(deadline, now);
+  } catch {
+    // If parsing fails, don't allow editing
+    return false;
+  }
+};
 
 // Helper function to format error messages from backend to user-friendly Vietnamese
 const formatBackendError = (
@@ -136,8 +170,9 @@ export default function AttendanceDetailPage() {
       ? (fallbackSession as { timeSlotName?: string }).timeSlotName
       : undefined;
 
-  const session: SessionInfo | null = sessionDetail
-    ? {
+  const session: SessionInfo | null = useMemo(() => {
+    if (sessionDetail) {
+      return {
         sessionId: sessionDetail.sessionId,
         classId: sessionDetail.classId,
         classCode: sessionDetail.classCode,
@@ -153,9 +188,10 @@ export default function AttendanceDetailPage() {
         totalStudents: sessionDetail.summary.totalStudents,
         presentCount: sessionDetail.summary.presentCount,
         absentCount: sessionDetail.summary.absentCount,
-      }
-    : fallbackSession
-    ? {
+      };
+    }
+    if (fallbackSession) {
+      return {
         sessionId: fallbackSession.sessionId,
         classId: fallbackSession.classId,
         classCode: fallbackSession.classCode,
@@ -171,8 +207,10 @@ export default function AttendanceDetailPage() {
         absentCount: fallbackSession.absentCount,
         resourceName: fallbackSession.resourceName,
         modality: fallbackSession.modality,
-      }
-    : null;
+      };
+    }
+    return null;
+  }, [sessionDetail, fallbackSession, fallbackTimeSlotName]);
 
   // Extract students from response - data.students is the array
   const students = useMemo(
@@ -202,6 +240,12 @@ export default function AttendanceDetailPage() {
         student.homeworkStatus.trim().length > 0
     );
   }, [sessionHasHomeworkFlag, students]);
+
+  // Check if attendance can be edited (session has ended and within 48 hours from end)
+  const isEditable = useMemo(() => {
+    if (!session) return false;
+    return canEditAttendance(session.date, session.endTime);
+  }, [session]);
 
   // Report dialog state
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
@@ -438,7 +482,9 @@ export default function AttendanceDetailPage() {
         apiError?.data?.message ||
         apiError?.data?.error ||
         "Có lỗi xảy ra khi lưu điểm danh";
-      toast.error(formatBackendError(errorMessage, "Có lỗi xảy ra khi lưu điểm danh"));
+      toast.error(
+        formatBackendError(errorMessage, "Có lỗi xảy ra khi lưu điểm danh")
+      );
     }
   };
 
@@ -556,12 +602,41 @@ export default function AttendanceDetailPage() {
             </div>
           ) : (
             <div className="space-y-3">
+              {/* Warning message if editing is not allowed */}
+              {!isEditable && session && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-sm text-amber-800">
+                    {(() => {
+                      try {
+                        if (!session.endTime) {
+                          return "Buổi học chưa kết thúc hoặc không có thông tin thời gian kết thúc.";
+                        }
+                        const sessionDateTime = parseISO(
+                          `${session.date}T${session.endTime}`
+                        );
+                        const now = new Date();
+                        if (isAfter(sessionDateTime, now)) {
+                          return "Buổi học chưa kết thúc. Bạn chỉ có thể chỉnh sửa điểm danh sau khi buổi học kết thúc và trong vòng 48 giờ.";
+                        }
+                        const deadline = addHours(sessionDateTime, 48);
+                        if (isAfter(now, deadline)) {
+                          return "Đã quá 48 giờ kể từ khi buổi học kết thúc. Không thể chỉnh sửa điểm danh.";
+                        }
+                        return "Không thể chỉnh sửa điểm danh.";
+                      } catch {
+                        return "Không thể chỉnh sửa điểm danh.";
+                      }
+                    })()}
+                  </p>
+                </div>
+              )}
               {/* Quick action buttons */}
               <div className="flex items-center justify-end gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleMarkAllPresent}
+                  disabled={!isEditable}
                   className="text-emerald-700 border-emerald-300 hover:bg-emerald-50"
                 >
                   Tất cả có mặt
@@ -570,6 +645,7 @@ export default function AttendanceDetailPage() {
                   variant="outline"
                   size="sm"
                   onClick={handleMarkAllAbsent}
+                  disabled={!isEditable}
                   className="text-rose-700 border-rose-300 hover:bg-rose-50"
                 >
                   Tất cả vắng mặt
@@ -631,7 +707,12 @@ export default function AttendanceDetailPage() {
                                     "PRESENT"
                                   )
                                 }
+                                disabled={!isEditable}
                                 className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                                  !isEditable
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
+                                } ${
                                   attendanceStatus[student.studentId] ===
                                   "PRESENT"
                                     ? "bg-emerald-100 text-emerald-700 border border-emerald-300"
@@ -656,7 +737,12 @@ export default function AttendanceDetailPage() {
                                     "ABSENT"
                                   )
                                 }
+                                disabled={!isEditable}
                                 className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                                  !isEditable
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
+                                } ${
                                   attendanceStatus[student.studentId] ===
                                   "ABSENT"
                                     ? "bg-rose-100 text-rose-700 border border-rose-300"
@@ -690,6 +776,7 @@ export default function AttendanceDetailPage() {
                                       value as "COMPLETED" | "INCOMPLETE"
                                     )
                                   }
+                                  disabled={!isEditable}
                                 >
                                   <SelectTrigger className="w-full max-w-[200px]">
                                     <SelectValue placeholder="Chọn trạng thái" />
@@ -723,6 +810,7 @@ export default function AttendanceDetailPage() {
                                     e.target.value
                                   )
                                 }
+                                disabled={!isEditable}
                                 className="min-h-16 w-full max-w-[300px]"
                               />
                             </div>
@@ -753,10 +841,14 @@ export default function AttendanceDetailPage() {
                   <Button
                     variant="outline"
                     onClick={() => setIsReportDialogOpen(true)}
+                    disabled={!isEditable}
                   >
                     Nộp báo cáo
                   </Button>
-                  <Button onClick={handleSubmit} disabled={isSubmitting}>
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting || !isEditable}
+                  >
                     {isSubmitting ? "Đang lưu..." : "Lưu điểm danh"}
                   </Button>
                 </div>
@@ -908,7 +1000,12 @@ export default function AttendanceDetailPage() {
                             apiError?.data?.message ||
                             apiError?.data?.error ||
                             "Có lỗi xảy ra khi nộp báo cáo";
-                          toast.error(formatBackendError(errorMessage, "Có lỗi xảy ra khi nộp báo cáo"));
+                          toast.error(
+                            formatBackendError(
+                              errorMessage,
+                              "Có lỗi xảy ra khi nộp báo cáo"
+                            )
+                          );
                         }
                       }}
                       disabled={isSubmittingReport || !teacherNote.trim()}
