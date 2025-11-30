@@ -20,6 +20,9 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import {
   useGetCurrentWeekQuery,
@@ -108,7 +111,9 @@ const RESOURCE_TYPE_LABELS: Record<string, string> = {
 
 export default function StudentSchedulePage() {
   const [weekStart, setWeekStart] = useState<string | null>(null)
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear())
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null)
+  const [weekPickerOpen, setWeekPickerOpen] = useState(false)
 
   const {
     data: currentWeekResponse,
@@ -117,15 +122,18 @@ export default function StudentSchedulePage() {
     refetch: refetchCurrentWeek,
   } = useGetCurrentWeekQuery()
 
-  // Initialize weekStart only on first load (when weekStart is null)
-  // Do NOT reset when user navigates to different weeks
+  // Initialize weekStart and selectedYear only on first load
   useEffect(() => {
     if (weekStart === null) {
       if (currentWeekResponse?.data) {
         setWeekStart(currentWeekResponse.data)
+        // Set selected year based on current week
+        const currentWeekDate = parseISO(currentWeekResponse.data)
+        setSelectedYear(currentWeekDate.getFullYear())
       } else if (isCurrentWeekError) {
         const fallbackWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
         setWeekStart(format(fallbackWeekStart, 'yyyy-MM-dd'))
+        setSelectedYear(fallbackWeekStart.getFullYear())
       }
     }
   }, [currentWeekResponse?.data, isCurrentWeekError, weekStart])
@@ -148,30 +156,117 @@ export default function StudentSchedulePage() {
 
   const scheduleData = weeklyScheduleResponse?.data
 
-  const weekRangeLabel = useMemo(() => {
-    if (!scheduleData) {
-      return null
+  // Year options: previous year, current year, next year
+  const currentYear = new Date().getFullYear()
+  const yearOptions = useMemo(() => [
+    { value: currentYear - 1, label: `${currentYear - 1}` },
+    { value: currentYear, label: `${currentYear}` },
+    { value: currentYear + 1, label: `${currentYear + 1}` },
+  ], [currentYear])
+
+  // Get current week start for highlighting
+  const currentWeekStartDate = useMemo(() => {
+    return currentWeekResponse?.data
+      ? parseISO(currentWeekResponse.data)
+      : startOfWeek(new Date(), { weekStartsOn: 1 })
+  }, [currentWeekResponse?.data])
+
+  // Generate all weeks for the selected year
+  const weekOptionsForYear = useMemo(() => {
+    const options: Array<{ value: string; label: string; isCurrentWeek: boolean }> = []
+    
+    // Start from first Monday of/before Jan 1st
+    const jan1 = new Date(selectedYear, 0, 1)
+    let weekStartDate = startOfWeek(jan1, { weekStartsOn: 1 })
+    
+    // If the week starts in previous year and has less than 4 days in selected year,
+    // move to next week (ISO week numbering logic)
+    if (weekStartDate.getFullYear() < selectedYear) {
+      const daysInSelectedYear = 7 - weekStartDate.getDate() + 1
+      if (daysInSelectedYear < 4) {
+        weekStartDate = addDays(weekStartDate, 7)
+      }
     }
-    const start = parseISO(scheduleData.weekStart)
-    const end = parseISO(scheduleData.weekEnd)
-    return `${format(start, 'dd/MM/yyyy', { locale: vi })} - ${format(end, 'dd/MM/yyyy', { locale: vi })}`
-  }, [scheduleData])
+    
+    const nextYearStart = new Date(selectedYear + 1, 0, 1)
+    let weekNumber = 1
+    
+    while (weekStartDate < nextYearStart) {
+      const weekEndDate = addDays(weekStartDate, 6)
+      const isCurrentWeek = format(weekStartDate, 'yyyy-MM-dd') === format(currentWeekStartDate, 'yyyy-MM-dd')
+      
+      // Format label with week number
+      const startLabel = format(weekStartDate, 'dd/MM', { locale: vi })
+      const endLabel = weekEndDate.getFullYear() !== weekStartDate.getFullYear()
+        ? format(weekEndDate, 'dd/MM/yy', { locale: vi })
+        : format(weekEndDate, 'dd/MM', { locale: vi })
+      
+      options.push({
+        value: format(weekStartDate, 'yyyy-MM-dd'),
+        label: `Tuần ${weekNumber} (${startLabel} - ${endLabel})`,
+        isCurrentWeek,
+      })
+      
+      weekStartDate = addDays(weekStartDate, 7)
+      weekNumber++
+    }
+    
+    return options
+  }, [selectedYear, currentWeekStartDate])
+
+  const handleYearChange = useCallback((value: string) => {
+    const year = parseInt(value, 10)
+    setSelectedYear(year)
+    
+    // If changing to current year, select current week
+    // Otherwise, select first week of the year
+    if (year === currentWeekStartDate.getFullYear()) {
+      setWeekStart(format(currentWeekStartDate, 'yyyy-MM-dd'))
+    } else {
+      // Select first week of selected year
+      const jan1 = new Date(year, 0, 1)
+      let firstWeekStart = startOfWeek(jan1, { weekStartsOn: 1 })
+      if (firstWeekStart.getFullYear() < year) {
+        const daysInYear = 7 - firstWeekStart.getDate() + 1
+        if (daysInYear < 4) {
+          firstWeekStart = addDays(firstWeekStart, 7)
+        }
+      }
+      setWeekStart(format(firstWeekStart, 'yyyy-MM-dd'))
+    }
+  }, [currentWeekStartDate])
+
+  const handleWeekSelect = useCallback((value: string) => {
+    setWeekStart(value)
+    setWeekPickerOpen(false)
+  }, [])
+
+  // Get selected week label for trigger button
+  const selectedWeekLabel = useMemo(() => {
+    if (!weekStart) return 'Chọn tuần'
+    const selectedOption = weekOptionsForYear.find(opt => opt.value === weekStart)
+    if (selectedOption) return selectedOption.label
+    // If week not in current year options, format it manually
+    const start = parseISO(weekStart)
+    const end = addDays(start, 6)
+    return `${format(start, 'dd/MM', { locale: vi })} - ${format(end, 'dd/MM', { locale: vi })}`
+  }, [weekStart, weekOptionsForYear])
 
   const handleWeekChange = useCallback(
     (direction: 'prev' | 'next' | 'current') => {
       if (direction === 'current') {
         if (currentWeekResponse?.data) {
           setWeekStart(currentWeekResponse.data)
+          setSelectedYear(parseISO(currentWeekResponse.data).getFullYear())
         } else {
-          // Fallback to current week calculation
           const fallbackWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
           setWeekStart(format(fallbackWeekStart, 'yyyy-MM-dd'))
+          setSelectedYear(fallbackWeekStart.getFullYear())
         }
         return
       }
 
-      // For prev/next, use the best available date source
-      // Priority: weekStart state (most current) -> scheduleData -> currentWeek -> fallback
+      // For prev/next, use weekStart state or fallback
       let baseDate: Date
       if (weekStart) {
         baseDate = parseISO(weekStart)
@@ -180,14 +275,20 @@ export default function StudentSchedulePage() {
       } else if (currentWeekResponse?.data) {
         baseDate = parseISO(currentWeekResponse.data)
       } else {
-        // Ultimate fallback: calculate from today
         baseDate = startOfWeek(new Date(), { weekStartsOn: 1 })
       }
 
       const newDate = direction === 'prev' ? addDays(baseDate, -7) : addDays(baseDate, 7)
-      setWeekStart(format(newDate, 'yyyy-MM-dd'))
+      const newWeekStart = format(newDate, 'yyyy-MM-dd')
+      setWeekStart(newWeekStart)
+      
+      // Update selected year if navigated to a different year
+      const newYear = newDate.getFullYear()
+      if (newYear !== selectedYear) {
+        setSelectedYear(newYear)
+      }
     },
-    [currentWeekResponse?.data, scheduleData, weekStart]
+    [currentWeekResponse?.data, scheduleData, weekStart, selectedYear]
   )
 
   const handleRetry = useCallback(() => {
@@ -197,11 +298,6 @@ export default function StudentSchedulePage() {
 
   const isLoading = (!weekStart && !isCurrentWeekError) || isCurrentWeekLoading || isScheduleLoading
   const hasError = isScheduleError || (isCurrentWeekError && !weekStart && !isCurrentWeekLoading)
-  const totalSessions = useMemo(() => {
-    if (!scheduleData) return 0
-    return Object.values(scheduleData.schedule ?? {}).reduce((sum, sessions) => sum + sessions.length, 0)
-  }, [scheduleData])
-  const hasContent = !!scheduleData && totalSessions > 0
 
   return (
     <StudentRoute>
@@ -225,29 +321,87 @@ export default function StudentSchedulePage() {
                 </p>
               </div>
               
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                  {/* Prev Week Button */}
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-7 px-2"
+                    className="h-8 px-2"
                     onClick={() => handleWeekChange('prev')}
                     disabled={!scheduleData || isScheduleFetching}
                   >
                     <ChevronLeftIcon className="h-4 w-4" />
                   </Button>
+                  
+                  {/* Week Picker Popover */}
+                  <Popover open={weekPickerOpen} onOpenChange={setWeekPickerOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 min-w-[200px] justify-between font-medium"
+                        disabled={isScheduleFetching}
+                      >
+                        <CalendarIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span className="flex-1 text-left truncate">{selectedWeekLabel}</span>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[280px] p-0" align="center">
+                      {/* Year Selector */}
+                      <div className="p-3 border-b">
+                        <Select
+                          value={selectedYear.toString()}
+                          onValueChange={handleYearChange}
+                        >
+                          <SelectTrigger size="sm" className="w-full">
+                            <SelectValue placeholder="Chọn năm" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {yearOptions.map((option) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value.toString()}
+                                className={cn(option.value === currentYear && 'font-semibold')}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {/* Week List */}
+                      <ScrollArea className="h-[300px]">
+                        <div className="p-2">
+                          {weekOptionsForYear.map((option) => (
+                            <button
+                              key={option.value}
+                              onClick={() => handleWeekSelect(option.value)}
+                              className={cn(
+                                "w-full flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors",
+                                "hover:bg-accent hover:text-accent-foreground",
+                                weekStart === option.value && "bg-accent text-accent-foreground",
+                                option.isCurrentWeek && "font-semibold"
+                              )}
+                            >
+                              <span>{option.label}</span>
+                              {option.isCurrentWeek && (
+                                <Badge variant="secondary" className="h-5 px-1.5 text-xs">
+                                  Tuần này
+                                </Badge>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </PopoverContent>
+                  </Popover>
+                  
+                  {/* Next Week Button */}
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-7 px-3 font-medium"
-                    onClick={() => handleWeekChange('current')}
-                    disabled={!currentWeekResponse?.data || isScheduleFetching}
-                  >
-                    {weekRangeLabel || 'Hôm nay'}
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-7 px-2"
+                    className="h-8 px-2"
                     onClick={() => handleWeekChange('next')}
                     disabled={!scheduleData || isScheduleFetching}
                   >
@@ -258,10 +412,13 @@ export default function StudentSchedulePage() {
 
                 <Button 
                   variant="outline" 
-                  className="gap-2 hidden sm:flex"
-                  onClick={() => handleWeekChange('current')}
+                  size="sm"
+                  className="h-7 gap-2 hidden sm:flex"
+                  onClick={handleRetry}
+                  disabled={isScheduleFetching}
+                  title="Làm mới dữ liệu"
                 >
-                  <RefreshCcwIcon className="h-4 w-4" />
+                  <RefreshCcwIcon className={cn("h-4 w-4", isScheduleFetching && "animate-spin")} />
                 </Button>
               </div>
             </header>
@@ -288,19 +445,7 @@ export default function StudentSchedulePage() {
                 </div>
               )}
 
-              {!isLoading && !hasError && !hasContent && (
-                <div className="flex h-full flex-col items-center justify-center gap-4 rounded-xl border border-dashed bg-background p-8 text-center">
-                  <div className="rounded-full bg-muted p-3">
-                    <CalendarIcon className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">Không có lịch học</h3>
-                    <p className="text-sm text-muted-foreground">Bạn không có lịch học nào trong tuần này.</p>
-                  </div>
-                </div>
-              )}
-
-              {!isLoading && !hasError && hasContent && scheduleData && (
+              {!isLoading && !hasError && scheduleData && (
                 <CalendarView scheduleData={scheduleData} onSessionClick={setSelectedSessionId} className="h-full" />
               )}
             </div>
