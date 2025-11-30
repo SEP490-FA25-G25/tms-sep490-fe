@@ -52,19 +52,6 @@ const SessionsTab: React.FC<SessionsTabProps> = ({ sessionsData, isLoading, repo
     return allSessions;
   }, [allSessions, filter]);
 
-  const summary = useMemo(() => {
-    const total = allSessions.length;
-    const regularPresent = studentSessions.filter((s) => s.attendanceStatus === 'PRESENT' && !s.isMakeup).length;
-    const makeupPresent = studentSessions.filter((s) => s.attendanceStatus === 'PRESENT' && s.isMakeup).length;
-    const present = regularPresent + makeupPresent;
-    const absent = studentSessions.filter((s) => s.attendanceStatus === 'ABSENT').length;
-    const excused = studentSessions.filter((s) => s.attendanceStatus === 'EXCUSED').length;
-    const upcomingCount = upcomingSessions.length;
-    const completed = present + absent + excused;
-    const attendanceRate = (present + absent) > 0 ? (present / (present + absent)) * 100 : 0;
-    return { total, present, regularPresent, makeupPresent, absent, excused, upcomingCount, completed, attendanceRate };
-  }, [allSessions.length, studentSessions, upcomingSessions.length]);
-
   if (isLoading) {
     return (
       <Card>

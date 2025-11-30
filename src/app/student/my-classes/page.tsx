@@ -92,9 +92,26 @@ const MyClassesPage = () => {
     direction: 'desc',
   });
 
-  // Sort classes by status priority, then by startDate
+  // Filter and sort classes by status priority, then by startDate
   const classItems = useMemo(() => {
-    const items = classesResponse?.data?.content || [];
+    let items = classesResponse?.data?.content || [];
+
+    // Client-side search filtering
+    const searchTerm = filters.searchTerm.trim().toLowerCase();
+    if (searchTerm) {
+      items = items.filter((item) => {
+        const searchableFields = [
+          item.className,
+          item.classCode,
+          item.courseName,
+          item.branchName,
+          ...(item.instructorNames || []),
+        ];
+        return searchableFields.some(
+          (field) => field && field.toLowerCase().includes(searchTerm)
+        );
+      });
+    }
 
     // If viewing specific status tab, no need to re-sort by status priority
     if (activeStatusTab !== 'all') {
@@ -121,7 +138,7 @@ const MyClassesPage = () => {
       // Within same status, keep server-side sorting (startDate desc)
       return 0;
     });
-  }, [classesResponse, activeStatusTab]);
+  }, [classesResponse, activeStatusTab, filters.searchTerm]);
   useEffect(() => {
     setBranchOptions((prev) => {
       const map = new Map<number, string>();

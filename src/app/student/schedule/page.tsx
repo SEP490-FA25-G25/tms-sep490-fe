@@ -28,10 +28,7 @@ import {
   SESSION_STATUS_STYLES,
   ATTENDANCE_STATUS_STYLES,
   HOMEWORK_STATUS_STYLES,
-  MODALITY_STYLES,
-  MATERIAL_TYPE_STYLES,
   getMaterialTypeMeta,
-  getStatusStyle,
 } from '@/lib/status-colors'
 import {
   useGetCurrentWeekQuery,
@@ -40,26 +37,6 @@ import {
 } from '@/store/services/studentScheduleApi'
 import { CalendarView } from './components/CalendarView'
 
-const SESSION_STATUS_LABELS: Record<string, string> = {
-  PLANNED: 'Đã lên lịch',
-  DONE: 'Hoàn thành',
-  CANCELLED: 'Đã hủy',
-}
-
-const ATTENDANCE_STATUS_LABELS: Record<string, string> = {
-  PLANNED: 'Chờ điểm danh',
-  PRESENT: 'Có mặt',
-  ABSENT: 'Vắng mặt',
-  LATE: 'Đi trễ',
-  EXCUSED: 'Có phép',
-  MAKEUP: 'Buổi bù',
-}
-
-const HOMEWORK_STATUS_LABELS: Record<string, string> = {
-  COMPLETED: 'Đã hoàn thành',
-  INCOMPLETE: 'Chưa hoàn thành',
-  NO_HOMEWORK: 'Không có bài tập',
-}
 
 const MODALITY_LABELS: Record<string, string> = {
   OFFLINE: 'Học tại trung tâm',
@@ -435,10 +412,59 @@ function SessionDetailDialog({ sessionId, onClose }: SessionDetailDialogProps) {
   const detail = data?.data
   const classroomResource = detail?.classroomResource ?? null
   const attendanceBadge = detail
-    ? ATTENDANCE_STATUS_STYLES[detail.studentStatus.attendanceStatus] ?? null
+    ? (() => {
+        const status = detail.studentStatus.attendanceStatus;
+        if (!status || !ATTENDANCE_STATUS_STYLES[status as keyof typeof ATTENDANCE_STATUS_STYLES]) return null;
+
+        const labels: Record<string, string> = {
+          PLANNED: 'Chờ điểm danh',
+          PRESENT: 'Có mặt',
+          ABSENT: 'Vắng mặt',
+          LATE: 'Đi trễ',
+          EXCUSED: 'Có phép',
+          MAKEUP: 'Buổi bù',
+        };
+
+        return {
+          className: ATTENDANCE_STATUS_STYLES[status as keyof typeof ATTENDANCE_STATUS_STYLES],
+          label: labels[status] || status
+        };
+      })()
     : null
-  const homeworkBadge = detail ? HOMEWORK_STATUS_STYLES[detail.studentStatus.homeworkStatus] ?? null : null
-  const sessionStatus = detail ? SESSION_STATUS_STYLES[detail.sessionInfo.sessionStatus] ?? null : null
+  const homeworkBadge = detail
+    ? (() => {
+        const status = detail.studentStatus.homeworkStatus;
+        if (!status || !HOMEWORK_STATUS_STYLES[status as keyof typeof HOMEWORK_STATUS_STYLES]) return null;
+
+        const labels: Record<string, string> = {
+          COMPLETED: 'Đã hoàn thành',
+          INCOMPLETE: 'Chưa hoàn thành',
+          NO_HOMEWORK: 'Không có bài tập',
+        };
+
+        return {
+          className: HOMEWORK_STATUS_STYLES[status as keyof typeof HOMEWORK_STATUS_STYLES],
+          label: labels[status] || status
+        };
+      })()
+    : null
+  const sessionStatus = detail
+    ? (() => {
+        const status = detail.sessionInfo.sessionStatus;
+        if (!status || !SESSION_STATUS_STYLES[status as keyof typeof SESSION_STATUS_STYLES]) return null;
+
+        const labels: Record<string, string> = {
+          PLANNED: 'Đã lên lịch',
+          DONE: 'Hoàn thành',
+          CANCELLED: 'Đã hủy',
+        };
+
+        return {
+          className: SESSION_STATUS_STYLES[status as keyof typeof SESSION_STATUS_STYLES],
+          label: labels[status] || status
+        };
+      })()
+    : null
   const locationDisplay = detail
     ? classroomResource?.resourceType === 'VIRTUAL'
       ? classroomResource?.onlineLink || classroomResource?.location || detail.sessionInfo.location || detail.sessionInfo.onlineLink || ''

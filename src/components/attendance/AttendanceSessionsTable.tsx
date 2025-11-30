@@ -93,7 +93,7 @@ export function AttendanceSessionsTable({
 }: AttendanceSessionsTableProps) {
   return (
     <TooltipProvider>
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden p-0">
         {rows.length > 0 ? (
           <Table>
             <TableHeader>
