@@ -7,6 +7,7 @@ import {
   useGetMissedSessionsQuery,
   useGetMakeupOptionsQuery,
   useSubmitStudentRequestMutation,
+  useGetStudentRequestConfigQuery,
   type SessionModality
 } from '@/store/services/studentRequestApi'
 import {
@@ -22,7 +23,8 @@ import {
 } from '../utils'
 import type { MakeupFlowProps } from '../UnifiedRequestFlow'
 
-const MAKEUP_LOOKBACK_WEEKS = 2
+// Fallback value if config API fails
+const DEFAULT_MAKEUP_LOOKBACK_WEEKS = 2
 
 export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
   // Wizard State
@@ -34,9 +36,13 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
   const [reason, setReason] = useState('')
   const [reasonError, setReasonError] = useState<string | null>(null)
 
+  // Fetch config from backend policy
+  const { data: configResponse } = useGetStudentRequestConfigQuery()
+  const makeupLookbackWeeks = configResponse?.data?.makeupLookbackWeeks ?? DEFAULT_MAKEUP_LOOKBACK_WEEKS
+
   // 1. Fetch Missed Sessions
   const { data: missedResponse, isFetching: isLoadingMissed } = useGetMissedSessionsQuery({
-    weeksBack: MAKEUP_LOOKBACK_WEEKS,
+    weeksBack: makeupLookbackWeeks,
     excludeRequested,
   })
 
@@ -140,7 +146,7 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
     {
       id: 1,
       title: 'Chọn buổi đã vắng',
-      description: `Hiển thị buổi vắng trong ${MAKEUP_LOOKBACK_WEEKS} tuần gần nhất`,
+      description: `Hiển thị buổi vắng trong ${makeupLookbackWeeks} tuần gần nhất`,
       isComplete: !!selectedMissedSession,
       isAvailable: true
     },
@@ -185,7 +191,7 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
             </div>
           ) : missedSessions.length === 0 ? (
             <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
-              Không có buổi vắng hợp lệ trong {MAKEUP_LOOKBACK_WEEKS} tuần gần nhất
+              Không có buổi vắng hợp lệ trong {makeupLookbackWeeks} tuần gần nhất
             </div>
           ) : (
             <div className="space-y-2">

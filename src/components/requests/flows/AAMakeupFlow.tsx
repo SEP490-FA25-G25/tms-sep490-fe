@@ -12,6 +12,7 @@ import {
   useGetStudentMissedSessionsQuery,
   useGetStudentMakeupOptionsQuery,
   useCreateOnBehalfRequestMutation,
+  useGetStudentRequestConfigQuery,
   type StudentSearchResult
 } from '@/store/services/studentRequestApi'
 import {
@@ -30,7 +31,8 @@ import {
   Validation
 } from '../utils'
 
-const MAKEUP_LOOKBACK_WEEKS = 2
+// Fallback value if config API fails
+const DEFAULT_MAKEUP_LOOKBACK_WEEKS = 2
 
 interface AAMakeupFlowProps {
   onSuccess: () => void
@@ -47,6 +49,10 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
   const [excludeRequested, setExcludeRequested] = useState(true)
   const [reason, setReason] = useState('')
   const [note, setNote] = useState('')
+
+  // Fetch config from backend policy
+  const { data: configResponse } = useGetStudentRequestConfigQuery()
+  const makeupLookbackWeeks = configResponse?.data?.makeupLookbackWeeks ?? DEFAULT_MAKEUP_LOOKBACK_WEEKS
 
   const debouncedStudentSearch = useDebouncedValue(studentSearch)
   const trimmedSearch = debouncedStudentSearch.trim()
@@ -67,7 +73,7 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
     isFetching: isLoadingMissed,
   } = useGetStudentMissedSessionsQuery(
     selectedStudent
-      ? { studentId: selectedStudent.id, weeksBack: MAKEUP_LOOKBACK_WEEKS, excludeRequested }
+      ? { studentId: selectedStudent.id, weeksBack: makeupLookbackWeeks, excludeRequested }
       : skipToken,
     { skip: !selectedStudent }
   )
@@ -192,7 +198,7 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
     {
       id: 2,
       title: 'Chọn buổi đã vắng',
-      description: `Buổi vắng trong ${MAKEUP_LOOKBACK_WEEKS} tuần gần nhất`,
+      description: `Buổi vắng trong ${makeupLookbackWeeks} tuần gần nhất`,
       isComplete: step2Complete,
       isAvailable: step1Complete
     },
@@ -294,7 +300,7 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
               </div>
             ) : missedSessions.length === 0 ? (
               <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
-                Không có buổi vắng hợp lệ trong {MAKEUP_LOOKBACK_WEEKS} tuần gần nhất
+                Không có buổi vắng hợp lệ trong {makeupLookbackWeeks} tuần gần nhất
               </div>
             ) : (
               <div className="space-y-2">
