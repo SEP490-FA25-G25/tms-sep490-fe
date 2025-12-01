@@ -1,14 +1,10 @@
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { CLASS_STATUS_STYLES, getStatusStyle } from "@/lib/status-colors";
-import { AttendanceCalendarHeatmap } from "./AttendanceCalendarHeatmap";
-import { useGetStudentAttendanceReportQuery } from "@/store/services/attendanceApi";
 
 interface AttendanceClassCardProps {
-  classId: number;
   classCode: string;
   className: string;
   startDate: string;
@@ -20,7 +16,6 @@ interface AttendanceClassCardProps {
   upcoming: number;
   status: string;
   onClick: () => void;
-  onMouseEnter?: () => void;
 }
 
 const CLASS_STATUS_LABELS: Record<string, string> = {
@@ -162,7 +157,6 @@ function AttendanceProgressRing({ attended, absent, excused = 0, size = 64 }: Pr
 }
 
 export function AttendanceClassCard({
-  classId,
   // classCode, // Unused
   className,
   startDate,
@@ -174,28 +168,14 @@ export function AttendanceClassCard({
   upcoming,
   status,
   onClick,
-  onMouseEnter,
 }: AttendanceClassCardProps) {
   const statusLabel = getStatusLabel(status);
   const statusClassName = getStatusStyle(CLASS_STATUS_STYLES, status);
-
-  // Fetch detailed report data for heatmap
-  const { data: reportData, isLoading: isLoadingReport } =
-    useGetStudentAttendanceReportQuery(
-      { classId },
-      {
-        // Only fetch if we need the heatmap
-        skip: false,
-      }
-    );
-
-  const sessions = reportData?.data?.sessions ?? [];
 
   return (
     <Card
       className="group flex flex-col gap-4 p-5 transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring h-full cursor-pointer"
       onClick={onClick}
-      onMouseEnter={onMouseEnter}
       tabIndex={0}
       role="button"
       onKeyDown={(e) => {
@@ -279,22 +259,6 @@ export function AttendanceClassCard({
             </span>
           </div>
         </div>
-      </div>
-
-      {/* Heatmap */}
-      <div className="mt-auto pt-3">
-        {isLoadingReport ? (
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-20 w-full" />
-          </div>
-        ) : (
-          <AttendanceCalendarHeatmap
-            sessions={sessions}
-            startDate={startDate}
-            endDate={actualEndDate ?? undefined}
-          />
-        )}
       </div>
     </Card>
   );

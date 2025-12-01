@@ -33,6 +33,7 @@ import TeacherProfilePage from "./app/teacher/profile/page";
 import StudentSchedulePage from "./app/student/schedule/page";
 import StudentRequestsPage from "./app/student/requests/page";
 import StudentAttendanceReportOverviewPage from "./app/student/attendance-report/page";
+import StudentClassAttendanceDetailPage from "./app/student/attendance-report/[classId]/page";
 import StudentMyClassesPage from "./app/student/my-classes/page";
 import StudentClassDetailPage from "./app/student/my-classes/[classId]/page";
 import StudentProfilePage from "./app/student/profile/page";
@@ -419,6 +420,14 @@ function App() {
             />
 
             {/* Student routes */}
+            <Route
+              path="/student/attendance-report/:classId"
+              element={
+                <ProtectedRoute requiredRoles={["STUDENT"]}>
+                  <StudentClassAttendanceDetailPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/student/attendance-report"
               element={

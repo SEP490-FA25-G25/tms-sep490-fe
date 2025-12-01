@@ -1,5 +1,5 @@
 import type React from "react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { StudentRoute } from "@/components/ProtectedRoute";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -11,12 +11,9 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/
 import {
   type StudentAttendanceOverviewClassDTO,
   useGetStudentAttendanceOverviewQuery,
-  attendanceApi,
 } from "@/store/services/attendanceApi";
 import { ClipboardList, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useDispatch } from "react-redux";
-import type { AppDispatch } from "@/store";
 import { AttendanceClassCard } from "@/components/attendance/AttendanceClassCard";
 
 type StatusFilter = 'all' | 'ongoing' | 'completed';
@@ -25,7 +22,6 @@ export default function StudentAttendanceReportOverviewPage() {
   const { data, isLoading, isError, refetch } =
     useGetStudentAttendanceOverviewQuery();
   const navigate = useNavigate();
-  const dispatch = useDispatch<AppDispatch>();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
   const classes: StudentAttendanceOverviewClassDTO[] = useMemo(() => 
@@ -38,29 +34,6 @@ export default function StudentAttendanceReportOverviewPage() {
     if (statusFilter === 'completed') return item.status === 'COMPLETED';
     return true;
   }), [classes, statusFilter]);
-
-  // Prefetch all class reports on page load for instant heatmap rendering
-  useEffect(() => {
-    if (classes.length > 0) {
-      classes.forEach((cls) => {
-        dispatch(
-          attendanceApi.endpoints.getStudentAttendanceReport.initiate(
-            { classId: cls.classId },
-            { forceRefetch: false }
-          )
-        );
-      });
-    }
-  }, [classes, dispatch]);
-
-  const handlePrefetch = (classId: number) => {
-    dispatch(
-      attendanceApi.endpoints.getStudentAttendanceReport.initiate(
-        { classId },
-        { forceRefetch: false }
-      )
-    );
-  };
 
   return (
     <StudentRoute>
@@ -180,7 +153,6 @@ export default function StudentAttendanceReportOverviewPage() {
                           {filteredClasses.map((item) => (
                             <AttendanceClassCard
                               key={item.classId}
-                              classId={item.classId}
                               classCode={item.classCode}
                               className={item.className}
                               startDate={item.startDate}
@@ -193,10 +165,9 @@ export default function StudentAttendanceReportOverviewPage() {
                               status={item.status}
                               onClick={() =>
                                 navigate(
-                                  `/student/my-classes/${item.classId}?tab=sessions`
+                                  `/student/attendance-report/${item.classId}`
                                 )
                               }
-                              onMouseEnter={() => handlePrefetch(item.classId)}
                             />
                           ))}
                         </div>
