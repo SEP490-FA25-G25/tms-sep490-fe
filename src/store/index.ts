@@ -103,6 +103,7 @@ export const store = configureStore({
       .concat(teacherScheduleApi.middleware)
       .concat(teacherGradeApi.middleware)
       .concat(teacherProfileApi.middleware)
+      .concat(teacherAvailabilityApi.middleware)
       .concat(notificationApi.middleware)
       .concat(userApi.middleware)
       .concat(policyApi.middleware)
