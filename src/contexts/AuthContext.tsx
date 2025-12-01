@@ -38,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: result.data.email,
           fullName: result.data.fullName,
           roles: result.data.roles,
+          branchId: result.data.branchId,
         }
         dispatch(setCredentials({
           accessToken: result.data.accessToken,

@@ -49,6 +49,7 @@ import EditClassPage from "./app/academic/classes/[id]/edit/page";
 
 import CenterHeadApprovalsPage from "./app/center-head/approvals/page";
 import CenterHeadResourcesPage from "./app/center-head/resources/page";
+import CenterHeadTimeSlotsPage from "./app/center-head/timeslots/page";
 import CurriculumPage from "./features/curriculum/pages/CurriculumPage";
 import CreateSubjectPage from "./features/curriculum/pages/CreateSubjectPage";
 import EditSubjectPage from "./features/curriculum/pages/EditSubjectPage";
@@ -69,6 +70,8 @@ import CurriculumCourseDetailPage from "./features/curriculum/pages/CourseDetail
 import SubjectDetailPage from "@/features/curriculum/pages/SubjectDetailPage";
 import CourseLearningPage from "./features/curriculum/pages/CourseLearningPage";
 import EditCoursePage from "./features/curriculum/pages/EditCoursePage";
+import ResourceDetailPage from "./app/center-head/resources/[id]/page";
+import TimeSlotDetailPage from "./app/center-head/timeslots/[id]/page";
 import NotificationsPage from "./app/notifications/page";
 import { Toaster } from "@/components/ui/sonner";
 import { lazy } from "react";
@@ -711,6 +714,30 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
                   <CenterHeadResourcesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/center-head/resources/:id"
+              element={
+                <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
+                  <ResourceDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/center-head/timeslots"
+              element={
+                <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
+                  <CenterHeadTimeSlotsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/center-head/timeslots/:id"
+              element={
+                <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
+                  <TimeSlotDetailPage />
                 </ProtectedRoute>
               }
             />

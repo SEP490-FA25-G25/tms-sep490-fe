@@ -164,7 +164,6 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
           <BookOpen className="h-5 w-5 text-primary" />
           Tổng quan khóa học
         </h3>
-
         <Card>
           <CardContent className="p-6 space-y-6">
             <div>
@@ -251,8 +250,8 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
           <Card className="overflow-hidden">
             <div className="divide-y">
               {courseMaterials.map((material) => (
-                <div 
-                  key={material.id} 
+                <div
+                  key={material.id}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
                 >
                   <div className="shrink-0 text-muted-foreground">
@@ -408,10 +407,10 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
 
                           return (
                             <div key={session.id} className="border rounded-lg bg-card overflow-hidden">
-                              <Accordion 
-                                type="single" 
+                              <Accordion
+                                type="single"
                                 collapsible
-                                value={expandedSessions.includes(sessionId) ? sessionId : undefined} 
+                                value={expandedSessions.includes(sessionId) ? sessionId : undefined}
                                 onValueChange={(value: string | undefined) => {
                                   if (value) {
                                     setExpandedSessions(prev => [...prev, sessionId]);
@@ -464,21 +463,18 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                                     )}
 
                                     {/* Session Skills */}
-                                    {session.skillSets && session.skillSets.length > 0 && (
+                                    {session.skill && (
                                       <div className="space-y-2">
                                         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                                           <Award className="h-4 w-4 text-primary" />
                                           <span>Kỹ năng</span>
                                         </div>
                                         <div className="flex flex-wrap gap-2">
-                                          {session.skillSets.map((skill, index) => (
-                                            <span
-                                              key={index}
-                                              className="rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wide"
-                                            >
-                                              {skill}
-                                            </span>
-                                          ))}
+                                          <span
+                                            className="rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wide"
+                                          >
+                                            {session.skill}
+                                          </span>
                                         </div>
                                       </div>
                                     )}

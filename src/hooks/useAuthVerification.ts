@@ -36,6 +36,7 @@ export function useAuthVerification() {
                 email: refreshResult.data.email,
                 fullName: refreshResult.data.fullName,
                 roles: refreshResult.data.roles,
+                branchId: refreshResult.data.branchId,
               },
             },
           })
