@@ -4,6 +4,7 @@ import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import type { UserResponse } from '@/store/services/userApi'
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react'
 import {
@@ -89,13 +90,21 @@ export function createUserColumns({
       cell: ({ row }) => {
         const user = row.original
         return (
-          <div className="flex flex-col">
-            <span className="font-medium">{user.fullName}</span>
-            <span className="text-xs text-muted-foreground">{user.email}</span>
+          <div className="flex items-center gap-3">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={user.avatarUrl || ""} alt={user.fullName} />
+              <AvatarFallback className="text-xs">
+                {user.fullName?.charAt(0)?.toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+              <span className="font-medium">{user.fullName}</span>
+              <span className="text-xs text-muted-foreground">{user.email}</span>
+            </div>
           </div>
         )
       },
-      size: 220,
+      size: 260,
       enableSorting: true,
     },
     {

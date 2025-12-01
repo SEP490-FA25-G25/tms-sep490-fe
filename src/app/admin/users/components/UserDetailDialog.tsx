@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useGetUserByIdQuery, type UserResponse } from '@/store/services/userApi'
 import { useEffect } from 'react'
 
@@ -63,6 +64,16 @@ export function UserDetailDialog({ user, open, onOpenChange }: UserDetailDialogP
             <p className="text-sm text-muted-foreground">Không có dữ liệu người dùng.</p>
           ) : (
             <div className="space-y-5 text-sm">
+              {/* Avatar Section */}
+              <div className="flex justify-center">
+                <Avatar className="h-24 w-24">
+                  <AvatarImage src={displayUser.avatarUrl || ""} alt={displayUser.fullName} />
+                  <AvatarFallback className="text-2xl">
+                    {displayUser.fullName?.charAt(0)?.toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+
               <section className="grid gap-3 rounded-lg border bg-muted/20 p-4">
                 <InfoItem label="Email" value={displayUser.email} />
                 <InfoItem label="Số điện thoại" value={displayUser.phone || '—'} />

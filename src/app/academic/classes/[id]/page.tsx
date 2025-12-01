@@ -32,6 +32,7 @@ import {
   AlertCircle,
   Edit
 } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useGetClassByIdQuery, useGetClassStudentsQuery } from '@/store/services/classApi'
 import type { ClassStudentDTO, TeacherSummaryDTO } from '@/store/services/classApi'
 import type { CreateStudentResponse } from '@/store/services/studentApi'
@@ -420,9 +421,17 @@ export default function ClassDetailPage() {
                   {students.map((student: ClassStudentDTO) => (
                     <TableRow key={student.id}>
                       <TableCell>
-                        <div>
-                          <div className="font-medium">{student.fullName}</div>
-                          <div className="text-sm text-muted-foreground">{student.studentCode}</div>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={student.avatarUrl || ""} alt={student.fullName} />
+                            <AvatarFallback className="text-xs">
+                              {student.fullName?.charAt(0)?.toUpperCase() || "U"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{student.fullName}</div>
+                            <div className="text-sm text-muted-foreground">{student.studentCode}</div>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>{student.email}</TableCell>

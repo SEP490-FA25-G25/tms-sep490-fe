@@ -78,7 +78,7 @@ export function SiteHeader() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2 px-2">
                 <Avatar className="h-7 w-7">
-                  <AvatarImage src="/avatars/default.jpg" alt={user?.fullName || "User"} />
+                  <AvatarImage src={user?.avatarUrl || ""} alt={user?.fullName || "User"} />
                   <AvatarFallback className="text-xs">
                     {user?.fullName?.charAt(0) || "U"}
                   </AvatarFallback>

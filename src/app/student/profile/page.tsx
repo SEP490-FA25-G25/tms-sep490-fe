@@ -5,6 +5,7 @@ import { SiteHeader } from '@/components/site-header'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { StudentRoute } from '@/components/ProtectedRoute'
 import { useGetMyProfileQuery } from '@/store/services/studentProfileApi';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -178,27 +179,37 @@ export default function StudentProfilePage() {
                   <div className="px-4 lg:px-6 max-w-7xl mx-auto space-y-8">
                     {/* Row 1: Title + Actions */}
                     <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                      <div className="space-y-3">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <Badge className={getStatusStyle(USER_STATUS_STYLES, profile.status)}>
-                            {profile.status === 'ACTIVE' ? 'Đang hoạt động' : 'Ngưng hoạt động'}
-                          </Badge>
-                          <Badge variant="secondary">{profile.studentCode}</Badge>
-                        </div>
-                        <div className="space-y-1">
-                          <h1 className="text-3xl font-bold tracking-tight">
-                            {profile.fullName}
-                          </h1>
-                          <p className="text-sm text-muted-foreground">{profile.email}</p>
-                        </div>
-                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1.5">
-                            <Phone className="h-4 w-4" />
-                            <span>{profile.phone || 'Chưa cập nhật'}</span>
+                      <div className="flex gap-6">
+                        {/* Avatar */}
+                        <Avatar className="h-24 w-24 border-2 border-background shadow-lg">
+                          <AvatarImage src={profile.avatarUrl || ""} alt={profile.fullName} />
+                          <AvatarFallback className="text-2xl font-semibold">
+                            {profile.fullName?.charAt(0)?.toUpperCase() || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <div className="space-y-3">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <Badge className={getStatusStyle(USER_STATUS_STYLES, profile.status)}>
+                              {profile.status === 'ACTIVE' ? 'Đang hoạt động' : 'Ngưng hoạt động'}
+                            </Badge>
+                            <Badge variant="secondary">{profile.studentCode}</Badge>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <MapPin className="h-4 w-4" />
-                            <span>{profile.branchName}</span>
+                          <div className="space-y-1">
+                            <h1 className="text-3xl font-bold tracking-tight">
+                              {profile.fullName}
+                            </h1>
+                            <p className="text-sm text-muted-foreground">{profile.email}</p>
+                          </div>
+                          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1.5">
+                              <Phone className="h-4 w-4" />
+                              <span>{profile.phone || 'Chưa cập nhật'}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <MapPin className="h-4 w-4" />
+                              <span>{profile.branchName}</span>
+                            </div>
                           </div>
                         </div>
                       </div>

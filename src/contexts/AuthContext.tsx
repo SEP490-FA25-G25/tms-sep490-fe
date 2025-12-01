@@ -37,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: result.data.userId,
           email: result.data.email,
           fullName: result.data.fullName,
+          avatarUrl: result.data.avatarUrl,
           roles: result.data.roles,
           branchId: result.data.branchId,
         }

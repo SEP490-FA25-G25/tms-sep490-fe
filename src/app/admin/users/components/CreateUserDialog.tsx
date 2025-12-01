@@ -40,6 +40,7 @@ const createUserSchema = z.object({
   fullName: z.string().min(1, 'Họ tên là bắt buộc'),
   phone: z.string().optional(),
   facebookUrl: z.string().url('URL không hợp lệ').optional().or(z.literal('')),
+  avatarUrl: z.string().url('URL không hợp lệ').optional().or(z.literal('')),
   dob: z.string().optional(),
   gender: z.enum(GENDER_VALUES),
   address: z.string().optional(),
@@ -118,6 +119,7 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
         fullName: data.fullName,
         phone: data.phone || undefined,
         facebookUrl: data.facebookUrl || undefined,
+        avatarUrl: data.avatarUrl || undefined,
         dob: data.dob || undefined,
         gender: data.gender,
         address: data.address || undefined,
@@ -240,6 +242,13 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
             <Label htmlFor="facebookUrl">Facebook URL</Label>
             <Input id="facebookUrl" placeholder="https://facebook.com/..." {...register('facebookUrl')} />
             {errors.facebookUrl && <p className="text-sm text-destructive">{errors.facebookUrl.message}</p>}
+          </div>
+
+          {/* Avatar URL */}
+          <div className="space-y-2">
+            <Label htmlFor="avatarUrl">Avatar URL</Label>
+            <Input id="avatarUrl" placeholder="https://example.com/avatar.jpg" {...register('avatarUrl')} />
+            {errors.avatarUrl && <p className="text-sm text-destructive">{errors.avatarUrl.message}</p>}
           </div>
 
           {/* Address */}
