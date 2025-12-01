@@ -68,8 +68,8 @@ const REQUEST_TYPE_LABELS: Record<RequestType, string> = {
 
 const STATUS_FILTERS: Array<{ label: string; value: 'ALL' | RequestStatus }> = [
   { label: 'Tất cả trạng thái', value: 'ALL' },
-  { label: 'Đang chờ duyệt', value: 'PENDING' },
-  { label: 'Đã chấp thuận', value: 'APPROVED' },
+  { label: 'Chờ duyệt', value: 'PENDING' },
+  { label: 'Đã duyệt', value: 'APPROVED' },
   { label: 'Đã từ chối', value: 'REJECTED' },
   { label: 'Đã hủy', value: 'CANCELLED' },
 ]
@@ -224,7 +224,7 @@ export default function StudentRequestsPage() {
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Bị từ chối</CardTitle>
+                  <CardTitle className="text-sm font-medium">Đã từ chối</CardTitle>
                   <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-rose-950/30">
                     <XCircleIcon className="h-4 w-4 text-rose-600 dark:text-rose-400" />
                   </div>

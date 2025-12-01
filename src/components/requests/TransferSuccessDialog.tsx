@@ -33,7 +33,7 @@ export default function TransferSuccessDialog({
       case 'APPROVED':
         return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">Đã duyệt</Badge>
       case 'PENDING':
-        return <Badge className="bg-amber-50 text-amber-700 border-amber-200">Đang chờ duyệt</Badge>
+        return <Badge className="bg-amber-50 text-amber-700 border-amber-200">Chờ duyệt</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
     }

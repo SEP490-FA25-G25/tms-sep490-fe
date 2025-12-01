@@ -38,7 +38,7 @@ export function CourseHeader({ course, progress, materials }: CourseHeaderProps)
       case 'PENDING':
         return 'Chờ duyệt'
       case 'REJECTED':
-        return 'Bị từ chối'
+        return 'Đã từ chối'
       default:
         return status
     }

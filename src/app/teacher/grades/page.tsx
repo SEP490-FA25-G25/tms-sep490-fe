@@ -36,8 +36,8 @@ import { vi } from "date-fns/locale";
 
 const STATUS_LABELS: Record<string, string> = {
   ONGOING: "Đang diễn ra",
-  COMPLETED: "Đã kết thúc",
-  SCHEDULED: "Sắp bắt đầu",
+  COMPLETED: "Đã hoàn thành",
+  SCHEDULED: "Đã lên lịch",
   CANCELLED: "Đã hủy",
 };
 
@@ -320,8 +320,8 @@ export default function TeacherGradesPage() {
   const statusFilters: { label: string; value: StatusFilter }[] = [
     { label: "Tất cả", value: "ALL" },
     { label: "Đang diễn ra", value: "ONGOING" },
-    { label: "Sắp bắt đầu", value: "SCHEDULED" },
-    { label: "Đã kết thúc", value: "COMPLETED" },
+    { label: "Đã lên lịch", value: "SCHEDULED" },
+    { label: "Đã hoàn thành", value: "COMPLETED" },
   ];
 
   return (

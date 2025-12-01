@@ -29,7 +29,7 @@ export function ClassStatusBadge({ status, className }: ClassStatusBadgeProps) {
     const getStatusLabel = (status: string) => {
         switch (status.toLowerCase()) {
             case "draft":
-                return "Nháp"
+                return "Bản nháp"
             case "scheduled":
                 return "Đã lên lịch"
             case "ongoing":

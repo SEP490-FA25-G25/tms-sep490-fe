@@ -181,7 +181,7 @@ export default function CenterHeadApprovalsPage() {
 
   const metrics = [
     {
-      label: 'Đang chờ duyệt',
+      label: 'Chờ duyệt',
       value: pendingSummary?.data?.page?.totalElements ?? 0,
       description: 'Lớp ở trạng thái nháp đã gửi duyệt',
     },
@@ -259,7 +259,7 @@ export default function CenterHeadApprovalsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                <SelectItem value="DRAFT">Nháp</SelectItem>
+                <SelectItem value="DRAFT">Bản nháp</SelectItem>
                 <SelectItem value="SCHEDULED">Đã lên lịch</SelectItem>
               </SelectContent>
             </Select>

@@ -103,7 +103,7 @@ export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDe
           id: detailRequest.id,
           note: decisionNote.trim() || undefined,
         }).unwrap()
-        toast.success('Đã chấp thuận yêu cầu')
+        toast.success('Đã duyệt yêu cầu')
       } else if (confirmAction === 'REJECT') {
         await rejectRequest({
           id: detailRequest.id,

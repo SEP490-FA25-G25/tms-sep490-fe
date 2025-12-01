@@ -58,7 +58,7 @@ const chartColors = [
 
 const classStatusLabelMap: Record<string, string> = {
   COMPLETED: "Đã hoàn thành",
-  DRAFT: "Nháp",
+  DRAFT: "Bản nháp",
   SCHEDULED: "Đã lên lịch",
   ONGOING: "Đang diễn ra",
   SUBMITTED: "Đã gửi phê duyệt",

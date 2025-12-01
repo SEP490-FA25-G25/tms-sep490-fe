@@ -118,7 +118,7 @@ const REQUEST_STATUS_META: Record<
     tone: "text-emerald-600",
   },
   REJECTED: {
-    label: "Bị từ chối",
+    label: "Đã từ chối",
     badgeClass: "bg-rose-100 text-rose-700 border-rose-200",
     tone: "text-rose-600",
   },

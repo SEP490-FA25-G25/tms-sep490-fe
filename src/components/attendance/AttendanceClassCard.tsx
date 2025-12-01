@@ -20,11 +20,11 @@ interface AttendanceClassCardProps {
 
 const CLASS_STATUS_LABELS: Record<string, string> = {
   ONGOING: "Đang học",
-  COMPLETED: "Đã kết thúc",
-  UPCOMING: "Sắp diễn ra",
-  SCHEDULED: "Sắp diễn ra",
+  COMPLETED: "Đã hoàn thành",
+  UPCOMING: "Đã lên lịch",
+  SCHEDULED: "Đã lên lịch",
   CANCELLED: "Đã hủy",
-  DRAFT: "Nháp",
+  DRAFT: "Bản nháp",
 };
 
 function getStatusLabel(status?: string | null) {

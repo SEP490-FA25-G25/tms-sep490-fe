@@ -129,7 +129,7 @@ export default function ClassListPage() {
       case 'ONGOING':
         return 'Đang diễn ra'
       case 'COMPLETED':
-        return 'Đã kết thúc'
+        return 'Đã hoàn thành'
       case 'CANCELLED':
         return 'Đã hủy'
       default:
@@ -145,7 +145,7 @@ export default function ClassListPage() {
       return { label: 'Chờ duyệt', color: 'bg-amber-100 text-amber-800 border-amber-200' }
     }
     if (approval === 'REJECTED') {
-      return { label: 'Bị từ chối', color: 'bg-red-100 text-red-800 border-red-200' }
+      return { label: 'Đã từ chối', color: 'bg-red-100 text-red-800 border-red-200' }
     }
     // APPROVED hoặc không có approvalStatus
     return { label: getStatusLabel(status), color: getStatusColor(status) }
@@ -250,7 +250,7 @@ export default function ClassListPage() {
                 <SelectItem value="DRAFT">Bản nháp</SelectItem>
                 <SelectItem value="SCHEDULED">Đã lên lịch</SelectItem>
                 <SelectItem value="ONGOING">Đang diễn ra</SelectItem>
-                <SelectItem value="COMPLETED">Đã kết thúc</SelectItem>
+                <SelectItem value="COMPLETED">Đã hoàn thành</SelectItem>
                 <SelectItem value="CANCELLED">Đã hủy</SelectItem>
               </SelectContent>
             </Select>

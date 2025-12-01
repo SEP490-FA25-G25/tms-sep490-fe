@@ -129,7 +129,7 @@ export default function StudentAttendanceReportOverviewPage() {
                             Đang học
                           </ToggleGroupItem>
                           <ToggleGroupItem value="completed" className="text-sm">
-                            Đã kết thúc
+                            Đã hoàn thành
                           </ToggleGroupItem>
                         </ToggleGroup>
                       </div>

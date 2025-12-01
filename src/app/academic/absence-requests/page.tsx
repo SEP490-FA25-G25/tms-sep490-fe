@@ -178,7 +178,7 @@ export default function AcademicAbsenceRequestsPage() {
 
   const summaryItems = [
     {
-      label: 'Đang chờ duyệt',
+      label: 'Chờ duyệt',
       value: pendingData?.summary?.totalPending ?? 0,
       accent: 'text-primary',
     },
