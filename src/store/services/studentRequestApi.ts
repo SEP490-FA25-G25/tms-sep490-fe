@@ -856,7 +856,8 @@ export const studentRequestApi = createApi({
     }),
 
     // Student Classes API for AA - /api/v1/students
-    getStudentClasses: builder.query<ApiResponse<StudentClassDTO[]>, { studentId: number }>({
+    // Backend trả về Page<StudentClassDTO> với pagination structure
+    getStudentClasses: builder.query<ApiResponse<{ content: StudentClassDTO[]; totalElements: number }>, { studentId: number }>({
       query: ({ studentId }) => ({
         url: `/students/${studentId}/classes`,
       }),

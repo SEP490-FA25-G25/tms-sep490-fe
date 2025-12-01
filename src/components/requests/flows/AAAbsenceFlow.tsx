@@ -101,7 +101,11 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
     selectedStudent ? { studentId: selectedStudent.id } : skipToken,
     { skip: !selectedStudent }
   )
-  const classOptions = classesResponse?.data ?? []
+  // Backend trả về Page<StudentClassDTO> với pagination, data nằm trong .content
+  // Chỉ lấy các lớp đang học (ENROLLED + ONGOING) cho absence request
+  const classOptions = (classesResponse?.data?.content ?? []).filter(
+    (cls) => cls.enrollmentStatus === 'ENROLLED' && cls.status === 'ONGOING'
+  )
   const selectedClass = classOptions.find((cls) => cls.classId === selectedClassId) ?? null
 
   const { data: scheduleResponse, isFetching: isLoadingSchedule } = useGetAcademicWeeklyScheduleQuery(
@@ -256,9 +260,16 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
             <Input
               placeholder="Nhập tên hoặc mã học viên (tối thiểu 2 ký tự)"
               value={studentSearch}
-              onChange={(event) => setStudentSearch(event.target.value)}
+              onChange={(event) => {
+                setStudentSearch(event.target.value)
+                // Khi user gõ lại, clear selected student để cho phép chọn lại
+                if (selectedStudent) {
+                  setSelectedStudent(null)
+                }
+              }}
             />
-            {studentSearch.trim().length > 0 && studentOptions.length > 0 && (
+            {/* Chỉ hiển thị search results khi chưa chọn student - ẩn ngay khi click chọn */}
+            {!selectedStudent && studentSearch.trim().length > 0 && studentOptions.length > 0 && (
               <div className="space-y-2">
                 {isSearchingStudents ? (
                   <Skeleton className="h-20 w-full" />
@@ -268,10 +279,7 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
                       key={student.id}
                       type="button"
                       onClick={() => handleSelectStudent(student)}
-                      className={cn(
-                        "w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30",
-                        selectedStudent?.id === student.id && "border-primary bg-primary/5"
-                      )}
+                      className="w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30"
                     >
                       <p className="font-medium">
                         {student.fullName} <span className="text-muted-foreground">({student.studentCode})</span>
