@@ -45,6 +45,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { useGetAnalyticsQuery } from "@/store/services/analyticsApi";
 
 const chartColors = [
@@ -131,46 +132,143 @@ export default function AdminAnalyticsPage() {
     ([role, count]) => ({ role, count })
   );
 
+  const summaryColorMap: Record<
+    string,
+    { border: string; valueColor?: string; iconColor?: string }
+  > = {
+    emerald: {
+      border: "#10b981",
+      valueColor: "text-emerald-600",
+      iconColor: "text-emerald-500",
+    },
+    amber: {
+      border: "#f59e0b",
+      valueColor: "text-amber-600",
+      iconColor: "text-amber-500",
+    },
+    sky: {
+      border: "#0ea5e9",
+      valueColor: "text-sky-600",
+      iconColor: "text-sky-500",
+    },
+    rose: {
+      border: "#f43f5e",
+      valueColor: "text-rose-600",
+      iconColor: "text-rose-500",
+    },
+    slate: {
+      border: "#64748b",
+      iconColor: "text-muted-foreground",
+    },
+    purple: {
+      border: "#a855f7",
+      valueColor: "text-purple-600",
+      iconColor: "text-purple-500",
+    },
+    cyan: {
+      border: "#06b6d4",
+      valueColor: "text-cyan-600",
+      iconColor: "text-cyan-500",
+    },
+    orange: {
+      border: "#fb923c",
+      valueColor: "text-orange-600",
+      iconColor: "text-orange-500",
+    },
+  };
+
+  const SummaryCard = ({
+    label,
+    value,
+    icon: Icon,
+    accent = "slate",
+  }: {
+    label: string;
+    value: number;
+    icon: React.ComponentType<{ className?: string }>;
+    accent?: keyof typeof summaryColorMap;
+  }) => {
+    const style = summaryColorMap[accent] ?? summaryColorMap.slate;
+    return (
+      <div className="relative group">
+        <Card
+          className={cn(
+            "border-t-2 border-l-2 transition-all duration-300 ease-in-out group-hover:-translate-y-1 group-hover:shadow-md cursor-pointer relative"
+          )}
+          style={
+            {
+              borderTopColor: style.border,
+              borderLeftColor: style.border,
+            } as React.CSSProperties
+          }
+        >
+          <Icon
+            className={cn(
+              "h-6 w-6 absolute top-[calc(50%-0.125rem)] -translate-y-1/2 right-4 z-10",
+              style.iconColor ?? "text-muted-foreground"
+            )}
+          />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-0.5 relative z-10">
+            <CardTitle className="text-base font-medium">{label}</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 pb-2 relative z-10">
+            <div className={cn("text-3xl font-bold", style.valueColor)}>
+              {formatNumber(value)}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
   const overviewCards = [
     {
       label: "Tổng người dùng",
       value: overview?.totalUsers ?? 0,
       icon: UsersIcon,
+      accent: "slate",
     },
     {
       label: "Học viên",
       value: overview?.totalStudents ?? 0,
       icon: GraduationCapIcon,
+      accent: "emerald",
     },
     {
       label: "Giáo viên",
       value: overview?.totalTeachers ?? 0,
       icon: LayersIcon,
+      accent: "amber",
     },
     {
       label: "Lớp học đang hoạt động",
       value: overview?.activeClasses ?? 0,
       icon: ActivityIcon,
+      accent: "rose",
     },
     {
       label: "Khóa học",
       value: overview?.totalCourses ?? 0,
       icon: BookOpenIcon,
+      accent: "sky",
     },
     {
       label: "Trung tâm",
       value: overview?.totalCenters ?? 0,
       icon: BuildingIcon,
+      accent: "purple",
     },
     {
       label: "Phiên học hôm nay",
       value: overview?.todaySessions ?? 0,
       icon: CalendarDaysIcon,
+      accent: "cyan",
     },
     {
       label: "Đăng ký mới hôm nay",
       value: overview?.todayEnrollments ?? 0,
       icon: BarChartBigIcon,
+      accent: "orange",
     },
   ];
 
@@ -219,19 +317,13 @@ export default function AdminAnalyticsPage() {
                     {/* Overview cards */}
                     <div className="grid gap-4 px-4 lg:px-6 sm:grid-cols-2 xl:grid-cols-4">
                       {overviewCards.map((card) => (
-                        <Card key={card.label} className="border-muted">
-                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">
-                              {card.label}
-                            </CardTitle>
-                            <card.icon className="text-muted-foreground h-5 w-5" />
-                          </CardHeader>
-                          <CardContent>
-                            <div className="text-3xl font-extrabold tracking-tight">
-                              {formatNumber(card.value)}
-                            </div>
-                          </CardContent>
-                        </Card>
+                        <SummaryCard
+                          key={card.label}
+                          label={card.label}
+                          value={card.value}
+                          icon={card.icon}
+                          accent={card.accent}
+                        />
                       ))}
                     </div>
 
@@ -254,7 +346,7 @@ export default function AdminAnalyticsPage() {
                             roleDistribution.map((role) => (
                               <div
                                 key={role.role}
-                                className="flex items-center justify-between rounded-lg border px-3 py-2"
+                                className="flex items-center justify-between rounded-lg border px-3 py-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm hover:bg-muted/40"
                               >
                                 <div className="flex flex-col">
                                   <span className="text-sm font-medium tracking-wide">
@@ -294,7 +386,7 @@ export default function AdminAnalyticsPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                           <div className="grid grid-cols-2 gap-3 text-sm">
-                            <div className="rounded-lg border px-3 py-2">
+                            <div className="rounded-lg border px-3 py-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm hover:bg-muted/40">
                               <p className="text-muted-foreground text-xs">
                                 Đang hoạt động
                               </p>
@@ -302,7 +394,7 @@ export default function AdminAnalyticsPage() {
                                 {formatNumber(classAnalytics?.activeClasses)}
                               </p>
                             </div>
-                            <div className="rounded-lg border px-3 py-2">
+                            <div className="rounded-lg border px-3 py-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm hover:bg-muted/40">
                               <p className="text-muted-foreground text-xs">
                                 Hoàn thành
                               </p>
@@ -310,7 +402,7 @@ export default function AdminAnalyticsPage() {
                                 {formatNumber(classAnalytics?.completedClasses)}
                               </p>
                             </div>
-                            <div className="rounded-lg border px-3 py-2">
+                            <div className="rounded-lg border px-3 py-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm hover:bg-muted/40">
                               <p className="text-muted-foreground text-xs">
                                 Bị hủy
                               </p>
@@ -318,7 +410,7 @@ export default function AdminAnalyticsPage() {
                                 {formatNumber(classAnalytics?.cancelledClasses)}
                               </p>
                             </div>
-                            <div className="rounded-lg border px-3 py-2">
+                            <div className="rounded-lg border px-3 py-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm hover:bg-muted/40">
                               <p className="text-muted-foreground text-xs">
                                 Tỉ lệ đăng ký TB
                               </p>
@@ -512,7 +604,8 @@ export default function AdminAnalyticsPage() {
                                 <Bar
                                   dataKey="studentCount"
                                   radius={[8, 8, 0, 0]}
-                                  fill="var(--color-studentCount)"
+                                  // Đậm hơn, dùng xanh lá chủ đạo
+                                  fill="#16a34a"
                                 />
                               </BarChart>
                             </ChartContainer>
@@ -537,7 +630,7 @@ export default function AdminAnalyticsPage() {
                               {topBranches.map((branch, index) => (
                                 <div
                                   key={branch.name}
-                                  className="rounded-lg border px-4 py-3"
+                                  className="rounded-lg border px-4 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm hover:bg-muted/40"
                                 >
                                   <div className="flex items-center justify-between">
                                     <div>

@@ -133,9 +133,11 @@ export function ResourceDialog({ open, onOpenChange, resource, branchId, branche
                 toast.success("Tạo tài nguyên mới thành công");
             }
             onOpenChange(false);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Failed to save resource:", error);
-            const errorMessage = error?.data?.message || error?.message || "Lưu thất bại. Vui lòng thử lại.";
+            const apiError = error as { data?: { message?: string }; message?: string };
+            const errorMessage =
+                apiError.data?.message || apiError.message || "Lưu thất bại. Vui lòng thử lại.";
             toast.error(errorMessage);
         }
     };
