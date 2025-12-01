@@ -19,6 +19,9 @@ export interface LevelDTO {
   subjectName?: string
   subjectCode?: string
   status?: string
+
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface SubjectWithLevelsDTO {
@@ -28,6 +31,7 @@ export interface SubjectWithLevelsDTO {
   description: string
   status: string
   createdAt: string
+  updatedAt: string
   levels: LevelDTO[]
   plos?: { code: string; description: string }[]
   levelCount?: number
@@ -237,6 +241,22 @@ export const curriculumApi = createApi({
         method: 'GET',
       }),
     }),
+    // Delete subject
+    deleteSubject: builder.mutation<ApiResponse<void>, number>({
+      query: (id) => ({
+        url: `/curriculum/subjects/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Curriculum'],
+    }),
+    // Delete level
+    deleteLevel: builder.mutation<ApiResponse<void>, number>({
+      query: (id) => ({
+        url: `/curriculum/levels/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Curriculum'],
+    }),
   }),
 })
 
@@ -247,12 +267,14 @@ export const {
   useUpdateSubjectMutation,
   useDeactivateSubjectMutation,
   useReactivateSubjectMutation,
+  useDeleteSubjectMutation,
   useCreateLevelMutation,
   useGetLevelsQuery,
   useGetLevelQuery,
   useUpdateLevelMutation,
   useDeactivateLevelMutation,
   useReactivateLevelMutation,
+  useDeleteLevelMutation,
   useUpdateLevelSortOrderMutation,
   useGetTimeslotDurationQuery,
 } = curriculumApi

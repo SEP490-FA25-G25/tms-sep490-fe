@@ -23,7 +23,7 @@ export default function CurriculumPage() {
         setSearchParams({ tab: value });
     };
 
-    const canViewApprovals = isManager || isSubjectLeader;
+    const canViewApprovals = isManager;
 
     return (
         <DashboardLayout

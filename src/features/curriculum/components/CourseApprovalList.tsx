@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { format } from "date-fns";
 import {
     Table,
     TableBody,
@@ -15,7 +16,12 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { Eye, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Eye, CheckCircle, XCircle, Loader2, MoreVertical } from "lucide-react";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
 import {
     useGetAllCoursesQuery,
     useApproveCourseMutation,
@@ -48,6 +54,7 @@ interface CourseApprovalListProps {
 export function CourseApprovalList({ readOnly = false }: CourseApprovalListProps) {
     const navigate = useNavigate();
     const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+    const [approveDialogOpen, setApproveDialogOpen] = useState(false);
     const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
     const [rejectReason, setRejectReason] = useState("");
 
@@ -74,14 +81,22 @@ export function CourseApprovalList({ readOnly = false }: CourseApprovalListProps
         return status === filterStatus;
     }) || [];
 
-    const handleApprove = async (id: number) => {
+    const handleApprove = async () => {
+        if (!selectedCourseId) return;
         try {
-            await approveCourse(id).unwrap();
+            await approveCourse(selectedCourseId).unwrap();
             toast.success("Đã phê duyệt khóa học thành công");
+            setApproveDialogOpen(false);
+            setSelectedCourseId(null);
         } catch (error) {
             console.error("Failed to approve course:", error);
             toast.error("Phê duyệt thất bại. Vui lòng thử lại.");
         }
+    };
+
+    const openApproveDialog = (id: number) => {
+        setSelectedCourseId(id);
+        setApproveDialogOpen(true);
     };
 
     const openRejectDialog = (id: number) => {
@@ -160,15 +175,17 @@ export function CourseApprovalList({ readOnly = false }: CourseApprovalListProps
                             <TableHead>Mã khóa học</TableHead>
                             <TableHead>Tên khóa học</TableHead>
                             <TableHead>Người yêu cầu</TableHead>
+                            <TableHead>Ngày gửi</TableHead>
+                            <TableHead>Ngày xử lý</TableHead>
                             <TableHead>Trạng thái</TableHead>
                             <TableHead>Lý do từ chối</TableHead>
-                            <TableHead className="text-right">Thao tác</TableHead>
+                            <TableHead className="text-right">Hành động</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center">
+                                <TableCell colSpan={8} className="h-24 text-center">
                                     <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
                                 </TableCell>
                             </TableRow>
@@ -178,6 +195,14 @@ export function CourseApprovalList({ readOnly = false }: CourseApprovalListProps
                                     <TableCell className="font-medium">{course.code}</TableCell>
                                     <TableCell>{course.name}</TableCell>
                                     <TableCell>{course.requesterName || "N/A"}</TableCell>
+                                    <TableCell className="whitespace-nowrap">
+                                        {course.submittedAt ? format(new Date(course.submittedAt), "dd/MM/yyyy HH:mm") : "-"}
+                                    </TableCell>
+                                    <TableCell className="whitespace-nowrap">
+                                        {(course.approvalStatus === 'ACTIVE' || course.approvalStatus === 'REJECTED') && course.decidedAt
+                                            ? format(new Date(course.decidedAt), "dd/MM/yyyy HH:mm")
+                                            : "-"}
+                                    </TableCell>
                                     <TableCell>
                                         {getStatusBadge(course)}
                                     </TableCell>
@@ -185,50 +210,60 @@ export function CourseApprovalList({ readOnly = false }: CourseApprovalListProps
                                         {course.approvalStatus === 'REJECTED' ? course.rejectionReason : '-'}
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => navigate(`/curriculum/courses/${course.id}`)}
-                                                title="Xem chi tiết"
-                                            >
-                                                <Eye className="h-4 w-4" />
-                                            </Button>
-                                            {!readOnly && course.status === 'SUBMITTED' && (
-                                                <>
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent align="end" className="w-48 p-1">
+                                                <div className="flex flex-col gap-0.5">
                                                     <Button
                                                         variant="ghost"
-                                                        size="icon"
-                                                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                                        onClick={() => handleApprove(course.id)}
-                                                        disabled={isApproving}
-                                                        title="Phê duyệt"
+                                                        size="sm"
+                                                        className="w-full justify-start gap-2 h-9 px-2"
+                                                        onClick={() => navigate(`/curriculum/courses/${course.id}`)}
                                                     >
-                                                        {isApproving && selectedCourseId === course.id ? (
-                                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                                        ) : (
-                                                            <CheckCircle className="h-4 w-4" />
-                                                        )}
+                                                        <Eye className="h-4 w-4" />
+                                                        Xem chi tiết
                                                     </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                        onClick={() => openRejectDialog(course.id)}
-                                                        disabled={isRejecting}
-                                                        title="Từ chối"
-                                                    >
-                                                        <XCircle className="h-4 w-4" />
-                                                    </Button>
-                                                </>
-                                            )}
-                                        </div>
+                                                    {!readOnly && course.status === 'SUBMITTED' && (
+                                                        <>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="w-full justify-start gap-2 h-9 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                                onClick={() => openApproveDialog(course.id)}
+                                                                disabled={isApproving}
+                                                            >
+                                                                {isApproving && selectedCourseId === course.id ? (
+                                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                                ) : (
+                                                                    <CheckCircle className="h-4 w-4" />
+                                                                )}
+                                                                Phê duyệt
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="w-full justify-start gap-2 h-9 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                                onClick={() => openRejectDialog(course.id)}
+                                                                disabled={isRejecting}
+                                                            >
+                                                                <XCircle className="h-4 w-4" />
+                                                                Từ chối
+                                                            </Button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </PopoverContent>
+                                        </Popover>
                                     </TableCell>
                                 </TableRow>
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                                     Không có khóa học nào.
                                 </TableCell>
                             </TableRow>
@@ -264,6 +299,30 @@ export function CourseApprovalList({ readOnly = false }: CourseApprovalListProps
                         >
                             {isRejecting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                             Xác nhận từ chối
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Xác nhận phê duyệt</DialogTitle>
+                        <DialogDescription>
+                            Bạn có chắc chắn muốn phê duyệt khóa học này không? Hành động này sẽ công khai khóa học cho toàn bộ hệ thống.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setApproveDialogOpen(false)}>
+                            Hủy
+                        </Button>
+                        <Button
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={handleApprove}
+                            disabled={isApproving}
+                        >
+                            {isApproving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Xác nhận
                         </Button>
                     </DialogFooter>
                 </DialogContent>

@@ -55,7 +55,7 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
     setExpandedSessions(next)
   }
 
-  
+
   // Helper function to get materials for a specific session
   const getSessionMaterials = (sessionId: number) => {
     if (!materials) return []
@@ -282,16 +282,13 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
                               </div>
                             )}
 
-                            {session.skillSets && session.skillSets.length > 0 && (
+                            {session.skill && (
                               <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                                {session.skillSets.map((skill, index) => (
-                                  <span
-                                    key={index}
-                                    className="rounded-full bg-muted px-2 py-1 uppercase tracking-wide font-medium"
-                                  >
-                                    {skill}
-                                  </span>
-                                ))}
+                                <span
+                                  className="rounded-full bg-muted px-2 py-1 uppercase tracking-wide font-medium"
+                                >
+                                  {session.skill}
+                                </span>
                               </div>
                             )}
 

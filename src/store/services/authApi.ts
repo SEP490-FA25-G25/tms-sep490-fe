@@ -27,6 +27,7 @@ export interface LoginData {
   email: string
   fullName: string
   roles: string[]
+  branchId: number | null
 }
 
 export interface LoginResponse {
@@ -102,6 +103,7 @@ export const baseQueryWithReauth: BaseQueryFn<
           email: refreshData.data.email,
           fullName: refreshData.data.fullName,
           roles: refreshData.data.roles,
+          branchId: refreshData.data.branchId,
         },
       },
     })

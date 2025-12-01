@@ -384,9 +384,9 @@ export default function CourseDetailPage() {
                                                         </TableCell>
                                                         <TableCell>
                                                             <div className="flex flex-wrap gap-1">
-                                                                {session.skillSets?.map((skill) => (
-                                                                    <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>
-                                                                ))}
+                                                                {session.skill && (
+                                                                    <Badge variant="secondary" className="text-xs">{session.skill}</Badge>
+                                                                )}
                                                             </div>
                                                         </TableCell>
                                                     </TableRow>

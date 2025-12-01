@@ -19,6 +19,7 @@ import {
   PlusIcon,
   MessageCircleIcon,
   LogOutIcon,
+  Clock,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -136,9 +137,14 @@ const roleBasedNav = {
         icon: ClipboardCheckIcon,
       },
       {
-        title: "Quản lý tài nguyên và khung giờ học",
+        title: "Quản lý tài nguyên",
         url: "/center-head/resources",
         icon: BuildingIcon,
+      },
+      {
+        title: "Quản lý khung giờ học",
+        url: "/center-head/timeslots",
+        icon: Clock,
       },
       {
         title: "Quản lý học sinh",

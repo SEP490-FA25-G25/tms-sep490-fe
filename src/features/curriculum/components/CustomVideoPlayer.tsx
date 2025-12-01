@@ -127,6 +127,10 @@ export function CustomVideoPlayer({ src, autoPlay = false }: CustomVideoPlayerPr
                 src={src}
                 className="w-full h-full"
                 onClick={togglePlay}
+                onError={(e) => {
+                    console.error("Video playback error:", e);
+                    // You could set an error state here to show a UI message
+                }}
             />
 
             {/* Custom Controls */}

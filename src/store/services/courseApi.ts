@@ -101,7 +101,7 @@ export interface CourseSession {
   studentTask?: string;
   description?: string;
   objectives?: string;
-  skillSets?: string[];
+  skill?: string;
   materials?: CourseMaterial[];
   totalMaterials?: number;
   isCompleted?: boolean;
@@ -230,6 +230,10 @@ export interface CourseDTO {
   approvalStatus?: string;
   requesterName?: string;
   rejectionReason?: string;
+  submittedAt?: string;
+  decidedAt?: string;
+  effectiveDate?: string;
+  updatedAt?: string;
 }
 
 export interface ApiResponse<T = unknown> {
@@ -423,6 +427,13 @@ export const courseApi = createApi({
       }),
       invalidatesTags: ['Course'],
     }),
+    deleteCourse: builder.mutation<void, number>({
+      query: (id) => ({
+        url: `/courses/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Course'],
+    }),
   }),
 });
 
@@ -442,6 +453,7 @@ export const {
   useGetCourseDetailsQuery,
   useDeactivateCourseMutation,
   useReactivateCourseMutation,
+  useDeleteCourseMutation,
   useSubmitCourseMutation,
   useApproveCourseMutation,
   useRejectCourseMutation,
