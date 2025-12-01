@@ -186,7 +186,7 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
       // Branch/modality change - show contact modal
       setIsContactModalOpen(true)
     }
-  }, [selectedEnrollment, selectedClass, selectedSession, transferType, requestReason, note, submitTransfer, handleReset, handleSuccess, handleError])
+  }, [selectedEnrollment, selectedClass, selectedSession, transferType, requestReason, submitTransfer, handleReset, handleSuccess, handleError])
 
   // Step states
   const step1Complete = !!selectedEnrollment
