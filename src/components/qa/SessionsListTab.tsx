@@ -99,11 +99,11 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
 
         switch (status) {
             case SessionStatus.DONE:
-                return <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100/80">{displayStatus}</Badge>
+                return <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100/80">{displayStatus}</Badge>
             case SessionStatus.PLANNED:
-                return <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100/80">{displayStatus}</Badge>
+                return <Badge variant="outline" className="bg-sky-100 text-sky-700 border-sky-200 hover:bg-sky-100/80">{displayStatus}</Badge>
             case SessionStatus.CANCELLED:
-                return <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200 hover:bg-red-100/80">{displayStatus}</Badge>
+                return <Badge variant="outline" className="bg-rose-100 text-rose-700 border-rose-200 hover:bg-rose-100/80">{displayStatus}</Badge>
             default:
                 return <Badge variant="outline">{displayStatus}</Badge>
         }
@@ -229,7 +229,7 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
                                     <TableCell className="text-center">
                                         <div className="flex items-center justify-center space-x-1">
                                             {session.hasQAReport ? (
-                                                <Badge variant="default" className="bg-blue-100 text-blue-700">
+                                                <Badge variant="default" className="bg-sky-100 text-sky-700">
                                                     Có ({session.qaReportCount})
                                                 </Badge>
                                             ) : (

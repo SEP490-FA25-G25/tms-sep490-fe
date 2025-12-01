@@ -186,7 +186,7 @@ const AvailabilityCampaignPage = () => {
                                         <TableCell>{teacher.totalSlots}</TableCell>
                                         <TableCell>
                                             {teacher.status === "UP_TO_DATE" ? (
-                                                <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                                                <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
                                                     Đã cập nhật
                                                 </Badge>
                                             ) : (

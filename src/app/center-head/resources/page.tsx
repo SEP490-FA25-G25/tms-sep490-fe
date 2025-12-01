@@ -289,7 +289,7 @@ export default function CenterHeadResourcesPage() {
             cell: ({ row }) => {
                 const status = row.original.status;
                 return (
-                    <Badge variant={status === "ACTIVE" ? "default" : "destructive"} className={status === "ACTIVE" ? "bg-green-600 hover:bg-green-700" : ""}>
+                    <Badge variant={status === "ACTIVE" ? "default" : "destructive"} className={status === "ACTIVE" ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200" : ""}>
                         {status === "ACTIVE" ? "Hoạt động" : "Ngưng hoạt động"}
                     </Badge>
                 );

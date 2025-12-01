@@ -64,7 +64,7 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
 
     if (score && score.isGraded) {
       return (
-        <Badge className="bg-green-100 text-green-800 border-green-200">
+        <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
           Đã chấm điểm
         </Badge>
       );
@@ -72,7 +72,7 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
 
     if (score && score.isSubmitted && !score.isGraded) {
       return (
-        <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+        <Badge className="bg-amber-100 text-amber-700 border-amber-200">
           Chờ chấm điểm
         </Badge>
       );

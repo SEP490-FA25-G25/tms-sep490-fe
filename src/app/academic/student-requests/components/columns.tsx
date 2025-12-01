@@ -10,9 +10,9 @@ import { ArrowUpDown } from 'lucide-react'
 // Request type badge
 function RequestTypeBadge({ type }: { type: string }) {
   const variants: Record<string, { label: string; className: string }> = {
-    ABSENCE: { label: 'Xin nghỉ', className: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' },
-    MAKEUP: { label: 'Học bù', className: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' },
-    TRANSFER: { label: 'Chuyển lớp', className: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' },
+    ABSENCE: { label: 'Xin nghỉ', className: 'bg-orange-100 text-orange-700 border-orange-200' },
+    MAKEUP: { label: 'Học bù', className: 'bg-teal-100 text-teal-700 border-teal-200' },
+    TRANSFER: { label: 'Chuyển lớp', className: 'bg-violet-100 text-violet-700 border-violet-200' },
   }
 
   const variant = variants[type] || { label: type, className: '' }
@@ -27,10 +27,10 @@ function RequestTypeBadge({ type }: { type: string }) {
 // Status badge
 function StatusBadge({ status }: { status: string }) {
   const variants: Record<string, { label: string; className: string }> = {
-    PENDING: { label: 'Chờ duyệt', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300' },
-    APPROVED: { label: 'Đã duyệt', className: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' },
-    REJECTED: { label: 'Đã từ chối', className: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' },
-    CANCELLED: { label: 'Đã hủy', className: 'bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300' },
+    PENDING: { label: 'Chờ duyệt', className: 'bg-amber-100 text-amber-700 border-amber-200' },
+    APPROVED: { label: 'Đã duyệt', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+    REJECTED: { label: 'Đã từ chối', className: 'bg-rose-100 text-rose-700 border-rose-200' },
+    CANCELLED: { label: 'Đã hủy', className: 'bg-slate-100 text-slate-700 border-slate-200' },
   }
 
   const variant = variants[status] || { label: status, className: '' }
@@ -139,7 +139,7 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
         if (hours !== null && hours !== undefined && hours < 0) {
           return {
             text: 'Đã qua',
-            className: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+            className: 'bg-rose-100 text-rose-700 border-rose-200'
           }
         }
 
@@ -147,7 +147,7 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
         if (hours !== null && hours !== undefined && hours < 3) {
           return {
             text: `${hours} giờ`,
-            className: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+            className: 'bg-rose-100 text-rose-700 border-rose-200'
           }
         }
 
@@ -155,7 +155,7 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
         if (hours !== null && hours !== undefined && hours < 24) {
           return {
             text: `${hours} giờ`,
-            className: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'
+            className: 'bg-amber-100 text-amber-700 border-amber-200'
           }
         }
 
@@ -164,24 +164,24 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
           if (days === 0) {
             return {
               text: 'Hôm nay',
-              className: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'
+              className: 'bg-amber-100 text-amber-700 border-amber-200'
             }
           } else if (days <= 2) {
             return {
               text: `${days} ngày`,
-              className: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
+              className: 'bg-orange-100 text-orange-700 border-orange-200'
             }
           } else {
             return {
               text: `${days} ngày`,
-              className: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+              className: 'bg-emerald-100 text-emerald-700 border-emerald-200'
             }
           }
         }
 
         return {
           text: 'Không xác định',
-          className: 'bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300'
+          className: 'bg-slate-100 text-slate-700 border-slate-200'
         }
       }
 
@@ -198,7 +198,7 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
         // For makeup requests, show urgency based on when missed session occurred
         if (daysUntilSession === null || daysUntilSession === undefined) {
           return (
-            <Badge variant="outline" className="bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+            <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200">
               Không xác định
             </Badge>
           )
@@ -212,13 +212,13 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
           const hoursAgo = Math.abs(hoursUntilSession)
           if (hoursAgo <= 3) {
             return (
-              <Badge variant="outline" className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
+              <Badge variant="outline" className="bg-rose-100 text-rose-700 border-rose-200">
                 {hoursAgo} giờ trước
               </Badge>
             )
           }
           return (
-            <Badge variant="outline" className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
+            <Badge variant="outline" className="bg-rose-100 text-rose-700 border-rose-200">
               {hoursAgo} giờ trước
             </Badge>
           )
@@ -226,19 +226,19 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
 
         if (daysSinceMissed <= 7) {
           return (
-            <Badge variant="outline" className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
+            <Badge variant="outline" className="bg-rose-100 text-rose-700 border-rose-200">
               {daysSinceMissed} ngày trước
             </Badge>
           )
         } else if (daysSinceMissed <= 14) {
           return (
-            <Badge variant="outline" className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+            <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">
               {daysSinceMissed} ngày trước
             </Badge>
           )
         } else {
           return (
-            <Badge variant="outline" className="bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+            <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200">
               {daysSinceMissed} ngày trước
             </Badge>
           )
@@ -252,31 +252,31 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
 
         if (hoursSinceSubmission < 1) {
           return (
-            <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+            <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200">
               Mới
             </Badge>
           )
         } else if (hoursSinceSubmission < 24) {
           return (
-            <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+            <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200">
               {hoursSinceSubmission} giờ
             </Badge>
           )
         } else if (daysSinceSubmission >= 3) {
           return (
-            <Badge variant="outline" className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
+            <Badge variant="outline" className="bg-rose-100 text-rose-700 border-rose-200">
               {daysSinceSubmission} ngày
             </Badge>
           )
         } else if (daysSinceSubmission >= 1) {
           return (
-            <Badge variant="outline" className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+            <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">
               {daysSinceSubmission} ngày
             </Badge>
           )
         } else {
           return (
-            <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+            <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200">
               Mới
             </Badge>
           )
@@ -284,7 +284,7 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
       }
 
       return (
-        <Badge variant="outline" className="bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300">
+        <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200">
           Không xác định
         </Badge>
       )

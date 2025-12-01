@@ -206,7 +206,7 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
                                     </div>
                                     <Badge
                                         variant="outline"
-                                        className={`flex items-center gap-1 ${feedback.isFeedback ? 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100/80' : 'bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100/80'}`}
+                                        className={`flex items-center gap-1 ${feedback.isFeedback ? 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100/80' : 'bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100/80'}`}
                                     >
                                         {feedback.isFeedback ? (
                                             <>

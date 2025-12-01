@@ -492,11 +492,11 @@ export function EnrollmentImportDialog({
                                 </div>
                               </TableCell>
                               <TableCell>
-                                {student.status === 'FOUND' && <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Đã có hồ sơ</Badge>}
-                                {student.status === 'CREATE' && <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Tạo mới</Badge>}
-                                {student.status === 'DUPLICATE' && <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Trùng lặp</Badge>}
-                                {student.status === 'ERROR' && <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Lỗi dữ liệu</Badge>}
-                                {student.errorMessage && <p className="text-xs text-red-600 mt-1 max-w-[200px]">{student.errorMessage}</p>}
+                                {student.status === 'FOUND' && <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">Đã có hồ sơ</Badge>}
+                                {student.status === 'CREATE' && <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200">Tạo mới</Badge>}
+                                {student.status === 'DUPLICATE' && <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Trùng lặp</Badge>}
+                                {student.status === 'ERROR' && <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200">Lỗi dữ liệu</Badge>}
+                                {student.errorMessage && <p className="text-xs text-rose-600 mt-1 max-w-[200px]">{student.errorMessage}</p>}
                               </TableCell>
                               <TableCell>
                                 <div className="flex flex-col text-sm">

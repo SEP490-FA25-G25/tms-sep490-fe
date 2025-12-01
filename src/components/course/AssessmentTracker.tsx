@@ -35,14 +35,14 @@ export function AssessmentTracker({ assessments, assessmentProgress }: Assessmen
 
   const getStatusIcon = (isCompleted?: boolean) => {
     if (isCompleted) {
-      return <CheckCircle className="h-4 w-4 text-green-600" />
+      return <CheckCircle className="h-4 w-4 text-emerald-600" />
     }
-    return <Clock className="h-4 w-4 text-orange-600" />
+    return <Clock className="h-4 w-4 text-amber-600" />
   }
 
   const getStatusBadge = (isCompleted?: boolean) => {
     if (isCompleted) {
-      return <Badge variant="default" className="bg-green-600">Đã nộp</Badge>
+      return <Badge variant="default" className="bg-emerald-100 text-emerald-700">Đã nộp</Badge>
     }
     return <Badge variant="outline">Chưa nộp</Badge>
   }

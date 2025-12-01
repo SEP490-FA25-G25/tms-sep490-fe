@@ -142,9 +142,9 @@ export function CourseApprovalList({ readOnly = false }: CourseApprovalListProps
 
         switch (status) {
             case "SUBMITTED":
-                return <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200">Chờ phê duyệt</Badge>;
+                return <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-200">Chờ duyệt</Badge>;
             case "ACTIVE":
-                return <Badge variant="default" className="bg-green-600 hover:bg-green-700">Đã phê duyệt</Badge>;
+                return <Badge variant="default" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200">Đã duyệt</Badge>;
             default:
                 return <Badge variant="outline">{status}</Badge>;
         }

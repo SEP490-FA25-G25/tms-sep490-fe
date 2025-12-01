@@ -103,7 +103,7 @@ const REQUEST_STATUS_META: Record<
   { label: string; badgeClass: string; tone: string }
 > = {
   PENDING: {
-    label: "Đang chờ",
+    label: "Chờ duyệt",
     badgeClass: "bg-amber-100 text-amber-700 border-amber-200",
     tone: "text-amber-600",
   },
@@ -590,7 +590,7 @@ export default function MyRequestsPage() {
         iconColor="text-slate-500"
       />
       <SummaryCard
-        label="Đang chờ"
+        label="Chờ duyệt"
         value={summary.pending}
         icon={Clock3}
         valueColor="text-amber-600"
@@ -606,7 +606,7 @@ export default function MyRequestsPage() {
         iconColor="text-emerald-500"
       />
       <SummaryCard
-        label="Bị từ chối"
+        label="Đã từ chối"
         value={summary.rejected}
         icon={XCircle}
         valueColor="text-rose-600"

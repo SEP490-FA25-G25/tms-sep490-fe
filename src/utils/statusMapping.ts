@@ -7,7 +7,7 @@ export const statusMapping: Record<string, string> = {
 
     // Course Specific
     SUBMITTED: "Đã gửi",
-    REJECTED: "Bị từ chối",
+    REJECTED: "Đã từ chối",
     PENDING: "Chờ duyệt",
     APPROVED: "Đã duyệt",
 

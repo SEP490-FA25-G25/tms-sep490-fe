@@ -29,9 +29,9 @@ const ROLE_LABELS: Record<string, string> = {
 // Status badge
 function StatusBadge({ status }: { status: string }) {
   const variants: Record<string, { label: string; className: string }> = {
-    ACTIVE: { label: 'Hoạt động', className: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' },
-    INACTIVE: { label: 'Không hoạt động', className: 'bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300' },
-    SUSPENDED: { label: 'Tạm khóa', className: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' },
+    ACTIVE: { label: 'Hoạt động', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300' },
+    INACTIVE: { label: 'Không hoạt động', className: 'bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-300' },
+    SUSPENDED: { label: 'Tạm khóa', className: 'bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-300' },
   }
 
   const variant = variants[status] || { label: status, className: '' }

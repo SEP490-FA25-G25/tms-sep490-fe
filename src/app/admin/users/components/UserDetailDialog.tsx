@@ -141,7 +141,7 @@ function renderStatus(status?: string) {
   if (!status) return <span className="text-sm text-muted-foreground">—</span>
   const variants: Record<string, string> = {
     ACTIVE: 'bg-emerald-100 text-emerald-700',
-    INACTIVE: 'bg-gray-100 text-gray-700',
+    INACTIVE: 'bg-slate-100 text-slate-700',
     SUSPENDED: 'bg-rose-100 text-rose-700',
   }
   return (

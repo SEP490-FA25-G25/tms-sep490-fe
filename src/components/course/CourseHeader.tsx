@@ -21,9 +21,9 @@ export function CourseHeader({ course, progress, materials }: CourseHeaderProps)
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'APPROVED':
-        return 'default'
+        return 'success'
       case 'PENDING':
-        return 'secondary'
+        return 'warning'
       case 'REJECTED':
         return 'destructive'
       default:
