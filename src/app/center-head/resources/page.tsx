@@ -115,9 +115,11 @@ export default function CenterHeadResourcesPage() {
                 await deleteResource(resourceToDelete).unwrap();
                 toast.success("Đã xóa tài nguyên thành công");
                 setResourceToDelete(null);
-            } catch (error: any) {
+            } catch (error: unknown) {
                 console.error("Failed to delete resource:", error);
-                const errorMessage = error?.data?.message || error?.message || "Xóa thất bại. Vui lòng thử lại.";
+                const apiError = error as { data?: { message?: string }; message?: string };
+                const errorMessage =
+                    apiError.data?.message || apiError.message || "Xóa thất bại. Vui lòng thử lại.";
                 toast.error(errorMessage);
             }
         }

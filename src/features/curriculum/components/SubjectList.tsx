@@ -71,10 +71,10 @@ export function SubjectList() {
                 await deleteSubject(subjectToDeletePermanently).unwrap();
                 toast.success("Đã xóa môn học thành công");
                 setSubjectToDeletePermanently(null);
-            } catch (error: any) {
+            } catch (error: unknown) {
                 console.error("Failed to delete subject:", error);
-                // Show specific error message from backend if available
-                const errorMessage = error?.data?.message || "Xóa thất bại. Vui lòng thử lại.";
+                const apiError = error as { data?: { message?: string } };
+                const errorMessage = apiError.data?.message || "Xóa thất bại. Vui lòng thử lại.";
                 toast.error(errorMessage);
             }
         }

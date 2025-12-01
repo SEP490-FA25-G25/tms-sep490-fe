@@ -76,8 +76,11 @@ export default function ResourceDetailPage() {
                     : "Đã kích hoạt lại tài nguyên"
             );
             setShowDeactivateDialog(false);
-        } catch (error: any) {
-            toast.error(error.data?.message || "Có lỗi xảy ra khi cập nhật trạng thái");
+        } catch (error: unknown) {
+            const apiError = error as { data?: { message?: string } };
+            toast.error(
+                apiError.data?.message || "Có lỗi xảy ra khi cập nhật trạng thái"
+            );
         }
     };
 
