@@ -104,9 +104,11 @@ export function TimeSlotDialog({ open, onOpenChange, timeSlot, branchId, branche
                 toast.success("Tạo khung giờ mới thành công");
             }
             onOpenChange(false);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Failed to save time slot:", error);
-            const errorMessage = error?.data?.message || error?.message || "Lưu thất bại. Vui lòng thử lại.";
+            const apiError = error as { data?: { message?: string }; message?: string };
+            const errorMessage =
+                apiError.data?.message || apiError.message || "Lưu thất bại. Vui lòng thử lại.";
             toast.error(errorMessage);
         }
     };

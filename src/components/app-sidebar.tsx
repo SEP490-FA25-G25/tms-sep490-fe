@@ -210,14 +210,14 @@ const roleBasedNav = {
         icon: HomeIcon,
       },
       {
-        title: "Lớp học của tôi",
-        url: "/teacher/classes",
-        icon: SchoolIcon,
-      },
-      {
         title: "Lịch dạy của tôi",
         url: "/teacher/schedule",
         icon: CalendarIcon,
+      },
+      {
+        title: "Lớp học của tôi",
+        url: "/teacher/classes",
+        icon: SchoolIcon,
       },
       {
         title: "Điểm danh buổi học",
