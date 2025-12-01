@@ -27,15 +27,15 @@ export function DashboardLayout({ children, title, description, actions }: Dashb
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               {(title || description || actions) && (
                 <div className="px-4 lg:px-6">
-                  <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex flex-col gap-1">
                       {title && (
-                        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+                        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{title}</h1>
                       )}
                       {description && typeof description === 'string' ? (
-                        <p className="text-muted-foreground">{description}</p>
+                        <p className="text-sm text-muted-foreground">{description}</p>
                       ) : description ? (
-                        <div className="text-muted-foreground">{description}</div>
+                        <div className="text-sm text-muted-foreground">{description}</div>
                       ) : null}
                     </div>
                     {actions && <div className="flex items-center gap-2">{actions}</div>}

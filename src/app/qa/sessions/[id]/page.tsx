@@ -37,15 +37,15 @@ export default function SessionDetailsPage() {
         const value = status?.toLowerCase() || 'unknown'
         switch (value) {
             case 'present':
-                return 'text-green-600 bg-green-50'
+                return 'text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/30'
             case 'absent':
-                return 'text-red-600 bg-red-50'
+                return 'text-rose-700 bg-rose-50 dark:text-rose-400 dark:bg-rose-950/30'
             case 'late':
-                return 'text-yellow-600 bg-yellow-50'
+                return 'text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/30'
             case 'excused':
-                return 'text-blue-600 bg-blue-50'
+                return 'text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/30'
             default:
-                return 'text-gray-600 bg-gray-50'
+                return 'text-slate-700 bg-slate-50 dark:text-slate-400 dark:bg-slate-800/50'
         }
     }
 
@@ -53,13 +53,13 @@ export default function SessionDetailsPage() {
         const value = status?.toLowerCase() || 'unknown'
         switch (value) {
             case 'completed':
-                return 'text-green-600 bg-green-50'
+                return 'text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/30'
             case 'incomplete':
-                return 'text-red-600 bg-red-50'
+                return 'text-rose-700 bg-rose-50 dark:text-rose-400 dark:bg-rose-950/30'
             case 'partial':
-                return 'text-yellow-600 bg-yellow-50'
+                return 'text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/30'
             default:
-                return 'text-gray-600 bg-gray-50'
+                return 'text-slate-700 bg-slate-50 dark:text-slate-400 dark:bg-slate-800/50'
         }
     }
 
@@ -128,17 +128,26 @@ export default function SessionDetailsPage() {
 
     return (
         <DashboardLayout
-            title={`Chi Tiết Buổi Học #${session.sessionId}`}
-            description={`${session.classCode} - ${session.courseName}`}
+            title={`Buổi #${session.sessionId} - ${session.classCode}`}
+            description={session.courseName}
+            actions={
+                <Button asChild>
+                    <Link to={`/qa/reports/create?sessionId=${session.sessionId}`}>
+                        <Plus className="h-4 w-4" />
+                        Tạo báo cáo
+                    </Link>
+                </Button>
+            }
         >
             <div className="space-y-6">
                 {/* Session Overview */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <QAStatsCard
                         title="Ngày học"
                         value={new Date(session.date).toLocaleDateString('vi-VN')}
                         subtitle={new Date(session.date).toLocaleDateString('vi-VN', { weekday: 'long' })}
                         icon={Calendar}
+                        iconClassName="bg-blue-50 dark:bg-blue-950/30 [&>svg]:text-blue-600 dark:[&>svg]:text-blue-400"
                     />
 
                     <QAStatsCard
@@ -146,6 +155,7 @@ export default function SessionDetailsPage() {
                         value={session.timeSlot}
                         subtitle="Khung giờ học"
                         icon={Clock}
+                        iconClassName="bg-purple-50 dark:bg-purple-950/30 [&>svg]:text-purple-600 dark:[&>svg]:text-purple-400"
                     />
 
                     <QAStatsCard
@@ -153,6 +163,7 @@ export default function SessionDetailsPage() {
                         value={`${session.attendanceStats.presentCount}/${session.attendanceStats.totalStudents}`}
                         subtitle="Học viên có mặt"
                         icon={Users}
+                        iconClassName="bg-emerald-50 dark:bg-emerald-950/30 [&>svg]:text-emerald-600 dark:[&>svg]:text-emerald-400"
                     />
 
                     <QAStatsCard
@@ -160,6 +171,7 @@ export default function SessionDetailsPage() {
                         value={`${session.attendanceStats.homeworkCompletionRate.toFixed(1)}%`}
                         subtitle="Tỷ lệ hoàn thành"
                         icon={BookOpen}
+                        iconClassName="bg-amber-50 dark:bg-amber-950/30 [&>svg]:text-amber-600 dark:[&>svg]:text-amber-400"
                     />
                 </div>
 
@@ -201,16 +213,16 @@ export default function SessionDetailsPage() {
 
                         {/* Student Attendance */}
                         <div className="space-y-4">
-                            <h3 className="text-lg font-semibold">Điểm Danh Học Sinh</h3>
+                            <h3 className="text-lg font-semibold">Điểm danh học sinh</h3>
                             <div className="rounded-lg border">
                                 <Table>
-                                    <TableHeader>
+                                    <TableHeader className="bg-muted/50">
                                         <TableRow>
-                                            <TableHead>Mã học sinh</TableHead>
-                                            <TableHead>Tên học sinh</TableHead>
-                                            <TableHead>Trạng thái</TableHead>
-                                            <TableHead>Bài tập</TableHead>
-                                            <TableHead>Ghi chú</TableHead>
+                                            <TableHead className="font-semibold">Mã học sinh</TableHead>
+                                            <TableHead className="font-semibold">Tên học sinh</TableHead>
+                                            <TableHead className="font-semibold">Trạng thái</TableHead>
+                                            <TableHead className="font-semibold">Bài tập</TableHead>
+                                            <TableHead className="font-semibold">Ghi chú</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -287,20 +299,7 @@ export default function SessionDetailsPage() {
                             </Card>
                         )}
 
-                        {/* Create QA Report */}
-                        <Card className="py-0 gap-0">
-                            <CardHeader className="py-3">
-                                <CardTitle>Hành Động</CardTitle>
-                            </CardHeader>
-                            <CardContent className="pb-4">
-                                <Button asChild className="w-full">
-                                    <Link to={`/qa/reports/create?sessionId=${session.sessionId}`}>
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        Tạo Báo Cáo QA
-                                    </Link>
-                                </Button>
-                            </CardContent>
-                        </Card>
+
                     </div>
                 </div>
             </div>
