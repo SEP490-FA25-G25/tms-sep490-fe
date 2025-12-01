@@ -1,9 +1,10 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { Loader2 } from 'lucide-react'
+import { getDefaultRouteForUser } from '@/utils/role-routes'
 
 export function AuthRedirect() {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, user } = useAuth()
 
   if (isLoading) {
     return (
@@ -16,5 +17,10 @@ export function AuthRedirect() {
     )
   }
 
-  return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+  if (isAuthenticated && user?.roles) {
+    const defaultRoute = getDefaultRouteForUser(user.roles)
+    return <Navigate to={defaultRoute} replace />
+  }
+
+  return <Navigate to="/login" replace />
 }

@@ -228,11 +228,6 @@ const roleBasedNav = {
   [ROLES.STUDENT]: {
     navMain: [
       {
-        title: "Bảng điều khiển",
-        url: "/student/dashboard",
-        icon: HomeIcon,
-      },
-      {
         title: "Thời khóa biểu",
         url: "/student/schedule",
         icon: CalendarIcon,
@@ -370,7 +365,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     items: roleBasedNav[role as keyof typeof roleBasedNav]?.navMain ?? [],
   }));
 
-  const brandHref = navSections[0]?.items?.[0]?.url ?? "/dashboard";
+  const brandHref = navSections[0]?.items?.[0]?.url ?? "/login";
 
   const handleLogout = () => {
     logout();
