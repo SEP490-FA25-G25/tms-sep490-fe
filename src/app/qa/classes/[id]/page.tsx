@@ -7,6 +7,7 @@ import { ClassStatusBadge } from "@/components/qa/ClassStatusBadge"
 import { SessionsListTab } from "@/components/qa/SessionsListTab"
 import { QAReportsListTab } from "@/components/qa/QAReportsListTab"
 import { StudentFeedbackTab } from "@/components/qa/StudentFeedbackTab"
+import { QAStatsCard } from "@/components/qa/QAStatsCard"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -83,59 +84,33 @@ export default function ClassDetailsPage() {
 
                 {/* Class Overview */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center space-x-2">
-                                <Users className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Sĩ số</p>
-                                    <p className="text-2xl font-bold">
-                                        {classInfo.currentEnrollment}/{classInfo.maxCapacity}
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <QAStatsCard
+                        title="Sĩ số"
+                        value={`${classInfo.currentEnrollment}/${classInfo.maxCapacity}`}
+                        subtitle="Học viên đang học"
+                        icon={Users}
+                    />
 
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center space-x-2">
-                                <Calendar className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Tiến độ buổi học</p>
-                                    <p className="text-2xl font-bold">
-                                        {classInfo.sessionSummary?.completedSessions || 0}/{classInfo.sessionSummary?.totalSessions || 0}
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <QAStatsCard
+                        title="Tiến độ buổi học"
+                        value={`${classInfo.sessionSummary?.completedSessions || 0}/${classInfo.sessionSummary?.totalSessions || 0}`}
+                        subtitle="Buổi đã hoàn thành"
+                        icon={Calendar}
+                    />
 
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center space-x-2">
-                                <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Tỷ lệ điểm danh</p>
-                                    <p className="text-2xl font-bold">
-                                        {classInfo.performanceMetrics?.attendanceRate?.toFixed(1) || "0.0"}%
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <QAStatsCard
+                        title="Tỷ lệ điểm danh"
+                        value={`${classInfo.performanceMetrics?.attendanceRate?.toFixed(1) || "0.0"}%`}
+                        subtitle="Trung bình lớp"
+                        icon={CheckCircle}
+                    />
 
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center space-x-2">
-                                <FileText className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Báo cáo QA</p>
-                                    <p className="text-2xl font-bold">{classInfo.qaReports?.length || 0}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <QAStatsCard
+                        title="Báo cáo QA"
+                        value={classInfo.qaReports?.length || 0}
+                        subtitle="Báo cáo đã tạo"
+                        icon={FileText}
+                    />
                 </div>
 
                 {/* Tabs */}

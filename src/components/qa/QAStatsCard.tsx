@@ -10,6 +10,7 @@ interface QAStatsCardProps {
     trend?: "up" | "down" | "neutral"
     trendValue?: string
     className?: string
+    valueClassName?: string
 }
 
 export function QAStatsCard({
@@ -20,6 +21,7 @@ export function QAStatsCard({
     trend,
     trendValue,
     className,
+    valueClassName,
 }: QAStatsCardProps) {
     return (
         <Card className={cn("overflow-hidden", className)}>
@@ -30,7 +32,7 @@ export function QAStatsCard({
                 {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">{value}</div>
+                <div className={cn("text-2xl font-bold", valueClassName)}>{value}</div>
                 {(subtitle || trendValue) && (
                     <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                         {trendValue && (

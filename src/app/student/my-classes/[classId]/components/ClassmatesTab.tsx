@@ -75,7 +75,7 @@ const ClassmatesTab: React.FC<ClassmatesTabProps> = ({ classmates, isLoading, en
         </div>
       </div>
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden py-0">
         {filteredClassmates.length > 0 ? (
           <Table>
             <TableHeader>

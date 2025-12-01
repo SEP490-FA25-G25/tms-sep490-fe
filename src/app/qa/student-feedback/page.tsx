@@ -93,7 +93,7 @@ export default function StudentFeedbackPage() {
         { skip: !selectedClassId }
     )
 
-    const feedbacks = feedbackData?.feedbacks || []
+    const feedbacks = Array.isArray(feedbackData?.feedbacks) ? feedbackData.feedbacks : []
     const {
         totalStudents = 0,
         submittedCount = 0,

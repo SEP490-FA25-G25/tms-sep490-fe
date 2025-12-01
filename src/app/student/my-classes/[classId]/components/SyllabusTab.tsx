@@ -606,7 +606,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
               <h3 className="text-xl font-semibold">Cơ cấu điểm</h3>
               <Badge variant="secondary">{courseSyllabus.assessments?.length || 0}</Badge>
             </div>
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden py-0">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">

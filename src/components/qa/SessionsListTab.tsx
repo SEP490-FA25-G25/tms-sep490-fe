@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useGetQASessionListQuery } from "@/store/services/qaApi"
 import { SessionStatus, getSessionStatusDisplayName, sessionStatusOptions } from "@/types/qa"
+import { QAStatsCard } from "@/components/qa/QAStatsCard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -110,63 +111,44 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
         }
     }
 
+    const completedCount = sessions.filter(s => s.status === "DONE").length
+    const plannedCount = sessions.filter(s => s.status === "PLANNED").length
+    const cancelledCount = sessions.filter(s => s.status === "CANCELLED").length
+
     return (
         <div className="space-y-6">
             {/* Summary Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center space-x-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                                <p className="text-sm text-muted-foreground">Tổng số buổi</p>
-                                <p className="text-2xl font-bold">{sessionListData.totalSessions}</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                <QAStatsCard
+                    title="Tổng số buổi"
+                    value={sessionListData.totalSessions}
+                    subtitle="Buổi trong lớp"
+                    icon={Calendar}
+                />
 
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center space-x-2">
-                            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                                <p className="text-sm text-muted-foreground">Đã hoàn thành</p>
-                                <p className="text-2xl font-bold text-green-600">
-                                    {sessions.filter(s => s.status === "DONE").length}
-                                </p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                <QAStatsCard
+                    title="Đã hoàn thành"
+                    value={completedCount}
+                    subtitle="Buổi đã dạy"
+                    icon={CheckCircle}
+                    valueClassName="text-green-600"
+                />
 
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center space-x-2">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                                <p className="text-sm text-muted-foreground">Sắp tới</p>
-                                <p className="text-2xl font-bold text-blue-600">
-                                    {sessions.filter(s => s.status === "PLANNED").length}
-                                </p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                <QAStatsCard
+                    title="Sắp tới"
+                    value={plannedCount}
+                    subtitle="Buổi chưa học"
+                    icon={Clock}
+                    valueClassName="text-blue-600"
+                />
 
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center space-x-2">
-                            <XCircle className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                                <p className="text-sm text-muted-foreground">Đã hủy</p>
-                                <p className="text-2xl font-bold text-red-600">
-                                    {sessions.filter(s => s.status === "CANCELLED").length}
-                                </p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                <QAStatsCard
+                    title="Đã hủy"
+                    value={cancelledCount}
+                    subtitle="Buổi bị hủy"
+                    icon={XCircle}
+                    valueClassName="text-red-600"
+                />
             </div>
 
             {/* Filter */}
@@ -193,11 +175,11 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
             </div>
 
             {/* Sessions Table */}
-            <Card>
-                <CardHeader>
+            <Card className="py-0">
+                <CardHeader className="py-4">
                     <CardTitle>Danh Sách Buổi Học</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-0">
                     {filteredSessions.length > 0 ? (
                         <Table>
                             <TableHeader>

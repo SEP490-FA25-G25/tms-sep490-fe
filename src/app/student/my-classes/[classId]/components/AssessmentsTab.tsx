@@ -131,7 +131,7 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
         </ToggleGroup>
       </div>
 
-      <Card className="overflow-hidden p-0">
+      <Card className="overflow-hidden py-0">
         {filteredAssessments.length > 0 ? (
           <Table>
             <TableHeader>

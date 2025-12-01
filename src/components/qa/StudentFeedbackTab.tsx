@@ -106,7 +106,7 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
     }
 
     const statistics = feedbackData?.statistics
-    const feedbacks = feedbackData?.feedbacks || []
+    const feedbacks = Array.isArray(feedbackData?.feedbacks) ? feedbackData.feedbacks : []
 
     const filteredFeedbacks = feedbacks.filter(feedback => {
         const phaseMatch = phaseFilter === "all" || feedback.phaseId?.toString() === phaseFilter
@@ -209,7 +209,7 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">Tất cả giai đoạn</SelectItem>
-                                    {phases?.sort((a, b) => a.phaseNumber - b.phaseNumber).map((phase) => (
+                                    {[...(phases || [])].sort((a, b) => a.phaseNumber - b.phaseNumber).map((phase) => (
                                         <SelectItem key={phase.id} value={phase.id.toString()}>
                                             {phase.name || `Phase ${phase.phaseNumber}`}
                                         </SelectItem>
