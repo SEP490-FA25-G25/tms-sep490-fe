@@ -10,6 +10,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import {
     Table,
     TableBody,
     TableCell,
@@ -18,52 +25,74 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Plus, Search, Eye, Loader2, AlertTriangle } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Plus, Search, Loader2, AlertTriangle, FileText } from "lucide-react"
+import { Link, useNavigate } from "react-router-dom"
+import { getQAReportTypeDisplayName, qaReportTypeOptions, QAReportStatus } from "@/types/qa"
 
 export default function QAReportsListPage() {
     const [searchParams, setSearchParams] = useSearchParams()
     const [searchTerm, setSearchTerm] = useState("")
+    const [reportTypeFilter, setReportTypeFilter] = useState<string>("all")
+    const [statusFilter, setStatusFilter] = useState<string>("all")
     const [page, setPage] = useState(0)
+    const navigate = useNavigate()
 
     // Initialize state from URL parameters
     useEffect(() => {
         const search = searchParams.get('search') || ''
+        const reportType = searchParams.get('reportType') || 'all'
+        const status = searchParams.get('status') || 'all'
         const pageNum = parseInt(searchParams.get('page') || '0')
 
         setSearchTerm(search)
+        setReportTypeFilter(reportType)
+        setStatusFilter(status)
         setPage(pageNum)
     }, [searchParams])
+
+    // Update URL parameters helper
+    const updateUrlParams = (updates: Record<string, string | null>) => {
+        const newParams = new URLSearchParams(searchParams.toString())
+        Object.entries(updates).forEach(([key, value]) => {
+            if (value === null || value === '' || value === 'all') {
+                newParams.delete(key)
+            } else {
+                newParams.set(key, value)
+            }
+        })
+        setSearchParams(newParams)
+    }
 
     // Reset page to 0 when search term changes
     const handleSearchChange = (value: string) => {
         setSearchTerm(value)
         setPage(0)
+        updateUrlParams({ search: value || null, page: '0' })
+    }
 
-        // Update URL parameters
-        const newParams = new URLSearchParams(searchParams.toString())
-        if (value.trim()) {
-            newParams.set('search', value)
-            newParams.set('page', '0')
-        } else {
-            newParams.delete('search')
-            newParams.set('page', '0')
-        }
-        setSearchParams(newParams)
+    // Handle filter changes
+    const handleReportTypeChange = (value: string) => {
+        setReportTypeFilter(value)
+        setPage(0)
+        updateUrlParams({ reportType: value === 'all' ? null : value, page: '0' })
+    }
+
+    const handleStatusChange = (value: string) => {
+        setStatusFilter(value)
+        setPage(0)
+        updateUrlParams({ status: value === 'all' ? null : value, page: '0' })
     }
 
     // Handle page change
     const handlePageChange = (newPage: number) => {
         setPage(newPage)
-
-        // Update URL parameters
-        const newParams = new URLSearchParams(searchParams.toString())
-        newParams.set('page', newPage.toString())
-        setSearchParams(newParams)
+        updateUrlParams({ page: newPage.toString() })
     }
 
     const { data: reportsData, isLoading, error } = useGetQAReportsQuery({
-        search: searchTerm,
+        search: searchTerm || undefined,
+        reportType: reportTypeFilter === 'all' ? undefined : reportTypeFilter,
+        status: statusFilter === 'all' ? undefined : statusFilter,
         page,
         size: 20,
         sort: 'createdAt',
@@ -73,6 +102,36 @@ export default function QAReportsListPage() {
     const reports = reportsData?.data || []
     const totalCount = reportsData?.total || 0
     const totalPages = Math.ceil(totalCount / 20)
+
+    // Helper function for report level badge - consistent with QAReportsListTab
+    const getReportLevelBadge = (report: QAReportListItemDTO) => {
+        if (report.sessionId) {
+            return <Badge variant="outline" className="text-xs">Buổi học</Badge>
+        } else if (report.phaseId) {
+            return <Badge variant="outline" className="text-xs">Giai đoạn</Badge>
+        } else {
+            return <Badge variant="secondary" className="text-xs">Lớp học</Badge>
+        }
+    }
+
+    // Helper function for scope info display
+    const getScopeInfo = (report: QAReportListItemDTO) => {
+        if (report.sessionDate) {
+            return (
+                <p className="text-xs text-muted-foreground">
+                    {new Date(report.sessionDate).toLocaleDateString('vi-VN')}
+                </p>
+            )
+        }
+        if (report.phaseName) {
+            return (
+                <p className="text-xs text-muted-foreground">
+                    {report.phaseName}
+                </p>
+            )
+        }
+        return null
+    }
 
     if (isLoading) {
         return (
@@ -110,11 +169,11 @@ export default function QAReportsListPage() {
         >
             <div className="space-y-6">
                 {/* Header Actions */}
-                <div className="flex items-center justify-between">
-                    <div className="relative flex-1 max-w-md">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="relative flex-1 max-w-md w-full">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Tìm báo cáo QA..."
+                            placeholder="Tìm theo mã lớp, người báo cáo, nội dung..."
                             value={searchTerm}
                             onChange={(e) => handleSearchChange(e.target.value)}
                             className="pl-8"
@@ -128,65 +187,102 @@ export default function QAReportsListPage() {
                     </Button>
                 </div>
 
+                {/* Filters */}
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex flex-wrap items-center gap-4">
+                        <Select value={reportTypeFilter} onValueChange={handleReportTypeChange}>
+                            <SelectTrigger className="w-[220px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Tất cả loại báo cáo</SelectItem>
+                                {qaReportTypeOptions.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
+                        <Select value={statusFilter} onValueChange={handleStatusChange}>
+                            <SelectTrigger className="w-[150px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                                <SelectItem value={QAReportStatus.DRAFT}>Bản nháp</SelectItem>
+                                <SelectItem value={QAReportStatus.SUBMITTED}>Đã nộp</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="text-sm text-muted-foreground">
+                        Hiển thị {reports.length} / {totalCount} báo cáo
+                    </div>
+                </div>
+
                 {/* Reports Table */}
                 <div className="rounded-lg border overflow-hidden bg-card">
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted/50">
-                                <TableHead>Loại Báo Cáo</TableHead>
-                                <TableHead>Lớp</TableHead>
-                                <TableHead>Buổi Học</TableHead>
-                                <TableHead>Người Báo Cáo</TableHead>
-                                <TableHead>Trạng Thái</TableHead>
-                                <TableHead>Ngày Tạo</TableHead>
-                                <TableHead className="text-right">Hành Động</TableHead>
+                                <TableHead className="font-semibold">Loại Báo Cáo</TableHead>
+                                <TableHead className="font-semibold">Lớp</TableHead>
+                                <TableHead className="font-semibold">Phạm vi</TableHead>
+                                <TableHead className="font-semibold">Người Báo Cáo</TableHead>
+                                <TableHead className="font-semibold">Trạng Thái</TableHead>
+                                <TableHead className="font-semibold">Ngày Tạo</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {reports.length > 0 ? (
                                 reports.map((report: QAReportListItemDTO) => (
-                                    <TableRow key={report.id} className="hover:bg-muted/50">
+                                    <TableRow 
+                                        key={report.id} 
+                                        className="cursor-pointer hover:bg-muted/50"
+                                        onClick={() => navigate(`/qa/reports/${report.id}`)}
+                                    >
                                         <TableCell>
-                                            <div>
-                                                <p className="font-medium">{report.reportType}</p>
-                                                <Badge variant="outline" className="text-xs">
-                                                    {report.reportLevel}
-                                                </Badge>
+                                            <div className="space-y-1">
+                                                <p className="font-medium">
+                                                    {getQAReportTypeDisplayName(report.reportType)}
+                                                </p>
                                             </div>
                                         </TableCell>
                                         <TableCell>{report.classCode}</TableCell>
                                         <TableCell>
-                                            {report.sessionDate ? (
-                                                new Date(report.sessionDate).toLocaleDateString('vi-VN')
-                                            ) : report.phaseName ? (
-                                                <span>{report.phaseName}</span>
-                                            ) : (
-                                                <span className="text-muted-foreground">-</span>
-                                            )}
+                                            <div className="space-y-1">
+                                                {getReportLevelBadge(report)}
+                                                {getScopeInfo(report)}
+                                            </div>
                                         </TableCell>
                                         <TableCell>{report.reportedByName}</TableCell>
                                         <TableCell>
                                             <QAReportStatusBadge status={report.status} />
                                         </TableCell>
                                         <TableCell>
-                                            {new Date(report.createdAt).toLocaleDateString('vi-VN')}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex items-center space-x-2 justify-end">
-                                                <Button variant="outline" size="sm" asChild>
-                                                    <Link to={`/qa/reports/${report.id}`}>
-                                                        <Eye className="h-4 w-4 mr-2" />
-                                                        Xem
-                                                    </Link>
-                                                </Button>
-                                            </div>
+                                            {new Date(report.createdAt).toLocaleDateString('vi-VN', {
+                                                day: '2-digit',
+                                                month: '2-digit',
+                                                year: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}
                                         </TableCell>
                                     </TableRow>
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={8} className="h-24 text-center">
-                                        Không tìm thấy báo cáo QA nào.
+                                    <TableCell colSpan={6} className="h-32">
+                                        <div className="flex flex-col items-center justify-center text-center">
+                                            <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                                            <p className="text-muted-foreground">
+                                                {searchTerm || reportTypeFilter !== 'all' || statusFilter !== 'all'
+                                                    ? "Không có báo cáo nào phù hợp với bộ lọc đã chọn."
+                                                    : "Chưa có báo cáo QA nào."
+                                                }
+                                            </p>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -195,27 +291,25 @@ export default function QAReportsListPage() {
                 </div>
 
                 {/* Pagination */}
-                {totalCount > 20 && (
-                    <div className="flex items-center justify-center space-x-2">
-                        <Button
-                            variant="outline"
-                            onClick={() => handlePageChange(page - 1)}
-                            disabled={page === 0}
-                        >
-                            Trang trước
-                        </Button>
-                        <span className="text-sm text-muted-foreground">
-                            Trang {page + 1} / {totalPages}
-                        </span>
-                        <Button
-                            variant="outline"
-                            onClick={() => handlePageChange(page + 1)}
-                            disabled={page >= totalPages - 1 || reports.length === 0}
-                        >
-                            Trang tiếp
-                        </Button>
-                    </div>
-                )}
+                <div className="flex items-center justify-center space-x-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => handlePageChange(page - 1)}
+                        disabled={page === 0}
+                    >
+                        Trang trước
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                        Trang {page + 1} / {Math.max(totalPages, 1)}
+                    </span>
+                    <Button
+                        variant="outline"
+                        onClick={() => handlePageChange(page + 1)}
+                        disabled={page >= totalPages - 1 || reports.length === 0}
+                    >
+                        Trang tiếp
+                    </Button>
+                </div>
             </div>
         </DashboardLayout>
     )

@@ -18,7 +18,7 @@ export function QAReportStatusBadge({ status, className }: QAReportStatusBadgePr
             case "DRAFT":
                 return "bg-slate-100 text-slate-700 hover:bg-slate-100/80 border-slate-200"
             case "SUBMITTED":
-                return "bg-blue-100 text-blue-700 hover:bg-blue-100/80 border-blue-200"
+                return "bg-green-100 text-green-700 hover:bg-green-100/80 border-green-200"
             default:
                 return "bg-gray-100 text-gray-700 hover:bg-gray-100/80 border-gray-200"
         }
