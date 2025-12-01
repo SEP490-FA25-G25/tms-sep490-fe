@@ -210,6 +210,21 @@ export default function StudentProfilePage() {
                               <MapPin className="h-4 w-4" />
                               <span>{profile.branchName}</span>
                             </div>
+                            <div className="flex items-center gap-1.5">
+                              <Facebook className="h-4 w-4" />
+                              {profile.facebookUrl ? (
+                                <a
+                                  className="text-primary hover:underline"
+                                  href={profile.facebookUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  Facebook
+                                </a>
+                              ) : (
+                                <span>Chưa cập nhật</span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -286,15 +301,24 @@ export default function StudentProfilePage() {
                         </div>
                         <p className="text-base text-foreground">{profile.address || 'Chưa cập nhật'}</p>
                       </div>
-                      {profile.facebookUrl && (
-                        <div className="space-y-1 md:col-span-2">
-                          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                            <Facebook className="h-4 w-4" />
-                            <span>Facebook</span>
-                          </div>
-                          <p className="text-base text-foreground">{profile.facebookUrl}</p>
+                      <div className="space-y-1 md:col-span-2">
+                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                          <Facebook className="h-4 w-4" />
+                          <span>Facebook</span>
                         </div>
-                      )}
+                        {profile.facebookUrl ? (
+                          <a
+                            href={profile.facebookUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-base text-primary hover:underline break-all"
+                          >
+                            {profile.facebookUrl}
+                          </a>
+                        ) : (
+                          <p className="text-base text-muted-foreground">Chưa cập nhật</p>
+                        )}
+                      </div>
                     </div>
                   </Card>
 

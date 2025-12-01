@@ -168,49 +168,62 @@ export default function StudentPendingFeedbackPage() {
       </SidebarProvider>
 
       <Dialog open={!!selected} onOpenChange={(open) => (!open ? setSelected(null) : null)}>
-        <DialogContent className="max-w-3xl max-h-[70vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Đánh giá phase</DialogTitle>
             {selected && (
-              <DialogDescription className="space-y-1 text-sm text-muted-foreground">
-                <p>
-                  {selected.classCode} · {selected.className}
-                </p>
-                <p>
-                  {selected.courseName}
-                  {selected.phaseName ? ` · ${selected.phaseName}` : ''}
-                </p>
+              <DialogDescription asChild>
+                <div className="text-sm text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-2 mb-2 pt-2">
+                    <Badge variant="secondary" className="rounded-sm px-2 font-normal">
+                      {selected.classCode}
+                    </Badge>
+                    {selected.phaseName && (
+                      <Badge variant="outline" className="rounded-sm px-2 font-normal">
+                        {selected.phaseName}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="font-medium text-foreground text-base">{selected.courseName}</p>
+                    <p>{selected.className}</p>
+                  </div>
+                </div>
               </DialogDescription>
             )}
           </DialogHeader>
 
-          <div className="space-y-4  pr-1">
-            {ratingQuestions.map((q) => (
-              <Card key={q.id} className="p-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-sm font-semibold leading-tight">{q.questionText}</Label>
-                  </div>
-                  <Badge variant="outline" className="text-xs">
-                    Câu {q.id}
-                  </Badge>
+          <div className="space-y-6 px-1">
+            {ratingQuestions.map((q, index) => (
+              <div key={q.id} className="space-y-3">
+                <div className="flex items-start justify-between gap-4">
+                  <Label className="text-base font-medium leading-relaxed">
+                    <span className="mr-2 text-muted-foreground">{index + 1}.</span>
+                    {q.questionText}
+                  </Label>
                 </div>
                 <StarRatingRow
                   value={ratings[q.id] ?? 0}
                   onChange={(value) => setRatings((prev) => ({ ...prev, [q.id]: value }))}
-                  ariaLabel={`Đánh giá câu ${q.id}`}
+                  ariaLabel={`Đánh giá câu ${index + 1}`}
                 />
-              </Card>
+                {index < ratingQuestions.length - 1 && <Separator className="mt-6" />}
+              </div>
             ))}
 
-            <div className="space-y-2">
-              <Label htmlFor="comment">Nhận xét thêm (không bắt buộc)</Label>
+            <Separator className="my-6" />
+
+            <div className="space-y-3">
+              <Label htmlFor="comment" className="text-base font-medium">
+                Nhận xét thêm (không bắt buộc)
+              </Label>
               <Textarea
                 id="comment"
                 placeholder="Chia sẻ điểm bạn hài lòng hoặc đề xuất cải thiện..."
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                rows={3}
+                rows={4}
+                className="resize-none"
               />
             </div>
           </div>
@@ -241,9 +254,17 @@ function StarRatingRow({ value, onChange, ariaLabel }: StarRatingRowProps) {
   const [hovered, setHovered] = useState<number | null>(null)
   const activeValue = hovered ?? value ?? 0
 
+  const ratingLabels: Record<number, string> = {
+    1: 'Rất tệ',
+    2: 'Tệ',
+    3: 'Bình thường',
+    4: 'Tốt',
+    5: 'Rất tốt',
+  }
+
   return (
-    <div className="mt-3 flex flex-wrap items-center justify-between gap-3" role="group" aria-label={ariaLabel}>
-      <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-2" role="group" aria-label={ariaLabel}>
+      <div className="flex items-center gap-1">
         {[1, 2, 3, 4, 5].map((val) => {
           const isActive = val <= activeValue
           return (
@@ -254,23 +275,25 @@ function StarRatingRow({ value, onChange, ariaLabel }: StarRatingRowProps) {
               onMouseEnter={() => setHovered(val)}
               onMouseLeave={() => setHovered(null)}
               onFocus={() => setHovered(null)}
-              className="flex h-10 w-10 items-center justify-center rounded-md border border-border/70 bg-background transition hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 focus-visible:ring-offset-2"
+              className="group relative p-1 focus-visible:outline-none"
               aria-pressed={value === val}
-              aria-label={`${val} sao`}
+              aria-label={`${val} sao - ${ratingLabels[val]}`}
             >
               <StarIcon
                 className={cn(
-                  'h-5 w-5 transition-all',
+                  'h-8 w-8 transition-all duration-200',
                   isActive
-                    ? 'fill-amber-400 text-amber-500 drop-shadow-[0_1px_2px_rgba(0,0,0,0.12)]'
-                    : 'fill-transparent text-muted-foreground/50'
+                    ? 'fill-amber-400 text-amber-400 drop-shadow-sm'
+                    : 'fill-transparent text-muted-foreground/30 group-hover:text-amber-200'
                 )}
               />
             </button>
           )
         })}
+        <span className="ml-3 text-sm font-medium text-muted-foreground min-w-[100px]">
+          {activeValue ? ratingLabels[activeValue] : 'Chưa đánh giá'}
+        </span>
       </div>
-      <span className="text-xs font-medium text-muted-foreground">{value ? `${value}/5` : 'Chưa chọn'}</span>
     </div>
   )
 }
