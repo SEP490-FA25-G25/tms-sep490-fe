@@ -82,17 +82,17 @@ export const qaApi = createApi({
       providesTags: (_result, _error, sessionId) => [{ type: 'QASession', id: sessionId }],
     }),
 
-    // QA Rereports CRUD
+    // QA Reports CRUD
     getQAReports: builder.query<{ data: QAReportListItemDTO[]; total: number; page: number; size: number }, QAReportFilters>({
       query: ({ classId, sessionId, phaseId, reportType, status, reportedBy, search, page = 0, size = 20, sort = 'createdAt', sortDir = 'desc' }) => ({
         url: '/qa/reports',
         params: { classId, sessionId, phaseId, reportType, status, reportedBy, search, page, size, sort, sortDir },
       }),
-      transformResponse: (response: { data: { content: QAReportListItemDTO[]; totalElements: number; number: number; size: number } }) => ({
+      transformResponse: (response: { data: { content: QAReportListItemDTO[]; page: { totalElements: number; number: number; size: number; totalPages: number } } }) => ({
         data: response.data.content,
-        total: response.data.totalElements,
-        page: response.data.number,
-        size: response.data.size
+        total: response.data.page.totalElements,
+        page: response.data.page.number,
+        size: response.data.page.size
       }),
       providesTags: ['QAReport'],
     }),

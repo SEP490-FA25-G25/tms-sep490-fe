@@ -25,6 +25,15 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+    PaginationEllipsis,
+} from "@/components/ui/pagination"
 import { Plus, Search, Loader2, AlertTriangle, FileText } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { getQAReportTypeDisplayName, qaReportTypeOptions, QAReportStatus } from "@/types/qa"
@@ -291,25 +300,74 @@ export default function QAReportsListPage() {
                 </div>
 
                 {/* Pagination */}
-                <div className="flex items-center justify-center space-x-2">
-                    <Button
-                        variant="outline"
-                        onClick={() => handlePageChange(page - 1)}
-                        disabled={page === 0}
-                    >
-                        Trang trước
-                    </Button>
-                    <span className="text-sm text-muted-foreground">
-                        Trang {page + 1} / {Math.max(totalPages, 1)}
-                    </span>
-                    <Button
-                        variant="outline"
-                        onClick={() => handlePageChange(page + 1)}
-                        disabled={page >= totalPages - 1 || reports.length === 0}
-                    >
-                        Trang tiếp
-                    </Button>
-                </div>
+                <Pagination>
+                    <PaginationContent>
+                        <PaginationItem>
+                            <PaginationPrevious 
+                                onClick={() => page > 0 && handlePageChange(page - 1)}
+                                disabled={page === 0}
+                            />
+                        </PaginationItem>
+
+                        {/* First page - always show at least page 1 */}
+                        <PaginationItem>
+                            <PaginationLink
+                                onClick={() => handlePageChange(0)}
+                                isActive={page === 0}
+                            >
+                                1
+                            </PaginationLink>
+                        </PaginationItem>
+
+                        {/* Ellipsis before current */}
+                        {page > 2 && totalPages > 4 && (
+                            <PaginationItem>
+                                <PaginationEllipsis />
+                            </PaginationItem>
+                        )}
+
+                        {/* Pages around current */}
+                        {Array.from({ length: Math.max(totalPages, 1) }, (_, i) => i)
+                            .filter(i => i !== 0 && i !== Math.max(totalPages, 1) - 1 && Math.abs(i - page) <= 1)
+                            .map(i => (
+                                <PaginationItem key={i}>
+                                    <PaginationLink
+                                        onClick={() => handlePageChange(i)}
+                                        isActive={page === i}
+                                    >
+                                        {i + 1}
+                                    </PaginationLink>
+                                </PaginationItem>
+                            ))
+                        }
+
+                        {/* Ellipsis after current */}
+                        {page < totalPages - 3 && totalPages > 4 && (
+                            <PaginationItem>
+                                <PaginationEllipsis />
+                            </PaginationItem>
+                        )}
+
+                        {/* Last page */}
+                        {totalPages > 1 && (
+                            <PaginationItem>
+                                <PaginationLink
+                                    onClick={() => handlePageChange(totalPages - 1)}
+                                    isActive={page === totalPages - 1}
+                                >
+                                    {totalPages}
+                                </PaginationLink>
+                            </PaginationItem>
+                        )}
+
+                        <PaginationItem>
+                            <PaginationNext 
+                                onClick={() => page < totalPages - 1 && handlePageChange(page + 1)}
+                                disabled={page >= totalPages - 1 || totalPages <= 1}
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
             </div>
         </DashboardLayout>
     )
