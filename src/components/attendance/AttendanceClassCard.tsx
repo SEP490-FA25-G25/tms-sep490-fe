@@ -16,6 +16,7 @@ interface AttendanceClassCardProps {
   totalSessions: number;
   attended: number;
   absent: number;
+  excused?: number;
   upcoming: number;
   status: string;
   onClick: () => void;
@@ -43,42 +44,118 @@ function formatDate(dateString?: string | null) {
   return format(date, "dd/MM/yyyy");
 }
 
-function AttendanceProgressRing({ attended, absent }: { attended: number; absent: number }) {
+interface ProgressRingProps {
+  attended: number;
+  absent: number;
+  excused?: number;
+  size?: number;
+}
+
+function AttendanceProgressRing({ attended, absent, excused = 0, size = 64 }: ProgressRingProps) {
+  // Tỷ lệ chuyên cần = có mặt / (có mặt + vắng không phép)
+  // EXCUSED không tính vào mẫu số vì đã xin phép
   const total = attended + absent;
+  const totalWithExcused = attended + absent + excused;
   const percentage = total > 0 ? Math.round((attended / total) * 100) : 0;
-  const radius = 20;
+  const hasOnlyExcused = total === 0 && excused > 0;
+  
+  // Proportional calculations
+  const strokeWidth = size * 0.1; // 10% of size
+  const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  const center = size / 2;
+
+  // Determine color based on percentage
+  const getProgressColor = () => {
+    if (percentage >= 80) return "text-emerald-500";
+    if (percentage >= 50) return "text-amber-500";
+    return "text-rose-500";
+  };
+
+  // Trường hợp đặc biệt: chỉ có buổi vắng có phép
+  if (hasOnlyExcused) {
+    return (
+      <div 
+        className="relative shrink-0 flex items-center justify-center" 
+        style={{ width: size, height: size }}
+        role="img"
+        aria-label={`Chỉ có ${excused} buổi vắng có phép`}
+      >
+        <svg 
+          className="transform -rotate-90" 
+          width={size} 
+          height={size}
+          viewBox={`0 0 ${size} ${size}`}
+        >
+          <circle
+            className="text-muted/30"
+            strokeWidth={strokeWidth}
+            stroke="currentColor"
+            fill="transparent"
+            r={radius}
+            cx={center}
+            cy={center}
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-xs font-medium text-muted-foreground">Có phép</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="relative flex items-center justify-center">
-      <svg className="transform -rotate-90 w-14 h-14">
-        {/* Background Circle (Absent Color - Red) */}
+    <div 
+      className="relative shrink-0" 
+      style={{ width: size, height: size }}
+      role="progressbar"
+      aria-valuenow={percentage}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={`Tỉ lệ có mặt: ${percentage}% (${attended}/${totalWithExcused} buổi)`}
+    >
+      <svg 
+        className="transform -rotate-90" 
+        width={size} 
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+      >
+        {/* Track (background circle) */}
         <circle
-          className="text-rose-500"
-          strokeWidth="5"
+          className="text-muted/30"
+          strokeWidth={strokeWidth}
           stroke="currentColor"
           fill="transparent"
           r={radius}
-          cx="28"
-          cy="28"
+          cx={center}
+          cy={center}
         />
-        {/* Foreground Circle (Present Color - Green) */}
+        {/* Progress indicator */}
         <circle
-          className="text-emerald-500 transition-all duration-1000 ease-out"
-          strokeWidth="5"
+          className={cn(
+            getProgressColor(),
+            "transition-all duration-700 ease-out"
+          )}
+          strokeWidth={strokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
           stroke="currentColor"
           fill="transparent"
           r={radius}
-          cx="28"
-          cy="28"
+          cx={center}
+          cy={center}
+          style={{
+            // Animation on mount
+            animation: "progress-ring 1s ease-out forwards",
+          }}
         />
       </svg>
-      <div className="absolute flex flex-col items-center justify-center">
-        <span className="text-xs font-bold text-foreground">{percentage}%</span>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-sm font-bold text-foreground tabular-nums">
+          {percentage}%
+        </span>
       </div>
     </div>
   );
@@ -93,6 +170,7 @@ export function AttendanceClassCard({
   totalSessions,
   attended,
   absent,
+  excused = 0,
   upcoming,
   status,
   onClick,
@@ -154,43 +232,57 @@ export function AttendanceClassCard({
       </div>
 
       {/* Stats Row */}
-      <div className="flex items-center gap-4">
-        <AttendanceProgressRing attended={attended} absent={absent} />
+      <div className="flex items-center gap-5">
+        <AttendanceProgressRing attended={attended} absent={absent} excused={excused} size={64} />
 
-        <div className="flex flex-col gap-1.5 text-xs text-muted-foreground flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <span>Tổng số buổi</span>
-            <span className="font-medium text-foreground">
+        <div className="flex-1 space-y-2 text-sm">
+          {/* Total sessions */}
+          <div className="flex items-center justify-between pb-2 border-b border-border/50">
+            <span className="text-muted-foreground">Tổng số buổi</span>
+            <span className="font-semibold text-foreground tabular-nums">
               {totalSessions}
             </span>
           </div>
-          <div className="h-px bg-border/50 w-full my-0.5" />
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              <span>Có mặt</span>
+          
+          {/* Stats grid */}
+          <div className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+              <span className="text-muted-foreground">Có mặt</span>
             </div>
-            <span className="font-medium text-emerald-700">{attended}</span>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-              <span>Vắng</span>
+            <span className="font-medium text-emerald-600 dark:text-emerald-400 tabular-nums text-right">
+              {attended}
+            </span>
+
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+              <span className="text-muted-foreground">Vắng</span>
             </div>
-            <span className="font-medium text-rose-700">{absent}</span>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
-              <span>Sắp tới</span>
+            <span className="font-medium text-rose-600 dark:text-rose-400 tabular-nums text-right">
+              {absent}
+            </span>
+
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
+              <span className="text-muted-foreground">Có phép</span>
             </div>
-            <span className="font-medium text-sky-700">{upcoming}</span>
+            <span className="font-medium text-indigo-600 dark:text-indigo-400 tabular-nums text-right">
+              {excused}
+            </span>
+
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-sky-500 shrink-0" />
+              <span className="text-muted-foreground">Sắp tới</span>
+            </div>
+            <span className="font-medium text-sky-600 dark:text-sky-400 tabular-nums text-right">
+              {upcoming}
+            </span>
           </div>
         </div>
       </div>
 
       {/* Heatmap */}
-      <div className="mt-auto pt-4 border-t border-border/50">
+      <div className="mt-auto pt-3">
         {isLoadingReport ? (
           <div className="space-y-2">
             <Skeleton className="h-4 w-full" />

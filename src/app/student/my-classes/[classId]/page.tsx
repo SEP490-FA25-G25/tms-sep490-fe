@@ -187,12 +187,7 @@ const ClassDetailPage = () => {
     }
 
     return (
-      <ClassHeader
-        classDetail={classDetail}
-        attendanceRate={sessionStats?.attendanceRate}
-        sessionStats={sessionStats}
-        nextSession={classDetail.nextSession}
-      />
+      <ClassHeader classDetail={classDetail} />
     );
   };
 

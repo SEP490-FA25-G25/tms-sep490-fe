@@ -304,21 +304,31 @@ export default function StudentClassAttendanceReportPage() {
                                     {session.teacherName || "Chưa cập nhật"}
                                   </td>
                                   <td className="border-r border-border/40 px-3 py-2 text-center">
-                                    {statusMeta ? (
-                                      <Badge
-                                        variant="outline"
-                                        className={cn(
-                                          "px-2 py-0.5 text-[11px] font-medium",
-                                          statusMeta.className
-                                        )}
-                                      >
-                                        {statusMeta.label}
-                                      </Badge>
-                                    ) : (
-                                      <span className="text-xs text-muted-foreground">
-                                        Chưa có dữ liệu
-                                      </span>
-                                    )}
+                                    <div className="flex items-center justify-center gap-1.5">
+                                      {statusMeta ? (
+                                        <Badge
+                                          variant="outline"
+                                          className={cn(
+                                            "px-2 py-0.5 text-[11px] font-medium",
+                                            statusMeta.className
+                                          )}
+                                        >
+                                          {statusMeta.label}
+                                        </Badge>
+                                      ) : (
+                                        <span className="text-xs text-muted-foreground">
+                                          Chưa có dữ liệu
+                                        </span>
+                                      )}
+                                      {session.isMakeup && (
+                                        <Badge
+                                          variant="secondary"
+                                          className="px-1.5 py-0 text-[10px] bg-purple-50 text-purple-700 border-purple-200"
+                                        >
+                                          Học bù
+                                        </Badge>
+                                      )}
+                                    </div>
                                   </td>
                                   <td className="border-r border-border/40 px-3 py-2 text-sm text-center text-muted-foreground">
                                     {session.note?.trim() || "Không có ghi chú"}

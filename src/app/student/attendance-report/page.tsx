@@ -188,6 +188,7 @@ export default function StudentAttendanceReportOverviewPage() {
                               totalSessions={item.totalSessions}
                               attended={item.attended}
                               absent={item.absent}
+                              excused={item.excused}
                               upcoming={item.upcoming}
                               status={item.status}
                               onClick={() =>

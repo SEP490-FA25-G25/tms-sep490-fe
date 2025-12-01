@@ -9,6 +9,12 @@ import {
 } from "date-fns";
 import { vi } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface AttendanceSession {
   sessionId: number;
@@ -18,6 +24,7 @@ interface AttendanceSession {
   endTime?: string;
   teacherName?: string;
   topic?: string;
+  isMakeup?: boolean;
 }
 
 interface AttendanceCalendarHeatmapProps {
@@ -149,93 +156,132 @@ export function AttendanceCalendarHeatmap({
   }
 
   return (
-    <div className="flex flex-col gap-2 w-full overflow-hidden">
-      <div className="flex flex-col w-full overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
-        <div className="min-w-max">
-          {/* Month Labels */}
-          <div className="flex gap-1 ml-8 mb-1 h-4">
-            {calendarData.weeks.map((week, i) => {
-              let showLabel = false;
-              let labelDate = week.startDate;
+    <TooltipProvider delayDuration={100}>
+      <div className="flex flex-col gap-2 w-full">
+        {/* Centered container with horizontal scroll if needed */}
+        <div className="flex justify-center overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-muted/50 scrollbar-track-transparent">
+          <div className="inline-flex flex-col">
+            {/* Month Labels */}
+            <div className="flex gap-[3px] ml-7 mb-1 h-4">
+              {calendarData.weeks.map((week, i) => {
+                let showLabel = false;
+                let labelDate = week.startDate;
 
-              if (i === 0) {
-                showLabel = true;
-              } else {
-                const firstOfMonth = week.days.find((d) => d.date.getDate() === 1);
-                if (firstOfMonth) {
+                if (i === 0) {
                   showLabel = true;
-                  labelDate = firstOfMonth.date;
+                } else {
+                  const firstOfMonth = week.days.find((d) => d.date.getDate() === 1);
+                  if (firstOfMonth) {
+                    showLabel = true;
+                    labelDate = firstOfMonth.date;
+                  }
                 }
-              }
 
-              const monthLabel = format(labelDate, "MMM", { locale: vi });
+                const monthLabel = format(labelDate, "MMM", { locale: vi });
 
-              return (
-                <div
-                  key={i}
-                  className="w-3 text-[10px] text-muted-foreground overflow-visible whitespace-nowrap relative"
-                >
-                  {showLabel && (
-                    <span className="absolute top-0 left-0 capitalize">
-                      {monthLabel}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="flex gap-2">
-            {/* Day Labels (Mon, Wed, Fri) */}
-            <div className="flex flex-col gap-1 pt-px">
-              {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((day, i) => (
-                <div
-                  key={day}
-                  className="h-3 text-[10px] leading-3 text-muted-foreground w-6 text-right pr-1"
-                >
-                  {i % 2 === 0 ? day : ""}
-                </div>
-              ))}
+                return (
+                  <div
+                    key={i}
+                    className="w-3.5 text-[10px] text-muted-foreground overflow-visible whitespace-nowrap relative"
+                  >
+                    {showLabel && (
+                      <span className="absolute top-0 left-0 capitalize font-medium">
+                        {monthLabel}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Heatmap Grid */}
-            <div className="flex gap-1">
-              {calendarData.weeks.map((week, weekIndex) => (
-                <div key={weekIndex} className="flex flex-col gap-1">
-                  {week.days.map((day, dayIndex) => {
-                    const session = day.session;
-                    const status: CellStatus = session
-                      ? session.attendanceStatus === "PLANNED" ||
-                        !session.attendanceStatus
-                        ? "PLANNED"
-                        : session.attendanceStatus
-                      : "EMPTY";
+            <div className="flex gap-1.5">
+              {/* Day Labels - Show all days for clarity */}
+              <div className="flex flex-col gap-[3px] pt-px shrink-0">
+                {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((day) => (
+                  <div
+                    key={day}
+                    className="h-3.5 text-[10px] leading-[14px] text-muted-foreground w-5 text-right pr-0.5"
+                  >
+                    {day}
+                  </div>
+                ))}
+              </div>
 
-                    const colorClass = getStatusColor(status);
+              {/* Heatmap Grid */}
+              <div className="flex gap-[3px]">
+                {calendarData.weeks.map((week, weekIndex) => (
+                  <div key={weekIndex} className="flex flex-col gap-[3px]">
+                    {week.days.map((day, dayIndex) => {
+                      const session = day.session;
+                      const status: CellStatus = session
+                        ? session.attendanceStatus === "PLANNED" ||
+                          !session.attendanceStatus
+                          ? "PLANNED"
+                          : session.attendanceStatus
+                        : "EMPTY";
 
-                    return (
-                      <div
-                        key={dayIndex}
-                        className={cn(
-                          "h-3 w-3 rounded-[2px] border transition-all",
-                          colorClass,
-                          session && "cursor-pointer hover:ring-2 hover:ring-ring hover:ring-offset-1 hover:z-10"
-                        )}
-                        title={
-                          `${format(day.date, "dd/MM/yyyy", { locale: vi })}: ${getStatusLabel(status)}` +
-                          (session?.teacherName ? `\nGV: ${session.teacherName}` : "") +
-                          (session?.topic ? `\nBài: ${session.topic}` : "")
-                        }
-                      />
-                    );
-                  })}
-                </div>
-              ))}
+                      const colorClass = getStatusColor(status);
+                      const hasSession = !!session;
+                      const isMakeup = session?.isMakeup ?? false;
+
+                      return (
+                        <Tooltip key={dayIndex}>
+                          <TooltipTrigger asChild>
+                            <div
+                              className={cn(
+                                "h-3.5 w-3.5 rounded-sm border transition-all relative",
+                                colorClass,
+                                hasSession && "cursor-pointer hover:ring-2 hover:ring-ring/50 hover:ring-offset-1 hover:z-10"
+                              )}
+                            >
+                              {/* Makeup indicator: small purple dot */}
+                              {isMakeup && (
+                                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-purple-500 rounded-full border border-background" />
+                              )}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent 
+                            side="top" 
+                            className="text-xs"
+                            sideOffset={4}
+                          >
+                            <div className="space-y-0.5">
+                              <p className="font-medium">
+                                {format(day.date, "EEEE, dd/MM/yyyy", { locale: vi })}
+                              </p>
+                              <p className={cn(
+                                "text-muted-foreground",
+                                status === "PRESENT" && "text-emerald-600 dark:text-emerald-400",
+                                status === "ABSENT" && "text-rose-600 dark:text-rose-400",
+                                (status === "LATE" || status === "EXCUSED") && "text-amber-600 dark:text-amber-400",
+                                status === "PLANNED" && "text-sky-600 dark:text-sky-400"
+                              )}>
+                                {getStatusLabel(status)}
+                                {isMakeup && " (Học bù)"}
+                              </p>
+                              {session?.teacherName && (
+                                <p className="text-muted-foreground">
+                                  GV: {session.teacherName}
+                                </p>
+                              )}
+                              {session?.topic && (
+                                <p className="text-muted-foreground truncate max-w-[200px]">
+                                  Bài: {session.topic}
+                                </p>
+                              )}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
 
