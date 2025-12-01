@@ -1,6 +1,7 @@
-
-import { LoginForm } from "@/components/login-form"
+﻿import { LoginForm } from "@/components/login-form"
 import { useNavigate } from "react-router-dom"
+
+const loginBanner = new URL("../../assets/Gemini_Generated_Image_xi4umcxi4umcxi4u.png", import.meta.url).href
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -20,10 +21,15 @@ export default function LoginPage() {
           >
             <img
               src="/logo.jpg"
-              alt="Anh ngữ Pinnacle Logo"
-              className="h-8 w-auto"
+              alt="Anh ngu Pinnacle Logo"
+              className="h-10 w-10 rounded-full object-cover"
             />
-           Anh ngữ Pinnacle
+            <span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 1.05 }}>
+              <span style={{ fontWeight: 700, color: "#2e5a34", fontSize: "1rem" }}>PINNACLE</span>
+              <span style={{ fontWeight: 500, color: "#5c6a7c", fontSize: "0.8rem", marginTop: "2px" }}>
+                English Center
+              </span>
+            </span>
           </button>
         </div>
         <div className="flex flex-1 items-center justify-center">
@@ -34,9 +40,9 @@ export default function LoginPage() {
       </div>
       <div className="bg-muted relative hidden lg:block">
         <img
-          src="/loginbackground.jpg"
-          alt="Đăng nhập hệ thống"
           className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+          src={loginBanner}
+          alt="Pinnacle banner"
         />
       </div>
     </div>

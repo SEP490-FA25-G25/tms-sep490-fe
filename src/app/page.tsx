@@ -1,239 +1,266 @@
-import { Link } from 'react-router-dom';
-import './landing.css';
-
-// Icons (using Lucide React as it's already in the project)
+import { Link } from "react-router-dom"
+import "./landing.css"
 import {
-  ArrowRight,
-  CheckCircle2,
-  Users2,
+
   CalendarDays,
   Layers3,
-  Star
-} from 'lucide-react';
+  Sparkles,
+  Users2,
+  MessageCircle,
+  BookOpen,
+  Cog
+} from "lucide-react"
+import { FeedbackLoop } from "@/components/FeedbackLoop"
+import { FeatureCarousel } from "@/components/FeatureCarousel"
+import { LearningModes } from '@/components/LearningModes';
+import { FeaturedCourses } from '@/components/FeaturedCourses';
 
-const mockCourses = [
+const topBanner = new URL("../assets/Linhvat2.png", import.meta.url).href
+const consultLogo = new URL("../assets/logo.png", import.meta.url).href
+
+
+
+const featureCards = [
+  {
+    icon: <Sparkles size={24} />,
+    title: "Tiết học vui và sinh động",
+    desc: "Trò chơi, role-play và tình huống thực tế cho trẻ em, sinh viên, người đi làm."
+  },
+  {
+    icon: <Layers3 size={24} />,
+    title: "Lộ trình rõ ràng",
+    desc: "Mục tiêu theo tuần/tháng, báo cáo tiến độ định kỳ cho phụ huynh hoặc học viên trưởng thành."
+  },
+  {
+    icon: <CalendarDays size={24} />,
+    title: "Lịch học linh hoạt",
+    desc: "Ca học sáng - chiều - tối, lớp online hoặc tại trung tâm, phù hợp lịch bận rộn."
+  },
+  {
+    icon: <Users2 size={24} />,
+    title: "Nhóm nhỏ 1:6",
+    desc: "Tương tác nhiều, giáo viên kèm sát để sửa phát âm kịp thời."
+  }
+]
+
+const feedbacks = [
   {
     id: 1,
-    code: 'IELTS-F-2024',
-    name: 'IELTS Foundation',
-    description: 'Khóa học chuyên sâu tập trung vào 4 kỹ năng, cam kết đầu ra 5.0+. Phù hợp cho người mới bắt đầu.',
-    total_hours: 96,
-    duration_weeks: 12,
-    session_per_week: 3,
-    level: 'Beginner',
-    image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=600&q=80",
+    name: "Cẩm Em",
+    role: "Nhân viên văn phòng",
+    quote:
+      "Giờ học ngắn gọn, cuối buổi luôn có mini-quiz nên mình nhớ bài lâu và tự tin giao tiếp với khách nước ngoài hơn.",
+    image: "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=400&q=80"
   },
   {
     id: 2,
-    code: 'TOEIC-I-2024',
-    name: 'TOEIC Intensive',
-    description: 'Luyện thi TOEIC cấp tốc, tập trung giải đề và chiến thuật làm bài. Mục tiêu 700+.',
-    total_hours: 72,
-    duration_weeks: 9,
-    session_per_week: 4,
-    level: 'Intermediate',
-    image: "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=600&q=80",
+    name: "Phạm Thị Hạnh",
+    role: "Sinh viên năm nhất",
+    quote:
+      "Lớp nhỏ 1:6 nên được sửa phát âm từng câu. Bạn bè thân thiện, hoạt động nhóm vui và đỡ ngại nói hơn.",
+    image: "https://images.unsplash.com/photo-1509099836639-18ba02e2e1ba?auto=format&fit=crop&w=400&q=80"
   },
   {
     id: 3,
-    code: 'IELTS-M-2024',
-    name: 'IELTS Master',
-    description: 'Chinh phục band điểm 7.5+ với giáo trình nâng cao và chấm chữa chi tiết từ chuyên gia.',
-    total_hours: 120,
-    duration_weeks: 15,
-    session_per_week: 4,
-    level: 'Advanced',
-    image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80",
+    name: "Ngân Hà",
+    role: "Sinh viên khoa tiếng Nhật",
+    quote: "Mock test tăng 20 điểm sau 2 tháng nhờ lộ trình rõ ràng và bài tập sát đề.",
+    image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80",
+    highlight: true
   },
-];
+  {
+    id: 4,
+    name: "Trương Hồ Phương Thảo",
+    role: "Phụ huynh học sinh lớp 8",
+    quote: "Con hào hứng tham gia CLB nói tiếng Anh hàng tuần, về nhà chủ động kể lại câu chuyện bằng tiếng Anh.",
+    image: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    id: 5,
+    name: "Minh Khang",
+    role: "Học sinh lớp 5",
+    quote: "Role-play và sticker giúp con nói nhiều hơn, không còn sợ sai như trước.",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80"
+  },
+  {
+    id: 6,
+    name: "Nguyễn Văn An",
+    role: "Kỹ sư phần mềm",
+    quote: "Môi trường học chuyên nghiệp, giáo viên bản ngữ nhiệt tình. Kỹ năng giao tiếp nâng rõ rệt sau 3 tháng.",
+    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80"
+  }
+]
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground landing-container">
-      {/* Header */}
       <header className="lp-header">
         <div className="lp-container lp-flex lp-justify-between lp-items-center">
           <Link to="/" className="lp-logo">
             <img
               src="/logo.jpg"
               alt="Anh ngữ Pinnacle"
-              style={{ height: '2rem', width: 'auto' }}
+              style={{ height: "2.5rem", width: "2.5rem", borderRadius: "50%", objectFit: "cover" }}
             />
-            <span>Anh ngữ Pinnacle</span>
+            <span className="lp-logo-stack">
+              <span className="lp-logo-text-primary">PINNACLE</span>
+              <span className="lp-logo-text-secondary">English Center</span>
+            </span>
           </Link>
 
           <nav className="lp-header-nav">
-            <a href="#courses">Chương trình</a>
-            <a href="#features">Ưu điểm</a>
+            <a href="#courses">Khóa học</a>
+            <a href="#feedback">Góc chia sẻ</a>
             <a href="#consultation">Tư vấn</a>
           </nav>
 
-          <div className="lp-flex lp-items-center" style={{ gap: '1rem' }}>
-            <Link to="/login" className="lp-btn lp-btn-ghost">Đăng nhập</Link>
-            <a href="#consultation" className="lp-btn lp-btn-primary">
-              Đăng ký ngay <ArrowRight size={18} style={{ marginLeft: '0.5rem' }} />
+          <div className="lp-flex lp-items-center" style={{ gap: "1rem" }}>
+            <Link to="/login" className="lp-btn lp-btn-primary lp-btn-regular">Đăng nhập</Link>
+            <a href="#consultation" className="lp-btn lp-btn-primary lp-btn-regular">
+              Đăng ký ngay
             </a>
           </div>
         </div>
       </header>
 
       <main>
-        {/* Hero Section */}
-        <section className="lp-hero">
-          <div className="lp-container lp-hero-content">
-            <div className="lp-hero-text">
-              <span className="lp-section-tag">Đào tạo chuẩn quốc tế</span>
-              <h1 className="lp-h1">Bứt phá giới hạn, chinh phục tương lai</h1>
-              <p className="lp-subtitle">
-                Hệ thống quản lý đào tạo và học tập toàn diện. Lộ trình cá nhân hóa giúp bạn đạt được mục tiêu nhanh chóng và hiệu quả.
+        <section className="lp-top-banner" aria-label="Hình ảnh nổi bật">
+          <div className="lp-top-banner-card">
+            <div className="lp-top-banner-text">
+              <p className="lp-banner-kicker">Tiếng Anh cho mọi lứa tuổi</p>
+              <h1 className="lp-banner-title">DẠY TỪ TÂM, HỌC TỪ THÍCH, GIỎI TOÀN DIỆN!</h1>
+              <p className="lp-banner-subtitle">
+                Luôn thành tâm xem xét, quan tâm đến cảm nhận và sự tiến bộ từng ngày của học viên. Đề xuất những phương pháp tân tiến, khoa học và phù hợp nhất.
               </p>
+              <a href="#courses" className="lp-btn lp-btn-primary lp-btn-banner">Xem khóa học</a>
+            </div>
+            <div className="lp-top-banner-image">
+              <img src={topBanner} alt="Hai linh vật Pinnacle" className="lp-top-banner-image-combined" />
+            </div>
+          </div>
+        </section>
 
-              <div className="lp-flex" style={{ gap: '1rem', flexWrap: 'wrap' }}>
-                <a href="#consultation" className="lp-btn lp-btn-primary lp-btn-lg">
-                  Tư vấn lộ trình
-                </a>
-                <a href="#courses" className="lp-btn lp-btn-outline lp-btn-lg">
-                  Xem khóa học
-                </a>
+        <section className="lp-banner-info">
+          <div className="lp-banner-info-grid">
+            <div className="lp-banner-info-item">
+              <div className="lp-banner-info-icon">
+                <MessageCircle size={20} />
               </div>
-
-              <div className="lp-hero-stats">
-                <div className="lp-stat-card">
-                  <span className="lp-stat-value">12k+</span>
-                  <span className="lp-stat-label">Học viên</span>
-                </div>
-                <div className="lp-stat-card">
-                  <span className="lp-stat-value">98%</span>
-                  <span className="lp-stat-label">Hài lòng</span>
-                </div>
-                <div className="lp-stat-card">
-                  <span className="lp-stat-value">50+</span>
-                  <span className="lp-stat-label">Đối tác</span>
-                </div>
+              <div>
+                <div className="lp-banner-info-title">Giao tiếp</div>
+                <div className="lp-banner-info-desc">Lộ trình khóa học giao tiếp được thiết kế bài bản với đội ngũ giáo viên uy tín.</div>
               </div>
             </div>
-
-            <div className="lp-hero-image-wrapper">
-              <img
-                src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80"
-                alt="Students learning"
-                className="lp-hero-image"
-              />
-              <div className="lp-floating-badge">
-                <div className="lp-flex lp-items-center" style={{ gap: '0.5rem', marginBottom: '0.25rem' }}>
-                  <Star fill="#D4E157" color="#D4E157" size={20} />
-                  <span style={{ fontWeight: 700 }}>4.9/5.0</span>
-                </div>
-                <span className="text-sm" style={{ color: 'var(--lp-text-light)' }}>Đánh giá từ học viên</span>
+            <div className="lp-banner-info-item">
+              <div className="lp-banner-info-icon">
+                <BookOpen size={20} />
+              </div>
+              <div>
+                <div className="lp-banner-info-title">Luyện tập</div>
+                <div className="lp-banner-info-desc">Hệ thống cung cấp tài liệu và video trực tuyến mỗi buổi học.</div>
+              </div>
+            </div>
+            <div className="lp-banner-info-item">
+              <div className="lp-banner-info-icon">
+                <Cog size={20} />
+              </div>
+              <div>
+                <div className="lp-banner-info-title">Kỹ năng</div>
+                <div className="lp-banner-info-desc">Bốn kỹ năng Nghe, Nói, Đọc, Viết được sắp xếp theo từng buổi học.</div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Features Section */}
-        <section id="features" className="lp-section" style={{ backgroundColor: 'var(--lp-white)' }}>
-          <div className="lp-container">
-            <div className="lp-section-header">
-              <span className="lp-section-tag">Tại sao chọn chúng tôi</span>
-              <h2 className="lp-h2">Giải pháp giáo dục toàn diện</h2>
-              <p className="lp-subtitle">Chúng tôi cung cấp môi trường học tập hiện đại với công nghệ tiên tiến nhất.</p>
+        <section className="py-20 bg-white relative mb-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+              {/* Left Column: Image */}
+              <div className="relative z-10">
+                <img
+                  src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=800&q=80"
+                  alt="Lớp học Pinnacle"
+                  className="rounded-lg shadow-xl w-full h-[400px] object-cover"
+                />
+              </div>
+
+              {/* Right Column: Text */}
+              <div className="pt-4">
+                <h2 className="text-3xl md:text-4xl font-bold mb-6 text-slate-900 uppercase leading-tight">
+                  Lý do hàng ngàn học viên <br /> tìm đến Pinnacle
+                </h2>
+                <p className="text-lg text-slate-600 leading-relaxed mb-8">
+                  Với phương châm "Không có học sinh kém, chỉ có giáo viên chưa đủ giỏi", đội ngũ giáo viên tại
+                  <span className="font-bold text-green-700"> Pinnacle </span>
+                  luôn nỗ lực không ngừng nghỉ nâng cao, cải thiện và tinh giản giáo trình học sao cho phù hợp với người Việt Nam nhất,
+                  biến Tiếng Anh trở nên thú vị, dễ hiểu với mọi đối tượng, nhất là đối với người bận rộn!
+                </p>
+              </div>
             </div>
 
-            <div className="lp-features-grid">
-              <div className="lp-feature-card">
-                <div className="lp-feature-icon">
-                  <Layers3 size={24} />
+            {/* Stats Card - Overlapping with Animation */}
+            <div className="relative z-20 mt-[-60px] lg:mt-[-80px] mx-4 lg:mx-0">
+              <div className="max-w-5xl mx-auto relative group transition-transform duration-300 hover:-translate-y-2">
+                {/* Animated Border Background */}
+                <div className="absolute -inset-[3px] rounded-2xl overflow-hidden">
+                  <div className="absolute inset-[-100%] bg-[conic-gradient(from_90deg_at_50%_50%,#ffedd5_0%,#f97316_50%,#ffedd5_100%)] animate-[spin_4s_linear_infinite]" />
                 </div>
-                <h3 className="lp-h3">Lộ trình cá nhân hóa</h3>
-                <p style={{ color: 'var(--lp-text-light)' }}>Thiết kế lộ trình học tập riêng biệt dựa trên năng lực và mục tiêu của từng học viên.</p>
-              </div>
-              <div className="lp-feature-card">
-                <div className="lp-feature-icon">
-                  <CalendarDays size={24} />
-                </div>
-                <h3 className="lp-h3">Lịch học linh hoạt</h3>
-                <p style={{ color: 'var(--lp-text-light)' }}>Dễ dàng sắp xếp lịch học phù hợp với công việc và cuộc sống cá nhân.</p>
-              </div>
-              <div className="lp-feature-card">
-                <div className="lp-feature-icon">
-                  <Users2 size={24} />
-                </div>
-                <h3 className="lp-h3">Giảng viên hàng đầu</h3>
-                <p style={{ color: 'var(--lp-text-light)' }}>Đội ngũ giảng viên giàu kinh nghiệm, tận tâm và có chứng chỉ quốc tế.</p>
-              </div>
-              <div className="lp-feature-card">
-                <div className="lp-feature-icon">
-                  <CheckCircle2 size={24} />
-                </div>
-                <h3 className="lp-h3">Cam kết đầu ra</h3>
-                <p style={{ color: 'var(--lp-text-light)' }}>Cam kết chất lượng đào tạo và hỗ trợ học viên đạt được kết quả mong muốn.</p>
-              </div>
-            </div>
-          </div>
-        </section>
 
-        {/* Courses Section */}
-        <section id="courses" className="lp-section">
-          <div className="lp-container">
-            <div className="lp-section-header">
-              <span className="lp-section-tag">Khóa học nổi bật</span>
-              <h2 className="lp-h2">Chương trình đào tạo chuyên sâu</h2>
-            </div>
-
-            <div className="lp-courses-grid">
-              {mockCourses.map((course) => (
-                <Link to={`/courses/${course.id}`} key={course.id} className="lp-course-card">
-                  <img src={course.image} alt={course.name} className="lp-course-image" />
-                  <div className="lp-course-content">
-                    <div className="lp-course-tags">
-                      <span className="lp-tag">{course.level}</span>
-                      <span className="lp-tag">{course.duration_weeks} tuần</span>
+                {/* Main Card Content */}
+                <div className="relative bg-orange-50 rounded-2xl shadow-lg p-8 md:p-10 border border-orange-100">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center divide-y md:divide-y-0 md:divide-x divide-orange-200">
+                    <div className="p-2">
+                      <div className="text-4xl font-extrabold text-slate-900 mb-2">1,000</div>
+                      <div className="text-slate-600 font-medium italic">Học viên tham gia khoá học</div>
                     </div>
-                    <h3 className="lp-h3">{course.name}</h3>
-                    <p style={{ fontSize: '0.9rem', marginBottom: '1rem', color: 'var(--lp-text-light)' }}>
-                      {course.description}
-                    </p>
-                    <div className="lp-course-footer">
-                      <span>{course.total_hours} giờ học</span>
-                      <ArrowRight size={16} />
+                    <div className="p-2">
+                      <div className="text-4xl font-extrabold text-slate-900 mb-2">720</div>
+                      <div className="text-slate-600 font-medium italic">Học viên đạt chứng chỉ</div>
+                    </div>
+                    <div className="p-2">
+                      <div className="text-4xl font-extrabold text-slate-900 mb-2">3</div>
+                      <div className="text-slate-600 font-medium italic">Năm hoạt động</div>
                     </div>
                   </div>
-                </Link>
-              ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Consultation Form Section */}
+        <section id="features" className="bg-transparent">
+          <FeatureCarousel features={featureCards} />
+        </section>
+
+        {/* Learning Modes Section */}
+        <LearningModes />
+
+        <FeaturedCourses />
+
+        <section className="lp-section lp-feedback" id="feedback">
+          <FeedbackLoop feedbacks={feedbacks} />
+        </section>
+
         <section id="consultation" className="lp-consultation lp-section">
           <div className="lp-container lp-consultation-container">
-            <div className="lp-consultation-text">
-              <span className="lp-section-tag" style={{ color: 'rgba(255,255,255,0.8)' }}>Đăng ký ngay</span>
-              <h2 className="lp-h2" style={{ color: 'white' }}>Nhận tư vấn miễn phí</h2>
-              <p className="lp-subtitle" style={{ color: 'rgba(255,255,255,0.8)', margin: 0 }}>
-                Để lại thông tin, đội ngũ tư vấn của chúng tôi sẽ liên hệ với bạn trong vòng 24h để xây dựng lộ trình học tập phù hợp nhất.
-              </p>
-              <ul style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <li className="lp-flex lp-items-center" style={{ gap: '0.75rem' }}>
-                  <CheckCircle2 size={20} style={{ color: '#4ade80' }} />
-                  <span>Kiểm tra trình độ miễn phí</span>
-                </li>
-                <li className="lp-flex lp-items-center" style={{ gap: '0.75rem' }}>
-                  <CheckCircle2 size={20} style={{ color: '#4ade80' }} />
-                  <span>Học thử 2 buổi trải nghiệm</span>
-                </li>
-                <li className="lp-flex lp-items-center" style={{ gap: '0.75rem' }}>
-                  <CheckCircle2 size={20} style={{ color: '#4ade80' }} />
-                  <span>Ưu đãi học phí lên đến 30%</span>
-                </li>
-              </ul>
+            <div className="lp-consultation-text" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <img
+                src={consultLogo}
+                alt="Pinnacle logo"
+                style={{
+                  maxWidth: "620px",
+                  width: "100%",
+                  height: "auto",
+                  filter: "drop-shadow(0 12px 28px rgba(0,0,0,0.18))"
+                }}
+              />
             </div>
 
             <div className="lp-form-wrapper">
               <form onSubmit={(e) => e.preventDefault()}>
                 <div className="lp-form-group">
                   <label className="lp-form-label">Họ và tên</label>
-                  <input type="text" className="lp-form-input" placeholder="Nguyễn Văn A" required />
+                  <input type="text" className="lp-form-input" placeholder="Nguyễn Thu Hà" required />
                 </div>
 
                 <div className="lp-form-group">
@@ -247,19 +274,18 @@ export default function LandingPage() {
                 </div>
 
                 <div className="lp-form-group">
-                  <label className="lp-form-label">Nhu cầu tư vấn</label>
+                  <label className="lp-form-label">Chọn khóa học quan tâm</label>
                   <select className="lp-form-select" defaultValue="">
-                    <option value="" disabled>Chọn khóa học bạn quan tâm</option>
-                    {mockCourses.map((course) => (
-                      <option key={course.id} value={course.id}>
-                        {course.name}
-                      </option>
-                    ))}
+                    <option value="" disabled>Chọn khóa học</option>
+                    <option value="ielts">IELTS Foundation / Intermediate / Advanced</option>
+                    <option value="toeic">TOEIC 450+ / 650+ / 800+</option>
+                    <option value="cambridge">Cambridge Starters / Movers / Flyers</option>
+                    <option value="giao-tiep">Tiếng Anh Giao Tiếp</option>
                     <option value="other">Khác</option>
                   </select>
                 </div>
 
-                <button type="submit" className="lp-btn lp-btn-primary" style={{ width: '100%', marginTop: '1rem' }}>
+                <button type="submit" className="lp-btn lp-btn-primary" style={{ width: "100%", marginTop: "1rem" }}>
                   Gửi đăng ký
                 </button>
               </form>
@@ -270,13 +296,16 @@ export default function LandingPage() {
 
       <footer className="lp-footer">
         <div className="lp-container lp-footer-content">
-          <div className="lp-flex lp-items-center" style={{ gap: '0.5rem' }}>
+          <div className="lp-flex lp-items-center" style={{ gap: "0.5rem" }}>
             <img
               src="/logo.jpg"
               alt="Anh ngữ Pinnacle"
-              style={{ height: '1.5rem', width: 'auto' }}
+              style={{ height: "1.75rem", width: "1.75rem", borderRadius: "50%", objectFit: "cover" }}
             />
-            <span style={{ fontWeight: 700, color: 'var(--lp-primary)' }}>Anh ngữ Pinnacle</span>
+            <span className="lp-logo-stack">
+              <span className="lp-logo-text-primary">PINNACLE</span>
+              <span className="lp-logo-text-secondary">English Center</span>
+            </span>
           </div>
 
           <div className="lp-footer-links">
@@ -286,11 +315,11 @@ export default function LandingPage() {
             <a href="#">Liên hệ</a>
           </div>
 
-          <div style={{ fontSize: '0.875rem' }}>
+          <div style={{ fontSize: "0.875rem" }}>
             © 2025 Anh ngữ Pinnacle. All rights reserved.
           </div>
         </div>
       </footer>
     </div>
-  );
+  )
 }
