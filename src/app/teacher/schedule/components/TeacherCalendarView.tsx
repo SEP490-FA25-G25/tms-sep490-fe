@@ -27,12 +27,12 @@ const DAY_LABELS: Record<DayOfWeek, string> = {
 }
 
 // Colors for different session statuses or types
-const SESSION_VARIANTS: Record<string, { bg: string; border: string; borderLeft: string; text: string }> = {
-  PLANNED: { bg: 'bg-sky-50', border: 'border-sky-200', borderLeft: 'border-l-sky-600', text: 'text-sky-700' },
-  DONE: { bg: 'bg-emerald-50', border: 'border-emerald-200', borderLeft: 'border-l-emerald-600', text: 'text-emerald-700' },
-  CANCELLED: { bg: 'bg-rose-50', border: 'border-rose-200', borderLeft: 'border-l-rose-600', text: 'text-rose-700' },
+const SESSION_VARIANTS: Record<string, { bg: string; border: string; text: string }> = {
+  PLANNED: { bg: 'bg-sky-50', border: 'border-sky-200', text: 'text-sky-700' },
+  DONE: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700' },
+  CANCELLED: { bg: 'bg-rose-50', border: 'border-rose-200', text: 'text-rose-700' },
   // Fallback
-  DEFAULT: { bg: 'bg-slate-50', border: 'border-slate-200', borderLeft: 'border-l-slate-600', text: 'text-slate-700' },
+  DEFAULT: { bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-700' },
 }
 
 const DEFAULT_START_HOUR = 7
@@ -140,7 +140,7 @@ export function TeacherCalendarView({ scheduleData, onSessionClick, className }:
   return (
     <div className={cn("flex h-full min-h-0 flex-col overflow-hidden rounded-xl border bg-background shadow-sm", className)}>
       {/* Calendar Header (Days) */}
-      <div className="grid grid-cols-8 border-b divide-x bg-muted/40">
+      <div className="grid grid-cols-8 border-b divide-x">
         <div className="p-4 text-center text-xs font-medium text-muted-foreground">
           GIỜ
         </div>
@@ -165,11 +165,11 @@ export function TeacherCalendarView({ scheduleData, onSessionClick, className }:
       </div>
 
       {/* Calendar Body (Scrollable) */}
-      <div className="flex-1 overflow-y-auto min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="flex-1 overflow-y-auto min-h-0">
         <div className="relative grid grid-cols-8 divide-x" style={{ height: `${(endHour - startHour + 1) * HOUR_HEIGHT}px` }}>
           
           {/* Time Column */}
-          <div className="relative border-r bg-muted/30">
+          <div className="relative border-r bg-muted/5">
             {hours.map((hour) => (
               <div
                 key={hour}
@@ -184,7 +184,7 @@ export function TeacherCalendarView({ scheduleData, onSessionClick, className }:
             {/* Current time label in time column */}
             {currentTimeIndicator && (
               <div 
-                className="absolute right-0 z-20 flex items-center"
+                className="absolute right-0 z-50 flex items-center"
                 style={{ top: `${currentTimeIndicator.top}px`, transform: 'translateY(-50%)' }}
               >
                 <span className="bg-primary text-primary-foreground text-[10px] font-medium px-1.5 py-0.5 rounded mr-1">
@@ -210,7 +210,7 @@ export function TeacherCalendarView({ scheduleData, onSessionClick, className }:
               {/* Current time indicator line */}
               {currentTimeIndicator && (
                 <div 
-                  className="absolute left-0 right-0 z-10 pointer-events-none"
+                  className="absolute left-0 right-0 z-50 pointer-events-none"
                   style={{ top: `${currentTimeIndicator.top}px` }}
                 >
                   <div 
@@ -228,10 +228,9 @@ export function TeacherCalendarView({ scheduleData, onSessionClick, className }:
                     key={session.sessionId}
                     onClick={() => onSessionClick(session.sessionId)}
                     className={cn(
-                      "absolute inset-x-1 rounded-md border p-2 text-left text-xs transition-all hover:brightness-95 hover:z-10 focus:outline-none border-l-4 cursor-pointer",
+                      "absolute inset-x-1 rounded-md border p-2 text-left text-xs transition-all hover:brightness-95 hover:z-10 focus:ring-2 focus:ring-primary focus:outline-none",
                       variant.bg,
                       variant.border,
-                      variant.borderLeft,
                       variant.text
                     )}
                     style={getEventStyle(session)}

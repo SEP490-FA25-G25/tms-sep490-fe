@@ -71,11 +71,8 @@ export default function TimeSlotDetailPage() {
                     : "Đã kích hoạt lại khung giờ"
             );
             setShowDeactivateDialog(false);
-        } catch (error: unknown) {
-            const apiError = error as { data?: { message?: string } };
-            toast.error(
-                apiError.data?.message || "Có lỗi xảy ra khi cập nhật trạng thái"
-            );
+        } catch (error: any) {
+            toast.error(error.data?.message || "Có lỗi xảy ra khi cập nhật trạng thái");
         }
     };
 

@@ -98,11 +98,9 @@ export default function CenterHeadTimeSlotsPage() {
                 await deleteTimeSlot(timeSlotToDelete).unwrap();
                 toast.success("Đã xóa khung giờ thành công");
                 setTimeSlotToDelete(null);
-            } catch (error: unknown) {
+            } catch (error: any) {
                 console.error("Failed to delete time slot:", error);
-                const apiError = error as { data?: { message?: string }; message?: string };
-                const errorMessage =
-                    apiError.data?.message || apiError.message || "Xóa thất bại. Vui lòng thử lại.";
+                const errorMessage = error?.data?.message || error?.message || "Xóa thất bại. Vui lòng thử lại.";
                 toast.error(errorMessage);
             }
         }

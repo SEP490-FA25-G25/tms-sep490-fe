@@ -33,9 +33,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   useGetPoliciesQuery,
   useUpdatePolicyMutation,
-  useGetPolicyHistoryQuery,
   type Policy,
-  type PolicyHistory,
 } from "@/store/services/policyApi";
 import { toast } from "sonner";
 import { Search } from "lucide-react";
@@ -52,23 +50,29 @@ const CATEGORY_OPTIONS = [
   { value: "LICENSE", label: "Giấy phép" },
 ];
 
+const SCOPE_OPTIONS = [
+  { value: "ALL", label: "Tất cả scope" },
+  { value: "GLOBAL", label: "Toàn hệ thống" },
+  { value: "BRANCH", label: "Theo chi nhánh" },
+  { value: "COURSE", label: "Theo khóa học" },
+  { value: "CLASS", label: "Theo lớp học" },
+];
+
 export default function AdminPoliciesPage() {
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("ALL");
+  const [scope, setScope] = useState("ALL");
   const [editingPolicy, setEditingPolicy] = useState<Policy | null>(null);
   const [newValue, setNewValue] = useState("");
   const [reason, setReason] = useState("");
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [historyPage, setHistoryPage] = useState(0);
-  const [historySearch, setHistorySearch] = useState("");
-  const [historyCategory, setHistoryCategory] = useState("ALL");
 
   const { data, isLoading } = useGetPoliciesQuery({
     page,
     size: PAGE_SIZE,
     search: search || undefined,
     category: category && category !== "ALL" ? category : undefined,
+    scope: scope && scope !== "ALL" ? scope : undefined,
   });
 
   const [updatePolicy, { isLoading: isUpdating }] = useUpdatePolicyMutation();
@@ -214,25 +218,6 @@ export default function AdminPoliciesPage() {
     }
   };
 
-  const { data: historyData, isLoading: isHistoryLoading } =
-    useGetPolicyHistoryQuery(
-      {
-        page: historyPage,
-        size: 10,
-        search: historySearch || undefined,
-        category:
-          historyCategory && historyCategory !== "ALL"
-            ? historyCategory
-            : undefined,
-      },
-      {
-        skip: !historyOpen,
-      }
-    );
-
-  const historyPageData = historyData?.data;
-  const histories: PolicyHistory[] = historyPageData?.content ?? [];
-
   return (
     <AdminRoute>
       <SidebarProvider
@@ -262,9 +247,9 @@ export default function AdminPoliciesPage() {
                   </div>
                 </div>
 
-                {/* Filters + actions */}
+                {/* Filters */}
                 <div className="px-4 lg:px-6 space-y-3">
-                  <div className="flex flex-wrap gap-3 items-center justify-between">
+                  <div className="flex flex-wrap gap-3">
                     <div className="relative flex-1 min-w-[220px]">
                       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
@@ -277,36 +262,42 @@ export default function AdminPoliciesPage() {
                         className="pl-10"
                       />
                     </div>
-                    <div className="flex flex-wrap gap-3 items-center">
-                      <Select
-                        value={category}
-                        onValueChange={(v) => {
-                          setCategory(v);
-                          setPage(0);
-                        }}
-                      >
-                        <SelectTrigger className="w-[190px]">
-                          <SelectValue placeholder="Nhóm policy" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {CATEGORY_OPTIONS.map((opt) => (
-                            <SelectItem key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setHistoryOpen(true);
-                          setHistoryPage(0);
-                        }}
-                      >
-                        Xem lịch sử thay đổi
-                      </Button>
-                    </div>
+                    <Select
+                      value={category}
+                      onValueChange={(v) => {
+                        setCategory(v);
+                        setPage(0);
+                      }}
+                    >
+                      <SelectTrigger className="w-[190px]">
+                        <SelectValue placeholder="Nhóm policy" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CATEGORY_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={scope}
+                      onValueChange={(v) => {
+                        setScope(v);
+                        setPage(0);
+                      }}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Scope" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SCOPE_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -328,13 +319,16 @@ export default function AdminPoliciesPage() {
                               <TableHead className="w-[32%] border-l border-border/60">
                                 Tên
                               </TableHead>
-                              <TableHead className="w-[12%] border-l border-border/60 text-center">
+                              <TableHead className="w-[10%] border-l border-border/60 text-center">
                                 Nhóm
                               </TableHead>
-                              <TableHead className="w-[14%] border-l border-border/60">
+                              <TableHead className="w-[8%] border-l border-border/60 text-center">
+                                Scope
+                              </TableHead>
+                              <TableHead className="w-[12%] border-l border-border/60">
                                 Giá trị hiện tại
                               </TableHead>
-                              <TableHead className="w-[10%] border-l border-border/60">
+                              <TableHead className="w-[8%] border-l border-border/60">
                                 Mặc định
                               </TableHead>
                               <TableHead className="w-[12%] border-l border-border/60" />
@@ -357,6 +351,9 @@ export default function AdminPoliciesPage() {
                                   <Badge variant="outline">
                                     {p.policyCategory}
                                   </Badge>
+                                </TableCell>
+                                <TableCell className="border-l border-border/60 align-top text-center">
+                                  <Badge variant="secondary">{p.scope}</Badge>
                                 </TableCell>
                                 <TableCell className="border-l border-border/60 align-top whitespace-normal break-words">
                                   <div className="flex flex-col text-sm">
@@ -485,163 +482,6 @@ export default function AdminPoliciesPage() {
                   Lưu thay đổi
                 </Button>
               </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={historyOpen}
-        onOpenChange={(open) => {
-          setHistoryOpen(open);
-          if (!open) {
-            setHistoryPage(0);
-          }
-        }}
-      >
-        <DialogContent className="w-[min(95vw,90rem)] max-w-none sm:max-w-5xl lg:max-w-6xl">
-          <DialogHeader>
-            <DialogTitle>Lịch sử thay đổi chính sách hệ thống</DialogTitle>
-          </DialogHeader>
-
-          {historyOpen && (
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex-1 min-w-[220px]">
-                  <Input
-                    placeholder="Tìm theo key hoặc tên policy..."
-                    value={historySearch}
-                    onChange={(e) => {
-                      setHistorySearch(e.target.value);
-                      setHistoryPage(0);
-                    }}
-                    className="w-full"
-                  />
-                </div>
-                <div className="flex-shrink-0">
-                  <Select
-                    value={historyCategory}
-                    onValueChange={(value) => {
-                      setHistoryCategory(value);
-                      setHistoryPage(0);
-                    }}
-                  >
-                    <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Nhóm policy" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CATEGORY_OPTIONS.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="rounded-md border bg-muted/40">
-                <div className="overflow-x-auto">
-                  {isHistoryLoading ? (
-                    <div className="space-y-2 p-3">
-                      {Array.from({ length: 4 }).map((_, i) => (
-                        <Skeleton key={i} className="h-8 w-full" />
-                      ))}
-                    </div>
-                  ) : histories.length === 0 ? (
-                    <div className="p-4 text-sm text-muted-foreground text-center">
-                      Chưa có lịch sử thay đổi nào cho policy này.
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[16%]">Thời gian</TableHead>
-                          <TableHead className="w-[20%]">Policy</TableHead>
-                          <TableHead className="w-[12%] text-center">
-                            Người sửa
-                          </TableHead>
-                          <TableHead className="w-[10%] text-center">
-                            Phiên bản
-                          </TableHead>
-                          <TableHead className="w-[18%]">Giá trị cũ</TableHead>
-                          <TableHead className="w-[18%]">Giá trị mới</TableHead>
-                          <TableHead className="w-[16%]">Lý do</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {histories.map((h) => (
-                          <TableRow key={h.id}>
-                            <TableCell className="text-xs">
-                              {h.changedAt
-                                ? new Date(h.changedAt).toLocaleString("vi-VN")
-                                : "-"}
-                            </TableCell>
-                            <TableCell className="text-xs">
-                              <div className="flex flex-col gap-0.5">
-                                <span className="font-medium">
-                                  {h.policyName ?? "-"}
-                                </span>
-                                <span className="font-mono text-[11px] text-muted-foreground break-all">
-                                  {h.policyKey ?? ""}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-xs text-center">
-                              {h.changedByName
-                                ? h.changedByName
-                                : h.changedBy
-                                ? `User #${h.changedBy}`
-                                : "Hệ thống"}
-                            </TableCell>
-                            <TableCell className="text-xs text-center">
-                              v{h.version}
-                            </TableCell>
-                            <TableCell className="text-xs break-words">
-                              {h.oldValue ?? "-"}
-                            </TableCell>
-                            <TableCell className="text-xs break-words">
-                              {h.newValue}
-                            </TableCell>
-                            <TableCell className="text-xs break-words">
-                              {h.reason ?? "-"}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </div>
-              </div>
-
-              {historyPageData && historyPageData.totalPages > 1 && (
-                <div className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
-                  <span>
-                    Trang {historyPageData.number + 1} /{" "}
-                    {historyPageData.totalPages}
-                  </span>
-                  <div className="space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={historyPageData.first}
-                      onClick={() =>
-                        setHistoryPage((prev) => Math.max(prev - 1, 0))
-                      }
-                    >
-                      Trước
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={historyPageData.last}
-                      onClick={() => setHistoryPage((prev) => prev + 1)}
-                    >
-                      Sau
-                    </Button>
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </DialogContent>

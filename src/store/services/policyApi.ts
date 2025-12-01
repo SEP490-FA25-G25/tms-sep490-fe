@@ -14,6 +14,7 @@ export interface Policy {
   minValue?: string
   maxValue?: string
   unit?: string
+  scope: string
   branchId?: number
   courseId?: number
   classId?: number
@@ -28,27 +29,12 @@ export interface GetPoliciesParams {
   size?: number
   search?: string
   category?: string
+  scope?: string
 }
 
 export interface UpdatePolicyRequest {
   newValue: string
   reason?: string
-}
-
-export interface PolicyHistory {
-  id: number
-  policyId: number | null
-  policyKey?: string | null
-  policyName?: string | null
-  policyCategory?: string | null
-  oldValue?: string | null
-  newValue: string
-  changedBy?: number | null
-  changedByName?: string | null
-  changedAt?: string | null
-  reason?: string | null
-  version: number
-  changeType?: string | null
 }
 
 export const policyApi = createApi({
@@ -63,6 +49,7 @@ export const policyApi = createApi({
         if (params.size !== undefined) searchParams.append('size', params.size.toString())
         if (params.search) searchParams.append('search', params.search)
         if (params.category) searchParams.append('category', params.category)
+        if (params.scope) searchParams.append('scope', params.scope)
 
         const query = searchParams.toString()
         return {
@@ -81,28 +68,9 @@ export const policyApi = createApi({
       }),
       invalidatesTags: ['Policy'],
     }),
-
-    getPolicyHistory: builder.query<
-      ApiResponse<PageableResponse<PolicyHistory>>,
-      { page?: number; size?: number; search?: string; category?: string }
-    >({
-      query: ({ page, size, search, category }) => {
-        const searchParams = new URLSearchParams()
-        if (page !== undefined) searchParams.append('page', page.toString())
-        if (size !== undefined) searchParams.append('size', size.toString())
-        if (search) searchParams.append('search', search)
-        if (category) searchParams.append('category', category)
-
-        const query = searchParams.toString()
-        return {
-          url: `/admin/policies/history${query ? `?${query}` : ''}`,
-          method: 'GET',
-        }
-      },
-    }),
   }),
 })
 
-export const { useGetPoliciesQuery, useUpdatePolicyMutation, useGetPolicyHistoryQuery } = policyApi
+export const { useGetPoliciesQuery, useUpdatePolicyMutation } = policyApi
 
 

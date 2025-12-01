@@ -275,10 +275,10 @@ export default function TeacherClassesPage() {
         title="Lớp học của tôi"
         description="Quản lý lịch trình lớp học, học sinh và tài liệu khóa học"
       >
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
               {hasActiveFilters && (
                 <Button variant="ghost" size="sm" onClick={resetFilters}>
                   Xóa bộ lọc
@@ -291,7 +291,7 @@ export default function TeacherClassesPage() {
           </div>
 
           {/* Filters */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             {/* Status Tabs */}
             <Tabs
               value={activeStatusTab}
@@ -307,7 +307,7 @@ export default function TeacherClassesPage() {
             </Tabs>
 
             {/* Search and Dropdown Filters */}
-            <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -441,7 +441,7 @@ export default function TeacherClassesPage() {
 
             {/* Active Filters Badges */}
             {hasActiveFilters && (
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 {filters.status !== "ALL" && (
                   <Badge
                     variant="secondary"
@@ -523,7 +523,7 @@ export default function TeacherClassesPage() {
             </div>
           ) : (
             <>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-4">
                 {paginatedClasses.map((classItem) => (
                   <ClassCard key={classItem.id} classItem={classItem} />
                 ))}
@@ -689,29 +689,17 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
     ? format(parseISO(classItem.plannedEndDate), "dd/MM/yyyy", { locale: vi })
     : null;
 
-  // Check if class has started
-  const hasClassStarted = classItem.status !== "SCHEDULED" && 
-    (classItem.startDate ? parseISO(classItem.startDate) <= new Date() : classItem.status === "ONGOING" || classItem.status === "COMPLETED");
-
-  // Determine which info item is the last one to render
-  const hasCourse = !!classItem.courseName;
-  const hasBranch = !!classItem.branchName;
-  const hasDate = !!(startDate || endDate);
-  const hasSessions = totalSessions > 0;
-  
-  // Find the last visible item
-  const lastItem = hasSessions ? 'sessions' : hasDate ? 'date' : hasBranch ? 'branch' : hasCourse ? 'course' : null;
-
   return (
-    <div className="rounded-lg border p-3 transition-all duration-200 hover:border-primary/60 hover:bg-primary/5 hover:-translate-y-1 hover:shadow-md">
-      <div>
+    <div className="rounded-lg border p-5 transition-colors hover:border-primary/60 hover:bg-primary/5">
+      <div className="space-y-4">
         {/* Header: Class Name and Status */}
-        <div className="space-y-1.5 mb-2">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <h3 className="text-base font-semibold text-foreground">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 space-y-2">
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-foreground">
                 {classItem.name}
               </h3>
-            <Badge variant={getStatusBadgeVariant(classItem.status)} className="text-xs">
+              <Badge variant={getStatusBadgeVariant(classItem.status)}>
                 {STATUS_LABELS[classItem.status] || classItem.status}
               </Badge>
               <Badge variant="outline" className="text-xs">
@@ -719,35 +707,36 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
               </Badge>
             </div>
             {classItem.code && (
-            <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Mã lớp: {classItem.code}
               </p>
             )}
+          </div>
         </div>
 
         {/* Class Info Grid */}
-        <div className="text-xs">
+        <div className="grid gap-3 text-sm sm:grid-cols-2">
           {/* Course */}
           {classItem.courseName && (
-            <div className={cn("flex items-center gap-1.5 text-muted-foreground", lastItem !== 'course' && "mb-1.5")}>
-              <GraduationCap className="h-3.5 w-3.5 flex-shrink-0" />
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <GraduationCap className="h-4 w-4 flex-shrink-0" />
               <span className="truncate">{classItem.courseName}</span>
             </div>
           )}
 
           {/* Branch */}
           {classItem.branchName && (
-            <div className={cn("flex items-center gap-1.5 text-muted-foreground", lastItem !== 'branch' && "mb-1.5")}>
-              <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <MapPin className="h-4 w-4 flex-shrink-0" />
               <span className="truncate">{classItem.branchName}</span>
             </div>
           )}
 
           {/* Date Range */}
           {(startDate || endDate) && (
-            <div className={cn("flex items-center gap-1.5 text-muted-foreground", lastItem !== 'date' && "mb-1.5")}>
-              <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
-              <span className="truncate">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Calendar className="h-4 w-4 flex-shrink-0" />
+              <span>
                 {startDate && endDate
                   ? `${startDate} - ${endDate}`
                   : startDate
@@ -761,27 +750,20 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
 
           {/* Total Sessions */}
           {totalSessions > 0 && (
-            <div className={cn("flex items-center gap-1.5 text-muted-foreground", lastItem !== 'sessions' && "mb-1.5")}>
-              <BookOpen className="h-3.5 w-3.5 flex-shrink-0" />
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <BookOpen className="h-4 w-4 flex-shrink-0" />
               <span>{totalSessions} buổi học</span>
             </div>
           )}
         </div>
 
         {/* Attendance Rate */}
-        <div className="flex items-center gap-1.5 rounded-md border bg-muted/30 p-2 mt-2">
-          <TrendingUp className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">
+        {averageAttendanceRate !== undefined && (
+          <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-3">
+            <TrendingUp className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">
               Tỷ lệ chuyên cần:
             </span>
-          {!hasClassStarted ? (
-            <Badge
-              variant="outline"
-              className="text-xs font-medium bg-slate-50 border-slate-200 text-slate-600"
-            >
-              Lớp chưa bắt đầu
-            </Badge>
-          ) : averageAttendanceRate !== undefined ? (
             <Badge
               variant="outline"
               className={cn(
@@ -792,18 +774,11 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
             >
               {averageAttendanceRate.toFixed(1)}%
             </Badge>
-          ) : (
-            <Badge
-              variant="outline"
-              className="text-xs font-medium bg-muted border-muted text-muted-foreground"
-            >
-              Chưa có dữ liệu
-            </Badge>
-          )}
           </div>
+        )}
 
         {/* Action buttons */}
-        <div className="flex flex-wrap gap-1.5 mt-2">
+        <div className="flex flex-wrap gap-2 pt-2">
           <Button
             variant="outline"
             size="sm"

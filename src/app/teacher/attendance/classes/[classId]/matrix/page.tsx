@@ -1,10 +1,12 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { TeacherRoute } from "@/components/ProtectedRoute";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import {
   useGetClassAttendanceMatrixQuery,
   type AttendanceMatrixDTO,
@@ -16,6 +18,7 @@ import { cn } from "@/lib/utils";
 export default function ClassAttendanceMatrixPage() {
   const { classId } = useParams<{ classId: string }>();
   const classIdNum = classId ? parseInt(classId, 10) : 0;
+  const navigate = useNavigate();
 
   const {
     data: matrixResponse,
@@ -238,8 +241,18 @@ export default function ClassAttendanceMatrixPage() {
     <TeacherRoute>
       <DashboardLayout title="Ma trận điểm danh">
         <div className="space-y-6">
-          {/* Header */}
-          <div>
+          {/* Header with back button */}
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/teacher/classes")}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Quay lại
+            </Button>
+            <div className="h-6 w-px bg-border" />
             <h1 className="text-lg font-semibold">{className}</h1>
           </div>
 
