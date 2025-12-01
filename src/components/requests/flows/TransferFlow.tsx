@@ -17,7 +17,6 @@ import {
 import {
   Section,
   ReasonInput,
-  NoteInput,
   BaseFlowComponent
 } from '../UnifiedRequestFlow'
 import {
@@ -85,7 +84,6 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
   const [transferType, setTransferType] = useState<'schedule' | 'branch-modality'>('schedule')
   const [requestReason, setRequestReason] = useState('')
   const [reasonError, setReasonError] = useState<string | null>(null)
-  const [note, setNote] = useState('')
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
   const [selectedSession, setSelectedSession] = useState<{ sessionId: number; date: string } | null>(null)
 
@@ -129,7 +127,6 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
     setSelectedSession(null)
     setRequestReason('')
     setReasonError(null)
-    setNote('')
     setCurrentStep(1)
   }, [])
 
@@ -177,8 +174,7 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
           targetClassId: selectedClass!.classId,
           effectiveDate: selectedSession.date,
           sessionId: selectedSession.sessionId,
-          requestReason: requestReason.trim(),
-          note: note.trim() || undefined
+          requestReason: requestReason.trim()
         }).unwrap()
 
         handleReset()
@@ -618,12 +614,6 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
               onChange={setRequestReason}
               placeholder="Nhập lý do muốn chuyển lớp..."
               error={reasonError}
-            />
-
-            <NoteInput
-              value={note}
-              onChange={setNote}
-              placeholder="Ghi chú thêm về yêu cầu chuyển lớp..."
             />
           </div>
         </Section>

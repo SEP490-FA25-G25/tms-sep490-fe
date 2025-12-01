@@ -505,29 +505,27 @@ function CreateRequestDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl rounded-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
           <DialogTitle>Tạo yêu cầu mới</DialogTitle>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto pr-4 pb-4" style={{ height: 'calc(90vh - 8rem)' }}>
-          {activeType === null ? (
-            <TypeSelection onSelect={handleTypeSelect} />
-          ) : (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between border-b pb-2">
-                <div>
-                  <p className="text-xs text-muted-foreground">Loại yêu cầu</p>
-                  <h3 className="text-base font-semibold">{REQUEST_TYPE_LABELS[activeType]}</h3>
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => onSelectType(null)}>
-                  Chọn loại khác
-                </Button>
+        {activeType === null ? (
+          <TypeSelection onSelect={handleTypeSelect} />
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between border-b pb-2">
+              <div>
+                <p className="text-xs text-muted-foreground">Loại yêu cầu</p>
+                <h3 className="text-base font-semibold">{REQUEST_TYPE_LABELS[activeType]}</h3>
               </div>
-
-              <UnifiedRequestFlow type={activeType} onSuccess={onSuccess} />
+              <Button variant="ghost" size="sm" onClick={() => onSelectType(null)}>
+                Chọn loại khác
+              </Button>
             </div>
-          )}
-        </div>
+
+            <UnifiedRequestFlow type={activeType} onSuccess={onSuccess} />
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

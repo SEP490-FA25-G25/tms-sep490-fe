@@ -369,16 +369,23 @@ export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDe
 
                   <div className="space-y-3">
                     <label className="flex flex-col gap-2">
-                      <span className="text-sm font-semibold">Lý do từ chối</span>
+                      <span className="text-sm font-semibold">Ghi chú khi duyệt <span className="text-xs font-normal text-muted-foreground">(tùy chọn)</span></span>
+                      <Textarea
+                        value={decisionNote}
+                        onChange={(event) => setDecisionNote(event.target.value)}
+                        placeholder="Nhập ghi chú khi chấp thuận yêu cầu (nếu cần)..."
+                        className="min-h-[60px]"
+                      />
+                    </label>
+
+                    <label className="flex flex-col gap-2">
+                      <span className="text-sm font-semibold">Lý do từ chối <span className="text-xs font-normal text-muted-foreground">(bắt buộc nếu từ chối)</span></span>
                       <Textarea
                         value={decisionRejectReason}
                         onChange={(event) => setDecisionRejectReason(event.target.value)}
                         placeholder="Nhập lý do từ chối (tối thiểu 10 ký tự)"
                         className="min-h-[80px]"
                       />
-                      <span className="text-xs text-muted-foreground">
-                        Bắt buộc nhập khi chọn Từ chối để đảm bảo minh bạch.
-                      </span>
                     </label>
 
                     <div className="flex justify-end gap-2">
