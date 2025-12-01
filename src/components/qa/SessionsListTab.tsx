@@ -175,8 +175,8 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
             </div>
 
             {/* Sessions Table */}
-            <Card className="py-0">
-                <CardHeader className="py-4">
+            <Card className="py-0 gap-0">
+                <CardHeader className="py-3">
                     <CardTitle>Danh Sách Buổi Học</CardTitle>
                 </CardHeader>
                 <CardContent className="px-0">

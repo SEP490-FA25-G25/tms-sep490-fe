@@ -164,8 +164,8 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
           <BookOpen className="h-5 w-5 text-primary" />
           Tổng quan khóa học
         </h3>
-        <Card>
-          <CardContent className="p-6 space-y-6">
+        <Card className="py-0">
+          <CardContent className="space-y-6">
             <div>
               <h4 className="text-sm font-medium text-muted-foreground mb-2">Tên khóa học</h4>
               <p className="text-base font-semibold">{course.name}</p>
@@ -247,7 +247,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
             <Badge variant="secondary">{courseMaterials.length}</Badge>
           </div>
 
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden py-0">
             <div className="divide-y">
               {courseMaterials.map((material) => (
                 <div
@@ -568,8 +568,8 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
               Mục tiêu học tập (CLO)
             </h3>
 
-            <Card>
-              <CardContent className="p-6 space-y-4">
+            <Card className="py-0 gap-0">
+              <CardContent className="p-0">
                 {courseSyllabus.clos.map((clo) => (
                   <div key={clo.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
                     <div className="shrink-0">

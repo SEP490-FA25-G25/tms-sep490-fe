@@ -24,14 +24,14 @@ export function QAStatsCard({
     valueClassName,
 }: QAStatsCardProps) {
     return (
-        <Card className={cn("overflow-hidden", className)}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className={cn("overflow-hidden py-0 gap-0", className)}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pt-3 pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                     {title}
                 </CardTitle>
                 {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
             </CardHeader>
-            <CardContent>
+            <CardContent className="pb-3">
                 <div className={cn("text-2xl font-bold", valueClassName)}>{value}</div>
                 {(subtitle || trendValue) && (
                     <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">

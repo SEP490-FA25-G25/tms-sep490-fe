@@ -145,8 +145,8 @@ export function QAReportsListTab({ classId, onNavigateToCreate }: QAReportsListT
             {filteredReports.length > 0 ? (
                 <div className="space-y-4">
                     {filteredReports.map((report) => (
-                        <Card key={report.id} className="hover:shadow-md transition-shadow">
-                            <CardContent className="p-6">
+                        <Card key={report.id} className="hover:shadow-md transition-shadow py-0 gap-0">
+                            <CardContent className="p-4">
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1 space-y-2">
                                         {/* Header */}

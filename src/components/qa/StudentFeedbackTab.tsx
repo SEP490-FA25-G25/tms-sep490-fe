@@ -162,11 +162,11 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
             </div>
 
             {/* Progress Overview */}
-            <Card>
-                <CardHeader>
+            <Card className="py-0 gap-0">
+                <CardHeader className="py-3">
                     <CardTitle>Tỷ Lệ Phản Hồi</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pb-4">
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <div className="flex justify-between text-sm">
@@ -195,11 +195,11 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
             </Card>
 
             {/* Filters */}
-            <Card>
-                <CardHeader>
+            <Card className="py-0 gap-0">
+                <CardHeader className="py-3">
                     <CardTitle>Bộ Lọc</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pb-4">
                     <div className="flex flex-wrap gap-4">
                         <div className="flex-1 min-w-[200px]">
                             <label className="text-sm font-medium mb-2 block">Giai đoạn</label>
@@ -236,8 +236,8 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
             </Card>
 
             {/* Feedback List */}
-            <Card>
-                        <CardHeader>
+            <Card className="py-0 gap-0">
+                        <CardHeader className="py-3">
                             <div className="flex justify-between items-center">
                                 <CardTitle>Danh Sách Phản Hồi ({filteredFeedbacks.length})</CardTitle>
                                 <Button asChild>

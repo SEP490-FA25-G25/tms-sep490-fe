@@ -125,11 +125,11 @@ export default function ClassDetailsPage() {
                     <TabsContent value="overview" className="space-y-6">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Basic Information */}
-                            <Card>
-                                <CardHeader>
+                            <Card className="py-0 gap-0">
+                                <CardHeader className="py-3">
                                     <CardTitle>Thông Tin Chung</CardTitle>
                                 </CardHeader>
-                                <CardContent className="space-y-4">
+                                <CardContent className="space-y-4 pb-4">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <p className="text-sm text-muted-foreground">Mã lớp</p>
@@ -160,11 +160,11 @@ export default function ClassDetailsPage() {
                             </Card>
 
                             {/* Performance Metrics */}
-                            <Card>
-                                <CardHeader>
+                            <Card className="py-0 gap-0">
+                                <CardHeader className="py-3">
                                     <CardTitle>Hiệu Suất</CardTitle>
                                 </CardHeader>
-                                <CardContent className="space-y-4">
+                                <CardContent className="space-y-4 pb-4">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <p className="text-sm text-muted-foreground">Tỷ lệ hoàn thành BT</p>
