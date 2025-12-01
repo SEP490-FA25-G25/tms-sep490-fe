@@ -61,6 +61,7 @@ import {
 import { toast } from "sonner";
 import { useGetAllBranchesQuery } from "@/store/services/branchApi";
 import { useAuth } from "@/hooks/useAuth";
+import { format } from "date-fns";
 
 const RESOURCE_TYPE_OPTIONS: { label: string; value: ResourceType | "ALL" }[] = [
     { label: "Tất cả loại", value: "ALL" },
@@ -271,6 +272,15 @@ export default function CenterHeadResourcesPage() {
                         {override && ` (${override})`}
                     </div>
                 );
+            },
+        },
+        {
+            accessorKey: "expiryDate",
+            header: "Ngày hết hạn",
+            cell: ({ row }) => {
+                const date = row.getValue("expiryDate") as string;
+                if (!date) return <div className="text-muted-foreground">—</div>;
+                return <div>{format(new Date(date), "dd/MM/yyyy")}</div>;
             },
         },
         {

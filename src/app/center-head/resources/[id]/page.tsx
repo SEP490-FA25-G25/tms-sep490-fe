@@ -325,6 +325,24 @@ export default function ResourceDetailPage() {
                                             </div>
                                         </div>
                                     </CardContent>
+                                    <CardContent className="space-y-4 pt-0">
+                                        <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                                            <div>
+                                                <span className="text-sm text-muted-foreground">License Type</span>
+                                                <div className="flex items-center mt-1">
+                                                    <span className="font-medium">{resource.licenseType || "—"}</span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <span className="text-sm text-muted-foreground">Ngày hết hạn</span>
+                                                <div className="flex items-center mt-1">
+                                                    <span className="font-medium">
+                                                        {resource.expiryDate ? format(new Date(resource.expiryDate), "dd/MM/yyyy", { locale: vi }) : "—"}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </CardContent>
                                 </Card>
                             )}
                         </div>

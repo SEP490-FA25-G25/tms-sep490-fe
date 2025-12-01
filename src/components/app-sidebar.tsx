@@ -220,6 +220,11 @@ const roleBasedNav = {
         icon: SchoolIcon,
       },
       {
+        title: "Đăng ký lịch giảng dạy",
+        url: "/teacher/availability",
+        icon: CalendarIcon,
+      },
+      {
         title: "Điểm danh buổi học",
         url: "/teacher/attendance",
         icon: CheckCircleIcon,
@@ -346,6 +351,11 @@ const roleBasedNav = {
         title: "Quản lý yêu cầu giáo viên",
         url: "/academic/teacher-requests",
         icon: ClipboardCheckIcon,
+      },
+      {
+        title: "Quản lý đợt cập nhật lịch dạy",
+        url: "/academic/teacher-availability",
+        icon: CalendarIcon,
       },
     ],
   },
