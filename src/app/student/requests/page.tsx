@@ -34,7 +34,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Pagination,
@@ -66,8 +68,8 @@ const REQUEST_TYPE_LABELS: Record<RequestType, string> = {
 
 const STATUS_FILTERS: Array<{ label: string; value: 'ALL' | RequestStatus }> = [
   { label: 'Tất cả trạng thái', value: 'ALL' },
-  { label: 'Đang chờ duyệt', value: 'PENDING' },
-  { label: 'Đã chấp thuận', value: 'APPROVED' },
+  { label: 'Chờ duyệt', value: 'PENDING' },
+  { label: 'Đã duyệt', value: 'APPROVED' },
   { label: 'Đã từ chối', value: 'REJECTED' },
   { label: 'Đã hủy', value: 'CANCELLED' },
 ]
@@ -162,32 +164,34 @@ export default function StudentRequestsPage() {
         }
       >
         <AppSidebar variant="inset" />
-        <SidebarInset>
+        <SidebarInset className="overflow-hidden">
           <SiteHeader />
-          <main className="flex flex-1 flex-col">
-            <header className="flex flex-col gap-2 border-b border-border px-6 py-5">
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col gap-2">
-                  <h1 className="text-2xl font-semibold tracking-tight">Yêu cầu của tôi</h1>
+          <main className="flex flex-1 flex-col overflow-hidden min-w-0">
+            <header className="flex flex-col gap-4 border-b border-border px-4 sm:px-6 py-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-1">
+                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Yêu cầu của tôi</h1>
                   <p className="text-sm text-muted-foreground">
                     Quản lý yêu cầu xin nghỉ, học bù, chuyển lớp
                   </p>
                 </div>
-                <Button onClick={() => setIsCreateOpen(true)} size="sm">
+                <Button onClick={() => setIsCreateOpen(true)} size="sm" className="w-full sm:w-auto">
                   <PlusIcon className="h-4 w-4" />
                   Tạo yêu cầu
                 </Button>
               </div>
             </header>
 
-            <div className="flex flex-1 flex-col gap-6 px-6 py-6">
+            <div className="flex flex-1 flex-col gap-6 px-4 sm:px-6 py-6 overflow-auto min-w-0">
 
             {/* Summary Stats */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Tổng số yêu cầu</CardTitle>
-                  <NotebookPenIcon className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                    <NotebookPenIcon className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{summary?.totalRequests ?? 0}</div>
@@ -196,46 +200,52 @@ export default function StudentRequestsPage() {
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Đang chờ</CardTitle>
-                  <ClockIcon className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium">Chờ duyệt</CardTitle>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-950/30">
+                    <ClockIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-sky-600">{summary?.pending ?? 0}</div>
+                  <div className="text-2xl font-bold">{summary?.pending ?? 0}</div>
                   <p className="text-xs text-muted-foreground">Chờ phê duyệt</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Đã duyệt</CardTitle>
-                  <CheckCircleIcon className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950/30">
+                    <CheckCircleIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-emerald-600">{summary?.approved ?? 0}</div>
+                  <div className="text-2xl font-bold">{summary?.approved ?? 0}</div>
                   <p className="text-xs text-muted-foreground">Được chấp thuận</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Bị từ chối</CardTitle>
-                  <XCircleIcon className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium">Đã từ chối</CardTitle>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-rose-950/30">
+                    <XCircleIcon className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-rose-600">{summary?.rejected ?? 0}</div>
+                  <div className="text-2xl font-bold">{summary?.rejected ?? 0}</div>
                   <p className="text-xs text-muted-foreground">Không được duyệt</p>
                 </CardContent>
               </Card>
             </div>
 
-            <div className="h-px bg-border" />
+            <Separator />
 
             {/* Filters */}
-            <div className="flex items-center justify-between gap-4">
-              {/* Search Input - Left side */}
-              <div className="flex-1 max-w-md">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              {/* Search Input */}
+              <div className="w-full lg:max-w-sm">
                 <div className="relative">
                   <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Tìm kiếm theo lý do, mã lớp, hoặc tên buổi học..."
+                    placeholder="Tìm kiếm theo lý do, mã lớp..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 pr-10"
@@ -251,8 +261,8 @@ export default function StudentRequestsPage() {
                 </div>
               </div>
 
-              {/* Filter Controls - Right side */}
-              <div className="flex items-center gap-2">
+              {/* Filter Controls */}
+              <div className="flex flex-wrap items-center gap-2">
                 <Select
                   value={typeFilter}
                   onValueChange={(value: TypeFilter) => {
@@ -260,7 +270,7 @@ export default function StudentRequestsPage() {
                     setPage(0)
                   }}
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[140px] h-9">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -279,7 +289,7 @@ export default function StudentRequestsPage() {
                     setPage(0)
                   }}
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[140px] h-9">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -305,13 +315,17 @@ export default function StudentRequestsPage() {
                   <Skeleton className="h-64 w-full" />
                 </div>
               ) : requests.length === 0 ? (
-                <div className="flex flex-col items-center gap-2 py-12 text-center">
-                  <NotebookPenIcon className="h-12 w-12 text-muted-foreground/50" />
-                  <p className="font-medium">Chưa có yêu cầu nào</p>
-                  <p className="text-sm text-muted-foreground">
-                    Tạo yêu cầu mới để xin nghỉ, học bù hoặc chuyển lớp
-                  </p>
-                </div>
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <NotebookPenIcon className="h-10 w-10" />
+                    </EmptyMedia>
+                    <EmptyTitle>Chưa có yêu cầu nào</EmptyTitle>
+                    <EmptyDescription>
+                      Tạo yêu cầu mới để xin nghỉ, học bù hoặc chuyển lớp.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
               ) : (
                 <DataTable
                   columns={columns}
@@ -329,7 +343,7 @@ export default function StudentRequestsPage() {
 
             {/* Pagination */}
             {pagination && (
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
                 <span className="text-muted-foreground">
                   Trang {pagination.number + 1} / {pagination.totalPages}
                 </span>
@@ -345,20 +359,29 @@ export default function StudentRequestsPage() {
                         disabled={pagination.number === 0}
                       />
                     </PaginationItem>
-                    {Array.from({ length: pagination.totalPages }, (_, i) => i).map((pageNum) => (
-                      <PaginationItem key={pageNum}>
-                        <PaginationLink
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            setPage(pageNum)
-                          }}
-                          isActive={pageNum === pagination.number}
-                        >
-                          {pageNum + 1}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
+                    {/* Show page numbers only on sm+ screens, limit to 5 pages */}
+                    <span className="hidden sm:contents">
+                      {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => {
+                        let pageNum = i;
+                        if (pagination.totalPages > 5 && pagination.number > 2) {
+                          pageNum = Math.min(pagination.number - 2 + i, pagination.totalPages - 1);
+                        }
+                        return (
+                          <PaginationItem key={pageNum}>
+                            <PaginationLink
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setPage(pageNum)
+                              }}
+                              isActive={pageNum === pagination.number}
+                            >
+                              {pageNum + 1}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      })}
+                    </span>
                     <PaginationItem>
                       <PaginationNext
                         href="#"
@@ -499,29 +522,27 @@ function CreateRequestDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl rounded-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
           <DialogTitle>Tạo yêu cầu mới</DialogTitle>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto pr-4 pb-4" style={{ height: 'calc(90vh - 8rem)' }}>
-          {activeType === null ? (
-            <TypeSelection onSelect={handleTypeSelect} />
-          ) : (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between border-b pb-2">
-                <div>
-                  <p className="text-xs text-muted-foreground">Loại yêu cầu</p>
-                  <h3 className="text-base font-semibold">{REQUEST_TYPE_LABELS[activeType]}</h3>
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => onSelectType(null)}>
-                  Chọn loại khác
-                </Button>
+        {activeType === null ? (
+          <TypeSelection onSelect={handleTypeSelect} />
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between border-b pb-2">
+              <div>
+                <p className="text-xs text-muted-foreground">Loại yêu cầu</p>
+                <h3 className="text-base font-semibold">{REQUEST_TYPE_LABELS[activeType]}</h3>
               </div>
-
-              <UnifiedRequestFlow type={activeType} onSuccess={onSuccess} />
+              <Button variant="ghost" size="sm" onClick={() => onSelectType(null)}>
+                Chọn loại khác
+              </Button>
             </div>
-          )}
-        </div>
+
+            <UnifiedRequestFlow type={activeType} onSuccess={onSuccess} />
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )
@@ -600,7 +621,7 @@ export function RequestDetail({ request }: { request: StudentRequest }) {
         </div>
       </div>
 
-      <div className="h-px bg-border" />
+      <Separator />
 
       {request.requestType !== 'MAKEUP' && (
         <>
@@ -612,7 +633,7 @@ export function RequestDetail({ request }: { request: StudentRequest }) {
             )}
           </div>
 
-          <div className="h-px bg-border" />
+          <Separator />
         </>
       )}
 
@@ -646,7 +667,7 @@ export function RequestDetail({ request }: { request: StudentRequest }) {
 
       {request.makeupSession && (
         <>
-          <div className="h-px bg-border" />
+          <Separator />
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Buổi học bù</p>
             <p className="mt-1 font-medium">
@@ -673,7 +694,7 @@ export function RequestDetail({ request }: { request: StudentRequest }) {
         </>
       )}
 
-      <div className="h-px bg-border" />
+      <Separator />
 
       <div>
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Lý do</p>
@@ -682,7 +703,7 @@ export function RequestDetail({ request }: { request: StudentRequest }) {
 
       {request.note && (
         <>
-          <div className="h-px bg-border" />
+          <Separator />
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Ghi chú</p>
             <p className="mt-1 text-sm text-muted-foreground">{request.note}</p>
@@ -692,7 +713,7 @@ export function RequestDetail({ request }: { request: StudentRequest }) {
 
       {request.rejectionReason && (
         <>
-          <div className="h-px bg-border" />
+          <Separator />
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Lý do từ chối</p>
             <p className="mt-1 text-sm text-muted-foreground">{request.rejectionReason}</p>
@@ -700,7 +721,7 @@ export function RequestDetail({ request }: { request: StudentRequest }) {
         </>
       )}
 
-      <div className="h-px bg-border" />
+      <Separator />
 
       <div className="space-y-2 text-sm text-muted-foreground">
         <div>

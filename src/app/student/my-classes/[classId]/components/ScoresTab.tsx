@@ -115,7 +115,7 @@ const ScoresTab: React.FC<ScoresTabProps> = ({ scores, isLoading, assessments })
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="bg-muted/50">
                     <TableHead>Bài kiểm tra</TableHead>
                     <TableHead>Loại</TableHead>
                     <TableHead>Điểm</TableHead>

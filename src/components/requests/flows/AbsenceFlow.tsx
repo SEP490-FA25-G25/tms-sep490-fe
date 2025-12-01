@@ -21,7 +21,6 @@ import {
   BaseFlowComponent,
   Section,
   ReasonInput,
-  NoteInput,
   SelectionCard,
   type AbsenceFlowProps
 } from '../UnifiedRequestFlow'
@@ -94,7 +93,6 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
   } | null>(null)
 
   const [reason, setReason] = useState('')
-  const [note, setNote] = useState('')
   const [reasonError, setReasonError] = useState<string | null>(null)
 
   // Data Fetching
@@ -231,8 +229,7 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
         requestType: 'ABSENCE',
         currentClassId: selectedSession.classId,
         targetSessionId: selectedSession.sessionId,
-        requestReason: reason.trim(),
-        note: note.trim() || undefined
+        requestReason: reason.trim()
       }).unwrap()
 
       handleSuccess()
@@ -445,11 +442,6 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
             }}
             placeholder="Nhập lý do xin nghỉ (ví dụ: Ốm, bận việc gia đình...)"
             error={reasonError}
-          />
-
-          <NoteInput
-            value={note}
-            onChange={setNote}
           />
         </Section>
       )}

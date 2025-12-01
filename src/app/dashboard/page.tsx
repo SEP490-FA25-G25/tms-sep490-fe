@@ -84,16 +84,14 @@ export default function DashboardPage() {
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-              <div className="px-4 lg:px-6">
-                <div className="flex flex-col gap-1">
-                  <h1 className="text-3xl font-bold tracking-tight">
-                    Chào mừng trở lại, {user?.fullName || 'Người dùng'}!
-                  </h1>
-                  <p className="text-muted-foreground">
-                    Đây là những gì đang diễn ra với tài khoản của bạn hôm nay.
-                  </p>
-                </div>
-              </div>
+              <header className="flex flex-col gap-2 border-b border-border px-4 lg:px-6 py-5 -mt-4 md:-mt-6 mb-4">
+                <h1 className="text-2xl font-semibold tracking-tight">
+                  Chào mừng trở lại, {user?.fullName || 'Người dùng'}!
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Đây là những gì đang diễn ra với tài khoản của bạn hôm nay.
+                </p>
+              </header>
               {getDashboardContent()}
             </div>
           </div>

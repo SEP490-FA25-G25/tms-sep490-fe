@@ -299,7 +299,7 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
                                         <div className="flex items-center space-x-3">
                                             <h4 className="font-semibold text-lg">{feedback.studentName}</h4>
                                             {feedback.isFeedback ? (
-                                                <Badge variant="default" className="bg-green-100 text-green-700">
+                                                <Badge variant="default" className="bg-emerald-100 text-emerald-700">
                                                     <CheckCircle className="h-3 w-3 mr-1" />
                                                     Đã phản hồi
                                                 </Badge>

@@ -5,8 +5,11 @@ import { SiteHeader } from '@/components/site-header'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { StudentRoute } from '@/components/ProtectedRoute'
 import { useGetMyProfileQuery } from '@/store/services/studentProfileApi';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import {
   Table,
@@ -28,6 +31,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { ENROLLMENT_STATUS_STYLES, USER_STATUS_STYLES, getStatusStyle } from '@/lib/status-colors';
 import { useMemo } from 'react';
 
 export default function StudentProfilePage() {
@@ -44,21 +48,6 @@ export default function StudentProfilePage() {
     profile?.enrollments.filter(e => e.enrollmentStatus === 'COMPLETED') || [],
     [profile]
   );
-
-  const getEnrollmentStatusColor = (status: string) => {
-    switch (status) {
-      case 'ENROLLED':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case 'COMPLETED':
-        return 'bg-slate-50 text-slate-700 border-slate-200';
-      case 'DROPPED':
-        return 'bg-red-50 text-red-700 border-red-200';
-      case 'WITHDRAWN':
-        return 'bg-amber-50 text-amber-700 border-amber-200';
-      default:
-        return 'bg-slate-50 text-slate-700 border-slate-200';
-    }
-  };
 
   const getEnrollmentStatusText = (status: string) => {
     switch (status) {
@@ -87,10 +76,52 @@ export default function StudentProfilePage() {
           <AppSidebar variant="inset" />
           <SidebarInset>
             <SiteHeader />
-            <div className="flex flex-1 flex-col items-center justify-center">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Đang tải thông tin hồ sơ...</p>
+            <div className="flex flex-1 flex-col">
+              <div className="min-h-screen bg-background">
+                {/* Header Skeleton */}
+                <div className="border-b bg-background">
+                  <div className="@container/main py-6 md:py-8">
+                    <div className="px-4 lg:px-6 max-w-7xl mx-auto space-y-8">
+                      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="space-y-3">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <Skeleton className="h-6 w-24" />
+                            <Skeleton className="h-6 w-20" />
+                          </div>
+                          <div className="space-y-1">
+                            <Skeleton className="h-8 w-48" />
+                            <Skeleton className="h-4 w-32" />
+                          </div>
+                          <div className="flex flex-wrap gap-4">
+                            <Skeleton className="h-4 w-28" />
+                            <Skeleton className="h-4 w-36" />
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                          <Skeleton className="h-10 w-36" />
+                          <Skeleton className="h-10 w-28" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Content Skeleton */}
+                <div className="@container/main py-6 md:py-8">
+                  <div className="px-4 lg:px-6 max-w-7xl mx-auto space-y-6">
+                    <Card className="p-6">
+                      <Skeleton className="h-6 w-40 mb-4" />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {Array.from({ length: 6 }).map((_, idx) => (
+                          <div key={idx} className="space-y-2">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-5 w-40" />
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                    <Skeleton className="h-64 w-full" />
+                  </div>
+                </div>
               </div>
             </div>
           </SidebarInset>
@@ -141,265 +172,293 @@ export default function StudentProfilePage() {
         <SidebarInset>
           <SiteHeader />
           <div className="flex flex-1 flex-col">
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b bg-background">
-        <div className="@container/main py-6 md:py-8">
-          <div className="px-4 lg:px-6 max-w-7xl mx-auto space-y-8">
-            {/* Row 1: Title + Actions */}
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-              <div className="space-y-3">
-                <div className="flex flex-wrap items-center gap-3">
-                  <Badge className={
-                    profile.status === 'ACTIVE'
-                      ? 'bg-success/10 text-success border-success/20'
-                      : profile.status === 'SUSPENDED'
-                      ? 'bg-destructive/10 text-destructive border-destructive/20'
-                      : 'bg-muted text-muted-foreground border-muted-foreground/20'
-                  }>
-                    {profile.status === 'ACTIVE' ? 'Đang hoạt động' : 'Ngưng hoạt động'}
-                  </Badge>
-                  <Badge variant="secondary">{profile.studentCode}</Badge>
-                </div>
-                <div className="space-y-1">
-                  <h1 className="text-2xl font-semibold tracking-tight">
-                    {profile.fullName}
-                  </h1>
-                  <p className="text-sm text-muted-foreground">{profile.email}</p>
-                </div>
-                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1.5">
-                    <Phone className="h-4 w-4" />
-                    <span>{profile.phone || 'Chưa cập nhật'}</span>
+            <div className="min-h-screen bg-background">
+              {/* Header */}
+              <div className="border-b bg-background">
+                <div className="@container/main py-6 md:py-8">
+                  <div className="px-4 lg:px-6 max-w-7xl mx-auto space-y-8">
+                    {/* Row 1: Title + Actions */}
+                    <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="flex gap-6">
+                        {/* Avatar */}
+                        <Avatar className="h-24 w-24 border-2 border-background shadow-lg">
+                          <AvatarImage src={profile.avatarUrl || ""} alt={profile.fullName} />
+                          <AvatarFallback className="text-2xl font-semibold">
+                            {profile.fullName?.charAt(0)?.toUpperCase() || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <div className="space-y-3">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <Badge className={getStatusStyle(USER_STATUS_STYLES, profile.status)}>
+                              {profile.status === 'ACTIVE' ? 'Đang hoạt động' : 'Ngưng hoạt động'}
+                            </Badge>
+                            <Badge variant="secondary">{profile.studentCode}</Badge>
+                          </div>
+                          <div className="space-y-1">
+                            <h1 className="text-3xl font-bold tracking-tight">
+                              {profile.fullName}
+                            </h1>
+                            <p className="text-sm text-muted-foreground">{profile.email}</p>
+                          </div>
+                          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1.5">
+                              <Phone className="h-4 w-4" />
+                              <span>{profile.phone || 'Chưa cập nhật'}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <MapPin className="h-4 w-4" />
+                              <span>{profile.branchName}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Facebook className="h-4 w-4" />
+                              {profile.facebookUrl ? (
+                                <a
+                                  className="text-primary hover:underline"
+                                  href={profile.facebookUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  Facebook
+                                </a>
+                              ) : (
+                                <span>Chưa cập nhật</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-3">
+                        <Button>Chỉnh sửa thông tin</Button>
+                        <Button variant="ghost">Đổi mật khẩu</Button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <MapPin className="h-4 w-4" />
-                    <span>{profile.branchName}</span>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="@container/main py-6 md:py-8">
+                <div className="px-4 lg:px-6 max-w-7xl mx-auto space-y-6">
+
+                  {/* Personal Info Section */}
+                  <Card className="p-6">
+                    <h2 className="text-lg font-semibold mb-4">Thông tin cá nhân</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                          <User className="h-4 w-4" />
+                          <span>Mã sinh viên</span>
+                        </div>
+                        <p className="text-base text-foreground">{profile.studentCode}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                          <User className="h-4 w-4" />
+                          <span>Họ tên</span>
+                        </div>
+                        <p className="text-base text-foreground">{profile.fullName}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                          <Mail className="h-4 w-4" />
+                          <span>Email</span>
+                        </div>
+                        <p className="text-base text-foreground">{profile.email}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                          <Phone className="h-4 w-4" />
+                          <span>Số điện thoại</span>
+                        </div>
+                        <p className="text-base text-foreground">{profile.phone || 'Chưa cập nhật'}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                          <User className="h-4 w-4" />
+                          <span>Giới tính</span>
+                        </div>
+                        <p className="text-base text-foreground">
+                          {profile.gender === 'MALE' ? 'Nam' : profile.gender === 'FEMALE' ? 'Nữ' : 'Khác'}
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          <span>Ngày sinh</span>
+                        </div>
+                        <p className="text-base text-foreground">
+                          {profile.dateOfBirth ?
+                            new Date(profile.dateOfBirth).toLocaleDateString('vi-VN') :
+                            'Chưa cập nhật'
+                          }
+                        </p>
+                      </div>
+                      <div className="space-y-1 md:col-span-2">
+                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                          <MapPin className="h-4 w-4" />
+                          <span>Địa chỉ</span>
+                        </div>
+                        <p className="text-base text-foreground">{profile.address || 'Chưa cập nhật'}</p>
+                      </div>
+                      <div className="space-y-1 md:col-span-2">
+                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                          <Facebook className="h-4 w-4" />
+                          <span>Facebook</span>
+                        </div>
+                        {profile.facebookUrl ? (
+                          <a
+                            href={profile.facebookUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-base text-primary hover:underline break-all"
+                          >
+                            {profile.facebookUrl}
+                          </a>
+                        ) : (
+                          <p className="text-base text-muted-foreground">Chưa cập nhật</p>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+
+                  {/* Current Classes Table */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-lg font-semibold">Lớp đang học</h2>
+                      <span className="text-sm text-muted-foreground">
+                        {currentClasses.length} lớp
+                      </span>
+                    </div>
+
+                    {currentClasses.length === 0 ? (
+                      <Empty>
+                        <EmptyHeader>
+                          <EmptyMedia variant="icon">
+                            <FileText className="h-10 w-10" />
+                          </EmptyMedia>
+                          <EmptyTitle>Chưa có lớp học</EmptyTitle>
+                          <EmptyDescription>
+                            Bạn chưa đăng ký lớp học nào đang hoạt động.
+                          </EmptyDescription>
+                        </EmptyHeader>
+                      </Empty>
+                    ) : (
+                      <Card className="overflow-hidden p-0">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-muted/50">
+                              <TableHead className="w-32">Mã lớp</TableHead>
+                              <TableHead>Tên lớp</TableHead>
+                              <TableHead className="w-48">Khóa học</TableHead>
+                              <TableHead className="w-40">Chi nhánh</TableHead>
+                              <TableHead className="w-32 text-center">Ngày ghi danh</TableHead>
+                              <TableHead className="w-48 text-center">Thời gian học</TableHead>
+                              <TableHead className="w-32 text-center">Trạng thái</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {currentClasses.map((cls) => (
+                              <TableRow
+                                key={cls.classId}
+                                className="cursor-pointer hover:bg-muted/50"
+                                onClick={() => navigate(`/student/my-classes/${cls.classId}`)}
+                              >
+                                <TableCell className="font-medium">{cls.classCode}</TableCell>
+                                <TableCell>{cls.className}</TableCell>
+                                <TableCell className="text-muted-foreground">
+                                  {cls.courseName}
+                                </TableCell>
+                                <TableCell className="text-sm">{cls.branchName}</TableCell>
+                                <TableCell className="text-sm text-center">
+                                  {new Date(cls.enrolledAt).toLocaleDateString('vi-VN')}
+                                </TableCell>
+                                <TableCell className="text-sm text-center">
+                                  {new Date(cls.startDate).toLocaleDateString('vi-VN')} - {new Date(cls.plannedEndDate).toLocaleDateString('vi-VN')}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Badge className={cn('text-xs', getStatusStyle(ENROLLMENT_STATUS_STYLES, cls.enrollmentStatus))}>
+                                    {getEnrollmentStatusText(cls.enrollmentStatus)}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </Card>
+                    )}
                   </div>
-                </div>
-              </div>
-              <div className="flex flex-col gap-3">
-                <Button>Chỉnh sửa thông tin</Button>
-                <Button variant="ghost">Đổi mật khẩu</Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Content */}
-      <div className="@container/main py-6 md:py-8">
-        <div className="px-4 lg:px-6 max-w-7xl mx-auto space-y-6">
+                  {/* Completed Classes Table */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-lg font-semibold">Lịch sử lớp học</h2>
+                      <span className="text-sm text-muted-foreground">
+                        {completedClasses.length} lớp đã hoàn thành
+                      </span>
+                    </div>
 
-          {/* Personal Info Section */}
-          <div className="rounded-lg border bg-muted/10 p-6">
-            <h2 className="text-lg font-semibold mb-4">Thông tin cá nhân</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <User className="h-4 w-4" />
-                  <span>Mã sinh viên</span>
-                </div>
-                <p className="text-base text-foreground">{profile.studentCode}</p>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <User className="h-4 w-4" />
-                  <span>Họ tên</span>
-                </div>
-                <p className="text-base text-foreground">{profile.fullName}</p>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Mail className="h-4 w-4" />
-                  <span>Email</span>
-                </div>
-                <p className="text-base text-foreground">{profile.email}</p>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Phone className="h-4 w-4" />
-                  <span>Số điện thoại</span>
-                </div>
-                <p className="text-base text-foreground">{profile.phone || 'Chưa cập nhật'}</p>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <User className="h-4 w-4" />
-                  <span>Giới tính</span>
-                </div>
-                <p className="text-base text-foreground">
-                  {profile.gender === 'MALE' ? 'Nam' : profile.gender === 'FEMALE' ? 'Nữ' : 'Khác'}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>Ngày sinh</span>
-                </div>
-                <p className="text-base text-foreground">
-                  {profile.dateOfBirth ?
-                    new Date(profile.dateOfBirth).toLocaleDateString('vi-VN') :
-                    'Chưa cập nhật'
-                  }
-                </p>
-              </div>
-              <div className="space-y-1 md:col-span-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  <span>Địa chỉ</span>
-                </div>
-                <p className="text-base text-foreground">{profile.address || 'Chưa cập nhật'}</p>
-              </div>
-              {profile.facebookUrl && (
-                <div className="space-y-1 md:col-span-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <Facebook className="h-4 w-4" />
-                    <span>Facebook</span>
+                    {completedClasses.length === 0 ? (
+                      <Empty>
+                        <EmptyHeader>
+                          <EmptyMedia variant="icon">
+                            <FileText className="h-10 w-10" />
+                          </EmptyMedia>
+                          <EmptyTitle>Chưa có lớp đã hoàn thành</EmptyTitle>
+                          <EmptyDescription>
+                            Bạn chưa hoàn thành lớp học nào.
+                          </EmptyDescription>
+                        </EmptyHeader>
+                      </Empty>
+                    ) : (
+                      <Card className="overflow-hidden p-0">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-muted/50">
+                              <TableHead className="w-32">Mã lớp</TableHead>
+                              <TableHead>Tên lớp</TableHead>
+                              <TableHead className="w-48">Khóa học</TableHead>
+                              <TableHead className="w-40">Chi nhánh</TableHead>
+                              <TableHead className="w-32 text-center">Ngày ghi danh</TableHead>
+                              <TableHead className="w-48 text-center">Thời gian học</TableHead>
+                              <TableHead className="w-32 text-center">Trạng thái</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {completedClasses.map((cls) => (
+                              <TableRow
+                                key={cls.classId}
+                                className="cursor-pointer hover:bg-muted/50"
+                                onClick={() => navigate(`/student/my-classes/${cls.classId}`)}
+                              >
+                                <TableCell className="font-medium">{cls.classCode}</TableCell>
+                                <TableCell>{cls.className}</TableCell>
+                                <TableCell className="text-muted-foreground">
+                                  {cls.courseName}
+                                </TableCell>
+                                <TableCell className="text-sm">{cls.branchName}</TableCell>
+                                <TableCell className="text-sm text-center">
+                                  {new Date(cls.enrolledAt).toLocaleDateString('vi-VN')}
+                                </TableCell>
+                                <TableCell className="text-sm text-center">
+                                  {new Date(cls.startDate).toLocaleDateString('vi-VN')} - {new Date(cls.plannedEndDate).toLocaleDateString('vi-VN')}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Badge className={cn('text-xs', getStatusStyle(ENROLLMENT_STATUS_STYLES, cls.enrollmentStatus))}>
+                                    {getEnrollmentStatusText(cls.enrollmentStatus)}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </Card>
+                    )}
                   </div>
-                  <p className="text-base text-foreground">{profile.facebookUrl}</p>
+
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* Current Classes Table */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Lớp đang học</h2>
-              <span className="text-sm text-muted-foreground">
-                {currentClasses.length} lớp
-              </span>
-            </div>
-
-            {currentClasses.length === 0 ? (
-              <Empty>
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <FileText className="h-10 w-10" />
-                  </EmptyMedia>
-                  <EmptyTitle>Chưa có lớp học</EmptyTitle>
-                  <EmptyDescription>
-                    Bạn chưa đăng ký lớp học nào đang hoạt động.
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            ) : (
-              <div className="rounded-lg border overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead className="w-32">Mã lớp</TableHead>
-                      <TableHead>Tên lớp</TableHead>
-                      <TableHead className="w-48">Khóa học</TableHead>
-                      <TableHead className="w-40">Chi nhánh</TableHead>
-                      <TableHead className="w-32 text-center">Ngày ghi danh</TableHead>
-                      <TableHead className="w-48 text-center">Thời gian học</TableHead>
-                      <TableHead className="w-32 text-center">Trạng thái</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentClasses.map((cls) => (
-                      <TableRow
-                        key={cls.classId}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => navigate(`/student/my-classes/${cls.classId}`)}
-                      >
-                        <TableCell className="font-medium">{cls.classCode}</TableCell>
-                        <TableCell>{cls.className}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {cls.courseName}
-                        </TableCell>
-                        <TableCell className="text-sm">{cls.branchName}</TableCell>
-                        <TableCell className="text-sm text-center">
-                          {new Date(cls.enrolledAt).toLocaleDateString('vi-VN')}
-                        </TableCell>
-                        <TableCell className="text-sm text-center">
-                          {new Date(cls.startDate).toLocaleDateString('vi-VN')} - {new Date(cls.plannedEndDate).toLocaleDateString('vi-VN')}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge className={cn('text-xs', getEnrollmentStatusColor(cls.enrollmentStatus))}>
-                            {getEnrollmentStatusText(cls.enrollmentStatus)}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
               </div>
-            )}
-          </div>
-
-          {/* Completed Classes Table */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Lịch sử lớp học</h2>
-              <span className="text-sm text-muted-foreground">
-                {completedClasses.length} lớp đã hoàn thành
-              </span>
             </div>
-
-            {completedClasses.length === 0 ? (
-              <Empty>
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <FileText className="h-10 w-10" />
-                  </EmptyMedia>
-                  <EmptyTitle>Chưa có lớp đã hoàn thành</EmptyTitle>
-                  <EmptyDescription>
-                    Bạn chưa hoàn thành lớp học nào.
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            ) : (
-              <div className="rounded-lg border overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead className="w-32">Mã lớp</TableHead>
-                      <TableHead>Tên lớp</TableHead>
-                      <TableHead className="w-48">Khóa học</TableHead>
-                      <TableHead className="w-40">Chi nhánh</TableHead>
-                      <TableHead className="w-32 text-center">Ngày ghi danh</TableHead>
-                      <TableHead className="w-48 text-center">Thời gian học</TableHead>
-                      <TableHead className="w-32 text-center">Trạng thái</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {completedClasses.map((cls) => (
-                      <TableRow
-                        key={cls.classId}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => navigate(`/student/my-classes/${cls.classId}`)}
-                      >
-                        <TableCell className="font-medium">{cls.classCode}</TableCell>
-                        <TableCell>{cls.className}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {cls.courseName}
-                        </TableCell>
-                        <TableCell className="text-sm">{cls.branchName}</TableCell>
-                        <TableCell className="text-sm text-center">
-                          {new Date(cls.enrolledAt).toLocaleDateString('vi-VN')}
-                        </TableCell>
-                        <TableCell className="text-sm text-center">
-                          {new Date(cls.startDate).toLocaleDateString('vi-VN')} - {new Date(cls.plannedEndDate).toLocaleDateString('vi-VN')}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge className={cn('text-xs', getEnrollmentStatusColor(cls.enrollmentStatus))}>
-                            {getEnrollmentStatusText(cls.enrollmentStatus)}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </div>
-
-        </div>
-      </div>
-    </div>
           </div>
         </SidebarInset>
       </SidebarProvider>

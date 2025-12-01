@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/hooks/useAuth"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { getDefaultRouteForUser } from "@/utils/role-routes"
 
 export function LoginForm({
   className,
@@ -49,8 +50,9 @@ export function LoginForm({
     try {
       const result = await login(email, password)
 
-      if (result.success) {
-        navigate("/dashboard")
+      if (result.success && result.user?.roles) {
+        const defaultRoute = getDefaultRouteForUser(result.user.roles)
+        navigate(defaultRoute)
       } else {
         setErrors({ email: result.error })
       }

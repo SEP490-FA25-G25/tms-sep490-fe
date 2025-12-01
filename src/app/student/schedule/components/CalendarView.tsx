@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { format, addDays, parseISO, isToday } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { CALENDAR_SESSION_VARIANTS } from '@/lib/status-colors'
 import {
   type DayOfWeek,
   type SessionSummaryDTO,
@@ -26,14 +27,6 @@ const DAY_LABELS: Record<DayOfWeek, string> = {
   SUNDAY: 'CN',
 }
 
-// Colors for different session statuses or types
-const SESSION_VARIANTS: Record<string, { bg: string; border: string; text: string }> = {
-  PLANNED: { bg: 'bg-sky-50', border: 'border-sky-200', text: 'text-sky-700' },
-  DONE: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700' },
-  CANCELLED: { bg: 'bg-rose-50', border: 'border-rose-200', text: 'text-rose-700' },
-  // Fallback
-  DEFAULT: { bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-700' },
-}
 
 const DEFAULT_START_HOUR = 7
 const DEFAULT_END_HOUR = 22
@@ -47,10 +40,10 @@ const parseTimeToMinutes = (timeStr?: string) => {
 
 export function CalendarView({ scheduleData, onSessionClick, className }: CalendarViewProps) {
   const startDate = useMemo(() => parseISO(scheduleData.weekStart), [scheduleData.weekStart])
-  
+
   // Current time indicator
   const [currentTime, setCurrentTime] = useState(new Date())
-  
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date())
@@ -110,26 +103,26 @@ export function CalendarView({ scheduleData, onSessionClick, className }: Calend
     const currentHour = now.getHours()
     const currentMinute = now.getMinutes()
     const totalMinutes = currentHour * 60 + currentMinute
-    
+
     // Check if current time is within the displayed range
     if (currentHour < startHour || currentHour > endHour) {
       return null
     }
-    
+
     // Find which day column is today
     const todayIndex = DAYS.findIndex((_, index) => {
       const date = addDays(startDate, index)
       return isToday(date)
     })
-    
+
     if (todayIndex === -1) {
       return null // Today is not in current week view
     }
-    
+
     const offsetFromStart = totalMinutes - startHour * 60
     const topPosition = (offsetFromStart / 60) * HOUR_HEIGHT
     const timeLabel = format(now, 'H:mm')
-    
+
     return {
       top: topPosition,
       dayIndex: todayIndex,
@@ -140,14 +133,14 @@ export function CalendarView({ scheduleData, onSessionClick, className }: Calend
   return (
     <div className={cn("flex h-full min-h-0 flex-col overflow-hidden rounded-xl border bg-background shadow-sm", className)}>
       {/* Calendar Header (Days) */}
-      <div className="grid grid-cols-8 border-b divide-x">
+      <div className="grid grid-cols-8 border-b divide-x bg-muted/40">
         <div className="p-4 text-center text-xs font-medium text-muted-foreground">
           GIỜ
         </div>
         {DAYS.map((day, index) => {
           const date = addDays(startDate, index)
           const isToday = format(new Date(), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
-          
+
           return (
             <div key={day} className={cn("flex flex-col items-center justify-center p-3", isToday && "bg-muted/30")}>
               <span className={cn("text-xs font-medium uppercase", isToday ? "text-primary" : "text-muted-foreground")}>
@@ -165,11 +158,11 @@ export function CalendarView({ scheduleData, onSessionClick, className }: Calend
       </div>
 
       {/* Calendar Body (Scrollable) */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <div className="flex-1 overflow-y-auto min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <div className="relative grid grid-cols-8 divide-x" style={{ height: `${(endHour - startHour + 1) * HOUR_HEIGHT}px` }}>
-          
+
           {/* Time Column */}
-          <div className="relative border-r bg-muted/5">
+          <div className="relative border-r bg-muted/30">
             {hours.map((hour) => (
               <div
                 key={hour}
@@ -183,7 +176,7 @@ export function CalendarView({ scheduleData, onSessionClick, className }: Calend
             ))}
             {/* Current time label in time column */}
             {currentTimeIndicator && (
-              <div 
+              <div
                 className="absolute right-0 z-20 flex items-center"
                 style={{ top: `${currentTimeIndicator.top}px`, transform: 'translateY(-50%)' }}
               >
@@ -209,11 +202,11 @@ export function CalendarView({ scheduleData, onSessionClick, className }: Calend
 
               {/* Current time indicator line */}
               {currentTimeIndicator && (
-                <div 
+                <div
                   className="absolute left-0 right-0 z-10 pointer-events-none"
                   style={{ top: `${currentTimeIndicator.top}px` }}
                 >
-                  <div 
+                  <div
                     className="w-full border-t-2 border-dotted border-primary/60"
                   />
                 </div>
@@ -221,16 +214,17 @@ export function CalendarView({ scheduleData, onSessionClick, className }: Calend
 
               {/* Events */}
               {scheduleData.schedule[day]?.map((session) => {
-                const variant = SESSION_VARIANTS[session.sessionStatus] || SESSION_VARIANTS.DEFAULT
-                
+                const variant = CALENDAR_SESSION_VARIANTS[session.sessionStatus as keyof typeof CALENDAR_SESSION_VARIANTS] || CALENDAR_SESSION_VARIANTS.DEFAULT
+
                 return (
                   <button
                     key={session.sessionId}
                     onClick={() => onSessionClick(session.sessionId)}
                     className={cn(
-                      "absolute inset-x-1 rounded-md border p-2 text-left text-xs transition-all hover:brightness-95 hover:z-10 focus:ring-2 focus:ring-primary focus:outline-none",
+                      "absolute inset-x-1 rounded-md border p-2 text-left text-xs transition-all hover:brightness-95 hover:z-10 focus:outline-none border-l-4 cursor-pointer",
                       variant.bg,
                       variant.border,
+                      variant.borderLeft,
                       variant.text
                     )}
                     style={getEventStyle(session)}
@@ -241,7 +235,7 @@ export function CalendarView({ scheduleData, onSessionClick, className }: Calend
                       <span>{session.startTime.slice(0, 5)} - {session.endTime.slice(0, 5)}</span>
                     </div>
                     {session.isMakeup && (
-                       <Badge variant="secondary" className="mt-1 h-4 px-1 text-[10px]">Buổi bù</Badge>
+                      <Badge variant="secondary" className="mt-1 h-4 px-1 text-[10px]">Buổi bù</Badge>
                     )}
                   </button>
                 )

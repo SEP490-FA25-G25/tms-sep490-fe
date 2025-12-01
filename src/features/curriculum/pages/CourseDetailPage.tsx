@@ -126,9 +126,9 @@ export default function CourseDetailPage() {
         }
         switch (status) {
             case "SUBMITTED":
-                return <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200 px-3 py-1 text-sm">Chờ phê duyệt</Badge>;
+                return <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-200 px-3 py-1 text-sm">Chờ duyệt</Badge>;
             case "ACTIVE":
-                return <Badge variant="default" className="bg-green-600 hover:bg-green-700 px-3 py-1 text-sm">Đã phê duyệt</Badge>;
+                return <Badge variant="default" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-1 text-sm">Đã duyệt</Badge>;
             case "DRAFT":
                 return <Badge variant="outline" className="px-3 py-1 text-sm">Nháp</Badge>;
             default:
@@ -384,9 +384,9 @@ export default function CourseDetailPage() {
                                                         </TableCell>
                                                         <TableCell>
                                                             <div className="flex flex-wrap gap-1">
-                                                                {session.skillSets?.map((skill) => (
-                                                                    <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>
-                                                                ))}
+                                                                {session.skill && (
+                                                                    <Badge variant="secondary" className="text-xs">{session.skill}</Badge>
+                                                                )}
                                                             </div>
                                                         </TableCell>
                                                     </TableRow>

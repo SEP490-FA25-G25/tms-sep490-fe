@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom"
-import { ArrowLeft, BellIcon, UserCircleIcon } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -78,7 +78,7 @@ export function SiteHeader() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2 px-2">
                 <Avatar className="h-7 w-7">
-                  <AvatarImage src="/avatars/default.jpg" alt={user?.fullName || "User"} />
+                  <AvatarImage src={user?.avatarUrl || ""} alt={user?.fullName || "User"} />
                   <AvatarFallback className="text-xs">
                     {user?.fullName?.charAt(0) || "U"}
                   </AvatarFallback>
@@ -104,14 +104,6 @@ export function SiteHeader() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => navigate("/profile")}>
-                  <UserCircleIcon className="mr-2 h-4 w-4" />
-                  Tài khoản
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/notifications")}>
-                  <BellIcon className="mr-2 h-4 w-4" />
-                  Thông báo
-                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <div className="flex items-center justify-between w-full cursor-default">
                     <span>Chế độ tối</span>

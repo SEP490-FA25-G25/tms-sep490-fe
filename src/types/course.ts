@@ -26,7 +26,7 @@ export interface Session {
     sequence?: number;
     topic: string;
     studentTask: string;
-    skillSets: string[];
+    skill: string;
     cloIds: string[];
 }
 
@@ -43,7 +43,7 @@ export interface Assessment {
     type: "QUIZ" | "MIDTERM" | "FINAL" | "MOCK_TEST" | "PHASE_TEST" | "PLACEMENT_TEST" | "HOMEWORK" | "ORAL" | "PRACTICE" | "OTHER";
     durationMinutes?: number;
     maxScore?: number;
-    skills?: string[];
+    skill?: string;
     description?: string;
     note?: string;
     cloIds: string[];

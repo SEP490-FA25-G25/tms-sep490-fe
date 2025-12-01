@@ -40,6 +40,8 @@ import authSlice, {
   selectHasAllRoles,
 } from "./slices/authSlice";
 
+import { teacherAvailabilityApi } from "./services/teacherAvailabilityApi";
+
 export const store = configureStore({
   reducer: {
     auth: authSlice,
@@ -59,6 +61,7 @@ export const store = configureStore({
     [teacherScheduleApi.reducerPath]: teacherScheduleApi.reducer,
     [teacherGradeApi.reducerPath]: teacherGradeApi.reducer,
     [teacherProfileApi.reducerPath]: teacherProfileApi.reducer,
+    [teacherAvailabilityApi.reducerPath]: teacherAvailabilityApi.reducer,
     [notificationApi.reducerPath]: notificationApi.reducer,
     [userApi.reducerPath]: userApi.reducer,
     [policyApi.reducerPath]: policyApi.reducer,
@@ -100,6 +103,7 @@ export const store = configureStore({
       .concat(teacherScheduleApi.middleware)
       .concat(teacherGradeApi.middleware)
       .concat(teacherProfileApi.middleware)
+      .concat(teacherAvailabilityApi.middleware)
       .concat(notificationApi.middleware)
       .concat(userApi.middleware)
       .concat(policyApi.middleware)

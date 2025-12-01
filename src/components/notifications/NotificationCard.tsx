@@ -1,22 +1,17 @@
 import { useNavigate } from "react-router-dom"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   CheckIcon,
   TrashIcon,
-  ExternalLinkIcon,
+  MoreHorizontalIcon,
   ClockIcon,
 } from "lucide-react"
 import {
@@ -31,6 +26,7 @@ import {
   getPriorityConfig,
   isNotificationRead,
 } from "@/lib/notification-utils"
+import { cn } from "@/lib/utils"
 
 interface NotificationCardProps {
   notification: Notification
@@ -42,13 +38,12 @@ export function NotificationCard({ notification }: NotificationCardProps) {
   const [deleteNotification] = useDeleteNotificationMutation()
 
   const isRead = isNotificationRead(notification)
-  const actionText = notification.actionText || "Xem chi tiết"
   const typeConfig = getNotificationTypeConfig(notification.type)
   const priorityConfigValue = getPriorityConfig(notification.priority)
   const TypeIcon = typeConfig.icon
 
-  const handleMarkAsRead = async (e: React.MouseEvent) => {
-    e.stopPropagation()
+  const handleMarkAsRead = async (e?: React.MouseEvent) => {
+    e?.stopPropagation()
     try {
       await markAsRead(notification.id).unwrap()
       toast.success("Đã đánh dấu là đã đọc")
@@ -57,7 +52,8 @@ export function NotificationCard({ notification }: NotificationCardProps) {
     }
   }
 
-  const handleDelete = async () => {
+  const handleDelete = async (e?: React.MouseEvent) => {
+    e?.stopPropagation()
     try {
       await deleteNotification(notification.id).unwrap()
       toast.success("Đã xóa thông báo")
@@ -84,113 +80,92 @@ export function NotificationCard({ notification }: NotificationCardProps) {
 
   return (
     <Card
-      className={`cursor-pointer transition-all hover:shadow-md ${
-        !isRead ? 'bg-muted/30 border-primary/50' : ''
-      } ${priorityConfigValue.className}`}
+      className={cn(
+        "group relative overflow-hidden transition-all duration-200 border-none shadow-sm hover:shadow-md",
+        !isRead ? "bg-blue-50/40 dark:bg-blue-950/10" : "bg-card",
+        "cursor-pointer"
+      )}
       onClick={handleCardClick}
-      role="article"
-      aria-label={`Thông báo: ${notification.title}${!isRead ? ' - Chưa đọc' : ''}`}
     >
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3 flex-1">
-            <div className={`p-2 rounded-full ${typeConfig.bgClassName} flex-shrink-0`}>
-              <TypeIcon className={`h-4 w-4 ${typeConfig.className}`} aria-hidden="true" />
-            </div>
-
-            <div className="flex-1 min-w-0 space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <CardTitle className={`text-base truncate ${!isRead ? 'font-semibold' : ''}`}>
-                  {notification.title}
-                </CardTitle>
-                {!isRead && (
-                  <div 
-                    className="h-2 w-2 rounded-full bg-blue-600 flex-shrink-0"
-                    aria-label="Chưa đọc"
-                  />
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs">
-                  {typeConfig.label}
-                </Badge>
-                <Badge variant={priorityConfigValue.badgeVariant} className="text-xs">
-                  {priorityConfigValue.label}
-                </Badge>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <ClockIcon className="h-3 w-3" aria-hidden="true" />
-              <time dateTime={notification.createdAt}>
-                {formatTimeAgo(notification.createdAt)}
-              </time>
-            </div>
+      <CardContent className="p-4 flex gap-4">
+        {/* Icon / Status Indicator */}
+        <div className="flex-shrink-0 pt-1">
+          <div className={cn(
+            "h-10 w-10 rounded-full flex items-center justify-center transition-colors",
+            !isRead ? "bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400" : "bg-muted text-muted-foreground"
+          )}>
+            <TypeIcon className="h-5 w-5" />
           </div>
         </div>
-      </CardHeader>
 
-      <CardContent className="pt-0">
-        <CardDescription className="text-sm mb-3 line-clamp-3">
-          {notification.message}
-        </CardDescription>
+        {/* Content */}
+        <div className="flex-1 min-w-0 space-y-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="space-y-1">
+              <h4 className={cn(
+                "text-sm font-medium leading-none",
+                !isRead ? "text-foreground font-semibold" : "text-muted-foreground"
+              )}>
+                {notification.title}
+              </h4>
+              <p className="text-sm text-muted-foreground line-clamp-2">
+                {notification.message}
+              </p>
+            </div>
 
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+            {/* Unread Dot */}
             {!isRead && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleMarkAsRead}
-                className="h-8 px-3 text-xs"
-              >
-                <CheckIcon className="h-3 w-3 mr-1" aria-hidden="true" />
-                Đánh dấu đã đọc
-              </Button>
-            )}
-
-            {notification.actionUrl && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 px-3 text-xs"
-              >
-                <ExternalLinkIcon className="h-3 w-3 mr-1" aria-hidden="true" />
-                {actionText}
-              </Button>
+              <div className="h-2 w-2 rounded-full bg-blue-600 flex-shrink-0 mt-1.5" />
             )}
           </div>
 
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
+          <div className="flex items-center gap-2 pt-2">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <ClockIcon className="h-3 w-3" />
+              <span>{formatTimeAgo(notification.createdAt)}</span>
+            </div>
+
+            {notification.priority !== 'LOW' && notification.priority !== 'MEDIUM' && (
+              <Badge variant={priorityConfigValue.badgeVariant} className="text-[10px] h-5 px-1.5 font-normal">
+                {priorityConfigValue.label}
+              </Badge>
+            )}
+            <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-normal text-muted-foreground">
+              {typeConfig.label}
+            </Badge>
+          </div>
+        </div>
+
+        {/* Actions (Hover only on desktop) */}
+        <div className="flex-shrink-0 self-start opacity-0 group-hover:opacity-100 transition-opacity">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
+                className="h-8 w-8 -mt-1 -mr-2 text-muted-foreground hover:text-foreground"
                 onClick={(e) => e.stopPropagation()}
-                className="h-8 px-3 text-xs text-destructive hover:text-destructive"
-                aria-label="Xóa thông báo"
               >
-                <TrashIcon className="h-3 w-3" aria-hidden="true" />
+                <MoreHorizontalIcon className="h-4 w-4" />
+                <span className="sr-only">Thao tác</span>
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Xóa thông báo</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Bạn có chắc chắn muốn xóa thông báo này? Hành động này không thể hoàn tác.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Hủy</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>
-                  Xóa
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {!isRead && (
+                <DropdownMenuItem onClick={handleMarkAsRead}>
+                  <CheckIcon className="h-4 w-4 mr-2" />
+                  Đánh dấu đã đọc
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem
+                onClick={handleDelete}
+                className="text-destructive focus:text-destructive"
+              >
+                <TrashIcon className="h-4 w-4 mr-2" />
+                Xóa thông báo
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardContent>
     </Card>

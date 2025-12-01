@@ -54,11 +54,11 @@ export const qaApi = createApi({
         url: '/qa/classes',
         params: { branchIds, status, search, page, size, sort, sortDir },
       }),
-      transformResponse: (response: { data: { content: QAClassListItemDTO[]; totalElements: number; number: number; size: number } }) => ({
+      transformResponse: (response: { data: { content: QAClassListItemDTO[]; page: { totalElements: number; number: number; size: number } } }) => ({
         data: response.data.content,
-        total: response.data.totalElements,
-        page: response.data.number,
-        size: response.data.size
+        total: response.data.page.totalElements,
+        page: response.data.page.number,
+        size: response.data.page.size
       }),
       providesTags: ['QAClass'],
     }),
@@ -82,17 +82,17 @@ export const qaApi = createApi({
       providesTags: (_result, _error, sessionId) => [{ type: 'QASession', id: sessionId }],
     }),
 
-    // QA Rereports CRUD
+    // QA Reports CRUD
     getQAReports: builder.query<{ data: QAReportListItemDTO[]; total: number; page: number; size: number }, QAReportFilters>({
       query: ({ classId, sessionId, phaseId, reportType, status, reportedBy, search, page = 0, size = 20, sort = 'createdAt', sortDir = 'desc' }) => ({
         url: '/qa/reports',
         params: { classId, sessionId, phaseId, reportType, status, reportedBy, search, page, size, sort, sortDir },
       }),
-      transformResponse: (response: { data: { content: QAReportListItemDTO[]; totalElements: number; number: number; size: number } }) => ({
+      transformResponse: (response: { data: { content: QAReportListItemDTO[]; page: { totalElements: number; number: number; size: number; totalPages: number } } }) => ({
         data: response.data.content,
-        total: response.data.totalElements,
-        page: response.data.number,
-        size: response.data.size
+        total: response.data.page.totalElements,
+        page: response.data.page.number,
+        size: response.data.page.size
       }),
       providesTags: ['QAReport'],
     }),
@@ -144,12 +144,12 @@ export const qaApi = createApi({
         url: `/classes/${classId}/feedbacks`,
         params: filters,
       }),
-      transformResponse: (response: { data: StudentFeedbackListResponse }) => ({
+      transformResponse: (response: { data: { statistics: StudentFeedbackListResponse['statistics']; feedbacks: { content: StudentFeedbackListResponse['feedbacks']; page: { size: number; number: number; totalElements: number; totalPages: number } } } }) => ({
         statistics: response.data.statistics,
-        feedbacks: response.data.feedbacks,
-        total: response.data.total,
-        page: response.data.page,
-        size: response.data.size
+        feedbacks: response.data.feedbacks.content, // Extract content array from paginated response
+        total: response.data.feedbacks.page.totalElements,
+        page: response.data.feedbacks.page.number,
+        size: response.data.feedbacks.page.size
       }),
       providesTags: ['QAFeedback'],
     }),

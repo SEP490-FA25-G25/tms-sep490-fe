@@ -9,6 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
     Table,
     TableBody,
     TableCell,
@@ -57,7 +64,7 @@ export function Step3Structure({ data, setData }: Step3Props) {
             sequence: (data.structure[phaseIndex].sessions?.length || 0) + 1,
             topic: "",
             studentTask: "",
-            skillSets: [],
+            skill: "",
             cloIds: [],
         };
 
@@ -261,18 +268,21 @@ export function Step3Structure({ data, setData }: Step3Props) {
                                                     />
                                                 </TableCell>
                                                 <TableCell>
-                                                    <MultiSelect
-                                                        options={skills.map((skill) => ({
-                                                            label: skill,
-                                                            value: skill,
-                                                        }))}
-                                                        selected={session.skillSets || []}
-                                                        onChange={(selected) => updateSession(pIndex, sIndex, "skillSets", selected)}
-                                                        placeholder="Chọn Kỹ năng"
-                                                        searchPlaceholder="Tìm kỹ năng..."
-                                                        emptyMessage="Không tìm thấy kỹ năng."
-                                                        badgeClassName="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
-                                                    />
+                                                    <Select
+                                                        value={session.skill}
+                                                        onValueChange={(val) => updateSession(pIndex, sIndex, "skill", val)}
+                                                    >
+                                                        <SelectTrigger className="w-full">
+                                                            <SelectValue placeholder="Chọn Kỹ năng" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {skills.map((skill) => (
+                                                                <SelectItem key={skill} value={skill}>
+                                                                    {skill}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
                                                 </TableCell>
                                                 <TableCell>
                                                     <MultiSelect

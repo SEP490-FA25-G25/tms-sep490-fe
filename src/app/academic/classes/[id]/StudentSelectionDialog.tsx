@@ -32,7 +32,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -280,6 +280,7 @@ export function StudentSelectionDialog({
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-10 w-10 border border-border/50">
+                            <AvatarImage src={student.avatarUrl || ""} alt={student.fullName} />
                             <AvatarFallback className={cn(
                               "text-xs font-medium",
                               selectedStudents.has(student.id) ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"

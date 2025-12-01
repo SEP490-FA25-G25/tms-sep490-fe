@@ -10,7 +10,7 @@ import type { RootState } from '@/store'
 interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; user?: User }>
   logout: () => void
   isLoading: boolean
   error: string | null
@@ -27,23 +27,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loginMutation, { isLoading: isLoginLoading }] = useLoginMutation()
   const [logoutMutation] = useLogoutMutation()
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string; user?: User }> => {
     try {
       const result = await loginMutation({ email, password }).unwrap()
 
       // Backend returns response with wrapper: {success, message, data}
       if (result?.success && result?.data) {
+        const user: User = {
+          id: result.data.userId,
+          email: result.data.email,
+          fullName: result.data.fullName,
+          avatarUrl: result.data.avatarUrl,
+          roles: result.data.roles,
+          branchId: result.data.branchId,
+        }
         dispatch(setCredentials({
           accessToken: result.data.accessToken,
           refreshToken: result.data.refreshToken,
-          user: {
-            id: result.data.userId,
-            email: result.data.email,
-            fullName: result.data.fullName,
-            roles: result.data.roles,
-          },
+          user,
         }))
-        return { success: true }
+        return { success: true, user }
       }
 
       return { success: false, error: result?.message || 'Phản hồi không hợp lệ từ máy chủ' }

@@ -11,6 +11,9 @@ export interface TimeSlotTemplate {
     endTime: string; // HH:mm format
     createdAt: string;
     updatedAt: string;
+    // Statistics
+    activeClassesCount?: number;
+    totalSessionsCount?: number;
 }
 
 export interface TimeSlotQueryParams {

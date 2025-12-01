@@ -338,6 +338,12 @@ export interface AAStaffDTO {
   email: string
 }
 
+export interface StudentRequestConfig {
+  makeupWeeksLimit: number
+  makeupLookbackWeeks: number
+  maxTransfersPerCourse: number
+}
+
 export interface MissedSessionsQuery {
   weeksBack?: number
   excludeRequested?: boolean
@@ -629,6 +635,11 @@ export const studentRequestApi = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: ['StudentRequests', 'PendingRequests', 'RequestDetail', 'AAStaff'],
   endpoints: (builder) => ({
+    // Student request configuration - /api/v1/students-request/config
+    getStudentRequestConfig: builder.query<ApiResponse<StudentRequestConfig>, void>({
+      query: () => '/students-request/config',
+    }),
+
     // Student-specific endpoints - /api/v1/students-request
     getAvailableSessions: builder.query<ApiResponse<StudentClassSessions[]>, StudentSessionQuery>({
       query: ({ date, requestType = 'ABSENCE' }) => ({
@@ -856,7 +867,8 @@ export const studentRequestApi = createApi({
     }),
 
     // Student Classes API for AA - /api/v1/students
-    getStudentClasses: builder.query<ApiResponse<StudentClassDTO[]>, { studentId: number }>({
+    // Backend trả về Page<StudentClassDTO> với pagination structure
+    getStudentClasses: builder.query<ApiResponse<{ content: StudentClassDTO[]; totalElements: number }>, { studentId: number }>({
       query: ({ studentId }) => ({
         url: `/students/${studentId}/classes`,
       }),
@@ -879,6 +891,7 @@ export const studentRequestApi = createApi({
 })
 
 export const {
+  useGetStudentRequestConfigQuery,
   useGetAvailableSessionsQuery,
   useGetMissedSessionsQuery,
   useLazyGetMissedSessionsQuery,

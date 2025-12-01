@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
 import { AppSidebar } from '@/components/app-sidebar';
@@ -11,16 +11,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
-import { useGetStudentAttendanceReportQuery } from '@/store/services/attendanceApi';
-import { useGetClassAssessmentsQuery, useGetClassDetailQuery, useGetClassSessionsQuery, useGetClassmatesQuery, useGetStudentAssessmentScoresQuery } from '@/store/services/studentClassApi';
-import type { StudentSessionDTO } from '@/types/studentClass';
+import { useGetClassAssessmentsQuery, useGetClassDetailQuery, useGetClassmatesQuery, useGetStudentAssessmentScoresQuery } from '@/store/services/studentClassApi';
 
 import AssessmentsTab from './components/AssessmentsTab';
 import ClassmatesTab from './components/ClassmatesTab';
-import SessionsTab from './components/SessionsTab';
 import SyllabusTab from './components/SyllabusTab';
 
-const VALID_TABS = ['sessions', 'syllabus', 'assessments', 'classmates'] as const;
+const VALID_TABS = ['syllabus', 'assessments', 'classmates'] as const;
 type TabValue = typeof VALID_TABS[number];
 
 const ClassDetailPage = () => {
@@ -30,9 +27,9 @@ const ClassDetailPage = () => {
   const { user } = useAuth();
   // studentId not needed - backend gets it from JWT token via StudentContextHelper
 
-  // Read tab from URL query param, fallback to 'sessions'
-  const tabFromUrl = searchParams.get('tab') || 'sessions';
-  const initialTab = VALID_TABS.includes(tabFromUrl as TabValue) ? tabFromUrl : 'sessions';
+  // Read tab from URL query param, fallback to 'syllabus'
+  const tabFromUrl = searchParams.get('tab') || 'syllabus';
+  const initialTab = VALID_TABS.includes(tabFromUrl as TabValue) ? tabFromUrl : 'syllabus';
   const [activeTab, setActiveTab] = useState<string>(initialTab);
 
   // Sync activeTab when URL changes (e.g., browser back/forward navigation)
@@ -51,15 +48,6 @@ const ClassDetailPage = () => {
     isLoading: isDetailLoading,
     error: detailError,
   } = useGetClassDetailQuery({ classId: classIdNumber }, { skip: !isValidClassId });
-
-  const {
-    data: sessionsResponse,
-    isLoading: isSessionsLoading,
-    error: sessionsError,
-  } = useGetClassSessionsQuery(
-    { classId: classIdNumber },
-    { skip: !classDetailResponse || !isValidClassId }
-  );
 
   const {
     data: assessmentsResponse,
@@ -84,49 +72,10 @@ const ClassDetailPage = () => {
     { skip: !classDetailResponse || !isValidClassId }
   );
 
-  const { data: attendanceReportResponse } = useGetStudentAttendanceReportQuery(
-    { classId: classIdNumber },
-    { skip: !isValidClassId }
-  );
-
   const classDetail = classDetailResponse?.data;
-  const sessionsData = sessionsResponse?.data;
   const assessments = assessmentsResponse?.data;
   const scores = scoresResponse?.data;
   const classmates = classmatesResponse?.data;
-  const attendanceReportSessions = attendanceReportResponse?.data?.sessions;
-
-  const sessionStats = useMemo(() => {
-    const sessions = sessionsData?.studentSessions || [];
-    let present = 0;
-    let absent = 0;
-    let excused = 0;
-    let future = 0;
-
-    sessions.forEach((s: StudentSessionDTO) => {
-      switch (s.attendanceStatus) {
-        case 'PRESENT':
-        case 'LATE':
-          present++;
-          break;
-        case 'ABSENT':
-          absent++;
-          break;
-        case 'EXCUSED':
-          excused++;
-          break;
-        case 'PLANNED':
-          future++;
-          break;
-        default:
-          break;
-      }
-    });
-
-    const completed = present + absent + excused;
-    const attendanceRate = (present + absent) > 0 ? (present / (present + absent)) * 100 : 0;
-    return { completed, total: sessions.length, present, absent, excused, future, attendanceRate };
-  }, [sessionsData]);
 
   const averageScore = useMemo(() => {
     if (!scores || scores.length === 0) return undefined;
@@ -187,12 +136,7 @@ const ClassDetailPage = () => {
     }
 
     return (
-      <ClassHeader
-        classDetail={classDetail}
-        attendanceRate={sessionStats?.attendanceRate}
-        sessionStats={sessionStats}
-        nextSession={classDetail.nextSession}
-      />
+      <ClassHeader classDetail={classDetail} />
     );
   };
 
@@ -240,14 +184,8 @@ const ClassDetailPage = () => {
 
                   {!isDetailLoading && classDetail && (
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
-                      <div className="sticky top-[--header-height] bg-background/95 backdrop-blur-sm z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2" style={{ top: 'calc(var(--header-height) + 0.5rem)' }}>
-                        <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted/50">
-                          <TabsTrigger
-                            value="sessions"
-                            className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
-                          >
-                            Lịch học
-                          </TabsTrigger>
+                      <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2 -mt-6 pt-6">
+                        <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-muted/50">
                           <TabsTrigger
                             value="syllabus"
                             className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
@@ -268,24 +206,6 @@ const ClassDetailPage = () => {
                           </TabsTrigger>
                         </TabsList>
                       </div>
-
-                      <TabsContent value="sessions" className="space-y-4">
-                        {sessionsError ? (
-                          <div className="text-center py-8">
-                            <p className="text-sm text-muted-foreground">Không tải được lịch học</p>
-                            <Button size="sm" variant="outline" className="mt-2" onClick={() => window.location.reload()}>
-                              Thử lại
-                            </Button>
-                          </div>
-                        ) : (
-                          <SessionsTab
-                            sessionsData={sessionsData}
-                            isLoading={isSessionsLoading}
-                            classDetail={classDetail}
-                            reportSessions={attendanceReportSessions}
-                          />
-                        )}
-                      </TabsContent>
 
                       <TabsContent value="syllabus" className="space-y-4">
                         <SyllabusTab

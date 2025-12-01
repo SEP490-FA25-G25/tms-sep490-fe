@@ -1,7 +1,18 @@
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Progress } from '@/components/ui/progress'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { ArrowLeftIcon } from 'lucide-react'
 
 // Types
@@ -186,7 +197,9 @@ export function BaseFlowComponent({
   isSubmitDisabled = false,
   isSubmitting = false,
   nextLabel = 'Tiếp tục',
-  submitLabel = 'Gửi yêu cầu'
+  submitLabel = 'Gửi yêu cầu',
+  confirmTitle = 'Xác nhận gửi yêu cầu',
+  confirmDescription = 'Bạn có chắc chắn muốn gửi yêu cầu này không? Sau khi gửi, yêu cầu sẽ được chuyển đến Phòng Học vụ để xử lý.'
 }: {
   children: React.ReactNode
   steps: StepConfig[]
@@ -199,18 +212,30 @@ export function BaseFlowComponent({
   isSubmitting?: boolean
   nextLabel?: string
   submitLabel?: string
+  confirmTitle?: string
+  confirmDescription?: string
 }) {
   const isLastStep = currentStep === steps.length
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+
+  const handleSubmitClick = () => {
+    setShowConfirmDialog(true)
+  }
+
+  const handleConfirmSubmit = () => {
+    setShowConfirmDialog(false)
+    onSubmit()
+  }
 
   return (
-    <div className="flex flex-col h-full min-h-[400px]">
+    <div className="space-y-6">
       <StepHeader steps={steps} currentStep={currentStep} />
 
-      <div className="flex-1 overflow-y-auto min-h-0 px-1">
+      <div className="px-1">
         {children}
       </div>
 
-      <div className="mt-6 flex items-center justify-between pt-4 border-t">
+      <div className="flex items-center justify-between pt-4 border-t">
         <Button
           variant="ghost"
           onClick={onBack}
@@ -223,7 +248,7 @@ export function BaseFlowComponent({
 
         {isLastStep ? (
           <Button
-            onClick={onSubmit}
+            onClick={handleSubmitClick}
             disabled={isSubmitDisabled || isSubmitting}
           >
             {isSubmitting ? 'Đang gửi...' : submitLabel}
@@ -238,6 +263,24 @@ export function BaseFlowComponent({
           </Button>
         )}
       </div>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmTitle}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDescription}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSubmitting}>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmSubmit} disabled={isSubmitting}>
+              {isSubmitting ? 'Đang gửi...' : 'Xác nhận'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

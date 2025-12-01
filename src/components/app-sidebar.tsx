@@ -19,6 +19,7 @@ import {
   PlusIcon,
   MessageCircleIcon,
   LogOutIcon,
+  Clock,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -32,6 +33,16 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { ROLES } from "@/hooks/useRoleBasedAccess";
 import { Link, useNavigate } from "react-router-dom";
@@ -136,9 +147,14 @@ const roleBasedNav = {
         icon: ClipboardCheckIcon,
       },
       {
-        title: "Quản lý tài nguyên và khung giờ học",
+        title: "Quản lý tài nguyên",
         url: "/center-head/resources",
         icon: BuildingIcon,
+      },
+      {
+        title: "Quản lý khung giờ học",
+        url: "/center-head/timeslots",
+        icon: Clock,
       },
       {
         title: "Quản lý học sinh",
@@ -194,13 +210,18 @@ const roleBasedNav = {
         icon: HomeIcon,
       },
       {
+        title: "Lịch dạy của tôi",
+        url: "/teacher/schedule",
+        icon: CalendarIcon,
+      },
+      {
         title: "Lớp học của tôi",
         url: "/teacher/classes",
         icon: SchoolIcon,
       },
       {
-        title: "Lịch dạy của tôi",
-        url: "/teacher/schedule",
+        title: "Đăng ký lịch giảng dạy",
+        url: "/teacher/availability",
         icon: CalendarIcon,
       },
       {
@@ -227,11 +248,6 @@ const roleBasedNav = {
   },
   [ROLES.STUDENT]: {
     navMain: [
-      {
-        title: "Bảng điều khiển",
-        url: "/student/dashboard",
-        icon: HomeIcon,
-      },
       {
         title: "Thời khóa biểu",
         url: "/student/schedule",
@@ -336,6 +352,11 @@ const roleBasedNav = {
         url: "/academic/teacher-requests",
         icon: ClipboardCheckIcon,
       },
+      {
+        title: "Quản lý đợt cập nhật lịch dạy",
+        url: "/academic/teacher-availability",
+        icon: CalendarIcon,
+      },
     ],
   },
 };
@@ -370,7 +391,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     items: roleBasedNav[role as keyof typeof roleBasedNav]?.navMain ?? [],
   }));
 
-  const brandHref = navSections[0]?.items?.[0]?.url ?? "/dashboard";
+  const brandHref = navSections[0]?.items?.[0]?.url ?? "/login";
 
   const handleLogout = () => {
     logout();
@@ -429,13 +450,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={handleLogout}
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-            >
-              <LogOutIcon className="h-4 w-4" />
-              <span>Đăng xuất</span>
-            </SidebarMenuButton>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <SidebarMenuButton>
+                  <LogOutIcon className="h-4 w-4" />
+                  <span>Đăng xuất</span>
+                </SidebarMenuButton>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Xác nhận đăng xuất</AlertDialogTitle>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Hủy</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleLogout}>
+                    Đăng xuất
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

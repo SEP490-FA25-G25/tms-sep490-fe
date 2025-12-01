@@ -163,31 +163,37 @@ export default function AcademicRequestsPage() {
 
         {/* Summary Stats */}
         {summary && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Chờ duyệt</CardTitle>
-                <ClockIcon className="h-4 w-4 text-muted-foreground" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/30">
+                  <ClockIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{summary.totalPending}</div>
                 <p className="text-xs text-muted-foreground">Tổng yêu cầu chờ xử lý</p>
               </CardContent>
             </Card>
-            <Card className="bg-amber-50 dark:bg-amber-950/20">
+            <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-amber-700 dark:text-amber-400">Khẩn cấp</CardTitle>
-                <AlertTriangleIcon className="h-4 w-4 text-amber-700 dark:text-amber-400" />
+                <CardTitle className="text-sm font-medium">Khẩn cấp</CardTitle>
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-950/30">
+                  <AlertTriangleIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-amber-700 dark:text-amber-400">{summary.needsUrgentReview}</div>
-                <p className="text-xs text-amber-600 dark:text-amber-500">Cần xử lý gấp</p>
+                <div className="text-2xl font-bold">{summary.needsUrgentReview}</div>
+                <p className="text-xs text-muted-foreground">Cần xử lý gấp</p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Xin nghỉ</CardTitle>
-                <CalendarXIcon className="h-4 w-4 text-muted-foreground" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-50 dark:bg-orange-950/30">
+                  <CalendarXIcon className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{summary.absenceRequests}</div>
@@ -197,7 +203,9 @@ export default function AcademicRequestsPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Học bù</CardTitle>
-                <CalendarCheckIcon className="h-4 w-4 text-muted-foreground" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950/30">
+                  <CalendarCheckIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{summary.makeupRequests}</div>
@@ -207,7 +215,9 @@ export default function AcademicRequestsPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Chuyển lớp</CardTitle>
-                <ArrowRightLeftIcon className="h-4 w-4 text-muted-foreground" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950/30">
+                  <ArrowRightLeftIcon className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{summary.transferRequests}</div>
@@ -219,151 +229,151 @@ export default function AcademicRequestsPage() {
 
         {/* Tabs with filters on same line */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'pending' | 'history')}>
-          {/* Tab Headers with Filters */}
-          <div className="space-y-3">
-            {/* First row: Tabs + Filters */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <TabsList>
-                <TabsTrigger value="pending">Chờ duyệt</TabsTrigger>
-                <TabsTrigger value="history">Lịch sử</TabsTrigger>
-              </TabsList>
+          {/* Tab Headers with Filters - all on same row */}
+          <div className="flex flex-wrap items-center gap-3 w-full">
+            {/* Tabs first */}
+            <TabsList>
+              <TabsTrigger value="pending">Chờ duyệt</TabsTrigger>
+              <TabsTrigger value="history">Lịch sử</TabsTrigger>
+            </TabsList>
 
-              {/* Filters that apply to current tab */}
-              {activeTab === 'pending' ? (
-                <>
-                  <Select
-                    value={requestTypeFilter}
-                    onValueChange={(value) => {
-                      setRequestTypeFilter(value as RequestType)
-                      setPage(0)
-                    }}
-                  >
-                    <SelectTrigger className="flex-1 min-w-40">
-                      <SelectValue placeholder="Tất cả yêu cầu" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {REQUEST_TYPE_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            {/* Search inputs second */}
+            {activeTab === 'pending' ? (
+              <>
+                <Input
+                  placeholder="Tìm học viên..."
+                  value={searchKeyword}
+                  onChange={(e) => {
+                    setSearchKeyword(e.target.value)
+                    setPage(0)
+                  }}
+                  className="flex-1 min-w-[100px]"
+                />
 
-                  <Input
-                    placeholder="Tìm kiếm học viên..."
-                    value={searchKeyword}
-                    onChange={(e) => {
-                      setSearchKeyword(e.target.value)
-                      setPage(0)
-                    }}
-                    className="flex-1 min-w-40"
-                  />
+                <Input
+                  placeholder="Mã lớp..."
+                  value={classCode}
+                  onChange={(e) => {
+                    setClassCode(e.target.value)
+                    setPage(0)
+                  }}
+                  className="flex-1 min-w-[100px]"
+                />
 
-                  <Input
-                    placeholder="Mã lớp..."
-                    value={classCode}
-                    onChange={(e) => {
-                      setClassCode(e.target.value)
-                      setPage(0)
-                    }}
-                    className="flex-1 min-w-32"
-                  />
+                {/* Filter select last */}
+                <Select
+                  value={requestTypeFilter}
+                  onValueChange={(value) => {
+                    setRequestTypeFilter(value as RequestType)
+                    setPage(0)
+                  }}
+                >
+                  <SelectTrigger className="flex-1 min-w-[100px]">
+                    <SelectValue placeholder="Loại yêu cầu" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REQUEST_TYPE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-                  {hasActiveFilters && (
-                    <Button variant="ghost" size="sm" onClick={handleClearFilters} className="gap-2">
-                      <XIcon className="h-4 w-4" />
-                    </Button>
-                  )}
-                </>
-              ) : (
-                <>
-                  <Select
-                    value={historyRequestType}
-                    onValueChange={(value) => {
-                      setHistoryRequestType(value as RequestType)
-                      setHistoryPage(0)
-                    }}
-                  >
-                    <SelectTrigger className="flex-1 min-w-40">
-                      <SelectValue placeholder="Tất cả yêu cầu" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {REQUEST_TYPE_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="icon" onClick={handleClearFilters}>
+                    <XIcon className="h-4 w-4" />
+                  </Button>
+                )}
+              </>
+            ) : (
+              <>
+                <Input
+                  placeholder="Tìm học viên..."
+                  value={historySearchKeyword}
+                  onChange={(e) => {
+                    setHistorySearchKeyword(e.target.value)
+                    setHistoryPage(0)
+                  }}
+                  className="flex-1 min-w-[100px]"
+                />
 
-                  <Select
-                    value={historyStatus}
-                    onValueChange={(value) => {
-                      setHistoryStatus(value as RequestStatus | 'ALL')
-                      setHistoryPage(0)
-                    }}
-                  >
-                    <SelectTrigger className="flex-1 min-w-40">
-                      <SelectValue placeholder="Tất cả trạng thái" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STATUS_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <Input
+                  placeholder="Mã lớp..."
+                  value={historyClassCode}
+                  onChange={(e) => {
+                    setHistoryClassCode(e.target.value)
+                    setHistoryPage(0)
+                  }}
+                  className="flex-1 min-w-[100px]"
+                />
 
-                  <Select
-                    value={historyDecidedBy?.toString() || 'all'}
-                    onValueChange={(value) => {
-                      setHistoryDecidedBy(value === 'all' ? undefined : parseInt(value))
-                      setHistoryPage(0)
-                    }}
-                  >
-                    <SelectTrigger className="flex-1 min-w-40">
-                      <SelectValue placeholder="Người duyệt" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tất cả người duyệt</SelectItem>
-                      {aaStaffResponse?.data?.map((staff) => (
-                        <SelectItem key={staff.id} value={staff.id.toString()}>
-                          {staff.fullName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                {/* Filter selects last */}
+                <Select
+                  value={historyRequestType}
+                  onValueChange={(value) => {
+                    setHistoryRequestType(value as RequestType)
+                    setHistoryPage(0)
+                  }}
+                >
+                  <SelectTrigger className="flex-1 min-w-[100px]">
+                    <SelectValue placeholder="Loại yêu cầu" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REQUEST_TYPE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-                  <Input
-                    placeholder="Tìm kiếm học viên..."
-                    value={historySearchKeyword}
-                    onChange={(e) => {
-                      setHistorySearchKeyword(e.target.value)
-                      setHistoryPage(0)
-                    }}
-                    className="flex-1 min-w-40"
-                  />
+                <Select
+                  value={historyStatus}
+                  onValueChange={(value) => {
+                    setHistoryStatus(value as RequestStatus | 'ALL')
+                    setHistoryPage(0)
+                  }}
+                >
+                  <SelectTrigger className="flex-1 min-w-[100px]">
+                    <SelectValue placeholder="Trạng thái" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-                  <Input
-                    placeholder="Mã lớp..."
-                    value={historyClassCode}
-                    onChange={(e) => {
-                      setHistoryClassCode(e.target.value)
-                      setHistoryPage(0)
-                    }}
-                    className="flex-1 min-w-32"
-                  />
+                <Select
+                  value={historyDecidedBy?.toString() || 'all'}
+                  onValueChange={(value) => {
+                    setHistoryDecidedBy(value === 'all' ? undefined : parseInt(value))
+                    setHistoryPage(0)
+                  }}
+                >
+                  <SelectTrigger className="flex-1 min-w-[100px]">
+                    <SelectValue placeholder="Người duyệt" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả người duyệt</SelectItem>
+                    {aaStaffResponse?.data?.map((staff) => (
+                      <SelectItem key={staff.id} value={staff.id.toString()}>
+                        {staff.fullName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-                  {hasActiveHistoryFilters && (
-                    <Button variant="ghost" size="sm" onClick={handleClearHistoryFilters} className="gap-2">
-                      <XIcon className="h-4 w-4" />
-                    </Button>
-                  )}
-                </>
-              )}
-            </div>
+                {hasActiveHistoryFilters && (
+                  <Button variant="ghost" size="icon" onClick={handleClearHistoryFilters}>
+                    <XIcon className="h-4 w-4" />
+                  </Button>
+                )}
+              </>
+            )}
           </div>
 
           {/* Pending Tab */}
@@ -381,7 +391,7 @@ export default function AcademicRequestsPage() {
               )}
 
               {/* Pagination */}
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
                 <p className="text-muted-foreground">
                   Trang {page + 1} / {totalPages} · {pendingData?.totalElements ?? 0} yêu cầu
                 </p>
@@ -397,20 +407,30 @@ export default function AcademicRequestsPage() {
                         disabled={page === 0 || isLoadingPending}
                       />
                     </PaginationItem>
-                    {Array.from({ length: totalPages }, (_, i) => i).map((pageNum) => (
-                      <PaginationItem key={pageNum}>
-                        <PaginationLink
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            setPage(pageNum)
-                          }}
-                          isActive={pageNum === page}
-                        >
-                          {pageNum + 1}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
+                    {/* Show page numbers only on larger screens */}
+                    <span className="hidden sm:contents">
+                      {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                        // Show first 5 pages or pages around current page
+                        let pageNum = i;
+                        if (totalPages > 5 && page > 2) {
+                          pageNum = Math.min(page - 2 + i, totalPages - 1);
+                        }
+                        return (
+                          <PaginationItem key={pageNum}>
+                            <PaginationLink
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setPage(pageNum)
+                              }}
+                              isActive={pageNum === page}
+                            >
+                              {pageNum + 1}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      })}
+                    </span>
                     <PaginationItem>
                       <PaginationNext
                         href="#"
@@ -441,7 +461,7 @@ export default function AcademicRequestsPage() {
               )}
 
               {/* History Pagination */}
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
                 <p className="text-muted-foreground">
                   Trang {historyPage + 1} / {historyTotalPages} · {historyData?.page?.totalElements ?? 0} yêu cầu
                 </p>
@@ -457,20 +477,29 @@ export default function AcademicRequestsPage() {
                         disabled={historyPage === 0 || isLoadingHistory}
                       />
                     </PaginationItem>
-                    {Array.from({ length: historyTotalPages }, (_, i) => i).map((pageNum) => (
-                      <PaginationItem key={pageNum}>
-                        <PaginationLink
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            setHistoryPage(pageNum)
-                          }}
-                          isActive={pageNum === historyPage}
-                        >
-                          {pageNum + 1}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
+                    {/* Show page numbers only on larger screens */}
+                    <span className="hidden sm:contents">
+                      {Array.from({ length: Math.min(historyTotalPages, 5) }, (_, i) => {
+                        let pageNum = i;
+                        if (historyTotalPages > 5 && historyPage > 2) {
+                          pageNum = Math.min(historyPage - 2 + i, historyTotalPages - 1);
+                        }
+                        return (
+                          <PaginationItem key={pageNum}>
+                            <PaginationLink
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setHistoryPage(pageNum)
+                              }}
+                              isActive={pageNum === historyPage}
+                            >
+                              {pageNum + 1}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      })}
+                    </span>
                     <PaginationItem>
                       <PaginationNext
                         href="#"

@@ -1,8 +1,9 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Eye, Trash2, Loader2, RotateCcw, ArrowUpDown } from "lucide-react";
-import { useGetSubjectsWithLevelsQuery, useDeactivateSubjectMutation, useReactivateSubjectMutation } from "@/store/services/curriculumApi";
+import { Edit, Eye, Trash2, Loader2, RotateCcw, ArrowUpDown, MoreVertical } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useGetSubjectsWithLevelsQuery, useDeactivateSubjectMutation, useReactivateSubjectMutation, useDeleteSubjectMutation } from "@/store/services/curriculumApi";
 import type { SubjectWithLevelsDTO } from "@/store/services/curriculumApi";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +21,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { DataTable } from "@/components/data-table";
+import { getStatusLabel, getStatusColor } from "@/utils/statusMapping";
 
 export function SubjectList() {
     const navigate = useNavigate();
@@ -28,8 +30,10 @@ export function SubjectList() {
     const { data: subjectsData, isLoading } = useGetSubjectsWithLevelsQuery();
     const [deactivateSubject, { isLoading: isDeactivating }] = useDeactivateSubjectMutation();
     const [reactivateSubject, { isLoading: isReactivating }] = useReactivateSubjectMutation();
+    const [deleteSubject, { isLoading: isDeleting }] = useDeleteSubjectMutation();
     const [subjectToDelete, setSubjectToDelete] = useState<number | null>(null);
     const [subjectToReactivate, setSubjectToReactivate] = useState<number | null>(null);
+    const [subjectToDeletePermanently, setSubjectToDeletePermanently] = useState<number | null>(null);
 
     const handleEdit = (id: number) => {
         navigate(`/curriculum/subjects/${id}/edit`);
@@ -57,6 +61,21 @@ export function SubjectList() {
             } catch (error) {
                 console.error("Failed to reactivate subject:", error);
                 toast.error("Kích hoạt lại thất bại. Vui lòng thử lại.");
+            }
+        }
+    };
+
+    const handleDelete = async () => {
+        if (subjectToDeletePermanently) {
+            try {
+                await deleteSubject(subjectToDeletePermanently).unwrap();
+                toast.success("Đã xóa môn học thành công");
+                setSubjectToDeletePermanently(null);
+            } catch (error: unknown) {
+                console.error("Failed to delete subject:", error);
+                const apiError = error as { data?: { message?: string } };
+                const errorMessage = apiError.data?.message || "Xóa thất bại. Vui lòng thử lại.";
+                toast.error(errorMessage);
             }
         }
     };
@@ -102,9 +121,9 @@ export function SubjectList() {
             header: "Trạng thái",
             cell: ({ row }) => (
                 <Badge
-                    variant={row.getValue("status") === "ACTIVE" ? "default" : "secondary"}
+                    variant={getStatusColor(row.getValue("status"))}
                 >
-                    {row.getValue("status")}
+                    {getStatusLabel(row.getValue("status"))}
                 </Badge>
             ),
         },
@@ -117,43 +136,83 @@ export function SubjectList() {
             },
         },
         {
+            accessorKey: "updatedAt",
+            header: "Ngày thay đổi",
+            cell: ({ row }) => {
+                const date = row.getValue("updatedAt");
+                return date ? format(new Date(date as string), "dd/MM/yyyy") : "-";
+            },
+        },
+        {
             id: "actions",
+            header: "Hành động",
             cell: ({ row }) => {
                 const subject = row.original;
                 return (
-                    <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => navigate(`/curriculum/subjects/${subject.id}`)}>
-                            <Eye className="h-4 w-4" />
-                        </Button>
-                        {isSubjectLeader && (
-                            <>
-                                <Button variant="ghost" size="icon" onClick={() => handleEdit(subject.id)}>
-                                    <Edit className="h-4 w-4" />
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                                <span className="sr-only">Mở menu hành động</span>
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent align="end" className="w-48 p-1">
+                            <div className="flex flex-col gap-0.5">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full justify-start gap-2 h-9 px-2"
+                                    onClick={() => navigate(`/curriculum/subjects/${subject.id}`)}
+                                >
+                                    <Eye className="h-4 w-4" />
+                                    Xem chi tiết
                                 </Button>
-                                {subject.status === "INACTIVE" ? (
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                        onClick={() => setSubjectToReactivate(subject.id)}
-                                        title="Kích hoạt lại"
-                                    >
-                                        <RotateCcw className="h-4 w-4" />
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="text-destructive"
-                                        onClick={() => setSubjectToDelete(subject.id)}
-                                        title="Hủy kích hoạt"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                {isSubjectLeader && (
+                                    <>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="w-full justify-start gap-2 h-9 px-2"
+                                            onClick={() => handleEdit(subject.id)}
+                                        >
+                                            <Edit className="h-4 w-4" />
+                                            Chỉnh sửa
+                                        </Button>
+                                        {subject.status === "INACTIVE" ? (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="w-full justify-start gap-2 h-9 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                onClick={() => setSubjectToReactivate(subject.id)}
+                                            >
+                                                <RotateCcw className="h-4 w-4" />
+                                                Kích hoạt lại
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="w-full justify-start gap-2 h-9 px-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                                onClick={() => setSubjectToDelete(subject.id)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                                Hủy kích hoạt
+                                            </Button>
+                                        )}
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="w-full justify-start gap-2 h-9 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            onClick={() => setSubjectToDeletePermanently(subject.id)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                            Xóa
+                                        </Button>
+                                    </>
                                 )}
-                            </>
-                        )}
-                    </div>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
                 );
             },
         },
@@ -181,12 +240,12 @@ export function SubjectList() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Bạn có chắc chắn muốn hủy kích hoạt?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Hành động này sẽ chuyển trạng thái môn học sang INACTIVE. Bạn có thể kích hoạt lại sau này.
+                            Hành động này sẽ chuyển trạng thái môn học sang Ngừng hoạt động. Bạn có thể kích hoạt lại sau này.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Hủy</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeactivate} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        <AlertDialogAction onClick={handleDeactivate} className="bg-orange-600 text-white hover:bg-orange-700">
                             {isDeactivating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Hủy kích hoạt"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
@@ -198,13 +257,32 @@ export function SubjectList() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Kích hoạt lại môn học?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Hành động này sẽ chuyển trạng thái môn học sang ACTIVE (hoặc DRAFT nếu chưa có PLO).
+                            Hành động này sẽ chuyển trạng thái môn học sang Hoạt động (hoặc Nháp nếu chưa có PLO).
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Hủy</AlertDialogCancel>
                         <AlertDialogAction onClick={handleReactivate} className="bg-primary text-primary-foreground hover:bg-primary/90">
                             {isReactivating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Kích hoạt lại"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={!!subjectToDeletePermanently} onOpenChange={(open) => !open && setSubjectToDeletePermanently(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Hành động này sẽ xóa vĩnh viễn môn học. Không thể hoàn tác.
+                            <br />
+                            Lưu ý: Chỉ có thể xóa môn học nếu chưa có cấp độ nào.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Xóa vĩnh viễn"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

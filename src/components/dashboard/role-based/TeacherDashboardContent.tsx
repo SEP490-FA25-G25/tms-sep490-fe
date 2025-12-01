@@ -375,7 +375,7 @@ export function TeacherDashboardContent() {
                       >
                         <div className="flex items-center justify-between gap-2">
                           <p className="font-medium">{item.name}</p>
-                          <Badge variant="secondary">Đã kết thúc</Badge>
+                          <Badge variant="secondary">Đã hoàn thành</Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
                           {item.courseName}

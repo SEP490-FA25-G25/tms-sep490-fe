@@ -11,9 +11,9 @@ import { ArrowUpDown, XIcon, MoreVertical, FileText } from 'lucide-react'
 // Request type badge
 function RequestTypeBadge({ type }: { type: string }) {
   const variants: Record<string, { label: string; className: string }> = {
-    ABSENCE: { label: 'Xin nghỉ', className: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' },
-    MAKEUP: { label: 'Học bù', className: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' },
-    TRANSFER: { label: 'Chuyển lớp', className: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' },
+    ABSENCE: { label: 'Xin nghỉ', className: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300' },
+    MAKEUP: { label: 'Học bù', className: 'bg-teal-100 text-teal-700 dark:bg-teal-900 dark:text-teal-300' },
+    TRANSFER: { label: 'Chuyển lớp', className: 'bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300' },
   }
 
   const variant = variants[type] || { label: type, className: '' }
@@ -29,9 +29,9 @@ function RequestTypeBadge({ type }: { type: string }) {
 function StatusBadge({ status }: { status: string }) {
   const variants: Record<string, { label: string; className: string }> = {
     PENDING: { label: 'Chờ duyệt', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300' },
-    APPROVED: { label: 'Đã duyệt', className: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' },
-    REJECTED: { label: 'Đã từ chối', className: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' },
-    CANCELLED: { label: 'Đã hủy', className: 'bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300' },
+    APPROVED: { label: 'Đã duyệt', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300' },
+    REJECTED: { label: 'Đã từ chối', className: 'bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-300' },
+    CANCELLED: { label: 'Đã hủy', className: 'bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-300' },
   }
 
   const variant = variants[status] || { label: status, className: '' }

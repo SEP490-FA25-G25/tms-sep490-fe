@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useGetUserByIdQuery, type UserResponse } from '@/store/services/userApi'
 import { useEffect } from 'react'
 
@@ -63,6 +64,16 @@ export function UserDetailDialog({ user, open, onOpenChange }: UserDetailDialogP
             <p className="text-sm text-muted-foreground">Không có dữ liệu người dùng.</p>
           ) : (
             <div className="space-y-5 text-sm">
+              {/* Avatar Section */}
+              <div className="flex justify-center">
+                <Avatar className="h-24 w-24">
+                  <AvatarImage src={displayUser.avatarUrl || ""} alt={displayUser.fullName} />
+                  <AvatarFallback className="text-2xl">
+                    {displayUser.fullName?.charAt(0)?.toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+
               <section className="grid gap-3 rounded-lg border bg-muted/20 p-4">
                 <InfoItem label="Email" value={displayUser.email} />
                 <InfoItem label="Số điện thoại" value={displayUser.phone || '—'} />
@@ -130,7 +141,7 @@ function renderStatus(status?: string) {
   if (!status) return <span className="text-sm text-muted-foreground">—</span>
   const variants: Record<string, string> = {
     ACTIVE: 'bg-emerald-100 text-emerald-700',
-    INACTIVE: 'bg-gray-100 text-gray-700',
+    INACTIVE: 'bg-slate-100 text-slate-700',
     SUSPENDED: 'bg-rose-100 text-rose-700',
   }
   return (

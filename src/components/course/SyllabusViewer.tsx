@@ -97,7 +97,7 @@ export function SyllabusViewer({ phases }: SyllabusViewerProps) {
                                       Hoàn thành
                                     </Badge>
                                   )}
-                                  </div>
+                                </div>
                               </div>
                               {session.description && (
                                 <p className="text-sm text-gray-600 mt-1">{session.description}</p>
@@ -133,18 +133,15 @@ export function SyllabusViewer({ phases }: SyllabusViewerProps) {
                               <p className="text-sm text-gray-600">{session.objectives}</p>
                             </div>
                           )}
-                          {session.skillSets && session.skillSets.length > 0 && (
+                          {session.skill && (
                             <div>
                               <h5 className="font-medium text-sm text-gray-700 mb-1">Kỹ năng:</h5>
                               <div className="flex flex-wrap gap-1">
-                                {session.skillSets.map((skill, index) => (
-                                  <span
-                                    key={index}
-                                    className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded"
-                                  >
-                                    {skill}
-                                  </span>
-                                ))}
+                                <span
+                                  className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded"
+                                >
+                                  {session.skill}
+                                </span>
                               </div>
                             </div>
                           )}
@@ -154,7 +151,7 @@ export function SyllabusViewer({ phases }: SyllabusViewerProps) {
                               <span>{session.totalMaterials} tài liệu có sẵn</span>
                             </div>
                           )}
-                          </div>
+                        </div>
                       )}
                     </div>
                   ))}

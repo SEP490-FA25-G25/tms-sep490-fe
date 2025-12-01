@@ -11,6 +11,7 @@ export interface UserResponse {
   dob?: string
   gender?: 'MALE' | 'FEMALE' | 'OTHER'
   address?: string
+  avatarUrl?: string
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
   roles: string[]
   branches: string[]
@@ -25,6 +26,7 @@ export interface CreateUserRequest {
   dob?: string
   gender: 'MALE' | 'FEMALE' | 'OTHER'
   address?: string
+  avatarUrl?: string
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
   roleIds: number[]
   branchIds?: number[]
@@ -41,6 +43,7 @@ export interface UpdateUserRequest {
   dob?: string
   gender?: 'MALE' | 'FEMALE' | 'OTHER'
   address?: string
+  avatarUrl?: string
   status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
   roleIds?: number[]
   branchIds?: number[]

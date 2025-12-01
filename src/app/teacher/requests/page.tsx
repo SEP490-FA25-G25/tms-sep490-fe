@@ -103,7 +103,7 @@ const REQUEST_STATUS_META: Record<
   { label: string; badgeClass: string; tone: string }
 > = {
   PENDING: {
-    label: "Đang chờ",
+    label: "Chờ duyệt",
     badgeClass: "bg-amber-100 text-amber-700 border-amber-200",
     tone: "text-amber-600",
   },
@@ -118,7 +118,7 @@ const REQUEST_STATUS_META: Record<
     tone: "text-emerald-600",
   },
   REJECTED: {
-    label: "Bị từ chối",
+    label: "Đã từ chối",
     badgeClass: "bg-rose-100 text-rose-700 border-rose-200",
     tone: "text-rose-600",
   },
@@ -531,27 +531,49 @@ export default function MyRequestsPage() {
     icon: Icon,
     valueColor,
     borderColor,
+    iconColor,
   }: {
     label: string;
     value: number;
     icon: React.ComponentType<{ className?: string }>;
     valueColor?: string;
     borderColor: string;
+    iconColor?: string;
   }) => {
+    const borderColorMap: Record<string, string> = {
+      "emerald-500": "#10b981",
+      "amber-500": "#f59e0b",
+      "rose-500": "#f43f5e",
+      "slate-500": "#64748b",
+    };
+
     return (
       <div className="relative group">
         <Card
           className={cn(
-            "border-t-2 border-l-2 transition-all duration-300 ease-in-out group-hover:-translate-y-1 group-hover:shadow-md cursor-pointer",
-            `border-t-${borderColor} border-l-${borderColor}`
+            "border-t-2 border-l-2 transition-all duration-300 ease-in-out group-hover:-translate-y-1 group-hover:shadow-md cursor-pointer relative"
           )}
+          style={
+            {
+              borderTopColor:
+                borderColorMap[borderColor] || borderColor || "#64748b",
+              borderLeftColor:
+                borderColorMap[borderColor] || borderColor || "#64748b",
+            } as React.CSSProperties
+          }
         >
+          {/* Icon positioned at vertical center of entire card */}
+          <Icon
+            className={cn(
+              "h-6 w-6 absolute top-[calc(50%-0.125rem)] -translate-y-1/2 right-4 z-10",
+              iconColor || "text-muted-foreground"
+            )}
+          />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-0.5 relative z-10">
-            <CardTitle className="text-sm font-medium">{label}</CardTitle>
-            <Icon className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-base font-medium">{label}</CardTitle>
           </CardHeader>
           <CardContent className="pt-0 pb-2 relative z-10">
-            <div className={cn("text-2xl font-bold", valueColor)}>{value}</div>
+            <div className={cn("text-3xl font-bold", valueColor)}>{value}</div>
           </CardContent>
         </Card>
       </div>
@@ -565,13 +587,15 @@ export default function MyRequestsPage() {
         value={summary.total}
         icon={NotebookPen}
         borderColor="slate-500"
+        iconColor="text-slate-500"
       />
       <SummaryCard
-        label="Đang chờ"
+        label="Chờ duyệt"
         value={summary.pending}
         icon={Clock3}
         valueColor="text-amber-600"
         borderColor="amber-500"
+        iconColor="text-amber-500"
       />
       <SummaryCard
         label="Đã duyệt"
@@ -579,13 +603,15 @@ export default function MyRequestsPage() {
         icon={CheckCircle2}
         valueColor="text-emerald-600"
         borderColor="emerald-500"
+        iconColor="text-emerald-500"
       />
       <SummaryCard
-        label="Bị từ chối"
+        label="Đã từ chối"
         value={summary.rejected}
         icon={XCircle}
         valueColor="text-rose-600"
         borderColor="rose-500"
+        iconColor="text-rose-500"
       />
     </div>
   );
@@ -3216,7 +3242,7 @@ function ReplacementFlow({ onSuccess }: FlowProps) {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent
-                      className="w-[var(--radix-popover-trigger-width)] p-0"
+                      className="w-(--radix-popover-trigger-width) p-0"
                       align="start"
                       onWheelCapture={(event) => event.stopPropagation()}
                     >

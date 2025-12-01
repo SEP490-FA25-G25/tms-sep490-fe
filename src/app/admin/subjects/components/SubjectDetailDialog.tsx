@@ -37,7 +37,7 @@ const statusMap: Record<
 const approvalLabelMap: Record<string, string> = {
   APPROVED: "Đã duyệt",
   PENDING: "Chờ duyệt",
-  REJECTED: "Từ chối",
+  REJECTED: "Đã từ chối",
 };
 
 const courseStatusLabelMap: Record<string, string> = {

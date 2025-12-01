@@ -151,6 +151,14 @@ export interface StudentAttendanceOverviewResponse {
 }
 
 // Types cho student attendance report chi tiết theo buổi của 1 lớp
+export interface StudentAttendanceReportMakeupInfo {
+  sessionId: number;
+  classId: number;
+  classCode?: string;
+  date: string;
+  attended?: boolean;
+}
+
 export interface StudentAttendanceReportSessionDTO {
   sessionId: number;
   sessionNumber?: number;
@@ -168,6 +176,8 @@ export interface StudentAttendanceReportSessionDTO {
     | "PLANNED"
     | "UNKNOWN";
   note?: string | null;
+  isMakeup?: boolean;
+  makeupSessionInfo?: StudentAttendanceReportMakeupInfo | null;
 }
 
 export interface StudentAttendanceReportDTO {

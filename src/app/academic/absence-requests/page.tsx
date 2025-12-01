@@ -20,6 +20,16 @@ import { Badge } from '@/components/ui/badge'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Table,
@@ -59,6 +69,7 @@ export default function AcademicAbsenceRequestsPage() {
   const [selectedRequestId, setSelectedRequestId] = useState<number | null>(null)
   const [decisionNote, setDecisionNote] = useState('')
   const [decisionRejectReason, setDecisionRejectReason] = useState('')
+  const [confirmAction, setConfirmAction] = useState<'APPROVE' | 'REJECT' | null>(null)
 
   const {
     data: pendingResponse,
@@ -118,21 +129,30 @@ export default function AcademicAbsenceRequestsPage() {
 
   const detailRequest = detailResponse?.data
 
-  const handleDecision = async (type: 'APPROVE' | 'REJECT') => {
+  const handleDecision = (type: 'APPROVE' | 'REJECT') => {
     if (!detailRequest) return
 
+    // For reject, validate reason first
+    if (type === 'REJECT' && decisionRejectReason.trim().length < 10) {
+      toast.error('Lý do từ chối cần tối thiểu 10 ký tự')
+      return
+    }
+
+    // Show confirmation dialog
+    setConfirmAction(type)
+  }
+
+  const handleConfirmDecision = async () => {
+    if (!detailRequest || !confirmAction) return
+
     try {
-      if (type === 'APPROVE') {
+      if (confirmAction === 'APPROVE') {
         await approveRequest({
           id: detailRequest.id,
           note: decisionNote.trim() || undefined,
         }).unwrap()
         toast.success('Đã chấp thuận yêu cầu vắng mặt')
       } else {
-        if (decisionRejectReason.trim().length < 10) {
-          toast.error('Lý do từ chối cần tối thiểu 10 ký tự')
-          return
-        }
         await rejectRequest({
           id: detailRequest.id,
           rejectionReason: decisionRejectReason.trim(),
@@ -142,6 +162,7 @@ export default function AcademicAbsenceRequestsPage() {
 
       setDecisionNote('')
       setDecisionRejectReason('')
+      setConfirmAction(null)
       setSelectedRequestId(null)
     } catch (error: unknown) {
       const message =
@@ -151,9 +172,13 @@ export default function AcademicAbsenceRequestsPage() {
     }
   }
 
+  const handleCancelDecision = () => {
+    setConfirmAction(null)
+  }
+
   const summaryItems = [
     {
-      label: 'Đang chờ duyệt',
+      label: 'Chờ duyệt',
       value: pendingData?.summary?.totalPending ?? 0,
       accent: 'text-primary',
     },
@@ -641,6 +666,28 @@ export default function AcademicAbsenceRequestsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={confirmAction !== null} onOpenChange={(open) => !open && handleCancelDecision()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction === 'APPROVE' ? 'Xác nhận chấp thuận' : 'Xác nhận từ chối'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction === 'APPROVE'
+                ? 'Bạn có chắc chắn muốn chấp thuận yêu cầu xin nghỉ này? Hành động này không thể hoàn tác.'
+                : 'Bạn có chắc chắn muốn từ chối yêu cầu này? Lý do từ chối sẽ được gửi cho học viên.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelDecision}>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDecision}>
+              {confirmAction === 'APPROVE' ? 'Chấp thuận' : 'Từ chối'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   )
 }

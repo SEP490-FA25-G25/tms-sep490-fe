@@ -33,6 +33,7 @@ import TeacherProfilePage from "./app/teacher/profile/page";
 import StudentSchedulePage from "./app/student/schedule/page";
 import StudentRequestsPage from "./app/student/requests/page";
 import StudentAttendanceReportOverviewPage from "./app/student/attendance-report/page";
+import StudentClassAttendanceDetailPage from "./app/student/attendance-report/[classId]/page";
 import StudentMyClassesPage from "./app/student/my-classes/page";
 import StudentClassDetailPage from "./app/student/my-classes/[classId]/page";
 import StudentProfilePage from "./app/student/profile/page";
@@ -48,9 +49,12 @@ import EditClassPage from "./app/academic/classes/[id]/edit/page";
 
 import CenterHeadApprovalsPage from "./app/center-head/approvals/page";
 import CenterHeadResourcesPage from "./app/center-head/resources/page";
+import CenterHeadTimeSlotsPage from "./app/center-head/timeslots/page";
 import CurriculumPage from "./features/curriculum/pages/CurriculumPage";
 import CreateSubjectPage from "./features/curriculum/pages/CreateSubjectPage";
 import EditSubjectPage from "./features/curriculum/pages/EditSubjectPage";
+import TeacherAvailabilityPage from "./app/teacher/availability/page";
+import AvailabilityCampaignPage from "./app/academic/teacher-availability/page";
 
 // QA imports
 import QARootPage from "./app/qa/page";
@@ -68,6 +72,8 @@ import CurriculumCourseDetailPage from "./features/curriculum/pages/CourseDetail
 import SubjectDetailPage from "@/features/curriculum/pages/SubjectDetailPage";
 import CourseLearningPage from "./features/curriculum/pages/CourseLearningPage";
 import EditCoursePage from "./features/curriculum/pages/EditCoursePage";
+import ResourceDetailPage from "./app/center-head/resources/[id]/page";
+import TimeSlotDetailPage from "./app/center-head/timeslots/[id]/page";
 import NotificationsPage from "./app/notifications/page";
 import { Toaster } from "@/components/ui/sonner";
 import { lazy } from "react";
@@ -101,15 +107,7 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-            {/* Dashboard - shared and per-role */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
-              }
-            />
+            {/* Per-role dashboard */}
             <Route
               path="/:role/dashboard"
               element={
@@ -349,6 +347,22 @@ function App() {
               }
             />
             <Route
+              path="/teacher/availability"
+              element={
+                <ProtectedRoute
+                  requiredRoles={[
+                    "TEACHER",
+                    "ADMIN",
+                    "MANAGER",
+                    "CENTER_HEAD",
+                    "SUBJECT_LEADER",
+                  ]}
+                >
+                  <TeacherAvailabilityPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/teacher/requests/create/select-type"
               element={
                 <ProtectedRoute
@@ -430,6 +444,14 @@ function App() {
             />
 
             {/* Student routes */}
+            <Route
+              path="/student/attendance-report/:classId"
+              element={
+                <ProtectedRoute requiredRoles={["STUDENT"]}>
+                  <StudentClassAttendanceDetailPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/student/attendance-report"
               element={
@@ -590,6 +612,21 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/academic/teacher-availability"
+              element={
+                <ProtectedRoute
+                  requiredRoles={[
+                    "ACADEMIC_AFFAIR",
+                    "ADMIN",
+                    "MANAGER",
+                    "CENTER_HEAD",
+                  ]}
+                >
+                  <AvailabilityCampaignPage />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Curriculum routes */}
             <Route
@@ -713,6 +750,30 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
                   <CenterHeadResourcesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/center-head/resources/:id"
+              element={
+                <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
+                  <ResourceDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/center-head/timeslots"
+              element={
+                <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
+                  <CenterHeadTimeSlotsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/center-head/timeslots/:id"
+              element={
+                <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
+                  <TimeSlotDetailPage />
                 </ProtectedRoute>
               }
             />

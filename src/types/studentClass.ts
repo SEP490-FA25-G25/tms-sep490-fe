@@ -218,7 +218,7 @@ export interface GetStudentScoresRequest {
 
 // Vietnamese constants for UI
 export const CLASS_STATUSES: Record<ClassStatus, string> = {
-  DRAFT: 'Nháp',
+  DRAFT: 'Bản nháp',
   SCHEDULED: 'Đã lên lịch',
   ONGOING: 'Đang học',
   COMPLETED: 'Đã hoàn thành',

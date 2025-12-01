@@ -6,9 +6,11 @@ import { StudentRoute } from '@/components/ProtectedRoute';
 import { SiteHeader } from '@/components/site-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import {
   Table,
   TableBody,
@@ -25,6 +27,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { ENROLLMENT_STATUS_STYLES, getStatusStyle } from '@/lib/status-colors';
 import { useGetStudentTranscriptQuery } from '@/store/services/studentApi';
 import type { StudentTranscriptDTO } from '@/store/services/studentApi';
 import { AlertCircle, BookOpen, TrendingUp } from 'lucide-react';
@@ -94,19 +97,6 @@ const TranscriptPage = () => {
     return (totalScore / completedClassesWithScores.length).toFixed(2);
   }, [transcriptData]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ONGOING':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case 'COMPLETED':
-        return 'bg-slate-50 text-slate-700 border-slate-200';
-      case 'DROPPED':
-        return 'bg-red-50 text-red-700 border-red-200';
-      default:
-        return 'bg-slate-50 text-slate-700 border-slate-200';
-    }
-  };
-
   const getStatusText = (status: string) => {
     switch (status) {
       case 'ONGOING':
@@ -140,7 +130,7 @@ const TranscriptPage = () => {
           <div className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col">
               <header className="flex flex-col gap-2 border-b border-border px-6 py-5">
-                <h1 className="text-2xl font-semibold tracking-tight">
+                <h1 className="text-3xl font-bold tracking-tight">
                   Bảng điểm
                 </h1>
                 <p className="text-sm text-muted-foreground">
@@ -155,15 +145,15 @@ const TranscriptPage = () => {
                 )}
               </header>
 
-              <main className="flex-1 px-6 py-6 md:px-8 md:py-8">
+              <main className="flex-1 px-4 lg:px-6 py-6">
                 {isLoading && (
-                  <div className="rounded-lg border">
+                  <Card>
                     <div className="p-4 space-y-3">
                       {Array.from({ length: 5 }).map((_, idx) => (
                         <Skeleton key={idx} className="h-12 w-full" />
                       ))}
                     </div>
-                  </div>
+                  </Card>
                 )}
 
                 {error && !isLoading && (
@@ -185,20 +175,20 @@ const TranscriptPage = () => {
 
                 {!isLoading && !error && transcriptData.length > 0 && (
                   <div className="space-y-6">
-                    <div className="rounded-lg border overflow-hidden">
-                      <Table>
+                    <Card className="overflow-x-auto p-0">
+                      <Table className="min-w-[800px]">
                         <TableHeader className="sticky top-0 z-10 bg-background">
                           <TableRow className="bg-muted/50">
-                            <TableHead className="w-32">Mã lớp</TableHead>
-                            <TableHead>Tên môn</TableHead>
-                            <TableHead className="w-48">Giáo viên</TableHead>
-                            <TableHead className="w-32 text-center">
+                            <TableHead className="w-32 min-w-[100px]">Mã lớp</TableHead>
+                            <TableHead className="min-w-[180px]">Tên môn</TableHead>
+                            <TableHead className="w-48 min-w-[140px]">Giáo viên</TableHead>
+                            <TableHead className="w-32 min-w-[100px] text-center">
                               Điểm TB
                             </TableHead>
-                            <TableHead className="w-32 text-center">
+                            <TableHead className="w-32 min-w-[100px] text-center">
                               Tiến độ
                             </TableHead>
-                            <TableHead className="w-32 text-center">
+                            <TableHead className="w-32 min-w-[100px] text-center">
                               Trạng thái
                             </TableHead>
                           </TableRow>
@@ -278,7 +268,7 @@ const TranscriptPage = () => {
                                 <Badge
                                   className={cn(
                                     'text-xs',
-                                    getStatusColor(transcriptItem.status)
+                                    getStatusStyle(ENROLLMENT_STATUS_STYLES, transcriptItem.status)
                                   )}
                                 >
                                   {getStatusText(transcriptItem.status)}
@@ -288,24 +278,22 @@ const TranscriptPage = () => {
                           ))}
                         </TableBody>
                       </Table>
-                    </div>
+                    </Card>
                   </div>
                 )}
 
                 {!isLoading && !error && transcriptData.length === 0 && (
-                  <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border/80 bg-muted/10 p-10 text-center">
-                    <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-2">
-                      <BookOpen className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-base font-semibold text-foreground">
-                        Chưa có dữ liệu điểm số
-                      </p>
-                      <p className="text-sm text-muted-foreground">
+                  <Empty>
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon">
+                        <BookOpen className="h-10 w-10" />
+                      </EmptyMedia>
+                      <EmptyTitle>Chưa có dữ liệu điểm số</EmptyTitle>
+                      <EmptyDescription>
                         Bạn chưa tham gia lớp học nào hoặc chưa có điểm số.
-                      </p>
-                    </div>
-                  </div>
+                      </EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
                 )}
               </main>
             </div>

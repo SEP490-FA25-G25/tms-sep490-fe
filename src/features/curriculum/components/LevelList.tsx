@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -8,8 +9,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Edit, Trash2, Loader2, Eye, RotateCcw } from "lucide-react";
-import { useGetSubjectsWithLevelsQuery, useGetLevelsQuery, useDeactivateLevelMutation, useReactivateLevelMutation, type LevelDTO } from "@/store/services/curriculumApi";
+import { Edit, Trash2, Loader2, Eye, RotateCcw, MoreVertical } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+import { useGetSubjectsWithLevelsQuery, useGetLevelsQuery, useDeactivateLevelMutation, useReactivateLevelMutation, useDeleteLevelMutation, type LevelDTO } from "@/store/services/curriculumApi";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import {
@@ -28,6 +31,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { DataTable } from "@/components/data-table";
 import { type ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
+import { getStatusLabel, getStatusColor } from "@/utils/statusMapping";
 
 export function LevelList() {
     const navigate = useNavigate();
@@ -36,6 +40,7 @@ export function LevelList() {
     const [selectedSubjectId, setSelectedSubjectId] = useState<number | undefined>(undefined);
     const [levelToDelete, setLevelToDelete] = useState<number | null>(null);
     const [levelToReactivate, setLevelToReactivate] = useState<number | null>(null);
+    const [levelToDeletePermanently, setLevelToDeletePermanently] = useState<number | null>(null);
 
     // Fetch subjects for filter dropdown
     const { data: subjectsData } = useGetSubjectsWithLevelsQuery();
@@ -44,6 +49,7 @@ export function LevelList() {
     const { data: levelsData } = useGetLevelsQuery(selectedSubjectId);
     const [deactivateLevel, { isLoading: isDeactivating }] = useDeactivateLevelMutation();
     const [reactivateLevel, { isLoading: isReactivating }] = useReactivateLevelMutation();
+    const [deleteLevel, { isLoading: isDeleting }] = useDeleteLevelMutation();
 
     const levels = levelsData?.data || [];
 
@@ -69,6 +75,21 @@ export function LevelList() {
             } catch (error) {
                 console.error("Failed to reactivate level:", error);
                 toast.error("Kích hoạt lại thất bại. Vui lòng thử lại.");
+            }
+        }
+    };
+
+    const handleDelete = async () => {
+        if (levelToDeletePermanently) {
+            try {
+                await deleteLevel(levelToDeletePermanently).unwrap();
+                toast.success("Đã xóa cấp độ thành công");
+                setLevelToDeletePermanently(null);
+            } catch (error: unknown) {
+                console.error("Failed to delete level:", error);
+                const apiError = error as { data?: { message?: string } };
+                const errorMessage = apiError.data?.message || "Xóa thất bại. Vui lòng thử lại.";
+                toast.error(errorMessage);
             }
         }
     };
@@ -118,52 +139,114 @@ export function LevelList() {
             header: "Thời lượng (Giờ)",
         },
         {
+            accessorKey: "createdAt",
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        Ngày tạo
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                )
+            },
+            cell: ({ row }) => <div className="pl-4">{row.getValue("createdAt") ? format(new Date(row.getValue("createdAt")), "dd/MM/yyyy") : "-"}</div>,
+        },
+        {
+            accessorKey: "updatedAt",
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        Ngày thay đổi
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                )
+            },
+            cell: ({ row }) => <div className="pl-4">{row.getValue("updatedAt") ? format(new Date(row.getValue("updatedAt")), "dd/MM/yyyy") : "-"}</div>,
+        },
+        {
             accessorKey: "status",
             header: "Trạng thái",
             cell: ({ row }) => (
-                <Badge variant={row.getValue("status") === "ACTIVE" ? "default" : "secondary"}>
-                    {row.getValue("status") || "ACTIVE"}
+                <Badge variant={getStatusColor(row.getValue("status"))}>
+                    {getStatusLabel(row.getValue("status"))}
                 </Badge>
             ),
         },
         {
             id: "actions",
+            header: "Hành động",
             cell: ({ row }) => {
                 const level = row.original;
                 return (
-                    <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => navigate(`/curriculum/levels/${level.id}`)}>
-                            <Eye className="h-4 w-4" />
-                        </Button>
-                        {isSubjectLeader && (
-                            <>
-                                <Button variant="ghost" size="icon" onClick={() => navigate(`/curriculum/levels/${level.id}/edit`)}>
-                                    <Edit className="h-4 w-4" />
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                                <span className="sr-only">Mở menu hành động</span>
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent align="end" className="w-48 p-1">
+                            <div className="flex flex-col gap-0.5">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full justify-start gap-2 h-9 px-2"
+                                    onClick={() => navigate(`/curriculum/levels/${level.id}`)}
+                                >
+                                    <Eye className="h-4 w-4" />
+                                    Xem chi tiết
                                 </Button>
-                                {level.status === "INACTIVE" ? (
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                        onClick={() => setLevelToReactivate(level.id)}
-                                        title="Kích hoạt lại"
-                                    >
-                                        <RotateCcw className="h-4 w-4" />
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="text-destructive"
-                                        onClick={() => setLevelToDelete(level.id)}
-                                        title="Hủy kích hoạt"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                {isSubjectLeader && (
+                                    <>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="w-full justify-start gap-2 h-9 px-2"
+                                            onClick={() => navigate(`/curriculum/levels/${level.id}/edit`)}
+                                        >
+                                            <Edit className="h-4 w-4" />
+                                            Chỉnh sửa
+                                        </Button>
+                                        {level.status === "INACTIVE" ? (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="w-full justify-start gap-2 h-9 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                onClick={() => setLevelToReactivate(level.id)}
+                                            >
+                                                <RotateCcw className="h-4 w-4" />
+                                                Kích hoạt lại
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="w-full justify-start gap-2 h-9 px-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                                onClick={() => setLevelToDelete(level.id)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                                Hủy kích hoạt
+                                            </Button>
+                                        )}
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="w-full justify-start gap-2 h-9 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            onClick={() => setLevelToDeletePermanently(level.id)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                            Xóa
+                                        </Button>
+                                    </>
                                 )}
-                            </>
-                        )}
-                    </div>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
                 );
             },
         },
@@ -208,12 +291,12 @@ export function LevelList() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Bạn có chắc chắn muốn hủy kích hoạt?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Hành động này sẽ chuyển trạng thái cấp độ sang INACTIVE. Bạn có thể kích hoạt lại sau này.
+                            Hành động này sẽ chuyển trạng thái cấp độ sang Ngừng hoạt động. Bạn có thể kích hoạt lại sau này.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Hủy</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeactivate} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        <AlertDialogAction onClick={handleDeactivate} className="bg-orange-600 text-white hover:bg-orange-700">
                             {isDeactivating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Hủy kích hoạt"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
@@ -225,13 +308,32 @@ export function LevelList() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Kích hoạt lại cấp độ?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Hành động này sẽ chuyển trạng thái cấp độ sang ACTIVE.
+                            Hành động này sẽ chuyển trạng thái cấp độ sang Hoạt động.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Hủy</AlertDialogCancel>
                         <AlertDialogAction onClick={handleReactivate} className="bg-primary text-primary-foreground hover:bg-primary/90">
                             {isReactivating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Kích hoạt lại"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={!!levelToDeletePermanently} onOpenChange={(open) => !open && setLevelToDeletePermanently(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Hành động này sẽ xóa vĩnh viễn cấp độ. Không thể hoàn tác.
+                            <br />
+                            Lưu ý: Chỉ có thể xóa cấp độ nếu chưa có khóa học nào.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Xóa vĩnh viễn"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

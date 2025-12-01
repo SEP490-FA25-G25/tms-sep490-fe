@@ -3,8 +3,6 @@
 import { useState } from "react"
 import { useGetQAReportsQuery } from "@/store/services/qaApi"
 import { QAReportStatusBadge } from "@/components/qa/QAReportStatusBadge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { getQAReportTypeDisplayName, type QAReportListItemDTO } from "@/types/qa"
@@ -16,24 +14,30 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table"
+import {
     FileText,
-    Plus,
-    Eye,
-    Edit,
     Loader2,
     AlertTriangle,
-    Calendar,
+    FileCheck,
+    FilePen,
 } from "lucide-react"
-import { Link } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 
 interface QAReportsListTabProps {
     classId: number
-    onNavigateToCreate?: () => void
 }
 
-export function QAReportsListTab({ classId, onNavigateToCreate }: QAReportsListTabProps) {
+export function QAReportsListTab({ classId }: QAReportsListTabProps) {
     const [reportTypeFilter, setReportTypeFilter] = useState<string>("all")
     const [statusFilter, setStatusFilter] = useState<string>("all")
+    const navigate = useNavigate()
   
     const { data: reportsData, isLoading, error } = useGetQAReportsQuery({
         classId,
@@ -43,11 +47,9 @@ export function QAReportsListTab({ classId, onNavigateToCreate }: QAReportsListT
 
     if (isLoading) {
         return (
-            <Card>
-                <CardContent className="flex items-center justify-center h-32">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                </CardContent>
-            </Card>
+            <div className="flex items-center justify-center h-32">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
         )
     }
 
@@ -70,17 +72,29 @@ export function QAReportsListTab({ classId, onNavigateToCreate }: QAReportsListT
         return typeMatch && statusMatch
     })
 
+    // Stats
+    const draftCount = reports.filter(r => r.status === "DRAFT").length
+    const submittedCount = reports.filter(r => r.status === "SUBMITTED").length
+
     const getReportLevelBadge = (report: QAReportListItemDTO) => {
         if (report.sessionId) {
-            return <Badge variant="outline">Buổi học</Badge>
+            return <Badge variant="outline" className="text-xs">Buổi học</Badge>
         } else if (report.phaseId) {
-            return <Badge variant="outline">Giai đoạn</Badge>
+            return <Badge variant="outline" className="text-xs">Giai đoạn</Badge>
         } else {
-            return <Badge variant="default">Lớp học</Badge>
+            return <Badge variant="secondary" className="text-xs">Lớp học</Badge>
         }
     }
 
     const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+        })
+    }
+
+    const formatDateTime = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('vi-VN', {
             day: '2-digit',
             month: '2-digit',
@@ -92,144 +106,151 @@ export function QAReportsListTab({ classId, onNavigateToCreate }: QAReportsListT
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex justify-between items-center">
-                <div>
-                    <h3 className="text-lg font-semibold">Báo Cáo QA</h3>
-                    <p className="text-sm text-muted-foreground">
-                        {filteredReports.length} báo cáo
-                    </p>
+            {/* Summary Stats */}
+            <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                <div className="rounded-lg border bg-card shadow-sm p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground">
+                        <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                        <span className="text-xs sm:text-sm font-medium">Tổng báo cáo</span>
+                    </div>
+                    <p className="text-base sm:text-lg font-semibold text-foreground">{reports.length}</p>
                 </div>
-                <Button onClick={onNavigateToCreate}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Tạo Báo Cáo Mới
-                </Button>
+
+                <div className="rounded-lg border bg-card shadow-sm p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground">
+                        <FileCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                        <span className="text-xs sm:text-sm font-medium">Đã nộp</span>
+                    </div>
+                    <p className="text-base sm:text-lg font-semibold text-green-600">{submittedCount}</p>
+                </div>
+
+                <div className="rounded-lg border bg-card shadow-sm p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground">
+                        <FilePen className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                        <span className="text-xs sm:text-sm font-medium">Bản nháp</span>
+                    </div>
+                    <p className="text-base sm:text-lg font-semibold text-amber-600">{draftCount}</p>
+                </div>
             </div>
 
             {/* Filters */}
-            <div className="flex items-center space-x-4">
-                <div>
-                    <label className="text-sm font-medium">Loại báo cáo:</label>
-                    <Select value={reportTypeFilter} onValueChange={setReportTypeFilter}>
-                        <SelectTrigger className="w-[250px] mt-1">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Tất cả loại báo cáo</SelectItem>
-                            <SelectItem value="CLASSROOM_OBSERVATION">Quan sát lớp học</SelectItem>
-                            <SelectItem value="PHASE_REVIEW">Đánh giá giai đoạn</SelectItem>
-                            <SelectItem value="CLO_ACHIEVEMENT_ANALYSIS">Phân tích kết quả CLO</SelectItem>
-                            <SelectItem value="STUDENT_FEEDBACK_ANALYSIS">Phân tích phản hồi học viên</SelectItem>
-                            <SelectItem value="ATTENDANCE_ENGAGEMENT_REVIEW">Đánh giá chuyên cần & tham gia</SelectItem>
-                            <SelectItem value="TEACHING_QUALITY_ASSESSMENT">Đánh giá chất lượng giảng dạy</SelectItem>
-                        </SelectContent>
-                    </Select>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-muted-foreground">Loại:</span>
+                        <Select value={reportTypeFilter} onValueChange={setReportTypeFilter}>
+                            <SelectTrigger className="w-[220px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Tất cả loại báo cáo</SelectItem>
+                                <SelectItem value="CLASSROOM_OBSERVATION">Quan sát lớp học</SelectItem>
+                                <SelectItem value="PHASE_REVIEW">Đánh giá giai đoạn</SelectItem>
+                                <SelectItem value="CLO_ACHIEVEMENT_ANALYSIS">Phân tích kết quả CLO</SelectItem>
+                                <SelectItem value="STUDENT_FEEDBACK_ANALYSIS">Phân tích phản hồi HV</SelectItem>
+                                <SelectItem value="ATTENDANCE_ENGAGEMENT_REVIEW">Đánh giá chuyên cần</SelectItem>
+                                <SelectItem value="TEACHING_QUALITY_ASSESSMENT">Đánh giá chất lượng GD</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-muted-foreground">Trạng thái:</span>
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger className="w-[150px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Tất cả</SelectItem>
+                                <SelectItem value="DRAFT">Bản nháp</SelectItem>
+                                <SelectItem value="SUBMITTED">Đã nộp</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
 
-                <div>
-                    <label className="text-sm font-medium">Trạng thái:</label>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="w-[180px] mt-1">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                            <SelectItem value="DRAFT">Bản nháp</SelectItem>
-                            <SelectItem value="SUBMITTED">Đã nộp</SelectItem>
-                        </SelectContent>
-                    </Select>
+                <div className="text-sm text-muted-foreground">
+                    Hiển thị {filteredReports.length} / {reports.length} báo cáo
                 </div>
             </div>
 
-            {/* Reports List */}
-            {filteredReports.length > 0 ? (
-                <div className="space-y-4">
-                    {filteredReports.map((report) => (
-                        <Card key={report.id} className="hover:shadow-md transition-shadow">
-                            <CardContent className="p-6">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1 space-y-2">
-                                        {/* Header */}
-                                        <div className="flex items-center space-x-3">
-                                            <h4 className="font-semibold text-lg">
+            {/* Reports Table */}
+            <div className="rounded-lg border">
+                {filteredReports.length > 0 ? (
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-muted/50">
+                                <TableHead className="font-semibold w-[30%]">Loại báo cáo</TableHead>
+                                <TableHead className="font-semibold w-[15%]">Phạm vi</TableHead>
+                                <TableHead className="font-semibold w-[20%]">Ngày tạo</TableHead>
+                                <TableHead className="font-semibold w-[20%]">Người tạo</TableHead>
+                                <TableHead className="font-semibold w-[15%]">Trạng thái</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredReports.map((report) => (
+                                <TableRow 
+                                    key={report.id} 
+                                    className="cursor-pointer hover:bg-muted/50"
+                                    onClick={() => navigate(`/qa/reports/${report.id}`)}
+                                >
+                                    <TableCell>
+                                        <div className="space-y-1">
+                                            <p className="font-medium">
                                                 {getQAReportTypeDisplayName(report.reportType)}
-                                            </h4>
-                                            {getReportLevelBadge(report)}
-                                            <QAReportStatusBadge status={report.status} />
-                                        </div>
-
-                                        {/* Metadata */}
-                                        <div className="flex items-center space-x-6 text-sm text-muted-foreground">
-                                            <div className="flex items-center space-x-1">
-                                                <Calendar className="h-4 w-4" />
-                                                <span>{formatDate(report.createdAt)}</span>
-                                            </div>
-                                            <div>
-                                                <span>Tạo bởi: </span>
-                                                <span className="font-medium">{report.reportedByName}</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Context Info */}
-                                        <div className="flex items-center space-x-4 text-sm">
-                                            <span className="font-medium">{report.classCode}</span>
-                                            {report.sessionDate && (
-                                                <>
-                                                    <span className="text-muted-foreground">•</span>
-                                                    <span>Buổi {new Date(report.sessionDate).toLocaleDateString('vi-VN')}</span>
-                                                </>
-                                            )}
-                                            {report.phaseName && (
-                                                <>
-                                                    <span className="text-muted-foreground">•</span>
-                                                    <span>{report.phaseName}</span>
-                                                </>
-                                            )}
-                                        </div>
-
-                                        {/* Findings Preview */}
-                                        {report.findingsPreview && (
-                                            <div className="mt-3 p-3 bg-muted/50 rounded-lg">
-                                                <p className="text-sm text-gray-700 line-clamp-3">
+                                            </p>
+                                            {report.findingsPreview && (
+                                                <p className="text-xs text-muted-foreground line-clamp-1">
                                                     {report.findingsPreview}
                                                 </p>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Actions */}
-                                    <div className="flex items-center space-x-2 ml-4">
-                                        <Button variant="outline" size="sm" asChild>
-                                            <Link to={`/qa/reports/${report.id}`}>
-                                                <Eye className="h-4 w-4 mr-1" />
-                                                Xem
-                                            </Link>
-                                        </Button>
-                                        {report.status === "DRAFT" && (
-                                            <Button variant="outline" size="sm" asChild>
-                                                <Link to={`/qa/reports/${report.id}/edit`}>
-                                                    <Edit className="h-4 w-4 mr-1" />
-                                                    Chỉnh sửa
-                                                </Link>
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            ) : (
-                <Alert>
-                    <FileText className="h-4 w-4" />
-                    <AlertDescription>
-                        {reports.length === 0
-                            ? "Chưa có báo cáo QA nào cho lớp học này."
-                            : "Không có báo cáo nào phù hợp với bộ lọc đã chọn."
-                        }
-                    </AlertDescription>
-                </Alert>
-            )}
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="space-y-1">
+                                            {getReportLevelBadge(report)}
+                                            {report.sessionDate && (
+                                                <p className="text-xs text-muted-foreground">
+                                                    {formatDate(report.sessionDate)}
+                                                </p>
+                                            )}
+                                            {report.phaseName && (
+                                                <p className="text-xs text-muted-foreground">
+                                                    {report.phaseName}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-sm">
+                                        {formatDateTime(report.createdAt)}
+                                    </TableCell>
+                                    <TableCell className="text-sm">
+                                        {report.reportedByName}
+                                    </TableCell>
+                                    <TableCell>
+                                        <QAReportStatusBadge status={report.status} />
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                        <p className="text-muted-foreground">
+                            {reports.length === 0
+                                ? "Chưa có báo cáo QA nào cho lớp học này."
+                                : "Không có báo cáo nào phù hợp với bộ lọc đã chọn."
+                            }
+                        </p>
+                        {reports.length === 0 && (
+                            <p className="text-sm text-muted-foreground mt-2">
+                                Sử dụng nút "Tạo Báo Cáo QA" ở trên để tạo báo cáo đầu tiên.
+                            </p>
+                        )}
+                    </div>
+                )}
+            </div>
         </div>
     )
 }

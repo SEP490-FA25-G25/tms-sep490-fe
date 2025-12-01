@@ -376,7 +376,7 @@ export const getQAReportStatusDisplayName = (status: QAReportStatus | string): s
 
   switch (normalizedStatus) {
     case QAReportStatus.DRAFT:
-      return "Nháp"
+      return "Bản nháp"
     case QAReportStatus.SUBMITTED:
       return "Đã nộp"
     default:

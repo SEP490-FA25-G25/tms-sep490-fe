@@ -1,5 +1,5 @@
-// Notification components barrel export
-export { NotificationBell, HeaderNotificationBell } from './NotificationBell'
-export { NotificationCard } from './NotificationCard'
-export { NotificationSkeleton } from './NotificationSkeleton'
-
+export * from './NotificationBell'
+export * from './NotificationCard'
+export * from './NotificationSkeleton'
+export * from './NotificationFilters'
+export * from './NotificationList'

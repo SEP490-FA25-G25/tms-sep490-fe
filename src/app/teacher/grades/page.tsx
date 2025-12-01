@@ -36,8 +36,8 @@ import { vi } from "date-fns/locale";
 
 const STATUS_LABELS: Record<string, string> = {
   ONGOING: "Đang diễn ra",
-  COMPLETED: "Đã kết thúc",
-  SCHEDULED: "Sắp bắt đầu",
+  COMPLETED: "Đã hoàn thành",
+  SCHEDULED: "Đã lên lịch",
   CANCELLED: "Đã hủy",
 };
 
@@ -320,8 +320,8 @@ export default function TeacherGradesPage() {
   const statusFilters: { label: string; value: StatusFilter }[] = [
     { label: "Tất cả", value: "ALL" },
     { label: "Đang diễn ra", value: "ONGOING" },
-    { label: "Sắp bắt đầu", value: "SCHEDULED" },
-    { label: "Đã kết thúc", value: "COMPLETED" },
+    { label: "Đã lên lịch", value: "SCHEDULED" },
+    { label: "Đã hoàn thành", value: "COMPLETED" },
   ];
 
   return (
@@ -394,7 +394,7 @@ export default function TeacherGradesPage() {
                 <div key={index} className="relative group">
                   <Card
                     className={cn(
-                      "border-t-2 border-l-2 transition-all duration-300 ease-in-out group-hover:-translate-y-1 group-hover:shadow-md cursor-pointer"
+                      "border-t-2 border-l-2 transition-all duration-300 ease-in-out group-hover:-translate-y-1 group-hover:shadow-md cursor-pointer relative"
                     )}
                     style={
                       {
@@ -405,15 +405,21 @@ export default function TeacherGradesPage() {
                       } as React.CSSProperties
                     }
                   >
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-0.5">
-                      <CardTitle className="text-sm font-medium">
+                    {/* Icon positioned at vertical center of entire card */}
+                    <card.icon
+                      className={cn(
+                        "h-6 w-6 absolute top-[calc(50%-0.125rem)] -translate-y-1/2 right-4 z-10",
+                        card.iconColor
+                      )}
+                    />
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-0.5 relative">
+                      <CardTitle className="text-base font-medium">
                         {card.label}
                       </CardTitle>
-                      <card.icon className={cn("h-4 w-4", card.iconColor)} />
                     </CardHeader>
-                    <CardContent className="pt-0 pb-2">
+                    <CardContent className="pt-0 pb-2 relative">
                       <div
-                        className={cn("text-2xl font-bold", card.valueColor)}
+                        className={cn("text-3xl font-bold", card.valueColor)}
                       >
                         {card.value}
                       </div>

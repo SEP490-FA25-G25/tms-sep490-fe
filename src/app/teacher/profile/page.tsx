@@ -81,7 +81,7 @@ export default function TeacherProfilePage() {
         return "Đang dạy";
       case "COMPLETED":
       case "ENDED":
-        return "Đã kết thúc";
+        return "Đã hoàn thành";
       case "CANCELLED":
         return "Đã hủy";
       case "PLANNED":

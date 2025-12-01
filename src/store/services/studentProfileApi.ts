@@ -7,6 +7,7 @@ export interface StudentProfile {
   fullName: string;
   email: string;
   phone: string;
+  avatarUrl?: string;
   address?: string;
   gender: string;
   dateOfBirth: string;

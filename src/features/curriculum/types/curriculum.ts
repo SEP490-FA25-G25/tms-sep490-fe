@@ -33,7 +33,7 @@ export interface CourseSession {
   topic: string;
   studentTask: string;
   cloIds: string[]; // Mapped CLOs
-  skillSets?: string[];
+  skill?: string;
 }
 
 export interface CoursePhase {

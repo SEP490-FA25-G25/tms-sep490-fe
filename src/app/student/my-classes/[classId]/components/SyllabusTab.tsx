@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
@@ -9,8 +10,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import {
   Download,
   Eye,
-  Lock,
-  Unlock,
   CheckCircle,
   BookOpen,
   FileText,
@@ -54,7 +53,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
   const isLoadingData = isLoading || syllabusLoading || materialsLoading;
   const hasError = syllabusError || materialsError;
 
-  
+
   // Helper functions
   const getMaterialIcon = (type?: string) => {
     switch (type?.toUpperCase()) {
@@ -101,7 +100,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
     return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
   };
 
-  
+
   // Get materials for different levels
   const courseMaterials = materials?.courseLevel || [];
   const getMaterialsForPhase = (phaseId: number) => {
@@ -118,7 +117,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
     return [];
   };
 
-  
+
   if (isLoadingData) {
     return (
       <div className="space-y-6">
@@ -130,7 +129,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
           </div>
         </div>
         {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="rounded-lg border bg-card p-6 space-y-4">
+          <div key={i} className="rounded-lg border bg-card p-6 space-y-4">
             <Skeleton className="h-6 w-32" />
             <Skeleton className="h-32 w-full" />
           </div>
@@ -165,9 +164,8 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
           <BookOpen className="h-5 w-5 text-primary" />
           Tổng quan khóa học
         </h3>
-
-                    <div className="rounded-lg border bg-card">
-          <div className="p-6 space-y-6">
+        <Card className="py-0">
+          <CardContent className="space-y-6">
             <div>
               <h4 className="text-sm font-medium text-muted-foreground mb-2">Tên khóa học</h4>
               <p className="text-base font-semibold">{course.name}</p>
@@ -236,8 +234,8 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                 </p>
               </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Course Materials */}
@@ -249,49 +247,48 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
             <Badge variant="secondary">{courseMaterials.length}</Badge>
           </div>
 
-          <div className="rounded-lg border divide-y overflow-hidden bg-card">
-            {courseMaterials.map((material) => (
-              <div key={material.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
-                <div className="shrink-0 text-muted-foreground">
-                  {getMaterialIcon(material.materialType)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-medium truncate">{material.title}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {getMaterialTypeLabel(material.materialType)}
-                    {material.fileSize && ` • ${formatFileSize(material.fileSize)}`}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">
-                    {getMaterialTypeLabel(material.materialType)}
-                  </Badge>
-                  <div className="flex items-center gap-1">
-                    {!material.isAccessible && <Lock className="h-4 w-4 text-muted-foreground" />}
-                    {material.isAccessible && <Unlock className="h-4 w-4 text-muted-foreground" />}
+          <Card className="overflow-hidden py-0">
+            <div className="divide-y">
+              {courseMaterials.map((material) => (
+                <div
+                  key={material.id}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="shrink-0 text-muted-foreground">
+                    {getMaterialIcon(material.materialType)}
                   </div>
-                  <div className="flex gap-1">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      aria-label="Xem tài liệu"
-                      disabled={!material.isAccessible}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      aria-label="Tải tài liệu"
-                      disabled={!material.isAccessible}
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium truncate">{material.title}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {getMaterialTypeLabel(material.materialType)}
+                      {material.fileSize && ` • ${formatFileSize(material.fileSize)}`}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">
+                      {getMaterialTypeLabel(material.materialType)}
+                    </Badge>
+                    <div className="flex gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label="Xem tài liệu"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label="Tải tài liệu"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </Card>
         </div>
       )}
 
@@ -319,7 +316,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
               const phaseId = `phase-${phaseIndex}`;
 
               return (
-                <AccordionItem key={phase.id} value={phaseId} className="rounded-lg border bg-card">
+                <AccordionItem key={phase.id} value={phaseId} className="rounded-lg border bg-card last:border-b">
                   <AccordionTrigger className="px-5 py-4 hover:no-underline">
                     <div className="flex items-start justify-between gap-3 text-left">
                       <div className="space-y-1">
@@ -359,7 +356,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                           {phaseMaterials.map((material) => (
                             <div
                               key={material.id}
-                              className="flex items-center gap-3 px-4 py-3 border-b last:border-b-0"
+                              className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40"
                             >
                               <div className="shrink-0 text-muted-foreground">
                                 {getMaterialIcon(material.materialType)}
@@ -378,16 +375,11 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                                 )}
                               </div>
                               <div className="flex items-center gap-2">
-                                <div className="flex items-center gap-1">
-                                  {!material.isAccessible && <Lock className="h-4 w-4 text-muted-foreground" />}
-                                  {material.isAccessible && <Unlock className="h-4 w-4 text-muted-foreground" />}
-                                </div>
                                 <div className="flex gap-1">
                                   <Button
                                     size="icon"
                                     variant="ghost"
                                     aria-label="Xem tài liệu"
-                                    disabled={!material.isAccessible}
                                   >
                                     <Eye className="h-4 w-4" />
                                   </Button>
@@ -395,7 +387,6 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                                     size="icon"
                                     variant="ghost"
                                     aria-label="Tải tài liệu"
-                                    disabled={!material.isAccessible}
                                   >
                                     <Download className="h-4 w-4" />
                                   </Button>
@@ -416,15 +407,20 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
 
                           return (
                             <div key={session.id} className="border rounded-lg bg-card overflow-hidden">
-                              <Accordion type="single" value={expandedSessions.includes(sessionId) ? sessionId : ''} onValueChange={(value: string | string[] | undefined) => {
-                                if (value) {
-                                  setExpandedSessions(prev => [...prev, sessionId]);
-                                } else {
-                                  setExpandedSessions(prev => prev.filter(id => id !== sessionId));
-                                }
-                              }} className="border-0">
-                                <AccordionItem value={sessionId} className="border-0">
-                                  <AccordionTrigger className="px-4 py-3 hover:no-underline border-0">
+                              <Accordion
+                                type="single"
+                                collapsible
+                                value={expandedSessions.includes(sessionId) ? sessionId : undefined}
+                                onValueChange={(value: string | undefined) => {
+                                  if (value) {
+                                    setExpandedSessions(prev => [...prev, sessionId]);
+                                  } else {
+                                    setExpandedSessions(prev => prev.filter(id => id !== sessionId));
+                                  }
+                                }}
+                              >
+                                <AccordionItem value={sessionId} className="border-b-0">
+                                  <AccordionTrigger className="px-4 py-3 hover:no-underline">
                                     <div className="flex items-start justify-between gap-3 text-left w-full">
                                       <div className="space-y-2">
                                         <div className="flex items-center gap-3">
@@ -452,7 +448,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                                     </div>
                                   </AccordionTrigger>
 
-                                  <AccordionContent className="px-4 pb-4 space-y-4 border-0">
+                                  <AccordionContent className="px-4 pb-4 space-y-4">
                                     {/* Session Objectives */}
                                     {session.objectives && (
                                       <div className="space-y-2">
@@ -467,21 +463,18 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                                     )}
 
                                     {/* Session Skills */}
-                                    {session.skillSets && session.skillSets.length > 0 && (
+                                    {session.skill && (
                                       <div className="space-y-2">
                                         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                                           <Award className="h-4 w-4 text-primary" />
                                           <span>Kỹ năng</span>
                                         </div>
                                         <div className="flex flex-wrap gap-2">
-                                          {session.skillSets.map((skill, index) => (
-                                            <span
-                                              key={index}
-                                              className="rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wide"
-                                            >
-                                              {skill}
-                                            </span>
-                                          ))}
+                                          <span
+                                            className="rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wide"
+                                          >
+                                            {session.skill}
+                                          </span>
                                         </div>
                                       </div>
                                     )}
@@ -497,7 +490,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                                           {sessionMaterials.map((material) => (
                                             <div
                                               key={material.id}
-                                              className="flex items-center gap-3 px-4 py-3 border-b last:border-b-0"
+                                              className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40"
                                             >
                                               <div className="shrink-0 text-muted-foreground">
                                                 {getMaterialIcon(material.materialType)}
@@ -516,16 +509,11 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                                                 )}
                                               </div>
                                               <div className="flex items-center gap-2">
-                                                <div className="flex items-center gap-1">
-                                                  {!material.isAccessible && <Lock className="h-4 w-4 text-muted-foreground" />}
-                                                  {material.isAccessible && <Unlock className="h-4 w-4 text-muted-foreground" />}
-                                                </div>
                                                 <div className="flex gap-1">
                                                   <Button
                                                     size="icon"
                                                     variant="ghost"
                                                     aria-label="Xem tài liệu"
-                                                    disabled={!material.isAccessible}
                                                   >
                                                     <Eye className="h-4 w-4" />
                                                   </Button>
@@ -533,7 +521,6 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                                                     size="icon"
                                                     variant="ghost"
                                                     aria-label="Tải tài liệu"
-                                                    disabled={!material.isAccessible}
                                                   >
                                                     <Download className="h-4 w-4" />
                                                   </Button>
@@ -581,8 +568,8 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
               Mục tiêu học tập (CLO)
             </h3>
 
-            <div className="rounded-lg border bg-card">
-              <div className="p-6 space-y-4">
+            <Card className="py-0 gap-0">
+              <CardContent className="p-0">
                 {courseSyllabus.clos.map((clo) => (
                   <div key={clo.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
                     <div className="shrink-0">
@@ -603,8 +590,8 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                     )}
                   </div>
                 ))}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         </>
       )}
@@ -619,10 +606,10 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
               <h3 className="text-xl font-semibold">Cơ cấu điểm</h3>
               <Badge variant="secondary">{courseSyllabus.assessments?.length || 0}</Badge>
             </div>
-            <div className="rounded-lg border">
+            <Card className="overflow-hidden py-0">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="bg-muted/50">
                     <TableHead>Thành phần đánh giá</TableHead>
                     <TableHead>Loại</TableHead>
                     <TableHead>Điểm tối đa</TableHead>
@@ -666,7 +653,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                   )}
                 </TableBody>
               </Table>
-            </div>
+            </Card>
           </div>
         </>
       )}

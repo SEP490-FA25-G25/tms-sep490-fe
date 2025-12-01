@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,6 +9,7 @@ import { Calendar, Clock, FileText } from 'lucide-react';
 import type { AssessmentDTO, StudentAssessmentScoreDTO } from '@/types/studentClass';
 import { ASSESSMENT_KINDS } from '@/types/studentClass';
 import { cn } from '@/lib/utils';
+import { ASSESSMENT_KIND_STYLES, getStatusStyle } from '@/lib/status-colors';
 
 interface AssessmentsTabProps {
   assessments: AssessmentDTO[];
@@ -56,30 +58,13 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
     });
   }, [assessments, filter, scoreMap]);
 
-  const getAssessmentKindColor = (kind: string) => {
-    switch (kind) {
-      case 'QUIZ':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'MIDTERM':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'FINAL':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'ASSIGNMENT':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'PROJECT':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
   const getStatusBadge = (assessment: AssessmentDTO, score?: StudentAssessmentScoreDTO) => {
     const now = new Date();
     const assessmentDate = new Date(assessment.scheduledDate);
 
     if (score && score.isGraded) {
       return (
-        <Badge className="bg-green-100 text-green-800 border-green-200">
+        <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
           Đã chấm điểm
         </Badge>
       );
@@ -87,7 +72,7 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
 
     if (score && score.isSubmitted && !score.isGraded) {
       return (
-        <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+        <Badge className="bg-amber-100 text-amber-700 border-amber-200">
           Chờ chấm điểm
         </Badge>
       );
@@ -111,13 +96,13 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
   // Loading state
   if (isLoading) {
     return (
-      <div className="rounded-lg border">
+      <Card>
         <div className="p-4 space-y-3">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-12 w-full" />
           ))}
         </div>
-      </div>
+      </Card>
     );
   }
 
@@ -146,7 +131,7 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
         </ToggleGroup>
       </div>
 
-      <div className="rounded-lg border overflow-hidden">
+      <Card className="overflow-hidden py-0">
         {filteredAssessments.length > 0 ? (
           <Table>
             <TableHeader>
@@ -176,7 +161,7 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={cn("text-xs", getAssessmentKindColor(assessment.kind))}>
+                      <Badge className={cn("text-xs", getStatusStyle(ASSESSMENT_KIND_STYLES, assessment.kind))}>
                         {ASSESSMENT_KINDS[assessment.kind]}
                       </Badge>
                     </TableCell>
@@ -235,7 +220,7 @@ const AssessmentsTab: React.FC<AssessmentsTabProps> = ({ assessments, isLoading,
             </Empty>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 };

@@ -1,8 +1,10 @@
 "use client"
 
-import { useParams, Link } from "react-router-dom"
+import { useParams } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { useGetSessionDetailQuery } from "@/store/services/qaApi"
 import { DashboardLayout } from "@/components/DashboardLayout"
+import { QAStatsCard } from "@/components/qa/QAStatsCard"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,9 +18,6 @@ import {
 } from "@/components/ui/table"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
-    ArrowLeft,
-    CheckCircle,
-    XCircle,
     Clock,
     Calendar,
     BookOpen,
@@ -33,6 +32,63 @@ export default function SessionDetailsPage() {
     const sessionId = parseInt(params.id as string)
 
     const { data: session, isLoading, error } = useGetSessionDetailQuery(sessionId)
+
+    const getAttendanceStatusColor = (status?: string) => {
+        const value = status?.toLowerCase() || 'unknown'
+        switch (value) {
+            case 'present':
+                return 'text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/30'
+            case 'absent':
+                return 'text-rose-700 bg-rose-50 dark:text-rose-400 dark:bg-rose-950/30'
+            case 'late':
+                return 'text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/30'
+            case 'excused':
+                return 'text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/30'
+            default:
+                return 'text-slate-700 bg-slate-50 dark:text-slate-400 dark:bg-slate-800/50'
+        }
+    }
+
+    const getHomeworkStatusColor = (status?: string) => {
+        const value = status?.toLowerCase() || 'unknown'
+        switch (value) {
+            case 'completed':
+                return 'text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/30'
+            case 'incomplete':
+                return 'text-rose-700 bg-rose-50 dark:text-rose-400 dark:bg-rose-950/30'
+            case 'partial':
+                return 'text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/30'
+            default:
+                return 'text-slate-700 bg-slate-50 dark:text-slate-400 dark:bg-slate-800/50'
+        }
+    }
+
+    const getAttendanceStatusBadge = (status?: string) => {
+        const statusMap: Record<string, string> = {
+            'present': 'Có mặt',
+            'absent': 'Vắng mặt',
+            'late': 'Đi muộn',
+            'excused': 'Có phép'
+        }
+        return (
+            <Badge className={getAttendanceStatusColor(status)}>
+                {status ? statusMap[status.toLowerCase()] || status : 'Không xác định'}
+            </Badge>
+        )
+    }
+
+    const getHomeworkStatusBadge = (status?: string) => {
+        const statusMap: Record<string, string> = {
+            'completed': 'Đã nộp',
+            'incomplete': 'Chưa nộp',
+            'partial': 'Nộp thiếu'
+        }
+        return (
+            <Badge className={getHomeworkStatusColor(status)}>
+                {status ? statusMap[status.toLowerCase()] || status : 'Không xác định'}
+            </Badge>
+        )
+    }
 
     if (isLoading) {
         return (
@@ -72,84 +128,61 @@ export default function SessionDetailsPage() {
 
     return (
         <DashboardLayout
-            title={`Chi Tiết Buổi Học #${session.sessionId}`}
-            description={`${session.classCode} - ${session.courseName}`}
+            title={`Buổi #${session.sessionId} - ${session.classCode}`}
+            description={session.courseName}
+            actions={
+                <Button asChild>
+                    <Link to={`/qa/reports/create?sessionId=${session.sessionId}`}>
+                        <Plus className="h-4 w-4" />
+                        Tạo báo cáo
+                    </Link>
+                </Button>
+            }
         >
             <div className="space-y-6">
-                {/* Back Button */}
-                <div>
-                    <Link to={`/qa/classes/${session.classId}`}>
-                        <Button variant="ghost" size="sm" className="gap-1 pl-0">
-                            <ArrowLeft className="h-4 w-4" /> Quay lại lớp học
-                        </Button>
-                    </Link>
-                </div>
-
                 {/* Session Overview */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center space-x-2">
-                                <Calendar className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Ngày</p>
-                                    <p className="text-2xl font-bold">
-                                        {new Date(session.date).toLocaleDateString('vi-VN')}
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <QAStatsCard
+                        title="Ngày học"
+                        value={new Date(session.date).toLocaleDateString('vi-VN')}
+                        subtitle={new Date(session.date).toLocaleDateString('vi-VN', { weekday: 'long' })}
+                        icon={Calendar}
+                        iconClassName="bg-blue-50 dark:bg-blue-950/30 [&>svg]:text-blue-600 dark:[&>svg]:text-blue-400"
+                    />
 
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center space-x-2">
-                                <Clock className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Thời gian</p>
-                                    <p className="text-2xl font-bold">{session.timeSlot}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <QAStatsCard
+                        title="Thời gian"
+                        value={session.timeSlot}
+                        subtitle="Khung giờ học"
+                        icon={Clock}
+                        iconClassName="bg-purple-50 dark:bg-purple-950/30 [&>svg]:text-purple-600 dark:[&>svg]:text-purple-400"
+                    />
 
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center space-x-2">
-                                <Users className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Điểm danh</p>
-                                    <p className="text-2xl font-bold">
-                                        {session.attendanceStats.presentCount}/{session.attendanceStats.totalStudents}
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <QAStatsCard
+                        title="Điểm danh"
+                        value={`${session.attendanceStats.presentCount}/${session.attendanceStats.totalStudents}`}
+                        subtitle="Học viên có mặt"
+                        icon={Users}
+                        iconClassName="bg-emerald-50 dark:bg-emerald-950/30 [&>svg]:text-emerald-600 dark:[&>svg]:text-emerald-400"
+                    />
 
-                    <Card>
-                        <CardContent className="p-6">
-                            <div className="flex items-center space-x-2">
-                                <BookOpen className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Bài tập</p>
-                                    <p className="text-2xl font-bold">
-                                        {session.attendanceStats.homeworkCompletionRate.toFixed(1)}%
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <QAStatsCard
+                        title="Bài tập"
+                        value={`${session.attendanceStats.homeworkCompletionRate.toFixed(1)}%`}
+                        subtitle="Tỷ lệ hoàn thành"
+                        icon={BookOpen}
+                        iconClassName="bg-amber-50 dark:bg-amber-950/30 [&>svg]:text-amber-600 dark:[&>svg]:text-amber-400"
+                    />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Session Information */}
                     <div className="lg:col-span-2 space-y-6">
-                        <Card>
-                            <CardHeader>
+                        <Card className="py-0 gap-0">
+                            <CardHeader className="py-3">
                                 <CardTitle>Thông Tin Buổi Học</CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-4">
+                            <CardContent className="space-y-4 pb-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <p className="text-sm text-muted-foreground">Lớp học</p>
@@ -179,19 +212,17 @@ export default function SessionDetailsPage() {
                         </Card>
 
                         {/* Student Attendance */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Điểm Danh Học Sinh</CardTitle>
-                            </CardHeader>
-                            <CardContent>
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-semibold">Điểm danh học sinh</h3>
+                            <div className="rounded-lg border overflow-hidden bg-card">
                                 <Table>
                                     <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Mã học sinh</TableHead>
-                                            <TableHead>Tên học sinh</TableHead>
-                                            <TableHead>Trạng thái</TableHead>
-                                            <TableHead>Bài tập</TableHead>
-                                            <TableHead>Ghi chú</TableHead>
+                                        <TableRow className="bg-muted/50">
+                                            <TableHead className="font-semibold">Mã học sinh</TableHead>
+                                            <TableHead className="font-semibold">Tên học sinh</TableHead>
+                                            <TableHead className="font-semibold">Trạng thái</TableHead>
+                                            <TableHead className="font-semibold">Bài tập</TableHead>
+                                            <TableHead className="font-semibold">Ghi chú</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -200,30 +231,10 @@ export default function SessionDetailsPage() {
                                                 <TableCell className="font-medium">{student.studentCode}</TableCell>
                                                 <TableCell>{student.studentName}</TableCell>
                                                 <TableCell>
-                                                    {student.attendanceStatus === 'present' ? (
-                                                        <div className="flex items-center space-x-1 text-green-600">
-                                                            <CheckCircle className="h-4 w-4" />
-                                                            <span>Có mặt</span>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="flex items-center space-x-1 text-red-600">
-                                                            <XCircle className="h-4 w-4" />
-                                                            <span>Vắng mặt</span>
-                                                        </div>
-                                                    )}
+                                                    {getAttendanceStatusBadge(student.attendanceStatus)}
                                                 </TableCell>
                                                 <TableCell>
-                                                    {student.homeworkStatus === 'completed' ? (
-                                                        <div className="flex items-center space-x-1 text-green-600">
-                                                            <CheckCircle className="h-4 w-4" />
-                                                            <span>Hoàn thành</span>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="flex items-center space-x-1 text-yellow-600">
-                                                            <Clock className="h-4 w-4" />
-                                                            <span>Chưa nộp</span>
-                                                        </div>
-                                                    )}
+                                                    {getHomeworkStatusBadge(student.homeworkStatus)}
                                                 </TableCell>
                                                 <TableCell>
                                                     {student.note || '-'}
@@ -232,18 +243,18 @@ export default function SessionDetailsPage() {
                                         ))}
                                     </TableBody>
                                 </Table>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Sidebar */}
                     <div className="space-y-6">
                         {/* Statistics */}
-                        <Card>
-                            <CardHeader>
+                        <Card className="py-0 gap-0">
+                            <CardHeader className="py-3">
                                 <CardTitle>Thống Kê</CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-4">
+                            <CardContent className="space-y-4 pb-4">
                                 <div className="flex justify-between">
                                     <span className="text-sm text-muted-foreground">Tỷ lệ điểm danh</span>
                                     <span className="font-medium">{session.attendanceStats.attendanceRate.toFixed(1)}%</span>
@@ -269,11 +280,11 @@ export default function SessionDetailsPage() {
 
                         {/* CLO Covered */}
                         {session.closCovered.length > 0 && (
-                            <Card>
-                                <CardHeader>
+                            <Card className="py-0 gap-0">
+                                <CardHeader className="py-3">
                                     <CardTitle>CLO Được Đề Cập</CardTitle>
                                 </CardHeader>
-                                <CardContent>
+                                <CardContent className="pb-4">
                                     <div className="space-y-3">
                                         {session.closCovered.map((clo) => (
                                             <div key={clo.cloId} className="p-3 border rounded">
@@ -288,20 +299,7 @@ export default function SessionDetailsPage() {
                             </Card>
                         )}
 
-                        {/* Create QA Report */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Hành Động</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <Button asChild className="w-full">
-                                    <Link to={`/qa/reports/create?sessionId=${session.sessionId}`}>
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        Tạo Báo Cáo QA
-                                    </Link>
-                                </Button>
-                            </CardContent>
-                        </Card>
+
                     </div>
                 </div>
             </div>
