@@ -214,10 +214,10 @@ export default function SessionDetailsPage() {
                         {/* Student Attendance */}
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold">Điểm danh học sinh</h3>
-                            <div className="rounded-lg border">
+                            <div className="rounded-lg border overflow-hidden bg-card">
                                 <Table>
-                                    <TableHeader className="bg-muted/50">
-                                        <TableRow>
+                                    <TableHeader>
+                                        <TableRow className="bg-muted/50">
                                             <TableHead className="font-semibold">Mã học sinh</TableHead>
                                             <TableHead className="font-semibold">Tên học sinh</TableHead>
                                             <TableHead className="font-semibold">Trạng thái</TableHead>

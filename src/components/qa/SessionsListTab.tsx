@@ -173,11 +173,11 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
             </div>
 
             {/* Sessions Table */}
-            <div className="rounded-lg border">
+            <div className="rounded-lg border overflow-hidden bg-card">
                 {filteredSessions.length > 0 ? (
                     <Table>
-                        <TableHeader className="bg-muted/50">
-                            <TableRow>
+                        <TableHeader>
+                            <TableRow className="bg-muted/50">
                                 <TableHead className="font-semibold">Ngày</TableHead>
                                 <TableHead className="font-semibold">Thời gian</TableHead>
                                 <TableHead className="font-semibold">Chủ đề</TableHead>

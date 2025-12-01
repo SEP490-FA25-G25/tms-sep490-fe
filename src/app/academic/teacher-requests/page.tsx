@@ -765,7 +765,7 @@ export default function AcademicTeacherRequestsPage() {
 
           {/* Teacher Pending Requests Tab */}
           <TabsContent value="pending" className="space-y-4">
-            <div className="rounded-lg border overflow-x-auto">
+            <div className="rounded-lg border overflow-hidden bg-card">
               {teacherRequestsError ? (
                 <div className="rounded-lg border border-dashed border-rose-200 bg-rose-50 p-8 text-center text-sm text-rose-700">
                   {formatBackendError(
@@ -787,7 +787,7 @@ export default function AcademicTeacherRequestsPage() {
               ) : (
                 <Table className="min-w-[900px]">
                   <TableHeader>
-                    <TableRow className="bg-muted/50">
+                    <TableRow className="bg-muted/50 hover:bg-muted/50">
                       <TableHead className="min-w-[140px]">Loại</TableHead>
                       <TableHead className="min-w-[100px]">Trạng thái</TableHead>
                       <TableHead className="min-w-[140px]">Giáo viên</TableHead>
@@ -922,7 +922,7 @@ export default function AcademicTeacherRequestsPage() {
 
           {/* Teacher History Tab */}
           <TabsContent value="history" className="space-y-4">
-            <div className="rounded-lg border overflow-x-auto">
+            <div className="rounded-lg border overflow-hidden bg-card">
               {isLoadingTeacherRequests ? (
                 <div className="space-y-3 p-4">
                   {[...Array(5)].map((_, index) => (
@@ -932,7 +932,7 @@ export default function AcademicTeacherRequestsPage() {
               ) : paginatedHistoryRequests.length ? (
                 <Table className="min-w-[900px]">
                   <TableHeader>
-                    <TableRow className="bg-muted/50">
+                    <TableRow className="bg-muted/50 hover:bg-muted/50">
                       <TableHead className="min-w-[140px]">Loại</TableHead>
                       <TableHead className="min-w-[100px]">Trạng thái</TableHead>
                       <TableHead className="min-w-[140px]">Giáo viên</TableHead>

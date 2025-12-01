@@ -54,11 +54,11 @@ export const qaApi = createApi({
         url: '/qa/classes',
         params: { branchIds, status, search, page, size, sort, sortDir },
       }),
-      transformResponse: (response: { data: { content: QAClassListItemDTO[]; totalElements: number; number: number; size: number } }) => ({
+      transformResponse: (response: { data: { content: QAClassListItemDTO[]; page: { totalElements: number; number: number; size: number } } }) => ({
         data: response.data.content,
-        total: response.data.totalElements,
-        page: response.data.number,
-        size: response.data.size
+        total: response.data.page.totalElements,
+        page: response.data.page.number,
+        size: response.data.page.size
       }),
       providesTags: ['QAClass'],
     }),
