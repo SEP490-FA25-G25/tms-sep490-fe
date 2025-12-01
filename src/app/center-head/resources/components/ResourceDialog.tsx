@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCreateResourceMutation, useUpdateResourceMutation } from "@/store/services/resourceApi";
 import type { Resource, ResourceType } from "@/store/services/resourceApi";
 import { Loader2 } from "lucide-react";
+import { addMonths, format } from "date-fns";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -49,6 +50,10 @@ export function ResourceDialog({ open, onOpenChange, resource, branchId, branche
         meetingPasscode: "",
         accountEmail: "",
         accountPassword: "",
+        licenseType: "BASIC",
+        startDate: format(new Date(), "yyyy-MM-dd"),
+        licenseDuration: "",
+        expiryDate: "",
     });
 
     useEffect(() => {
@@ -66,6 +71,13 @@ export function ResourceDialog({ open, onOpenChange, resource, branchId, branche
                 meetingPasscode: resource.meetingPasscode || "",
                 accountEmail: resource.accountEmail || "",
                 accountPassword: resource.accountPassword || "",
+                licenseType: resource.licenseType || "BASIC",
+                startDate: format(new Date(), "yyyy-MM-dd"), // Default to today if not stored, or maybe we don't store start date in DB yet? User didn't ask to store it, just use it for calculation. But wait, if we edit, we need it?
+                // The DB doesn't have start_date column based on previous schema.
+                // But the user wants to "select start date... to calculate expiry".
+                // So it's a helper field.
+                licenseDuration: "",
+                expiryDate: resource.expiryDate || "",
             });
         } else {
             setFormData({
@@ -81,12 +93,44 @@ export function ResourceDialog({ open, onOpenChange, resource, branchId, branche
                 meetingPasscode: "",
                 accountEmail: "",
                 accountPassword: "",
+                licenseType: "BASIC",
+                startDate: format(new Date(), "yyyy-MM-dd"),
+                licenseDuration: "",
+                expiryDate: "",
             });
         }
     }, [resource, open, branchId]);
 
-    const handleChange = (id: string, value: string) => {
-        setFormData((prev) => ({ ...prev, [id]: value }));
+    const handleChange = (field: string, value: any) => {
+        setFormData((prev) => ({ ...prev, [field]: value }));
+    };
+
+    const calculateExpiry = (start: string, duration: string) => {
+        if (!start || !duration) return "";
+        const startDate = new Date(start);
+        const durationMonths = parseInt(duration);
+        if (isNaN(durationMonths)) return "";
+
+        const expiry = addMonths(startDate, durationMonths);
+        return format(expiry, "yyyy-MM-dd");
+    };
+
+    const handleStartDateChange = (value: string) => {
+        const newExpiry = calculateExpiry(value, formData.licenseDuration);
+        setFormData((prev) => ({
+            ...prev,
+            startDate: value,
+            expiryDate: newExpiry || prev.expiryDate,
+        }));
+    };
+
+    const handleDurationChange = (value: string) => {
+        const newExpiry = calculateExpiry(formData.startDate, value);
+        setFormData((prev) => ({
+            ...prev,
+            licenseDuration: value,
+            expiryDate: newExpiry || prev.expiryDate,
+        }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -307,6 +351,54 @@ export function ResourceDialog({ open, onOpenChange, resource, branchId, branche
                                     />
                                 </div>
                             </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="licenseType">License Type</Label>
+                                <Select
+                                    value={formData.licenseType}
+                                    onValueChange={(value) => handleChange("licenseType", value)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Chọn loại license" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="BASIC">Basic (Free)</SelectItem>
+                                        <SelectItem value="PRO">Pro</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            {formData.licenseType === "PRO" && (
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="startDate">Ngày bắt đầu</Label>
+                                        <Input
+                                            id="startDate"
+                                            type="date"
+                                            value={formData.startDate}
+                                            onChange={(e) => handleStartDateChange(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="licenseDuration">Thời hạn (tháng)</Label>
+                                        <Input
+                                            id="licenseDuration"
+                                            type="number"
+                                            min="1"
+                                            placeholder="VD: 12"
+                                            value={formData.licenseDuration}
+                                            onChange={(e) => handleDurationChange(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="expiryDate">Ngày hết hạn</Label>
+                                        <Input
+                                            id="expiryDate"
+                                            type="date"
+                                            value={formData.expiryDate}
+                                            onChange={(e) => handleChange("expiryDate", e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -321,6 +413,6 @@ export function ResourceDialog({ open, onOpenChange, resource, branchId, branche
                     </DialogFooter>
                 </form>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }

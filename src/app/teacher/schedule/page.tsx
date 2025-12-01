@@ -494,27 +494,27 @@ function SessionDetailDialog({
     ? classroomResource?.resourceType === "VIRTUAL"
       ? "ONLINE"
       : classroomResource?.resourceType === "ROOM"
-      ? "OFFLINE"
-      : detail.classInfo.modality
+        ? "OFFLINE"
+        : detail.classInfo.modality
     : null;
 
   const locationDisplay = detail
     ? classroomResource?.resourceType === "VIRTUAL"
       ? classroomResource?.onlineLink ||
-        classroomResource?.location ||
-        detail.sessionInfo.location ||
-        detail.sessionInfo.onlineLink ||
-        ""
+      classroomResource?.location ||
+      detail.sessionInfo.location ||
+      detail.sessionInfo.onlineLink ||
+      ""
       : classroomResource?.location ||
-        detail.sessionInfo.location ||
-        detail.sessionInfo.onlineLink ||
-        (sessionModality === "ONLINE"
-          ? "Học trực tuyến"
-          : detail.classInfo.branchName || "")
+      detail.sessionInfo.location ||
+      detail.sessionInfo.onlineLink ||
+      (sessionModality === "ONLINE"
+        ? "Học trực tuyến"
+        : detail.classInfo.branchName || "")
     : "Chưa cập nhật";
   const resourceTypeLabel = classroomResource
     ? RESOURCE_TYPE_LABELS[classroomResource.resourceType] ??
-      classroomResource.resourceType
+    classroomResource.resourceType
     : null;
 
   const resolveMaterialUrl = useCallback((fileUrl: string) => {
@@ -546,11 +546,11 @@ function SessionDetailDialog({
           <DialogDescription>
             {detail
               ? `${format(parseISO(detail.date), "EEEE, dd/MM/yyyy", {
-                  locale: vi,
-                })} · ${detail.startTime.slice(0, 5)} - ${detail.endTime.slice(
-                  0,
-                  5
-                )}`
+                locale: vi,
+              })} · ${detail.startTime.slice(0, 5)} - ${detail.endTime.slice(
+                0,
+                5
+              )}`
               : "Đang tải thông tin"}
           </DialogDescription>
         </DialogHeader>
@@ -594,7 +594,7 @@ function SessionDetailDialog({
                 {sessionModality
                   ? MODALITY_LABELS[sessionModality] ?? sessionModality
                   : MODALITY_LABELS[detail.classInfo.modality] ??
-                    detail.classInfo.modality}
+                  detail.classInfo.modality}
               </span>
               {detail.makeupInfo?.isMakeup && (
                 <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-0.5 text-xs font-semibold text-purple-700">
@@ -766,10 +766,10 @@ function SessionDetailDialog({
                     const typeMeta = getMaterialTypeMeta(material.fileName);
                     const uploadedLabel = material.uploadedAt
                       ? `Cập nhật ${format(
-                          parseISO(material.uploadedAt),
-                          "dd/MM/yyyy HH:mm",
-                          { locale: vi }
-                        )}`
+                        parseISO(material.uploadedAt),
+                        "dd/MM/yyyy HH:mm",
+                        { locale: vi }
+                      )}`
                       : "Chưa có thời gian tải lên";
                     return (
                       <li

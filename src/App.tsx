@@ -53,6 +53,8 @@ import CenterHeadTimeSlotsPage from "./app/center-head/timeslots/page";
 import CurriculumPage from "./features/curriculum/pages/CurriculumPage";
 import CreateSubjectPage from "./features/curriculum/pages/CreateSubjectPage";
 import EditSubjectPage from "./features/curriculum/pages/EditSubjectPage";
+import TeacherAvailabilityPage from "./app/teacher/availability/page";
+import AvailabilityCampaignPage from "./app/academic/teacher-availability/page";
 
 // QA imports
 import QARootPage from "./app/qa/page";
@@ -342,6 +344,22 @@ function App() {
               }
             />
             <Route
+              path="/teacher/availability"
+              element={
+                <ProtectedRoute
+                  requiredRoles={[
+                    "TEACHER",
+                    "ADMIN",
+                    "MANAGER",
+                    "CENTER_HEAD",
+                    "SUBJECT_LEADER",
+                  ]}
+                >
+                  <TeacherAvailabilityPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/teacher/requests/create/select-type"
               element={
                 <ProtectedRoute
@@ -588,6 +606,21 @@ function App() {
                   ]}
                 >
                   <AcademicTeacherRequestsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academic/teacher-availability"
+              element={
+                <ProtectedRoute
+                  requiredRoles={[
+                    "ACADEMIC_AFFAIR",
+                    "ADMIN",
+                    "MANAGER",
+                    "CENTER_HEAD",
+                  ]}
+                >
+                  <AvailabilityCampaignPage />
                 </ProtectedRoute>
               }
             />
