@@ -1,11 +1,11 @@
 "use client"
 
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { useGetQASessionListQuery } from "@/store/services/qaApi"
 import { SessionStatus, getSessionStatusDisplayName, sessionStatusOptions } from "@/types/qa"
 import { QAStatsCard } from "@/components/qa/QAStatsCard"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
@@ -24,7 +24,6 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import {
-    Eye,
     Calendar,
     Clock,
     Users,
@@ -34,7 +33,6 @@ import {
     Loader2,
     AlertTriangle,
 } from "lucide-react"
-import { Link } from "react-router-dom"
 
 interface SessionsListTabProps {
     classId: number
@@ -42,6 +40,7 @@ interface SessionsListTabProps {
 
 export function SessionsListTab({ classId }: SessionsListTabProps) {
     const [statusFilter, setStatusFilter] = useState<string>("all")
+    const navigate = useNavigate()
 
     const { data: sessionListData, isLoading, error } = useGetQASessionListQuery(classId)
 
@@ -175,96 +174,86 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
             </div>
 
             {/* Sessions Table */}
-            <Card className="py-0 gap-0">
-                <CardHeader className="py-3">
-                    <CardTitle>Danh Sách Buổi Học</CardTitle>
-                </CardHeader>
-                <CardContent className="px-0">
-                    {filteredSessions.length > 0 ? (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Buổi</TableHead>
-                                    <TableHead>Ngày</TableHead>
-                                    <TableHead>Thời gian</TableHead>
-                                    <TableHead>Chủ đề</TableHead>
-                                    <TableHead>Giáo viên</TableHead>
-                                    <TableHead>Trạng thái</TableHead>
-                                    <TableHead className="text-center">Điểm danh</TableHead>
-                                    <TableHead className="text-center">Bài tập</TableHead>
-                                    <TableHead className="text-center">Báo cáo QA</TableHead>
-                                    <TableHead className="text-right">Hành động</TableHead>
+            <div className="rounded-lg border">
+                {filteredSessions.length > 0 ? (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Buổi</TableHead>
+                                <TableHead>Ngày</TableHead>
+                                <TableHead>Thời gian</TableHead>
+                                <TableHead>Chủ đề</TableHead>
+                                <TableHead>Giáo viên</TableHead>
+                                <TableHead>Trạng thái</TableHead>
+                                <TableHead className="text-center">Điểm danh</TableHead>
+                                <TableHead className="text-center">Bài tập</TableHead>
+                                <TableHead className="text-center">Báo cáo QA</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredSessions.map((session) => (
+                                <TableRow 
+                                    key={session.sessionId}
+                                    className="cursor-pointer hover:bg-muted/50"
+                                    onClick={() => navigate(`/qa/sessions/${session.sessionId}`)}
+                                >
+                                    <TableCell className="font-medium">
+                                        #{session.sequenceNumber || session.sessionId}
+                                    </TableCell>
+                                    <TableCell>
+                                        {new Date(session.date).toLocaleDateString('vi-VN')}
+                                    </TableCell>
+                                    <TableCell>{session.timeSlot}</TableCell>
+                                    <TableCell className="max-w-xs truncate" title={session.topic}>
+                                        {session.topic}
+                                    </TableCell>
+                                    <TableCell>{session.teacherName}</TableCell>
+                                    <TableCell>{getStatusBadge(session.status)}</TableCell>
+                                    <TableCell className="text-center">
+                                        <div className="flex items-center justify-center space-x-1">
+                                            <Users className="h-4 w-4" />
+                                            <span className={getAttendanceColor(session.attendanceRate)}>
+                                                {session.presentCount}/{session.totalStudents}
+                                            </span>
+                                            <span className={`text-xs ${getAttendanceColor(session.attendanceRate)}`}>
+                                                ({session.attendanceRate.toFixed(1)}%)
+                                            </span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-center">
+                                        <div className="flex items-center justify-center space-x-1">
+                                            <BookOpen className="h-4 w-4" />
+                                            <span className={getHomeworkColor(session.homeworkCompletionRate)}>
+                                                {session.homeworkCompletedCount}
+                                            </span>
+                                            <span className={`text-xs ${getHomeworkColor(session.homeworkCompletionRate)}`}>
+                                                ({session.homeworkCompletionRate.toFixed(1)}%)
+                                            </span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-center">
+                                        <div className="flex items-center justify-center space-x-1">
+                                            {session.hasQAReport ? (
+                                                <Badge variant="default" className="bg-blue-100 text-blue-700">
+                                                    Có ({session.qaReportCount})
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="outline">Chưa có</Badge>
+                                            )}
+                                        </div>
+                                    </TableCell>
                                 </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredSessions.map((session) => (
-                                    <TableRow key={session.sessionId}>
-                                        <TableCell className="font-medium">
-                                            #{session.sequenceNumber || session.sessionId}
-                                        </TableCell>
-                                        <TableCell>
-                                            {new Date(session.date).toLocaleDateString('vi-VN')}
-                                        </TableCell>
-                                        <TableCell>{session.timeSlot}</TableCell>
-                                        <TableCell className="max-w-xs truncate" title={session.topic}>
-                                            {session.topic}
-                                        </TableCell>
-                                        <TableCell>{session.teacherName}</TableCell>
-                                        <TableCell>{getStatusBadge(session.status)}</TableCell>
-                                        <TableCell className="text-center">
-                                            <div className="flex items-center justify-center space-x-1">
-                                                <Users className="h-4 w-4" />
-                                                <span className={getAttendanceColor(session.attendanceRate)}>
-                                                    {session.presentCount}/{session.totalStudents}
-                                                </span>
-                                                <span className={`text-xs ${getAttendanceColor(session.attendanceRate)}`}>
-                                                    ({session.attendanceRate.toFixed(1)}%)
-                                                </span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-center">
-                                            <div className="flex items-center justify-center space-x-1">
-                                                <BookOpen className="h-4 w-4" />
-                                                <span className={getHomeworkColor(session.homeworkCompletionRate)}>
-                                                    {session.homeworkCompletedCount}
-                                                </span>
-                                                <span className={`text-xs ${getHomeworkColor(session.homeworkCompletionRate)}`}>
-                                                    ({session.homeworkCompletionRate.toFixed(1)}%)
-                                                </span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-center">
-                                            <div className="flex items-center justify-center space-x-1">
-                                                {session.hasQAReport ? (
-                                                    <Badge variant="default" className="bg-blue-100 text-blue-700">
-                                                        Có ({session.qaReportCount})
-                                                    </Badge>
-                                                ) : (
-                                                    <Badge variant="outline">Chưa có</Badge>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="outline" size="sm" asChild>
-                                                <Link to={`/qa/sessions/${session.sessionId}`}>
-                                                    <Eye className="h-4 w-4 mr-1" />
-                                                    Chi tiết
-                                                </Link>
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    ) : (
-                        <div className="text-center py-8">
-                            <p className="text-muted-foreground">
-                                Không có buổi học nào phù hợp với bộ lọc.
-                            </p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+                            ))}
+                        </TableBody>
+                    </Table>
+                ) : (
+                    <div className="text-center py-8">
+                        <p className="text-muted-foreground">
+                            Không có buổi học nào phù hợp với bộ lọc.
+                        </p>
+                    </div>
+                )}
+            </div>
         </div>
     )
 }
