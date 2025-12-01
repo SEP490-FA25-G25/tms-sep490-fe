@@ -198,7 +198,7 @@ export default function QAClassesListPage() {
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex flex-wrap items-center gap-4">
                         <Select value={statusFilter} onValueChange={handleStatusChange}>
-                            <SelectTrigger className="w-[160px]">
+                            <SelectTrigger className="w-40">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>

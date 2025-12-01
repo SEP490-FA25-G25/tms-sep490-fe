@@ -101,7 +101,7 @@ export function ResourceDialog({ open, onOpenChange, resource, branchId, branche
         }
     }, [resource, open, branchId]);
 
-    const handleChange = (field: string, value: any) => {
+    const handleChange = (field: string, value: string | number | boolean | null) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
 

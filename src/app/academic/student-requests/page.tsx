@@ -229,152 +229,151 @@ export default function AcademicRequestsPage() {
 
         {/* Tabs with filters on same line */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'pending' | 'history')}>
-          {/* Tab Headers with Filters */}
-          <div className="space-y-3">
-            {/* First row: Tabs */}
+          {/* Tab Headers with Filters - all on same row */}
+          <div className="flex flex-wrap items-center gap-3 w-full">
+            {/* Tabs first */}
             <TabsList>
               <TabsTrigger value="pending">Chờ duyệt</TabsTrigger>
               <TabsTrigger value="history">Lịch sử</TabsTrigger>
             </TabsList>
 
-            {/* Second row: Filters - wrap better on mobile */}
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Filters that apply to current tab */}
-              {activeTab === 'pending' ? (
-                <>
-                  <Select
-                    value={requestTypeFilter}
-                    onValueChange={(value) => {
-                      setRequestTypeFilter(value as RequestType)
-                      setPage(0)
-                    }}
-                  >
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Loại yêu cầu" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {REQUEST_TYPE_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            {/* Search inputs second */}
+            {activeTab === 'pending' ? (
+              <>
+                <Input
+                  placeholder="Tìm học viên..."
+                  value={searchKeyword}
+                  onChange={(e) => {
+                    setSearchKeyword(e.target.value)
+                    setPage(0)
+                  }}
+                  className="flex-1 min-w-[100px]"
+                />
 
-                  <Input
-                    placeholder="Tìm học viên..."
-                    value={searchKeyword}
-                    onChange={(e) => {
-                      setSearchKeyword(e.target.value)
-                      setPage(0)
-                    }}
-                    className="w-[160px]"
-                  />
+                <Input
+                  placeholder="Mã lớp..."
+                  value={classCode}
+                  onChange={(e) => {
+                    setClassCode(e.target.value)
+                    setPage(0)
+                  }}
+                  className="flex-1 min-w-[100px]"
+                />
 
-                  <Input
-                    placeholder="Mã lớp..."
-                    value={classCode}
-                    onChange={(e) => {
-                      setClassCode(e.target.value)
-                      setPage(0)
-                    }}
-                    className="w-[120px]"
-                  />
+                {/* Filter select last */}
+                <Select
+                  value={requestTypeFilter}
+                  onValueChange={(value) => {
+                    setRequestTypeFilter(value as RequestType)
+                    setPage(0)
+                  }}
+                >
+                  <SelectTrigger className="flex-1 min-w-[100px]">
+                    <SelectValue placeholder="Loại yêu cầu" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REQUEST_TYPE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-                  {hasActiveFilters && (
-                    <Button variant="ghost" size="icon" onClick={handleClearFilters}>
-                      <XIcon className="h-4 w-4" />
-                    </Button>
-                  )}
-                </>
-              ) : (
-                <>
-                  <Select
-                    value={historyRequestType}
-                    onValueChange={(value) => {
-                      setHistoryRequestType(value as RequestType)
-                      setHistoryPage(0)
-                    }}
-                  >
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Loại yêu cầu" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {REQUEST_TYPE_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="icon" onClick={handleClearFilters}>
+                    <XIcon className="h-4 w-4" />
+                  </Button>
+                )}
+              </>
+            ) : (
+              <>
+                <Input
+                  placeholder="Tìm học viên..."
+                  value={historySearchKeyword}
+                  onChange={(e) => {
+                    setHistorySearchKeyword(e.target.value)
+                    setHistoryPage(0)
+                  }}
+                  className="flex-1 min-w-[100px]"
+                />
 
-                  <Select
-                    value={historyStatus}
-                    onValueChange={(value) => {
-                      setHistoryStatus(value as RequestStatus | 'ALL')
-                      setHistoryPage(0)
-                    }}
-                  >
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Trạng thái" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STATUS_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <Input
+                  placeholder="Mã lớp..."
+                  value={historyClassCode}
+                  onChange={(e) => {
+                    setHistoryClassCode(e.target.value)
+                    setHistoryPage(0)
+                  }}
+                  className="flex-1 min-w-[100px]"
+                />
 
-                  <Select
-                    value={historyDecidedBy?.toString() || 'all'}
-                    onValueChange={(value) => {
-                      setHistoryDecidedBy(value === 'all' ? undefined : parseInt(value))
-                      setHistoryPage(0)
-                    }}
-                  >
-                    <SelectTrigger className="w-[150px]">
-                      <SelectValue placeholder="Người duyệt" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tất cả người duyệt</SelectItem>
-                      {aaStaffResponse?.data?.map((staff) => (
-                        <SelectItem key={staff.id} value={staff.id.toString()}>
-                          {staff.fullName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                {/* Filter selects last */}
+                <Select
+                  value={historyRequestType}
+                  onValueChange={(value) => {
+                    setHistoryRequestType(value as RequestType)
+                    setHistoryPage(0)
+                  }}
+                >
+                  <SelectTrigger className="flex-1 min-w-[100px]">
+                    <SelectValue placeholder="Loại yêu cầu" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REQUEST_TYPE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-                  <Input
-                    placeholder="Tìm học viên..."
-                    value={historySearchKeyword}
-                    onChange={(e) => {
-                      setHistorySearchKeyword(e.target.value)
-                      setHistoryPage(0)
-                    }}
-                    className="w-[160px]"
-                  />
+                <Select
+                  value={historyStatus}
+                  onValueChange={(value) => {
+                    setHistoryStatus(value as RequestStatus | 'ALL')
+                    setHistoryPage(0)
+                  }}
+                >
+                  <SelectTrigger className="flex-1 min-w-[100px]">
+                    <SelectValue placeholder="Trạng thái" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-                  <Input
-                    placeholder="Mã lớp..."
-                    value={historyClassCode}
-                    onChange={(e) => {
-                      setHistoryClassCode(e.target.value)
-                      setHistoryPage(0)
-                    }}
-                    className="w-[120px]"
-                  />
+                <Select
+                  value={historyDecidedBy?.toString() || 'all'}
+                  onValueChange={(value) => {
+                    setHistoryDecidedBy(value === 'all' ? undefined : parseInt(value))
+                    setHistoryPage(0)
+                  }}
+                >
+                  <SelectTrigger className="flex-1 min-w-[100px]">
+                    <SelectValue placeholder="Người duyệt" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả người duyệt</SelectItem>
+                    {aaStaffResponse?.data?.map((staff) => (
+                      <SelectItem key={staff.id} value={staff.id.toString()}>
+                        {staff.fullName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-                  {hasActiveHistoryFilters && (
-                    <Button variant="ghost" size="icon" onClick={handleClearHistoryFilters}>
-                      <XIcon className="h-4 w-4" />
-                    </Button>
-                  )}
-                </>
-              )}
-            </div>
+                {hasActiveHistoryFilters && (
+                  <Button variant="ghost" size="icon" onClick={handleClearHistoryFilters}>
+                    <XIcon className="h-4 w-4" />
+                  </Button>
+                )}
+              </>
+            )}
           </div>
 
           {/* Pending Tab */}

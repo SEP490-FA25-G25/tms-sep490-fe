@@ -384,7 +384,7 @@ export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDe
                         value={decisionRejectReason}
                         onChange={(event) => setDecisionRejectReason(event.target.value)}
                         placeholder="Nhập lý do từ chối (tối thiểu 10 ký tự)"
-                        className="min-h-[80px]"
+                        className="min-h-20"
                       />
                     </label>
 

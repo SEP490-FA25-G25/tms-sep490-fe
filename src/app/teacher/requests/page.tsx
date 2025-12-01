@@ -3242,7 +3242,7 @@ function ReplacementFlow({ onSuccess }: FlowProps) {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent
-                      className="w-[var(--radix-popover-trigger-width)] p-0"
+                      className="w-(--radix-popover-trigger-width) p-0"
                       align="start"
                       onWheelCapture={(event) => event.stopPropagation()}
                     >

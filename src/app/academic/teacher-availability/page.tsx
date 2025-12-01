@@ -56,7 +56,7 @@ const AvailabilityCampaignPage = () => {
             toast.success("Đã tạo đợt cập nhật thành công");
             setIsCreateModalOpen(false);
             setNewCampaign({ name: "", deadline: "", targetAudience: "ALL" });
-        } catch (error) {
+        } catch {
             toast.error("Lỗi khi tạo đợt cập nhật");
         }
     };
@@ -118,7 +118,7 @@ const AvailabilityCampaignPage = () => {
                                     <Label htmlFor="audience">Đối tượng</Label>
                                     <Select
                                         value={newCampaign.targetAudience}
-                                        onValueChange={(value: any) =>
+                                        onValueChange={(value: "ALL" | "FULL_TIME" | "PART_TIME") =>
                                             setNewCampaign({ ...newCampaign, targetAudience: value })
                                         }
                                     >

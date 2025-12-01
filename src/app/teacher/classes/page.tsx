@@ -730,7 +730,7 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
           {/* Course */}
           {classItem.courseName && (
             <div className={cn("flex items-center gap-1.5 text-muted-foreground", lastItem !== 'course' && "mb-1.5")}>
-              <GraduationCap className="h-3.5 w-3.5 flex-shrink-0" />
+              <GraduationCap className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{classItem.courseName}</span>
             </div>
           )}
@@ -738,7 +738,7 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
           {/* Branch */}
           {classItem.branchName && (
             <div className={cn("flex items-center gap-1.5 text-muted-foreground", lastItem !== 'branch' && "mb-1.5")}>
-              <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{classItem.branchName}</span>
             </div>
           )}
@@ -746,7 +746,7 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
           {/* Date Range */}
           {(startDate || endDate) && (
             <div className={cn("flex items-center gap-1.5 text-muted-foreground", lastItem !== 'date' && "mb-1.5")}>
-              <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+              <Calendar className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">
                 {startDate && endDate
                   ? `${startDate} - ${endDate}`
@@ -762,7 +762,7 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
           {/* Total Sessions */}
           {totalSessions > 0 && (
             <div className={cn("flex items-center gap-1.5 text-muted-foreground", lastItem !== 'sessions' && "mb-1.5")}>
-              <BookOpen className="h-3.5 w-3.5 flex-shrink-0" />
+              <BookOpen className="h-3.5 w-3.5 shrink-0" />
               <span>{totalSessions} buổi học</span>
             </div>
           )}
@@ -770,7 +770,7 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
 
         {/* Attendance Rate */}
         <div className="flex items-center gap-1.5 rounded-md border bg-muted/30 p-2 mt-2">
-          <TrendingUp className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+          <TrendingUp className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">
               Tỷ lệ chuyên cần:
             </span>

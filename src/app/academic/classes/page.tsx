@@ -169,7 +169,7 @@ export default function ClassListPage() {
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="flex items-center gap-2 cursor-help">
-              <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <User className="h-4 w-4 text-muted-foreground shrink-0" />
               <div className="flex flex-col gap-0.5">
                 {displayTeachers.map((teacher) => (
                   <span key={teacher.id} className="text-sm">
@@ -358,7 +358,7 @@ export default function ClassListPage() {
                     <TableHead className="min-w-[150px]">Khóa học</TableHead>
                     <TableHead className="min-w-[150px]">Giáo viên</TableHead>
                     <TableHead className="min-w-[120px]">Chi nhánh</TableHead>
-                    <TableHead className="min-w-[80px]">Sĩ số</TableHead>
+                    <TableHead className="min-w-20">Sĩ số</TableHead>
                     <TableHead className="min-w-[100px]">Trạng thái</TableHead>
                     <TableHead className="w-[70px]"></TableHead>
                   </TableRow>
