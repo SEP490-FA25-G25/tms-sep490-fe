@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useGetQASessionListQuery } from "@/store/services/qaApi"
 import { SessionStatus, getSessionStatusDisplayName, sessionStatusOptions } from "@/types/qa"
-import { QAStatsCard } from "@/components/qa/QAStatsCard"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -100,11 +99,11 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
 
         switch (status) {
             case SessionStatus.DONE:
-                return <Badge variant="default" className="bg-green-100 text-green-700">{displayStatus}</Badge>
+                return <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100/80">{displayStatus}</Badge>
             case SessionStatus.PLANNED:
-                return <Badge variant="outline">{displayStatus}</Badge>
+                return <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100/80">{displayStatus}</Badge>
             case SessionStatus.CANCELLED:
-                return <Badge variant="destructive">{displayStatus}</Badge>
+                return <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200 hover:bg-red-100/80">{displayStatus}</Badge>
             default:
                 return <Badge variant="outline">{displayStatus}</Badge>
         }
@@ -118,42 +117,42 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
         <div className="space-y-6">
             {/* Summary Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <QAStatsCard
-                    title="Tổng số buổi"
-                    value={sessionListData.totalSessions}
-                    subtitle="Buổi trong lớp"
-                    icon={Calendar}
-                />
+                <div className="rounded-lg border bg-card shadow-sm p-3 space-y-1">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        <span className="text-sm font-medium">Tổng số buổi</span>
+                    </div>
+                    <p className="text-lg font-semibold text-foreground">{sessionListData.totalSessions}</p>
+                </div>
 
-                <QAStatsCard
-                    title="Đã hoàn thành"
-                    value={completedCount}
-                    subtitle="Buổi đã dạy"
-                    icon={CheckCircle}
-                    valueClassName="text-green-600"
-                />
+                <div className="rounded-lg border bg-card shadow-sm p-3 space-y-1">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <CheckCircle className="h-4 w-4" />
+                        <span className="text-sm font-medium">Đã hoàn thành</span>
+                    </div>
+                    <p className="text-lg font-semibold text-green-600">{completedCount}</p>
+                </div>
 
-                <QAStatsCard
-                    title="Sắp tới"
-                    value={plannedCount}
-                    subtitle="Buổi chưa học"
-                    icon={Clock}
-                    valueClassName="text-blue-600"
-                />
+                <div className="rounded-lg border bg-card shadow-sm p-3 space-y-1">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        <span className="text-sm font-medium">Sắp tới</span>
+                    </div>
+                    <p className="text-lg font-semibold text-blue-600">{plannedCount}</p>
+                </div>
 
-                <QAStatsCard
-                    title="Đã hủy"
-                    value={cancelledCount}
-                    subtitle="Buổi bị hủy"
-                    icon={XCircle}
-                    valueClassName="text-red-600"
-                />
+                <div className="rounded-lg border bg-card shadow-sm p-3 space-y-1">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <XCircle className="h-4 w-4" />
+                        <span className="text-sm font-medium">Đã hủy</span>
+                    </div>
+                    <p className="text-lg font-semibold text-red-600">{cancelledCount}</p>
+                </div>
             </div>
 
             {/* Filter */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                    <span className="text-sm font-medium">Lọc theo trạng thái:</span>
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
                         <SelectTrigger className="w-[200px]">
                             <SelectValue />
@@ -177,17 +176,16 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
             <div className="rounded-lg border">
                 {filteredSessions.length > 0 ? (
                     <Table>
-                        <TableHeader>
+                        <TableHeader className="bg-muted/50">
                             <TableRow>
-                                <TableHead>Buổi</TableHead>
-                                <TableHead>Ngày</TableHead>
-                                <TableHead>Thời gian</TableHead>
-                                <TableHead>Chủ đề</TableHead>
-                                <TableHead>Giáo viên</TableHead>
-                                <TableHead>Trạng thái</TableHead>
-                                <TableHead className="text-center">Điểm danh</TableHead>
-                                <TableHead className="text-center">Bài tập</TableHead>
-                                <TableHead className="text-center">Báo cáo QA</TableHead>
+                                <TableHead className="font-semibold">Ngày</TableHead>
+                                <TableHead className="font-semibold">Thời gian</TableHead>
+                                <TableHead className="font-semibold">Chủ đề</TableHead>
+                                <TableHead className="font-semibold">Giáo viên</TableHead>
+                                <TableHead className="font-semibold">Trạng thái</TableHead>
+                                <TableHead className="text-center font-semibold">Điểm danh</TableHead>
+                                <TableHead className="text-center font-semibold">Bài tập</TableHead>
+                                <TableHead className="text-center font-semibold">Báo cáo QA</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -197,9 +195,6 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
                                     className="cursor-pointer hover:bg-muted/50"
                                     onClick={() => navigate(`/qa/sessions/${session.sessionId}`)}
                                 >
-                                    <TableCell className="font-medium">
-                                        #{session.sequenceNumber || session.sessionId}
-                                    </TableCell>
                                     <TableCell>
                                         {new Date(session.date).toLocaleDateString('vi-VN')}
                                     </TableCell>

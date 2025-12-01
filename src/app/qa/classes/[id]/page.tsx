@@ -1,29 +1,19 @@
 "use client"
 
+import type { CSSProperties } from 'react'
 import { useParams } from "react-router-dom"
 import { useGetQAClassDetailQuery } from "@/store/services/qaApi"
-import { DashboardLayout } from "@/components/DashboardLayout"
-import { ClassStatusBadge } from "@/components/qa/ClassStatusBadge"
+import { AppSidebar } from '@/components/app-sidebar'
+import { SiteHeader } from '@/components/site-header'
+import { QAClassHeader } from "@/components/qa/QAClassHeader"
 import { SessionsListTab } from "@/components/qa/SessionsListTab"
 import { QAReportsListTab } from "@/components/qa/QAReportsListTab"
 import { StudentFeedbackTab } from "@/components/qa/StudentFeedbackTab"
-import { QAStatsCard } from "@/components/qa/QAStatsCard"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import {
-    ArrowLeft,
-    Calendar,
-    CheckCircle,
-    FileText,
-    MessageSquare,
-    Users,
-    Loader2,
-    AlertTriangle,
-} from "lucide-react"
-import { Link } from "react-router-dom"
+import { Skeleton } from "@/components/ui/skeleton"
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { AlertTriangle } from "lucide-react"
 
 export default function ClassDetailsPage() {
     const params = useParams()
@@ -31,197 +21,129 @@ export default function ClassDetailsPage() {
 
     const { data: classInfo, isLoading, error } = useGetQAClassDetailQuery(classId)
 
-    if (isLoading) {
-        return (
-            <DashboardLayout title="Đang tải..." description="Chi tiết lớp học">
-                <div className="flex items-center justify-center h-64">
-                    <Loader2 className="h-8 w-8 animate-spin" />
+    const renderHeader = () => {
+        if (isLoading) {
+            return (
+                <div className="border-b bg-background">
+                    <div className="@container/main py-6 md:py-8">
+                        <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-4">
+                            <div className="flex items-start gap-3">
+                                <Skeleton className="h-10 w-10" />
+                                <div className="space-y-2">
+                                    <Skeleton className="h-6 w-48" />
+                                    <Skeleton className="h-4 w-56" />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                                {Array.from({ length: 6 }).map((_, idx) => (
+                                    <Skeleton key={idx} className="h-16 w-full" />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </DashboardLayout>
-        );
-    }
+            )
+        }
 
-    if (error) {
-        return (
-            <DashboardLayout title="Lỗi" description="Chi tiết lớp học">
-                <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                        Không thể tải thông tin lớp học. Vui lòng thử lại.
-                    </AlertDescription>
-                </Alert>
-            </DashboardLayout>
-        );
-    }
+        if (error || !classInfo) {
+            return (
+                <div className="border-b bg-background">
+                    <div className="@container/main py-4">
+                        <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm text-muted-foreground">Không thể tải thông tin lớp học</p>
+                                <Button size="sm" onClick={() => window.location.reload()}>
+                                    Thử lại
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )
+        }
 
-    if (!classInfo) {
-        return (
-            <DashboardLayout title="Không tìm thấy" description="Chi tiết lớp học">
-                <Alert>
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                        Lớp học không tồn tại.
-                    </AlertDescription>
-                </Alert>
-            </DashboardLayout>
-        );
+        return <QAClassHeader classInfo={classInfo} />
     }
 
     return (
-        <DashboardLayout
-            title={`Lớp ${classInfo.classCode}`}
-            description={classInfo.className}
+        <SidebarProvider
+            style={
+                {
+                    '--sidebar-width': 'calc(var(--spacing) * 72)',
+                    '--header-height': 'calc(var(--spacing) * 12)',
+                } as CSSProperties
+            }
         >
-            <div className="space-y-6">
-                {/* Back Button */}
-                <div>
-                    <Link to="/qa/classes">
-                        <Button variant="ghost" size="sm" className="gap-1 pl-0">
-                            <ArrowLeft className="h-4 w-4" /> Quay lại danh sách
-                        </Button>
-                    </Link>
-                </div>
+            <AppSidebar variant="inset" />
+            <SidebarInset>
+                <SiteHeader />
+                <div className="flex flex-1 flex-col">
+                    <div className="@container/main flex flex-1 flex-col">
+                        {renderHeader()}
 
-                {/* Class Overview */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <QAStatsCard
-                        title="Sĩ số"
-                        value={`${classInfo.currentEnrollment}/${classInfo.maxCapacity}`}
-                        subtitle="Học viên đang học"
-                        icon={Users}
-                    />
-
-                    <QAStatsCard
-                        title="Tiến độ buổi học"
-                        value={`${classInfo.sessionSummary?.completedSessions || 0}/${classInfo.sessionSummary?.totalSessions || 0}`}
-                        subtitle="Buổi đã hoàn thành"
-                        icon={Calendar}
-                    />
-
-                    <QAStatsCard
-                        title="Tỷ lệ điểm danh"
-                        value={`${classInfo.performanceMetrics?.attendanceRate?.toFixed(1) || "0.0"}%`}
-                        subtitle="Trung bình lớp"
-                        icon={CheckCircle}
-                    />
-
-                    <QAStatsCard
-                        title="Báo cáo QA"
-                        value={classInfo.qaReports?.length || 0}
-                        subtitle="Báo cáo đã tạo"
-                        icon={FileText}
-                    />
-                </div>
-
-                {/* Tabs */}
-                <Tabs defaultValue="overview" className="space-y-6">
-                    <TabsList className="grid w-full grid-cols-4">
-                        <TabsTrigger value="overview">Tổng quan</TabsTrigger>
-                        <TabsTrigger value="sessions">Buổi học</TabsTrigger>
-                        <TabsTrigger value="reports">Báo cáo QA</TabsTrigger>
-                        <TabsTrigger value="feedback">Phản hồi HV</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="overview" className="space-y-6">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* Basic Information */}
-                            <Card className="py-0 gap-0">
-                                <CardHeader className="py-3">
-                                    <CardTitle>Thông Tin Chung</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4 pb-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Mã lớp</p>
-                                            <p className="font-medium">{classInfo.classCode}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Trạng thái</p>
-                                            <ClassStatusBadge status={classInfo.status} />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Khóa học</p>
-                                            <p className="font-medium">{classInfo.courseName}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Hình thức</p>
-                                            <Badge variant="outline">{classInfo.modality}</Badge>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Chi nhánh</p>
-                                            <p className="font-medium">{classInfo.branchName}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Ngày bắt đầu</p>
-                                            <p className="font-medium">{classInfo.startDate}</p>
-                                        </div>
+                        <main className="flex-1">
+                            <div className="max-w-7xl mx-auto space-y-6 px-4 py-6 sm:px-6 lg:px-8 md:py-8">
+                                {isLoading && (
+                                    <div className="space-y-4">
+                                        <Skeleton className="h-10 w-full" />
+                                        <Skeleton className="h-40 w-full" />
                                     </div>
-                                </CardContent>
-                            </Card>
+                                )}
 
-                            {/* Performance Metrics */}
-                            <Card className="py-0 gap-0">
-                                <CardHeader className="py-3">
-                                    <CardTitle>Hiệu Suất</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4 pb-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Tỷ lệ hoàn thành BT</p>
-                                            <p className="font-medium">{classInfo.performanceMetrics?.homeworkCompletionRate?.toFixed(1) || "0.0"}%</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Tổng số vắng</p>
-                                            <p className="font-medium">{classInfo.performanceMetrics?.totalAbsences || 0}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Học sinh rủi ro</p>
-                                            <p className="font-medium">{classInfo.performanceMetrics?.studentsAtRisk || 0}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Buổi học sắp tới</p>
-                                            <p className="font-medium">
-                                                {classInfo.sessionSummary?.nextSessionDate || "Không có"}
-                                            </p>
-                                        </div>
+                                {!isLoading && error && (
+                                    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-destructive/40 bg-destructive/10 p-8 text-center">
+                                        <AlertTriangle className="h-8 w-8 text-destructive" />
+                                        <p className="text-base font-semibold text-foreground">Không thể tải thông tin lớp học</p>
+                                        <p className="text-sm text-muted-foreground">Vui lòng thử lại sau.</p>
+                                        <Button size="sm" onClick={() => window.location.reload()}>
+                                            Thử lại
+                                        </Button>
                                     </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </TabsContent>
+                                )}
 
-                    <TabsContent value="sessions" className="space-y-6">
-                        <SessionsListTab classId={classInfo.classId} />
-                    </TabsContent>
+                                {!isLoading && classInfo && (
+                                    <Tabs defaultValue="sessions" className="w-full space-y-6">
+                                        <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2 -mt-6 pt-6">
+                                            <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-muted/50">
+                                                <TabsTrigger
+                                                    value="sessions"
+                                                    className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
+                                                >
+                                                    Buổi học
+                                                </TabsTrigger>
+                                                <TabsTrigger
+                                                    value="reports"
+                                                    className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
+                                                >
+                                                    Báo cáo QA
+                                                </TabsTrigger>
+                                                <TabsTrigger
+                                                    value="feedback"
+                                                    className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
+                                                >
+                                                    Phản hồi HV
+                                                </TabsTrigger>
+                                            </TabsList>
+                                        </div>
 
-                    <TabsContent value="reports" className="space-y-6">
-                        <QAReportsListTab
-                            classId={classInfo.classId}
-                            onNavigateToCreate={() => window.location.href = `/qa/reports/create?classId=${classInfo.classId}`}
-                        />
-                    </TabsContent>
+                                        <TabsContent value="sessions" className="space-y-6">
+                                            <SessionsListTab classId={classInfo.classId} />
+                                        </TabsContent>
 
-                    <TabsContent value="feedback" className="space-y-6">
-                        <StudentFeedbackTab classId={classInfo.classId} />
-                    </TabsContent>
+                                        <TabsContent value="reports" className="space-y-6">
+                                            <QAReportsListTab classId={classInfo.classId} />
+                                        </TabsContent>
 
-                    <TabsContent value="statistics" className="space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Thống Kê Hiệu Suất</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <Alert>
-                                    <MessageSquare className="h-4 w-4" />
-                                    <AlertDescription>
-                                        Biểu đồ thống kê sẽ được triển khai trong Phase 2.
-                                    </AlertDescription>
-                                </Alert>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                </Tabs>
-            </div>
-        </DashboardLayout>
+                                        <TabsContent value="feedback" className="space-y-6">
+                                            <StudentFeedbackTab classId={classInfo.classId} />
+                                        </TabsContent>
+                                    </Tabs>
+                                )}
+                            </div>
+                        </main>
+                    </div>
+                </div>
+            </SidebarInset>
+        </SidebarProvider>
     )
 }
