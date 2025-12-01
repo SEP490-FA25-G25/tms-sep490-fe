@@ -156,9 +156,6 @@ export function FeaturedCourses() {
                     <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
                         LỘ TRÌNH HỌC TẬP CHUẨN QUỐC TẾ
                     </h2>
-                    <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                        Chọn lộ trình phù hợp với mục tiêu của bạn. Chúng tôi cam kết chất lượng đầu ra bằng văn bản.
-                    </p>
                 </div>
 
                 {/* Category Tabs */}

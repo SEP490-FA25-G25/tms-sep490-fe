@@ -86,6 +86,8 @@ const CreateCoursePage = lazy(
   () => import("./features/curriculum/pages/CreateCoursePage")
 );
 
+import SchedulePage from "./app/schedule/page";
+
 function App() {
   return (
     <BrowserRouter>
@@ -93,6 +95,7 @@ function App() {
         <AuthProvider>
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/schedule" element={<SchedulePage />} />
             <Route path="/courses/:id" element={<PublicCourseDetailPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />

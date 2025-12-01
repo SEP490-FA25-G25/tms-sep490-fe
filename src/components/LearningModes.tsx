@@ -1,4 +1,8 @@
 
+const onlineImage = new URL("../assets/Linhvat20.png", import.meta.url).href;
+
+const offlineImage = new URL("../assets/Linhvat21.png", import.meta.url).href;
+
 export function LearningModes() {
     return (
         <section className="py-20 bg-transparent overflow-hidden">
@@ -10,7 +14,7 @@ export function LearningModes() {
                     <div className="w-full md:w-1/2">
                         <div className="relative rounded-[32px] overflow-hidden shadow-2xl transform hover:scale-[1.02] transition-transform duration-500">
                             <img
-                                src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80"
+                                src={onlineImage}
                                 alt="Online Learning"
                                 className="w-full h-[300px] md:h-[400px] object-cover"
                             />
@@ -44,7 +48,7 @@ export function LearningModes() {
                     <div className="w-full md:w-1/2">
                         <div className="relative rounded-[32px] overflow-hidden shadow-2xl transform hover:scale-[1.02] transition-transform duration-500">
                             <img
-                                src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80"
+                                src={offlineImage}
                                 alt="Offline Learning"
                                 className="w-full h-[300px] md:h-[400px] object-cover"
                             />

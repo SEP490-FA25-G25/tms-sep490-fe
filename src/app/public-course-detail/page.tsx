@@ -1,65 +1,197 @@
-import { useParams, Link } from 'react-router-dom';
-import { GraduationCap, ArrowRight, Clock, Calendar, BookOpen, CheckCircle2, Star, User } from 'lucide-react';
-import '../landing.css';
 
-// Mock data (duplicated from landing page for simplicity in this mockup)
-const mockCourses = [
+import { useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import {
+    Clock,
+    Calendar,
+    BookOpen,
+    CheckCircle2,
+    Mail,
+    Facebook,
+    Phone,
+    MessageCircle
+} from 'lucide-react';
+import '../landing.css';
+import { Studywithpannacle } from '@/components/Studywithpannacle';
+
+// Image imports
+const consultLogo = new URL('../../assets/logo.png', import.meta.url).href;
+const cambridgeStartersImg = new URL('../../assets/Linhvat9.png', import.meta.url).href;
+const cambridgeMoversImg = new URL('../../assets/Linhvat13.png', import.meta.url).href;
+const cambridgeFlyersImg = new URL('../../assets/Linhvat12.png', import.meta.url).href;
+const ieltsFoundationImg = new URL('../../assets/Linhvat14.png', import.meta.url).href;
+const ieltsIntermediateImg = new URL('../../assets/Linhvat15.png', import.meta.url).href;
+const ieltsAdvancedImg = new URL('../../assets/Linhvat16.png', import.meta.url).href;
+const toeic800Img = new URL('../../assets/Linhvat17.png', import.meta.url).href;
+const toeic650Img = new URL('../../assets/Linhvat18.png', import.meta.url).href;
+const toeic450Img = new URL('../../assets/Linhvat19.png', import.meta.url).href;
+
+const coursesData = [
+    // IELTS
     {
-        id: 1,
+        id: 'ielts-foundation',
         code: 'IELTS-F-2024',
         name: 'IELTS Foundation',
-        description: 'Khóa học chuyên sâu tập trung vào 4 kỹ năng, cam kết đầu ra 5.0+. Phù hợp cho người mới bắt đầu.',
-        total_hours: 96,
+        description: 'Xây dựng nền tảng vững chắc cho người mới bắt đầu, tập trung vào ngữ pháp và từ vựng cốt lõi.',
+        total_hours: 48,
         duration_weeks: 12,
-        session_per_week: 3,
-        level: 'Beginner',
-        image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1200&q=80",
+        session_per_week: 2,
+        level: 'Beginner (0 - 3.5)',
+        image: ieltsFoundationImg,
         price: "5.000.000 VNĐ",
         syllabus: [
-            { title: "Phase 1: Pronunciation & Basic Grammar", duration: "4 weeks" },
-            { title: "Phase 2: Listening & Reading Foundation", duration: "4 weeks" },
-            { title: "Phase 3: Speaking & Writing Introduction", duration: "4 weeks" }
+            { title: "Phase 1: Pronunciation & Basic Grammar", duration: "4 tuần" },
+            { title: "Phase 2: Listening & Reading Foundation", duration: "4 tuần" },
+            { title: "Phase 3: Speaking & Writing Introduction", duration: "4 tuần" }
         ]
     },
     {
-        id: 2,
-        code: 'TOEIC-I-2024',
-        name: 'TOEIC Intensive',
-        description: 'Luyện thi TOEIC cấp tốc, tập trung giải đề và chiến thuật làm bài. Mục tiêu 700+.',
-        total_hours: 72,
-        duration_weeks: 9,
-        session_per_week: 4,
+        id: 'ielts-intermediate',
+        code: 'IELTS-I-2024',
+        name: 'IELTS Intermediate',
+        description: 'Phát triển toàn diện 4 kỹ năng, làm quen với các dạng bài thi IELTS và chiến thuật làm bài.',
+        total_hours: 64,
+        duration_weeks: 16,
+        session_per_week: 2,
+        level: 'Intermediate (3.5 - 5.5)',
+        image: ieltsIntermediateImg,
+        price: "7.000.000 VNĐ",
+        syllabus: [
+            { title: "Phase 1: Skill Development", duration: "5 tuần" },
+            { title: "Phase 2: Exam Strategies", duration: "5 tuần" },
+            { title: "Phase 3: Intensive Practice", duration: "6 tuần" }
+        ]
+    },
+    {
+        id: 'ielts-advanced',
+        code: 'IELTS-A-2024',
+        name: 'IELTS Advanced',
+        description: 'Luyện đề chuyên sâu, nâng cao kỹ năng Speaking và Writing để đạt band điểm cao.',
+        total_hours: 48,
+        duration_weeks: 12,
+        session_per_week: 2,
+        level: 'Advanced (6.0+)',
+        image: ieltsAdvancedImg,
+        price: "9.000.000 VNĐ",
+        syllabus: [
+            { title: "Phase 1: Advanced Writing", duration: "4 tuần" },
+            { title: "Phase 2: Advanced Speaking", duration: "4 tuần" },
+            { title: "Phase 3: Mock Tests & Feedback", duration: "4 tuần" }
+        ]
+    },
+    // TOEIC
+    {
+        id: 'toeic-450',
+        code: 'TOEIC-450-2024',
+        name: 'TOEIC 450+ Mục tiêu',
+        description: 'Lấy lại căn bản và đạt mục tiêu 450+ TOEIC cho sinh viên và người đi làm.',
+        total_hours: 40,
+        duration_weeks: 10,
+        session_per_week: 2,
+        level: 'Basic',
+        image: toeic450Img,
+        price: "3.500.000 VNĐ",
+        syllabus: [
+            { title: "Phase 1: Vocabulary Building", duration: "3 tuần" },
+            { title: "Phase 2: Grammar Review", duration: "3 tuần" },
+            { title: "Phase 3: Basic Listening & Reading", duration: "4 tuần" }
+        ]
+    },
+    {
+        id: 'toeic-650',
+        code: 'TOEIC-650-2024',
+        name: 'TOEIC 650+ Bứt phá',
+        description: 'Nâng cao kỹ năng nghe đọc, chinh phục mốc 650+ để mở rộng cơ hội nghề nghiệp.',
+        total_hours: 48,
+        duration_weeks: 12,
+        session_per_week: 2,
         level: 'Intermediate',
-        image: "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80",
+        image: toeic650Img,
         price: "4.500.000 VNĐ",
         syllabus: [
-            { title: "Phase 1: Vocabulary & Grammar Review", duration: "3 weeks" },
-            { title: "Phase 2: Listening Strategies (Part 1-4)", duration: "3 weeks" },
-            { title: "Phase 3: Reading Strategies (Part 5-7) & Mock Tests", duration: "3 weeks" }
+            { title: "Phase 1: Listening Strategies", duration: "4 tuần" },
+            { title: "Phase 2: Reading Comprehension", duration: "4 tuần" },
+            { title: "Phase 3: Full Tests", duration: "4 tuần" }
         ]
     },
     {
-        id: 3,
-        code: 'IELTS-M-2024',
-        name: 'IELTS Master',
-        description: 'Chinh phục band điểm 7.5+ với giáo trình nâng cao và chấm chữa chi tiết từ chuyên gia.',
-        total_hours: 120,
-        duration_weeks: 15,
-        session_per_week: 4,
+        id: 'toeic-800',
+        code: 'TOEIC-800-2024',
+        name: 'TOEIC 800+ Master',
+        description: 'Chinh phục điểm số tuyệt đối với các kỹ năng nâng cao và kho đề thi phong phú.',
+        total_hours: 48,
+        duration_weeks: 12,
+        session_per_week: 2,
         level: 'Advanced',
-        image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
-        price: "8.000.000 VNĐ",
+        image: toeic800Img,
+        price: "5.500.000 VNĐ",
         syllabus: [
-            { title: "Phase 1: Advanced Writing Task 1 & 2", duration: "5 weeks" },
-            { title: "Phase 2: Advanced Speaking & Idiomatic Expressions", duration: "5 weeks" },
-            { title: "Phase 3: Intensive Practice & Mock Tests", duration: "5 weeks" }
+            { title: "Phase 1: Advanced Vocabulary", duration: "4 tuần" },
+            { title: "Phase 2: Speed Reading & Listening", duration: "4 tuần" },
+            { title: "Phase 3: Exam Simulation", duration: "4 tuần" }
         ]
     },
+    // CAMBRIDGE
+    {
+        id: 'cambridge-starters',
+        code: 'CAM-S-2024',
+        name: 'Starters (Pre-A1)',
+        description: 'Khơi dậy niềm đam mê tiếng Anh cho trẻ em qua các hoạt động vui nhộn và hình ảnh sinh động.',
+        total_hours: 48,
+        duration_weeks: 12,
+        session_per_week: 2,
+        level: 'Kids',
+        image: cambridgeStartersImg,
+        price: "3.000.000 VNĐ",
+        syllabus: [
+            { title: "Phase 1: Alphabet & Numbers", duration: "4 tuần" },
+            { title: "Phase 2: Basic Vocabulary", duration: "4 tuần" },
+            { title: "Phase 3: Simple Sentences", duration: "4 tuần" }
+        ]
+    },
+    {
+        id: 'cambridge-movers',
+        code: 'CAM-M-2024',
+        name: 'Movers (A1)',
+        description: 'Xây dựng vốn từ vựng và ngữ pháp cơ bản, giúp trẻ tự tin sử dụng tiếng Anh trong các tình huống đơn giản.',
+        total_hours: 64,
+        duration_weeks: 16,
+        session_per_week: 2,
+        level: 'Kids',
+        image: cambridgeMoversImg,
+        price: "3.500.000 VNĐ",
+        syllabus: [
+            { title: "Phase 1: Grammar Expansion", duration: "5 tuần" },
+            { title: "Phase 2: Storytelling", duration: "5 tuần" },
+            { title: "Phase 3: Movers Practice Tests", duration: "6 tuần" }
+        ]
+    },
+    {
+        id: 'cambridge-flyers',
+        code: 'CAM-F-2024',
+        name: 'Flyers (A2)',
+        description: 'Hoàn thiện kỹ năng ngôn ngữ, chuẩn bị hành trang vững chắc cho các cấp độ tiếng Anh cao hơn.',
+        total_hours: 64,
+        duration_weeks: 16,
+        session_per_week: 2,
+        level: 'Teens',
+        image: cambridgeFlyersImg,
+        price: "4.000.000 VNĐ",
+        syllabus: [
+            { title: "Phase 1: Advanced Grammar", duration: "5 tuần" },
+            { title: "Phase 2: Writing Skills", duration: "5 tuần" },
+            { title: "Phase 3: Flyers Practice Tests", duration: "6 tuần" }
+        ]
+    }
 ];
 
 export default function PublicCourseDetailPage() {
     const { id } = useParams();
-    const course = mockCourses.find(c => c.id === Number(id));
+    const course = coursesData.find(c => c.id === id);
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [id]);
 
     if (!course) {
         return (
@@ -76,18 +208,28 @@ export default function PublicCourseDetailPage() {
             <header className="lp-header">
                 <div className="lp-container lp-flex lp-justify-between lp-items-center">
                     <Link to="/" className="lp-logo">
-                        <GraduationCap size={28} />
-                        <span>TMS Academy</span>
+                        <img
+                            src="/logo.jpg"
+                            alt="Anh ngữ Pinnacle"
+                            style={{ height: "2.5rem", width: "2.5rem", borderRadius: "50%", objectFit: "cover" }}
+                        />
+                        <span className="lp-logo-stack">
+                            <span className="lp-logo-text-primary">PINNACLE</span>
+                            <span className="lp-logo-text-secondary">English Center</span>
+                        </span>
                     </Link>
+
                     <nav className="lp-header-nav">
-                        <Link to="/">Trang chủ</Link>
-                        <Link to="/#courses">Chương trình</Link>
+                        <Link to="/#courses">Khóa học</Link>
+                        <Link to="/schedule#schedule-info">Lịch khai giảng</Link>
+                        <Link to="/#feedback">Góc chia sẻ</Link>
                         <Link to="/#consultation">Tư vấn</Link>
                     </nav>
+
                     <div className="lp-flex lp-items-center" style={{ gap: '1rem' }}>
-                        <Link to="/login" className="lp-btn lp-btn-ghost">Đăng nhập</Link>
-                        <a href="#register" className="lp-btn lp-btn-primary">
-                            Đăng ký ngay <ArrowRight size={18} style={{ marginLeft: '0.5rem' }} />
+                        <Link to="/login" className="lp-btn lp-btn-primary lp-btn-regular">Đăng nhập</Link>
+                        <a href="#register" className="lp-btn lp-btn-primary lp-btn-regular">
+                            Đăng ký ngay
                         </a>
                     </div>
                 </div>
@@ -118,11 +260,7 @@ export default function PublicCourseDetailPage() {
                                     </div>
                                 </div>
 
-                                <div className="lp-flex" style={{ gap: '1rem' }}>
-                                    <a href="#register" className="lp-btn lp-btn-primary lp-btn-lg">
-                                        Đăng ký tư vấn
-                                    </a>
-                                </div>
+
                             </div>
                             <div>
                                 <img src={course.image} alt={course.name} style={{ borderRadius: '24px', boxShadow: 'var(--lp-shadow-lg)' }} />
@@ -138,7 +276,7 @@ export default function PublicCourseDetailPage() {
 
                             {/* Main Content */}
                             <div>
-                                <h2 className="lp-h2" style={{ fontSize: '1.75rem' }}>Lộ trình học tập</h2>
+                                <h2 className="lp-h2" style={{ fontSize: '1.75rem' }}>LỘ TRÌNH HỌC TẬP</h2>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1.5rem' }}>
                                     {course.syllabus.map((phase, index) => (
                                         <div key={index} style={{ background: 'var(--lp-white)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--lp-border)' }}>
@@ -153,7 +291,7 @@ export default function PublicCourseDetailPage() {
                                     ))}
                                 </div>
 
-                                <h2 className="lp-h2" style={{ fontSize: '1.75rem', marginTop: '3rem' }}>Cam kết đầu ra</h2>
+                                <h2 className="lp-h2" style={{ fontSize: '1.75rem', marginTop: '3rem' }}>CAM KẾT CHUẨN ĐẦU RA</h2>
                                 <ul style={{ marginTop: '1.5rem', display: 'grid', gap: '1rem' }}>
                                     <li className="lp-flex lp-items-center" style={{ gap: '0.75rem' }}>
                                         <CheckCircle2 size={20} style={{ color: 'var(--lp-success)' }} />
@@ -170,58 +308,60 @@ export default function PublicCourseDetailPage() {
                                 </ul>
                             </div>
 
-                            {/* Sidebar */}
-                            <div>
-                                <div style={{ background: 'var(--lp-white)', padding: '2rem', borderRadius: '16px', border: '1px solid var(--lp-border)', position: 'sticky', top: '100px' }}>
-                                    <h3 className="lp-h3">Thông tin khóa học</h3>
-                                    <div style={{ margin: '1.5rem 0', fontSize: '2rem', fontWeight: '700', color: 'var(--lp-primary)' }}>
-                                        {course.price}
-                                    </div>
-
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
-                                        <div className="lp-flex lp-items-center" style={{ gap: '0.75rem' }}>
-                                            <User size={20} color="var(--lp-text-light)" />
-                                            <span style={{ color: 'var(--lp-text)' }}>Sĩ số: 10-15 học viên</span>
-                                        </div>
-                                        <div className="lp-flex lp-items-center" style={{ gap: '0.75rem' }}>
-                                            <Star size={20} color="var(--lp-text-light)" />
-                                            <span style={{ color: 'var(--lp-text)' }}>Đánh giá: 4.9/5.0</span>
-                                        </div>
-                                    </div>
-
-                                    <a href="#register" className="lp-btn lp-btn-primary" style={{ width: '100%' }}>
-                                        Đăng ký ngay
-                                    </a>
-                                </div>
-                            </div>
-
                         </div>
                     </div>
                 </section>
 
+                {/* Studywithpannacle Section */}
+                <Studywithpannacle />
+
                 {/* Registration Form (Reused from Landing) */}
                 <section id="register" className="lp-consultation lp-section">
                     <div className="lp-container lp-consultation-container">
-                        <div className="lp-consultation-text">
-                            <h2 className="lp-h2" style={{ color: 'white' }}>Đăng ký tư vấn khóa học này</h2>
-                            <p className="lp-subtitle" style={{ color: 'rgba(255,255,255,0.8)' }}>
-                                Để lại thông tin để nhận tư vấn chi tiết về lộ trình {course.name}.
-                            </p>
+                        <div className="lp-consultation-text" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <img
+                                src={consultLogo}
+                                alt="Pinnacle logo"
+                                style={{
+                                    width: "100%",
+                                    height: "auto",
+                                    filter: "drop-shadow(0 12px 28px rgba(0,0,0,0.18))"
+                                }}
+                            />
                         </div>
+
                         <div className="lp-form-wrapper">
                             <form onSubmit={(e) => e.preventDefault()}>
                                 <div className="lp-form-group">
                                     <label className="lp-form-label">Họ và tên</label>
-                                    <input type="text" className="lp-form-input" placeholder="Nguyễn Văn A" required />
+                                    <input type="text" className="lp-form-input" placeholder="Nguyễn Thu Hà" required />
                                 </div>
+
                                 <div className="lp-form-group">
                                     <label className="lp-form-label">Email</label>
                                     <input type="email" className="lp-form-input" placeholder="email@example.com" required />
                                 </div>
+
                                 <div className="lp-form-group">
                                     <label className="lp-form-label">Số điện thoại</label>
                                     <input type="tel" className="lp-form-input" placeholder="0912 345 678" required />
                                 </div>
+
+                                <div className="lp-form-group">
+                                    <label className="lp-form-label">Chọn khóa học quan tâm</label>
+                                    <select
+                                        className="lp-form-select"
+                                        defaultValue={course.id.includes('ielts') ? 'ielts' : course.id.includes('toeic') ? 'toeic' : course.id.includes('cambridge') ? 'cambridge' : 'other'}
+                                    >
+                                        <option value="" disabled>Chọn khóa học</option>
+                                        <option value="ielts">IELTS Foundation / Intermediate / Advanced</option>
+                                        <option value="toeic">TOEIC 450+ / 650+ / 800+</option>
+                                        <option value="cambridge">Cambridge Starters / Movers / Flyers</option>
+                                        <option value="giao-tiep">Tiếng Anh Giao Tiếp</option>
+                                        <option value="other">Khác</option>
+                                    </select>
+                                </div>
+
                                 <button type="submit" className="lp-btn lp-btn-primary" style={{ width: '100%', marginTop: '1rem' }}>
                                     Gửi đăng ký
                                 </button>
@@ -232,14 +372,51 @@ export default function PublicCourseDetailPage() {
 
             </main>
 
+
             <footer className="lp-footer">
-                <div className="lp-container lp-footer-content">
-                    <div className="lp-flex lp-items-center" style={{ gap: '0.5rem' }}>
-                        <GraduationCap size={24} />
-                        <span style={{ fontWeight: 700, color: 'var(--lp-primary)' }}>TMS Academy</span>
+                <div className="lp-container">
+                    <div className="lp-footer-top">
+                        <h2 className="text-3xl font-bold text-[#FFFFFF] uppercase">PINNACLE ENGLISH CENTER</h2>
+                        <div className="lp-footer-subtitle">
+                            Hệ thống Anh ngữ Luyện thi IELTS, TOEIC và Cambridge Cam kết chuẩn đầu ra
+                        </div>
                     </div>
-                    <div style={{ fontSize: '0.875rem' }}>
-                        © 2025 TMS Academy. All rights reserved.
+
+                    <div className="lp-footer-grid">
+                        {/* Left Column: Locations */}
+                        <div>
+                            <div style={{ marginBottom: '2rem' }}>
+                                <div className="lp-footer-col-title">PINNACLE HÀ NỘI</div>
+                                <ul className="lp-footer-list">
+                                    <li>• CS1: Số 34, Hoàng Cầu, Phường Ô Chợ Dừa, Quận Đống Đa</li>
+                                    <li>• CS2: 96A, Trần Phú, Phường Mộ Lao, Quận Hà Đông</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Right Column: Contact */}
+                        <div style={{ textAlign: 'right' }}>
+                            <div className="lp-footer-col-title">LIÊN HỆ VỚI CHÚNG TÔI</div>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+                                <div className="lp-footer-contact-item">
+                                    <Phone size={18} /> 0913 321 564
+                                </div>
+                                <div className="lp-footer-contact-item">
+                                    <Phone size={18} /> 0977 727 721
+                                </div>
+                                <div className="lp-footer-contact-item">
+                                    <Mail size={18} /> tienganhpinnacle@gmail.com
+                                </div>
+                            </div>
+                            <div className="lp-footer-socials" style={{ justifyContent: 'flex-end' }}>
+                                <a href="https://www.facebook.com/anhngupinnacle" className="lp-social-icon" aria-label="Facebook">
+                                    <Facebook size={20} />
+                                </a>
+                                <a href="https://www.facebook.com/messages/t/108208812194521" className="lp-social-icon" aria-label="Messenger">
+                                    <MessageCircle size={20} />
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </footer>

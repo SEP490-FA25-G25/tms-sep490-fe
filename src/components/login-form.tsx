@@ -64,9 +64,6 @@ export function LoginForm({
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
           <h1 className="text-2xl font-bold">Đăng nhập vào tài khoản của bạn</h1>
-          <p className="text-muted-foreground text-sm text-balance">
-            Nhập email bên dưới để đăng nhập vào tài khoản của bạn
-          </p>
         </div>
 
         {authError && (
