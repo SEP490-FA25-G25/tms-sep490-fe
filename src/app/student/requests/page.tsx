@@ -189,7 +189,9 @@ export default function StudentRequestsPage() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Tổng số yêu cầu</CardTitle>
-                  <NotebookPenIcon className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800/50">
+                    <NotebookPenIcon className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{summary?.totalRequests ?? 0}</div>
@@ -199,30 +201,36 @@ export default function StudentRequestsPage() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Đang chờ</CardTitle>
-                  <ClockIcon className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/30">
+                    <ClockIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-sky-600">{summary?.pending ?? 0}</div>
+                  <div className="text-2xl font-bold">{summary?.pending ?? 0}</div>
                   <p className="text-xs text-muted-foreground">Chờ phê duyệt</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Đã duyệt</CardTitle>
-                  <CheckCircleIcon className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950/30">
+                    <CheckCircleIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-emerald-600">{summary?.approved ?? 0}</div>
+                  <div className="text-2xl font-bold">{summary?.approved ?? 0}</div>
                   <p className="text-xs text-muted-foreground">Được chấp thuận</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Bị từ chối</CardTitle>
-                  <XCircleIcon className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-50 dark:bg-rose-950/30">
+                    <XCircleIcon className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-rose-600">{summary?.rejected ?? 0}</div>
+                  <div className="text-2xl font-bold">{summary?.rejected ?? 0}</div>
                   <p className="text-xs text-muted-foreground">Không được duyệt</p>
                 </CardContent>
               </Card>

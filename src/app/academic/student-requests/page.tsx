@@ -167,27 +167,33 @@ export default function AcademicRequestsPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Chờ duyệt</CardTitle>
-                <ClockIcon className="h-4 w-4 text-muted-foreground" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/30">
+                  <ClockIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{summary.totalPending}</div>
                 <p className="text-xs text-muted-foreground">Tổng yêu cầu chờ xử lý</p>
               </CardContent>
             </Card>
-            <Card className="bg-amber-50 dark:bg-amber-950/20">
+            <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-amber-700 dark:text-amber-400">Khẩn cấp</CardTitle>
-                <AlertTriangleIcon className="h-4 w-4 text-amber-700 dark:text-amber-400" />
+                <CardTitle className="text-sm font-medium">Khẩn cấp</CardTitle>
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-950/30">
+                  <AlertTriangleIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-amber-700 dark:text-amber-400">{summary.needsUrgentReview}</div>
-                <p className="text-xs text-amber-600 dark:text-amber-500">Cần xử lý gấp</p>
+                <div className="text-2xl font-bold">{summary.needsUrgentReview}</div>
+                <p className="text-xs text-muted-foreground">Cần xử lý gấp</p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Xin nghỉ</CardTitle>
-                <CalendarXIcon className="h-4 w-4 text-muted-foreground" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-50 dark:bg-orange-950/30">
+                  <CalendarXIcon className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{summary.absenceRequests}</div>
@@ -197,7 +203,9 @@ export default function AcademicRequestsPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Học bù</CardTitle>
-                <CalendarCheckIcon className="h-4 w-4 text-muted-foreground" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950/30">
+                  <CalendarCheckIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{summary.makeupRequests}</div>
@@ -207,7 +215,9 @@ export default function AcademicRequestsPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Chuyển lớp</CardTitle>
-                <ArrowRightLeftIcon className="h-4 w-4 text-muted-foreground" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950/30">
+                  <ArrowRightLeftIcon className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{summary.transferRequests}</div>

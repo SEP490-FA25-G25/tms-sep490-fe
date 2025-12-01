@@ -613,7 +613,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
             <Card className="overflow-hidden">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="bg-muted/50">
                     <TableHead>Thành phần đánh giá</TableHead>
                     <TableHead>Loại</TableHead>
                     <TableHead>Điểm tối đa</TableHead>

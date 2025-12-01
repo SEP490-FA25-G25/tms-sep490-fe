@@ -14,6 +14,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -636,42 +637,56 @@ export default function AcademicTeacherRequestsPage() {
       description="Xét duyệt yêu cầu của giáo viên."
     >
       <div className="space-y-6">
-        {/* Summary cards for teacher requests (similar to student page) */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Clock3 className="h-4 w-4" />
-              <span className="text-sm">Đang chờ duyệt</span>
-            </div>
-            <p className="text-2xl font-semibold">{totalPending}</p>
-          </div>
-          <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <ArrowLeftRight className="h-4 w-4" />
-              <span className="text-sm">Thay đổi phương thức</span>
-            </div>
-            <p className="text-2xl font-semibold text-sky-600">
-              {pendingModalityChange}
-            </p>
-          </div>
-          <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <CalendarClock className="h-4 w-4" />
-              <span className="text-sm">Đổi lịch</span>
-            </div>
-            <p className="text-2xl font-semibold text-amber-600">
-              {pendingReschedule}
-            </p>
-          </div>
-          <div className="rounded-lg border border-border/70 bg-muted/10 p-4">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <UserRoundCheck className="h-4 w-4" />
-              <span className="text-sm">Nhờ dạy thay</span>
-            </div>
-            <p className="text-2xl font-semibold text-purple-600">
-              {pendingReplacement}
-            </p>
-          </div>
+        {/* Summary cards for teacher requests */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Đang chờ duyệt</CardTitle>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/30">
+                <Clock3 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalPending}</div>
+              <p className="text-xs text-muted-foreground">Tổng yêu cầu chờ xử lý</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Thay đổi phương thức</CardTitle>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-50 dark:bg-sky-950/30">
+                <ArrowLeftRight className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{pendingModalityChange}</div>
+              <p className="text-xs text-muted-foreground">Yêu cầu đổi hình thức</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Đổi lịch</CardTitle>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-950/30">
+                <CalendarClock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{pendingReschedule}</div>
+              <p className="text-xs text-muted-foreground">Yêu cầu đổi lịch dạy</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Nhờ dạy thay</CardTitle>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950/30">
+                <UserRoundCheck className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{pendingReplacement}</div>
+              <p className="text-xs text-muted-foreground">Yêu cầu giáo viên thay</p>
+            </CardContent>
+          </Card>
         </div>
 
         <Tabs defaultValue="pending" className="space-y-4">
@@ -750,7 +765,7 @@ export default function AcademicTeacherRequestsPage() {
 
           {/* Teacher Pending Requests Tab */}
           <TabsContent value="pending" className="space-y-4">
-            <div className="rounded-lg border">
+            <div className="rounded-lg border overflow-hidden">
               {teacherRequestsError ? (
                 <div className="rounded-lg border border-dashed border-rose-200 bg-rose-50 p-8 text-center text-sm text-rose-700">
                   {formatBackendError(
@@ -772,14 +787,13 @@ export default function AcademicTeacherRequestsPage() {
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                    <TableRow className="bg-muted/50">
                       <TableHead>Loại</TableHead>
+                      <TableHead>Trạng thái</TableHead>
                       <TableHead>Giáo viên</TableHead>
                       <TableHead>Lớp học / Buổi</TableHead>
-                      <TableHead>Trạng thái</TableHead>
                       <TableHead>Lý do</TableHead>
                       <TableHead>Ngày gửi</TableHead>
-                      <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -797,60 +811,21 @@ export default function AcademicTeacherRequestsPage() {
                       return (
                         <TableRow
                           key={request.id}
-                          role="button"
-                          tabIndex={0}
-                          className="cursor-pointer hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                          className="cursor-pointer hover:bg-muted/50"
                           onClick={() => handleOpenRequestDetail(request.id)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter" || event.key === " ") {
-                              event.preventDefault();
-                              handleOpenRequestDetail(request.id);
-                            }
-                          }}
                         >
                           <TableCell>
-                            <Badge variant="outline" className="rounded-full">
+                            <Badge variant="outline">
                               {TEACHER_REQUEST_TYPE_LABELS[request.requestType]}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <div className="flex flex-col">
-                              <span className="font-semibold">
-                                {request.teacherName ?? "—"}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              <p className="font-medium">
-                                {request.className}{" "}
-                                <span className="font-medium">
-                                  ·{" "}
-                                  {format(
-                                    parseISO(request.sessionDate),
-                                    "dd/MM/yyyy",
-                                    { locale: vi }
-                                  )}
-                                </span>
-                              </p>
-                              {topic && (
-                                <p className="text-xs text-muted-foreground">
-                                  {topic}
-                                </p>
-                              )}
-                              <p className="text-xs text-muted-foreground">
-                                {request.sessionStartTime} -{" "}
-                                {request.sessionEndTime}
-                              </p>
-                            </div>
-                          </TableCell>
-                          <TableCell>
                             <Badge
-                              className={cn(
-                                "rounded-full text-xs font-medium",
+                              variant="outline"
+                              className={
                                 TEACHER_REQUEST_STATUS_META[request.status]
                                   .badgeClass
-                              )}
+                              }
                             >
                               {
                                 TEACHER_REQUEST_STATUS_META[request.status]
@@ -858,32 +833,29 @@ export default function AcademicTeacherRequestsPage() {
                               }
                             </Badge>
                           </TableCell>
-                          <TableCell
-                            className="text-sm text-muted-foreground"
-                            title={reason}
-                          >
+                          <TableCell>
+                            <span className="font-medium">
+                              {request.teacherName ?? "—"}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium text-sm">
+                                {request.className} · {format(parseISO(request.sessionDate), "dd/MM/yyyy", { locale: vi })}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {request.sessionStartTime} - {request.sessionEndTime}
+                                {topic && ` · ${topic}`}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground" title={reason}>
                             {truncatedReason || "Không có lý do"}
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
                             {request.submittedAt
-                              ? format(
-                                  parseISO(request.submittedAt),
-                                  "HH:mm dd/MM",
-                                  { locale: vi }
-                                )
+                              ? format(parseISO(request.submittedAt), "HH:mm dd/MM", { locale: vi })
                               : "—"}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenRequestDetail(request.id);
-                              }}
-                            >
-                              Xem & xử lý
-                            </Button>
                           </TableCell>
                         </TableRow>
                       );
@@ -950,7 +922,7 @@ export default function AcademicTeacherRequestsPage() {
 
           {/* Teacher History Tab */}
           <TabsContent value="history" className="space-y-4">
-            <div className="rounded-lg border">
+            <div className="rounded-lg border overflow-hidden">
               {isLoadingTeacherRequests ? (
                 <div className="space-y-3 p-4">
                   {[...Array(5)].map((_, index) => (
@@ -960,14 +932,13 @@ export default function AcademicTeacherRequestsPage() {
               ) : paginatedHistoryRequests.length ? (
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                    <TableRow className="bg-muted/50">
                       <TableHead>Loại</TableHead>
+                      <TableHead>Trạng thái</TableHead>
                       <TableHead>Giáo viên</TableHead>
                       <TableHead>Lớp học / Buổi</TableHead>
-                      <TableHead>Trạng thái</TableHead>
                       <TableHead>Người xử lý</TableHead>
                       <TableHead>Thời gian</TableHead>
-                      <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -977,60 +948,21 @@ export default function AcademicTeacherRequestsPage() {
                       return (
                         <TableRow
                           key={request.id}
-                          role="button"
-                          tabIndex={0}
-                          className="cursor-pointer hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                          className="cursor-pointer hover:bg-muted/50"
                           onClick={() => handleOpenRequestDetail(request.id)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter" || event.key === " ") {
-                              event.preventDefault();
-                              handleOpenRequestDetail(request.id);
-                            }
-                          }}
                         >
                           <TableCell>
-                            <Badge variant="outline" className="rounded-full">
+                            <Badge variant="outline">
                               {TEACHER_REQUEST_TYPE_LABELS[request.requestType]}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <div className="flex flex-col">
-                              <span className="font-semibold">
-                                {request.teacherName ?? "—"}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              <p className="font-medium">
-                                {request.className}{" "}
-                                <span className="font-medium">
-                                  ·{" "}
-                                  {format(
-                                    parseISO(request.sessionDate),
-                                    "dd/MM/yyyy",
-                                    { locale: vi }
-                                  )}
-                                </span>
-                              </p>
-                              {topic && (
-                                <p className="text-xs text-muted-foreground">
-                                  {topic}
-                                </p>
-                              )}
-                              <p className="text-xs text-muted-foreground">
-                                {request.sessionStartTime} -{" "}
-                                {request.sessionEndTime}
-                              </p>
-                            </div>
-                          </TableCell>
-                          <TableCell>
                             <Badge
-                              className={cn(
-                                "rounded-full text-xs font-medium",
+                              variant="outline"
+                              className={
                                 TEACHER_REQUEST_STATUS_META[request.status]
                                   .badgeClass
-                              )}
+                              }
                             >
                               {
                                 TEACHER_REQUEST_STATUS_META[request.status]
@@ -1039,32 +971,30 @@ export default function AcademicTeacherRequestsPage() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <div className="text-sm">
-                              <p className="font-medium">
-                                {request.decidedByName ?? "—"}
-                              </p>
+                            <span className="font-medium">
+                              {request.teacherName ?? "—"}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium text-sm">
+                                {request.className} · {format(parseISO(request.sessionDate), "dd/MM/yyyy", { locale: vi })}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {request.sessionStartTime} - {request.sessionEndTime}
+                                {topic && ` · ${topic}`}
+                              </span>
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-medium text-sm">
+                              {request.decidedByName ?? "—"}
+                            </span>
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
                             {request.decidedAt
-                              ? format(
-                                  parseISO(request.decidedAt),
-                                  "HH:mm dd/MM",
-                                  { locale: vi }
-                                )
+                              ? format(parseISO(request.decidedAt), "HH:mm dd/MM", { locale: vi })
                               : "—"}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenRequestDetail(request.id);
-                              }}
-                            >
-                              Chi tiết
-                            </Button>
                           </TableCell>
                         </TableRow>
                       );
