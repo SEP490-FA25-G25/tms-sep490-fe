@@ -185,23 +185,23 @@ export default function ClassDetailPage() {
     <DashboardLayout>
       <div className="flex flex-col gap-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link to="/academic/classes">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Quay lại Lớp học
+                Quay lại
               </Button>
             </Link>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">{classData.name}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{classData.name}</h1>
               <p className="text-muted-foreground">{classData.code}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             {canEdit ? (
               <Link to={`/academic/classes/${classId}/edit`}>
-                <Button variant="outline">
+                <Button variant="outline" className="w-full sm:w-auto">
                   <Edit className="mr-2 h-4 w-4" />
                   Chỉnh sửa
                 </Button>
@@ -211,6 +211,7 @@ export default function ClassDetailPage() {
                 variant="outline"
                 disabled
                 title={editDisabledReason}
+                className="w-full sm:w-auto"
               >
                 <Edit className="mr-2 h-4 w-4" />
                 Chỉnh sửa
@@ -218,7 +219,7 @@ export default function ClassDetailPage() {
             )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button>
+                <Button className="w-full sm:w-auto">
                   Ghi danh Học viên
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
@@ -406,15 +407,15 @@ export default function ClassDetailPage() {
               ))}
             </div>
           ) : students.length > 0 ? (
-            <div className="border rounded-lg overflow-hidden">
-              <Table>
+            <div className="border rounded-lg overflow-x-auto">
+              <Table className="min-w-[700px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Học viên</TableHead>
-                    <TableHead>Thư điện tử</TableHead>
-                    <TableHead>Điện thoại</TableHead>
-                    <TableHead>Chi nhánh</TableHead>
-                    <TableHead>Ngày ghi danh</TableHead>
+                    <TableHead className="min-w-[180px]">Học viên</TableHead>
+                    <TableHead className="min-w-[180px]">Thư điện tử</TableHead>
+                    <TableHead className="min-w-[120px]">Điện thoại</TableHead>
+                    <TableHead className="min-w-[120px]">Chi nhánh</TableHead>
+                    <TableHead className="min-w-[120px]">Ngày ghi danh</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

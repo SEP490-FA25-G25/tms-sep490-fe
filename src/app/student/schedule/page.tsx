@@ -255,15 +255,15 @@ export default function StudentSchedulePage() {
         <SidebarInset className="h-svh overflow-hidden">
           <SiteHeader />
           <main className="flex flex-1 flex-col overflow-hidden min-h-0">
-            <header className="flex items-center justify-between border-b px-6 py-4 bg-background">
-              <div className="flex flex-col gap-2">
-                <h1 className="text-2xl font-semibold tracking-tight">Lịch học của tôi</h1>
+            <header className="flex flex-col gap-4 border-b px-4 sm:px-6 py-4 bg-background lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-col gap-1">
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Lịch học của tôi</h1>
                 <p className="text-sm text-muted-foreground">
                   Theo dõi lịch học, tài liệu và trạng thái điểm danh
                 </p>
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                   {/* Prev Week Button */}
                   <Button 
                     variant="ghost" 
@@ -281,7 +281,7 @@ export default function StudentSchedulePage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 min-w-[200px] justify-between font-medium"
+                        className="h-8 min-w-[180px] sm:min-w-[200px] justify-between font-medium"
                         disabled={isScheduleFetching}
                       >
                         <CalendarIcon className="h-4 w-4 mr-2 text-muted-foreground" />

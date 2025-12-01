@@ -163,7 +163,7 @@ export default function AcademicRequestsPage() {
 
         {/* Summary Stats */}
         {summary && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Chờ duyệt</CardTitle>
@@ -231,13 +231,14 @@ export default function AcademicRequestsPage() {
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'pending' | 'history')}>
           {/* Tab Headers with Filters */}
           <div className="space-y-3">
-            {/* First row: Tabs + Filters */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <TabsList>
-                <TabsTrigger value="pending">Chờ duyệt</TabsTrigger>
-                <TabsTrigger value="history">Lịch sử</TabsTrigger>
-              </TabsList>
+            {/* First row: Tabs */}
+            <TabsList>
+              <TabsTrigger value="pending">Chờ duyệt</TabsTrigger>
+              <TabsTrigger value="history">Lịch sử</TabsTrigger>
+            </TabsList>
 
+            {/* Second row: Filters - wrap better on mobile */}
+            <div className="flex flex-wrap items-center gap-2">
               {/* Filters that apply to current tab */}
               {activeTab === 'pending' ? (
                 <>
@@ -248,8 +249,8 @@ export default function AcademicRequestsPage() {
                       setPage(0)
                     }}
                   >
-                    <SelectTrigger className="flex-1 min-w-40">
-                      <SelectValue placeholder="Tất cả yêu cầu" />
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="Loại yêu cầu" />
                     </SelectTrigger>
                     <SelectContent>
                       {REQUEST_TYPE_OPTIONS.map((option) => (
@@ -261,13 +262,13 @@ export default function AcademicRequestsPage() {
                   </Select>
 
                   <Input
-                    placeholder="Tìm kiếm học viên..."
+                    placeholder="Tìm học viên..."
                     value={searchKeyword}
                     onChange={(e) => {
                       setSearchKeyword(e.target.value)
                       setPage(0)
                     }}
-                    className="flex-1 min-w-40"
+                    className="w-[160px]"
                   />
 
                   <Input
@@ -277,11 +278,11 @@ export default function AcademicRequestsPage() {
                       setClassCode(e.target.value)
                       setPage(0)
                     }}
-                    className="flex-1 min-w-32"
+                    className="w-[120px]"
                   />
 
                   {hasActiveFilters && (
-                    <Button variant="ghost" size="sm" onClick={handleClearFilters} className="gap-2">
+                    <Button variant="ghost" size="icon" onClick={handleClearFilters}>
                       <XIcon className="h-4 w-4" />
                     </Button>
                   )}
@@ -295,8 +296,8 @@ export default function AcademicRequestsPage() {
                       setHistoryPage(0)
                     }}
                   >
-                    <SelectTrigger className="flex-1 min-w-40">
-                      <SelectValue placeholder="Tất cả yêu cầu" />
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="Loại yêu cầu" />
                     </SelectTrigger>
                     <SelectContent>
                       {REQUEST_TYPE_OPTIONS.map((option) => (
@@ -314,8 +315,8 @@ export default function AcademicRequestsPage() {
                       setHistoryPage(0)
                     }}
                   >
-                    <SelectTrigger className="flex-1 min-w-40">
-                      <SelectValue placeholder="Tất cả trạng thái" />
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="Trạng thái" />
                     </SelectTrigger>
                     <SelectContent>
                       {STATUS_OPTIONS.map((option) => (
@@ -333,7 +334,7 @@ export default function AcademicRequestsPage() {
                       setHistoryPage(0)
                     }}
                   >
-                    <SelectTrigger className="flex-1 min-w-40">
+                    <SelectTrigger className="w-[150px]">
                       <SelectValue placeholder="Người duyệt" />
                     </SelectTrigger>
                     <SelectContent>
@@ -347,13 +348,13 @@ export default function AcademicRequestsPage() {
                   </Select>
 
                   <Input
-                    placeholder="Tìm kiếm học viên..."
+                    placeholder="Tìm học viên..."
                     value={historySearchKeyword}
                     onChange={(e) => {
                       setHistorySearchKeyword(e.target.value)
                       setHistoryPage(0)
                     }}
-                    className="flex-1 min-w-40"
+                    className="w-[160px]"
                   />
 
                   <Input
@@ -363,11 +364,11 @@ export default function AcademicRequestsPage() {
                       setHistoryClassCode(e.target.value)
                       setHistoryPage(0)
                     }}
-                    className="flex-1 min-w-32"
+                    className="w-[120px]"
                   />
 
                   {hasActiveHistoryFilters && (
-                    <Button variant="ghost" size="sm" onClick={handleClearHistoryFilters} className="gap-2">
+                    <Button variant="ghost" size="icon" onClick={handleClearHistoryFilters}>
                       <XIcon className="h-4 w-4" />
                     </Button>
                   )}
@@ -391,7 +392,7 @@ export default function AcademicRequestsPage() {
               )}
 
               {/* Pagination */}
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
                 <p className="text-muted-foreground">
                   Trang {page + 1} / {totalPages} · {pendingData?.totalElements ?? 0} yêu cầu
                 </p>
@@ -407,20 +408,30 @@ export default function AcademicRequestsPage() {
                         disabled={page === 0 || isLoadingPending}
                       />
                     </PaginationItem>
-                    {Array.from({ length: totalPages }, (_, i) => i).map((pageNum) => (
-                      <PaginationItem key={pageNum}>
-                        <PaginationLink
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            setPage(pageNum)
-                          }}
-                          isActive={pageNum === page}
-                        >
-                          {pageNum + 1}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
+                    {/* Show page numbers only on larger screens */}
+                    <span className="hidden sm:contents">
+                      {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                        // Show first 5 pages or pages around current page
+                        let pageNum = i;
+                        if (totalPages > 5 && page > 2) {
+                          pageNum = Math.min(page - 2 + i, totalPages - 1);
+                        }
+                        return (
+                          <PaginationItem key={pageNum}>
+                            <PaginationLink
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setPage(pageNum)
+                              }}
+                              isActive={pageNum === page}
+                            >
+                              {pageNum + 1}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      })}
+                    </span>
                     <PaginationItem>
                       <PaginationNext
                         href="#"
@@ -451,7 +462,7 @@ export default function AcademicRequestsPage() {
               )}
 
               {/* History Pagination */}
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
                 <p className="text-muted-foreground">
                   Trang {historyPage + 1} / {historyTotalPages} · {historyData?.page?.totalElements ?? 0} yêu cầu
                 </p>
@@ -467,20 +478,29 @@ export default function AcademicRequestsPage() {
                         disabled={historyPage === 0 || isLoadingHistory}
                       />
                     </PaginationItem>
-                    {Array.from({ length: historyTotalPages }, (_, i) => i).map((pageNum) => (
-                      <PaginationItem key={pageNum}>
-                        <PaginationLink
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            setHistoryPage(pageNum)
-                          }}
-                          isActive={pageNum === historyPage}
-                        >
-                          {pageNum + 1}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
+                    {/* Show page numbers only on larger screens */}
+                    <span className="hidden sm:contents">
+                      {Array.from({ length: Math.min(historyTotalPages, 5) }, (_, i) => {
+                        let pageNum = i;
+                        if (historyTotalPages > 5 && historyPage > 2) {
+                          pageNum = Math.min(historyPage - 2 + i, historyTotalPages - 1);
+                        }
+                        return (
+                          <PaginationItem key={pageNum}>
+                            <PaginationLink
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setHistoryPage(pageNum)
+                              }}
+                              isActive={pageNum === historyPage}
+                            >
+                              {pageNum + 1}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      })}
+                    </span>
                     <PaginationItem>
                       <PaginationNext
                         href="#"

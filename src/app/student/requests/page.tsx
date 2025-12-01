@@ -164,25 +164,25 @@ export default function StudentRequestsPage() {
         }
       >
         <AppSidebar variant="inset" />
-        <SidebarInset>
+        <SidebarInset className="overflow-hidden">
           <SiteHeader />
-          <main className="flex flex-1 flex-col">
-            <header className="flex flex-col gap-2 border-b border-border px-6 py-5">
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col gap-2">
-                  <h1 className="text-3xl font-bold tracking-tight">Yêu cầu của tôi</h1>
+          <main className="flex flex-1 flex-col overflow-hidden min-w-0">
+            <header className="flex flex-col gap-4 border-b border-border px-4 sm:px-6 py-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-1">
+                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Yêu cầu của tôi</h1>
                   <p className="text-sm text-muted-foreground">
                     Quản lý yêu cầu xin nghỉ, học bù, chuyển lớp
                   </p>
                 </div>
-                <Button onClick={() => setIsCreateOpen(true)} size="sm">
+                <Button onClick={() => setIsCreateOpen(true)} size="sm" className="w-full sm:w-auto">
                   <PlusIcon className="h-4 w-4" />
                   Tạo yêu cầu
                 </Button>
               </div>
             </header>
 
-            <div className="flex flex-1 flex-col gap-6 px-6 py-6">
+            <div className="flex flex-1 flex-col gap-6 px-4 sm:px-6 py-6 overflow-auto min-w-0">
 
             {/* Summary Stats */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -239,13 +239,13 @@ export default function StudentRequestsPage() {
             <Separator />
 
             {/* Filters */}
-            <div className="flex items-center justify-between gap-4">
-              {/* Search Input - Left side */}
-              <div className="flex-1 max-w-md">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              {/* Search Input */}
+              <div className="w-full lg:max-w-sm">
                 <div className="relative">
                   <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Tìm kiếm theo lý do, mã lớp, hoặc tên buổi học..."
+                    placeholder="Tìm kiếm theo lý do, mã lớp..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 pr-10"
@@ -261,8 +261,8 @@ export default function StudentRequestsPage() {
                 </div>
               </div>
 
-              {/* Filter Controls - Right side */}
-              <div className="flex items-center gap-2">
+              {/* Filter Controls */}
+              <div className="flex flex-wrap items-center gap-2">
                 <Select
                   value={typeFilter}
                   onValueChange={(value: TypeFilter) => {
@@ -270,7 +270,7 @@ export default function StudentRequestsPage() {
                     setPage(0)
                   }}
                 >
-                  <SelectTrigger className="w-[160px] h-9">
+                  <SelectTrigger className="w-[140px] h-9">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -289,7 +289,7 @@ export default function StudentRequestsPage() {
                     setPage(0)
                   }}
                 >
-                  <SelectTrigger className="w-[160px] h-9">
+                  <SelectTrigger className="w-[140px] h-9">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -343,7 +343,7 @@ export default function StudentRequestsPage() {
 
             {/* Pagination */}
             {pagination && (
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
                 <span className="text-muted-foreground">
                   Trang {pagination.number + 1} / {pagination.totalPages}
                 </span>
@@ -359,20 +359,29 @@ export default function StudentRequestsPage() {
                         disabled={pagination.number === 0}
                       />
                     </PaginationItem>
-                    {Array.from({ length: pagination.totalPages }, (_, i) => i).map((pageNum) => (
-                      <PaginationItem key={pageNum}>
-                        <PaginationLink
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            setPage(pageNum)
-                          }}
-                          isActive={pageNum === pagination.number}
-                        >
-                          {pageNum + 1}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
+                    {/* Show page numbers only on sm+ screens, limit to 5 pages */}
+                    <span className="hidden sm:contents">
+                      {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => {
+                        let pageNum = i;
+                        if (pagination.totalPages > 5 && pagination.number > 2) {
+                          pageNum = Math.min(pagination.number - 2 + i, pagination.totalPages - 1);
+                        }
+                        return (
+                          <PaginationItem key={pageNum}>
+                            <PaginationLink
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setPage(pageNum)
+                              }}
+                              isActive={pageNum === pagination.number}
+                            >
+                              {pageNum + 1}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      })}
+                    </span>
                     <PaginationItem>
                       <PaginationNext
                         href="#"

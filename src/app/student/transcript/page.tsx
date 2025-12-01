@@ -175,20 +175,20 @@ const TranscriptPage = () => {
 
                 {!isLoading && !error && transcriptData.length > 0 && (
                   <div className="space-y-6">
-                    <Card className="overflow-hidden p-0">
-                      <Table>
+                    <Card className="overflow-x-auto p-0">
+                      <Table className="min-w-[800px]">
                         <TableHeader className="sticky top-0 z-10 bg-background">
                           <TableRow className="bg-muted/50">
-                            <TableHead className="w-32">Mã lớp</TableHead>
-                            <TableHead>Tên môn</TableHead>
-                            <TableHead className="w-48">Giáo viên</TableHead>
-                            <TableHead className="w-32 text-center">
+                            <TableHead className="w-32 min-w-[100px]">Mã lớp</TableHead>
+                            <TableHead className="min-w-[180px]">Tên môn</TableHead>
+                            <TableHead className="w-48 min-w-[140px]">Giáo viên</TableHead>
+                            <TableHead className="w-32 min-w-[100px] text-center">
                               Điểm TB
                             </TableHead>
-                            <TableHead className="w-32 text-center">
+                            <TableHead className="w-32 min-w-[100px] text-center">
                               Tiến độ
                             </TableHead>
-                            <TableHead className="w-32 text-center">
+                            <TableHead className="w-32 min-w-[100px] text-center">
                               Trạng thái
                             </TableHead>
                           </TableRow>

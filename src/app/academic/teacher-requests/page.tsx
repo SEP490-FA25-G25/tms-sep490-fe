@@ -765,7 +765,7 @@ export default function AcademicTeacherRequestsPage() {
 
           {/* Teacher Pending Requests Tab */}
           <TabsContent value="pending" className="space-y-4">
-            <div className="rounded-lg border overflow-hidden">
+            <div className="rounded-lg border overflow-x-auto">
               {teacherRequestsError ? (
                 <div className="rounded-lg border border-dashed border-rose-200 bg-rose-50 p-8 text-center text-sm text-rose-700">
                   {formatBackendError(
@@ -785,15 +785,15 @@ export default function AcademicTeacherRequestsPage() {
                   Không có yêu cầu nào đang chờ duyệt.
                 </div>
               ) : (
-                <Table>
+                <Table className="min-w-[900px]">
                   <TableHeader>
                     <TableRow className="bg-muted/50">
-                      <TableHead>Loại</TableHead>
-                      <TableHead>Trạng thái</TableHead>
-                      <TableHead>Giáo viên</TableHead>
-                      <TableHead>Lớp học / Buổi</TableHead>
-                      <TableHead>Lý do</TableHead>
-                      <TableHead>Ngày gửi</TableHead>
+                      <TableHead className="min-w-[140px]">Loại</TableHead>
+                      <TableHead className="min-w-[100px]">Trạng thái</TableHead>
+                      <TableHead className="min-w-[140px]">Giáo viên</TableHead>
+                      <TableHead className="min-w-[200px]">Lớp học / Buổi</TableHead>
+                      <TableHead className="min-w-[180px]">Lý do</TableHead>
+                      <TableHead className="min-w-[100px]">Ngày gửi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -922,7 +922,7 @@ export default function AcademicTeacherRequestsPage() {
 
           {/* Teacher History Tab */}
           <TabsContent value="history" className="space-y-4">
-            <div className="rounded-lg border overflow-hidden">
+            <div className="rounded-lg border overflow-x-auto">
               {isLoadingTeacherRequests ? (
                 <div className="space-y-3 p-4">
                   {[...Array(5)].map((_, index) => (
@@ -930,15 +930,15 @@ export default function AcademicTeacherRequestsPage() {
                   ))}
                 </div>
               ) : paginatedHistoryRequests.length ? (
-                <Table>
+                <Table className="min-w-[900px]">
                   <TableHeader>
                     <TableRow className="bg-muted/50">
-                      <TableHead>Loại</TableHead>
-                      <TableHead>Trạng thái</TableHead>
-                      <TableHead>Giáo viên</TableHead>
-                      <TableHead>Lớp học / Buổi</TableHead>
-                      <TableHead>Người xử lý</TableHead>
-                      <TableHead>Thời gian</TableHead>
+                      <TableHead className="min-w-[140px]">Loại</TableHead>
+                      <TableHead className="min-w-[100px]">Trạng thái</TableHead>
+                      <TableHead className="min-w-[140px]">Giáo viên</TableHead>
+                      <TableHead className="min-w-[200px]">Lớp học / Buổi</TableHead>
+                      <TableHead className="min-w-[140px]">Người xử lý</TableHead>
+                      <TableHead className="min-w-[100px]">Thời gian</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

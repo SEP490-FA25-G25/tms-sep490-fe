@@ -224,10 +224,11 @@ export default function ClassListPage() {
     >
       <div className="flex flex-col gap-6">
         {/* Filters & Action */}
-        <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
-          <div className="flex flex-1 flex-col md:flex-row gap-3">
+        <div className="flex flex-col gap-4">
+          {/* Row 1: Search + Primary Filters */}
+          <div className="flex flex-col sm:flex-row gap-3">
             {/* Search */}
-            <div className="relative flex-1 max-w-sm">
+            <div className="relative flex-1 sm:max-w-xs">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Tìm kiếm lớp học..."
@@ -237,92 +238,100 @@ export default function ClassListPage() {
               />
             </div>
 
-            {/* Status Filter */}
-            <Select
-              value={filters.status || 'all'}
-              onValueChange={(value) => handleFilterChange('status', value === 'all' ? undefined : value)}
-            >
-              <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Tất cả trạng thái" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                <SelectItem value="DRAFT">Bản nháp</SelectItem>
-                <SelectItem value="SCHEDULED">Đã lên lịch</SelectItem>
-                <SelectItem value="ONGOING">Đang diễn ra</SelectItem>
-                <SelectItem value="COMPLETED">Đã hoàn thành</SelectItem>
-                <SelectItem value="CANCELLED">Đã hủy</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Primary Filters - wrap on mobile */}
+            <div className="flex flex-wrap gap-2">
+              {/* Status Filter */}
+              <Select
+                value={filters.status || 'all'}
+                onValueChange={(value) => handleFilterChange('status', value === 'all' ? undefined : value)}
+              >
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                  <SelectItem value="DRAFT">Bản nháp</SelectItem>
+                  <SelectItem value="SCHEDULED">Đã lên lịch</SelectItem>
+                  <SelectItem value="ONGOING">Đang diễn ra</SelectItem>
+                  <SelectItem value="COMPLETED">Đã hoàn thành</SelectItem>
+                  <SelectItem value="CANCELLED">Đã hủy</SelectItem>
+                </SelectContent>
+              </Select>
 
-            {/* Approval Status Filter */}
-            <Select
-              value={filters.approvalStatus || 'all'}
-              onValueChange={(value) => handleFilterChange('approvalStatus', value === 'all' ? undefined : value)}
-            >
-              <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Tất cả duyệt" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả duyệt</SelectItem>
-                <SelectItem value="PENDING">Chờ duyệt</SelectItem>
-                <SelectItem value="APPROVED">Đã duyệt</SelectItem>
-                <SelectItem value="REJECTED">Đã từ chối</SelectItem>
-              </SelectContent>
-            </Select>
+              {/* Approval Status Filter */}
+              <Select
+                value={filters.approvalStatus || 'all'}
+                onValueChange={(value) => handleFilterChange('approvalStatus', value === 'all' ? undefined : value)}
+              >
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue placeholder="Phê duyệt" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả duyệt</SelectItem>
+                  <SelectItem value="PENDING">Chờ duyệt</SelectItem>
+                  <SelectItem value="APPROVED">Đã duyệt</SelectItem>
+                  <SelectItem value="REJECTED">Đã từ chối</SelectItem>
+                </SelectContent>
+              </Select>
 
-            {/* Modality Filter */}
-            <Select
-              value={filters.modality || 'all'}
-              onValueChange={(value) => handleFilterChange('modality', value === 'all' ? undefined : value)}
-            >
-              <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Tất cả hình thức" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả hình thức</SelectItem>
-                <SelectItem value="ONLINE">Trực tuyến</SelectItem>
-                <SelectItem value="OFFLINE">Trực tiếp</SelectItem>
-                <SelectItem value="HYBRID">Kết hợp</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Sort By */}
-            <Select
-              value={filters.sort}
-              onValueChange={(value) => handleFilterChange('sort', value)}
-            >
-              <SelectTrigger className="w-full md:w-[160px]">
-                <SelectValue placeholder="Sắp xếp theo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="startDate">Ngày bắt đầu</SelectItem>
-                <SelectItem value="name">Tên</SelectItem>
-                <SelectItem value="code">Mã</SelectItem>
-                <SelectItem value="currentEnrolled">Học viên</SelectItem>
-                <SelectItem value="status">Trạng thái</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Sort Order */}
-            <Select
-              value={filters.sortDir}
-              onValueChange={(value) => handleFilterChange('sortDir', value)}
-            >
-              <SelectTrigger className="w-full md:w-[140px]">
-                <SelectValue placeholder="Thứ tự" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="asc">Tăng dần</SelectItem>
-                <SelectItem value="desc">Giảm dần</SelectItem>
-              </SelectContent>
-            </Select>
+              {/* Modality Filter */}
+              <Select
+                value={filters.modality || 'all'}
+                onValueChange={(value) => handleFilterChange('modality', value === 'all' ? undefined : value)}
+              >
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue placeholder="Hình thức" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả hình thức</SelectItem>
+                  <SelectItem value="ONLINE">Trực tuyến</SelectItem>
+                  <SelectItem value="OFFLINE">Trực tiếp</SelectItem>
+                  <SelectItem value="HYBRID">Kết hợp</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <Button onClick={() => navigate('/academic/classes/create')}>
-            <Plus className="mr-2 h-4 w-4" />
-            Lớp học mới
-          </Button>
+          {/* Row 2: Secondary Filters + Action */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex flex-wrap gap-2">
+              {/* Sort By */}
+              <Select
+                value={filters.sort}
+                onValueChange={(value) => handleFilterChange('sort', value)}
+              >
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Sắp xếp theo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="startDate">Ngày bắt đầu</SelectItem>
+                  <SelectItem value="name">Tên</SelectItem>
+                  <SelectItem value="code">Mã</SelectItem>
+                  <SelectItem value="currentEnrolled">Học viên</SelectItem>
+                  <SelectItem value="status">Trạng thái</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Sort Order */}
+              <Select
+                value={filters.sortDir}
+                onValueChange={(value) => handleFilterChange('sortDir', value)}
+              >
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Thứ tự" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="asc">Tăng dần</SelectItem>
+                  <SelectItem value="desc">Giảm dần</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button onClick={() => navigate('/academic/classes/create')} className="w-full sm:w-auto">
+              <Plus className="mr-2 h-4 w-4" />
+              Lớp học mới
+            </Button>
+          </div>
         </div>
 
         {/* Class List */}
@@ -341,16 +350,16 @@ export default function ClassListPage() {
               ))}
             </div>
           ) : response?.data?.content ? (
-            <div className="rounded-lg border bg-card">
-              <Table>
+            <div className="rounded-lg border bg-card overflow-x-auto">
+              <Table className="min-w-[900px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Lớp học</TableHead>
-                    <TableHead>Khóa học</TableHead>
-                    <TableHead>Giáo viên</TableHead>
-                    <TableHead>Chi nhánh</TableHead>
-                    <TableHead>Sĩ số</TableHead>
-                    <TableHead>Trạng thái</TableHead>
+                    <TableHead className="min-w-[180px]">Lớp học</TableHead>
+                    <TableHead className="min-w-[150px]">Khóa học</TableHead>
+                    <TableHead className="min-w-[150px]">Giáo viên</TableHead>
+                    <TableHead className="min-w-[120px]">Chi nhánh</TableHead>
+                    <TableHead className="min-w-[80px]">Sĩ số</TableHead>
+                    <TableHead className="min-w-[100px]">Trạng thái</TableHead>
                     <TableHead className="w-[70px]"></TableHead>
                   </TableRow>
                 </TableHeader>

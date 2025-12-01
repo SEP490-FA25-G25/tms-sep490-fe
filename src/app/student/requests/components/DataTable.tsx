@@ -55,8 +55,8 @@ export function DataTable<TData, TValue>({
   })
 
   return (
-    <Card className="overflow-hidden p-0">
-      <Table>
+    <Card className="overflow-x-auto p-0">
+      <Table className="min-w-[700px]">
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="bg-muted/50">
