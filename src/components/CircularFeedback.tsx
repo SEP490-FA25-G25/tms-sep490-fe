@@ -32,7 +32,7 @@ export function CircularFeedback({ feedbacks }: CircularFeedbackProps) {
         const targetAngle = - (activeIndex * anglePerItem);
 
         // Shortest path calculation
-        let current = rotationRef.current;
+        const current = rotationRef.current;
 
         // We want to rotate to `targetAngle`.
         // But we want to find the equivalent target that is closest to current.

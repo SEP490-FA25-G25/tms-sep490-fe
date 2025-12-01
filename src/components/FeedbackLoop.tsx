@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Quote, ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface Feedback {
@@ -20,9 +20,9 @@ export function FeedbackLoop({ feedbacks }: FeedbackLoopProps) {
     // Assign colors cyclically - Blue/Cyan/Purple tones as requested
     const colors = ['#D4E787', '#8CE2DA', '#A7E7CB', '#A6E4FF']; // Blue, Sky, Purple, Indigo
 
-    const nextSlide = () => {
+    const nextSlide = useCallback(() => {
         setCurrentIndex((prev) => (prev + 1) % feedbacks.length);
-    };
+    }, [feedbacks.length]);
 
     const prevSlide = () => {
         setCurrentIndex((prev) => (prev - 1 + feedbacks.length) % feedbacks.length);
@@ -32,7 +32,7 @@ export function FeedbackLoop({ feedbacks }: FeedbackLoopProps) {
     useEffect(() => {
         const interval = setInterval(nextSlide, 5000);
         return () => clearInterval(interval);
-    }, []);
+    }, [nextSlide]);
 
     return (
         <div className="w-full max-w-[1400px] mx-auto py-16 px-4">
