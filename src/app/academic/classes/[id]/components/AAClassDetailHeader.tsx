@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import type { ClassDetailDTO, TeacherSummaryDTO } from '@/store/services/classApi'
+import type { ClassDetailDTO } from '@/store/services/classApi'
 import {
   BookOpen,
   Calendar,
@@ -20,7 +20,6 @@ import {
   UserPlus,
   Edit,
   AlertCircle,
-  User,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
@@ -127,10 +126,6 @@ export function AAClassDetailHeader({
       ? 'Lớp đang chờ duyệt, không thể chỉnh sửa.'
       : 'Lớp đã được duyệt, không thể chỉnh sửa.'
 
-  // Get primary teacher or first teacher
-  const primaryTeacher = classData.teachers?.[0]
-  const teacherCount = classData.teachers?.length || 0
-
   return (
     <div className="border-b bg-background">
       <div className="@container/main py-6 md:py-8">
@@ -138,12 +133,9 @@ export function AAClassDetailHeader({
           {/* Header top row */}
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline" className={unified.color}>
                   {unified.label}
-                </Badge>
-                <Badge variant="outline" className="text-xs">
-                  {getModalityLabel(classData.modality)}
                 </Badge>
               </div>
               <div className="space-y-1">
@@ -153,10 +145,19 @@ export function AAClassDetailHeader({
                 <p className="text-lg text-muted-foreground">{classData.code}</p>
               </div>
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <BookOpen className="h-4 w-4" />
-                  <span>{classData.course.name}</span>
-                </div>
+                {classData.course.subject && (
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4" />
+                    <span>{classData.course.subject.name}</span>
+                  </div>
+                )}
+                {classData.course.level && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                      {classData.course.level.name}
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <Building className="h-4 w-4" />
                   <span>{classData.branch.name}</span>
@@ -215,19 +216,16 @@ export function AAClassDetailHeader({
             </Alert>
           )}
 
-          {/* Info grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {/* Teacher */}
+          {/* Info grid - responsive: 2 cols on mobile, 4 cols on tablet+ */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {/* Modality */}
             <div className="rounded-lg border bg-card shadow-sm p-3 space-y-1">
               <div className="flex items-center gap-1.5 text-muted-foreground">
-                <User className="h-4 w-4 shrink-0" />
-                <span className="text-xs font-medium">Giảng viên</span>
+                <MapPin className="h-4 w-4 shrink-0" />
+                <span className="text-xs font-medium">Hình thức</span>
               </div>
-              <p className="text-sm font-semibold text-foreground truncate" title={primaryTeacher?.fullName}>
-                {primaryTeacher?.fullName || 'Chưa phân công'}
-                {teacherCount > 1 && (
-                  <span className="text-xs text-muted-foreground font-normal"> +{teacherCount - 1}</span>
-                )}
+              <p className="text-sm font-semibold text-foreground">
+                {getModalityLabel(classData.modality)}
               </p>
             </div>
 
@@ -239,17 +237,6 @@ export function AAClassDetailHeader({
               </div>
               <p className="text-sm font-semibold text-foreground truncate" title={classData.scheduleSummary}>
                 {classData.scheduleSummary || '—'}
-              </p>
-            </div>
-
-            {/* Location */}
-            <div className="rounded-lg border bg-card shadow-sm p-3 space-y-1">
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <MapPin className="h-4 w-4 shrink-0" />
-                <span className="text-xs font-medium">Phòng học</span>
-              </div>
-              <p className="text-sm font-semibold text-foreground truncate" title={classData.room}>
-                {classData.room || '—'}
               </p>
             </div>
 
@@ -272,17 +259,6 @@ export function AAClassDetailHeader({
               </div>
               <p className={`text-sm font-semibold ${getCapacityColor(classData.enrollmentSummary.currentEnrolled, classData.enrollmentSummary.maxCapacity)}`}>
                 {classData.enrollmentSummary.currentEnrolled}/{classData.enrollmentSummary.maxCapacity}
-              </p>
-            </div>
-
-            {/* Utilization */}
-            <div className="rounded-lg border bg-card shadow-sm p-3 space-y-1">
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Building className="h-4 w-4 shrink-0" />
-                <span className="text-xs font-medium">Tỷ lệ lấp đầy</span>
-              </div>
-              <p className={`text-sm font-semibold ${getCapacityColor(classData.enrollmentSummary.currentEnrolled, classData.enrollmentSummary.maxCapacity)}`}>
-                {classData.enrollmentSummary.utilizationRate.toFixed(1)}%
               </p>
             </div>
           </div>

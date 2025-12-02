@@ -32,6 +32,17 @@ export function OverviewTab({ classData }: OverviewTabProps) {
   const upcomingSessions = classData.upcomingSessions || []
   const teachers = classData.teachers || []
 
+  const formatDateTime = (dateString?: string) => {
+    if (!dateString) return '—'
+    return new Date(dateString).toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
+
   return (
     <div className="space-y-8">
       {/* Teachers Section */}
@@ -95,10 +106,12 @@ export function OverviewTab({ classData }: OverviewTabProps) {
                     <Clock className="h-3.5 w-3.5" />
                     <span>{session.startTime} - {session.endTime}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <MapPin className="h-3.5 w-3.5" />
-                    <span>{session.room || classData.room || '—'}</span>
-                  </div>
+                  {session.room && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5" />
+                      <span>{session.room}</span>
+                    </div>
+                  )}
                   {session.teachers && session.teachers.length > 0 && (
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <User className="h-3.5 w-3.5" />
@@ -122,7 +135,8 @@ export function OverviewTab({ classData }: OverviewTabProps) {
       {/* Course Info Section */}
       <div>
         <h3 className="text-lg font-semibold mb-4">Thông tin khóa học</h3>
-        <div className="rounded-lg border bg-card p-4">
+        <div className="rounded-lg border bg-card p-4 space-y-4">
+          {/* Basic course info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Tên khóa học</p>
@@ -132,21 +146,88 @@ export function OverviewTab({ classData }: OverviewTabProps) {
               <p className="text-sm text-muted-foreground mb-1">Mã khóa học</p>
               <p className="font-medium">{classData.course.code}</p>
             </div>
+            {classData.course.subject && (
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Môn học</p>
+                <p className="font-medium">{classData.course.subject.name}</p>
+              </div>
+            )}
+            {classData.course.level && (
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Trình độ</p>
+                <Badge variant="secondary">{classData.course.level.name}</Badge>
+              </div>
+            )}
+          </div>
+
+          {/* Session info */}
+          <div className="pt-4 border-t grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Tổng số giờ</p>
-              <p className="font-medium">{classData.course.totalHours} giờ</p>
+              <p className="font-medium">{classData.course.totalHours || '—'} giờ</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Thời lượng</p>
-              <p className="font-medium">{classData.course.durationWeeks} tuần</p>
+              <p className="text-sm text-muted-foreground mb-1">Số buổi học</p>
+              <p className="font-medium">{classData.course.numberOfSessions || '—'} buổi</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Số giờ/buổi</p>
+              <p className="font-medium">{classData.course.hoursPerSession || '—'} giờ</p>
             </div>
           </div>
+
+          {/* Description */}
           {classData.course.description && (
-            <div className="mt-4 pt-4 border-t">
-              <p className="text-sm text-muted-foreground mb-1">Mô tả</p>
-              <p className="text-sm">{classData.course.description}</p>
+            <div className="pt-4 border-t">
+              <p className="text-sm text-muted-foreground mb-1">Mô tả khóa học</p>
+              <p className="text-sm whitespace-pre-wrap">{classData.course.description}</p>
             </div>
           )}
+
+          {/* Target Audience */}
+          {classData.course.targetAudience && (
+            <div className="pt-4 border-t">
+              <p className="text-sm text-muted-foreground mb-1">Đối tượng học viên</p>
+              <p className="text-sm whitespace-pre-wrap">{classData.course.targetAudience}</p>
+            </div>
+          )}
+
+          {/* Prerequisites */}
+          {classData.course.prerequisites && (
+            <div className="pt-4 border-t">
+              <p className="text-sm text-muted-foreground mb-1">Điều kiện tiên quyết</p>
+              <p className="text-sm whitespace-pre-wrap">{classData.course.prerequisites}</p>
+            </div>
+          )}
+
+          {/* Teaching Methods */}
+          {classData.course.teachingMethods && (
+            <div className="pt-4 border-t">
+              <p className="text-sm text-muted-foreground mb-1">Phương pháp giảng dạy</p>
+              <p className="text-sm whitespace-pre-wrap">{classData.course.teachingMethods}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Class Audit Info Section */}
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Thông tin tạo lớp</h3>
+        <div className="rounded-lg border bg-card p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Người tạo</p>
+              <p className="font-medium">{classData.createdByName || '—'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Ngày tạo</p>
+              <p className="font-medium">{formatDateTime(classData.createdAt)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Cập nhật lần cuối</p>
+              <p className="font-medium">{formatDateTime(classData.updatedAt)}</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

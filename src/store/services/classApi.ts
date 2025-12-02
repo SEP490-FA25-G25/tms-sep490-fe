@@ -145,14 +145,31 @@ export interface ClassDetailResponse {
 }
 
 // Nested interfaces for ClassDetailDTO
+export interface SubjectDTO {
+  id: number
+  code: string
+  name: string
+}
+
+export interface LevelDTO {
+  id: number
+  code: string
+  name: string
+}
+
 export interface CourseDTO {
   id: number
   code: string
   name: string
   description: string
   totalHours: number
-  durationWeeks: number
-  sessionPerWeek: number
+  numberOfSessions: number
+  hoursPerSession: number
+  prerequisites?: string
+  targetAudience?: string
+  teachingMethods?: string
+  subject?: SubjectDTO
+  level?: LevelDTO
 }
 
 export interface BranchDTO {
@@ -202,7 +219,10 @@ export interface ClassDetailDTO {
   submittedAt?: string | null // LocalDate from backend
   decidedAt?: string | null // LocalDate from backend
   decidedByName?: string
-  room: string
+  // Audit information
+  createdByName?: string
+  createdAt?: string // OffsetDateTime from backend
+  updatedAt?: string // OffsetDateTime from backend
   teachers: TeacherSummaryDTO[] // List of all teachers teaching this class
   scheduleSummary: string
   enrollmentSummary: EnrollmentSummary
