@@ -62,7 +62,10 @@ export default function AdminCentersPage() {
   // RTK Query trả về ApiResponse wrapper, nên cần access .data để lấy PageableResponse
   const pageData = centersResponse?.data;
   const centers: CenterResponse[] = pageData?.content || [];
-  const totalElements = pageData?.totalElements || 0;
+  const totalElements =
+    typeof pageData?.totalElements === "number"
+      ? pageData.totalElements
+      : centers.length;
   const totalPages = pageData?.totalPages || 0;
 
   // Filter centers by search term on client side
@@ -136,7 +139,7 @@ export default function AdminCentersPage() {
 
                 {/* Search */}
                 <div className="px-4 lg:px-6 space-y-3">
-                  <div className="relative flex-1 max-w-md">
+                  <div className="relative w-full">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       placeholder="Tìm kiếm theo tên, mã, địa chỉ..."

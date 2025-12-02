@@ -204,7 +204,7 @@ export function CenterDetailDialog({
             <Separator />
 
             {/* Branches Section */}
-            <div className="space-y-3">
+            <div className="space-y-4 pt-1">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold">Chi nhánh ({branches.length})</h3>
                 <Button
