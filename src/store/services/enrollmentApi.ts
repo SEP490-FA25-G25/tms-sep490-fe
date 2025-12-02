@@ -22,25 +22,32 @@ export interface StudentEnrollmentData {
   errorMessage?: string
 }
 
+// Match backend RecommendationType enum exactly
+export type RecommendationType = 'OK' | 'PARTIAL_SUGGESTED' | 'OVERRIDE_AVAILABLE' | 'BLOCKED'
+
 export interface EnrollmentRecommendation {
-  type: 'PROCEED' | 'PARTIAL' | 'OVERFLOW' | 'BLOCKED'
+  type: RecommendationType
   message: string
   suggestedEnrollCount?: number
 }
 
 export interface ClassEnrollmentImportPreview {
   classId: number
+  classCode: string
   className: string
-  totalStudents: number
-  totalValid: number
-  errorCount: number
+  students: StudentEnrollmentData[]
+  foundCount: number      // Số students đã có trong DB
+  createCount: number     // Số students sẽ tạo mới  
+  errorCount: number      // Số students có lỗi
+  totalValid: number      // found + create
   currentEnrolled: number
   maxCapacity: number
   availableSlots: number
-  students: StudentEnrollmentData[]
-  recommendation: EnrollmentRecommendation
+  exceedsCapacity: boolean
+  exceededBy: number      // Số lượng vượt quá (0 nếu không vượt)
   warnings: string[]
   errors: string[]
+  recommendation: EnrollmentRecommendation
 }
 
 export type EnrollmentStrategy = 'ALL' | 'PARTIAL' | 'OVERRIDE'

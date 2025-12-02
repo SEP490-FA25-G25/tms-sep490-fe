@@ -27,7 +27,10 @@ import {
   Trash2,
   Info,
   Users,
-  ArrowRight
+  ArrowRight,
+  AlertTriangle,
+  Settings,
+  UserCheck,
 } from 'lucide-react'
 import {
   usePreviewClassEnrollmentImportMutation,
@@ -41,7 +44,6 @@ import {
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent } from '@/components/ui/card'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -62,10 +64,12 @@ export function EnrollmentImportDialog({
 }: EnrollmentImportDialogProps) {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<ClassEnrollmentImportPreview | null>(null)
-  const [strategy, setStrategy] = useState<EnrollmentStrategy>('ALL')
+  // Strategy: ALL = tất cả, PARTIAL = chọn thủ công
+  const [baseStrategy, setBaseStrategy] = useState<'ALL' | 'PARTIAL'>('ALL')
+  // Override capacity checkbox (có thể kết hợp với cả ALL và PARTIAL)
+  const [overrideCapacity, setOverrideCapacity] = useState(false)
   const [overrideReason, setOverrideReason] = useState('')
   const [selectedStudents, setSelectedStudents] = useState<Set<number>>(new Set())
-  const [activeTab, setActiveTab] = useState<string>('valid')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [previewMutation, { isLoading: isPreviewing }] = usePreviewClassEnrollmentImportMutation()
@@ -73,6 +77,24 @@ export function EnrollmentImportDialog({
 
   const genericTemplateQuery = useDownloadEnrollmentTemplateQuery()
   const classTemplateQuery = useDownloadClassEnrollmentTemplateQuery({ classId }, { skip: !open })
+
+  // Compute derived values - all students sorted: valid first, then errors
+  const allStudentsSorted = preview?.students ? [
+    ...preview.students.filter(s => s.status !== 'ERROR' && s.status !== 'DUPLICATE'),
+    ...preview.students.filter(s => s.status === 'ERROR' || s.status === 'DUPLICATE')
+  ] : []
+  
+  const validStudentsList = preview?.students.filter(s => s.status !== 'ERROR' && s.status !== 'DUPLICATE') || []
+  const errorStudentsList = preview?.students.filter(s => s.status === 'ERROR' || s.status === 'DUPLICATE') || []
+  
+  // Check if capacity will be exceeded
+  const studentsToEnrollCount = baseStrategy === 'PARTIAL' ? selectedStudents.size : validStudentsList.length
+  const willExceedCapacity = preview ? (preview.currentEnrolled + studentsToEnrollCount) > preview.maxCapacity : false
+
+  // Helper to check if a student is valid (can be enrolled)
+  const isStudentValid = (student: StudentEnrollmentData) => {
+    return student.status === 'FOUND' || student.status === 'CREATE'
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -88,7 +110,8 @@ export function EnrollmentImportDialog({
     }
     setFile(selectedFile)
     setPreview(null)
-    setStrategy('ALL')
+    setBaseStrategy('ALL')
+    setOverrideCapacity(false)
     setSelectedStudents(new Set())
 
     // Auto preview
@@ -100,24 +123,25 @@ export function EnrollmentImportDialog({
       const result = await previewMutation({ classId, file: fileToPreview }).unwrap()
       setPreview(result.data)
 
-      switch (result.data.recommendation.type) {
-        case 'PROCEED':
-          setStrategy('ALL')
-          break
-        case 'PARTIAL':
-          setStrategy('PARTIAL')
-          break
-        case 'OVERFLOW':
-        case 'BLOCKED':
-          setStrategy('OVERRIDE')
-          break
-        default:
-          setStrategy('ALL')
+      // Auto-select strategy based on recommendation
+      const recType = result.data.recommendation.type
+      if (recType === 'OK') {
+        setBaseStrategy('ALL')
+        setOverrideCapacity(false)
+      } else if (recType === 'PARTIAL_SUGGESTED') {
+        setBaseStrategy('PARTIAL')
+        setOverrideCapacity(false)
+      } else if (recType === 'OVERRIDE_AVAILABLE') {
+        setBaseStrategy('ALL')
+        setOverrideCapacity(true)
+      } else if (recType === 'BLOCKED') {
+        setBaseStrategy('PARTIAL')
+        setOverrideCapacity(false)
       }
     } catch (error: unknown) {
       const errorMessage = (error as { data?: { message?: string } })?.data?.message || 'Xem trước dữ liệu thất bại'
       toast.error(errorMessage)
-      setFile(null) // Reset file on error
+      setFile(null)
     }
   }
 
@@ -158,27 +182,26 @@ export function EnrollmentImportDialog({
   const handleExecute = async () => {
     if (!preview) return
 
-    const validStudents = preview.students.filter(student =>
-      student.status !== 'ERROR' && student.status !== 'DUPLICATE'
-    )
-
-    if (validStudents.length === 0) {
+    if (validStudentsList.length === 0) {
       toast.error('Không có sinh viên hợp lệ để đăng ký')
       return
     }
 
-    if (strategy === 'PARTIAL' && selectedStudents.size === 0) {
+    if (baseStrategy === 'PARTIAL' && selectedStudents.size === 0) {
       toast.error('Vui lòng chọn ít nhất một sinh viên')
       return
     }
 
-    if (strategy === 'OVERRIDE' && overrideReason.trim().length < 20) {
-      toast.error('Lý do ghi đè phải có ít nhất 20 ký tự')
+    // Determine final strategy for backend
+    const finalStrategy: EnrollmentStrategy = overrideCapacity ? 'OVERRIDE' : baseStrategy
+
+    if (finalStrategy === 'OVERRIDE' && overrideReason.trim().length < 20) {
+      toast.error('Lý do vượt sĩ số phải có ít nhất 20 ký tự')
       return
     }
 
     try {
-      const studentsToEnroll = strategy === 'PARTIAL'
+      const studentsToEnroll = baseStrategy === 'PARTIAL'
         ? preview.students.filter((student, idx) => {
           if (student.status === 'ERROR' || student.status === 'DUPLICATE') return false
           const studentId = student.status === 'FOUND' ? student.resolvedStudentId : -idx - 1
@@ -188,9 +211,9 @@ export function EnrollmentImportDialog({
 
       const result = await executeMutation({
         classId: preview.classId,
-        strategy,
-        selectedStudentIds: strategy === 'PARTIAL' ? Array.from(selectedStudents) : undefined,
-        overrideReason: strategy === 'OVERRIDE' ? overrideReason : undefined,
+        strategy: finalStrategy,
+        selectedStudentIds: baseStrategy === 'PARTIAL' ? Array.from(selectedStudents) : undefined,
+        overrideReason: overrideCapacity ? overrideReason : undefined,
         students: studentsToEnroll,
       }).unwrap()
 
@@ -207,13 +230,17 @@ export function EnrollmentImportDialog({
   const handleClose = () => {
     setFile(null)
     setPreview(null)
-    setStrategy('ALL')
+    setBaseStrategy('ALL')
+    setOverrideCapacity(false)
     setOverrideReason('')
     setSelectedStudents(new Set())
     onOpenChange(false)
   }
 
   const toggleStudentSelection = (student: StudentEnrollmentData, idx: number) => {
+    // Don't allow selecting invalid students
+    if (!isStudentValid(student)) return
+
     const newSet = new Set(selectedStudents)
     const studentId = student.status === 'FOUND' ? student.resolvedStudentId : -idx - 1
 
@@ -227,15 +254,16 @@ export function EnrollmentImportDialog({
 
   const toggleAllSelection = () => {
     if (!preview) return
-    const validStudents = preview.students.filter(s => s.status !== 'ERROR' && s.status !== 'DUPLICATE')
-    const allSelected = validStudents.every((s, idx) => {
-      const id = s.status === 'FOUND' ? s.resolvedStudentId : -idx - 1
+    const allSelected = validStudentsList.every((s) => {
+      const realIdx = preview.students.indexOf(s)
+      const id = s.status === 'FOUND' ? s.resolvedStudentId : -realIdx - 1
       return selectedStudents.has(id!)
     })
 
     const newSet = new Set(selectedStudents)
-    validStudents.forEach((s, idx) => {
-      const id = s.status === 'FOUND' ? s.resolvedStudentId : -idx - 1
+    validStudentsList.forEach((s) => {
+      const realIdx = preview.students.indexOf(s)
+      const id = s.status === 'FOUND' ? s.resolvedStudentId : -realIdx - 1
       if (allSelected) {
         newSet.delete(id!)
       } else {
@@ -249,13 +277,16 @@ export function EnrollmentImportDialog({
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
   }
 
-  const validStudentsList = preview?.students.filter(s => s.status !== 'ERROR' && s.status !== 'DUPLICATE') || []
-  const errorStudentsList = preview?.students.filter(s => s.status === 'ERROR' || s.status === 'DUPLICATE') || []
   const isAllSelected = validStudentsList.length > 0 && validStudentsList.every((s) => {
     if (!preview) return false
     const id = s.status === 'FOUND' ? s.resolvedStudentId : -preview.students.indexOf(s) - 1
     return selectedStudents.has(id!)
   })
+
+  // Check if can proceed
+  const canProceed = preview && validStudentsList.length > 0 && 
+    (baseStrategy === 'ALL' || selectedStudents.size > 0) &&
+    (!willExceedCapacity || overrideCapacity)
 
   return (
     <FullScreenModal open={open} onOpenChange={onOpenChange}>
@@ -338,8 +369,8 @@ export function EnrollmentImportDialog({
           ) : (
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* Summary Header */}
-              <div className="bg-background border-b p-6 pb-2">
-                <div className="flex items-start justify-between mb-6">
+              <div className="bg-background border-b p-6">
+                <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-4">
                     <div className="bg-green-100 p-3 rounded-xl">
                       <FileSpreadsheet className="h-6 w-6 text-green-700" />
@@ -347,7 +378,11 @@ export function EnrollmentImportDialog({
                     <div>
                       <h3 className="font-medium text-lg">{file?.name}</h3>
                       <p className="text-sm text-muted-foreground">
-                        {preview.totalStudents} sinh viên tìm thấy • {preview.totalValid} hợp lệ
+                        {preview.students.length} sinh viên • 
+                        <span className="text-emerald-600 font-medium"> {validStudentsList.length} hợp lệ</span>
+                        {errorStudentsList.length > 0 && (
+                          <span className="text-rose-600 font-medium"> • {errorStudentsList.length} không hợp lệ</span>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -357,25 +392,62 @@ export function EnrollmentImportDialog({
                   </Button>
                 </div>
 
-                <div className="flex gap-2 mb-2">
-                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="w-full justify-start bg-transparent border-b rounded-none h-auto p-0 gap-6">
-                      <TabsTrigger
-                        value="valid"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-2"
-                      >
-                        Hợp lệ <Badge variant="secondary" className="ml-2">{validStudentsList.length}</Badge>
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="error"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-destructive data-[state=active]:bg-transparent px-0 py-2"
-                        disabled={errorStudentsList.length === 0}
-                      >
-                        Lỗi / Trùng lặp <Badge variant="destructive" className="ml-2">{errorStudentsList.length}</Badge>
-                      </TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                </div>
+                {/* Warning banner if there are errors */}
+                {errorStudentsList.length > 0 && (
+                  <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-amber-800">
+                        Có {errorStudentsList.length} sinh viên không thể đăng ký
+                      </p>
+                      <p className="text-xs text-amber-700 mt-1">
+                        Những sinh viên bị lỗi hoặc đã đăng ký lớp này sẽ được hiển thị mờ trong danh sách bên dưới.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Recommendation message */}
+                {preview.recommendation && (
+                  <div className={cn(
+                    "p-3 rounded-lg flex items-start gap-3",
+                    preview.recommendation.type === 'OK' && "bg-emerald-50 border border-emerald-200",
+                    preview.recommendation.type === 'PARTIAL_SUGGESTED' && "bg-sky-50 border border-sky-200",
+                    preview.recommendation.type === 'OVERRIDE_AVAILABLE' && "bg-amber-50 border border-amber-200",
+                    preview.recommendation.type === 'BLOCKED' && "bg-rose-50 border border-rose-200"
+                  )}>
+                    <Info className={cn(
+                      "h-5 w-5 shrink-0 mt-0.5",
+                      preview.recommendation.type === 'OK' && "text-emerald-600",
+                      preview.recommendation.type === 'PARTIAL_SUGGESTED' && "text-sky-600",
+                      preview.recommendation.type === 'OVERRIDE_AVAILABLE' && "text-amber-600",
+                      preview.recommendation.type === 'BLOCKED' && "text-rose-600"
+                    )} />
+                    <div>
+                      <p className={cn(
+                        "text-sm font-medium",
+                        preview.recommendation.type === 'OK' && "text-emerald-800",
+                        preview.recommendation.type === 'PARTIAL_SUGGESTED' && "text-sky-800",
+                        preview.recommendation.type === 'OVERRIDE_AVAILABLE' && "text-amber-800",
+                        preview.recommendation.type === 'BLOCKED' && "text-rose-800"
+                      )}>
+                        {preview.recommendation.type === 'OK' && 'Đủ sức chứa'}
+                        {preview.recommendation.type === 'PARTIAL_SUGGESTED' && 'Khuyến nghị chọn một phần'}
+                        {preview.recommendation.type === 'OVERRIDE_AVAILABLE' && 'Có thể vượt sĩ số'}
+                        {preview.recommendation.type === 'BLOCKED' && 'Lớp đã đầy'}
+                      </p>
+                      <p className={cn(
+                        "text-xs mt-1",
+                        preview.recommendation.type === 'OK' && "text-emerald-700",
+                        preview.recommendation.type === 'PARTIAL_SUGGESTED' && "text-sky-700",
+                        preview.recommendation.type === 'OVERRIDE_AVAILABLE' && "text-amber-700",
+                        preview.recommendation.type === 'BLOCKED' && "text-rose-700"
+                      )}>
+                        {preview.recommendation.message}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Content Area */}
@@ -383,74 +455,116 @@ export function EnrollmentImportDialog({
                 <div className="max-w-5xl mx-auto space-y-6">
 
                   {/* Strategy Selection */}
-                  <Card>
+                  <Card className="py-0">
                     <CardContent className="p-6">
                       <h4 className="font-medium mb-4 flex items-center gap-2">
-                        <Info className="h-4 w-4 text-primary" />
+                        <Settings className="h-4 w-4 text-primary" />
                         Tùy chọn đăng ký
                       </h4>
-                      <RadioGroup value={strategy} onValueChange={(v) => setStrategy(v as EnrollmentStrategy)} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      
+                      {/* Main strategy: ALL or PARTIAL */}
+                      <RadioGroup 
+                        value={baseStrategy} 
+                        onValueChange={(v) => setBaseStrategy(v as 'ALL' | 'PARTIAL')} 
+                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                      >
                         <Label
                           htmlFor="strategy-all"
                           className={cn(
                             "flex flex-col p-4 border rounded-lg cursor-pointer transition-all hover:bg-muted/50",
-                            strategy === 'ALL' && "border-primary bg-primary/5 ring-1 ring-primary"
+                            baseStrategy === 'ALL' && "border-primary bg-primary/5 ring-1 ring-primary"
                           )}
                         >
                           <RadioGroupItem value="ALL" id="strategy-all" className="sr-only" />
-                          <span className="font-medium mb-1">Tất cả hợp lệ</span>
-                          <span className="text-xs text-muted-foreground">Đăng ký toàn bộ {preview.totalValid} sinh viên hợp lệ vào lớp.</span>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Users className="h-4 w-4 text-primary" />
+                            <span className="font-medium">Đăng ký tất cả</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            Đăng ký toàn bộ {validStudentsList.length} sinh viên hợp lệ vào lớp.
+                          </span>
                         </Label>
 
                         <Label
                           htmlFor="strategy-partial"
                           className={cn(
                             "flex flex-col p-4 border rounded-lg cursor-pointer transition-all hover:bg-muted/50",
-                            strategy === 'PARTIAL' && "border-primary bg-primary/5 ring-1 ring-primary"
+                            baseStrategy === 'PARTIAL' && "border-primary bg-primary/5 ring-1 ring-primary"
                           )}
                         >
                           <RadioGroupItem value="PARTIAL" id="strategy-partial" className="sr-only" />
-                          <span className="font-medium mb-1">Chọn thủ công</span>
-                          <span className="text-xs text-muted-foreground">Chỉ đăng ký những sinh viên được chọn từ danh sách.</span>
-                        </Label>
-
-                        <Label
-                          htmlFor="strategy-override"
-                          className={cn(
-                            "flex flex-col p-4 border rounded-lg cursor-pointer transition-all hover:bg-muted/50",
-                            strategy === 'OVERRIDE' && "border-primary bg-primary/5 ring-1 ring-primary"
-                          )}
-                        >
-                          <RadioGroupItem value="OVERRIDE" id="strategy-override" className="sr-only" />
-                          <span className="font-medium mb-1">Ghi đè sức chứa</span>
-                          <span className="text-xs text-muted-foreground">Cho phép đăng ký vượt quá sĩ số tối đa của lớp.</span>
+                          <div className="flex items-center gap-2 mb-1">
+                            <UserCheck className="h-4 w-4 text-primary" />
+                            <span className="font-medium">Chọn sinh viên</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            Chỉ đăng ký những sinh viên bạn tick chọn từ danh sách bên dưới.
+                          </span>
                         </Label>
                       </RadioGroup>
 
-                      {strategy === 'OVERRIDE' && (
+                      {/* Override capacity checkbox - shows when capacity will be exceeded */}
+                      {willExceedCapacity && (
                         <div className="mt-4 pt-4 border-t animate-in slide-in-from-top-2">
-                          <Label className="text-sm font-medium mb-2 block">Lý do ghi đè (Bắt buộc)</Label>
-                          <Textarea
-                            value={overrideReason}
-                            onChange={(e) => setOverrideReason(e.target.value)}
-                            placeholder="Nhập lý do tại sao cần đăng ký vượt quá sức chứa..."
-                            className="resize-none"
-                          />
-                          <p className="text-xs text-muted-foreground mt-1 text-right">
-                            {overrideReason.length} / 20 ký tự
-                          </p>
+                          <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                            <Checkbox
+                              id="override-capacity"
+                              checked={overrideCapacity}
+                              onCheckedChange={(checked) => setOverrideCapacity(checked === true)}
+                              className="mt-0.5"
+                            />
+                            <div className="flex-1">
+                              <Label htmlFor="override-capacity" className="text-sm font-medium text-amber-800 cursor-pointer">
+                                Cho phép vượt sĩ số tối đa
+                              </Label>
+                              <p className="text-xs text-amber-700 mt-1">
+                                Đăng ký sẽ vượt quá sức chứa lớp ({preview.currentEnrolled + studentsToEnrollCount}/{preview.maxCapacity}).
+                                Tick vào đây nếu bạn xác nhận muốn tiếp tục.
+                              </p>
+                              
+                              {overrideCapacity && (
+                                <div className="mt-3">
+                                  <Label className="text-xs font-medium text-amber-800">Lý do vượt sĩ số (Bắt buộc)</Label>
+                                  <Textarea
+                                    value={overrideReason}
+                                    onChange={(e) => setOverrideReason(e.target.value)}
+                                    placeholder="Nhập lý do tại sao cần đăng ký vượt quá sức chứa..."
+                                    className="mt-1.5 resize-none text-sm"
+                                    rows={2}
+                                  />
+                                  <p className="text-xs text-amber-600 mt-1 text-right">
+                                    {overrideReason.length}/20 ký tự tối thiểu
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       )}
+
+                      {/* Summary of what will happen */}
+                      <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                        <p className="text-sm text-muted-foreground">
+                          <span className="font-medium text-foreground">Kết quả:</span>{' '}
+                          {baseStrategy === 'ALL' 
+                            ? `Sẽ đăng ký ${validStudentsList.length} sinh viên`
+                            : selectedStudents.size > 0 
+                              ? `Sẽ đăng ký ${selectedStudents.size} sinh viên đã chọn`
+                              : 'Chưa chọn sinh viên nào'
+                          }
+                          {overrideCapacity && ' (vượt sĩ số)'}
+                        </p>
+                      </div>
                     </CardContent>
                   </Card>
 
-                  {/* Student List */}
+                  {/* Student List - Single table with all students */}
                   <Card className="overflow-hidden border-none shadow-none bg-transparent">
                     <div className="rounded-md border bg-background">
                       <Table>
                         <TableHeader>
                           <TableRow className="bg-muted/30">
-                            {activeTab === 'valid' && strategy === 'PARTIAL' && (
+                            {baseStrategy === 'PARTIAL' && (
                               <TableHead className="w-[50px] pl-4">
                                 <Checkbox
                                   checked={isAllSelected}
@@ -465,52 +579,96 @@ export function EnrollmentImportDialog({
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {(activeTab === 'valid' ? validStudentsList : errorStudentsList).map((student, idx) => (
-                            <TableRow key={idx} className="hover:bg-muted/30">
-                              {activeTab === 'valid' && strategy === 'PARTIAL' && (
-                                <TableCell className="pl-4">
-                                  <Checkbox
-                                    checked={(() => {
-                                      const id = student.status === 'FOUND' ? student.resolvedStudentId : -preview.students.indexOf(student) - 1
-                                      return selectedStudents.has(id!)
-                                    })()}
-                                    onCheckedChange={() => toggleStudentSelection(student, preview.students.indexOf(student))}
-                                  />
-                                </TableCell>
-                              )}
-                              <TableCell>
-                                <div className="flex items-center gap-3">
-                                  <Avatar className="h-9 w-9 border">
-                                    <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                                      {getInitials(student.fullName)}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div className="flex flex-col">
-                                    <span className="font-medium text-sm">{student.fullName}</span>
-                                    <span className="text-xs text-muted-foreground">{student.dob} • {student.gender}</span>
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                {student.status === 'FOUND' && <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">Đã có hồ sơ</Badge>}
-                                {student.status === 'CREATE' && <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200">Tạo mới</Badge>}
-                                {student.status === 'DUPLICATE' && <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Trùng lặp</Badge>}
-                                {student.status === 'ERROR' && <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200">Lỗi dữ liệu</Badge>}
-                                {student.errorMessage && <p className="text-xs text-rose-600 mt-1 max-w-[200px]">{student.errorMessage}</p>}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex flex-col text-sm">
-                                  <span>{student.email}</span>
-                                  <span className="text-muted-foreground text-xs">{student.phone}</span>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="text-sm text-muted-foreground max-w-[200px] truncate">
-                                  {student.address || '-'}
-                                </div>
+                          {allStudentsSorted.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={baseStrategy === 'PARTIAL' ? 5 : 4} className="h-24 text-center text-muted-foreground">
+                                Không có sinh viên nào
                               </TableCell>
                             </TableRow>
-                          ))}
+                          ) : (
+                            allStudentsSorted.map((student) => {
+                              const realIdx = preview.students.indexOf(student)
+                              const isValid = isStudentValid(student)
+                              const studentId = student.status === 'FOUND' ? student.resolvedStudentId : -realIdx - 1
+                              const isSelected = selectedStudents.has(studentId!)
+                              
+                              return (
+                                <TableRow 
+                                  key={realIdx} 
+                                  className={cn(
+                                    "transition-colors",
+                                    isValid ? "hover:bg-muted/30" : "opacity-50 bg-muted/20"
+                                  )}
+                                >
+                                  {baseStrategy === 'PARTIAL' && (
+                                    <TableCell className="pl-4">
+                                      <Checkbox
+                                        checked={isSelected}
+                                        onCheckedChange={() => toggleStudentSelection(student, realIdx)}
+                                        disabled={!isValid}
+                                      />
+                                    </TableCell>
+                                  )}
+                                  <TableCell>
+                                    <div className="flex items-center gap-3">
+                                      <Avatar className={cn("h-9 w-9 border", !isValid && "grayscale")}>
+                                        <AvatarFallback className={cn(
+                                          "text-xs",
+                                          isValid ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                                        )}>
+                                          {getInitials(student.fullName)}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <div className="flex flex-col">
+                                        <span className={cn("font-medium text-sm", !isValid && "text-muted-foreground")}>
+                                          {student.fullName}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">{student.dob} • {student.gender}</span>
+                                      </div>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="space-y-1">
+                                      {student.status === 'FOUND' && (
+                                        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                                          Đã có hồ sơ
+                                        </Badge>
+                                      )}
+                                      {student.status === 'CREATE' && (
+                                        <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200">
+                                          Tạo mới
+                                        </Badge>
+                                      )}
+                                      {student.status === 'DUPLICATE' && (
+                                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                                          Đã đăng ký lớp này
+                                        </Badge>
+                                      )}
+                                      {student.status === 'ERROR' && (
+                                        <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200">
+                                          Lỗi dữ liệu
+                                        </Badge>
+                                      )}
+                                      {student.errorMessage && (
+                                        <p className="text-xs text-rose-600 max-w-[200px]">{student.errorMessage}</p>
+                                      )}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className={cn("flex flex-col text-sm", !isValid && "text-muted-foreground")}>
+                                      <span>{student.email}</span>
+                                      <span className="text-muted-foreground text-xs">{student.phone}</span>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className={cn("text-sm max-w-[200px] truncate", !isValid ? "text-muted-foreground/50" : "text-muted-foreground")}>
+                                      {student.address || '-'}
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              )
+                            })
+                          )}
                         </TableBody>
                       </Table>
                     </div>
@@ -526,7 +684,16 @@ export function EnrollmentImportDialog({
             {preview && (
               <span className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                Sức chứa lớp: <span className="font-medium text-foreground">{preview.currentEnrolled}/{preview.maxCapacity}</span>
+                Sức chứa lớp: 
+                <span className={cn(
+                  "font-medium",
+                  willExceedCapacity ? "text-amber-600" : "text-foreground"
+                )}>
+                  {preview.currentEnrolled + studentsToEnrollCount}/{preview.maxCapacity}
+                </span>
+                {willExceedCapacity && !overrideCapacity && (
+                  <span className="text-amber-600 text-xs">(vượt sĩ số)</span>
+                )}
               </span>
             )}
           </div>
@@ -537,7 +704,7 @@ export function EnrollmentImportDialog({
             {preview && (
               <Button
                 onClick={handleExecute}
-                disabled={isExecuting || (strategy === 'PARTIAL' && selectedStudents.size === 0)}
+                disabled={isExecuting || !canProceed}
                 className="min-w-[140px]"
               >
                 {isExecuting ? (
