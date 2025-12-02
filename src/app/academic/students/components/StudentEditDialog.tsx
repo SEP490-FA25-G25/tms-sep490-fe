@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -45,7 +45,6 @@ import {
   type UpdateStudentRequest,
   type SkillAssessmentUpdateInput,
   type SkillAssessmentDetailDTO,
-  type AssessorDTO,
 } from '@/store/services/studentApi'
 import { useGetLevelsQuery } from '@/store/services/curriculumApi'
 import { useUploadFileMutation } from '@/store/services/uploadApi'
@@ -147,7 +146,7 @@ export function StudentEditDialog({
     { skip: !student?.branchId || !open }
   )
 
-  const levels = levelsResponse?.data || []
+  const levels = useMemo(() => levelsResponse?.data || [], [levelsResponse?.data])
   const assessors = assessorsResponse?.data || []
 
   // Reset form when student changes
