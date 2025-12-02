@@ -27,7 +27,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCreateLevelMutation, useGetSubjectsWithLevelsQuery, useUpdateLevelMutation } from "@/store/services/curriculumApi";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Save } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -59,6 +69,7 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
     const [createLevel, { isLoading: isCreating }] = useCreateLevelMutation();
     const [updateLevel, { isLoading: isUpdating }] = useUpdateLevelMutation();
     const isLoading = isCreating || isUpdating;
+    const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
     const form = useForm<LevelFormValues>({
         resolver: zodResolver(formSchema),
@@ -90,6 +101,20 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
         }
     }, [level, open, subjectId, form]);
 
+    const handleOpenChangeWrapper = (newOpen: boolean) => {
+        if (!newOpen && form.formState.isDirty) {
+            setShowCloseConfirm(true);
+        } else {
+            onOpenChange(newOpen);
+        }
+    };
+
+    const handleConfirmClose = () => {
+        setShowCloseConfirm(false);
+        form.reset(); // Reset form state including isDirty
+        onOpenChange(false);
+    };
+
     const onSubmit = async (values: LevelFormValues) => {
         try {
             if (level) {
@@ -107,8 +132,8 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl">
+        <Dialog open={open} onOpenChange={handleOpenChangeWrapper}>
+            <DialogContent className="sm:max-w-4xl">
                 <DialogHeader>
                     <DialogTitle>{level ? "Chỉnh sửa Cấp độ" : "Tạo Cấp độ Mới"}</DialogTitle>
                     <DialogDescription>
@@ -199,7 +224,7 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
                             />
 
                             <DialogFooter>
-                                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                                <Button type="button" variant="outline" onClick={() => handleOpenChangeWrapper(false)}>
                                     Hủy
                                 </Button>
                                 <Button type="submit" disabled={isLoading}>
@@ -220,6 +245,20 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
                     </Form>
                 )}
             </DialogContent>
+            <AlertDialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Xác nhận hủy</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Bạn có thay đổi chưa được lưu. Bạn có chắc chắn muốn hủy không?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Tiếp tục chỉnh sửa</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmClose}>Hủy thay đổi</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Dialog>
     );
 }

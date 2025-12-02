@@ -1,3 +1,13 @@
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -21,7 +31,7 @@ import { useCreateResourceMutation, useUpdateResourceMutation } from "@/store/se
 import type { Resource, ResourceType } from "@/store/services/resourceApi";
 import { Loader2 } from "lucide-react";
 import { addMonths, format } from "date-fns";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 interface ResourceDialogProps {
@@ -36,6 +46,7 @@ export function ResourceDialog({ open, onOpenChange, resource, branchId, branche
     const [createResource, { isLoading: isCreating }] = useCreateResourceMutation();
     const [updateResource, { isLoading: isUpdating }] = useUpdateResourceMutation();
     const isLoading = isCreating || isUpdating;
+    const [showConfirmClose, setShowConfirmClose] = useState(false);
 
     const [formData, setFormData] = useState({
         code: "",
@@ -101,6 +112,57 @@ export function ResourceDialog({ open, onOpenChange, resource, branchId, branche
         }
     }, [resource, open, branchId]);
 
+    // Check if form has been modified from initial state
+    const initialFormData = useMemo(() => ({
+        code: resource?.code || "",
+        name: resource?.name || "",
+        branchId: resource?.branchId?.toString() || (branchId > 0 ? branchId.toString() : ""),
+        resourceType: resource?.resourceType || "ROOM",
+        description: resource?.description || "",
+        capacity: resource?.capacity?.toString() || "",
+        equipment: resource?.equipment || "",
+        meetingUrl: resource?.meetingUrl || "",
+        meetingId: resource?.meetingId || "",
+        meetingPasscode: resource?.meetingPasscode || "",
+        accountEmail: resource?.accountEmail || "",
+        accountPassword: resource?.accountPassword || "",
+        licenseType: resource?.licenseType || "BASIC",
+        startDate: format(new Date(), "yyyy-MM-dd"),
+        licenseDuration: "",
+        expiryDate: resource?.expiryDate || "",
+    }), [resource, branchId]);
+
+    const hasChanges = useMemo(() => {
+        return (
+            formData.code !== initialFormData.code ||
+            formData.name !== initialFormData.name ||
+            formData.resourceType !== initialFormData.resourceType ||
+            formData.description !== initialFormData.description ||
+            formData.capacity !== initialFormData.capacity ||
+            formData.equipment !== initialFormData.equipment ||
+            formData.meetingUrl !== initialFormData.meetingUrl ||
+            formData.meetingId !== initialFormData.meetingId ||
+            formData.meetingPasscode !== initialFormData.meetingPasscode ||
+            formData.accountEmail !== initialFormData.accountEmail ||
+            formData.accountPassword !== initialFormData.accountPassword ||
+            formData.licenseType !== initialFormData.licenseType ||
+            formData.expiryDate !== initialFormData.expiryDate
+        );
+    }, [formData, initialFormData]);
+
+    const handleOpenChange = useCallback((newOpen: boolean) => {
+        if (!newOpen && hasChanges) {
+            setShowConfirmClose(true);
+        } else {
+            onOpenChange(newOpen);
+        }
+    }, [hasChanges, onOpenChange]);
+
+    const handleConfirmClose = useCallback(() => {
+        setShowConfirmClose(false);
+        onOpenChange(false);
+    }, [onOpenChange]);
+
     const handleChange = (field: string, value: string | number | boolean | null) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
@@ -145,6 +207,10 @@ export function ResourceDialog({ open, onOpenChange, resource, branchId, branche
             toast.error("Vui lòng nhập tên tài nguyên");
             return;
         }
+        if (formData.description.trim() && formData.description.trim().length < 10) {
+            toast.error("Mô tả phải có ít nhất 10 ký tự hoặc để trống");
+            return;
+        }
         if (branchId === 0 && !formData.branchId) {
             toast.error("Vui lòng chọn chi nhánh");
             return;
@@ -187,7 +253,8 @@ export function ResourceDialog({ open, onOpenChange, resource, branchId, branche
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{resource ? "Chỉnh sửa Tài nguyên" : "Thêm Tài nguyên Mới"}</DialogTitle>
@@ -266,6 +333,7 @@ export function ResourceDialog({ open, onOpenChange, resource, branchId, branche
                             onChange={(e) => handleChange("description", e.target.value)}
                             placeholder="Mô tả thêm về tài nguyên..."
                         />
+                        <p className="text-xs text-muted-foreground">Để trống hoặc nhập ít nhất 10 ký tự</p>
                     </div>
 
                     {formData.resourceType === "ROOM" && (
@@ -275,10 +343,13 @@ export function ResourceDialog({ open, onOpenChange, resource, branchId, branche
                                 <Input
                                     id="capacity"
                                     type="number"
+                                    min={1}
+                                    max={40}
                                     value={formData.capacity}
                                     onChange={(e) => handleChange("capacity", e.target.value)}
                                     placeholder="VD: 30"
                                 />
+                                <p className="text-xs text-muted-foreground">Tối đa 40 người</p>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="equipment">Trang thiết bị</Label>
@@ -300,19 +371,24 @@ export function ResourceDialog({ open, onOpenChange, resource, branchId, branche
                                 <Input
                                     id="capacity"
                                     type="number"
+                                    min={1}
+                                    max={100}
                                     value={formData.capacity}
                                     onChange={(e) => handleChange("capacity", e.target.value)}
                                     placeholder="VD: 100"
                                 />
+                                <p className="text-xs text-muted-foreground">Tối đa 100 người</p>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="meetingUrl">Meeting URL</Label>
                                 <Input
                                     id="meetingUrl"
+                                    type="url"
                                     value={formData.meetingUrl}
                                     onChange={(e) => handleChange("meetingUrl", e.target.value)}
                                     placeholder="https://zoom.us/j/..."
                                 />
+                                <p className="text-xs text-muted-foreground">Phải bắt đầu bằng http:// hoặc https://</p>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
@@ -337,8 +413,10 @@ export function ResourceDialog({ open, onOpenChange, resource, branchId, branche
                                     <Label htmlFor="accountEmail">Account Email</Label>
                                     <Input
                                         id="accountEmail"
+                                        type="email"
                                         value={formData.accountEmail}
                                         onChange={(e) => handleChange("accountEmail", e.target.value)}
+                                        placeholder="example@domain.com"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -403,7 +481,7 @@ export function ResourceDialog({ open, onOpenChange, resource, branchId, branche
                     )}
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
                             Hủy
                         </Button>
                         <Button type="submit" disabled={isLoading}>
@@ -413,6 +491,24 @@ export function ResourceDialog({ open, onOpenChange, resource, branchId, branche
                     </DialogFooter>
                 </form>
             </DialogContent>
-        </Dialog >
+        </Dialog>
+
+        <AlertDialog open={showConfirmClose} onOpenChange={setShowConfirmClose}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Xác nhận hủy</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Bạn có thay đổi chưa được lưu. Bạn có chắc chắn muốn hủy không?
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Tiếp tục chỉnh sửa</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleConfirmClose}>
+                        Hủy thay đổi
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        </>
     );
 }

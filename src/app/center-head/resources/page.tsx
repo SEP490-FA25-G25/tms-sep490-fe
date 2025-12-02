@@ -31,10 +31,11 @@ import {
     type SortingState,
     useReactTable,
 } from "@tanstack/react-table";
-import { Search, PlusCircleIcon, Building2, MonitorPlay, XIcon, ArrowUpDown } from "lucide-react";
+import { Search, PlusCircleIcon, Building2, MonitorPlay, XIcon, ArrowUpDown, Power, PowerOff } from "lucide-react";
 import {
     useGetResourcesQuery,
     useDeleteResourceMutation,
+    useUpdateResourceStatusMutation,
     type Resource,
     type ResourceType,
 } from "@/store/services/resourceApi";
@@ -69,11 +70,17 @@ const RESOURCE_TYPE_OPTIONS: { label: string; value: ResourceType | "ALL" }[] = 
     { label: "Tài khoản Zoom", value: "VIRTUAL" },
 ];
 
+const STATUS_OPTIONS: { label: string; value: "ALL" | "ACTIVE" | "INACTIVE" }[] = [
+    { label: "Tất cả trạng thái", value: "ALL" },
+    { label: "Hoạt động", value: "ACTIVE" },
+    { label: "Ngưng hoạt động", value: "INACTIVE" },
+];
+
 export default function CenterHeadResourcesPage() {
     const navigate = useNavigate();
     const [search, setSearch] = useState("");
-    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [resourceTypeFilter, setResourceTypeFilter] = useState<ResourceType | "ALL">("ALL");
+    const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
     const { user } = useAuth();
 
     // Initialize branch filter from user's branch if available
@@ -95,9 +102,11 @@ export default function CenterHeadResourcesPage() {
     const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
     const [resourceDialogOpen, setResourceDialogOpen] = useState(false);
     const [resourceToDelete, setResourceToDelete] = useState<number | null>(null);
+    const [resourceToToggleStatus, setResourceToToggleStatus] = useState<Resource | null>(null);
 
     // Mutations
     const [deleteResource, { isLoading: isDeletingResource }] = useDeleteResourceMutation();
+    const [updateResourceStatus, { isLoading: isUpdatingStatus }] = useUpdateResourceStatusMutation();
 
     const handleAddResource = () => {
         setSelectedResource(null);
@@ -126,13 +135,22 @@ export default function CenterHeadResourcesPage() {
         }
     };
 
-    // Debounce search
-    useEffect(() => {
-        const id = setTimeout(() => {
-            setDebouncedSearch(search.trim());
-        }, 400);
-        return () => clearTimeout(id);
-    }, [search]);
+    const confirmToggleResourceStatus = async () => {
+        if (resourceToToggleStatus) {
+            const newStatus = resourceToToggleStatus.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+            try {
+                await updateResourceStatus({ id: resourceToToggleStatus.id, status: newStatus }).unwrap();
+                toast.success(newStatus === "ACTIVE" ? "Đã kích hoạt tài nguyên" : "Đã ngưng hoạt động tài nguyên");
+                setResourceToToggleStatus(null);
+            } catch (error: unknown) {
+                console.error("Failed to update resource status:", error);
+                const apiError = error as { data?: { message?: string }; message?: string };
+                const errorMessage =
+                    apiError.data?.message || apiError.message || "Cập nhật trạng thái thất bại. Vui lòng thử lại.";
+                toast.error(errorMessage);
+            }
+        }
+    };
 
     // Fetch branches
     const { data: branches } = useGetAllBranchesQuery();
@@ -144,16 +162,38 @@ export default function CenterHeadResourcesPage() {
         }
     }, [branches, branchFilter]);
 
-    // Fetch resources
+    // Fetch resources (không filter search qua API, lọc local để tránh giật)
     const { data: resources, isFetching: isFetchingResources } = useGetResourcesQuery(
         {
-            search: debouncedSearch || undefined,
-            resourceType: resourceTypeFilter === "ALL" ? undefined : resourceTypeFilter,
             branchId: branchFilter === "ALL" ? undefined : branchFilter,
         }
     );
 
-    const filteredResources = useMemo(() => resources ?? [], [resources]);
+    // Lọc local để tránh giật khi search
+    const filteredResources = useMemo(() => {
+        let result = resources ?? [];
+        
+        // Filter by search
+        if (search.trim()) {
+            const searchLower = search.toLowerCase().trim();
+            result = result.filter(r => 
+                r.name.toLowerCase().includes(searchLower) ||
+                r.code.toLowerCase().includes(searchLower)
+            );
+        }
+        
+        // Filter by resource type
+        if (resourceTypeFilter !== "ALL") {
+            result = result.filter(r => r.resourceType === resourceTypeFilter);
+        }
+        
+        // Filter by status
+        if (statusFilter !== "ALL") {
+            result = result.filter(r => r.status === statusFilter);
+        }
+        
+        return result;
+    }, [resources, search, resourceTypeFilter, statusFilter]);
 
     // Calculate stats
     const stats = useMemo(() => {
@@ -166,13 +206,14 @@ export default function CenterHeadResourcesPage() {
     const handleClearFilters = () => {
         setSearch("");
         setResourceTypeFilter("ALL");
+        setStatusFilter("ALL");
         // Only clear branch filter if it's not locked by user's branchId
         if (!user?.branchId) {
             setBranchFilter("ALL");
         }
     };
 
-    const hasActiveFilters = search !== "" || resourceTypeFilter !== "ALL" || (branchFilter !== "ALL" && !user?.branchId);
+    const hasActiveFilters = search !== "" || resourceTypeFilter !== "ALL" || statusFilter !== "ALL" || (branchFilter !== "ALL" && !user?.branchId);
 
     const resourceTypeBadge = (type: ResourceType) => {
         return type === "ROOM" ? (
@@ -300,6 +341,16 @@ export default function CenterHeadResourcesPage() {
             header: "Hành động",
             cell: ({ row }) => {
                 const resource = row.original;
+                const isActive = resource.status === "ACTIVE";
+                const canDeactivate = !resource.hasFutureSessions;
+                // Can only delete if: INACTIVE + no sessions
+                const canDelete = !isActive && !resource.hasAnySessions;
+                
+                // Build reason for disabled delete
+                let deleteDisabledReason = "";
+                if (isActive) deleteDisabledReason = "cần ngưng HĐ";
+                else if (resource.hasAnySessions) deleteDisabledReason = "đang sử dụng";
+                
                 return (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -308,7 +359,7 @@ export default function CenterHeadResourcesPage() {
                                 <span className="sr-only">Mở menu hành động</span>
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48 p-1">
+                        <DropdownMenuContent align="end" className="w-56 p-1">
                             <DropdownMenuLabel>Hành động</DropdownMenuLabel>
                             <DropdownMenuItem onClick={() => navigate(`/center-head/resources/${resource.id}`)}>
                                 <Eye className="mr-2 h-4 w-4" />
@@ -320,12 +371,40 @@ export default function CenterHeadResourcesPage() {
                                 <Edit className="mr-2 h-4 w-4" />
                                 Chỉnh sửa
                             </DropdownMenuItem>
+                            {/* Toggle Status Button */}
+                            {isActive ? (
+                                <DropdownMenuItem
+                                    onClick={() => canDeactivate && setResourceToToggleStatus(resource)}
+                                    disabled={!canDeactivate}
+                                    className={canDeactivate 
+                                        ? "text-orange-600 hover:text-orange-600 hover:bg-orange-50" 
+                                        : "text-muted-foreground cursor-not-allowed opacity-50"
+                                    }
+                                >
+                                    <PowerOff className="mr-2 h-4 w-4" />
+                                    Ngưng hoạt động
+                                    {!canDeactivate && <span className="ml-auto text-xs">(có lịch)</span>}
+                                </DropdownMenuItem>
+                            ) : (
+                                <DropdownMenuItem
+                                    onClick={() => setResourceToToggleStatus(resource)}
+                                    className="text-emerald-600 hover:text-emerald-600 hover:bg-emerald-50"
+                                >
+                                    <Power className="mr-2 h-4 w-4" />
+                                    Kích hoạt lại
+                                </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
-                                onClick={() => setResourceToDelete(resource.id)}
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => canDelete && setResourceToDelete(resource.id)}
+                                disabled={!canDelete}
+                                className={canDelete 
+                                    ? "text-destructive hover:text-destructive hover:bg-destructive/10" 
+                                    : "text-muted-foreground cursor-not-allowed opacity-50"
+                                }
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Xóa
+                                {!canDelete && <span className="ml-auto text-xs">({deleteDisabledReason})</span>}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -398,7 +477,7 @@ export default function CenterHeadResourcesPage() {
 
                 {/* Filters */}
                 <div className="flex items-center gap-3 flex-wrap">
-                    <div className="relative flex-1 min-w-[200px]">
+                    <div className="relative w-[280px]">
                         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             placeholder="Tìm kiếm theo tên hoặc mã..."
@@ -414,11 +493,29 @@ export default function CenterHeadResourcesPage() {
                             setResourceTypeFilter(value as ResourceType | "ALL")
                         }
                     >
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-[160px]">
                             <SelectValue placeholder="Loại tài nguyên" />
                         </SelectTrigger>
                         <SelectContent>
                             {RESOURCE_TYPE_OPTIONS.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    <Select
+                        value={statusFilter}
+                        onValueChange={(value) =>
+                            setStatusFilter(value as "ALL" | "ACTIVE" | "INACTIVE")
+                        }
+                    >
+                        <SelectTrigger className="w-[170px]">
+                            <SelectValue placeholder="Trạng thái" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {STATUS_OPTIONS.map((option) => (
                                 <SelectItem key={option.value} value={option.value}>
                                     {option.label}
                                 </SelectItem>
@@ -540,6 +637,38 @@ export default function CenterHeadResourcesPage() {
                                 disabled={isDeletingResource}
                             >
                                 {isDeletingResource ? "Đang xóa..." : "Xóa"}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
+                {/* Toggle Status Confirmation Dialog */}
+                <AlertDialog open={!!resourceToToggleStatus} onOpenChange={(open) => !open && setResourceToToggleStatus(null)}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>
+                                {resourceToToggleStatus?.status === "ACTIVE" 
+                                    ? "Ngưng hoạt động tài nguyên?" 
+                                    : "Kích hoạt lại tài nguyên?"}
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                                {resourceToToggleStatus?.status === "ACTIVE" 
+                                    ? "Tài nguyên sẽ không thể được sử dụng cho các buổi học mới sau khi ngưng hoạt động."
+                                    : "Tài nguyên sẽ có thể được sử dụng cho các buổi học mới sau khi kích hoạt."}
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Hủy</AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={confirmToggleResourceStatus}
+                                className={resourceToToggleStatus?.status === "ACTIVE" 
+                                    ? "bg-orange-600 hover:bg-orange-700" 
+                                    : "bg-emerald-600 hover:bg-emerald-700"}
+                                disabled={isUpdatingStatus}
+                            >
+                                {isUpdatingStatus 
+                                    ? "Đang xử lý..." 
+                                    : (resourceToToggleStatus?.status === "ACTIVE" ? "Ngưng hoạt động" : "Kích hoạt")}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>

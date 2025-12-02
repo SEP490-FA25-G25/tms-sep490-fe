@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Eye, Trash2, Loader2, RotateCcw, ArrowUpDown, MoreVertical } from "lucide-react";
+import { Edit, Eye, Trash2, Loader2, RotateCcw, ArrowUpDown, MoreHorizontal } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useGetSubjectsWithLevelsQuery, useDeactivateSubjectMutation, useReactivateSubjectMutation, useDeleteSubjectMutation } from "@/store/services/curriculumApi";
 import type { SubjectWithLevelsDTO } from "@/store/services/curriculumApi";
@@ -162,7 +162,7 @@ export function SubjectList() {
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreVertical className="h-4 w-4" />
+                                <MoreHorizontal className="h-4 w-4" />
                                 <span className="sr-only">Mở menu hành động</span>
                             </Button>
                         </PopoverTrigger>
@@ -171,7 +171,7 @@ export function SubjectList() {
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="w-full justify-start gap-2 h-9 px-2"
+                                    className="w-full justify-start gap-2 h-9 px-2 bg-yellow-100 text-yellow-900 hover:bg-yellow-200"
                                     onClick={() => navigate(`/curriculum/subjects/${subject.id}`)}
                                 >
                                     <Eye className="h-4 w-4" />
@@ -212,7 +212,7 @@ export function SubjectList() {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="w-full justify-start gap-2 h-9 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            className="w-full justify-start gap-2 h-9 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
                                             onClick={() => setSubjectToDeletePermanently(subject.id)}
                                         >
                                             <Trash2 className="h-4 w-4" />

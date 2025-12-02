@@ -2,14 +2,14 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { ArrowLeft, Loader2, Edit, GripVertical, Ban, CheckCircle } from "lucide-react";
+import { ArrowLeft, Loader2, Edit, GripVertical, CheckCircle } from "lucide-react";
 import {
     useGetSubjectQuery,
     useUpdateLevelSortOrderMutation,
-    useDeactivateSubjectMutation,
     useReactivateSubjectMutation,
     type LevelDTO
 } from "@/store/services/curriculumApi";
+import { getStatusLabel, getStatusColor } from "@/utils/statusMapping";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -38,17 +38,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { toast } from "sonner";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+
 
 interface SortableRowProps {
     level: LevelDTO;
@@ -113,7 +103,6 @@ export default function SubjectDetailPage() {
         skip: !id || isNaN(Number(id))
     });
     const [updateSortOrder] = useUpdateLevelSortOrderMutation();
-    const [deactivateSubject, { isLoading: isDeactivating }] = useDeactivateSubjectMutation();
     const [reactivateSubject, { isLoading: isReactivating }] = useReactivateSubjectMutation();
 
     const [levels, setLevels] = useState<LevelDTO[]>([]);
@@ -156,16 +145,7 @@ export default function SubjectDetailPage() {
         }
     };
 
-    const handleDeactivate = async () => {
-        try {
-            await deactivateSubject(Number(id)).unwrap();
-            toast.success("Đã ngừng hoạt động môn học");
-            refetch();
-        } catch (error) {
-            console.error("Ngừng hoạt động môn học thất bại:", error);
-            toast.error("Ngừng hoạt động thất bại");
-        }
-    };
+
 
     const handleReactivate = async () => {
         try {
@@ -222,35 +202,7 @@ export default function SubjectDetailPage() {
                     <div className="flex gap-2">
                         {isSubjectLeader && (
                             <>
-                                {isActive ? (
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="destructive" disabled={isDeactivating}>
-                                                {isDeactivating ? (
-                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                ) : (
-                                                    <Ban className="mr-2 h-4 w-4" />
-                                                )}
-                                                Ngừng hoạt động
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Xác nhận ngừng hoạt động</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    Bạn có chắc chắn muốn ngừng hoạt động môn học này?
-                                                    Môn học sẽ không thể được sử dụng để tạo lớp học mới.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Hủy</AlertDialogCancel>
-                                                <AlertDialogAction onClick={handleDeactivate} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                                    Ngừng hoạt động
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                ) : (
+                                {!isActive && (
                                     <Button
                                         variant="outline"
                                         className="text-green-600 border-green-600 hover:bg-green-50"
@@ -292,8 +244,8 @@ export default function SubjectDetailPage() {
                             <div>
                                 <span className="text-sm font-medium text-muted-foreground">Trạng thái</span>
                                 <div className="mt-1">
-                                    <Badge variant={isActive ? 'default' : 'secondary'}>
-                                        {isActive ? 'Đang hoạt động' : 'Ngừng hoạt động'}
+                                    <Badge variant={getStatusColor(subject.status)}>
+                                        {getStatusLabel(subject.status)}
                                     </Badge>
                                 </div>
                             </div>
@@ -387,6 +339,6 @@ export default function SubjectDetailPage() {
                     </div>
                 </div>
             </div>
-        </DashboardLayout>
+        </DashboardLayout >
     );
 }

@@ -58,6 +58,8 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
     });
 
     const [pendingRemoveIndex, setPendingRemoveIndex] = useState<number | null>(null);
+    const [isDirty, setIsDirty] = useState(false);
+    const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
     useEffect(() => {
         if (subject) {
@@ -75,11 +77,27 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
                 plos: [],
             });
         }
+        setIsDirty(false);
     }, [subject, open]);
+
+    const handleOpenChangeWrapper = (newOpen: boolean) => {
+        if (!newOpen && isDirty) {
+            setShowCloseConfirm(true);
+        } else {
+            onOpenChange(newOpen);
+        }
+    };
+
+    const handleConfirmClose = () => {
+        setShowCloseConfirm(false);
+        setIsDirty(false);
+        onOpenChange(false);
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { id, value } = e.target;
         setFormData((prev) => ({ ...prev, [id]: value }));
+        setIsDirty(true);
     };
 
     const getNextPloCode = (plos: { code: string; description: string }[]) => {
@@ -97,6 +115,7 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
             ...prev,
             plos: [...prev.plos, { code: getNextPloCode(prev.plos), description: "" }],
         }));
+        setIsDirty(true);
     };
 
     const updatePLO = (index: number, field: "code" | "description", value: string) => {
@@ -106,6 +125,7 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
                 i === index ? { ...plo, [field]: value } : plo
             ),
         }));
+        setIsDirty(true);
     };
 
     const handleConfirmRemove = () => {
@@ -115,6 +135,7 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
             plos: prev.plos.filter((_, i) => i !== pendingRemoveIndex),
         }));
         setPendingRemoveIndex(null);
+        setIsDirty(true);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -135,8 +156,8 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <Dialog open={open} onOpenChange={handleOpenChangeWrapper}>
+            <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{subject ? "Chỉnh sửa Môn học" : "Tạo Môn học Mới"}</DialogTitle>
                     <DialogDescription>
@@ -241,7 +262,7 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
                     </div>
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        <Button type="button" variant="outline" onClick={() => handleOpenChangeWrapper(false)}>
                             Hủy
                         </Button>
                         <Button type="submit" disabled={isLoading}>
@@ -263,6 +284,20 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
                     <AlertDialogFooter>
                         <AlertDialogCancel>Hủy</AlertDialogCancel>
                         <AlertDialogAction onClick={handleConfirmRemove}>Xóa</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <AlertDialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Xác nhận hủy</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Bạn có thay đổi chưa được lưu. Bạn có chắc chắn muốn hủy không?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Tiếp tục chỉnh sửa</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmClose}>Hủy thay đổi</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

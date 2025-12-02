@@ -9,7 +9,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Edit, Trash2, Loader2, Eye, RotateCcw, MoreVertical } from "lucide-react";
+import { Edit, Trash2, Loader2, Eye, RotateCcw, MoreHorizontal } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import { useGetSubjectsWithLevelsQuery, useGetLevelsQuery, useDeactivateLevelMutation, useReactivateLevelMutation, useDeleteLevelMutation, type LevelDTO } from "@/store/services/curriculumApi";
@@ -196,7 +196,7 @@ export function LevelList() {
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreVertical className="h-4 w-4" />
+                                <MoreHorizontal className="h-4 w-4" />
                                 <span className="sr-only">Mở menu hành động</span>
                             </Button>
                         </PopoverTrigger>
@@ -205,7 +205,7 @@ export function LevelList() {
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="w-full justify-start gap-2 h-9 px-2"
+                                    className="w-full justify-start gap-2 h-9 px-2 bg-yellow-100 text-yellow-900 hover:bg-yellow-200"
                                     onClick={() => navigate(`/curriculum/levels/${level.id}`)}
                                 >
                                     <Eye className="h-4 w-4" />
@@ -246,7 +246,7 @@ export function LevelList() {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="w-full justify-start gap-2 h-9 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            className="w-full justify-start gap-2 h-9 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
                                             onClick={() => setLevelToDeletePermanently(level.id)}
                                         >
                                             <Trash2 className="h-4 w-4" />

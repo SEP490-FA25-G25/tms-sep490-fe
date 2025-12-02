@@ -1,26 +1,16 @@
 import { useNavigate, useParams } from "react-router-dom";
 import {
     useGetLevelQuery,
-    useDeactivateLevelMutation,
     useReactivateLevelMutation
 } from "@/store/services/curriculumApi";
+import { getStatusLabel, getStatusColor } from "@/utils/statusMapping";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, Loader2, Ban, CheckCircle } from "lucide-react";
+import { ArrowLeft, Edit, Loader2, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+
 
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -32,7 +22,6 @@ export default function LevelDetailPage() {
     const { data: levelData, isLoading, refetch } = useGetLevelQuery(Number(id), {
         skip: !id || isNaN(Number(id))
     });
-    const [deactivateLevel, { isLoading: isDeactivating }] = useDeactivateLevelMutation();
     const [reactivateLevel, { isLoading: isReactivating }] = useReactivateLevelMutation();
 
     if (isLoading) {
@@ -59,16 +48,7 @@ export default function LevelDetailPage() {
         );
     }
 
-    const handleDeactivate = async () => {
-        try {
-            await deactivateLevel(Number(id)).unwrap();
-            toast.success("Đã ngừng hoạt động cấp độ");
-            refetch();
-        } catch (error) {
-            console.error("Failed to deactivate level:", error);
-            toast.error("Ngừng hoạt động thất bại");
-        }
-    };
+
 
     const handleReactivate = async () => {
         try {
@@ -98,35 +78,7 @@ export default function LevelDetailPage() {
                     <div className="flex gap-2">
                         {isSubjectLeader && (
                             <>
-                                {isActive ? (
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="destructive" disabled={isDeactivating}>
-                                                {isDeactivating ? (
-                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                ) : (
-                                                    <Ban className="mr-2 h-4 w-4" />
-                                                )}
-                                                Ngừng hoạt động
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Xác nhận ngừng hoạt động</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    Bạn có chắc chắn muốn ngừng hoạt động cấp độ này?
-                                                    Cấp độ sẽ không thể được sử dụng trong các khóa học mới.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Hủy</AlertDialogCancel>
-                                                <AlertDialogAction onClick={handleDeactivate} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                                    Ngừng hoạt động
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                ) : (
+                                {!isActive && (
                                     <Button
                                         variant="outline"
                                         className="text-green-600 border-green-600 hover:bg-green-50"
@@ -170,8 +122,8 @@ export default function LevelDetailPage() {
                             </div>
                             <div>
                                 <h3 className="font-medium text-sm text-muted-foreground">Trạng thái</h3>
-                                <Badge variant={isActive ? "default" : "secondary"}>
-                                    {level.status === "ACTIVE" ? "Đang hoạt động" : "Ngừng hoạt động"}
+                                <Badge variant={getStatusColor(level.status)}>
+                                    {getStatusLabel(level.status)}
                                 </Badge>
                             </div>
                         </CardContent>

@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -23,10 +24,11 @@ import {
     type SortingState,
     useReactTable,
 } from "@tanstack/react-table";
-import { Search, PlusCircleIcon, Clock, XIcon, ArrowUpDown } from "lucide-react";
+import { Search, PlusCircleIcon, Clock, XIcon, ArrowUpDown, Power, PowerOff } from "lucide-react";
 import {
     useGetTimeSlotsQuery,
     useDeleteTimeSlotMutation,
+    useUpdateTimeSlotStatusMutation,
     type TimeSlot,
 } from "@/store/services/resourceApi";
 import { TimeSlotDialog } from "../resources/components/TimeSlotDialog";
@@ -53,10 +55,16 @@ import { useGetAllBranchesQuery } from "@/store/services/branchApi";
 import { useAuth } from "@/hooks/useAuth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+const STATUS_OPTIONS: { label: string; value: "ALL" | "ACTIVE" | "INACTIVE" }[] = [
+    { label: "Tất cả trạng thái", value: "ALL" },
+    { label: "Hoạt động", value: "ACTIVE" },
+    { label: "Ngưng hoạt động", value: "INACTIVE" },
+];
+
 export default function CenterHeadTimeSlotsPage() {
     const navigate = useNavigate();
     const [search, setSearch] = useState("");
-    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
     const { user } = useAuth();
 
     // Initialize branch filter from user's branch if available
@@ -78,9 +86,11 @@ export default function CenterHeadTimeSlotsPage() {
     const [timeSlotDialogOpen, setTimeSlotDialogOpen] = useState(false);
     const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null);
     const [timeSlotToDelete, setTimeSlotToDelete] = useState<number | null>(null);
+    const [timeSlotToToggleStatus, setTimeSlotToToggleStatus] = useState<TimeSlot | null>(null);
 
     // Mutations
     const [deleteTimeSlot, { isLoading: isDeletingTimeSlot }] = useDeleteTimeSlotMutation();
+    const [updateTimeSlotStatus, { isLoading: isUpdatingStatus }] = useUpdateTimeSlotStatusMutation();
 
     const handleAddTimeSlot = () => {
         setSelectedTimeSlot(null);
@@ -108,13 +118,22 @@ export default function CenterHeadTimeSlotsPage() {
         }
     };
 
-    // Debounce search
-    useEffect(() => {
-        const id = setTimeout(() => {
-            setDebouncedSearch(search.trim());
-        }, 400);
-        return () => clearTimeout(id);
-    }, [search]);
+    const confirmToggleTimeSlotStatus = async () => {
+        if (timeSlotToToggleStatus) {
+            const newStatus = timeSlotToToggleStatus.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+            try {
+                await updateTimeSlotStatus({ id: timeSlotToToggleStatus.id, status: newStatus }).unwrap();
+                toast.success(newStatus === "ACTIVE" ? "Đã kích hoạt khung giờ" : "Đã ngưng hoạt động khung giờ");
+                setTimeSlotToToggleStatus(null);
+            } catch (error: unknown) {
+                console.error("Failed to update time slot status:", error);
+                const apiError = error as { data?: { message?: string }; message?: string };
+                const errorMessage =
+                    apiError.data?.message || apiError.message || "Cập nhật trạng thái thất bại. Vui lòng thử lại.";
+                toast.error(errorMessage);
+            }
+        }
+    };
 
     // Fetch branches
     const { data: branches } = useGetAllBranchesQuery();
@@ -126,15 +145,32 @@ export default function CenterHeadTimeSlotsPage() {
         }
     }, [branches, branchFilter]);
 
-    // Fetch time slots
+    // Fetch time slots (không filter search qua API, lọc local để tránh giật)
     const { data: timeSlots, isFetching: isFetchingTimeSlots } = useGetTimeSlotsQuery(
         {
-            search: debouncedSearch || undefined,
             branchId: branchFilter === "ALL" ? undefined : branchFilter,
         }
     );
 
-    const filteredTimeSlots = useMemo(() => timeSlots ?? [], [timeSlots]);
+    // Lọc local để tránh giật khi search
+    const filteredTimeSlots = useMemo(() => {
+        let result = timeSlots ?? [];
+        
+        // Filter by search
+        if (search.trim()) {
+            const searchLower = search.toLowerCase().trim();
+            result = result.filter(ts => 
+                ts.name.toLowerCase().includes(searchLower)
+            );
+        }
+        
+        // Filter by status
+        if (statusFilter !== "ALL") {
+            result = result.filter(ts => ts.status === statusFilter);
+        }
+        
+        return result;
+    }, [timeSlots, search, statusFilter]);
 
     // Calculate stats
     const stats = useMemo(() => {
@@ -143,13 +179,14 @@ export default function CenterHeadTimeSlotsPage() {
 
     const handleClearFilters = () => {
         setSearch("");
+        setStatusFilter("ALL");
         // Only clear branch filter if it's not locked by user's branchId
         if (!user?.branchId) {
             setBranchFilter("ALL");
         }
     };
 
-    const hasActiveFilters = search !== "" || (branchFilter !== "ALL" && !user?.branchId);
+    const hasActiveFilters = search !== "" || statusFilter !== "ALL" || (branchFilter !== "ALL" && !user?.branchId);
 
     // TimeSlot Columns
     const timeSlotColumns: ColumnDef<TimeSlot>[] = [
@@ -218,10 +255,33 @@ export default function CenterHeadTimeSlotsPage() {
             cell: ({ row }) => <div className="text-muted-foreground">{row.getValue("endTime")}</div>,
         },
         {
+            id: "status",
+            header: "Trạng thái",
+            cell: ({ row }) => {
+                const status = row.original.status;
+                return (
+                    <Badge variant={status === "ACTIVE" ? "default" : "destructive"} className={status === "ACTIVE" ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200" : ""}>
+                        {status === "ACTIVE" ? "Hoạt động" : "Ngưng hoạt động"}
+                    </Badge>
+                );
+            },
+        },
+        {
             id: "actions",
             header: "Hành động",
             cell: ({ row }) => {
                 const timeSlot = row.original;
+                const isActive = timeSlot.status === "ACTIVE";
+                const canDeactivate = !timeSlot.hasFutureSessions;
+                // Can only delete if: INACTIVE + no sessions + no teacher availability
+                const canDelete = !isActive && !timeSlot.hasAnySessions && !timeSlot.hasTeacherAvailability;
+                
+                // Build reason for disabled delete
+                let deleteDisabledReason = "";
+                if (isActive) deleteDisabledReason = "cần ngưng HĐ";
+                else if (timeSlot.hasAnySessions) deleteDisabledReason = "đang sử dụng";
+                else if (timeSlot.hasTeacherAvailability) deleteDisabledReason = "có lịch GV";
+                
                 return (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -230,7 +290,7 @@ export default function CenterHeadTimeSlotsPage() {
                                 <span className="sr-only">Mở menu hành động</span>
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48 p-1">
+                        <DropdownMenuContent align="end" className="w-56 p-1">
                             <DropdownMenuLabel>Hành động</DropdownMenuLabel>
                             <DropdownMenuItem onClick={() => navigate(`/center-head/timeslots/${timeSlot.id}`)}>
                                 <Eye className="mr-2 h-4 w-4" />
@@ -242,12 +302,40 @@ export default function CenterHeadTimeSlotsPage() {
                                 <Edit className="mr-2 h-4 w-4" />
                                 Chỉnh sửa
                             </DropdownMenuItem>
+                            {/* Toggle Status Button */}
+                            {isActive ? (
+                                <DropdownMenuItem
+                                    onClick={() => canDeactivate && setTimeSlotToToggleStatus(timeSlot)}
+                                    disabled={!canDeactivate}
+                                    className={canDeactivate 
+                                        ? "text-orange-600 hover:text-orange-600 hover:bg-orange-50" 
+                                        : "text-muted-foreground cursor-not-allowed opacity-50"
+                                    }
+                                >
+                                    <PowerOff className="mr-2 h-4 w-4" />
+                                    Ngưng hoạt động
+                                    {!canDeactivate && <span className="ml-auto text-xs">(có lịch)</span>}
+                                </DropdownMenuItem>
+                            ) : (
+                                <DropdownMenuItem
+                                    onClick={() => setTimeSlotToToggleStatus(timeSlot)}
+                                    className="text-emerald-600 hover:text-emerald-600 hover:bg-emerald-50"
+                                >
+                                    <Power className="mr-2 h-4 w-4" />
+                                    Kích hoạt lại
+                                </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
-                                onClick={() => setTimeSlotToDelete(timeSlot.id)}
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => canDelete && setTimeSlotToDelete(timeSlot.id)}
+                                disabled={!canDelete}
+                                className={canDelete 
+                                    ? "text-destructive hover:text-destructive hover:bg-destructive/10" 
+                                    : "text-muted-foreground cursor-not-allowed opacity-50"
+                                }
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Xóa
+                                {!canDelete && <span className="ml-auto text-xs">({deleteDisabledReason})</span>}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -300,7 +388,7 @@ export default function CenterHeadTimeSlotsPage() {
 
                 {/* Filters */}
                 <div className="flex items-center gap-3 flex-wrap">
-                    <div className="relative flex-1 min-w-[200px]">
+                    <div className="relative w-[280px]">
                         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             placeholder="Tìm kiếm theo tên khung giờ..."
@@ -309,6 +397,24 @@ export default function CenterHeadTimeSlotsPage() {
                             className="pl-9"
                         />
                     </div>
+
+                    <Select
+                        value={statusFilter}
+                        onValueChange={(value) =>
+                            setStatusFilter(value as "ALL" | "ACTIVE" | "INACTIVE")
+                        }
+                    >
+                        <SelectTrigger className="w-[170px]">
+                            <SelectValue placeholder="Trạng thái" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {STATUS_OPTIONS.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
 
                     {!user?.branchId && (branches?.data?.length || 0) > 1 && (
                         <Select
@@ -424,6 +530,38 @@ export default function CenterHeadTimeSlotsPage() {
                                 disabled={isDeletingTimeSlot}
                             >
                                 {isDeletingTimeSlot ? "Đang xóa..." : "Xóa"}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
+                {/* Toggle Status Confirmation Dialog */}
+                <AlertDialog open={!!timeSlotToToggleStatus} onOpenChange={(open) => !open && setTimeSlotToToggleStatus(null)}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>
+                                {timeSlotToToggleStatus?.status === "ACTIVE" 
+                                    ? "Ngưng hoạt động khung giờ?" 
+                                    : "Kích hoạt lại khung giờ?"}
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                                {timeSlotToToggleStatus?.status === "ACTIVE" 
+                                    ? "Khung giờ sẽ không thể được sử dụng cho các buổi học mới sau khi ngưng hoạt động."
+                                    : "Khung giờ sẽ có thể được sử dụng cho các buổi học mới sau khi kích hoạt."}
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Hủy</AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={confirmToggleTimeSlotStatus}
+                                className={timeSlotToToggleStatus?.status === "ACTIVE" 
+                                    ? "bg-orange-600 hover:bg-orange-700" 
+                                    : "bg-emerald-600 hover:bg-emerald-700"}
+                                disabled={isUpdatingStatus}
+                            >
+                                {isUpdatingStatus 
+                                    ? "Đang xử lý..." 
+                                    : (timeSlotToToggleStatus?.status === "ACTIVE" ? "Ngưng hoạt động" : "Kích hoạt")}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>

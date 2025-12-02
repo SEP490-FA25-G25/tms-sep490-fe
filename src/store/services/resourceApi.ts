@@ -28,6 +28,9 @@ export interface Resource {
     activeClassesCount?: number;
     totalSessionsCount?: number;
     nextSessionInfo?: string;
+    // Flags for UI actions
+    hasAnySessions?: boolean; // Can't delete if true
+    hasFutureSessions?: boolean; // Can't deactivate if true
     createdBy?: number;
     createdAt: string;
     updatedAt: string;
@@ -76,6 +79,10 @@ export interface TimeSlot {
     // Statistics
     activeClassesCount?: number;
     totalSessionsCount?: number;
+    // Flags for UI actions
+    hasAnySessions?: boolean; // Can't delete if true
+    hasFutureSessions?: boolean; // Can't deactivate if true
+    hasTeacherAvailability?: boolean; // Can't delete if true
 }
 
 export interface CreateTimeSlotRequest {

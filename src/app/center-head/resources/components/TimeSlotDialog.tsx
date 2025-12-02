@@ -1,3 +1,13 @@
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -12,7 +22,7 @@ import { Label } from "@/components/ui/label";
 import { useCreateTimeSlotMutation, useUpdateTimeSlotMutation } from "@/store/services/resourceApi";
 import type { TimeSlot } from "@/store/services/resourceApi";
 import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     Select,
     SelectContent,
@@ -34,6 +44,7 @@ export function TimeSlotDialog({ open, onOpenChange, timeSlot, branchId, branche
     const [createTimeSlot, { isLoading: isCreating }] = useCreateTimeSlotMutation();
     const [updateTimeSlot, { isLoading: isUpdating }] = useUpdateTimeSlotMutation();
     const isLoading = isCreating || isUpdating;
+    const [showConfirmClose, setShowConfirmClose] = useState(false);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -59,6 +70,35 @@ export function TimeSlotDialog({ open, onOpenChange, timeSlot, branchId, branche
             });
         }
     }, [timeSlot, open, branchId]);
+
+    // Check if form has been modified from initial state
+    const initialFormData = useMemo(() => ({
+        name: timeSlot?.name || "",
+        branchId: timeSlot?.branchId?.toString() || (branchId > 0 ? branchId.toString() : ""),
+        startTime: timeSlot?.startTime || "",
+        endTime: timeSlot?.endTime || "",
+    }), [timeSlot, branchId]);
+
+    const hasChanges = useMemo(() => {
+        return (
+            formData.name !== initialFormData.name ||
+            formData.startTime !== initialFormData.startTime ||
+            formData.endTime !== initialFormData.endTime
+        );
+    }, [formData, initialFormData]);
+
+    const handleOpenChange = useCallback((newOpen: boolean) => {
+        if (!newOpen && hasChanges) {
+            setShowConfirmClose(true);
+        } else {
+            onOpenChange(newOpen);
+        }
+    }, [hasChanges, onOpenChange]);
+
+    const handleConfirmClose = useCallback(() => {
+        setShowConfirmClose(false);
+        onOpenChange(false);
+    }, [onOpenChange]);
 
     const handleChange = (id: string, value: string) => {
         setFormData((prev) => ({ ...prev, [id]: value }));
@@ -114,7 +154,8 @@ export function TimeSlotDialog({ open, onOpenChange, timeSlot, branchId, branche
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
                     <DialogTitle>{timeSlot ? "Chỉnh sửa Khung giờ" : "Thêm Khung giờ Mới"}</DialogTitle>
@@ -180,7 +221,7 @@ export function TimeSlotDialog({ open, onOpenChange, timeSlot, branchId, branche
                     </div>
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
                             Hủy
                         </Button>
                         <Button type="submit" disabled={isLoading}>
@@ -191,5 +232,23 @@ export function TimeSlotDialog({ open, onOpenChange, timeSlot, branchId, branche
                 </form>
             </DialogContent>
         </Dialog>
+
+        <AlertDialog open={showConfirmClose} onOpenChange={setShowConfirmClose}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Xác nhận hủy</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Bạn có thay đổi chưa được lưu. Bạn có chắc chắn muốn hủy không?
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Tiếp tục chỉnh sửa</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleConfirmClose}>
+                        Hủy thay đổi
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        </>
     );
 }
