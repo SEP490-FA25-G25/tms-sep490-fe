@@ -23,15 +23,16 @@ import {
 } from 'lucide-react'
 
 // Types - match với API response
-interface StudentEnrollment {
-  id: number
+interface CurrentClass {
   classId: number
   classCode: string
   className: string
   courseName: string
-  status: 'ENROLLED' | 'TRANSFERRED' | 'DROPPED' | 'COMPLETED' | string
+  branchName: string
+  startDate: string
+  plannedEndDate: string
+  enrollmentStatus: 'ENROLLED' | 'TRANSFERRED' | 'DROPPED' | 'COMPLETED' | string
   enrolledAt: string
-  leftAt: string | null
 }
 
 interface StudentDetail {
@@ -39,7 +40,7 @@ interface StudentDetail {
   studentCode: string
   fullName: string
   gender: 'MALE' | 'FEMALE' | 'OTHER' | string
-  dob: string | null
+  dateOfBirth: string | null
   phone: string | null
   email: string | null
   address: string | null
@@ -47,7 +48,14 @@ interface StudentDetail {
   avatarUrl: string | null
   status: 'ACTIVE' | 'SUSPENDED' | 'INACTIVE' | string
   createdAt: string
-  enrollments: StudentEnrollment[]
+  branchName: string
+  branchId: number
+  totalEnrollments: number
+  activeEnrollments: number
+  completedEnrollments: number
+  firstEnrollmentDate: string | null
+  lastEnrollmentDate: string | null
+  currentClasses: CurrentClass[]
 }
 
 interface StudentDetailDrawerProps {
@@ -86,8 +94,8 @@ export function StudentDetailDrawer({
   onEnroll,
   hideEnrollButton = false,
 }: StudentDetailDrawerProps) {
-  const hasActiveEnrollment = student?.enrollments?.some(
-    (e) => e.status === 'ENROLLED'
+  const hasActiveEnrollment = student?.currentClasses?.some(
+    (c) => c.enrollmentStatus === 'ENROLLED'
   )
 
   return (
@@ -98,6 +106,7 @@ export function StudentDetailDrawer({
             <div className="flex-1">
               {isLoading ? (
                 <>
+                  <DrawerTitle className="sr-only">Đang tải thông tin học viên</DrawerTitle>
                   <div className="h-6 w-48 bg-muted animate-pulse rounded" />
                   <div className="h-4 w-32 bg-muted animate-pulse rounded mt-2" />
                 </>
@@ -144,7 +153,7 @@ export function StudentDetailDrawer({
                   value="classes"
                   className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
                 >
-                  Lớp học ({student.enrollments?.length || 0})
+                  Lớp học ({student.currentClasses?.length || 0})
                 </TabsTrigger>
               </TabsList>
 
@@ -170,7 +179,7 @@ export function StudentDetailDrawer({
                         <span className="text-muted-foreground min-w-[80px]">
                           Ngày sinh:
                         </span>
-                        <span>{formatDate(student.dob)}</span>
+                        <span>{formatDate(student.dateOfBirth)}</span>
                       </div>
                     </div>
                   </div>
@@ -245,35 +254,33 @@ export function StudentDetailDrawer({
               </TabsContent>
 
               <TabsContent value="classes" className="mt-0 p-4">
-                {!student.enrollments || student.enrollments.length === 0 ? (
+                {!student.currentClasses || student.currentClasses.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <GraduationCap className="h-12 w-12 mx-auto mb-3 opacity-50" />
                     <p>Học viên chưa được phân lớp</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {student.enrollments.map((enrollment) => (
+                    {student.currentClasses.map((classItem) => (
                       <div
-                        key={enrollment.id}
+                        key={classItem.classId}
                         className="rounded-lg border p-3 space-y-2"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
                             <div className="font-medium truncate">
-                              {enrollment.className}
+                              {classItem.className}
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              {enrollment.classCode} • {enrollment.courseName}
+                              {classItem.classCode} • {classItem.courseName}
                             </div>
                           </div>
-                          <EnrollmentStatusBadge status={enrollment.status as 'ENROLLED' | 'TRANSFERRED' | 'DROPPED' | 'COMPLETED'} />
+                          <EnrollmentStatusBadge status={classItem.enrollmentStatus as 'ENROLLED' | 'TRANSFERRED' | 'DROPPED' | 'COMPLETED'} />
                         </div>
 
                         <div className="text-xs text-muted-foreground">
-                          <span>Ghi danh: {formatDate(enrollment.enrolledAt)}</span>
-                          {enrollment.leftAt && (
-                            <span> • Kết thúc: {formatDate(enrollment.leftAt)}</span>
-                          )}
+                          <span>Ghi danh: {formatDate(classItem.enrolledAt)}</span>
+                          <span> • {classItem.startDate} → {classItem.plannedEndDate}</span>
                         </div>
                       </div>
                     ))}

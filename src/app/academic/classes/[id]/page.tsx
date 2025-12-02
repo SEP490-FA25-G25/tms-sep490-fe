@@ -64,22 +64,8 @@ export default function ClassDetailPage() {
 
   const studentDetail = studentDetailResponse?.data
 
-  // Transform studentDetail to match drawer interface
-  const drawerStudent = studentDetail ? {
-    id: studentDetail.id,
-    studentCode: studentDetail.studentCode,
-    fullName: studentDetail.fullName,
-    gender: studentDetail.gender,
-    dob: studentDetail.dob,
-    phone: studentDetail.phone,
-    email: studentDetail.email,
-    address: studentDetail.address,
-    facebookUrl: studentDetail.facebookUrl,
-    avatarUrl: studentDetail.avatarUrl,
-    status: studentDetail.status,
-    createdAt: studentDetail.createdAt,
-    enrollments: studentDetail.enrollments || [],
-  } : null
+  // Pass studentDetail directly - drawer interface now matches API response
+  const drawerStudent = studentDetail ?? null
 
   // Handler for opening student drawer
   const handleStudentClick = (studentId: number) => {
