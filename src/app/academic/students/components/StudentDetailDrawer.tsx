@@ -57,6 +57,8 @@ interface StudentDetailDrawerProps {
   isLoading?: boolean
   onEdit?: () => void
   onEnroll?: () => void
+  /** Hide the enroll button (e.g., when viewing from class detail where student is already enrolled) */
+  hideEnrollButton?: boolean
 }
 
 const genderLabels: Record<string, string> = {
@@ -82,6 +84,7 @@ export function StudentDetailDrawer({
   isLoading = false,
   onEdit,
   onEnroll,
+  hideEnrollButton = false,
 }: StudentDetailDrawerProps) {
   const hasActiveEnrollment = student?.enrollments?.some(
     (e) => e.status === 'ENROLLED'
@@ -286,7 +289,7 @@ export function StudentDetailDrawer({
             <Button variant="outline" className="flex-1" onClick={onEdit} disabled={isLoading || !student}>
               Sửa thông tin
             </Button>
-            {!hasActiveEnrollment && (
+            {!hideEnrollButton && !hasActiveEnrollment && (
               <Button className="flex-1" onClick={onEnroll} disabled={isLoading || !student}>
                 Phân lớp
               </Button>

@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -16,10 +15,10 @@ interface StudentsTabProps {
   students: ClassStudentDTO[]
   isLoading: boolean
   totalStudents: number
-  onViewAll: () => void
+  onStudentClick: (studentId: number) => void
 }
 
-export function StudentsTab({ students, isLoading, totalStudents, onViewAll }: StudentsTabProps) {
+export function StudentsTab({ students, isLoading, totalStudents, onStudentClick }: StudentsTabProps) {
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -72,11 +71,6 @@ export function StudentsTab({ students, isLoading, totalStudents, onViewAll }: S
             ({totalStudents} học viên)
           </span>
         </h3>
-        {totalStudents > 10 && (
-          <Button variant="outline" size="sm" onClick={onViewAll}>
-            Xem tất cả
-          </Button>
-        )}
       </div>
 
       {students.length > 0 ? (
@@ -93,7 +87,7 @@ export function StudentsTab({ students, isLoading, totalStudents, onViewAll }: S
             </TableHeader>
             <TableBody>
               {students.map((student: ClassStudentDTO) => (
-                <TableRow key={student.id} className="hover:bg-muted/50">
+                <TableRow key={student.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => onStudentClick(student.id)}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">

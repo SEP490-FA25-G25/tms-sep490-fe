@@ -8,6 +8,7 @@ import { SiteHeader } from '@/components/site-header'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { AlertCircle, Calendar } from 'lucide-react'
 import { useGetClassByIdQuery, useGetClassStudentsQuery } from '@/store/services/classApi'
+import { useGetStudentDetailQuery } from '@/store/services/studentApi'
 import type { CreateStudentResponse } from '@/store/services/studentApi'
 import { EnrollmentImportDialog } from './EnrollmentImportDialog'
 import { StudentSelectionDialog } from './StudentSelectionDialog'
@@ -17,6 +18,7 @@ import { AAClassDetailHeader } from './components/AAClassDetailHeader'
 import { AAClassDetailHeaderSkeleton, AAClassDetailContentSkeleton } from './components/AAClassDetailSkeleton'
 import { OverviewTab } from './components/OverviewTab'
 import { StudentsTab } from './components/StudentsTab'
+import { StudentDetailDrawer } from '../../students/components/StudentDetailDrawer'
 import { toast } from 'sonner'
 
 export default function ClassDetailPage() {
@@ -28,6 +30,8 @@ export default function ClassDetailPage() {
   const [createStudentOpen, setCreateStudentOpen] = useState(false)
   const [successDialogOpen, setSuccessDialogOpen] = useState(false)
   const [createdStudentData, setCreatedStudentData] = useState<CreateStudentResponse | null>(null)
+  const [studentDrawerOpen, setStudentDrawerOpen] = useState(false)
+  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null)
 
   const {
     data: classResponse,
@@ -51,6 +55,37 @@ export default function ClassDetailPage() {
 
   const students = studentsResponse?.data?.content || []
   const totalStudents = studentsResponse?.data?.page?.totalElements || students.length
+
+  // Query student detail for drawer
+  const { data: studentDetailResponse, isLoading: isLoadingStudentDetail } =
+    useGetStudentDetailQuery(selectedStudentId!, {
+      skip: !selectedStudentId,
+    })
+
+  const studentDetail = studentDetailResponse?.data
+
+  // Transform studentDetail to match drawer interface
+  const drawerStudent = studentDetail ? {
+    id: studentDetail.id,
+    studentCode: studentDetail.studentCode,
+    fullName: studentDetail.fullName,
+    gender: studentDetail.gender,
+    dob: studentDetail.dob,
+    phone: studentDetail.phone,
+    email: studentDetail.email,
+    address: studentDetail.address,
+    facebookUrl: studentDetail.facebookUrl,
+    avatarUrl: studentDetail.avatarUrl,
+    status: studentDetail.status,
+    createdAt: studentDetail.createdAt,
+    enrollments: studentDetail.enrollments || [],
+  } : null
+
+  // Handler for opening student drawer
+  const handleStudentClick = (studentId: number) => {
+    setSelectedStudentId(studentId)
+    setStudentDrawerOpen(true)
+  }
 
   // Render header based on state
   const renderHeader = () => {
@@ -150,9 +185,7 @@ export default function ClassDetailPage() {
                         students={students}
                         isLoading={isLoadingStudents}
                         totalStudents={totalStudents}
-                        onViewAll={() => {
-                          // TODO: Navigate to full students list or open dialog
-                        }}
+                        onStudentClick={handleStudentClick}
                       />
                     </TabsContent>
 
@@ -218,6 +251,18 @@ export default function ClassDetailPage() {
           />
         </>
       )}
+
+      {/* Student Detail Drawer */}
+      <StudentDetailDrawer
+        open={studentDrawerOpen}
+        onOpenChange={setStudentDrawerOpen}
+        student={drawerStudent}
+        isLoading={isLoadingStudentDetail}
+        onEdit={() => {
+          toast.info('Tính năng chỉnh sửa sẽ được triển khai sau')
+        }}
+        hideEnrollButton={true}
+      />
     </SidebarProvider>
   )
 }
