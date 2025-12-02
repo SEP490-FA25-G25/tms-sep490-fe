@@ -21,47 +21,12 @@ import {
   Facebook,
   Loader2,
 } from 'lucide-react'
-
-// Types - match với API response
-interface CurrentClass {
-  classId: number
-  classCode: string
-  className: string
-  courseName: string
-  branchName: string
-  startDate: string
-  plannedEndDate: string
-  enrollmentStatus: 'ENROLLED' | 'TRANSFERRED' | 'DROPPED' | 'COMPLETED' | string
-  enrolledAt: string
-}
-
-interface StudentDetail {
-  id: number
-  studentCode: string
-  fullName: string
-  gender: 'MALE' | 'FEMALE' | 'OTHER' | string
-  dateOfBirth: string | null
-  phone: string | null
-  email: string | null
-  address: string | null
-  facebookUrl: string | null
-  avatarUrl: string | null
-  status: 'ACTIVE' | 'SUSPENDED' | 'INACTIVE' | string
-  createdAt: string
-  branchName: string
-  branchId: number
-  totalEnrollments: number
-  activeEnrollments: number
-  completedEnrollments: number
-  firstEnrollmentDate: string | null
-  lastEnrollmentDate: string | null
-  currentClasses: CurrentClass[]
-}
+import type { StudentDetailDTO } from '@/store/services/studentApi'
 
 interface StudentDetailDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  student: StudentDetail | null
+  student: StudentDetailDTO | null
   isLoading?: boolean
   onEdit?: () => void
   onEnroll?: () => void
@@ -94,13 +59,15 @@ export function StudentDetailDrawer({
   onEnroll,
   hideEnrollButton = false,
 }: StudentDetailDrawerProps) {
+  // StudentActiveClassDTO.status là class status (IN_PROGRESS, COMPLETED, etc.)
+  // Coi như enrolled nếu class đang IN_PROGRESS
   const hasActiveEnrollment = student?.currentClasses?.some(
-    (c) => c.enrollmentStatus === 'ENROLLED'
+    (c) => c.status === 'IN_PROGRESS'
   )
 
   return (
     <Drawer direction="right" open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="h-full w-full sm:w-[480px] sm:max-w-lg">
+      <DrawerContent className="h-full w-full sm:w-[50vw] sm:min-w-[560px] sm:max-w-[800px]">
         <DrawerHeader className="border-b">
           <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -142,22 +109,16 @@ export function StudentDetailDrawer({
             </div>
           ) : (
             <Tabs defaultValue="info" className="w-full">
-              <TabsList className="w-full justify-start rounded-none border-b bg-transparent px-4">
-                <TabsTrigger
-                  value="info"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
-                >
+              <TabsList className="w-[calc(100%-2rem)] mx-4 mt-4">
+                <TabsTrigger value="info">
                   Thông tin
                 </TabsTrigger>
-                <TabsTrigger
-                  value="classes"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
-                >
+                <TabsTrigger value="classes">
                   Lớp học ({student.currentClasses?.length || 0})
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="info" className="mt-0 p-4">
+              <TabsContent value="info" className="p-4">
                 <div className="space-y-4">
                   {/* Thông tin cơ bản */}
                   <div className="space-y-3">
@@ -171,7 +132,7 @@ export function StudentDetailDrawer({
                         <span className="text-muted-foreground min-w-[80px]">
                           Giới tính:
                         </span>
-                        <span>{genderLabels[student.gender] || student.gender}</span>
+                        <span>{student.gender ? (genderLabels[student.gender] || student.gender) : '—'}</span>
                       </div>
 
                       <div className="flex items-center gap-3 text-sm">
@@ -247,7 +208,7 @@ export function StudentDetailDrawer({
                       <span className="text-muted-foreground min-w-[80px]">
                         Ngày tạo:
                       </span>
-                      <span>{formatDateTime(student.createdAt)}</span>
+                      <span>{formatDateTime(student.createdAt ?? null)}</span>
                     </div>
                   </div>
                 </div>
@@ -263,7 +224,7 @@ export function StudentDetailDrawer({
                   <div className="space-y-3">
                     {student.currentClasses.map((classItem) => (
                       <div
-                        key={classItem.classId}
+                        key={classItem.id}
                         className="rounded-lg border p-3 space-y-2"
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -275,12 +236,14 @@ export function StudentDetailDrawer({
                               {classItem.classCode} • {classItem.courseName}
                             </div>
                           </div>
-                          <EnrollmentStatusBadge status={classItem.enrollmentStatus as 'ENROLLED' | 'TRANSFERRED' | 'DROPPED' | 'COMPLETED'} />
+                          <EnrollmentStatusBadge status={classItem.status === 'IN_PROGRESS' ? 'ENROLLED' : classItem.status === 'COMPLETED' ? 'COMPLETED' : 'ENROLLED'} />
                         </div>
 
                         <div className="text-xs text-muted-foreground">
-                          <span>Ghi danh: {formatDate(classItem.enrolledAt)}</span>
-                          <span> • {classItem.startDate} → {classItem.plannedEndDate}</span>
+                          <span>{classItem.startDate} → {classItem.plannedEndDate}</span>
+                          {typeof classItem.attendanceRate === 'number' && (
+                            <span> • Đi học: {classItem.attendanceRate}%</span>
+                          )}
                         </div>
                       </div>
                     ))}

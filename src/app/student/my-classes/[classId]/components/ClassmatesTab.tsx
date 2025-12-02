@@ -20,7 +20,8 @@ interface ClassmatesTabProps {
   };
 }
 
-const ClassmatesTab: React.FC<ClassmatesTabProps> = ({ classmates, isLoading, enrollmentSummary }) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const ClassmatesTab: React.FC<ClassmatesTabProps> = ({ classmates, isLoading, enrollmentSummary: _enrollmentSummary }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Filter classmates based on search term

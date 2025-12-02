@@ -222,7 +222,6 @@ export function ApprovalDetailDrawer({ classId, open, onClose, onActionComplete 
   const timeSlotSummary = useMemo(() => extractCommonTimeSlot(sessions), [sessions])
 
   const resourceSummary = useMemo(() => {
-    if (overview?.room) return overview.room
     const resourceMap = new Map<string, number>()
     sessions.forEach((session) => {
       const resource = session.resourceName || session.resourceDisplayName || session.room
@@ -232,7 +231,7 @@ export function ApprovalDetailDrawer({ classId, open, onClose, onActionComplete 
     if (resourceMap.size === 0) return null
     const sorted = Array.from(resourceMap.entries()).sort((a, b) => b[1] - a[1])
     return sorted.map(([name]) => name).join(', ')
-  }, [overview?.room, sessions])
+  }, [sessions])
 
   const resetRejectState = () => {
     setReason('')

@@ -156,7 +156,7 @@ export default function StudentListPage() {
 
   // Extract data from API response
   // Spring Boot Page response has nested "page" object for pagination info
-  const rawStudents = studentsResponse?.data?.content || []
+  const rawStudents = useMemo(() => studentsResponse?.data?.content || [], [studentsResponse?.data?.content])
   const pageInfo = studentsResponse?.data?.page
   const studentDetail = studentDetailResponse?.data
 
@@ -192,41 +192,6 @@ export default function StudentListPage() {
       notEnrolled: notEnrolledCount,
     }
   }, [rawStudents, pageInfo?.totalElements])
-
-  // Transform studentDetail to match drawer interface
-  const drawerStudent = useMemo(() => {
-    if (!studentDetail) return null
-    return {
-      id: studentDetail.id,
-      studentCode: studentDetail.studentCode,
-      fullName: studentDetail.fullName,
-      gender: studentDetail.gender || 'OTHER',
-      dob: studentDetail.dateOfBirth || null,
-      phone: studentDetail.phone || null,
-      email: studentDetail.email || null,
-      address: studentDetail.address || null,
-      facebookUrl: studentDetail.facebookUrl || null,
-      avatarUrl: studentDetail.avatarUrl || null,
-      status: studentDetail.status || 'ACTIVE',
-      createdAt: studentDetail.createdAt || '',
-      enrollments:
-        studentDetail.currentClasses?.map((c, idx) => ({
-          id: idx,
-          classId: c.id,
-          classCode: c.classCode,
-          className: c.className,
-          courseName: c.courseName,
-          status:
-            c.status === 'IN_PROGRESS'
-              ? 'ENROLLED'
-              : c.status === 'COMPLETED'
-                ? 'COMPLETED'
-                : 'ENROLLED',
-          enrolledAt: c.startDate,
-          leftAt: c.status === 'COMPLETED' ? c.plannedEndDate : null,
-        })) || [],
-    } as const
-  }, [studentDetail])
 
   // Handlers
   const handleFilterChange = <K extends keyof FilterState>(
@@ -384,7 +349,7 @@ export default function StudentListPage() {
           <Select
             value={filters.status || 'all'}
             onValueChange={(value) =>
-              handleFilterChange('status', value === 'all' ? undefined : value)
+              handleFilterChange('status', value === 'all' ? undefined : value as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED')
             }
           >
             <SelectTrigger className="w-[180px]">
@@ -402,7 +367,7 @@ export default function StudentListPage() {
           <Select
             value={filters.gender || 'all'}
             onValueChange={(value) =>
-              handleFilterChange('gender', value === 'all' ? undefined : value)
+              handleFilterChange('gender', value === 'all' ? undefined : value as 'MALE' | 'FEMALE' | 'OTHER')
             }
           >
             <SelectTrigger className="w-40">
@@ -664,7 +629,7 @@ export default function StudentListPage() {
       <StudentDetailDrawer
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
-        student={drawerStudent}
+        student={studentDetail ?? null}
         isLoading={isLoadingDetail}
         onEdit={handleEdit}
         onEnroll={handleEnroll}

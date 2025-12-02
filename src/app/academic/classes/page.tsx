@@ -41,7 +41,6 @@ import {
   MapPin,
   User,
   ChevronRight,
-  Loader2,
   PlayCircle,
   Clock,
   CheckCircle2,
