@@ -1,52 +1,28 @@
+import type { CSSProperties } from 'react'
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import {
-  Users,
-  Calendar,
-  MapPin,
-  User,
-  Clock,
-  BookOpen,
-  Building,
-  FileUp,
-  UserPlus,
-  ChevronDown,
-  ArrowLeft,
-  AlertCircle,
-  Edit
-} from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AppSidebar } from '@/components/app-sidebar'
+import { SiteHeader } from '@/components/site-header'
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { AlertCircle, Calendar } from 'lucide-react'
 import { useGetClassByIdQuery, useGetClassStudentsQuery } from '@/store/services/classApi'
-import type { ClassStudentDTO, TeacherSummaryDTO } from '@/store/services/classApi'
 import type { CreateStudentResponse } from '@/store/services/studentApi'
-import { DashboardLayout } from '@/components/DashboardLayout'
-import { Link } from 'react-router-dom'
 import { EnrollmentImportDialog } from './EnrollmentImportDialog'
 import { StudentSelectionDialog } from './StudentSelectionDialog'
 import { CreateStudentDialog } from './CreateStudentDialog'
 import { StudentCreatedSuccessDialog } from './StudentCreatedSuccessDialog'
+import { AAClassDetailHeader } from './components/AAClassDetailHeader'
+import { AAClassDetailHeaderSkeleton, AAClassDetailContentSkeleton } from './components/AAClassDetailSkeleton'
+import { OverviewTab } from './components/OverviewTab'
+import { StudentsTab } from './components/StudentsTab'
 import { toast } from 'sonner'
 
 export default function ClassDetailPage() {
   const { id } = useParams<{ id: string }>()
   const classId = parseInt(id || '0')
+  const [activeTab, setActiveTab] = useState('overview')
   const [enrollmentDialogOpen, setEnrollmentDialogOpen] = useState(false)
   const [studentSelectionOpen, setStudentSelectionOpen] = useState(false)
   const [createStudentOpen, setCreateStudentOpen] = useState(false)
@@ -74,428 +50,174 @@ export default function ClassDetailPage() {
   )
 
   const students = studentsResponse?.data?.content || []
+  const totalStudents = studentsResponse?.data?.page?.totalElements || students.length
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'DRAFT':
-        return 'bg-slate-100 text-slate-800 border-slate-200'
-      case 'SUBMITTED':
-        return 'bg-amber-100 text-amber-800 border-amber-200'
-      case 'ONGOING':
-        return 'bg-green-100 text-green-800 border-green-200'
-      case 'SCHEDULED':
-        return 'bg-blue-100 text-blue-800 border-blue-200'
-      case 'COMPLETED':
-        return 'bg-gray-100 text-gray-800 border-gray-200'
-      case 'CANCELLED':
-        return 'bg-red-100 text-red-800 border-red-200'
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200'
+  // Render header based on state
+  const renderHeader = () => {
+    if (isLoadingClass) {
+      return <AAClassDetailHeaderSkeleton />
     }
-  }
 
-  const getCapacityColor = (current: number, max: number) => {
-    const percentage = (current / max) * 100
-    if (percentage < 80) return 'bg-green-100 text-green-800 border-green-200'
-    if (percentage < 95) return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-    return 'bg-red-100 text-red-800 border-red-200'
-  }
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'DRAFT':
-        return 'Bản nháp'
-      case 'SUBMITTED':
-        return 'Đã gửi duyệt'
-      case 'SCHEDULED':
-        return 'Đã lên lịch'
-      case 'ONGOING':
-        return 'Đang diễn ra'
-      case 'COMPLETED':
-        return 'Đã hoàn thành'
-      case 'CANCELLED':
-        return 'Đã hủy'
-      default:
-        return status
+    if (classError || !classData) {
+      return (
+        <div className="border-b bg-background">
+          <div className="@container/main py-4">
+            <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">Không thể tải thông tin lớp học</p>
+                <Button size="sm" onClick={() => window.location.reload()}>
+                  Thử lại
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
     }
-  }
 
-  const getUnifiedStatus = (status: string, approval?: string | null) => {
-    if (approval === 'PENDING') {
-      return { label: 'Chờ duyệt', color: 'bg-amber-100 text-amber-800 border-amber-200' }
-    }
-    if (approval === 'REJECTED') {
-      return { label: 'Đã từ chối', color: 'bg-red-100 text-red-800 border-red-200' }
-    }
-    return { label: getStatusLabel(status), color: getStatusColor(status) }
-  }
-
-  if (classError) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center gap-4 mb-6">
-          <Link to="/academic/classes">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Quay lại Lớp học
-            </Button>
-          </Link>
-        </div>
-        <div className="text-center py-12">
-          <p className="text-destructive">Không thể tải chi tiết lớp học. Vui lòng thử lại.</p>
-        </div>
-      </DashboardLayout>
+      <AAClassDetailHeader
+        classData={classData}
+        onEnrollFromExisting={() => setStudentSelectionOpen(true)}
+        onEnrollNewStudent={() => setCreateStudentOpen(true)}
+        onEnrollFromExcel={() => setEnrollmentDialogOpen(true)}
+      />
     )
   }
-
-  if (isLoadingClass) {
-    return (
-      <DashboardLayout>
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
-          <div className="h-32 bg-gray-200 rounded mb-6"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
-        </div>
-      </DashboardLayout>
-    )
-  }
-
-  if (!classData) {
-    return (
-      <DashboardLayout>
-        <div className="text-center py-12">
-          <p>Không tìm thấy lớp học.</p>
-        </div>
-      </DashboardLayout>
-    )
-  }
-
-  const canEdit =
-    (classData.status === 'DRAFT' &&
-      classData.approvalStatus !== 'PENDING' &&
-      classData.approvalStatus !== 'APPROVED') ||
-    classData.approvalStatus === 'REJECTED'
-
-  const editDisabledReason =
-    classData.approvalStatus === 'PENDING'
-      ? 'Lớp đang chờ duyệt, không thể chỉnh sửa.'
-      : 'Lớp đã được duyệt, không thể chỉnh sửa.'
 
   return (
-    <DashboardLayout>
-      <div className="flex flex-col gap-6">
-        {/* Header */}
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Link to="/academic/classes">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Quay lại
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{classData.name}</h1>
-              <p className="text-muted-foreground">{classData.code}</p>
-            </div>
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            {canEdit ? (
-              <Link to={`/academic/classes/${classId}/edit`}>
-                <Button variant="outline" className="w-full sm:w-auto">
-                  <Edit className="mr-2 h-4 w-4" />
-                  Chỉnh sửa
-                </Button>
-              </Link>
-            ) : (
-              <Button
-                variant="outline"
-                disabled
-                title={editDisabledReason}
-                className="w-full sm:w-auto"
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Chỉnh sửa
-              </Button>
-            )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="w-full sm:w-auto">
-                  Ghi danh Học viên
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={() => setStudentSelectionOpen(true)}>
-                  <Users className="mr-2 h-4 w-4" />
-                  Chọn từ học viên có sẵn
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setCreateStudentOpen(true)}>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Tạo học viên mới
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setEnrollmentDialogOpen(true)}>
-                  <FileUp className="mr-2 h-4 w-4" />
-                  Nhập từ Excel
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
+    <SidebarProvider
+      style={
+        {
+          '--sidebar-width': 'calc(var(--spacing) * 72)',
+          '--header-height': 'calc(var(--spacing) * 12)',
+        } as CSSProperties
+      }
+    >
+      <AppSidebar variant="inset" />
+      <SidebarInset>
+        <SiteHeader />
+        <div className="flex flex-1 flex-col">
+          <div className="@container/main flex flex-1 flex-col">
+            {renderHeader()}
 
-        {/* Status Badges */}
-        <div className="flex items-center gap-4">
-          {(() => {
-            const unified = getUnifiedStatus(classData.status, classData.approvalStatus)
-            return (
-              <Badge variant="outline" className={unified.color}>
-                {unified.label}
-              </Badge>
-            )
-          })()}
-          <Badge variant="secondary">
-            {classData.modality}
-          </Badge>
-        </div>
+            <main className="flex-1">
+              <div className="max-w-7xl mx-auto space-y-6 px-4 py-6 sm:px-6 lg:px-8 md:py-8">
+                {isLoadingClass && <AAClassDetailContentSkeleton />}
 
-        {/* Rejection Alert */}
-        {classData.approvalStatus === 'REJECTED' && classData.rejectionReason && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Lớp học bị từ chối</AlertTitle>
-            <AlertDescription>
-              Lý do: {classData.rejectionReason}
-            </AlertDescription>
-          </Alert>
-        )}
+                {!isLoadingClass && classError && (
+                  <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-destructive/40 bg-destructive/10 p-8 text-center">
+                    <AlertCircle className="h-8 w-8 text-destructive" />
+                    <p className="text-base font-semibold text-foreground">Không thể tải thông tin lớp học</p>
+                    <p className="text-sm text-muted-foreground">Vui lòng thử lại sau.</p>
+                    <Button size="sm" onClick={() => window.location.reload()}>
+                      Thử lại
+                    </Button>
+                  </div>
+                )}
 
-        {/* Main Info Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Course Info */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <BookOpen className="h-4 w-4" />
-              Khóa học
-            </div>
-            <div className="font-medium">{classData.course.name}</div>
-            <div className="text-sm text-muted-foreground">{classData.course.code}</div>
-          </div>
-
-          {/* Branch Info */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Building className="h-4 w-4" />
-              Chi nhánh
-            </div>
-            <div className="font-medium">{classData.branch.name}</div>
-            <div className="text-sm text-muted-foreground">{classData.branch.address}</div>
-          </div>
-
-          {/* Teacher Info */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <User className="h-4 w-4" />
-              Giảng viên ({classData.teachers?.length || 0})
-            </div>
-            <div className="space-y-2">
-              {classData.teachers && classData.teachers.length > 0 ? (
-                classData.teachers.map((teacher: TeacherSummaryDTO) => (
-                  <div key={teacher.id} className="flex items-start justify-between p-2 rounded-md bg-muted/50">
-                    <div>
-                      <div className="font-medium">{teacher.fullName}</div>
-                      <div className="text-xs text-muted-foreground">{teacher.email}</div>
+                {!isLoadingClass && classData && (
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
+                    <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2 -mt-6 pt-6">
+                      <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-muted/50">
+                        <TabsTrigger
+                          value="overview"
+                          className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
+                        >
+                          Tổng quan
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="students"
+                          className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
+                        >
+                          Học viên
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="sessions"
+                          className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
+                        >
+                          Buổi học
+                        </TabsTrigger>
+                      </TabsList>
                     </div>
-                    <Badge variant="outline" className="text-xs">
-                      {teacher.sessionCount} buổi học
-                    </Badge>
-                  </div>
-                ))
-              ) : (
-                <div className="text-sm text-muted-foreground">Chưa có giảng viên được phân công</div>
-              )}
-            </div>
-          </div>
 
-          {/* Room Info */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4" />
-              Phòng học
-            </div>
-            <div className="font-medium">{classData.room}</div>
+                    <TabsContent value="overview" className="space-y-6">
+                      <OverviewTab classData={classData} />
+                    </TabsContent>
+
+                    <TabsContent value="students" className="space-y-6">
+                      <StudentsTab
+                        students={students}
+                        isLoading={isLoadingStudents}
+                        totalStudents={totalStudents}
+                        onViewAll={() => {
+                          // TODO: Navigate to full students list or open dialog
+                        }}
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="sessions" className="space-y-6">
+                      <div className="rounded-lg border border-dashed p-12 text-center">
+                        <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                        <p className="text-muted-foreground">Danh sách buổi học sẽ được hiển thị ở đây</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Tính năng đang được phát triển
+                        </p>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                )}
+              </div>
+            </main>
           </div>
         </div>
+      </SidebarInset>
 
-        {/* Schedule & Capacity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Schedule */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Lịch học</h3>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <div className="font-medium">
-                    {new Date(classData.startDate).toLocaleDateString()} - {new Date(classData.plannedEndDate).toLocaleDateString()}
-                  </div>
-                  <div className="text-sm text-muted-foreground">{classData.scheduleSummary}</div>
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* Enrollment Dialogs */}
+      {classData && (
+        <>
+          <StudentSelectionDialog
+            classId={classId}
+            open={studentSelectionOpen}
+            onOpenChange={setStudentSelectionOpen}
+            onSuccess={() => {
+              // API will auto-refresh via cache invalidation
+            }}
+          />
 
-          {/* Capacity */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Ghi danh</h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Đã ghi danh</span>
-                <span className="font-medium">{classData.enrollmentSummary.currentEnrolled}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Sức chứa tối đa</span>
-                <span className="font-medium">{classData.enrollmentSummary.maxCapacity}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Còn trống</span>
-                <span className="font-medium">{classData.enrollmentSummary.availableSlots}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Tỷ lệ lấp đầy</span>
-                <Badge variant="outline" className={getCapacityColor(classData.enrollmentSummary.currentEnrolled, classData.enrollmentSummary.maxCapacity)}>
-                  {classData.enrollmentSummary.utilizationRate.toFixed(1)}%
-                </Badge>
-              </div>
-            </div>
-          </div>
-        </div>
+          <CreateStudentDialog
+            classId={classId}
+            branchId={classData.branch.id}
+            open={createStudentOpen}
+            onOpenChange={setCreateStudentOpen}
+            onSuccess={(studentData) => {
+              setCreatedStudentData(studentData)
+              setSuccessDialogOpen(true)
+            }}
+          />
 
-        {/* Upcoming Sessions */}
-        {classData.upcomingSessions && classData.upcomingSessions.length > 0 && (
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Buổi học sắp tới</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {classData.upcomingSessions.slice(0, 6).map((session) => (
-                <div key={session.id} className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="font-medium">{new Date(session.date).toLocaleDateString()}</div>
-                    <Badge variant="outline">{session.status}</Badge>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                    <Clock className="h-3 w-3" />
-                    {session.startTime} - {session.endTime}
-                  </div>
-                  <div className="text-sm">{session.room}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+          <StudentCreatedSuccessDialog
+            open={successDialogOpen}
+            onOpenChange={setSuccessDialogOpen}
+            studentData={createdStudentData}
+            onEnrollNow={() => {
+              toast.info('Tính năng ghi danh sẽ được triển khai sau')
+            }}
+            onAddLater={() => {
+              toast.success('Học viên đã được tạo thành công')
+            }}
+          />
 
-        {/* Students */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Học viên đã ghi danh</h3>
-            <Button variant="outline" size="sm">
-              Xem tất cả học viên
-            </Button>
-          </div>
-
-          {isLoadingStudents ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-16 bg-gray-200 rounded animate-pulse"></div>
-              ))}
-            </div>
-          ) : students.length > 0 ? (
-            <div className="border rounded-lg overflow-x-auto">
-              <Table className="min-w-[700px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="min-w-[180px]">Học viên</TableHead>
-                    <TableHead className="min-w-[180px]">Thư điện tử</TableHead>
-                    <TableHead className="min-w-[120px]">Điện thoại</TableHead>
-                    <TableHead className="min-w-[120px]">Chi nhánh</TableHead>
-                    <TableHead className="min-w-[120px]">Ngày ghi danh</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {students.map((student: ClassStudentDTO) => (
-                    <TableRow key={student.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={student.avatarUrl || ""} alt={student.fullName} />
-                            <AvatarFallback className="text-xs">
-                              {student.fullName?.charAt(0)?.toUpperCase() || "U"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">{student.fullName}</div>
-                            <div className="text-sm text-muted-foreground">{student.studentCode}</div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{student.email}</TableCell>
-                      <TableCell>{student.phone}</TableCell>
-                      <TableCell>{student.branchName}</TableCell>
-                      <TableCell>{new Date(student.enrolledAt).toLocaleDateString()}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Chưa có học viên nào ghi danh.</p>
-            </div>
-          )}
-        </div>
-
-        {/* Enrollment Dialogs */}
-        <StudentSelectionDialog
-          classId={classId}
-          open={studentSelectionOpen}
-          onOpenChange={setStudentSelectionOpen}
-          onSuccess={() => {
-            // API will auto-refresh via cache invalidation
-          }}
-        />
-
-        <CreateStudentDialog
-          classId={classId}
-          branchId={classData.branch.id}
-          open={createStudentOpen}
-          onOpenChange={setCreateStudentOpen}
-          onSuccess={(studentData) => {
-            // Store student data and show success dialog
-            setCreatedStudentData(studentData)
-            setSuccessDialogOpen(true)
-          }}
-        />
-
-        <StudentCreatedSuccessDialog
-          open={successDialogOpen}
-          onOpenChange={setSuccessDialogOpen}
-          studentData={createdStudentData}
-          onEnrollNow={() => {
-            // TODO: Implement enrollment API call when backend is ready
-            toast.info('Tính năng ghi danh sẽ được triển khai sau')
-          }}
-          onAddLater={() => {
-            toast.success('Học viên đã được tạo thành công')
-          }}
-        />
-
-        <EnrollmentImportDialog
-          classId={classId}
-          open={enrollmentDialogOpen}
-          onOpenChange={setEnrollmentDialogOpen}
-          onSuccess={() => {
-            // API will auto-refresh via cache invalidation
-          }}
-        />
-      </div>
-    </DashboardLayout>
+          <EnrollmentImportDialog
+            classId={classId}
+            open={enrollmentDialogOpen}
+            onOpenChange={setEnrollmentDialogOpen}
+            onSuccess={() => {
+              // API will auto-refresh via cache invalidation
+            }}
+          />
+        </>
+      )}
+    </SidebarProvider>
   )
 }
