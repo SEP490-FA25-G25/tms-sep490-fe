@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import {
   Drawer,
   DrawerContent,
@@ -20,6 +21,7 @@ import {
   X,
   Facebook,
   Loader2,
+  ExternalLink,
 } from 'lucide-react'
 import type { StudentDetailDTO } from '@/store/services/studentApi'
 
@@ -59,6 +61,8 @@ export function StudentDetailDrawer({
   onEnroll,
   hideEnrollButton = false,
 }: StudentDetailDrawerProps) {
+  const navigate = useNavigate()
+  
   // StudentActiveClassDTO.status là class status (IN_PROGRESS, COMPLETED, etc.)
   // Coi như enrolled nếu class đang IN_PROGRESS
   const hasActiveEnrollment = student?.currentClasses?.some(
@@ -222,15 +226,28 @@ export function StudentDetailDrawer({
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {student.currentClasses.map((classItem) => (
-                      <div
-                        key={classItem.id}
-                        className="rounded-lg border p-3 space-y-2"
+                    {student.currentClasses.map((classItem) => {
+                      // API có thể trả về id hoặc classId
+                      const classId = classItem.id ?? (classItem as unknown as { classId?: number }).classId
+                      return (
+                      <button
+                        key={classId}
+                        type="button"
+                        className="w-full text-left rounded-lg border p-3 space-y-2 hover:bg-accent hover:border-accent-foreground/20 transition-colors cursor-pointer group"
+                        onClick={() => {
+                          if (!classId) {
+                            console.warn('Class ID not found:', classItem)
+                            return
+                          }
+                          onOpenChange(false)
+                          navigate(`/academic/classes/${classId}`)
+                        }}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium truncate">
+                            <div className="font-medium truncate group-hover:text-primary flex items-center gap-1">
                               {classItem.className}
+                              <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </div>
                             <div className="text-sm text-muted-foreground">
                               {classItem.classCode} • {classItem.courseName}
@@ -245,8 +262,8 @@ export function StudentDetailDrawer({
                             <span> • Đi học: {classItem.attendanceRate}%</span>
                           )}
                         </div>
-                      </div>
-                    ))}
+                      </button>
+                    )})}
                   </div>
                 )}
               </TabsContent>
