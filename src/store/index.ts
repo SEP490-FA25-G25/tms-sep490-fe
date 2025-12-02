@@ -22,12 +22,12 @@ import { subjectAdminApi } from "./services/subjectAdminApi";
 import { analyticsApi } from "./services/analyticsApi";
 import { centerApi } from "./services/centerApi";
 import { branchApi } from "./services/branchApi";
-import { enumApi } from './services/enumApi'
-import { uploadApi } from './services/uploadApi'
-import { qaApi } from './services/qaApi'
-import { studentFeedbackApi } from './services/studentFeedbackApi'
-import { resourceApi } from './services/resourceApi'
-import { timeSlotApi } from './services/timeSlotApi'
+import { enumApi } from "./services/enumApi";
+import { uploadApi } from "./services/uploadApi";
+import { qaApi } from "./services/qaApi";
+import { studentFeedbackApi } from "./services/studentFeedbackApi";
+import { resourceApi } from "./services/resourceApi";
+import { timeSlotApi } from "./services/timeSlotApi";
 import authSlice, {
   setCredentials,
   logout,
@@ -116,8 +116,7 @@ export const store = configureStore({
       .concat(qaApi.middleware)
       .concat(studentFeedbackApi.middleware)
       .concat(resourceApi.middleware)
-      .concat(timeSlotApi.middleware)
-      .concat(teacherAvailabilityApi.middleware),
+      .concat(timeSlotApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

@@ -141,18 +141,18 @@ export default function AdminAnalyticsPage() {
     icon: React.ComponentType<{ className?: string }>;
   }) => {
     return (
-      <Card className="border border-border/50 bg-background/90 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-        <div className="flex items-center justify-between gap-4 px-4 py-3">
-          <div className="flex flex-col gap-1">
-            <span className="text-sm text-muted-foreground font-medium">
+      <Card className="border border-border/60 bg-background shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+        <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs font-medium text-muted-foreground">
               {label}
             </span>
-            <span className="text-2xl font-semibold text-foreground leading-tight">
+            <span className="text-xl font-semibold text-foreground leading-snug">
               {formatNumber(value)}
             </span>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-            <Icon className="h-5 w-5 text-muted-foreground" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
+            <Icon className="h-4 w-4 text-muted-foreground" />
           </div>
         </div>
       </Card>
@@ -266,7 +266,7 @@ export default function AdminAnalyticsPage() {
 
                     {/* User & class statistics */}
                     <div className="grid gap-4 px-4 lg:px-6 lg:grid-cols-2">
-                      <Card className="border-muted">
+                      <Card className="border border-border/60 bg-background shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                         <CardHeader>
                           <CardTitle>Người dùng theo vai trò</CardTitle>
                           <CardDescription>
@@ -313,7 +313,7 @@ export default function AdminAnalyticsPage() {
                         </CardContent>
                       </Card>
 
-                      <Card className="border-muted">
+                      <Card className="border border-border/60 bg-background shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                         <CardHeader>
                           <CardTitle>Tình trạng lớp học</CardTitle>
                           <CardDescription>
@@ -370,7 +370,7 @@ export default function AdminAnalyticsPage() {
 
                     {/* Charts */}
                     <div className="grid gap-4 px-4 lg:px-6 xl:grid-cols-3">
-                      <Card className="border-muted xl:col-span-2">
+                      <Card className="border border-border/60 bg-background shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md xl:col-span-2">
                         <CardHeader>
                           <CardTitle>Xu hướng người dùng mới</CardTitle>
                           <CardDescription>
@@ -428,7 +428,7 @@ export default function AdminAnalyticsPage() {
                         </CardContent>
                       </Card>
 
-                      <Card className="border-muted">
+                      <Card className="border border-border/60 bg-background shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                         <CardHeader>
                           <CardTitle>Tình trạng lớp học</CardTitle>
                           <CardDescription>
@@ -494,7 +494,7 @@ export default function AdminAnalyticsPage() {
 
                     {/* Branch performance */}
                     <div className="grid gap-4 px-4 lg:px-6 lg:grid-cols-2">
-                      <Card className="border-muted">
+                      <Card className="border border-border/60 bg-background shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                         <CardHeader>
                           <CardTitle>Phân bố học viên theo chi nhánh</CardTitle>
                           <CardDescription>
@@ -550,7 +550,7 @@ export default function AdminAnalyticsPage() {
                         </CardContent>
                       </Card>
 
-                      <Card className="border-muted">
+                      <Card className="border border-border/60 bg-background shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                         <CardHeader>
                           <CardTitle>Bảng xếp hạng chi nhánh</CardTitle>
                           <CardDescription>
