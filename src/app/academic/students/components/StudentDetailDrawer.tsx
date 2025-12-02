@@ -22,6 +22,12 @@ import {
   Facebook,
   Loader2,
   ExternalLink,
+  BookOpen,
+  PenTool,
+  MessageCircle,
+  Headphones,
+  Brain,
+  FileText,
 } from 'lucide-react'
 import type { StudentDetailDTO } from '@/store/services/studentApi'
 
@@ -41,6 +47,18 @@ const genderLabels: Record<string, string> = {
   FEMALE: 'Nữ',
   OTHER: 'Khác',
 }
+
+// Skill assessment config
+const skillConfig = {
+  READING: { icon: BookOpen, name: 'Đọc hiểu', color: 'text-blue-600 bg-blue-50' },
+  WRITING: { icon: PenTool, name: 'Viết', color: 'text-green-600 bg-green-50' },
+  SPEAKING: { icon: MessageCircle, name: 'Nói', color: 'text-orange-600 bg-orange-50' },
+  LISTENING: { icon: Headphones, name: 'Nghe', color: 'text-purple-600 bg-purple-50' },
+  GENERAL: { icon: Brain, name: 'Tổng quan', color: 'text-gray-600 bg-gray-50' },
+  VOCABULARY: { icon: BookOpen, name: 'Từ vựng', color: 'text-cyan-600 bg-cyan-50' },
+  GRAMMAR: { icon: FileText, name: 'Ngữ pháp', color: 'text-indigo-600 bg-indigo-50' },
+  KANJI: { icon: PenTool, name: 'Kanji', color: 'text-red-600 bg-red-50' },
+} as const
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return '—'
@@ -214,6 +232,76 @@ export function StudentDetailDrawer({
                       </span>
                       <span>{formatDateTime(student.createdAt ?? null)}</span>
                     </div>
+                  </div>
+
+                  {/* Đánh giá kỹ năng */}
+                  <div className="space-y-3 pt-2 border-t">
+                    <h4 className="text-sm font-medium text-muted-foreground">
+                      Đánh giá kỹ năng
+                    </h4>
+
+                    {!student.skillAssessments || student.skillAssessments.length === 0 ? (
+                      <div className="text-sm text-muted-foreground py-2">
+                        Chưa có bài kiểm tra đánh giá
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {student.skillAssessments.map((assessment) => {
+                          const skillInfo = skillConfig[assessment.skill as keyof typeof skillConfig]
+                          if (!skillInfo) return null
+                          const SkillIcon = skillInfo.icon
+                          
+                          return (
+                            <div
+                              key={assessment.id}
+                              className="rounded-lg border p-3 space-y-2"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className={`p-1.5 rounded ${skillInfo.color}`}>
+                                    <SkillIcon className="h-3.5 w-3.5" />
+                                  </div>
+                                  <span className="font-medium text-sm">{skillInfo.name}</span>
+                                  <span className="text-xs px-1.5 py-0.5 bg-muted rounded font-mono">
+                                    {assessment.levelCode}
+                                  </span>
+                                </div>
+                                {(assessment.scaledScore || assessment.rawScore) && (
+                                  <span className="text-sm font-medium">
+                                    {assessment.scaledScore ?? assessment.rawScore} điểm
+                                  </span>
+                                )}
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                                <div>
+                                  <span className="font-medium">Trình độ:</span> {assessment.levelName}
+                                </div>
+                                <div>
+                                  <span className="font-medium">Ngày KT:</span> {formatDate(assessment.assessmentDate)}
+                                </div>
+                                {assessment.assessmentType && (
+                                  <div>
+                                    <span className="font-medium">Loại:</span> {assessment.assessmentType}
+                                  </div>
+                                )}
+                                {assessment.assessedBy && (
+                                  <div>
+                                    <span className="font-medium">Người ĐG:</span> {assessment.assessedBy.fullName}
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {assessment.note && (
+                                <div className="text-xs text-muted-foreground pt-1 border-t">
+                                  <span className="font-medium">Ghi chú:</span> {assessment.note}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
               </TabsContent>
