@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 import { CLASS_STATUS_STYLES, getStatusStyle } from '@/lib/status-colors'
 import type { ClassDetailDTO } from '@/types/studentClass'
 import { CLASS_STATUSES, MODALITIES } from '@/types/studentClass'
-import { BookOpen, Calendar, Clock, MapPin, Users } from 'lucide-react'
+import { BookOpen, Building2, Calendar, Clock, MapPin, Users } from 'lucide-react'
 
 interface ClassHeaderProps {
   classDetail: ClassDetailDTO
@@ -19,10 +19,7 @@ const formatDate = (dateString?: string) => {
 }
 
 export function ClassHeader({ classDetail }: ClassHeaderProps) {
-  const primaryTeacher = classDetail.teachers.find((t) => t.isPrimaryInstructor) ?? classDetail.teachers[0]
-  const teacherCount = classDetail.teachers.length
   const scheduleDisplay = classDetail.scheduleSummary || 'Chưa có lịch'
-  const locationDisplay = classDetail.modality === 'ONLINE' ? 'Online' : classDetail.branch?.name || '—'
   const enrollment = classDetail.enrollmentSummary?.totalEnrolled ?? 0
   const capacity = classDetail.enrollmentSummary?.maxCapacity ?? classDetail.maxCapacity ?? 0
 
@@ -33,42 +30,54 @@ export function ClassHeader({ classDetail }: ClassHeaderProps) {
           {/* Header top row */}
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-3">
-                <Badge className={cn('text-xs', getStatusStyle(CLASS_STATUS_STYLES, classDetail.status))}>
-                  {CLASS_STATUSES[classDetail.status]}
-                </Badge>
-                <Badge variant="outline" className="text-xs">
-                  {MODALITIES[classDetail.modality]}
-                </Badge>
-              </div>
+              <Badge className={cn('text-xs', getStatusStyle(CLASS_STATUS_STYLES, classDetail.status))}>
+                {CLASS_STATUSES[classDetail.status]}
+              </Badge>
               <div className="space-y-1">
                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
                   {classDetail.name}
                 </h1>
                 <p className="text-lg text-muted-foreground">{classDetail.code}</p>
               </div>
-              <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <BookOpen className="h-4 w-4" />
-                  <span>Môn học: {classDetail.course?.name}</span>
-                </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                {classDetail.course?.subject && (
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4" />
+                    <span>{classDetail.course.subject.name}</span>
+                  </div>
+                )}
+                {classDetail.course?.level && (
+                  <Badge variant="outline" className="text-xs font-medium border-primary/30 text-primary bg-primary/5">
+                    {classDetail.course.level.name}
+                  </Badge>
+                )}
+                {classDetail.branch && (
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4" />
+                    <span>{classDetail.branch.name}</span>
+                  </div>
+                )}
+                {!classDetail.course?.subject && classDetail.course?.name && (
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4" />
+                    <span>{classDetail.course.name}</span>
+                  </div>
+                )}
               </div>
             </div>
-
           </div>
 
-          {/* Info grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+          {/* Info grid - 4 cards like AA header */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="rounded-lg border border-border/70 bg-muted/10 p-3 space-y-1">
               <div className="flex items-center gap-2 text-muted-foreground">
-                <Users className="h-4 w-4" />
-                <span className="text-sm font-medium">Giáo viên</span>
+                <MapPin className="h-4 w-4" />
+                <span className="text-sm font-medium">Hình thức</span>
               </div>
               <p className="text-sm font-semibold text-foreground">
-                {primaryTeacher?.teacherName || 'Chưa phân công'}
-                {teacherCount > 1 && (
-                  <span className="text-xs text-muted-foreground"> +{teacherCount - 1}</span>
-                )}
+                {classDetail.modality
+                  ? MODALITIES[classDetail.modality as keyof typeof MODALITIES] || classDetail.modality
+                  : 'Chưa xác định'}
               </p>
             </div>
 
@@ -78,14 +87,6 @@ export function ClassHeader({ classDetail }: ClassHeaderProps) {
                 <span className="text-sm font-medium">Lịch học</span>
               </div>
               <p className="text-sm font-semibold text-foreground">{scheduleDisplay}</p>
-            </div>
-
-            <div className="rounded-lg border border-border/70 bg-muted/10 p-3 space-y-1">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="h-4 w-4" />
-                <span className="text-sm font-medium">Địa điểm</span>
-              </div>
-              <p className="text-sm font-semibold text-foreground">{locationDisplay}</p>
             </div>
 
             <div className="rounded-lg border border-border/70 bg-muted/10 p-3 space-y-1">

@@ -164,7 +164,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
           <BookOpen className="h-5 w-5 text-primary" />
           Tổng quan khóa học
         </h3>
-        <Card className="py-0">
+        <Card>
           <CardContent className="space-y-6">
             <div>
               <h4 className="text-sm font-medium text-muted-foreground mb-2">Tên khóa học</h4>

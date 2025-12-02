@@ -70,10 +70,30 @@ export interface StudentClassDTO {
 }
 
 // Nested interfaces for ClassDetailDTO
+export interface SubjectInfo {
+  id: number;
+  code: string;
+  name: string;
+}
+
+export interface LevelInfo {
+  id: number;
+  code: string;
+  name: string;
+}
+
 export interface CourseInfo {
   id: number;
   name: string;
   code: string;
+  description?: string;
+  totalHours?: number;
+  numberOfSessions?: number;
+  hoursPerSession?: number;
+  prerequisites?: string;
+  targetAudience?: string;
+  subject?: SubjectInfo;
+  level?: LevelInfo;
 }
 
 export interface BranchInfo {

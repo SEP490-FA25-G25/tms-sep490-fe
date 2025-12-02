@@ -59,10 +59,6 @@ const ClassmatesTab: React.FC<ClassmatesTabProps> = ({ classmates, isLoading, en
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h3 className="text-lg font-semibold">Thành viên lớp</h3>
-          <p className="text-sm text-muted-foreground">
-            {enrollmentSummary.totalEnrolled}/{enrollmentSummary.maxCapacity} học viên ·
-            Còn {enrollmentSummary.maxCapacity - enrollmentSummary.totalEnrolled} chỗ trống
-          </p>
         </div>
         <div className="relative w-full md:w-64">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
