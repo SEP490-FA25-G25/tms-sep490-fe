@@ -76,8 +76,8 @@ export default function ResourceDetailPage() {
     }, [sessions]);
 
     // Filter and paginate sessions
-    const { filteredSessions, paginatedSessions, totalPages, totalCount } = useMemo(() => {
-        if (!sessions) return { filteredSessions: [], paginatedSessions: [], totalPages: 0, totalCount: 0 };
+    const { paginatedSessions, totalPages, totalCount } = useMemo(() => {
+        if (!sessions) return { paginatedSessions: [], totalPages: 0, totalCount: 0 };
         
         let filtered = [...sessions];
         
@@ -151,7 +151,6 @@ export default function ResourceDetailPage() {
         const paginated = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
         
         return { 
-            filteredSessions: filtered, 
             paginatedSessions: paginated, 
             totalPages: total,
             totalCount: filtered.length 
