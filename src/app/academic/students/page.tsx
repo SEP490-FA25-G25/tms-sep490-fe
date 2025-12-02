@@ -333,70 +333,70 @@ export default function StudentListPage() {
         </div>
 
         {/* Search & Filters */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          {/* Search */}
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Search - bên trái */}
+          <div className="relative w-64">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Tìm theo mã, tên, SĐT, email..."
+              placeholder="Tìm mã, tên, SĐT, email..."
               value={filters.search}
               onChange={(e) => handleFilterChange('search', e.target.value)}
-              className="pl-9"
+              className="pl-8 h-9"
             />
           </div>
 
-          {/* Status Filter */}
-          <Select
-            value={filters.status || 'all'}
-            onValueChange={(value) =>
-              handleFilterChange('status', value === 'all' ? undefined : value as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED')
-            }
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Trạng thái" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Trạng thái: Tất cả</SelectItem>
-              <SelectItem value="ACTIVE">Hoạt động</SelectItem>
-              <SelectItem value="SUSPENDED">Tạm khóa</SelectItem>
-              <SelectItem value="INACTIVE">Đã nghỉ</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Filters - bên phải */}
+          <div className="flex items-center gap-2 ml-auto">
+            <Select
+              value={filters.status || 'all'}
+              onValueChange={(value) =>
+                handleFilterChange('status', value === 'all' ? undefined : value as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED')
+              }
+            >
+              <SelectTrigger className="h-9 w-auto min-w-[140px]">
+                <SelectValue placeholder="Trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Trạng thái: Tất cả</SelectItem>
+                <SelectItem value="ACTIVE">Hoạt động</SelectItem>
+                <SelectItem value="SUSPENDED">Tạm khóa</SelectItem>
+                <SelectItem value="INACTIVE">Đã nghỉ</SelectItem>
+              </SelectContent>
+            </Select>
 
-          {/* Gender Filter */}
-          <Select
-            value={filters.gender || 'all'}
-            onValueChange={(value) =>
-              handleFilterChange('gender', value === 'all' ? undefined : value as 'MALE' | 'FEMALE' | 'OTHER')
-            }
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Giới tính" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Giới tính: Tất cả</SelectItem>
-              <SelectItem value="MALE">Nam</SelectItem>
-              <SelectItem value="FEMALE">Nữ</SelectItem>
-              <SelectItem value="OTHER">Khác</SelectItem>
-            </SelectContent>
-          </Select>
+            <Select
+              value={filters.gender || 'all'}
+              onValueChange={(value) =>
+                handleFilterChange('gender', value === 'all' ? undefined : value as 'MALE' | 'FEMALE' | 'OTHER')
+              }
+            >
+              <SelectTrigger className="h-9 w-auto min-w-[120px]">
+                <SelectValue placeholder="Giới tính" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Giới tính: Tất cả</SelectItem>
+                <SelectItem value="MALE">Nam</SelectItem>
+                <SelectItem value="FEMALE">Nữ</SelectItem>
+                <SelectItem value="OTHER">Khác</SelectItem>
+              </SelectContent>
+            </Select>
 
-          {/* Enrollment Status Filter */}
-          <Select
-            value={filters.enrollmentStatus}
-            onValueChange={(value) =>
-              handleFilterChange('enrollmentStatus', value as EnrollmentFilter)
-            }
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Tình trạng học" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Ghi danh: Tất cả</SelectItem>
-              <SelectItem value="enrolled">Đang học</SelectItem>
-              <SelectItem value="not_enrolled">Chưa ghi danh</SelectItem>
-            </SelectContent>
-          </Select>
+            <Select
+              value={filters.enrollmentStatus}
+              onValueChange={(value) =>
+                handleFilterChange('enrollmentStatus', value as EnrollmentFilter)
+              }
+            >
+              <SelectTrigger className="h-9 w-auto min-w-[130px]">
+                <SelectValue placeholder="Tình trạng học" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Ghi danh: Tất cả</SelectItem>
+                <SelectItem value="enrolled">Đang học</SelectItem>
+                <SelectItem value="not_enrolled">Chưa ghi danh</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Student List */}

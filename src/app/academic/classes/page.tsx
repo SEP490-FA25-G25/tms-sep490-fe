@@ -364,67 +364,67 @@ export default function ClassListPage() {
         </div>
 
         {/* Search & Filters */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          {/* Search */}
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Search - bên trái */}
+          <div className="relative w-64">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Tìm theo mã, tên lớp, khóa học..."
+              placeholder="Tìm mã, tên lớp, khóa học..."
               value={filters.search}
               onChange={(e) => handleFilterChange('search', e.target.value)}
-              className="pl-9"
+              className="pl-8 h-9"
             />
           </div>
 
-          {/* Status Filter */}
-          <Select
-            value={filters.status || 'all'}
-            onValueChange={(value) => handleFilterChange('status', value === 'all' ? undefined : value)}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Trạng thái" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Trạng thái: Tất cả</SelectItem>
-              <SelectItem value="DRAFT">Bản nháp</SelectItem>
-              <SelectItem value="SCHEDULED">Đã lên lịch</SelectItem>
-              <SelectItem value="ONGOING">Đang diễn ra</SelectItem>
-              <SelectItem value="COMPLETED">Đã hoàn thành</SelectItem>
-              <SelectItem value="CANCELLED">Đã hủy</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Filters - bên phải */}
+          <div className="flex items-center gap-2 ml-auto">
+            <Select
+              value={filters.status || 'all'}
+              onValueChange={(value) => handleFilterChange('status', value === 'all' ? undefined : value)}
+            >
+              <SelectTrigger className="h-9 w-auto min-w-[140px]">
+                <SelectValue placeholder="Trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Trạng thái: Tất cả</SelectItem>
+                <SelectItem value="DRAFT">Bản nháp</SelectItem>
+                <SelectItem value="SCHEDULED">Đã lên lịch</SelectItem>
+                <SelectItem value="ONGOING">Đang diễn ra</SelectItem>
+                <SelectItem value="COMPLETED">Đã hoàn thành</SelectItem>
+                <SelectItem value="CANCELLED">Đã hủy</SelectItem>
+              </SelectContent>
+            </Select>
 
-          {/* Approval Status Filter */}
-          <Select
-            value={filters.approvalStatus || 'all'}
-            onValueChange={(value) => handleFilterChange('approvalStatus', value === 'all' ? undefined : value)}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Phê duyệt" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Phê duyệt: Tất cả</SelectItem>
-              <SelectItem value="PENDING">Chờ duyệt</SelectItem>
-              <SelectItem value="APPROVED">Đã duyệt</SelectItem>
-              <SelectItem value="REJECTED">Đã từ chối</SelectItem>
-            </SelectContent>
-          </Select>
+            <Select
+              value={filters.approvalStatus || 'all'}
+              onValueChange={(value) => handleFilterChange('approvalStatus', value === 'all' ? undefined : value)}
+            >
+              <SelectTrigger className="h-9 w-auto min-w-[130px]">
+                <SelectValue placeholder="Phê duyệt" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Phê duyệt: Tất cả</SelectItem>
+                <SelectItem value="PENDING">Chờ duyệt</SelectItem>
+                <SelectItem value="APPROVED">Đã duyệt</SelectItem>
+                <SelectItem value="REJECTED">Đã từ chối</SelectItem>
+              </SelectContent>
+            </Select>
 
-          {/* Modality Filter */}
-          <Select
-            value={filters.modality || 'all'}
-            onValueChange={(value) => handleFilterChange('modality', value === 'all' ? undefined : value)}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Hình thức" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Hình thức: Tất cả</SelectItem>
-              <SelectItem value="ONLINE">Trực tuyến</SelectItem>
-              <SelectItem value="OFFLINE">Trực tiếp</SelectItem>
-              <SelectItem value="HYBRID">Kết hợp</SelectItem>
-            </SelectContent>
-          </Select>
+            <Select
+              value={filters.modality || 'all'}
+              onValueChange={(value) => handleFilterChange('modality', value === 'all' ? undefined : value)}
+            >
+              <SelectTrigger className="h-9 w-auto min-w-[130px]">
+                <SelectValue placeholder="Hình thức" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Hình thức: Tất cả</SelectItem>
+                <SelectItem value="ONLINE">Trực tuyến</SelectItem>
+                <SelectItem value="OFFLINE">Trực tiếp</SelectItem>
+                <SelectItem value="HYBRID">Kết hợp</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Class List */}

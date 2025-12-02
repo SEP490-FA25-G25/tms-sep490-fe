@@ -690,76 +690,78 @@ export default function AcademicTeacherRequestsPage() {
         </div>
 
         <Tabs defaultValue="pending" className="space-y-4">
-          {/* Tabs + filters in one row (like student requests page) */}
-          <div className="flex flex-wrap items-center gap-3 w-full">
-            <TabsList>
-              <TabsTrigger value="pending">
+          {/* Tabs + filters in one row */}
+          <div className="flex flex-wrap items-center gap-2">
+            <TabsList className="h-9">
+              <TabsTrigger value="pending" className="h-7">
                 Hàng đợi ({teacherPendingRequests.length})
               </TabsTrigger>
-              <TabsTrigger value="history">
+              <TabsTrigger value="history" className="h-7">
                 Lịch sử ({teacherHistoryRequests.length})
               </TabsTrigger>
             </TabsList>
 
-            {/* Search first */}
-            <div className="relative flex-1 min-w-[100px]">
+            {/* Search - bên trái */}
+            <div className="relative w-64">
+              <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Tìm theo giáo viên, lớp học, khóa học..."
+                placeholder="Tìm giáo viên, lớp, khóa học..."
                 value={teacherSearchKeyword}
                 onChange={(event) =>
                   setTeacherSearchKeyword(event.target.value)
                 }
-                className="pl-9"
+                className="pl-8 h-9"
               />
-              <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             </div>
 
-            {/* Filters last */}
-            <Select
-              value={teacherTypeFilter}
-              onValueChange={(value) =>
-                setTeacherTypeFilter(value as "ALL" | TeacherRequestType)
-              }
-            >
-              <SelectTrigger className="flex-1 min-w-[100px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Tất cả loại</SelectItem>
-                <SelectItem value="MODALITY_CHANGE">
-                  {TEACHER_REQUEST_TYPE_LABELS.MODALITY_CHANGE}
-                </SelectItem>
-                <SelectItem value="RESCHEDULE">
-                  {TEACHER_REQUEST_TYPE_LABELS.RESCHEDULE}
-                </SelectItem>
-                <SelectItem value="REPLACEMENT">
-                  {TEACHER_REQUEST_TYPE_LABELS.REPLACEMENT}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Filters - bên phải */}
+            <div className="flex items-center gap-2 ml-auto">
+              <Select
+                value={teacherTypeFilter}
+                onValueChange={(value) =>
+                  setTeacherTypeFilter(value as "ALL" | TeacherRequestType)
+                }
+              >
+                <SelectTrigger className="h-9 w-auto min-w-[150px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Tất cả loại</SelectItem>
+                  <SelectItem value="MODALITY_CHANGE">
+                    {TEACHER_REQUEST_TYPE_LABELS.MODALITY_CHANGE}
+                  </SelectItem>
+                  <SelectItem value="RESCHEDULE">
+                    {TEACHER_REQUEST_TYPE_LABELS.RESCHEDULE}
+                  </SelectItem>
+                  <SelectItem value="REPLACEMENT">
+                    {TEACHER_REQUEST_TYPE_LABELS.REPLACEMENT}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select
-              value={teacherStatusFilter}
-              onValueChange={(value) =>
-                setTeacherStatusFilter(value as "ALL" | TeacherRequestStatus)
-              }
-            >
-              <SelectTrigger className="flex-1 min-w-[100px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Tất cả trạng thái</SelectItem>
-                <SelectItem value="APPROVED">
-                  {TEACHER_REQUEST_STATUS_META.APPROVED.label}
-                </SelectItem>
-                <SelectItem value="REJECTED">
-                  {TEACHER_REQUEST_STATUS_META.REJECTED.label}
-                </SelectItem>
-                <SelectItem value="WAITING_CONFIRM">
-                  {TEACHER_REQUEST_STATUS_META.WAITING_CONFIRM.label}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+              <Select
+                value={teacherStatusFilter}
+                onValueChange={(value) =>
+                  setTeacherStatusFilter(value as "ALL" | TeacherRequestStatus)
+                }
+              >
+                <SelectTrigger className="h-9 w-auto min-w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Tất cả trạng thái</SelectItem>
+                  <SelectItem value="APPROVED">
+                    {TEACHER_REQUEST_STATUS_META.APPROVED.label}
+                  </SelectItem>
+                  <SelectItem value="REJECTED">
+                    {TEACHER_REQUEST_STATUS_META.REJECTED.label}
+                  </SelectItem>
+                  <SelectItem value="WAITING_CONFIRM">
+                    {TEACHER_REQUEST_STATUS_META.WAITING_CONFIRM.label}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Teacher Pending Requests Tab */}
