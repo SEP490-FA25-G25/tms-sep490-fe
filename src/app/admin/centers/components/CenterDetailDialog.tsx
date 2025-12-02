@@ -142,7 +142,7 @@ export function CenterDetailDialog({
   return (
     <>
       <FullScreenModal open={open} onOpenChange={onOpenChange}>
-        <FullScreenModalContent className="w-[min(95vw,80rem)] max-w-5xl">
+        <FullScreenModalContent size="2xl">
           <FullScreenModalHeader className="flex items-start justify-between">
             <div>
               <FullScreenModalTitle className="text-2xl">

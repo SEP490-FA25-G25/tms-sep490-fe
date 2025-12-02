@@ -259,7 +259,7 @@ export function EnrollmentImportDialog({
 
   return (
     <FullScreenModal open={open} onOpenChange={onOpenChange}>
-      <FullScreenModalContent className="bg-muted/10 p-0 gap-0">
+      <FullScreenModalContent size="2xl" className="bg-muted/10 p-0 gap-0">
         <FullScreenModalHeader className="bg-background border-b px-6 py-4">
           <FullScreenModalTitle className="text-xl font-semibold tracking-tight">
             Nhập sinh viên qua Excel

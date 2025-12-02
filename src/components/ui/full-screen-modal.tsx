@@ -1,5 +1,6 @@
 import * as React from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
+import { cva, type VariantProps } from 'class-variance-authority'
 import { X } from 'lucide-react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
@@ -27,23 +28,45 @@ const FullScreenModalOverlay = React.forwardRef<
 ))
 FullScreenModalOverlay.displayName = DialogPrimitive.Overlay.displayName
 
+const fullScreenModalContentVariants = cva(
+  [
+    'fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%]',
+    'flex flex-col',
+    'bg-background',
+    'border rounded-lg shadow-lg overflow-hidden',
+    'duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+  ],
+  {
+    variants: {
+      size: {
+        sm: 'w-full max-w-md max-h-[85vh]',
+        md: 'w-full max-w-lg max-h-[85vh]',
+        lg: 'w-full max-w-2xl max-h-[85vh]',
+        xl: 'w-full max-w-4xl max-h-[90vh]',
+        '2xl': 'w-full max-w-5xl max-h-[90vh]',
+        '3xl': 'w-full max-w-6xl max-h-[90vh]',
+        full: 'w-[95vw] h-[95vh]',
+      },
+    },
+    defaultVariants: {
+      size: 'full',
+    },
+  }
+)
+
+export interface FullScreenModalContentProps
+  extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>,
+    VariantProps<typeof fullScreenModalContentVariants> {}
+
 const FullScreenModalContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  FullScreenModalContentProps
+>(({ className, children, size, ...props }, ref) => (
   <FullScreenModalPortal>
     <FullScreenModalOverlay />
     <DialogPrimitive.Content
       ref={ref}
-      className={cn(
-        'fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%]',
-        'w-[95vw] h-[95vh]',
-        'flex flex-col',
-        'bg-background',
-        'border rounded-lg shadow-lg',
-        'duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
-        className
-      )}
+      className={cn(fullScreenModalContentVariants({ size }), className)}
       {...props}
     >
       {children}
