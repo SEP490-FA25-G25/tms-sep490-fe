@@ -1,4 +1,3 @@
-import type { CSSProperties } from 'react'
 import { useState, type CSSProperties } from 'react'
 import { useParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'

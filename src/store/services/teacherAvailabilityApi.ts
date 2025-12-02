@@ -3,7 +3,7 @@ import { baseQueryWithReauth } from "./authApi";
 
 // Types
 export interface AvailabilityDTO {
-    timeSlotId: number;
+    timeSlotTemplateId: number;
     dayOfWeek: number; // 1-7
     note?: string;
 }
@@ -82,9 +82,39 @@ export const teacherAvailabilityApi = createApi({
             invalidatesTags: ["Campaign", "TeacherStatus"],
         }),
 
-        getTeacherAvailabilityStatus: builder.query<TeacherStatusDTO[], void>({
-            query: () => "/academic/availability-status",
-            providesTags: ["TeacherStatus"],
+        getTeacherAvailabilityStatus: builder.query<TeacherStatusDTO[], { campaignId?: number; branchId?: number } | void>({
+            query: (params) => ({
+                url: '/academic/availability-status',
+                params: params || undefined,
+            }),
+            providesTags: ['TeacherStatus'],
+        }),
+
+        getTeacherAvailability: builder.query<TeacherAvailabilityResponse, number>({
+            query: (teacherId) => `/academic/teacher-availability/${teacherId}`,
+        }),
+
+        exportTeacherAvailabilityStatus: builder.query<Blob, number | void>({
+            query: (campaignId) => ({
+                url: "/academic/availability-status/export",
+                params: campaignId ? { campaignId } : undefined,
+                responseHandler: (response) => response.blob(),
+            }),
+        }),
+
+        sendReminder: builder.mutation<void, number>({
+            query: (teacherId) => ({
+                url: `/academic/availability-status/remind/${teacherId}`,
+                method: "POST",
+            }),
+        }),
+
+        sendBulkReminders: builder.mutation<void, number[]>({
+            query: (teacherIds) => ({
+                url: "/academic/availability-status/remind-bulk",
+                method: "POST",
+                body: teacherIds,
+            }),
         }),
     }),
 });
@@ -95,4 +125,8 @@ export const {
     useGetAvailabilityCampaignsQuery,
     useCreateAvailabilityCampaignMutation,
     useGetTeacherAvailabilityStatusQuery,
+    useGetTeacherAvailabilityQuery,
+    useLazyExportTeacherAvailabilityStatusQuery,
+    useSendReminderMutation,
+    useSendBulkRemindersMutation,
 } = teacherAvailabilityApi;

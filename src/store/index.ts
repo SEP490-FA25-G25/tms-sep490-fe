@@ -116,7 +116,8 @@ export const store = configureStore({
       .concat(qaApi.middleware)
       .concat(studentFeedbackApi.middleware)
       .concat(resourceApi.middleware)
-      .concat(timeSlotApi.middleware),
+      .concat(timeSlotApi.middleware)
+      .concat(teacherAvailabilityApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

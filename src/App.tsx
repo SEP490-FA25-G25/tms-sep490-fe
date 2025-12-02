@@ -52,8 +52,6 @@ import CenterHeadApprovalsPage from "./app/center-head/approvals/page";
 import CenterHeadResourcesPage from "./app/center-head/resources/page";
 import CenterHeadTimeSlotsPage from "./app/center-head/timeslots/page";
 import CurriculumPage from "./features/curriculum/pages/CurriculumPage";
-import CreateSubjectPage from "./features/curriculum/pages/CreateSubjectPage";
-import EditSubjectPage from "./features/curriculum/pages/EditSubjectPage";
 import TeacherAvailabilityPage from "./app/teacher/availability/page";
 import AvailabilityCampaignPage from "./app/academic/teacher-availability/page";
 
@@ -79,18 +77,12 @@ import NotificationsPage from "./app/notifications/page";
 import { Toaster } from "@/components/ui/sonner";
 import { lazy } from "react";
 
-// const CreateLevelPage = lazy(() => import('./features/curriculum/pages/CreateLevelPage'))
-const CreateLevelPage = lazy(
-  () => import("./features/curriculum/pages/CreateLevelPage")
+
+const CreateCoursePage = lazy(
+  () => import("./features/curriculum/pages/CreateCoursePage")
 );
 const LevelDetailPage = lazy(
   () => import("@/features/curriculum/pages/LevelDetailPage")
-);
-const EditLevelPage = lazy(
-  () => import("@/features/curriculum/pages/EditLevelPage")
-);
-const CreateCoursePage = lazy(
-  () => import("./features/curriculum/pages/CreateCoursePage")
 );
 
 import SchedulePage from "./app/schedule/page";
@@ -664,16 +656,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/curriculum/subjects/create"
-              element={
-                <ProtectedRoute
-                  requiredRoles={["SUBJECT_LEADER", "MANAGER", "ADMIN"]}
-                >
-                  <CreateSubjectPage />
-                </ProtectedRoute>
-              }
-            />
+
             <Route
               path="/curriculum/subjects/:id"
               element={
@@ -684,26 +667,8 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/curriculum/subjects/:id/edit"
-              element={
-                <ProtectedRoute
-                  requiredRoles={["SUBJECT_LEADER", "MANAGER", "ADMIN"]}
-                >
-                  <EditSubjectPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/curriculum/levels/create"
-              element={
-                <ProtectedRoute
-                  requiredRoles={["SUBJECT_LEADER", "MANAGER", "ADMIN"]}
-                >
-                  <CreateLevelPage />
-                </ProtectedRoute>
-              }
-            />
+
+
             <Route
               path="/curriculum/levels/:id"
               element={
@@ -714,16 +679,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/curriculum/levels/:id/edit"
-              element={
-                <ProtectedRoute
-                  requiredRoles={["SUBJECT_LEADER", "MANAGER", "ADMIN"]}
-                >
-                  <EditLevelPage />
-                </ProtectedRoute>
-              }
-            />
+
             <Route
               path="/curriculum/courses/:id"
               element={

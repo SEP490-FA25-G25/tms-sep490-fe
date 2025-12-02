@@ -32,6 +32,8 @@ import { DataTable } from "@/components/data-table";
 import { type ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { getStatusLabel, getStatusColor } from "@/utils/statusMapping";
+import { LevelDialog } from "./LevelDialog";
+import { Plus } from "lucide-react";
 
 export function LevelList() {
     const navigate = useNavigate();
@@ -41,6 +43,18 @@ export function LevelList() {
     const [levelToDelete, setLevelToDelete] = useState<number | null>(null);
     const [levelToReactivate, setLevelToReactivate] = useState<number | null>(null);
     const [levelToDeletePermanently, setLevelToDeletePermanently] = useState<number | null>(null);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [selectedLevel, setSelectedLevel] = useState<LevelDTO | null>(null);
+
+    const handleCreate = () => {
+        setSelectedLevel(null);
+        setIsDialogOpen(true);
+    };
+
+    const handleEdit = (level: LevelDTO) => {
+        setSelectedLevel(level);
+        setIsDialogOpen(true);
+    };
 
     // Fetch subjects for filter dropdown
     const { data: subjectsData } = useGetSubjectsWithLevelsQuery();
@@ -135,10 +149,6 @@ export function LevelList() {
             ),
         },
         {
-            accessorKey: "durationHours",
-            header: "Thời lượng (Giờ)",
-        },
-        {
             accessorKey: "createdAt",
             header: ({ column }) => {
                 return (
@@ -207,7 +217,7 @@ export function LevelList() {
                                             variant="ghost"
                                             size="sm"
                                             className="w-full justify-start gap-2 h-9 px-2"
-                                            onClick={() => navigate(`/curriculum/levels/${level.id}/edit`)}
+                                            onClick={() => handleEdit(level)}
                                         >
                                             <Edit className="h-4 w-4" />
                                             Chỉnh sửa
@@ -255,7 +265,7 @@ export function LevelList() {
     return (
         <div className="space-y-4">
             {/* Filter Section */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between gap-4">
                 <div className="w-[250px]">
                     <Select
                         value={selectedSubjectId?.toString() || "all"}
@@ -274,6 +284,12 @@ export function LevelList() {
                         </SelectContent>
                     </Select>
                 </div>
+                {isSubjectLeader && (
+                    <Button onClick={handleCreate}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Tạo Cấp độ
+                    </Button>
+                )}
             </div>
 
             {/* Table Section */}
@@ -285,6 +301,13 @@ export function LevelList() {
                     searchPlaceholder="Tìm kiếm theo tên cấp độ..."
                 />
             </div>
+
+            <LevelDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                level={selectedLevel ? { ...selectedLevel, subjectId: selectedLevel.subjectId || 0 } : null}
+                subjectId={selectedSubjectId}
+            />
 
             <AlertDialog open={!!levelToDelete} onOpenChange={(open) => !open && setLevelToDelete(null)}>
                 <AlertDialogContent>
