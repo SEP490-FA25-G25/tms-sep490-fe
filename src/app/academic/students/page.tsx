@@ -42,6 +42,7 @@ import {
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { StudentStatusBadge } from './components/StudentStatusBadge'
 import { StudentDetailDrawer } from './components/StudentDetailDrawer'
+import { StudentEditDialog } from './components/StudentEditDialog'
 import {
   useGetStudentsQuery,
   useGetStudentDetailQuery,
@@ -128,6 +129,9 @@ export default function StudentListPage() {
   // State cho drawer chi tiết
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null)
+
+  // State cho dialog chỉnh sửa
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
 
   // RTK Query - Lấy danh sách học viên
   const {
@@ -221,8 +225,12 @@ export default function StudentListPage() {
   }
 
   const handleEdit = () => {
-    // TODO: Mở modal chỉnh sửa thông tin
-    console.log('Edit student:', selectedStudentId)
+    setEditDialogOpen(true)
+  }
+
+  const handleEditSuccess = () => {
+    // Refetch student detail sau khi edit thành công
+    // RTK Query sẽ tự động invalidate và refetch
   }
 
   const handleEnroll = () => {
@@ -633,6 +641,14 @@ export default function StudentListPage() {
         isLoading={isLoadingDetail}
         onEdit={handleEdit}
         onEnroll={handleEnroll}
+      />
+
+      {/* Edit Dialog */}
+      <StudentEditDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        student={studentDetail ?? null}
+        onSuccess={handleEditSuccess}
       />
     </DashboardLayout>
   )
