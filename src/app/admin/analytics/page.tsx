@@ -45,7 +45,6 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import { useGetAnalyticsQuery } from "@/store/services/analyticsApi";
 
 const chartColors = [
@@ -261,7 +260,6 @@ export default function AdminAnalyticsPage() {
                           label={card.label}
                           value={card.value}
                           icon={card.icon}
-                          accent={card.accent}
                         />
                       ))}
                     </div>
