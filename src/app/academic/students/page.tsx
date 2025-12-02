@@ -24,7 +24,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
-import { Search, Plus, Users, Loader2, Download } from 'lucide-react'
+import { Search, Plus, Users, Loader2, Download, UserCheck, GraduationCap, UserX } from 'lucide-react'
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { StudentStatusBadge } from './components/StudentStatusBadge'
 import { StudentDetailDrawer } from './components/StudentDetailDrawer'
@@ -352,21 +352,41 @@ export default function StudentListPage() {
 
         {/* Statistics Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-card border rounded-lg p-4">
-            <div className="text-2xl font-bold">{statistics.total}</div>
-            <div className="text-sm text-muted-foreground">Tổng học viên</div>
+          <div className="bg-card border rounded-lg p-4 flex items-center gap-4">
+            <div className="p-3 rounded-lg bg-slate-500/20">
+              <Users className="h-6 w-6 text-slate-500" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold">{statistics.total}</div>
+              <div className="text-sm text-muted-foreground">Tổng học viên</div>
+            </div>
           </div>
-          <div className="bg-card border rounded-lg p-4">
-            <div className="text-2xl font-bold text-green-600">{statistics.active}</div>
-            <div className="text-sm text-muted-foreground">Đang hoạt động</div>
+          <div className="bg-card border rounded-lg p-4 flex items-center gap-4">
+            <div className="p-3 rounded-lg bg-green-500/20">
+              <UserCheck className="h-6 w-6 text-green-500" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold">{statistics.active}</div>
+              <div className="text-sm text-muted-foreground">Đang hoạt động</div>
+            </div>
           </div>
-          <div className="bg-card border rounded-lg p-4">
-            <div className="text-2xl font-bold text-blue-600">{statistics.enrolled}</div>
-            <div className="text-sm text-muted-foreground">Đang học</div>
+          <div className="bg-card border rounded-lg p-4 flex items-center gap-4">
+            <div className="p-3 rounded-lg bg-blue-500/20">
+              <GraduationCap className="h-6 w-6 text-blue-500" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold">{statistics.enrolled}</div>
+              <div className="text-sm text-muted-foreground">Đang học</div>
+            </div>
           </div>
-          <div className="bg-card border rounded-lg p-4">
-            <div className="text-2xl font-bold text-orange-600">{statistics.notEnrolled}</div>
-            <div className="text-sm text-muted-foreground">Chưa ghi danh</div>
+          <div className="bg-card border rounded-lg p-4 flex items-center gap-4">
+            <div className="p-3 rounded-lg bg-orange-500/20">
+              <UserX className="h-6 w-6 text-orange-500" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold">{statistics.notEnrolled}</div>
+              <div className="text-sm text-muted-foreground">Chưa ghi danh</div>
+            </div>
           </div>
         </div>
 
