@@ -45,31 +45,6 @@ function StatusBadge({ status }: { status: string }) {
 
 export const columns: ColumnDef<StudentRequest>[] = [
   {
-    accessorKey: 'requestType',
-    header: 'Loại',
-    cell: ({ row }) => <RequestTypeBadge type={row.original.requestType} />,
-    size: 90,
-    enableSorting: true,
-  },
-  {
-    accessorKey: 'status',
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="-ml-4 h-8 px-2"
-        >
-          Trạng thái
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    cell: ({ row }) => <StatusBadge status={row.original.status} />,
-    size: 120,
-    enableSorting: true,
-  },
-  {
     accessorKey: 'currentClass.code',
     header: 'Lớp',
     cell: ({ row }) => {
@@ -160,6 +135,31 @@ export const columns: ColumnDef<StudentRequest>[] = [
     },
     size: 120,
     enableSorting: false,
+  },
+  {
+    accessorKey: 'requestType',
+    header: 'Loại',
+    cell: ({ row }) => <RequestTypeBadge type={row.original.requestType} />,
+    size: 90,
+    enableSorting: true,
+  },
+  {
+    accessorKey: 'status',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          className="-ml-4 h-8 px-2"
+        >
+          Trạng thái
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    size: 120,
+    enableSorting: true,
   },
   {
     accessorKey: 'submittedAt',

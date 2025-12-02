@@ -33,7 +33,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
@@ -309,12 +308,7 @@ export default function StudentRequestsPage() {
 
             {/* Request Table */}
             <div className="space-y-4">
-              {isLoadingRequests ? (
-                <div className="space-y-3">
-                  <Skeleton className="h-12 w-full" />
-                  <Skeleton className="h-64 w-full" />
-                </div>
-              ) : requests.length === 0 ? (
+              {requests.length === 0 && !isLoadingRequests ? (
                 <Empty>
                   <EmptyHeader>
                     <EmptyMedia variant="icon">
@@ -337,6 +331,7 @@ export default function StudentRequestsPage() {
                   }}
                   isCancelling={isCancelling}
                   cancelingId={cancelingId}
+                  isLoading={isLoadingRequests}
                 />
               )}
             </div>

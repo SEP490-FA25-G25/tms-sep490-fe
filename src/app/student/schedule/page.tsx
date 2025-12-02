@@ -19,7 +19,14 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  FullScreenModal,
+  FullScreenModalBody,
+  FullScreenModalContent,
+  FullScreenModalDescription,
+  FullScreenModalHeader,
+  FullScreenModalTitle,
+} from '@/components/ui/full-screen-modal'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -49,6 +56,25 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ?
 const RESOURCE_TYPE_LABELS: Record<string, string> = {
   ROOM: 'Phòng học',
   VIRTUAL: 'Lớp trực tuyến',
+}
+
+const SKILL_LABELS: Record<string, string> = {
+  GENERAL: 'Tổng hợp',
+  READING: 'Đọc',
+  WRITING: 'Viết',
+  SPEAKING: 'Nói',
+  LISTENING: 'Nghe',
+  VOCABULARY: 'Từ vựng',
+  GRAMMAR: 'Ngữ pháp',
+  KANJI: 'Kanji',
+}
+
+const MATERIAL_TYPE_LABELS: Record<string, string> = {
+  DOCUMENT: 'Tài liệu',
+  MEDIA: 'Media',
+  ARCHIVE: 'Nén',
+  LINK: 'Liên kết',
+  OTHER: 'Khác',
 }
 
 export default function StudentSchedulePage() {
@@ -486,21 +512,22 @@ function SessionDetailDialog({ sessionId, onClose }: SessionDetailDialogProps) {
   }, [])
 
   return (
-    <Dialog open={!!sessionId} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] w-full max-w-3xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold text-foreground">
+    <FullScreenModal open={!!sessionId} onOpenChange={(open) => !open && onClose()}>
+      <FullScreenModalContent size="xl">
+        <FullScreenModalHeader>
+          <FullScreenModalTitle className="text-2xl font-semibold text-foreground">
             {detail ? `${detail.classInfo.className} · ${detail.classInfo.classCode}` : 'Chi tiết buổi học'}
-          </DialogTitle>
-          <DialogDescription>
+          </FullScreenModalTitle>
+          <FullScreenModalDescription>
             {detail
               ? `${format(parseISO(detail.date), "EEEE, dd/MM/yyyy", { locale: vi })} · ${detail.startTime.slice(
                   0,
                   5
                 )} - ${detail.endTime.slice(0, 5)}`
               : 'Đang tải thông tin'}
-          </DialogDescription>
-        </DialogHeader>
+          </FullScreenModalDescription>
+        </FullScreenModalHeader>
+        <FullScreenModalBody>
 
         {isLoading && (
           <div className="space-y-3 py-4">
@@ -548,6 +575,16 @@ function SessionDetailDialog({ sessionId, onClose }: SessionDetailDialogProps) {
               <span className="inline-flex items-center rounded-full bg-muted px-3 py-0.5 text-xs font-medium text-muted-foreground">
                 {MODALITY_LABELS[detail.classInfo.modality] ?? detail.classInfo.modality}
               </span>
+              {detail.sessionInfo.skill && (
+                <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-0.5 text-xs font-semibold text-blue-700">
+                  {SKILL_LABELS[detail.sessionInfo.skill] ?? detail.sessionInfo.skill}
+                </span>
+              )}
+              {detail.sessionInfo.sequenceNo && (
+                <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-0.5 text-xs font-medium text-slate-700">
+                  Buổi {detail.sessionInfo.sequenceNo}
+                </span>
+              )}
               {detail.makeupInfo?.isMakeup && (
                 <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-0.5 text-xs font-semibold text-purple-700">
                   Buổi học bù
@@ -681,13 +718,19 @@ function SessionDetailDialog({ sessionId, onClose }: SessionDetailDialogProps) {
                     const uploadedLabel = material.uploadedAt
                       ? `Cập nhật ${format(parseISO(material.uploadedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}`
                       : 'Chưa có thời gian tải lên'
+                    const materialTypeLabel = material.materialType 
+                      ? (MATERIAL_TYPE_LABELS[material.materialType] ?? material.materialType)
+                      : typeMeta.label
                     return (
                       <li
                         key={material.materialId}
                         className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border/60 bg-muted/20 px-3 py-2"
                       >
-                        <div>
-                          <p className="font-medium text-foreground">{material.fileName}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-foreground">{material.title || material.fileName}</p>
+                          {material.description && (
+                            <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{material.description}</p>
+                          )}
                           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                             <span
                               className={cn(
@@ -695,7 +738,7 @@ function SessionDetailDialog({ sessionId, onClose }: SessionDetailDialogProps) {
                                 typeMeta.className
                               )}
                             >
-                              {typeMeta.label}
+                              {materialTypeLabel}
                             </span>
                             <span>{uploadedLabel}</span>
                           </div>
@@ -732,8 +775,9 @@ function SessionDetailDialog({ sessionId, onClose }: SessionDetailDialogProps) {
             )}
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+        </FullScreenModalBody>
+      </FullScreenModalContent>
+    </FullScreenModal>
   )
 }
 

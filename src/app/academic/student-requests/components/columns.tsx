@@ -45,31 +45,6 @@ function StatusBadge({ status }: { status: string }) {
 
 export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
   {
-    accessorKey: 'requestType',
-    header: 'Loại',
-    cell: ({ row }) => <RequestTypeBadge type={row.original.requestType} />,
-    size: 90,
-    enableSorting: true,
-  },
-  {
-    accessorKey: 'status',
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="-ml-4"
-        >
-          Trạng thái
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    cell: ({ row }) => <StatusBadge status={row.original.status} />,
-    size: 120,
-    enableSorting: true,
-  },
-  {
     id: 'student',
     header: ({ column }) => {
       return (
@@ -322,6 +297,31 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
     enableSorting: false,
   },
   {
+    accessorKey: 'requestType',
+    header: 'Loại',
+    cell: ({ row }) => <RequestTypeBadge type={row.original.requestType} />,
+    size: 90,
+    enableSorting: true,
+  },
+  {
+    accessorKey: 'status',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          className="-ml-4"
+        >
+          Trạng thái
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    size: 120,
+    enableSorting: true,
+  },
+  {
     accessorKey: 'submittedAt',
     header: ({ column }) => {
       return (
@@ -362,31 +362,6 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
 ]
 
 export const historyColumns: ColumnDef<AcademicStudentRequest>[] = [
-  {
-    accessorKey: 'requestType',
-    header: 'Loại',
-    cell: ({ row }) => <RequestTypeBadge type={row.original.requestType} />,
-    size: 90,
-    enableSorting: true,
-  },
-  {
-    accessorKey: 'status',
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="-ml-4"
-        >
-          Trạng thái
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    cell: ({ row }) => <StatusBadge status={row.original.status} />,
-    size: 120,
-    enableSorting: true,
-  },
   {
     id: 'student',
     header: ({ column }) => {
@@ -477,6 +452,31 @@ export const historyColumns: ColumnDef<AcademicStudentRequest>[] = [
     },
     size: 100,
     enableSorting: false,
+  },
+  {
+    accessorKey: 'requestType',
+    header: 'Loại',
+    cell: ({ row }) => <RequestTypeBadge type={row.original.requestType} />,
+    size: 90,
+    enableSorting: true,
+  },
+  {
+    accessorKey: 'status',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          className="-ml-4"
+        >
+          Trạng thái
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    size: 120,
+    enableSorting: true,
   },
   {
     accessorKey: 'submittedAt',

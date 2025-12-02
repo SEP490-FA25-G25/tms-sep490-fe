@@ -775,13 +775,7 @@ export default function AcademicTeacherRequestsPage() {
                     "Có lỗi xảy ra khi tải danh sách yêu cầu. Vui lòng thử lại."
                   )}
                 </div>
-              ) : isLoadingTeacherRequests ? (
-                <div className="space-y-3 p-4">
-                  {[...Array(5)].map((_, index) => (
-                    <Skeleton key={index} className="h-12 w-full rounded-lg" />
-                  ))}
-                </div>
-              ) : paginatedPendingRequests.length === 0 ? (
+              ) : paginatedPendingRequests.length === 0 || isLoadingTeacherRequests ? (
                 <div className="p-8 text-center text-sm text-muted-foreground">
                   Không có yêu cầu nào đang chờ duyệt.
                 </div>
@@ -789,11 +783,11 @@ export default function AcademicTeacherRequestsPage() {
                 <Table className="min-w-[900px]">
                   <TableHeader>
                     <TableRow className="bg-muted/50 hover:bg-muted/50">
-                      <TableHead className="min-w-[140px]">Loại</TableHead>
-                      <TableHead className="min-w-[100px]">Trạng thái</TableHead>
                       <TableHead className="min-w-[140px]">Giáo viên</TableHead>
                       <TableHead className="min-w-[200px]">Lớp học / Buổi</TableHead>
                       <TableHead className="min-w-[180px]">Lý do</TableHead>
+                      <TableHead className="min-w-[140px]">Loại</TableHead>
+                      <TableHead className="min-w-[100px]">Trạng thái</TableHead>
                       <TableHead className="min-w-[100px]">Ngày gửi</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -816,25 +810,6 @@ export default function AcademicTeacherRequestsPage() {
                           onClick={() => handleOpenRequestDetail(request.id)}
                         >
                           <TableCell>
-                            <Badge variant="outline">
-                              {TEACHER_REQUEST_TYPE_LABELS[request.requestType]}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant="outline"
-                              className={
-                                TEACHER_REQUEST_STATUS_META[request.status]
-                                  .badgeClass
-                              }
-                            >
-                              {
-                                TEACHER_REQUEST_STATUS_META[request.status]
-                                  .label
-                              }
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
                             <span className="font-medium">
                               {request.teacherName ?? "—"}
                             </span>
@@ -852,6 +827,25 @@ export default function AcademicTeacherRequestsPage() {
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground" title={reason}>
                             {truncatedReason || "Không có lý do"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {TEACHER_REQUEST_TYPE_LABELS[request.requestType]}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={
+                                TEACHER_REQUEST_STATUS_META[request.status]
+                                  .badgeClass
+                              }
+                            >
+                              {
+                                TEACHER_REQUEST_STATUS_META[request.status]
+                                  .label
+                              }
+                            </Badge>
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
                             {request.submittedAt
@@ -924,21 +918,15 @@ export default function AcademicTeacherRequestsPage() {
           {/* Teacher History Tab */}
           <TabsContent value="history" className="space-y-4">
             <div className="rounded-lg border overflow-hidden bg-card">
-              {isLoadingTeacherRequests ? (
-                <div className="space-y-3 p-4">
-                  {[...Array(5)].map((_, index) => (
-                    <Skeleton key={index} className="h-12 w-full rounded-lg" />
-                  ))}
-                </div>
-              ) : paginatedHistoryRequests.length ? (
+              {paginatedHistoryRequests.length && !isLoadingTeacherRequests ? (
                 <Table className="min-w-[900px]">
                   <TableHeader>
                     <TableRow className="bg-muted/50 hover:bg-muted/50">
-                      <TableHead className="min-w-[140px]">Loại</TableHead>
-                      <TableHead className="min-w-[100px]">Trạng thái</TableHead>
                       <TableHead className="min-w-[140px]">Giáo viên</TableHead>
                       <TableHead className="min-w-[200px]">Lớp học / Buổi</TableHead>
                       <TableHead className="min-w-[140px]">Người xử lý</TableHead>
+                      <TableHead className="min-w-[140px]">Loại</TableHead>
+                      <TableHead className="min-w-[100px]">Trạng thái</TableHead>
                       <TableHead className="min-w-[100px]">Thời gian</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -952,25 +940,6 @@ export default function AcademicTeacherRequestsPage() {
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() => handleOpenRequestDetail(request.id)}
                         >
-                          <TableCell>
-                            <Badge variant="outline">
-                              {TEACHER_REQUEST_TYPE_LABELS[request.requestType]}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant="outline"
-                              className={
-                                TEACHER_REQUEST_STATUS_META[request.status]
-                                  .badgeClass
-                              }
-                            >
-                              {
-                                TEACHER_REQUEST_STATUS_META[request.status]
-                                  .label
-                              }
-                            </Badge>
-                          </TableCell>
                           <TableCell>
                             <span className="font-medium">
                               {request.teacherName ?? "—"}
@@ -991,6 +960,25 @@ export default function AcademicTeacherRequestsPage() {
                             <span className="font-medium text-sm">
                               {request.decidedByName ?? "—"}
                             </span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {TEACHER_REQUEST_TYPE_LABELS[request.requestType]}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={
+                                TEACHER_REQUEST_STATUS_META[request.status]
+                                  .badgeClass
+                              }
+                            >
+                              {
+                                TEACHER_REQUEST_STATUS_META[request.status]
+                                  .label
+                              }
+                            </Badge>
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
                             {request.decidedAt

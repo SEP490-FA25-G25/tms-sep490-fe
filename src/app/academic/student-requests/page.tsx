@@ -7,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
   Pagination,
@@ -398,14 +397,7 @@ export default function AcademicRequestsPage() {
 
             {/* Data Table */}
             <div className="space-y-4">
-              {isLoadingPending ? (
-                <div className="space-y-3">
-                  <Skeleton className="h-12 w-full" />
-                  <Skeleton className="h-64 w-full" />
-                </div>
-              ) : (
-                <DataTable columns={pendingColumns} data={requests} onViewDetail={handleViewDetail} />
-              )}
+              <DataTable columns={pendingColumns} data={requests} onViewDetail={handleViewDetail} isLoading={isLoadingPending} />
 
               {/* Pagination */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
@@ -468,14 +460,7 @@ export default function AcademicRequestsPage() {
           <TabsContent value="history" className="space-y-4 mt-4">
             {/* History Data Table */}
             <div className="space-y-4">
-              {isLoadingHistory ? (
-                <div className="space-y-3">
-                  <Skeleton className="h-12 w-full" />
-                  <Skeleton className="h-64 w-full" />
-                </div>
-              ) : (
-                <DataTable columns={historyColumns} data={historyRequests} onViewDetail={handleViewDetail} />
-              )}
+              <DataTable columns={historyColumns} data={historyRequests} onViewDetail={handleViewDetail} isLoading={isLoadingHistory} />
 
               {/* History Pagination */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">

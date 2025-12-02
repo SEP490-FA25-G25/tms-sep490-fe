@@ -100,6 +100,8 @@ export interface SessionInfoDTO {
   sessionStatus: SessionStatus
   location: string | null
   onlineLink: string | null
+  skill: string | null
+  sequenceNo: number | null
 }
 
 export interface StudentStatusDTO {
@@ -111,7 +113,10 @@ export interface StudentStatusDTO {
 
 export interface MaterialDTO {
   materialId: number
+  title: string | null
+  description: string | null
   fileName: string
+  materialType: string | null
   fileUrl: string
   uploadedAt?: string | null
 }

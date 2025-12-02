@@ -23,6 +23,7 @@ interface DataTableProps<TData, TValue> {
   onCancelRequest?: (id: number) => void
   isCancelling?: boolean
   cancelingId?: number | null
+  isLoading?: boolean
 }
 
 export function DataTable<TData, TValue>({
@@ -32,6 +33,7 @@ export function DataTable<TData, TValue>({
   onCancelRequest,
   isCancelling = false,
   cancelingId = null,
+  isLoading = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([
     { id: 'submittedAt', desc: true }, // Default: sort by submission date descending (newest first)
@@ -73,7 +75,13 @@ export function DataTable<TData, TValue>({
           ))}
         </TableHeader>
         <TableBody>
-          {table.getRowModel().rows?.length ? (
+          {isLoading ? (
+            <TableRow>
+              <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                Đang tải...
+              </TableCell>
+            </TableRow>
+          ) : table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (
               <TableRow
                 key={row.id}

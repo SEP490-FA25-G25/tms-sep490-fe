@@ -139,8 +139,8 @@ const FullScreenModalBody = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
-  <ScrollArea className={cn('flex-1 px-6 py-4', className)}>
-    {props.children}
+  <ScrollArea className={cn('flex-1 overflow-auto', className)}>
+    <div className="px-6 py-4">{props.children}</div>
   </ScrollArea>
 )
 FullScreenModalBody.displayName = 'FullScreenModalBody'

@@ -20,12 +20,14 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   onViewDetail?: (id: number) => void
+  isLoading?: boolean
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   onViewDetail,
+  isLoading = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([
     { id: 'submittedAt', desc: false }, // Default: sort by submission date ascending (oldest first)
@@ -64,7 +66,13 @@ export function DataTable<TData, TValue>({
           ))}
         </TableHeader>
         <TableBody>
-          {table.getRowModel().rows?.length ? (
+          {isLoading ? (
+            <TableRow>
+              <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                Đang tải...
+              </TableCell>
+            </TableRow>
+          ) : table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (
               <TableRow
                 key={row.id}
