@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Select,
   SelectContent,
@@ -24,7 +25,19 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
-import { Search, Plus, Users, Loader2, Download, UserCheck, GraduationCap, UserX } from 'lucide-react'
+import {
+  Search,
+  Plus,
+  Users,
+  Loader2,
+  Download,
+  UserCheck,
+  GraduationCap,
+  UserX,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+} from 'lucide-react'
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { StudentStatusBadge } from './components/StudentStatusBadge'
 import { StudentDetailDrawer } from './components/StudentDetailDrawer'
@@ -39,29 +52,52 @@ import { toast } from 'sonner'
 
 // ========== Types ==========
 type EnrollmentFilter = 'all' | 'enrolled' | 'not_enrolled'
-
-type SortOption = {
-  field: string
-  direction: 'asc' | 'desc'
-  label: string
-}
-
-const SORT_OPTIONS: SortOption[] = [
-  { field: 'studentCode', direction: 'asc', label: 'Mã HV (A-Z)' },
-  { field: 'studentCode', direction: 'desc', label: 'Mã HV (Z-A)' },
-  { field: 'fullName', direction: 'asc', label: 'Họ tên (A-Z)' },
-  { field: 'fullName', direction: 'desc', label: 'Họ tên (Z-A)' },
-  { field: 'lastEnrollmentDate', direction: 'desc', label: 'GD gần nhất (Mới nhất)' },
-  { field: 'lastEnrollmentDate', direction: 'asc', label: 'GD gần nhất (Cũ nhất)' },
-  { field: 'activeEnrollments', direction: 'desc', label: 'Số lớp (Nhiều nhất)' },
-  { field: 'activeEnrollments', direction: 'asc', label: 'Số lớp (Ít nhất)' },
-]
+type SortField = 'studentCode' | 'fullName' | 'lastEnrollmentDate' | 'activeEnrollments' | 'status'
+type SortDirection = 'asc' | 'desc'
 
 type FilterState = {
   search: string
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | undefined
   gender: 'MALE' | 'FEMALE' | 'OTHER' | undefined
   enrollmentStatus: EnrollmentFilter
+}
+
+// ========== Sortable Column Header Component ==========
+function SortableHeader({
+  label,
+  field,
+  currentSort,
+  currentDir,
+  onSort,
+  className = '',
+}: {
+  label: string
+  field: SortField
+  currentSort: string
+  currentDir: SortDirection
+  onSort: (field: SortField) => void
+  className?: string
+}) {
+  const isActive = currentSort === field
+
+  return (
+    <Button
+      variant="ghost"
+      onClick={() => onSort(field)}
+      className={`h-8 px-2 -ml-2 font-semibold hover:bg-muted/50 ${className}`}
+    >
+      {label}
+      {isActive ? (
+        currentDir === 'asc' ? (
+          <ArrowUp className="ml-1 h-4 w-4" />
+        ) : (
+          <ArrowDown className="ml-1 h-4 w-4" />
+        )
+      ) : (
+        <ArrowUpDown className="ml-1 h-4 w-4 opacity-50" />
+      )}
+    </Button>
+  )
 }
 
 // ========== Component ==========
@@ -75,9 +111,9 @@ export default function StudentListPage() {
     enrollmentStatus: 'all',
   })
 
-  // State cho sort
-  const [sortIndex, setSortIndex] = useState(0) // Default: Mã HV (A-Z)
-  const currentSort = SORT_OPTIONS[sortIndex]
+  // State cho sort - server-side sorting via column headers
+  const [sortField, setSortField] = useState<SortField>('studentCode')
+  const [sortDir, setSortDir] = useState<SortDirection>('asc')
 
   // Debounce search để tránh gọi API liên tục khi user đang gõ
   const debouncedSearch = useDebounce(filters.search, 300)
@@ -104,17 +140,15 @@ export default function StudentListPage() {
     gender: filters.gender,
     page: pagination.page,
     size: pagination.size,
-    sort: currentSort.field,
-    sortDir: currentSort.direction,
+    sort: sortField,
+    sortDir: sortDir,
   })
 
   // RTK Query - Lấy chi tiết học viên (chỉ fetch khi có selectedStudentId)
-  const {
-    data: studentDetailResponse,
-    isLoading: isLoadingDetail,
-  } = useGetStudentDetailQuery(selectedStudentId!, {
-    skip: !selectedStudentId,
-  })
+  const { data: studentDetailResponse, isLoading: isLoadingDetail } =
+    useGetStudentDetailQuery(selectedStudentId!, {
+      skip: !selectedStudentId,
+    })
 
   // RTK Query - Export students
   const [exportStudents, { isLoading: isExporting }] = useExportStudentsMutation()
@@ -136,18 +170,20 @@ export default function StudentListPage() {
     })
   }, [rawStudents, filters.enrollmentStatus])
 
-  const totalElements = filters.enrollmentStatus === 'all' 
-    ? (pageInfo?.totalElements || 0)
-    : students.length
-  const totalPages = filters.enrollmentStatus === 'all'
-    ? (pageInfo?.totalPages || 1)
-    : Math.ceil(students.length / pagination.size) || 1
+  const totalElements =
+    filters.enrollmentStatus === 'all'
+      ? pageInfo?.totalElements || 0
+      : students.length
+  const totalPages =
+    filters.enrollmentStatus === 'all'
+      ? pageInfo?.totalPages || 1
+      : Math.ceil(students.length / pagination.size) || 1
 
   // Statistics computed from current page data
   const statistics = useMemo(() => {
-    const activeCount = rawStudents.filter(s => s.status === 'ACTIVE').length
-    const enrolledCount = rawStudents.filter(s => s.activeEnrollments > 0).length
-    const notEnrolledCount = rawStudents.filter(s => s.activeEnrollments === 0).length
+    const activeCount = rawStudents.filter((s) => s.status === 'ACTIVE').length
+    const enrolledCount = rawStudents.filter((s) => s.activeEnrollments > 0).length
+    const notEnrolledCount = rawStudents.filter((s) => s.activeEnrollments === 0).length
     return {
       total: pageInfo?.totalElements || rawStudents.length,
       active: activeCount,
@@ -172,16 +208,22 @@ export default function StudentListPage() {
       avatarUrl: studentDetail.avatarUrl || null,
       status: studentDetail.status || 'ACTIVE',
       createdAt: studentDetail.createdAt || '',
-      enrollments: studentDetail.currentClasses?.map((c, idx) => ({
-        id: idx,
-        classId: c.id,
-        classCode: c.classCode,
-        className: c.className,
-        courseName: c.courseName,
-        status: c.status === 'IN_PROGRESS' ? 'ENROLLED' : c.status === 'COMPLETED' ? 'COMPLETED' : 'ENROLLED',
-        enrolledAt: c.startDate,
-        leftAt: c.status === 'COMPLETED' ? c.plannedEndDate : null,
-      })) || [],
+      enrollments:
+        studentDetail.currentClasses?.map((c, idx) => ({
+          id: idx,
+          classId: c.id,
+          classCode: c.classCode,
+          className: c.className,
+          courseName: c.courseName,
+          status:
+            c.status === 'IN_PROGRESS'
+              ? 'ENROLLED'
+              : c.status === 'COMPLETED'
+                ? 'COMPLETED'
+                : 'ENROLLED',
+          enrolledAt: c.startDate,
+          leftAt: c.status === 'COMPLETED' ? c.plannedEndDate : null,
+        })) || [],
     } as const
   }, [studentDetail])
 
@@ -192,6 +234,19 @@ export default function StudentListPage() {
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value }))
     setPagination((prev) => ({ ...prev, page: 0 })) // Reset về trang đầu khi filter
+  }
+
+  // Handle column header sort - toggle direction if same field, else set new field
+  const handleSort = (field: SortField) => {
+    if (field === sortField) {
+      // Toggle direction
+      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      // New field, default to asc for code/name, desc for dates/counts
+      setSortField(field)
+      setSortDir(field === 'studentCode' || field === 'fullName' ? 'asc' : 'desc')
+    }
+    setPagination((prev) => ({ ...prev, page: 0 }))
   }
 
   const handleRowClick = (student: StudentListItemDTO) => {
@@ -243,11 +298,7 @@ export default function StudentListPage() {
       description="Quản lý thông tin học viên và phân lớp"
       actions={
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={handleExport}
-            disabled={isExporting}
-          >
+          <Button variant="outline" onClick={handleExport} disabled={isExporting}>
             {isExporting ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -301,7 +352,7 @@ export default function StudentListPage() {
               handleFilterChange('gender', value === 'all' ? undefined : value)
             }
           >
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-40">
               <SelectValue placeholder="Giới tính" />
             </SelectTrigger>
             <SelectContent>
@@ -326,26 +377,6 @@ export default function StudentListPage() {
               <SelectItem value="all">Ghi danh: Tất cả</SelectItem>
               <SelectItem value="enrolled">Đang học</SelectItem>
               <SelectItem value="not_enrolled">Chưa ghi danh</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Sort Options */}
-          <Select
-            value={String(sortIndex)}
-            onValueChange={(value) => {
-              setSortIndex(Number(value))
-              setPagination((prev) => ({ ...prev, page: 0 }))
-            }}
-          >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Sắp xếp theo" />
-            </SelectTrigger>
-            <SelectContent>
-              {SORT_OPTIONS.map((option, index) => (
-                <SelectItem key={index} value={String(index)}>
-                  {option.label}
-                </SelectItem>
-              ))}
             </SelectContent>
           </Select>
         </div>
@@ -390,18 +421,50 @@ export default function StudentListPage() {
           </div>
         </div>
 
-        {/* Loading indicator when fetching */}
-        {isFetchingList && !isLoading && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Đang tải...</span>
-          </div>
-        )}
-
-        {/* Loading State */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        {/* Student List */}
+        {isLoading || isFetchingList ? (
+          /* Table Skeleton */
+          <div className="rounded-lg border bg-card overflow-hidden">
+            <Table className="min-w-[900px]">
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="min-w-[100px] font-semibold">Mã HV</TableHead>
+                  <TableHead className="font-semibold">Họ và tên</TableHead>
+                  <TableHead className="min-w-[120px] font-semibold">Điện thoại</TableHead>
+                  <TableHead className="min-w-[180px] font-semibold">Email</TableHead>
+                  <TableHead className="min-w-[80px] font-semibold text-center">Đang học</TableHead>
+                  <TableHead className="min-w-[120px] font-semibold">GD gần nhất</TableHead>
+                  <TableHead className="min-w-[100px] font-semibold">Trạng thái</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[...Array(10)].map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell>
+                      <Skeleton className="h-4 w-16" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-32" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-24" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-40" />
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Skeleton className="h-4 w-6 mx-auto" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-20" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-6 w-20" />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         ) : listError ? (
           <div className="text-center py-12 text-destructive">
@@ -418,24 +481,53 @@ export default function StudentListPage() {
             <Table className="min-w-[900px]">
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead className="min-w-[100px] font-semibold">
-                    Mã HV
+                  <TableHead className="min-w-[100px]">
+                    <SortableHeader
+                      label="Mã HV"
+                      field="studentCode"
+                      currentSort={sortField}
+                      currentDir={sortDir}
+                      onSort={handleSort}
+                    />
                   </TableHead>
-                  <TableHead className="font-semibold">Họ và tên</TableHead>
-                  <TableHead className="min-w-[120px] font-semibold">
-                    Điện thoại
+                  <TableHead>
+                    <SortableHeader
+                      label="Họ và tên"
+                      field="fullName"
+                      currentSort={sortField}
+                      currentDir={sortDir}
+                      onSort={handleSort}
+                    />
                   </TableHead>
-                  <TableHead className="min-w-[180px] font-semibold">
-                    Email
+                  <TableHead className="min-w-[120px] font-semibold">Điện thoại</TableHead>
+                  <TableHead className="min-w-[180px] font-semibold">Email</TableHead>
+                  <TableHead className="min-w-[80px]">
+                    <SortableHeader
+                      label="Đang học"
+                      field="activeEnrollments"
+                      currentSort={sortField}
+                      currentDir={sortDir}
+                      onSort={handleSort}
+                      className="justify-center"
+                    />
                   </TableHead>
-                  <TableHead className="min-w-[80px] font-semibold text-center">
-                    Đang học
+                  <TableHead className="min-w-[120px]">
+                    <SortableHeader
+                      label="GD gần nhất"
+                      field="lastEnrollmentDate"
+                      currentSort={sortField}
+                      currentDir={sortDir}
+                      onSort={handleSort}
+                    />
                   </TableHead>
-                  <TableHead className="min-w-[120px] font-semibold">
-                    GD gần nhất
-                  </TableHead>
-                  <TableHead className="min-w-[100px] font-semibold">
-                    Trạng thái
+                  <TableHead className="min-w-[100px]">
+                    <SortableHeader
+                      label="Trạng thái"
+                      field="status"
+                      currentSort={sortField}
+                      currentDir={sortDir}
+                      onSort={handleSort}
+                    />
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -449,9 +541,7 @@ export default function StudentListPage() {
                     <TableCell className="font-mono font-medium">
                       {student.studentCode}
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {student.fullName}
-                    </TableCell>
+                    <TableCell className="font-medium">{student.fullName}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {student.phone || '—'}
                     </TableCell>
@@ -459,12 +549,18 @@ export default function StudentListPage() {
                       {student.email || '—'}
                     </TableCell>
                     <TableCell className="text-center">
-                      <span className={student.activeEnrollments > 0 ? 'text-blue-600 font-medium' : 'text-muted-foreground'}>
+                      <span
+                        className={
+                          student.activeEnrollments > 0
+                            ? 'text-blue-600 font-medium'
+                            : 'text-muted-foreground'
+                        }
+                      >
                         {student.activeEnrollments || 0}
                       </span>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      {student.lastEnrollmentDate 
+                      {student.lastEnrollmentDate
                         ? new Date(student.lastEnrollmentDate).toLocaleDateString('vi-VN')
                         : '—'}
                     </TableCell>
@@ -496,11 +592,7 @@ export default function StudentListPage() {
                     }))
                   }}
                   aria-disabled={pagination.page === 0}
-                  className={
-                    pagination.page === 0
-                      ? 'pointer-events-none opacity-50'
-                      : ''
-                  }
+                  className={pagination.page === 0 ? 'pointer-events-none opacity-50' : ''}
                 />
               </PaginationItem>
 

@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Select,
   SelectContent,
@@ -38,26 +39,83 @@ import {
   Calendar,
   MapPin,
   User,
-  ChevronRight
+  ChevronRight,
+  Loader2,
+  PlayCircle,
+  Clock,
+  CheckCircle2,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react'
 import { useGetClassesQuery } from '@/store/services/classApi'
 import type { ClassListItemDTO, ClassListRequest, TeacherSummaryDTO } from '@/store/services/classApi'
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { useNavigate } from 'react-router-dom'
+import { useDebounce } from '@/hooks/useDebounce'
 
-type FilterState = Omit<ClassListRequest, 'page' | 'size'>
+// ========== Types ==========
+type SortField = 'startDate' | 'name' | 'code' | 'currentEnrolled' | 'status'
+type SortDirection = 'asc' | 'desc'
+
+type FilterState = Omit<ClassListRequest, 'page' | 'size' | 'sort' | 'sortDir'>
+
+// ========== Sortable Column Header Component ==========
+function SortableHeader({
+  label,
+  field,
+  currentSort,
+  currentDir,
+  onSort,
+  className = ''
+}: {
+  label: string
+  field: SortField
+  currentSort: string
+  currentDir: SortDirection
+  onSort: (field: SortField) => void
+  className?: string
+}) {
+  const isActive = currentSort === field
+  
+  return (
+    <Button
+      variant="ghost"
+      onClick={() => onSort(field)}
+      className={`h-8 px-2 -ml-2 font-semibold hover:bg-muted/50 ${className}`}
+    >
+      {label}
+      {isActive ? (
+        currentDir === 'asc' ? (
+          <ArrowUp className="ml-1 h-4 w-4" />
+        ) : (
+          <ArrowDown className="ml-1 h-4 w-4" />
+        )
+      ) : (
+        <ArrowUpDown className="ml-1 h-4 w-4 opacity-50" />
+      )}
+    </Button>
+  )
+}
 
 export default function ClassListPage() {
   const navigate = useNavigate()
+  
+  // State cho filters
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     courseId: undefined,
     status: undefined,
     approvalStatus: undefined,
     modality: undefined,
-    sort: 'startDate',
-    sortDir: 'asc',
   })
+
+  // State cho sort - server-side sorting via column headers
+  const [sortField, setSortField] = useState<SortField>('startDate')
+  const [sortDir, setSortDir] = useState<SortDirection>('desc')
+
+  // Debounce search để tránh gọi API liên tục khi user đang gõ
+  const debouncedSearch = useDebounce(filters.search, 300)
 
   const [pagination, setPagination] = useState({
     page: 0, // Backend uses 0-based pagination
@@ -65,17 +123,20 @@ export default function ClassListPage() {
   })
 
   const queryParams = useMemo(() => ({
-    ...filters,
-    ...pagination,
+    search: debouncedSearch || undefined,
     courseId: filters.courseId || undefined,
     status: filters.status || undefined,
     approvalStatus: filters.approvalStatus || undefined,
     modality: filters.modality || undefined,
-  }), [filters, pagination])
+    sort: sortField,
+    sortDir: sortDir,
+    ...pagination,
+  }), [debouncedSearch, filters.courseId, filters.status, filters.approvalStatus, filters.modality, sortField, sortDir, pagination])
 
   const {
     data: response,
     isLoading,
+    isFetching,
     error
   } = useGetClassesQuery(queryParams, {
     // Force refetch when quay lại màn hình để thấy lớp mới/lưu nháp ngay,
@@ -83,13 +144,36 @@ export default function ClassListPage() {
     refetchOnMountOrArgChange: true,
   })
 
+  // Statistics computed from API response
+  const statistics = useMemo(() => {
+    const classes = response?.data?.content || []
+    const ongoingCount = classes.filter(c => c.status === 'ONGOING').length
+    const pendingCount = classes.filter(c => c.approvalStatus === 'PENDING').length
+    const completedCount = classes.filter(c => c.status === 'COMPLETED').length
+    return {
+      total: response?.data?.page?.totalElements || classes.length,
+      ongoing: ongoingCount,
+      pending: pendingCount,
+      completed: completedCount,
+    }
+  }, [response?.data])
+
   const handleFilterChange = (key: keyof FilterState, value: string | number | undefined) => {
     setFilters(prev => ({ ...prev, [key]: value }))
     setPagination(prev => ({ ...prev, page: 0 })) // Reset to first page when filter changes (0-based)
   }
 
-  const handleSearch = (value: string) => {
-    handleFilterChange('search', value)
+  // Handle column header sort - toggle direction if same field, else set new field with desc
+  const handleSort = (field: SortField) => {
+    if (field === sortField) {
+      // Toggle direction
+      setSortDir(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      // New field, default to desc
+      setSortField(field)
+      setSortDir('desc')
+    }
+    setPagination(prev => ({ ...prev, page: 0 }))
   }
 
   const getCapacityColor = (current: number, max: number) => {
@@ -136,8 +220,6 @@ export default function ClassListPage() {
         return status
     }
   }
-
-
 
   // Gộp hiển thị: ưu tiên approvalStatus; nếu APPROVED thì hiển thị trạng thái vận hành
   const getUnifiedStatus = (status: string, approval?: string | null) => {
@@ -221,145 +303,206 @@ export default function ClassListPage() {
     <DashboardLayout
       title="Quản lý Lớp học"
       description="Quản lý và xem tất cả các lớp học trong chi nhánh của bạn"
+      actions={
+        <Button onClick={() => navigate('/academic/classes/create')}>
+          <Plus className="mr-2 h-4 w-4" />
+          Lớp học mới
+        </Button>
+      }
     >
       <div className="flex flex-col gap-6">
-        {/* Filters & Action */}
-        <div className="flex flex-col gap-4">
-          {/* Row 1: Search + Primary Filters */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Search */}
-            <div className="relative flex-1 sm:max-w-xs">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Tìm kiếm lớp học..."
-                value={filters.search}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-
-            {/* Primary Filters - wrap on mobile */}
-            <div className="flex flex-wrap gap-2">
-              {/* Status Filter */}
-              <Select
-                value={filters.status || 'all'}
-                onValueChange={(value) => handleFilterChange('status', value === 'all' ? undefined : value)}
-              >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Trạng thái" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                  <SelectItem value="DRAFT">Bản nháp</SelectItem>
-                  <SelectItem value="SCHEDULED">Đã lên lịch</SelectItem>
-                  <SelectItem value="ONGOING">Đang diễn ra</SelectItem>
-                  <SelectItem value="COMPLETED">Đã hoàn thành</SelectItem>
-                  <SelectItem value="CANCELLED">Đã hủy</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Approval Status Filter */}
-              <Select
-                value={filters.approvalStatus || 'all'}
-                onValueChange={(value) => handleFilterChange('approvalStatus', value === 'all' ? undefined : value)}
-              >
-                <SelectTrigger className="w-[130px]">
-                  <SelectValue placeholder="Phê duyệt" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả duyệt</SelectItem>
-                  <SelectItem value="PENDING">Chờ duyệt</SelectItem>
-                  <SelectItem value="APPROVED">Đã duyệt</SelectItem>
-                  <SelectItem value="REJECTED">Đã từ chối</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Modality Filter */}
-              <Select
-                value={filters.modality || 'all'}
-                onValueChange={(value) => handleFilterChange('modality', value === 'all' ? undefined : value)}
-              >
-                <SelectTrigger className="w-[130px]">
-                  <SelectValue placeholder="Hình thức" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả hình thức</SelectItem>
-                  <SelectItem value="ONLINE">Trực tuyến</SelectItem>
-                  <SelectItem value="OFFLINE">Trực tiếp</SelectItem>
-                  <SelectItem value="HYBRID">Kết hợp</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        {/* Search & Filters - Single Row */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Search */}
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Tìm theo mã, tên lớp, khóa học..."
+              value={filters.search}
+              onChange={(e) => handleFilterChange('search', e.target.value)}
+              className="pl-9"
+            />
           </div>
 
-          {/* Row 2: Secondary Filters + Action */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex flex-wrap gap-2">
-              {/* Sort By */}
-              <Select
-                value={filters.sort}
-                onValueChange={(value) => handleFilterChange('sort', value)}
-              >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Sắp xếp theo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="startDate">Ngày bắt đầu</SelectItem>
-                  <SelectItem value="name">Tên</SelectItem>
-                  <SelectItem value="code">Mã</SelectItem>
-                  <SelectItem value="currentEnrolled">Học viên</SelectItem>
-                  <SelectItem value="status">Trạng thái</SelectItem>
-                </SelectContent>
-              </Select>
+          {/* Status Filter */}
+          <Select
+            value={filters.status || 'all'}
+            onValueChange={(value) => handleFilterChange('status', value === 'all' ? undefined : value)}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Trạng thái" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Trạng thái: Tất cả</SelectItem>
+              <SelectItem value="DRAFT">Bản nháp</SelectItem>
+              <SelectItem value="SCHEDULED">Đã lên lịch</SelectItem>
+              <SelectItem value="ONGOING">Đang diễn ra</SelectItem>
+              <SelectItem value="COMPLETED">Đã hoàn thành</SelectItem>
+              <SelectItem value="CANCELLED">Đã hủy</SelectItem>
+            </SelectContent>
+          </Select>
 
-              {/* Sort Order */}
-              <Select
-                value={filters.sortDir}
-                onValueChange={(value) => handleFilterChange('sortDir', value)}
-              >
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="Thứ tự" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="asc">Tăng dần</SelectItem>
-                  <SelectItem value="desc">Giảm dần</SelectItem>
-                </SelectContent>
-              </Select>
+          {/* Approval Status Filter */}
+          <Select
+            value={filters.approvalStatus || 'all'}
+            onValueChange={(value) => handleFilterChange('approvalStatus', value === 'all' ? undefined : value)}
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Phê duyệt" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Phê duyệt: Tất cả</SelectItem>
+              <SelectItem value="PENDING">Chờ duyệt</SelectItem>
+              <SelectItem value="APPROVED">Đã duyệt</SelectItem>
+              <SelectItem value="REJECTED">Đã từ chối</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Modality Filter */}
+          <Select
+            value={filters.modality || 'all'}
+            onValueChange={(value) => handleFilterChange('modality', value === 'all' ? undefined : value)}
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Hình thức" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Hình thức: Tất cả</SelectItem>
+              <SelectItem value="ONLINE">Trực tuyến</SelectItem>
+              <SelectItem value="OFFLINE">Trực tiếp</SelectItem>
+              <SelectItem value="HYBRID">Kết hợp</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Statistics Summary */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-card border rounded-lg p-4 flex items-center gap-4">
+            <div className="p-3 rounded-lg bg-slate-500/20">
+              <Calendar className="h-6 w-6 text-slate-500" />
             </div>
-
-            <Button onClick={() => navigate('/academic/classes/create')} className="w-full sm:w-auto">
-              <Plus className="mr-2 h-4 w-4" />
-              Lớp học mới
-            </Button>
+            <div>
+              <div className="text-2xl font-bold">{statistics.total}</div>
+              <div className="text-sm text-muted-foreground">Tổng lớp học</div>
+            </div>
+          </div>
+          <div className="bg-card border rounded-lg p-4 flex items-center gap-4">
+            <div className="p-3 rounded-lg bg-green-500/20">
+              <PlayCircle className="h-6 w-6 text-green-500" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold">{statistics.ongoing}</div>
+              <div className="text-sm text-muted-foreground">Đang diễn ra</div>
+            </div>
+          </div>
+          <div className="bg-card border rounded-lg p-4 flex items-center gap-4">
+            <div className="p-3 rounded-lg bg-amber-500/20">
+              <Clock className="h-6 w-6 text-amber-500" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold">{statistics.pending}</div>
+              <div className="text-sm text-muted-foreground">Chờ duyệt</div>
+            </div>
+          </div>
+          <div className="bg-card border rounded-lg p-4 flex items-center gap-4">
+            <div className="p-3 rounded-lg bg-blue-500/20">
+              <CheckCircle2 className="h-6 w-6 text-blue-500" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold">{statistics.completed}</div>
+              <div className="text-sm text-muted-foreground">Đã hoàn thành</div>
+            </div>
           </div>
         </div>
 
         {/* Class List */}
         <div>
-          <div className="mb-4 text-sm text-muted-foreground">
-            {response?.data ?
-              `Hiển thị ${response.data.content.length} của ${response.data.page.totalElements} lớp học` :
-              'Đang tải lớp học...'
-            }
-          </div>
-
-          {isLoading ? (
-            <div className="space-y-3">
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="h-16 bg-muted/50 rounded-lg animate-pulse" />
-              ))}
+          {isLoading || isFetching ? (
+            /* Table Skeleton */
+            <div className="rounded-lg border bg-card overflow-hidden">
+              <Table className="min-w-[900px]">
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="min-w-[180px] font-semibold">Lớp học</TableHead>
+                    <TableHead className="min-w-[150px] font-semibold">Khóa học</TableHead>
+                    <TableHead className="min-w-[150px] font-semibold">Giáo viên</TableHead>
+                    <TableHead className="min-w-[120px] font-semibold">Chi nhánh</TableHead>
+                    <TableHead className="min-w-20 font-semibold">Sĩ số</TableHead>
+                    <TableHead className="min-w-[100px] font-semibold">Trạng thái</TableHead>
+                    <TableHead className="w-[70px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {[...Array(8)].map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-3 w-24" />
+                          <Skeleton className="h-3 w-40" />
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-28" />
+                          <Skeleton className="h-3 w-20" />
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-24" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-20" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-6 w-12" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-6 w-20" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-8 w-8" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           ) : response?.data?.content ? (
             <div className="rounded-lg border bg-card overflow-x-auto">
               <Table className="min-w-[900px]">
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="min-w-[180px]">Lớp học</TableHead>
-                    <TableHead className="min-w-[150px]">Khóa học</TableHead>
-                    <TableHead className="min-w-[150px]">Giáo viên</TableHead>
-                    <TableHead className="min-w-[120px]">Chi nhánh</TableHead>
-                    <TableHead className="min-w-20">Sĩ số</TableHead>
-                    <TableHead className="min-w-[100px]">Trạng thái</TableHead>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="min-w-[180px]">
+                      <SortableHeader
+                        label="Lớp học"
+                        field="name"
+                        currentSort={sortField}
+                        currentDir={sortDir}
+                        onSort={handleSort}
+                      />
+                    </TableHead>
+                    <TableHead className="min-w-[150px] font-semibold">Khóa học</TableHead>
+                    <TableHead className="min-w-[150px] font-semibold">Giáo viên</TableHead>
+                    <TableHead className="min-w-[120px] font-semibold">Chi nhánh</TableHead>
+                    <TableHead className="min-w-20">
+                      <SortableHeader
+                        label="Sĩ số"
+                        field="currentEnrolled"
+                        currentSort={sortField}
+                        currentDir={sortDir}
+                        onSort={handleSort}
+                      />
+                    </TableHead>
+                    <TableHead className="min-w-[100px]">
+                      <SortableHeader
+                        label="Trạng thái"
+                        field="status"
+                        currentSort={sortField}
+                        currentDir={sortDir}
+                        onSort={handleSort}
+                      />
+                    </TableHead>
                     <TableHead className="w-[70px]"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -377,7 +520,7 @@ export default function ClassListPage() {
                           <div className="flex items-center gap-2 mt-1">
                             <Calendar className="h-3 w-3 text-muted-foreground" />
                             <span className="text-xs text-muted-foreground">
-                              {new Date(classItem.startDate).toLocaleDateString()} - {new Date(classItem.plannedEndDate).toLocaleDateString()}
+                              {new Date(classItem.startDate).toLocaleDateString('vi-VN')} - {new Date(classItem.plannedEndDate).toLocaleDateString('vi-VN')}
                             </span>
                           </div>
                         </div>
@@ -440,7 +583,7 @@ export default function ClassListPage() {
         {response?.data?.page && (
           <div className="flex items-center justify-between pt-4 border-t">
             <div className="text-sm text-muted-foreground">
-              Trang {response.data.page.number + 1} của {response.data.page.totalPages}
+              Trang {response.data.page.number + 1} / {response.data.page.totalPages} · {response.data.page.totalElements} lớp học
             </div>
             <Pagination>
               <PaginationContent>
@@ -451,23 +594,39 @@ export default function ClassListPage() {
                       e.preventDefault()
                       setPagination(prev => ({ ...prev, page: prev.page - 1 }))
                     }}
-                    disabled={response.data.page.number === 0}
+                    aria-disabled={response.data.page.number === 0}
+                    className={response.data.page.number === 0 ? 'pointer-events-none opacity-50' : ''}
                   />
                 </PaginationItem>
-                {Array.from({ length: response.data.page.totalPages }, (_, i) => i).map((pageNum) => (
-                  <PaginationItem key={pageNum}>
-                    <PaginationLink
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        setPagination(prev => ({ ...prev, page: pageNum }))
-                      }}
-                      isActive={pageNum === response.data.page.number}
-                    >
-                      {pageNum + 1}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
+                {Array.from({ length: Math.min(5, response.data.page.totalPages) }, (_, i) => {
+                  // Show pages around current page
+                  let pageNum = i
+                  const totalPages = response.data.page.totalPages
+                  const currentPage = response.data.page.number
+                  if (totalPages > 5) {
+                    if (currentPage < 3) {
+                      pageNum = i
+                    } else if (currentPage > totalPages - 4) {
+                      pageNum = totalPages - 5 + i
+                    } else {
+                      pageNum = currentPage - 2 + i
+                    }
+                  }
+                  return (
+                    <PaginationItem key={pageNum}>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setPagination(prev => ({ ...prev, page: pageNum }))
+                        }}
+                        isActive={pageNum === response.data.page.number}
+                      >
+                        {pageNum + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                })}
                 <PaginationItem>
                   <PaginationNext
                     href="#"
@@ -475,7 +634,8 @@ export default function ClassListPage() {
                       e.preventDefault()
                       setPagination(prev => ({ ...prev, page: prev.page + 1 }))
                     }}
-                    disabled={response.data.page.number >= response.data.page.totalPages - 1}
+                    aria-disabled={response.data.page.number >= response.data.page.totalPages - 1}
+                    className={response.data.page.number >= response.data.page.totalPages - 1 ? 'pointer-events-none opacity-50' : ''}
                   />
                 </PaginationItem>
               </PaginationContent>
