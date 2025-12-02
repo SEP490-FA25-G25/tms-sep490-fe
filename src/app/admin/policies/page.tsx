@@ -278,32 +278,32 @@ export default function AdminPoliciesPage() {
                       />
                     </div>
                     <div className="flex flex-wrap gap-3 items-center">
-                      <Select
-                        value={category}
-                        onValueChange={(v) => {
-                          setCategory(v);
-                          setPage(0);
-                        }}
-                      >
-                        <SelectTrigger className="w-[190px]">
-                          <SelectValue placeholder="Nhóm policy" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {CATEGORY_OPTIONS.map((opt) => (
-                            <SelectItem key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    <Select
+                      value={category}
+                      onValueChange={(v) => {
+                        setCategory(v);
+                        setPage(0);
+                      }}
+                    >
+                      <SelectTrigger className="w-[190px]">
+                        <SelectValue placeholder="Nhóm policy" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CATEGORY_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => {
                           setHistoryOpen(true);
                           setHistoryPage(0);
-                        }}
-                      >
+                      }}
+                    >
                         Xem lịch sử thay đổi
                       </Button>
                     </div>

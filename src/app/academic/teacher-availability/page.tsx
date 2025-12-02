@@ -106,7 +106,7 @@ const AvailabilityCampaignPage = () => {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
             toast.success("Xuất báo cáo thành công");
-        } catch (error) {
+        } catch {
             toast.error("Lỗi khi xuất báo cáo");
         }
     };
@@ -341,7 +341,7 @@ const AvailabilityCampaignPage = () => {
                                                                 try {
                                                                     await sendBulkReminders(outdatedTeachers).unwrap();
                                                                     toast.success(`Đã gửi nhắc nhở cho ${outdatedTeachers.length} giáo viên`);
-                                                                } catch (error) {
+                                                                } catch {
                                                                     toast.error("Lỗi khi gửi nhắc nhở hàng loạt");
                                                                 }
                                                             }}

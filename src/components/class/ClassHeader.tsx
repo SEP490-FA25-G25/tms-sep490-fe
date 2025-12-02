@@ -1,27 +1,35 @@
-import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
-import { CLASS_STATUS_STYLES, getStatusStyle } from '@/lib/status-colors'
-import type { ClassDetailDTO } from '@/types/studentClass'
-import { CLASS_STATUSES, MODALITIES } from '@/types/studentClass'
-import { BookOpen, Building2, Calendar, Clock, MapPin, Users } from 'lucide-react'
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { CLASS_STATUS_STYLES, getStatusStyle } from "@/lib/status-colors";
+import type { ClassDetailDTO } from "@/types/studentClass";
+import { CLASS_STATUSES, MODALITIES } from "@/types/studentClass";
+import {
+  BookOpen,
+  Building2,
+  Calendar,
+  Clock,
+  MapPin,
+  Users,
+} from "lucide-react";
 
 interface ClassHeaderProps {
-  classDetail: ClassDetailDTO
+  classDetail: ClassDetailDTO;
 }
 
 const formatDate = (dateString?: string) => {
-  if (!dateString) return '—'
-  return new Date(dateString).toLocaleDateString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
-}
+  if (!dateString) return "—";
+  return new Date(dateString).toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
 
 export function ClassHeader({ classDetail }: ClassHeaderProps) {
-  const scheduleDisplay = classDetail.scheduleSummary || 'Chưa có lịch'
-  const enrollment = classDetail.enrollmentSummary?.totalEnrolled ?? 0
-  const capacity = classDetail.enrollmentSummary?.maxCapacity ?? classDetail.maxCapacity ?? 0
+  const scheduleDisplay = classDetail.scheduleSummary || "Chưa có lịch";
+  const enrollment = classDetail.enrollmentSummary?.totalEnrolled ?? 0;
+  const capacity =
+    classDetail.enrollmentSummary?.maxCapacity ?? classDetail.maxCapacity ?? 0;
 
   return (
     <div className="border-b bg-background">
@@ -30,14 +38,21 @@ export function ClassHeader({ classDetail }: ClassHeaderProps) {
           {/* Header top row */}
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-3">
-              <Badge className={cn('text-xs', getStatusStyle(CLASS_STATUS_STYLES, classDetail.status))}>
+              <Badge
+                className={cn(
+                  "text-xs",
+                  getStatusStyle(CLASS_STATUS_STYLES, classDetail.status)
+                )}
+              >
                 {CLASS_STATUSES[classDetail.status]}
               </Badge>
               <div className="space-y-1">
                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
                   {classDetail.name}
                 </h1>
-                <p className="text-lg text-muted-foreground">{classDetail.code}</p>
+                <p className="text-lg text-muted-foreground">
+                  {classDetail.code}
+                </p>
               </div>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
                 {classDetail.course?.subject && (
@@ -47,7 +62,10 @@ export function ClassHeader({ classDetail }: ClassHeaderProps) {
                   </div>
                 )}
                 {classDetail.course?.level && (
-                  <Badge variant="outline" className="text-xs font-medium border-primary/30 text-primary bg-primary/5">
+                  <Badge
+                    variant="outline"
+                    className="text-xs font-medium border-primary/30 text-primary bg-primary/5"
+                  >
                     {classDetail.course.level.name}
                   </Badge>
                 )}
@@ -76,8 +94,10 @@ export function ClassHeader({ classDetail }: ClassHeaderProps) {
               </div>
               <p className="text-sm font-semibold text-foreground">
                 {classDetail.modality
-                  ? MODALITIES[classDetail.modality as keyof typeof MODALITIES] || classDetail.modality
-                  : 'Chưa xác định'}
+                  ? MODALITIES[
+                      classDetail.modality as keyof typeof MODALITIES
+                    ] || classDetail.modality
+                  : "Chưa xác định"}
               </p>
             </div>
 
@@ -86,7 +106,9 @@ export function ClassHeader({ classDetail }: ClassHeaderProps) {
                 <Clock className="h-4 w-4" />
                 <span className="text-sm font-medium">Lịch học</span>
               </div>
-              <p className="text-sm font-semibold text-foreground">{scheduleDisplay}</p>
+              <p className="text-sm font-semibold text-foreground">
+                {scheduleDisplay}
+              </p>
             </div>
 
             <div className="rounded-lg border border-border/70 bg-muted/10 p-3 space-y-1">
@@ -95,7 +117,10 @@ export function ClassHeader({ classDetail }: ClassHeaderProps) {
                 <span className="text-sm font-medium">Thời gian</span>
               </div>
               <p className="text-sm font-semibold text-foreground">
-                {formatDate(classDetail.startDate)} - {formatDate(classDetail.plannedEndDate || classDetail.actualEndDate)}
+                {formatDate(classDetail.startDate)} -{" "}
+                {formatDate(
+                  classDetail.plannedEndDate || classDetail.actualEndDate
+                )}
               </p>
             </div>
 
@@ -105,12 +130,12 @@ export function ClassHeader({ classDetail }: ClassHeaderProps) {
                 <span className="text-sm font-medium">Sĩ số</span>
               </div>
               <p className="text-sm font-semibold text-foreground">
-                {enrollment}/{capacity || '—'}
+                {enrollment}/{capacity || "—"}
               </p>
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

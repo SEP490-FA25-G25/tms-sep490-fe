@@ -72,6 +72,7 @@ import {
   Clock3,
   CheckCircle2,
   XCircle,
+  UserCheck,
   MoreVertical,
 } from "lucide-react";
 import {
@@ -529,89 +530,79 @@ export default function MyRequestsPage() {
     label,
     value,
     icon: Icon,
-    valueColor,
-    borderColor,
+    description,
+    iconBgColor,
     iconColor,
   }: {
     label: string;
     value: number;
     icon: React.ComponentType<{ className?: string }>;
-    valueColor?: string;
-    borderColor: string;
-    iconColor?: string;
+    description: string;
+    iconBgColor: string;
+    iconColor: string;
   }) => {
-    const borderColorMap: Record<string, string> = {
-      "emerald-500": "#10b981",
-      "amber-500": "#f59e0b",
-      "rose-500": "#f43f5e",
-      "slate-500": "#64748b",
-    };
-
     return (
-      <div className="relative group">
-        <Card
-          className={cn(
-            "border-t-2 border-l-2 transition-all duration-300 ease-in-out group-hover:-translate-y-1 group-hover:shadow-md cursor-pointer relative"
-          )}
-          style={
-            {
-              borderTopColor:
-                borderColorMap[borderColor] || borderColor || "#64748b",
-              borderLeftColor:
-                borderColorMap[borderColor] || borderColor || "#64748b",
-            } as React.CSSProperties
-          }
-        >
-          {/* Icon positioned at vertical center of entire card */}
-          <Icon
+      <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">{label}</CardTitle>
+          <div
             className={cn(
-              "h-6 w-6 absolute top-[calc(50%-0.125rem)] -translate-y-1/2 right-4 z-10",
-              iconColor || "text-muted-foreground"
+              "flex h-9 w-9 items-center justify-center rounded-lg",
+              iconBgColor
             )}
-          />
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-0.5 relative z-10">
-            <CardTitle className="text-base font-medium">{label}</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0 pb-2 relative z-10">
-            <div className={cn("text-3xl font-bold", valueColor)}>{value}</div>
-          </CardContent>
-        </Card>
-      </div>
+          >
+            <Icon className={cn("h-4 w-4", iconColor)} />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{value}</div>
+          <p className="text-xs text-muted-foreground">{description}</p>
+        </CardContent>
+      </Card>
     );
   };
 
   const summaryCards = (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
       <SummaryCard
         label="Tổng số yêu cầu"
         value={summary.total}
         icon={NotebookPen}
-        borderColor="slate-500"
-        iconColor="text-slate-500"
+        description="Tất cả yêu cầu đã gửi"
+        iconBgColor="bg-slate-100 dark:bg-slate-800/50"
+        iconColor="text-slate-600 dark:text-slate-400"
       />
       <SummaryCard
         label="Chờ duyệt"
         value={summary.pending}
         icon={Clock3}
-        valueColor="text-amber-600"
-        borderColor="amber-500"
-        iconColor="text-amber-500"
+        description="Chờ phê duyệt"
+        iconBgColor="bg-amber-50 dark:bg-amber-950/30"
+        iconColor="text-amber-600 dark:text-amber-400"
       />
       <SummaryCard
         label="Đã duyệt"
         value={summary.approved}
         icon={CheckCircle2}
-        valueColor="text-emerald-600"
-        borderColor="emerald-500"
-        iconColor="text-emerald-500"
+        description="Được chấp thuận"
+        iconBgColor="bg-emerald-50 dark:bg-emerald-950/30"
+        iconColor="text-emerald-600 dark:text-emerald-400"
       />
       <SummaryCard
         label="Đã từ chối"
         value={summary.rejected}
         icon={XCircle}
-        valueColor="text-rose-600"
-        borderColor="rose-500"
-        iconColor="text-rose-500"
+        description="Không được duyệt"
+        iconBgColor="bg-rose-50 dark:bg-rose-950/30"
+        iconColor="text-rose-600 dark:text-rose-400"
+      />
+      <SummaryCard
+        label="Chờ xác nhận"
+        value={summary.waitingConfirm}
+        icon={UserCheck}
+        description="Chờ giáo viên dạy thay xác nhận"
+        iconBgColor="bg-sky-50 dark:bg-sky-950/30"
+        iconColor="text-sky-600 dark:text-sky-400"
       />
     </div>
   );
@@ -952,7 +943,7 @@ export default function MyRequestsPage() {
       <header className="flex flex-col gap-2 border-b border-border px-6 py-5">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="text-3xl font-bold tracking-tight">
               Yêu cầu của tôi
             </h1>
             <p className="text-sm text-muted-foreground">

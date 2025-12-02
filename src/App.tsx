@@ -15,6 +15,7 @@ import AdminCentersPage from "./app/admin/centers/page";
 import AdminSubjectsPage from "./app/admin/subjects/page";
 import AdminAnalyticsPage from "./app/admin/analytics/page";
 import TeacherClassesPage from "./app/teacher/classes/page";
+import TeacherClassDetailPage from "./app/teacher/classes/[classId]/page";
 import TeacherSchedulePage from "./app/teacher/schedule/page";
 import TeacherAttendancePage from "./app/teacher/attendance/page";
 import TeacherAttendanceDetailPage from "./app/teacher/attendance/[sessionId]/page";
@@ -176,6 +177,22 @@ function App() {
                   ]}
                 >
                   <TeacherGradesListPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/teacher/classes/:classId"
+              element={
+                <ProtectedRoute
+                  requiredRoles={[
+                    "TEACHER",
+                    "ADMIN",
+                    "MANAGER",
+                    "CENTER_HEAD",
+                    "SUBJECT_LEADER",
+                  ]}
+                >
+                  <TeacherClassDetailPage />
                 </ProtectedRoute>
               }
             />

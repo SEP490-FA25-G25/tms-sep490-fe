@@ -38,6 +38,7 @@ const SESSION_VARIANTS: Record<string, { bg: string; border: string; borderLeft:
 const DEFAULT_START_HOUR = 7
 const DEFAULT_END_HOUR = 22
 const HOUR_HEIGHT = 60 // px per hour
+const GRID_TOP_OFFSET = 20 // extra top spacing so 07:00 is not stuck to the header
 
 const parseTimeToMinutes = (timeStr?: string) => {
   if (!timeStr) return NaN
@@ -95,7 +96,7 @@ export function TeacherCalendarView({ scheduleData, onSessionClick, className }:
       ? endMinutes - startMinutes
       : 60
 
-    const top = Math.max(0, (startOffset / 60) * HOUR_HEIGHT)
+    const top = GRID_TOP_OFFSET + Math.max(0, (startOffset / 60) * HOUR_HEIGHT)
     const height = Math.max(HOUR_HEIGHT / 2, (duration / 60) * HOUR_HEIGHT)
 
     return {
@@ -127,7 +128,7 @@ export function TeacherCalendarView({ scheduleData, onSessionClick, className }:
     }
     
     const offsetFromStart = totalMinutes - startHour * 60
-    const topPosition = (offsetFromStart / 60) * HOUR_HEIGHT
+    const topPosition = GRID_TOP_OFFSET + (offsetFromStart / 60) * HOUR_HEIGHT
     const timeLabel = format(now, 'H:mm')
     
     return {
@@ -166,15 +167,21 @@ export function TeacherCalendarView({ scheduleData, onSessionClick, className }:
 
       {/* Calendar Body (Scrollable) */}
       <div className="flex-1 overflow-y-auto min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        <div className="relative grid grid-cols-8 divide-x" style={{ height: `${(endHour - startHour + 1) * HOUR_HEIGHT}px` }}>
+        <div
+          className="relative grid grid-cols-8 divide-x px-1 sm:px-3"
+          style={{ height: `${GRID_TOP_OFFSET + (endHour - startHour + 1) * HOUR_HEIGHT}px` }}
+        >
           
           {/* Time Column */}
-          <div className="relative border-r bg-muted/30">
+          <div className="relative border-r bg-muted/30 -ml-1 sm:-ml-3">
             {hours.map((hour) => (
               <div
                 key={hour}
                 className="absolute w-full border-b border-dashed border-border/50 text-right pr-2 text-xs text-muted-foreground"
-                style={{ top: `${(hour - startHour) * HOUR_HEIGHT}px`, height: `${HOUR_HEIGHT}px` }}
+                style={{
+                  top: `${GRID_TOP_OFFSET + (hour - startHour) * HOUR_HEIGHT}px`,
+                  height: `${HOUR_HEIGHT}px`,
+                }}
               >
                 <span className="-translate-y-1/2 block pt-2">
                   {String(hour).padStart(2, '0')}:00
@@ -203,7 +210,10 @@ export function TeacherCalendarView({ scheduleData, onSessionClick, className }:
                 <div
                   key={hour}
                   className="absolute w-full border-b border-border/30"
-                  style={{ top: `${(hour - startHour) * HOUR_HEIGHT}px`, height: `${HOUR_HEIGHT}px` }}
+                  style={{
+                    top: `${GRID_TOP_OFFSET + (hour - startHour) * HOUR_HEIGHT}px`,
+                    height: `${HOUR_HEIGHT}px`,
+                  }}
                 />
               ))}
 

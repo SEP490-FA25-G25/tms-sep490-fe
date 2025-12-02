@@ -1,4 +1,3 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
@@ -349,85 +348,70 @@ export default function TeacherGradesPage() {
             ))}
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {[
               {
                 label: "Đang diễn ra",
                 value: summaryStats.ongoing,
                 icon: TrendingUp,
-                borderColor: "emerald-500",
                 valueColor: "text-emerald-600",
-                iconColor: "text-emerald-500",
+                iconColor: "text-emerald-600",
+                iconBgColor: "bg-emerald-50 dark:bg-emerald-950/30",
+                description: "Số lớp đang dạy",
               },
               {
                 label: "Sắp kết thúc",
                 value: summaryStats.endingSoon,
                 icon: AlertTriangle,
-                borderColor: "amber-500",
                 valueColor: "text-amber-600",
-                iconColor: "text-amber-500",
+                iconColor: "text-amber-600",
+                iconBgColor: "bg-amber-50 dark:bg-amber-950/30",
+                description: "Chuẩn bị hoàn thành",
               },
               {
                 label: "Lớp sắp bắt đầu",
                 value: summaryStats.scheduled,
                 icon: Clock9,
-                borderColor: "sky-500",
                 valueColor: "text-sky-600",
-                iconColor: "text-sky-500",
+                iconColor: "text-sky-600",
+                iconBgColor: "bg-sky-50 dark:bg-sky-950/30",
+                description: "Chờ khai giảng",
               },
               {
                 label: "Điểm chuyên cần TB",
                 value: formatPercent(summaryStats.avgAttendance),
                 icon: ClipboardList,
-                borderColor: "slate-500",
-                iconColor: "text-slate-500",
+                valueColor: "text-slate-700 dark:text-slate-200",
+                iconColor: "text-slate-600 dark:text-slate-300",
+                iconBgColor: "bg-slate-100 dark:bg-slate-800/50",
+                description: "Tỉ lệ đi học trung bình",
               },
-            ].map((card, index) => {
-              const borderColorMap: Record<string, string> = {
-                "emerald-500": "#10b981",
-                "amber-500": "#f59e0b",
-                "sky-500": "#0ea5e9",
-                "slate-500": "#64748b",
-              };
-
-              return (
-                <div key={index} className="relative group">
-                  <Card
+            ].map((card) => (
+              <Card
+                key={card.label}
+                className="border-0 bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{card.label}</CardTitle>
+                  <div
                     className={cn(
-                      "border-t-2 border-l-2 transition-all duration-300 ease-in-out group-hover:-translate-y-1 group-hover:shadow-md cursor-pointer relative"
+                      "flex h-9 w-9 items-center justify-center rounded-lg",
+                      card.iconBgColor
                     )}
-                    style={
-                      {
-                        borderTopColor:
-                          borderColorMap[card.borderColor] || "#64748b",
-                        borderLeftColor:
-                          borderColorMap[card.borderColor] || "#64748b",
-                      } as React.CSSProperties
-                    }
                   >
-                    {/* Icon positioned at vertical center of entire card */}
-                    <card.icon
-                      className={cn(
-                        "h-6 w-6 absolute top-[calc(50%-0.125rem)] -translate-y-1/2 right-4 z-10",
-                        card.iconColor
-                      )}
-                    />
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-0.5 relative">
-                      <CardTitle className="text-base font-medium">
-                        {card.label}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-0 pb-2 relative">
-                      <div
-                        className={cn("text-3xl font-bold", card.valueColor)}
-                      >
-                        {card.value}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              );
-            })}
+                    <card.icon className={cn("h-4 w-4", card.iconColor)} />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className={cn("text-2xl font-bold", card.valueColor)}>
+                    {card.value}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {card.description}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         )}
 
