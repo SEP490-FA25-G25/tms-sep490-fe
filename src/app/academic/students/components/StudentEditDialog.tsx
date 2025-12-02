@@ -40,10 +40,12 @@ import { toast } from 'sonner'
 import {
   useUpdateStudentMutation,
   useDeleteSkillAssessmentMutation,
+  useGetAssessorsForBranchQuery,
   type StudentDetailDTO,
   type UpdateStudentRequest,
   type SkillAssessmentUpdateInput,
   type SkillAssessmentDetailDTO,
+  type AssessorDTO,
 } from '@/store/services/studentApi'
 import { useGetLevelsQuery } from '@/store/services/curriculumApi'
 import { useUploadFileMutation } from '@/store/services/uploadApi'
@@ -138,8 +140,15 @@ export function StudentEditDialog({
 
   // Get levels for skill assessment dropdown (get all levels without filter)
   const { data: levelsResponse } = useGetLevelsQuery(undefined)
+  
+  // Get assessors (teachers and AA) for the student's branch
+  const { data: assessorsResponse } = useGetAssessorsForBranchQuery(
+    student?.branchId ?? 0,
+    { skip: !student?.branchId || !open }
+  )
 
   const levels = levelsResponse?.data || []
+  const assessors = assessorsResponse?.data || []
 
   // Reset form when student changes
   useEffect(() => {
@@ -168,9 +177,11 @@ export function StudentEditDialog({
         assessmentDate: formatDateForInput(a.assessmentDate),
         assessmentType: a.assessmentType,
         note: a.note,
+        assessedByUserId: a.assessedBy?.userId, // Keep existing assessor
         // Keep original data for display
         _levelCode: a.levelCode,
         _levelName: a.levelName,
+        _assessedByFullName: a.assessedBy?.fullName,
       })) as SkillAssessmentUpdateInput[]
       
       setSkillAssessments(existingAssessments)
@@ -238,6 +249,7 @@ export function StudentEditDialog({
       scaledScore: undefined,
       assessmentDate: new Date().toISOString().split('T')[0],
       assessmentCategory: 'PLACEMENT',
+      assessedByUserId: undefined, // User will select assessor
     }
     setSkillAssessments(prev => [...prev, newAssessment])
   }
@@ -316,6 +328,7 @@ export function StudentEditDialog({
             assessmentDate: a.assessmentDate,
             assessmentType: a.assessmentType,
             note: a.note,
+            assessedByUserId: a.assessedByUserId,
           })),
       }
 
@@ -667,6 +680,33 @@ export function StudentEditDialog({
                             onChange={(e) => handleAssessmentChange(index, 'assessmentDate', e.target.value)}
                           />
                         </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Người đánh giá</Label>
+                        <Select
+                          value={assessment.assessedByUserId?.toString() || ''}
+                          onValueChange={(value) => handleAssessmentChange(index, 'assessedByUserId', value ? Number(value) : undefined)}
+                        >
+                          <SelectTrigger className="h-9 w-full">
+                            <SelectValue placeholder="Chọn người đánh giá">
+                              {assessment.assessedByUserId ? (
+                                assessors.find(a => a.userId === assessment.assessedByUserId)?.fullName ||
+                                (assessment as unknown as { _assessedByFullName?: string })._assessedByFullName ||
+                                'Đang tải...'
+                              ) : (
+                                'Chọn người đánh giá'
+                              )}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {assessors.map((assessor) => (
+                              <SelectItem key={assessor.userId} value={assessor.userId.toString()}>
+                                {assessor.fullName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div className="space-y-1.5">

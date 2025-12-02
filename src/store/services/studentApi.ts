@@ -204,6 +204,15 @@ export interface SkillAssessmentUpdateInput {
   assessmentDate?: string
   assessmentType?: string
   note?: string
+  assessedByUserId?: number // ID of the assessor (teacher or AA)
+}
+
+// Assessor DTO for teachers who assess student skills
+export interface AssessorDTO {
+  userId: number
+  fullName: string
+  email: string
+  role: 'TEACHER'
 }
 
 export interface UpdateStudentRequest {
@@ -392,6 +401,11 @@ export const studentApi = createApi({
       }),
       invalidatesTags: ['Student'],
     }),
+
+    // Get assessors for branch (teachers + academic affairs)
+    getAssessorsForBranch: builder.query<ApiResponse<AssessorDTO[]>, number>({
+      query: (branchId) => `/students/assessors?branchId=${branchId}`,
+    }),
   }),
 })
 
@@ -404,4 +418,5 @@ export const {
   useExportStudentsMutation,
   useUpdateStudentMutation,
   useDeleteSkillAssessmentMutation,
+  useGetAssessorsForBranchQuery,
 } = studentApi
