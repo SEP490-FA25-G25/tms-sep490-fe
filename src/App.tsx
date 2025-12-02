@@ -43,6 +43,7 @@ import AcademicClassesPage from "./app/academic/classes/page";
 import AcademicClassDetailPage from "./app/academic/classes/[id]/page";
 import AcademicStudentRequestsPage from "./app/academic/student-requests/page";
 import AcademicTeacherRequestsPage from "./app/academic/teacher-requests/page";
+import AcademicStudentsPage from "./app/academic/students/page";
 
 import CreateClassPage from "./app/academic/classes/create/page";
 import EditClassPage from "./app/academic/classes/[id]/edit/page";
@@ -609,6 +610,22 @@ function App() {
                   ]}
                 >
                   <AcademicTeacherRequestsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academic/students"
+              element={
+                <ProtectedRoute
+                  requiredRoles={[
+                    "ACADEMIC_AFFAIR",
+                    "ADMIN",
+                    "MANAGER",
+                    "CENTER_HEAD",
+                    "SUBJECT_LEADER",
+                  ]}
+                >
+                  <AcademicStudentsPage />
                 </ProtectedRoute>
               }
             />

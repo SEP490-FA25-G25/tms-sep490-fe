@@ -15,11 +15,13 @@ export interface StudentListItemDTO {
   fullName: string
   email: string
   phone: string
-  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
+  gender: 'MALE' | 'FEMALE' | 'OTHER' | null
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | null
   branchName: string
-  totalEnrollments: number
+  branchId: number
   activeEnrollments: number
   lastEnrollmentDate?: string
+  canEnroll: boolean
 }
 
 export interface StudentDetailDTO {
@@ -29,9 +31,12 @@ export interface StudentDetailDTO {
   email: string
   phone: string
   address: string
-  gender: string
+  gender: 'MALE' | 'FEMALE' | 'OTHER' | null
   dateOfBirth: string
-  status: string
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | null
+  facebookUrl?: string
+  avatarUrl?: string
+  createdAt?: string
   lastLoginAt?: string
   branchName: string
   branchId: number
@@ -112,15 +117,17 @@ export interface StudentEnrollmentHistoryDTO {
   averageScore?: number
 }
 
-export interface PaginationInfo {
-  page: number
+// Spring Boot Page response structure
+export interface PageInfo {
   size: number
+  number: number  // current page number (0-based)
   totalElements: number
   totalPages: number
-  first: boolean
-  last: boolean
-  numberOfElements: number
-  empty: boolean
+}
+
+export interface PageResponse<T> {
+  content: T[]
+  page: PageInfo
 }
 
 export interface ApiResponse<T = unknown> {
@@ -133,6 +140,7 @@ export interface StudentListRequest {
   branchIds?: number[]
   search?: string
   status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
+  gender?: 'MALE' | 'FEMALE' | 'OTHER'
   courseId?: number
   page?: number
   size?: number
@@ -251,7 +259,7 @@ export const studentApi = createApi({
   tagTypes: ['Student', 'Transcript'],
   endpoints: (builder) => ({
     // Get students list
-    getStudents: builder.query<ApiResponse<PaginationInfo & { content: StudentListItemDTO[] }>, StudentListRequest>({
+    getStudents: builder.query<ApiResponse<PageResponse<StudentListItemDTO>>, StudentListRequest>({
       query: (params) => ({
         url: '/students',
         method: 'GET',
@@ -259,6 +267,7 @@ export const studentApi = createApi({
           branchIds: params.branchIds,
           search: params.search,
           status: params.status,
+          gender: params.gender,
           courseId: params.courseId,
           page: params.page || 0,
           size: params.size || 20,
@@ -279,7 +288,7 @@ export const studentApi = createApi({
     }),
 
     // Get student enrollment history
-    getStudentEnrollmentHistory: builder.query<ApiResponse<PaginationInfo & { content: StudentEnrollmentHistoryDTO[] }>, { studentId: number; branchIds?: number[]; page?: number; size?: number; sort?: string; sortDir?: string }>({
+    getStudentEnrollmentHistory: builder.query<ApiResponse<PageResponse<StudentEnrollmentHistoryDTO>>, { studentId: number; branchIds?: number[]; page?: number; size?: number; sort?: string; sortDir?: string }>({
       query: ({ studentId, branchIds, page = 0, size = 20, sort = 'enrolledAt', sortDir = 'desc' }) => ({
         url: `/students/${studentId}/enrollments`,
         method: 'GET',
