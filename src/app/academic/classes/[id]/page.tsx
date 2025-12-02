@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SiteHeader } from '@/components/site-header'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
-import { AlertCircle, Calendar } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { useGetClassByIdQuery, useGetClassStudentsQuery } from '@/store/services/classApi'
 import { useGetStudentDetailQuery } from '@/store/services/studentApi'
 import type { CreateStudentResponse } from '@/store/services/studentApi'
@@ -18,6 +18,7 @@ import { AAClassDetailHeader } from './components/AAClassDetailHeader'
 import { AAClassDetailHeaderSkeleton, AAClassDetailContentSkeleton } from './components/AAClassDetailSkeleton'
 import { OverviewTab } from './components/OverviewTab'
 import { StudentsTab } from './components/StudentsTab'
+import { SessionsTab } from './components/SessionsTab'
 import { StudentDetailDrawer } from '../../students/components/StudentDetailDrawer'
 import { toast } from 'sonner'
 
@@ -176,13 +177,7 @@ export default function ClassDetailPage() {
                     </TabsContent>
 
                     <TabsContent value="sessions" className="space-y-6">
-                      <div className="rounded-lg border border-dashed p-12 text-center">
-                        <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                        <p className="text-muted-foreground">Danh sách buổi học sẽ được hiển thị ở đây</p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Tính năng đang được phát triển
-                        </p>
-                      </div>
+                      <SessionsTab classId={classId} />
                     </TabsContent>
                   </Tabs>
                 )}

@@ -476,6 +476,18 @@ export const classApi = createApi({
       }),
       invalidatesTags: ['Classes'],
     }),
+
+    // Get sessions with attendance and homework metrics
+    getClassSessionsWithMetrics: builder.query<
+      ApiResponse<import('@/types/qa').QASessionListResponse>,
+      number
+    >({
+      query: (classId) => ({
+        url: `/classes/${classId}/sessions/metrics`,
+        method: 'GET',
+      }),
+      providesTags: ['Classes'],
+    }),
   }),
 })
 
@@ -488,5 +500,6 @@ export const {
   useApproveClassMutation,
   useRejectClassMutation,
   useDeleteClassMutation,
+  useGetClassSessionsWithMetricsQuery,
   util: { invalidateTags: invalidateClassApiTags },
 } = classApi
