@@ -310,9 +310,9 @@ export default function TeacherSchedulePage() {
     <TeacherRoute>
       <DashboardLayout>
         <div className="flex flex-1 flex-col overflow-hidden min-h-0">
-          <header className="flex items-center justify-between border-b px-6 py-4 bg-background">
+          <header className="flex items-center justify-between border-b px-4 lg:px-6 py-4 bg-background">
             <div className="flex flex-col gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight">
+              <h1 className="text-3xl font-bold tracking-tight">
                 Lịch dạy của tôi
               </h1>
               <p className="text-sm text-muted-foreground">
@@ -422,7 +422,7 @@ export default function TeacherSchedulePage() {
             </div>
           </header>
 
-          <div className="flex-1 p-6 overflow-hidden bg-muted/10 min-h-0">
+          <div className="flex-1 px-4 lg:px-6 py-6 overflow-hidden bg-muted/10 min-h-0">
             {isLoading && !hasError && (
               <div className="h-full w-full rounded-xl border bg-background p-6">
                 <Skeleton className="h-full w-full" />

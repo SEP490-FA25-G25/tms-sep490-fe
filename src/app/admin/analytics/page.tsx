@@ -132,92 +132,31 @@ export default function AdminAnalyticsPage() {
     ([role, count]) => ({ role, count })
   );
 
-  const summaryColorMap: Record<
-    string,
-    { border: string; valueColor?: string; iconColor?: string }
-  > = {
-    emerald: {
-      border: "#10b981",
-      valueColor: "text-emerald-600",
-      iconColor: "text-emerald-500",
-    },
-    amber: {
-      border: "#f59e0b",
-      valueColor: "text-amber-600",
-      iconColor: "text-amber-500",
-    },
-    sky: {
-      border: "#0ea5e9",
-      valueColor: "text-sky-600",
-      iconColor: "text-sky-500",
-    },
-    rose: {
-      border: "#f43f5e",
-      valueColor: "text-rose-600",
-      iconColor: "text-rose-500",
-    },
-    slate: {
-      border: "#64748b",
-      iconColor: "text-muted-foreground",
-    },
-    purple: {
-      border: "#a855f7",
-      valueColor: "text-purple-600",
-      iconColor: "text-purple-500",
-    },
-    cyan: {
-      border: "#06b6d4",
-      valueColor: "text-cyan-600",
-      iconColor: "text-cyan-500",
-    },
-    orange: {
-      border: "#fb923c",
-      valueColor: "text-orange-600",
-      iconColor: "text-orange-500",
-    },
-  };
-
   const SummaryCard = ({
     label,
     value,
     icon: Icon,
-    accent = "slate",
   }: {
     label: string;
     value: number;
     icon: React.ComponentType<{ className?: string }>;
-    accent?: keyof typeof summaryColorMap;
   }) => {
-    const style = summaryColorMap[accent] ?? summaryColorMap.slate;
     return (
-      <div className="relative group">
-        <Card
-          className={cn(
-            "border-t-2 border-l-2 transition-all duration-300 ease-in-out group-hover:-translate-y-1 group-hover:shadow-md cursor-pointer relative"
-          )}
-          style={
-            {
-              borderTopColor: style.border,
-              borderLeftColor: style.border,
-            } as React.CSSProperties
-          }
-        >
-          <Icon
-            className={cn(
-              "h-6 w-6 absolute top-[calc(50%-0.125rem)] -translate-y-1/2 right-4 z-10",
-              style.iconColor ?? "text-muted-foreground"
-            )}
-          />
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-0.5 relative z-10">
-            <CardTitle className="text-base font-medium">{label}</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0 pb-2 relative z-10">
-            <div className={cn("text-3xl font-bold", style.valueColor)}>
+      <Card className="border border-border/50 bg-background/90 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+        <div className="flex items-center justify-between gap-4 px-4 py-3">
+          <div className="flex flex-col gap-1">
+            <span className="text-sm text-muted-foreground font-medium">
+              {label}
+            </span>
+            <span className="text-2xl font-semibold text-foreground leading-tight">
               {formatNumber(value)}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </span>
+          </div>
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+            <Icon className="h-5 w-5 text-muted-foreground" />
+          </div>
+        </div>
+      </Card>
     );
   };
 

@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { TeacherRoute } from "@/components/ProtectedRoute";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +13,6 @@ import {
 } from "@/store/services/attendanceApi";
 import {
   BookOpen,
-  BarChart3,
   TrendingUp,
   Search,
   Calendar,
@@ -638,11 +637,8 @@ export default function TeacherClassesPage() {
 function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
   const navigate = useNavigate();
 
-  const handleViewMatrix = (e?: React.MouseEvent) => {
-    if (e) {
-      e.stopPropagation();
-    }
-    navigate(`/teacher/attendance/classes/${classItem.id}/matrix`);
+  const handleNavigateDetail = () => {
+    navigate(`/teacher/classes/${classItem.id}`);
   };
 
   // Color coding for attendance rate
@@ -690,46 +686,69 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
     : null;
 
   // Check if class has started
-  const hasClassStarted = classItem.status !== "SCHEDULED" && 
-    (classItem.startDate ? parseISO(classItem.startDate) <= new Date() : classItem.status === "ONGOING" || classItem.status === "COMPLETED");
+  const hasClassStarted =
+    classItem.status !== "SCHEDULED" &&
+    (classItem.startDate
+      ? parseISO(classItem.startDate) <= new Date()
+      : classItem.status === "ONGOING" || classItem.status === "COMPLETED");
 
   // Determine which info item is the last one to render
   const hasCourse = !!classItem.courseName;
   const hasBranch = !!classItem.branchName;
   const hasDate = !!(startDate || endDate);
   const hasSessions = totalSessions > 0;
-  
+
   // Find the last visible item
-  const lastItem = hasSessions ? 'sessions' : hasDate ? 'date' : hasBranch ? 'branch' : hasCourse ? 'course' : null;
+  const lastItem = hasSessions
+    ? "sessions"
+    : hasDate
+    ? "date"
+    : hasBranch
+    ? "branch"
+    : hasCourse
+    ? "course"
+    : null;
 
   return (
-    <div className="rounded-lg border p-3 transition-all duration-200 hover:border-primary/60 hover:bg-primary/5 hover:-translate-y-1 hover:shadow-md">
+    <button
+      type="button"
+      onClick={handleNavigateDetail}
+      className="w-full rounded-lg border p-3 transition-all duration-200 hover:border-primary/60 hover:bg-primary/5 hover:-translate-y-1 hover:shadow-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+    >
       <div>
         {/* Header: Class Name and Status */}
         <div className="space-y-1.5 mb-2">
           <div className="flex items-center gap-1.5 flex-wrap">
             <h3 className="text-base font-semibold text-foreground">
-                {classItem.name}
-              </h3>
-            <Badge variant={getStatusBadgeVariant(classItem.status)} className="text-xs">
-                {STATUS_LABELS[classItem.status] || classItem.status}
-              </Badge>
-              <Badge variant="outline" className="text-xs">
-                {MODALITY_LABELS[classItem.modality]}
-              </Badge>
-            </div>
-            {classItem.code && (
+              {classItem.name}
+            </h3>
+            <Badge
+              variant={getStatusBadgeVariant(classItem.status)}
+              className="text-xs"
+            >
+              {STATUS_LABELS[classItem.status] || classItem.status}
+            </Badge>
+            <Badge variant="outline" className="text-xs">
+              {MODALITY_LABELS[classItem.modality]}
+            </Badge>
+          </div>
+          {classItem.code && (
             <p className="text-xs text-muted-foreground">
-                Mã lớp: {classItem.code}
-              </p>
-            )}
+              Mã lớp: {classItem.code}
+            </p>
+          )}
         </div>
 
         {/* Class Info Grid */}
         <div className="text-xs">
           {/* Course */}
           {classItem.courseName && (
-            <div className={cn("flex items-center gap-1.5 text-muted-foreground", lastItem !== 'course' && "mb-1.5")}>
+            <div
+              className={cn(
+                "flex items-center gap-1.5 text-muted-foreground",
+                lastItem !== "course" && "mb-1.5"
+              )}
+            >
               <GraduationCap className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{classItem.courseName}</span>
             </div>
@@ -737,7 +756,12 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
 
           {/* Branch */}
           {classItem.branchName && (
-            <div className={cn("flex items-center gap-1.5 text-muted-foreground", lastItem !== 'branch' && "mb-1.5")}>
+            <div
+              className={cn(
+                "flex items-center gap-1.5 text-muted-foreground",
+                lastItem !== "branch" && "mb-1.5"
+              )}
+            >
               <MapPin className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">{classItem.branchName}</span>
             </div>
@@ -745,7 +769,12 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
 
           {/* Date Range */}
           {(startDate || endDate) && (
-            <div className={cn("flex items-center gap-1.5 text-muted-foreground", lastItem !== 'date' && "mb-1.5")}>
+            <div
+              className={cn(
+                "flex items-center gap-1.5 text-muted-foreground",
+                lastItem !== "date" && "mb-1.5"
+              )}
+            >
               <Calendar className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate">
                 {startDate && endDate
@@ -761,7 +790,12 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
 
           {/* Total Sessions */}
           {totalSessions > 0 && (
-            <div className={cn("flex items-center gap-1.5 text-muted-foreground", lastItem !== 'sessions' && "mb-1.5")}>
+            <div
+              className={cn(
+                "flex items-center gap-1.5 text-muted-foreground",
+                lastItem !== "sessions" && "mb-1.5"
+              )}
+            >
               <BookOpen className="h-3.5 w-3.5 shrink-0" />
               <span>{totalSessions} buổi học</span>
             </div>
@@ -772,8 +806,8 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
         <div className="flex items-center gap-1.5 rounded-md border bg-muted/30 p-2 mt-2">
           <TrendingUp className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">
-              Tỷ lệ chuyên cần:
-            </span>
+            Tỷ lệ chuyên cần:
+          </span>
           {!hasClassStarted ? (
             <Badge
               variant="outline"
@@ -800,27 +834,8 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
               Chưa có dữ liệu
             </Badge>
           )}
-          </div>
-
-        {/* Action buttons */}
-        <div className="flex flex-wrap gap-1.5 mt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleViewMatrix}
-            className="gap-2"
-          >
-            <BarChart3 className="h-4 w-4" />
-            Xem bảng điểm danh
-          </Button>
-          <Button variant="outline" size="sm" asChild className="gap-2">
-            <Link to={`/teacher/classes/${classItem.id}/grades`}>
-              <BookOpen className="h-4 w-4" />
-              Quản lý điểm
-            </Link>
-          </Button>
         </div>
       </div>
-    </div>
+    </button>
   );
 }

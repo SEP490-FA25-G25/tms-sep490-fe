@@ -1074,7 +1074,7 @@ export default function AcademicTeacherRequestsPage() {
           }
         }}
       >
-        <DialogContent className="max-w-3xl rounded-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[90vw] sm:max-w-5xl lg:max-w-6xl rounded-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Chi tiết yêu cầu</DialogTitle>
           </DialogHeader>
