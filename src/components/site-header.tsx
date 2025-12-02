@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -17,10 +17,40 @@ import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { useAuth } from "@/hooks/useAuth"
 import { ROLES } from "@/hooks/useRoleBasedAccess"
 import { NotificationBell } from "@/components/notifications/NotificationBell"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { useState, useMemo } from "react"
 
 export function SiteHeader() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
+  const [showBackConfirm, setShowBackConfirm] = useState(false)
+
+  const shouldConfirmBack = useMemo(() => {
+    const guarded = [
+      "/curriculum/subjects/create",
+      "/curriculum/levels/create",
+      "/curriculum/courses/create",
+    ]
+    return guarded.some((path) => location.pathname.startsWith(path))
+  }, [location.pathname])
+
+  const handleBack = () => {
+    if (shouldConfirmBack) {
+      setShowBackConfirm(true)
+    } else {
+      navigate(-1)
+    }
+  }
 
   // Get highest priority role
   const getHighestRole = () => {
@@ -60,7 +90,7 @@ export function SiteHeader() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
             className="gap-1 hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -115,6 +145,28 @@ export function SiteHeader() {
           </DropdownMenu>
         </div>
       </div>
+
+      <AlertDialog open={showBackConfirm} onOpenChange={setShowBackConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận rời trang</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc muốn hủy và rời khỏi trang? Các thay đổi sẽ không được lưu.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Ở lại</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowBackConfirm(false)
+                navigate(-1)
+              }}
+            >
+              Rời trang
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </header>
   )
 }

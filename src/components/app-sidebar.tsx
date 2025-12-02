@@ -89,7 +89,7 @@ const roleBasedNav = {
         icon: BuildingIcon,
       },
       {
-        title: "Quản lý môn học",
+        title: "Quản lý chương trình đào tạo",
         url: "/admin/subjects",
         icon: BookOpenIcon,
       },
@@ -108,7 +108,7 @@ const roleBasedNav = {
         icon: HomeIcon,
       },
       {
-        title: "Quản lý môn học",
+        title: "Quản lý chương trình đào tạo",
         url: "/curriculum",
         icon: BookOpenIcon,
       },
@@ -162,11 +162,6 @@ const roleBasedNav = {
         icon: UsersIcon,
       },
       {
-        title: "Phân công giáo viên",
-        url: "/center/teachers",
-        icon: GraduationCapIcon,
-      },
-      {
         title: "Báo cáo trung tâm",
         url: "/center/reports",
         icon: FileTextIcon,
@@ -181,24 +176,9 @@ const roleBasedNav = {
         icon: HomeIcon,
       },
       {
-        title: "Quản lý môn học",
+        title: "Quản lý chương trình đào tạo",
         url: "/curriculum",
         icon: BookOpenIcon,
-      },
-      {
-        title: "Phân công giáo viên",
-        url: "/subject/teachers",
-        icon: GraduationCapIcon,
-      },
-      {
-        title: "Lập kế hoạch giảng dạy",
-        url: "/subject/curriculum",
-        icon: FileTextIcon,
-      },
-      {
-        title: "Theo dõi kết quả",
-        url: "/subject/performance",
-        icon: BarChartIcon,
       },
     ],
   },

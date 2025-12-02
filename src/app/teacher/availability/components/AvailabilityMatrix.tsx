@@ -29,7 +29,7 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
 }) => {
     const isAvailable = (dayId: number, slotId: number) => {
         return availabilityData?.availabilities.some(
-            (a) => a.dayOfWeek === dayId && a.timeSlotId === slotId
+            (a) => a.dayOfWeek === dayId && a.timeSlotTemplateId === slotId
         );
     };
 
@@ -44,18 +44,18 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
 
         const currentAvailabilities = availabilityData?.availabilities || [];
         const exists = currentAvailabilities.some(
-            (a) => a.dayOfWeek === dayId && a.timeSlotId === slotId
+            (a) => a.dayOfWeek === dayId && a.timeSlotTemplateId === slotId
         );
 
         let newAvailabilities;
         if (exists) {
             newAvailabilities = currentAvailabilities.filter(
-                (a) => !(a.dayOfWeek === dayId && a.timeSlotId === slotId)
+                (a) => !(a.dayOfWeek === dayId && a.timeSlotTemplateId === slotId)
             );
         } else {
             newAvailabilities = [
                 ...currentAvailabilities,
-                { dayOfWeek: dayId, timeSlotId: slotId },
+                { dayOfWeek: dayId, timeSlotTemplateId: slotId },
             ];
         }
         onChange(newAvailabilities);
@@ -73,13 +73,13 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
         if (allDaysSelected) {
             // Deselect all (except locked)
             newAvailabilities = newAvailabilities.filter(
-                (a) => a.timeSlotId !== slotId
+                (a) => a.timeSlotTemplateId !== slotId
             );
         } else {
             // Select all (except locked)
             DAYS_OF_WEEK.forEach((day) => {
                 if (!isLocked(day.id, slotId) && !isAvailable(day.id, slotId)) {
-                    newAvailabilities.push({ dayOfWeek: day.id, timeSlotId: slotId });
+                    newAvailabilities.push({ dayOfWeek: day.id, timeSlotTemplateId: slotId });
                 }
             });
         }
@@ -104,7 +104,7 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
             // Select all (except locked)
             timeSlots.forEach((slot) => {
                 if (!isLocked(dayId, slot.id) && !isAvailable(dayId, slot.id)) {
-                    newAvailabilities.push({ dayOfWeek: dayId, timeSlotId: slot.id });
+                    newAvailabilities.push({ dayOfWeek: dayId, timeSlotTemplateId: slot.id });
                 }
             });
         }

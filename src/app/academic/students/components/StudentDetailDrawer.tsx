@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/drawer'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { StudentStatusBadge, EnrollmentStatusBadge } from './StudentStatusBadge'
 import {
   User,
@@ -30,6 +31,15 @@ import {
   FileText,
 } from 'lucide-react'
 import type { StudentDetailDTO } from '@/store/services/studentApi'
+
+function getInitials(name: string) {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+}
 
 interface StudentDetailDrawerProps {
   open: boolean
@@ -100,14 +110,22 @@ export function StudentDetailDrawer({
                   <div className="h-4 w-32 bg-muted animate-pulse rounded mt-2" />
                 </>
               ) : student ? (
-                <>
-                  <DrawerTitle className="text-xl">{student.fullName}</DrawerTitle>
-                  <DrawerDescription className="flex items-center gap-2 mt-1">
-                    <span className="font-mono">{student.studentCode}</span>
-                    <span>•</span>
-                    <StudentStatusBadge status={student.status as 'ACTIVE' | 'SUSPENDED' | 'INACTIVE'} />
-                  </DrawerDescription>
-                </>
+                <div className="flex items-start gap-3">
+                  <Avatar className="h-12 w-12 border shrink-0">
+                    <AvatarImage src={student.avatarUrl || undefined} alt={student.fullName} />
+                    <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                      {getInitials(student.fullName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <DrawerTitle className="text-xl truncate">{student.fullName}</DrawerTitle>
+                    <DrawerDescription className="flex items-center gap-2 mt-1">
+                      <span className="font-mono">{student.studentCode}</span>
+                      <span>•</span>
+                      <StudentStatusBadge status={student.status as 'ACTIVE' | 'SUSPENDED' | 'INACTIVE'} />
+                    </DrawerDescription>
+                  </div>
+                </div>
               ) : (
                 <DrawerTitle>Chi tiết học viên</DrawerTitle>
               )}

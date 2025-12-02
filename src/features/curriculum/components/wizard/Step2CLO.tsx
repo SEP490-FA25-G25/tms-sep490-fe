@@ -4,7 +4,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
-
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Plus, Trash2 } from "lucide-react";
 import { useState, useMemo } from "react";
 import type { CourseData, CLO } from "@/types/course";
@@ -17,6 +26,7 @@ interface Step2Props {
 
 export function Step2CLO({ data, setData }: Step2Props) {
     const [selectedCloIndex, setSelectedCloIndex] = useState<number | null>(null);
+    const [pendingRemoveIndex, setPendingRemoveIndex] = useState<number | null>(null);
 
     // Fetch Subject Details to get PLOs
     const subjectId = data.basicInfo.subjectId ? parseInt(data.basicInfo.subjectId) : undefined;
@@ -62,9 +72,15 @@ export function Step2CLO({ data, setData }: Step2Props) {
     };
 
     const removeClo = (index: number) => {
-        const newClos = data.clos.filter((_, i) => i !== index);
+        setPendingRemoveIndex(index);
+    };
+
+    const handleConfirmRemove = () => {
+        if (pendingRemoveIndex === null) return;
+        const newClos = data.clos.filter((_, i) => i !== pendingRemoveIndex);
         setData((prev) => ({ ...prev, clos: newClos }));
-        if (selectedCloIndex === index) setSelectedCloIndex(null);
+        if (selectedCloIndex === pendingRemoveIndex) setSelectedCloIndex(null);
+        setPendingRemoveIndex(null);
     };
 
     return (
@@ -199,6 +215,20 @@ export function Step2CLO({ data, setData }: Step2Props) {
                     </div>
                 )}
             </div>
+            <AlertDialog open={pendingRemoveIndex !== null} onOpenChange={(open) => !open && setPendingRemoveIndex(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Xác nhận xóa CLO</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Bạn có chắc chắn muốn xóa CLO này? Hành động không thể hoàn tác.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmRemove}>Xóa</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

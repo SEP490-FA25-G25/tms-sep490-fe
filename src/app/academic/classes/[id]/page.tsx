@@ -1,5 +1,4 @@
-import type { CSSProperties } from 'react'
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { useParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -20,6 +19,7 @@ import { OverviewTab } from './components/OverviewTab'
 import { StudentsTab } from './components/StudentsTab'
 import { SessionsTab } from './components/SessionsTab'
 import { StudentDetailDrawer } from '../../students/components/StudentDetailDrawer'
+import { StudentEditDialog } from '../../students/components/StudentEditDialog'
 import { toast } from 'sonner'
 
 export default function ClassDetailPage() {
@@ -33,6 +33,7 @@ export default function ClassDetailPage() {
   const [createdStudentData, setCreatedStudentData] = useState<CreateStudentResponse | null>(null)
   const [studentDrawerOpen, setStudentDrawerOpen] = useState(false)
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null)
+  const [studentEditDialogOpen, setStudentEditDialogOpen] = useState(false)
 
   const {
     data: classResponse,
@@ -240,9 +241,20 @@ export default function ClassDetailPage() {
         student={drawerStudent}
         isLoading={isLoadingStudentDetail}
         onEdit={() => {
-          toast.info('Tính năng chỉnh sửa sẽ được triển khai sau')
+          setStudentEditDialogOpen(true)
         }}
         hideEnrollButton={true}
+      />
+
+      {/* Student Edit Dialog */}
+      <StudentEditDialog
+        open={studentEditDialogOpen}
+        onOpenChange={setStudentEditDialogOpen}
+        student={drawerStudent}
+        onSuccess={() => {
+          // Refetch student detail after edit
+          setStudentEditDialogOpen(false)
+        }}
       />
     </SidebarProvider>
   )

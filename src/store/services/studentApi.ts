@@ -192,6 +192,42 @@ export interface CreateStudentResponse {
   }
 }
 
+// Update Student types
+export interface SkillAssessmentUpdateInput {
+  id?: number // null = create new, has value = update existing
+  skill: 'GENERAL' | 'READING' | 'WRITING' | 'SPEAKING' | 'LISTENING' | 'VOCABULARY' | 'GRAMMAR' | 'KANJI'
+  levelId: number
+  rawScore?: number
+  scaledScore?: number
+  scoreScale?: string
+  assessmentCategory?: string
+  assessmentDate?: string
+  assessmentType?: string
+  note?: string
+  assessedByUserId?: number // ID of the assessor (teacher or AA)
+}
+
+// Assessor DTO for teachers who assess student skills
+export interface AssessorDTO {
+  userId: number
+  fullName: string
+  email: string
+  role: 'TEACHER'
+}
+
+export interface UpdateStudentRequest {
+  email: string
+  fullName: string
+  phone?: string
+  facebookUrl?: string
+  address?: string
+  avatarUrl?: string
+  gender: 'MALE' | 'FEMALE' | 'OTHER'
+  dateOfBirth?: string
+  status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
+  skillAssessments?: SkillAssessmentUpdateInput[]
+}
+
 // Base query with auth
 const baseQuery = fetchBaseQuery({
   baseUrl: '/api/v1',
@@ -346,6 +382,30 @@ export const studentApi = createApi({
         cache: 'no-cache',
       }),
     }),
+
+    // Update student information
+    updateStudent: builder.mutation<ApiResponse<StudentDetailDTO>, { studentId: number; data: UpdateStudentRequest }>({
+      query: ({ studentId, data }) => ({
+        url: `/students/${studentId}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['Student'],
+    }),
+
+    // Delete skill assessment
+    deleteSkillAssessment: builder.mutation<ApiResponse<void>, { studentId: number; assessmentId: number }>({
+      query: ({ studentId, assessmentId }) => ({
+        url: `/students/${studentId}/skill-assessments/${assessmentId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Student'],
+    }),
+
+    // Get assessors for branch (teachers + academic affairs)
+    getAssessorsForBranch: builder.query<ApiResponse<AssessorDTO[]>, number>({
+      query: (branchId) => `/students/assessors?branchId=${branchId}`,
+    }),
   }),
 })
 
@@ -356,4 +416,7 @@ export const {
   useCreateStudentMutation,
   useGetStudentTranscriptQuery,
   useExportStudentsMutation,
+  useUpdateStudentMutation,
+  useDeleteSkillAssessmentMutation,
+  useGetAssessorsForBranchQuery,
 } = studentApi

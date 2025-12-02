@@ -13,7 +13,6 @@ export interface LevelDTO {
   code: string
   name: string
   description: string
-  durationHours: number
   sortOrder: number
   subjectId?: number
   subjectName?: string
@@ -49,7 +48,6 @@ export interface CreateLevelRequest {
   code: string
   name: string
   description?: string
-  durationHours?: number
 }
 
 export interface ApiResponse<T = unknown> {

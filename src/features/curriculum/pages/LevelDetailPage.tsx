@@ -187,10 +187,6 @@ export default function LevelDetailPage() {
                                 <p className="text-lg">{level.subjectName} ({level.subjectCode})</p>
                             </div>
                             <div>
-                                <h3 className="font-medium text-sm text-muted-foreground">Thời lượng dự kiến</h3>
-                                <p className="text-lg">{level.durationHours} giờ</p>
-                            </div>
-                            <div>
                                 <h3 className="font-medium text-sm text-muted-foreground">Thứ tự sắp xếp</h3>
                                 <p className="text-lg">{level.sortOrder}</p>
                             </div>

@@ -22,6 +22,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { DataTable } from "@/components/data-table";
 import { getStatusLabel, getStatusColor } from "@/utils/statusMapping";
+import { SubjectDialog } from "./SubjectDialog";
+import { Plus } from "lucide-react";
 
 export function SubjectList() {
     const navigate = useNavigate();
@@ -34,9 +36,17 @@ export function SubjectList() {
     const [subjectToDelete, setSubjectToDelete] = useState<number | null>(null);
     const [subjectToReactivate, setSubjectToReactivate] = useState<number | null>(null);
     const [subjectToDeletePermanently, setSubjectToDeletePermanently] = useState<number | null>(null);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [selectedSubject, setSelectedSubject] = useState<SubjectWithLevelsDTO | null>(null);
 
-    const handleEdit = (id: number) => {
-        navigate(`/curriculum/subjects/${id}/edit`);
+    const handleCreate = () => {
+        setSelectedSubject(null);
+        setIsDialogOpen(true);
+    };
+
+    const handleEdit = (subject: SubjectWithLevelsDTO) => {
+        setSelectedSubject(subject);
+        setIsDialogOpen(true);
     };
 
     const handleDeactivate = async () => {
@@ -173,7 +183,7 @@ export function SubjectList() {
                                             variant="ghost"
                                             size="sm"
                                             className="w-full justify-start gap-2 h-9 px-2"
-                                            onClick={() => handleEdit(subject.id)}
+                                            onClick={() => handleEdit(subject)}
                                         >
                                             <Edit className="h-4 w-4" />
                                             Chỉnh sửa
@@ -212,7 +222,7 @@ export function SubjectList() {
                                 )}
                             </div>
                         </PopoverContent>
-                    </Popover>
+                    </Popover >
                 );
             },
         },
@@ -228,11 +238,27 @@ export function SubjectList() {
 
     return (
         <div className="w-full">
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Danh sách Môn học</h2>
+                {isSubjectLeader && (
+                    <Button onClick={handleCreate}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Tạo Môn học
+                    </Button>
+                )}
+            </div>
+
             <DataTable
                 columns={columns}
                 data={subjectsData?.data || []}
                 searchKey="name"
                 searchPlaceholder="Tìm kiếm theo tên môn học..."
+            />
+
+            <SubjectDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                subject={selectedSubject ? { ...selectedSubject, plos: selectedSubject.plos || [] } : null}
             />
 
             <AlertDialog open={!!subjectToDelete} onOpenChange={(open) => !open && setSubjectToDelete(null)}>

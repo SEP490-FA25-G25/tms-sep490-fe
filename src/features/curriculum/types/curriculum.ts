@@ -11,7 +11,6 @@ export interface Level {
   id: string;
   code: string;
   name: string;
-  durationHours: number;
 }
 
 export interface PLO {

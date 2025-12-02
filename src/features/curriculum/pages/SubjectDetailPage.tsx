@@ -89,7 +89,6 @@ function SortableRow({ level, onViewDetail }: SortableRowProps) {
             </TableCell>
             <TableCell className="font-medium">{level.code}</TableCell>
             <TableCell>{level.name}</TableCell>
-            <TableCell>{level.durationHours} giờ</TableCell>
             <TableCell className="text-right">
                 <Button
                     variant="ghost"
@@ -356,7 +355,6 @@ export default function SubjectDetailPage() {
                                                 <TableHead className="w-[50px]"></TableHead>
                                                 <TableHead className="w-[100px]">Mã</TableHead>
                                                 <TableHead>Tên cấp độ</TableHead>
-                                                <TableHead>Thời lượng</TableHead>
                                                 <TableHead className="text-right">Hành động</TableHead>
                                             </TableRow>
                                         </TableHeader>
