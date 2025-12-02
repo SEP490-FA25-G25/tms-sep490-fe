@@ -324,6 +324,28 @@ export const studentApi = createApi({
       }),
       providesTags: ['Transcript'],
     }),
+
+    // Export students to Excel
+    exportStudents: builder.mutation<Blob, StudentListRequest>({
+      query: (params) => ({
+        url: '/students/export',
+        method: 'GET',
+        params: {
+          branchIds: params.branchIds,
+          search: params.search,
+          status: params.status,
+          gender: params.gender,
+          courseId: params.courseId,
+        },
+        responseHandler: async (response) => {
+          if (response.ok) {
+            return await response.blob()
+          }
+          return response.json()
+        },
+        cache: 'no-cache',
+      }),
+    }),
   }),
 })
 
@@ -333,4 +355,5 @@ export const {
   useGetStudentEnrollmentHistoryQuery,
   useCreateStudentMutation,
   useGetStudentTranscriptQuery,
+  useExportStudentsMutation,
 } = studentApi

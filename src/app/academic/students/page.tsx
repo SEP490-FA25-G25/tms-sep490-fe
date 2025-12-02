@@ -24,22 +24,44 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
-import { Search, Plus, Users, Loader2 } from 'lucide-react'
+import { Search, Plus, Users, Loader2, Download } from 'lucide-react'
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { StudentStatusBadge } from './components/StudentStatusBadge'
 import { StudentDetailDrawer } from './components/StudentDetailDrawer'
 import {
   useGetStudentsQuery,
   useGetStudentDetailQuery,
+  useExportStudentsMutation,
   type StudentListItemDTO,
 } from '@/store/services/studentApi'
 import { useDebounce } from '@/hooks/useDebounce'
+import { toast } from 'sonner'
 
 // ========== Types ==========
+type EnrollmentFilter = 'all' | 'enrolled' | 'not_enrolled'
+
+type SortOption = {
+  field: string
+  direction: 'asc' | 'desc'
+  label: string
+}
+
+const SORT_OPTIONS: SortOption[] = [
+  { field: 'studentCode', direction: 'asc', label: 'Mã HV (A-Z)' },
+  { field: 'studentCode', direction: 'desc', label: 'Mã HV (Z-A)' },
+  { field: 'fullName', direction: 'asc', label: 'Họ tên (A-Z)' },
+  { field: 'fullName', direction: 'desc', label: 'Họ tên (Z-A)' },
+  { field: 'lastEnrollmentDate', direction: 'desc', label: 'GD gần nhất (Mới nhất)' },
+  { field: 'lastEnrollmentDate', direction: 'asc', label: 'GD gần nhất (Cũ nhất)' },
+  { field: 'activeEnrollments', direction: 'desc', label: 'Số lớp (Nhiều nhất)' },
+  { field: 'activeEnrollments', direction: 'asc', label: 'Số lớp (Ít nhất)' },
+]
+
 type FilterState = {
   search: string
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | undefined
   gender: 'MALE' | 'FEMALE' | 'OTHER' | undefined
+  enrollmentStatus: EnrollmentFilter
 }
 
 // ========== Component ==========
@@ -50,7 +72,12 @@ export default function StudentListPage() {
     search: '',
     status: undefined,
     gender: undefined,
+    enrollmentStatus: 'all',
   })
+
+  // State cho sort
+  const [sortIndex, setSortIndex] = useState(0) // Default: Mã HV (A-Z)
+  const currentSort = SORT_OPTIONS[sortIndex]
 
   // Debounce search để tránh gọi API liên tục khi user đang gõ
   const debouncedSearch = useDebounce(filters.search, 300)
@@ -77,8 +104,8 @@ export default function StudentListPage() {
     gender: filters.gender,
     page: pagination.page,
     size: pagination.size,
-    sort: 'studentCode',
-    sortDir: 'asc',
+    sort: currentSort.field,
+    sortDir: currentSort.direction,
   })
 
   // RTK Query - Lấy chi tiết học viên (chỉ fetch khi có selectedStudentId)
@@ -89,13 +116,45 @@ export default function StudentListPage() {
     skip: !selectedStudentId,
   })
 
+  // RTK Query - Export students
+  const [exportStudents, { isLoading: isExporting }] = useExportStudentsMutation()
+
   // Extract data from API response
   // Spring Boot Page response has nested "page" object for pagination info
-  const students = studentsResponse?.data?.content || []
+  const rawStudents = studentsResponse?.data?.content || []
   const pageInfo = studentsResponse?.data?.page
-  const totalElements = pageInfo?.totalElements || 0
-  const totalPages = pageInfo?.totalPages || 1
   const studentDetail = studentDetailResponse?.data
+
+  // Filter students by enrollment status (frontend filter)
+  const students = useMemo(() => {
+    if (filters.enrollmentStatus === 'all') return rawStudents
+    return rawStudents.filter((student) => {
+      if (filters.enrollmentStatus === 'enrolled') {
+        return student.activeEnrollments > 0
+      }
+      return student.activeEnrollments === 0
+    })
+  }, [rawStudents, filters.enrollmentStatus])
+
+  const totalElements = filters.enrollmentStatus === 'all' 
+    ? (pageInfo?.totalElements || 0)
+    : students.length
+  const totalPages = filters.enrollmentStatus === 'all'
+    ? (pageInfo?.totalPages || 1)
+    : Math.ceil(students.length / pagination.size) || 1
+
+  // Statistics computed from current page data
+  const statistics = useMemo(() => {
+    const activeCount = rawStudents.filter(s => s.status === 'ACTIVE').length
+    const enrolledCount = rawStudents.filter(s => s.activeEnrollments > 0).length
+    const notEnrolledCount = rawStudents.filter(s => s.activeEnrollments === 0).length
+    return {
+      total: pageInfo?.totalElements || rawStudents.length,
+      active: activeCount,
+      enrolled: enrolledCount,
+      notEnrolled: notEnrolledCount,
+    }
+  }, [rawStudents, pageInfo?.totalElements])
 
   // Transform studentDetail to match drawer interface
   const drawerStudent = useMemo(() => {
@@ -127,9 +186,9 @@ export default function StudentListPage() {
   }, [studentDetail])
 
   // Handlers
-  const handleFilterChange = (
-    key: keyof FilterState,
-    value: string | undefined
+  const handleFilterChange = <K extends keyof FilterState>(
+    key: K,
+    value: FilterState[K]
   ) => {
     setFilters((prev) => ({ ...prev, [key]: value }))
     setPagination((prev) => ({ ...prev, page: 0 })) // Reset về trang đầu khi filter
@@ -150,6 +209,31 @@ export default function StudentListPage() {
     console.log('Enroll student:', selectedStudentId)
   }
 
+  const handleExport = async () => {
+    try {
+      const result = await exportStudents({
+        search: debouncedSearch || undefined,
+        status: filters.status,
+        gender: filters.gender,
+      }).unwrap()
+
+      // Create download link
+      const url = window.URL.createObjectURL(result)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `danh-sach-hoc-vien-${new Date().toISOString().split('T')[0]}.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      toast.success('Xuất danh sách học viên thành công!')
+    } catch (error) {
+      console.error('Export error:', error)
+      toast.error('Có lỗi xảy ra khi xuất file. Vui lòng thử lại.')
+    }
+  }
+
   // Loading state
   const isLoading = isLoadingList && !studentsResponse
 
@@ -158,20 +242,34 @@ export default function StudentListPage() {
       title="Quản lý Học viên"
       description="Quản lý thông tin học viên và phân lớp"
       actions={
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Thêm học viên
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={isExporting}
+          >
+            {isExporting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="mr-2 h-4 w-4" />
+            )}
+            Xuất Excel
+          </Button>
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Thêm học viên
+          </Button>
+        </div>
       }
     >
       <div className="flex flex-col gap-6">
         {/* Search & Filters */}
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Search */}
-          <div className="relative flex-1 sm:max-w-xs">
+          <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Tìm kiếm học viên..."
+              placeholder="Tìm theo mã, tên, SĐT, email..."
               value={filters.search}
               onChange={(e) => handleFilterChange('search', e.target.value)}
               className="pl-9"
@@ -185,11 +283,11 @@ export default function StudentListPage() {
               handleFilterChange('status', value === 'all' ? undefined : value)
             }
           >
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Trạng thái" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
+              <SelectItem value="all">Trạng thái: Tất cả</SelectItem>
               <SelectItem value="ACTIVE">Hoạt động</SelectItem>
               <SelectItem value="SUSPENDED">Tạm khóa</SelectItem>
               <SelectItem value="INACTIVE">Đã nghỉ</SelectItem>
@@ -203,16 +301,73 @@ export default function StudentListPage() {
               handleFilterChange('gender', value === 'all' ? undefined : value)
             }
           >
-            <SelectTrigger className="w-[120px]">
+            <SelectTrigger className="w-[160px]">
               <SelectValue placeholder="Giới tính" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
+              <SelectItem value="all">Giới tính: Tất cả</SelectItem>
               <SelectItem value="MALE">Nam</SelectItem>
               <SelectItem value="FEMALE">Nữ</SelectItem>
               <SelectItem value="OTHER">Khác</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* Enrollment Status Filter */}
+          <Select
+            value={filters.enrollmentStatus}
+            onValueChange={(value) =>
+              handleFilterChange('enrollmentStatus', value as EnrollmentFilter)
+            }
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Tình trạng học" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Ghi danh: Tất cả</SelectItem>
+              <SelectItem value="enrolled">Đang học</SelectItem>
+              <SelectItem value="not_enrolled">Chưa ghi danh</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Sort Options */}
+          <Select
+            value={String(sortIndex)}
+            onValueChange={(value) => {
+              setSortIndex(Number(value))
+              setPagination((prev) => ({ ...prev, page: 0 }))
+            }}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Sắp xếp theo" />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((option, index) => (
+                <SelectItem key={index} value={String(index)}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Statistics Summary */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-card border rounded-lg p-4">
+            <div className="text-2xl font-bold">{statistics.total}</div>
+            <div className="text-sm text-muted-foreground">Tổng học viên</div>
+          </div>
+          <div className="bg-card border rounded-lg p-4">
+            <div className="text-2xl font-bold text-green-600">{statistics.active}</div>
+            <div className="text-sm text-muted-foreground">Đang hoạt động</div>
+          </div>
+          <div className="bg-card border rounded-lg p-4">
+            <div className="text-2xl font-bold text-blue-600">{statistics.enrolled}</div>
+            <div className="text-sm text-muted-foreground">Đang học</div>
+          </div>
+          <div className="bg-card border rounded-lg p-4">
+            <div className="text-2xl font-bold text-orange-600">{statistics.notEnrolled}</div>
+            <div className="text-sm text-muted-foreground">Chưa ghi danh</div>
+          </div>
         </div>
 
         {/* Loading indicator when fetching */}
@@ -240,7 +395,7 @@ export default function StudentListPage() {
           </div>
         ) : (
           <div className="rounded-lg border bg-card overflow-x-auto">
-            <Table className="min-w-[700px]">
+            <Table className="min-w-[900px]">
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="min-w-[100px] font-semibold">
@@ -252,6 +407,12 @@ export default function StudentListPage() {
                   </TableHead>
                   <TableHead className="min-w-[180px] font-semibold">
                     Email
+                  </TableHead>
+                  <TableHead className="min-w-[80px] font-semibold text-center">
+                    Đang học
+                  </TableHead>
+                  <TableHead className="min-w-[120px] font-semibold">
+                    GD gần nhất
                   </TableHead>
                   <TableHead className="min-w-[100px] font-semibold">
                     Trạng thái
@@ -276,6 +437,16 @@ export default function StudentListPage() {
                     </TableCell>
                     <TableCell className="text-muted-foreground truncate max-w-[180px]">
                       {student.email || '—'}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className={student.activeEnrollments > 0 ? 'text-blue-600 font-medium' : 'text-muted-foreground'}>
+                        {student.activeEnrollments || 0}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {student.lastEnrollmentDate 
+                        ? new Date(student.lastEnrollmentDate).toLocaleDateString('vi-VN')
+                        : '—'}
                     </TableCell>
                     <TableCell>
                       <StudentStatusBadge status={student.status || 'ACTIVE'} />
