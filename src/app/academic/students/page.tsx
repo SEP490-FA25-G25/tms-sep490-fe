@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
   SelectContent,
@@ -89,12 +90,12 @@ function SortableHeader({
       {label}
       {isActive ? (
         currentDir === 'asc' ? (
-          <ArrowUp className="ml-1 h-4 w-4" />
+          <ArrowUp className="ml-2 h-4 w-4" />
         ) : (
-          <ArrowDown className="ml-1 h-4 w-4" />
+          <ArrowDown className="ml-2 h-4 w-4" />
         )
       ) : (
-        <ArrowUpDown className="ml-1 h-4 w-4 opacity-50" />
+        <ArrowUpDown className="ml-2 h-4 w-4" />
       )}
     </Button>
   )
@@ -314,6 +315,58 @@ export default function StudentListPage() {
       }
     >
       <div className="flex flex-col gap-6">
+        {/* Statistics Summary */}
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Tổng học viên</CardTitle>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-50 dark:bg-slate-950/30">
+                <Users className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{statistics.total}</div>
+              <p className="text-xs text-muted-foreground">Tổng số học viên</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Đang hoạt động</CardTitle>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-50 dark:bg-green-950/30">
+                <UserCheck className="h-4 w-4 text-green-600 dark:text-green-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{statistics.active}</div>
+              <p className="text-xs text-muted-foreground">Học viên hoạt động</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Đang học</CardTitle>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/30">
+                <GraduationCap className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{statistics.enrolled}</div>
+              <p className="text-xs text-muted-foreground">Học viên đang học</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Chưa ghi danh</CardTitle>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-50 dark:bg-orange-950/30">
+                <UserX className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{statistics.notEnrolled}</div>
+              <p className="text-xs text-muted-foreground">Chưa có lớp học</p>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Search & Filters */}
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Search */}
@@ -379,46 +432,6 @@ export default function StudentListPage() {
               <SelectItem value="not_enrolled">Chưa ghi danh</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-
-        {/* Statistics Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-card border rounded-lg p-4 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-slate-500/20">
-              <Users className="h-6 w-6 text-slate-500" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold">{statistics.total}</div>
-              <div className="text-sm text-muted-foreground">Tổng học viên</div>
-            </div>
-          </div>
-          <div className="bg-card border rounded-lg p-4 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-green-500/20">
-              <UserCheck className="h-6 w-6 text-green-500" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold">{statistics.active}</div>
-              <div className="text-sm text-muted-foreground">Đang hoạt động</div>
-            </div>
-          </div>
-          <div className="bg-card border rounded-lg p-4 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-blue-500/20">
-              <GraduationCap className="h-6 w-6 text-blue-500" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold">{statistics.enrolled}</div>
-              <div className="text-sm text-muted-foreground">Đang học</div>
-            </div>
-          </div>
-          <div className="bg-card border rounded-lg p-4 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-orange-500/20">
-              <UserX className="h-6 w-6 text-orange-500" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold">{statistics.notEnrolled}</div>
-              <div className="text-sm text-muted-foreground">Chưa ghi danh</div>
-            </div>
-          </div>
         </div>
 
         {/* Student List */}

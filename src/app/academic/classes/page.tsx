@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
   SelectContent,
@@ -87,12 +88,12 @@ function SortableHeader({
       {label}
       {isActive ? (
         currentDir === 'asc' ? (
-          <ArrowUp className="ml-1 h-4 w-4" />
+          <ArrowUp className="ml-2 h-4 w-4" />
         ) : (
-          <ArrowDown className="ml-1 h-4 w-4" />
+          <ArrowDown className="ml-2 h-4 w-4" />
         )
       ) : (
-        <ArrowUpDown className="ml-1 h-4 w-4 opacity-50" />
+        <ArrowUpDown className="ml-2 h-4 w-4" />
       )}
     </Button>
   )
@@ -311,7 +312,59 @@ export default function ClassListPage() {
       }
     >
       <div className="flex flex-col gap-6">
-        {/* Search & Filters - Single Row */}
+        {/* Statistics Summary */}
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Tổng lớp học</CardTitle>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-50 dark:bg-slate-950/30">
+                <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{statistics.total}</div>
+              <p className="text-xs text-muted-foreground">Tổng số lớp học</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Đang diễn ra</CardTitle>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-50 dark:bg-green-950/30">
+                <PlayCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{statistics.ongoing}</div>
+              <p className="text-xs text-muted-foreground">Lớp đang học</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Chờ duyệt</CardTitle>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-950/30">
+                <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{statistics.pending}</div>
+              <p className="text-xs text-muted-foreground">Lớp chờ phê duyệt</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Đã hoàn thành</CardTitle>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/30">
+                <CheckCircle2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{statistics.completed}</div>
+              <p className="text-xs text-muted-foreground">Lớp đã kết thúc</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Search & Filters */}
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px]">
@@ -373,46 +426,6 @@ export default function ClassListPage() {
               <SelectItem value="HYBRID">Kết hợp</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-
-        {/* Statistics Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-card border rounded-lg p-4 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-slate-500/20">
-              <Calendar className="h-6 w-6 text-slate-500" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold">{statistics.total}</div>
-              <div className="text-sm text-muted-foreground">Tổng lớp học</div>
-            </div>
-          </div>
-          <div className="bg-card border rounded-lg p-4 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-green-500/20">
-              <PlayCircle className="h-6 w-6 text-green-500" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold">{statistics.ongoing}</div>
-              <div className="text-sm text-muted-foreground">Đang diễn ra</div>
-            </div>
-          </div>
-          <div className="bg-card border rounded-lg p-4 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-amber-500/20">
-              <Clock className="h-6 w-6 text-amber-500" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold">{statistics.pending}</div>
-              <div className="text-sm text-muted-foreground">Chờ duyệt</div>
-            </div>
-          </div>
-          <div className="bg-card border rounded-lg p-4 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-blue-500/20">
-              <CheckCircle2 className="h-6 w-6 text-blue-500" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold">{statistics.completed}</div>
-              <div className="text-sm text-muted-foreground">Đã hoàn thành</div>
-            </div>
-          </div>
         </div>
 
         {/* Class List */}
