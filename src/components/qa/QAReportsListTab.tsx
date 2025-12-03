@@ -5,6 +5,7 @@ import { useGetQAReportsQuery } from "@/store/services/qaApi"
 import { QAReportStatusBadge } from "@/components/qa/QAReportStatusBadge"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Input } from "@/components/ui/input"
 import { getQAReportTypeDisplayName, type QAReportListItemDTO } from "@/types/qa"
 import {
     Select,
@@ -22,26 +23,51 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination"
+import {
     FileText,
     Loader2,
     AlertTriangle,
+    Search,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+
+const PAGE_SIZE = 10
 
 interface QAReportsListTabProps {
     classId: number
 }
 
 export function QAReportsListTab({ classId }: QAReportsListTabProps) {
+    const [searchQuery, setSearchQuery] = useState("")
     const [reportTypeFilter, setReportTypeFilter] = useState<string>("all")
     const [statusFilter, setStatusFilter] = useState<string>("all")
+    const [page, setPage] = useState(0)
     const navigate = useNavigate()
   
     const { data: reportsData, isLoading, error } = useGetQAReportsQuery({
         classId,
         reportType: reportTypeFilter === "all" ? undefined : reportTypeFilter,
         status: statusFilter === "all" ? undefined : statusFilter,
+        search: searchQuery || undefined,
     })
+
+    // Reset page when filters/search change
+    const handleFilterChange = (setter: (value: string) => void, value: string) => {
+        setter(value)
+        setPage(0)
+    }
+
+    const handleSearchChange = (value: string) => {
+        setSearchQuery(value)
+        setPage(0)
+    }
 
     if (isLoading) {
         return (
@@ -69,6 +95,11 @@ export function QAReportsListTab({ classId }: QAReportsListTabProps) {
         const statusMatch = statusFilter === "all" || report.status === statusFilter
         return typeMatch && statusMatch
     })
+
+    // Pagination calculations
+    const totalItems = filteredReports.length
+    const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE))
+    const paginatedReports = filteredReports.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
     const getReportLevelBadge = (report: QAReportListItemDTO) => {
         if (report.sessionId) {
@@ -99,11 +130,20 @@ export function QAReportsListTab({ classId }: QAReportsListTabProps) {
     }
 
     return (
-        <div className="space-y-6">
-            {/* Filters */}
-            <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="space-y-4">
+            {/* Search & Filters */}
+            <div className="flex items-center justify-between gap-4">
+                <div className="relative w-64">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Tìm theo người tạo, nội dung..."
+                        value={searchQuery}
+                        onChange={(e) => handleSearchChange(e.target.value)}
+                        className="pl-8 h-9"
+                    />
+                </div>
                 <div className="flex items-center gap-2">
-                    <Select value={reportTypeFilter} onValueChange={setReportTypeFilter}>
+                    <Select value={reportTypeFilter} onValueChange={(v) => handleFilterChange(setReportTypeFilter, v)}>
                         <SelectTrigger className="w-[220px]">
                             <SelectValue />
                         </SelectTrigger>
@@ -118,7 +158,7 @@ export function QAReportsListTab({ classId }: QAReportsListTabProps) {
                         </SelectContent>
                     </Select>
 
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <Select value={statusFilter} onValueChange={(v) => handleFilterChange(setStatusFilter, v)}>
                         <SelectTrigger className="w-[160px]">
                             <SelectValue />
                         </SelectTrigger>
@@ -129,15 +169,11 @@ export function QAReportsListTab({ classId }: QAReportsListTabProps) {
                         </SelectContent>
                     </Select>
                 </div>
-
-                <div className="text-sm text-muted-foreground">
-                    Hiển thị {filteredReports.length} / {reports.length} báo cáo
-                </div>
             </div>
 
             {/* Reports Table */}
             <div className="rounded-lg border">
-                {filteredReports.length > 0 ? (
+                {paginatedReports.length > 0 ? (
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted/50">
@@ -149,7 +185,7 @@ export function QAReportsListTab({ classId }: QAReportsListTabProps) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredReports.map((report) => (
+                            {paginatedReports.map((report) => (
                                 <TableRow 
                                     key={report.id} 
                                     className="cursor-pointer hover:bg-muted/50"
@@ -211,6 +247,57 @@ export function QAReportsListTab({ classId }: QAReportsListTabProps) {
                         )}
                     </div>
                 )}
+            </div>
+
+            {/* Pagination */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+                <p className="text-muted-foreground">
+                    Trang {page + 1} / {totalPages} · {totalItems} báo cáo
+                </p>
+                <Pagination>
+                    <PaginationContent>
+                        <PaginationItem>
+                            <PaginationPrevious
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault()
+                                    setPage((prev) => Math.max(prev - 1, 0))
+                                }}
+                                className={page === 0 ? 'pointer-events-none opacity-50' : ''}
+                            />
+                        </PaginationItem>
+                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                            let pageNum = i
+                            if (totalPages > 5 && page > 2) {
+                                pageNum = Math.min(page - 2 + i, totalPages - 1)
+                            }
+                            return (
+                                <PaginationItem key={pageNum}>
+                                    <PaginationLink
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault()
+                                            setPage(pageNum)
+                                        }}
+                                        isActive={pageNum === page}
+                                    >
+                                        {pageNum + 1}
+                                    </PaginationLink>
+                                </PaginationItem>
+                            )
+                        })}
+                        <PaginationItem>
+                            <PaginationNext
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault()
+                                    setPage((prev) => Math.min(prev + 1, totalPages - 1))
+                                }}
+                                className={page + 1 >= totalPages ? 'pointer-events-none opacity-50' : ''}
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
             </div>
         </div>
     )

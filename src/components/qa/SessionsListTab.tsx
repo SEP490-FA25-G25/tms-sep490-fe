@@ -7,6 +7,7 @@ import { SessionStatus, getSessionStatusDisplayName, sessionStatusOptions } from
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Input } from "@/components/ui/input"
 import {
     Select,
     SelectContent,
@@ -23,21 +24,45 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination"
+import {
     Users,
     BookOpen,
     Loader2,
     AlertTriangle,
+    Search,
 } from "lucide-react"
+
+const PAGE_SIZE = 10
 
 interface SessionsListTabProps {
     classId: number
 }
 
 export function SessionsListTab({ classId }: SessionsListTabProps) {
+    const [searchQuery, setSearchQuery] = useState("")
     const [statusFilter, setStatusFilter] = useState<string>("all")
+    const [page, setPage] = useState(0)
     const navigate = useNavigate()
 
     const { data: sessionListData, isLoading, error } = useGetQASessionListQuery(classId)
+
+    // Reset page when filter/search changes
+    const handleFilterChange = (value: string) => {
+        setStatusFilter(value)
+        setPage(0)
+    }
+
+    const handleSearchChange = (value: string) => {
+        setSearchQuery(value)
+        setPage(0)
+    }
 
     if (isLoading) {
         return (
@@ -73,9 +98,22 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
 
     const sessions = sessionListData.sessions || []
     const filteredSessions = sessions.filter(session => {
-        if (statusFilter === "all") return true
-        return session.status === statusFilter
+        // Status filter
+        const statusMatch = statusFilter === "all" || session.status === statusFilter
+        
+        // Search filter (topic, teacherName)
+        const searchLower = searchQuery.toLowerCase().trim()
+        const searchMatch = !searchLower || 
+            session.topic?.toLowerCase().includes(searchLower) ||
+            session.teacherName?.toLowerCase().includes(searchLower)
+        
+        return statusMatch && searchMatch
     })
+
+    // Pagination calculations
+    const totalItems = filteredSessions.length
+    const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE))
+    const paginatedSessions = filteredSessions.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
     const getAttendanceColor = (rate: number) => {
         if (rate >= 90) return "text-green-600"
@@ -90,7 +128,6 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
     }
 
     const getStatusBadge = (status: string) => {
-        // Use display function for consistent Vietnamese labels
         const displayStatus = getSessionStatusDisplayName(status)
 
         switch (status) {
@@ -106,32 +143,36 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
     }
 
     return (
-        <div className="space-y-6">
-            {/* Filter */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="w-[200px]">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                            {sessionStatusOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+        <div className="space-y-4">
+            {/* Search & Filter */}
+            <div className="flex items-center justify-between gap-4">
+                <div className="relative w-64">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Tìm theo chủ đề, giáo viên..."
+                        value={searchQuery}
+                        onChange={(e) => handleSearchChange(e.target.value)}
+                        className="pl-8 h-9"
+                    />
                 </div>
-                <div className="text-sm text-muted-foreground">
-                    Hiển thị {filteredSessions.length} / {sessions.length} buổi học
-                </div>
+                <Select value={statusFilter} onValueChange={handleFilterChange}>
+                    <SelectTrigger className="w-[200px]">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                        {sessionStatusOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
 
             {/* Sessions Table */}
             <div className="rounded-lg border overflow-hidden bg-card">
-                {filteredSessions.length > 0 ? (
+                {paginatedSessions.length > 0 ? (
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted/50">
@@ -146,7 +187,7 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredSessions.map((session) => (
+                            {paginatedSessions.map((session) => (
                                 <TableRow 
                                     key={session.sessionId}
                                     className="cursor-pointer hover:bg-muted/50"
@@ -205,6 +246,57 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
                         </p>
                     </div>
                 )}
+            </div>
+
+            {/* Pagination */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+                <p className="text-muted-foreground">
+                    Trang {page + 1} / {totalPages} · {totalItems} buổi học
+                </p>
+                <Pagination>
+                    <PaginationContent>
+                        <PaginationItem>
+                            <PaginationPrevious
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault()
+                                    setPage((prev) => Math.max(prev - 1, 0))
+                                }}
+                                className={page === 0 ? 'pointer-events-none opacity-50' : ''}
+                            />
+                        </PaginationItem>
+                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                            let pageNum = i
+                            if (totalPages > 5 && page > 2) {
+                                pageNum = Math.min(page - 2 + i, totalPages - 1)
+                            }
+                            return (
+                                <PaginationItem key={pageNum}>
+                                    <PaginationLink
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault()
+                                            setPage(pageNum)
+                                        }}
+                                        isActive={pageNum === page}
+                                    >
+                                        {pageNum + 1}
+                                    </PaginationLink>
+                                </PaginationItem>
+                            )
+                        })}
+                        <PaginationItem>
+                            <PaginationNext
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault()
+                                    setPage((prev) => Math.min(prev + 1, totalPages - 1))
+                                }}
+                                className={page + 1 >= totalPages ? 'pointer-events-none opacity-50' : ''}
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
             </div>
         </div>
     )

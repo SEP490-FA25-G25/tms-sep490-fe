@@ -2,16 +2,17 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ArrowUpDown, CheckCircle, AlertTriangle, Calendar } from 'lucide-react'
+import { ArrowUpDown, CheckCircle, AlertTriangle, Calendar, Star } from 'lucide-react'
 
 export interface FeedbackItem {
   feedbackId: number
   studentName: string
-  phaseName: string
+  phaseName?: string
   phaseId?: number
   isFeedback: boolean
   submittedAt?: string
   responsePreview?: string
+  rating?: number
 }
 
 function StatusBadge({ isFeedback }: { isFeedback: boolean }) {
@@ -73,7 +74,7 @@ export const feedbackColumns: ColumnDef<FeedbackItem>[] = [
     accessorKey: 'phaseName',
     header: 'Giai đoạn',
     cell: ({ row }) => {
-      return <span className="text-sm text-muted-foreground">{row.original.phaseName}</span>
+      return <span className="text-sm text-muted-foreground">{row.original.phaseName || '—'}</span>
     },
     size: 140,
     enableSorting: true,
@@ -94,6 +95,45 @@ export const feedbackColumns: ColumnDef<FeedbackItem>[] = [
     },
     cell: ({ row }) => <StatusBadge isFeedback={row.original.isFeedback} />,
     size: 120,
+    enableSorting: true,
+  },
+  {
+    accessorKey: 'rating',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          className="-ml-4"
+        >
+          Đánh giá
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+    cell: ({ row }) => {
+      const rating = row.original.rating
+      if (!rating && rating !== 0) {
+        return <span className="text-sm text-muted-foreground">—</span>
+      }
+      return (
+        <div className="flex items-center gap-1">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <Star
+              key={star}
+              className={`h-3.5 w-3.5 ${star <= Math.round(rating)
+                ? 'fill-amber-400 text-amber-400'
+                : 'text-muted-foreground/30'
+              }`}
+            />
+          ))}
+          <span className="ml-1 text-xs text-muted-foreground">
+            ({rating.toFixed(1)})
+          </span>
+        </div>
+      )
+    },
+    size: 140,
     enableSorting: true,
   },
   {
@@ -133,14 +173,14 @@ export const feedbackColumns: ColumnDef<FeedbackItem>[] = [
       if (!preview) {
         return <span className="text-sm text-muted-foreground">—</span>
       }
-      const truncated = preview.length > 50 ? `${preview.substring(0, 50)}...` : preview
+      const truncated = preview.length > 40 ? `${preview.substring(0, 40)}...` : preview
       return (
         <span className="text-sm text-muted-foreground" title={preview}>
           {truncated}
         </span>
       )
     },
-    size: 200,
+    size: 180,
     enableSorting: false,
   },
 ]

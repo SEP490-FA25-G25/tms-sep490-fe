@@ -21,13 +21,25 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination"
+import {
     MessageSquare,
     Loader2,
     AlertTriangle,
     Star,
+    Search,
 } from "lucide-react"
+import { Input } from "@/components/ui/input"
 import { DataTable } from "./feedback/DataTable"
 import { feedbackColumns, type FeedbackItem } from "./feedback/columns"
+
+const PAGE_SIZE = 10
 
 interface StudentFeedbackTabProps {
     classId: number
@@ -35,8 +47,10 @@ interface StudentFeedbackTabProps {
 }
 
 export function StudentFeedbackTab({ classId, courseId }: StudentFeedbackTabProps) {
+    const [searchQuery, setSearchQuery] = useState("")
     const [phaseFilter, setPhaseFilter] = useState<string>("all")
     const [statusFilter, setStatusFilter] = useState<string>("all")
+    const [page, setPage] = useState(0)
     const [selectedFeedback, setSelectedFeedback] = useState<number | null>(null)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
 
@@ -51,6 +65,17 @@ export function StudentFeedbackTab({ classId, courseId }: StudentFeedbackTabProp
     const handleCloseDialog = () => {
         setSelectedFeedback(null)
         setIsDialogOpen(false)
+    }
+
+    // Reset page when filters/search change
+    const handleFilterChange = (setter: (value: string) => void, value: string) => {
+        setter(value)
+        setPage(0)
+    }
+
+    const handleSearchChange = (value: string) => {
+        setSearchQuery(value)
+        setPage(0)
     }
 
     const { data: feedbackData, isLoading, error } = useGetClassFeedbacksQuery({
@@ -92,8 +117,19 @@ export function StudentFeedbackTab({ classId, courseId }: StudentFeedbackTabProp
         const statusMatch = statusFilter === "all" ||
             (statusFilter === "submitted" && feedback.isFeedback) ||
             (statusFilter === "not_submitted" && !feedback.isFeedback)
-        return phaseMatch && statusMatch
+        
+        // Search filter (studentName)
+        const searchLower = searchQuery.toLowerCase().trim()
+        const searchMatch = !searchLower || 
+            feedback.studentName?.toLowerCase().includes(searchLower)
+        
+        return phaseMatch && statusMatch && searchMatch
     })
+
+    // Pagination calculations
+    const totalItems = filteredFeedbacks.length
+    const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE))
+    const paginatedFeedbacks = filteredFeedbacks.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
     const formatDate = (dateString: string | undefined) => {
         if (!dateString) return "Chưa nộp"
@@ -107,11 +143,20 @@ export function StudentFeedbackTab({ classId, courseId }: StudentFeedbackTabProp
     }
 
     return (
-        <div className="space-y-6">
-            {/* Filters */}
-            <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="space-y-4">
+            {/* Search & Filters */}
+            <div className="flex items-center justify-between gap-4">
+                <div className="relative w-64">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Tìm theo tên học viên..."
+                        value={searchQuery}
+                        onChange={(e) => handleSearchChange(e.target.value)}
+                        className="pl-8 h-9"
+                    />
+                </div>
                 <div className="flex items-center gap-2">
-                    <Select value={phaseFilter} onValueChange={setPhaseFilter}>
+                    <Select value={phaseFilter} onValueChange={(v) => handleFilterChange(setPhaseFilter, v)}>
                         <SelectTrigger className="w-[200px]">
                             <SelectValue />
                         </SelectTrigger>
@@ -125,7 +170,7 @@ export function StudentFeedbackTab({ classId, courseId }: StudentFeedbackTabProp
                         </SelectContent>
                     </Select>
 
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <Select value={statusFilter} onValueChange={(v) => handleFilterChange(setStatusFilter, v)}>
                         <SelectTrigger className="w-[160px]">
                             <SelectValue />
                         </SelectTrigger>
@@ -136,17 +181,13 @@ export function StudentFeedbackTab({ classId, courseId }: StudentFeedbackTabProp
                         </SelectContent>
                     </Select>
                 </div>
-
-                <div className="text-sm text-muted-foreground">
-                    Hiển thị {filteredFeedbacks.length} / {feedbacks.length} phản hồi
-                </div>
             </div>
 
             {/* Feedback Table */}
-            {filteredFeedbacks.length > 0 ? (
+            {paginatedFeedbacks.length > 0 ? (
                 <DataTable
                     columns={feedbackColumns}
-                    data={filteredFeedbacks}
+                    data={paginatedFeedbacks}
                     onViewDetail={handleOpenDialog}
                     isLoading={isLoading}
                 />
@@ -163,6 +204,57 @@ export function StudentFeedbackTab({ classId, courseId }: StudentFeedbackTabProp
                     </div>
                 </div>
             )}
+
+            {/* Pagination */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+                <p className="text-muted-foreground">
+                    Trang {page + 1} / {totalPages} · {totalItems} phản hồi
+                </p>
+                <Pagination>
+                    <PaginationContent>
+                        <PaginationItem>
+                            <PaginationPrevious
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault()
+                                    setPage((prev) => Math.max(prev - 1, 0))
+                                }}
+                                className={page === 0 ? 'pointer-events-none opacity-50' : ''}
+                            />
+                        </PaginationItem>
+                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                            let pageNum = i
+                            if (totalPages > 5 && page > 2) {
+                                pageNum = Math.min(page - 2 + i, totalPages - 1)
+                            }
+                            return (
+                                <PaginationItem key={pageNum}>
+                                    <PaginationLink
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault()
+                                            setPage(pageNum)
+                                        }}
+                                        isActive={pageNum === page}
+                                    >
+                                        {pageNum + 1}
+                                    </PaginationLink>
+                                </PaginationItem>
+                            )
+                        })}
+                        <PaginationItem>
+                            <PaginationNext
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault()
+                                    setPage((prev) => Math.min(prev + 1, totalPages - 1))
+                                }}
+                                className={page + 1 >= totalPages ? 'pointer-events-none opacity-50' : ''}
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
+            </div>
 
             <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
                 <DialogContent className="sm:max-w-2xl">
