@@ -1,5 +1,5 @@
-import { useMemo, useState, useEffect } from "react";
-import { format, parseISO } from "date-fns";
+import { useMemo, useState, useEffect, useCallback } from "react";
+import { format, parseISO, differenceInCalendarDays } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
   SearchIcon,
@@ -7,6 +7,7 @@ import {
   ArrowLeftRight,
   CalendarClock,
   UserRoundCheck,
+  ArrowUpDown,
 } from "lucide-react";
 import { skipToken } from "@reduxjs/toolkit/query";
 
@@ -280,6 +281,56 @@ const getRequestTopic = (request: TeacherRequestDTO): string | undefined => {
   return undefined;
 };
 
+const getDaysUntilSession = (request: TeacherRequestDTO): number | null => {
+  const sessionDate =
+    request.sessionDate ||
+    (typeof request.session === "object"
+      ? (request.session as { date?: string })?.date
+      : undefined) ||
+    (request as { sessionInfo?: { date?: string } }).sessionInfo?.date;
+  if (!sessionDate) return null;
+
+  try {
+    const targetDate = parseISO(sessionDate);
+    return differenceInCalendarDays(targetDate, new Date());
+  } catch {
+    return null;
+  }
+};
+
+const getTimeDisplayMeta = (
+  daysUntilSession: number | null
+): { label: string; className: string } => {
+  if (daysUntilSession === null) {
+    return {
+      label: "Không rõ",
+      className: "border bg-muted/50 text-muted-foreground",
+    };
+  }
+  if (daysUntilSession < 0) {
+    return {
+      label: `Đã qua ${Math.abs(daysUntilSession)} ngày`,
+      className: "border border-rose-100 bg-rose-50 text-rose-600",
+    };
+  }
+  if (daysUntilSession === 0) {
+    return {
+      label: "Diễn ra hôm nay",
+      className: "border border-amber-100 bg-amber-50 text-amber-600",
+    };
+  }
+  if (daysUntilSession <= 2) {
+    return {
+      label: `Còn ${daysUntilSession} ngày`,
+      className: "border border-amber-100 bg-amber-50 text-amber-600",
+    };
+  }
+  return {
+    label: `Còn ${daysUntilSession} ngày`,
+    className: "border border-emerald-100 bg-emerald-50 text-emerald-600",
+  };
+};
+
 export default function AcademicTeacherRequestsPage() {
   // Teacher request filter states
   const [teacherTypeFilter, setTeacherTypeFilter] = useState<
@@ -303,6 +354,11 @@ export default function AcademicTeacherRequestsPage() {
   );
   const [pendingPage, setPendingPage] = useState(0);
   const [historyPage, setHistoryPage] = useState(0);
+  const [activeTab, setActiveTab] = useState<"pending" | "history">("pending");
+  const [sortField, setSortField] = useState<
+    "teacher" | "time" | "status" | "submittedAt"
+  >("submittedAt");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const PAGE_SIZE = 10;
 
   // Teacher requests queries
@@ -433,7 +489,10 @@ export default function AcademicTeacherRequestsPage() {
         teacherTypeFilter === "ALL" ||
         request.requestType === teacherTypeFilter;
       const matchStatus =
-        teacherStatusFilter === "ALL" || request.status === teacherStatusFilter;
+        activeTab === "history"
+          ? teacherStatusFilter === "ALL" ||
+            request.status === teacherStatusFilter
+          : true;
       const matchSearch =
         !teacherSearchKeyword ||
         (request.teacherName &&
@@ -453,42 +512,89 @@ export default function AcademicTeacherRequestsPage() {
     teacherTypeFilter,
     teacherStatusFilter,
     teacherSearchKeyword,
+    activeTab,
   ]);
 
-  const teacherPendingRequests = useMemo(
-    () =>
-      filteredTeacherRequests
-        .filter((r) => r.status === "PENDING")
-        .sort((a, b) => {
-          // Sort by submittedAt descending (newest first)
-          const dateA = a.submittedAt ? parseISO(a.submittedAt).getTime() : 0;
-          const dateB = b.submittedAt ? parseISO(b.submittedAt).getTime() : 0;
-          return dateB - dateA;
-        }),
-    [filteredTeacherRequests]
+  const applySorting = useCallback(
+    (requests: TeacherRequestDTO[]) => {
+      const sorted = [...requests];
+      sorted.sort((a, b) => {
+        const directionMultiplier = sortDirection === "asc" ? 1 : -1;
+        const getSubmitted = (r: TeacherRequestDTO) =>
+          r.submittedAt ? parseISO(r.submittedAt).getTime() : 0;
+        const getStatusOrder = (status: TeacherRequestStatus) => {
+          const order: TeacherRequestStatus[] = [
+            "PENDING",
+            "WAITING_CONFIRM",
+            "APPROVED",
+            "REJECTED",
+          ];
+          const idx = order.indexOf(status);
+          return idx === -1 ? order.length : idx;
+        };
+        switch (sortField) {
+          case "teacher": {
+            const nameA = (a.teacherName || "").toLowerCase();
+            const nameB = (b.teacherName || "").toLowerCase();
+            if (nameA < nameB) return -1 * directionMultiplier;
+            if (nameA > nameB) return 1 * directionMultiplier;
+            return (getSubmitted(b) - getSubmitted(a)) * directionMultiplier;
+          }
+          case "time": {
+            const timeA = getDaysUntilSession(a);
+            const timeB = getDaysUntilSession(b);
+            const normalizedA =
+              timeA === null || timeA === undefined
+                ? Number.MAX_SAFE_INTEGER
+                : timeA;
+            const normalizedB =
+              timeB === null || timeB === undefined
+                ? Number.MAX_SAFE_INTEGER
+                : timeB;
+            if (normalizedA === normalizedB) {
+              return (getSubmitted(b) - getSubmitted(a)) * directionMultiplier;
+            }
+            return normalizedA < normalizedB
+              ? -1 * directionMultiplier
+              : 1 * directionMultiplier;
+          }
+          case "status": {
+            const statusDiff =
+              getStatusOrder(a.status) - getStatusOrder(b.status);
+            if (statusDiff !== 0) {
+              return statusDiff * directionMultiplier;
+            }
+            return (getSubmitted(b) - getSubmitted(a)) * directionMultiplier;
+          }
+          case "submittedAt":
+          default: {
+            const diff = getSubmitted(a) - getSubmitted(b);
+            return diff === 0
+              ? 0
+              : diff > 0
+              ? directionMultiplier
+              : -directionMultiplier;
+          }
+        }
+      });
+      return sorted;
+    },
+    [sortDirection, sortField]
   );
 
-  const teacherHistoryRequests = useMemo(
-    () =>
-      filteredTeacherRequests
-        .filter((r) => r.status !== "PENDING")
-        .sort((a, b) => {
-          // Sort by decidedAt descending (newest first)
-          // If decidedAt is missing, use submittedAt as fallback
-          const dateA = a.decidedAt
-            ? parseISO(a.decidedAt).getTime()
-            : a.submittedAt
-            ? parseISO(a.submittedAt).getTime()
-            : 0;
-          const dateB = b.decidedAt
-            ? parseISO(b.decidedAt).getTime()
-            : b.submittedAt
-            ? parseISO(b.submittedAt).getTime()
-            : 0;
-          return dateB - dateA;
-        }),
-    [filteredTeacherRequests]
-  );
+  const teacherPendingRequests = useMemo(() => {
+    const pending = filteredTeacherRequests.filter(
+      (r) => r.status === "PENDING"
+    );
+    return applySorting(pending);
+  }, [filteredTeacherRequests, applySorting]);
+
+  const teacherHistoryRequests = useMemo(() => {
+    const history = filteredTeacherRequests.filter(
+      (r) => r.status !== "PENDING"
+    );
+    return applySorting(history);
+  }, [filteredTeacherRequests, applySorting]);
 
   // Summary for teacher pending requests
   const totalPending = teacherPendingRequests.length;
@@ -528,6 +634,21 @@ export default function AcademicTeacherRequestsPage() {
     const start = safePage * PAGE_SIZE;
     return teacherHistoryRequests.slice(start, start + PAGE_SIZE);
   }, [teacherHistoryRequests, historyPage, historyTotalPages]);
+
+  const handleSort = (field: "teacher" | "time" | "status" | "submittedAt") => {
+    setSortField((prevField) => {
+      if (prevField === field) {
+        setSortDirection((prevDir) => (prevDir === "asc" ? "desc" : "asc"));
+        return prevField;
+      }
+      setSortDirection("asc");
+      return field;
+    });
+  };
+
+  const renderSortIcon = () => (
+    <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
+  );
 
   // Refetch detail when opening dialog to ensure we have the latest data
   useEffect(() => {
@@ -632,35 +753,49 @@ export default function AcademicTeacherRequestsPage() {
   };
 
   return (
-    <DashboardLayout
-      title="Quản lý yêu cầu giáo viên"
-      description="Xét duyệt yêu cầu của giáo viên."
-    >
+    <DashboardLayout>
       <div className="space-y-6">
+        {/* Page Header - aligned with student-requests UI */}
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Quản lý yêu cầu giáo viên</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Xem xét và phê duyệt các yêu cầu xin đổi lịch, dạy thay, đổi
+              phương thức dạy của giáo viên
+            </p>
+          </div>
+        </div>
+
         {/* Summary cards for teacher requests */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Đang chờ duyệt</CardTitle>
+              <CardTitle className="text-sm font-medium">Chờ duyệt</CardTitle>
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/30">
                 <Clock3 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{totalPending}</div>
-              <p className="text-xs text-muted-foreground">Tổng yêu cầu chờ xử lý</p>
+              <p className="text-xs text-muted-foreground">
+                Tổng yêu cầu chờ xử lý
+              </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Thay đổi phương thức</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Thay đổi phương thức
+              </CardTitle>
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-50 dark:bg-sky-950/30">
                 <ArrowLeftRight className="h-4 w-4 text-sky-600 dark:text-sky-400" />
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{pendingModalityChange}</div>
-              <p className="text-xs text-muted-foreground">Yêu cầu đổi hình thức</p>
+              <p className="text-xs text-muted-foreground">
+                Yêu cầu đổi hình thức
+              </p>
             </CardContent>
           </Card>
           <Card>
@@ -672,37 +807,49 @@ export default function AcademicTeacherRequestsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{pendingReschedule}</div>
-              <p className="text-xs text-muted-foreground">Yêu cầu đổi lịch dạy</p>
+              <p className="text-xs text-muted-foreground">
+                Yêu cầu đổi lịch dạy
+              </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Nhờ dạy thay</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Nhờ dạy thay
+              </CardTitle>
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950/30">
                 <UserRoundCheck className="h-4 w-4 text-violet-600 dark:text-violet-400" />
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{pendingReplacement}</div>
-              <p className="text-xs text-muted-foreground">Yêu cầu giáo viên thay</p>
+              <p className="text-xs text-muted-foreground">
+                Yêu cầu giáo viên thay
+              </p>
             </CardContent>
           </Card>
         </div>
 
-        <Tabs defaultValue="pending" className="space-y-4">
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) =>
+            setActiveTab(value as "pending" | "history")
+          }
+          className="space-y-4"
+        >
           {/* Tabs + filters in one row */}
           <div className="flex flex-wrap items-center gap-2">
             <TabsList className="h-9">
               <TabsTrigger value="pending" className="h-7">
-                Hàng đợi ({teacherPendingRequests.length})
+                Chờ duyệt
               </TabsTrigger>
               <TabsTrigger value="history" className="h-7">
-                Lịch sử ({teacherHistoryRequests.length})
+                Lịch sử
               </TabsTrigger>
             </TabsList>
 
-            {/* Search - bên trái */}
-            <div className="relative w-64">
+            {/* Search - phía giữa, chiếm phần còn lại */}
+            <div className="relative flex-1 min-w-[240px]">
               <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Tìm giáo viên, lớp, khóa học..."
@@ -715,7 +862,7 @@ export default function AcademicTeacherRequestsPage() {
             </div>
 
             {/* Filters - bên phải */}
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center gap-2">
               <Select
                 value={teacherTypeFilter}
                 onValueChange={(value) =>
@@ -723,7 +870,7 @@ export default function AcademicTeacherRequestsPage() {
                 }
               >
                 <SelectTrigger className="h-9 w-auto min-w-[150px]">
-                  <SelectValue />
+                  <SelectValue placeholder="Tất cả loại" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">Tất cả loại</SelectItem>
@@ -739,28 +886,35 @@ export default function AcademicTeacherRequestsPage() {
                 </SelectContent>
               </Select>
 
-              <Select
-                value={teacherStatusFilter}
-                onValueChange={(value) =>
-                  setTeacherStatusFilter(value as "ALL" | TeacherRequestStatus)
-                }
-              >
-                <SelectTrigger className="h-9 w-auto min-w-[140px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Tất cả trạng thái</SelectItem>
-                  <SelectItem value="APPROVED">
-                    {TEACHER_REQUEST_STATUS_META.APPROVED.label}
-                  </SelectItem>
-                  <SelectItem value="REJECTED">
-                    {TEACHER_REQUEST_STATUS_META.REJECTED.label}
-                  </SelectItem>
-                  <SelectItem value="WAITING_CONFIRM">
-                    {TEACHER_REQUEST_STATUS_META.WAITING_CONFIRM.label}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              {activeTab === "history" && (
+                <Select
+                  value={teacherStatusFilter}
+                  onValueChange={(value) =>
+                    setTeacherStatusFilter(
+                      value as "ALL" | TeacherRequestStatus
+                    )
+                  }
+                >
+                  <SelectTrigger className="h-9 w-auto min-w-[150px]">
+                    <SelectValue placeholder="Tất cả trạng thái" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Tất cả trạng thái</SelectItem>
+                    <SelectItem value="PENDING">
+                      {TEACHER_REQUEST_STATUS_META.PENDING.label}
+                    </SelectItem>
+                    <SelectItem value="WAITING_CONFIRM">
+                      {TEACHER_REQUEST_STATUS_META.WAITING_CONFIRM.label}
+                    </SelectItem>
+                    <SelectItem value="APPROVED">
+                      {TEACHER_REQUEST_STATUS_META.APPROVED.label}
+                    </SelectItem>
+                    <SelectItem value="REJECTED">
+                      {TEACHER_REQUEST_STATUS_META.REJECTED.label}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
 
@@ -775,7 +929,8 @@ export default function AcademicTeacherRequestsPage() {
                     "Có lỗi xảy ra khi tải danh sách yêu cầu. Vui lòng thử lại."
                   )}
                 </div>
-              ) : paginatedPendingRequests.length === 0 || isLoadingTeacherRequests ? (
+              ) : paginatedPendingRequests.length === 0 ||
+                isLoadingTeacherRequests ? (
                 <div className="p-8 text-center text-sm text-muted-foreground">
                   Không có yêu cầu nào đang chờ duyệt.
                 </div>
@@ -783,12 +938,51 @@ export default function AcademicTeacherRequestsPage() {
                 <Table className="min-w-[900px]">
                   <TableHeader>
                     <TableRow className="bg-muted/50 hover:bg-muted/50">
-                      <TableHead className="min-w-[140px]">Giáo viên</TableHead>
-                      <TableHead className="min-w-[200px]">Lớp học / Buổi</TableHead>
-                      <TableHead className="min-w-[180px]">Lý do</TableHead>
-                      <TableHead className="min-w-[140px]">Loại</TableHead>
-                      <TableHead className="min-w-[100px]">Trạng thái</TableHead>
-                      <TableHead className="min-w-[100px]">Ngày gửi</TableHead>
+                      <TableHead className="min-w-[160px]">
+                        <Button
+                          variant="ghost"
+                          className="h-8 px-2 text-left font-medium"
+                          onClick={() => handleSort("teacher")}
+                        >
+                          <span>Giáo viên</span>
+                          <span className="ml-1">{renderSortIcon()}</span>
+                        </Button>
+                      </TableHead>
+                      <TableHead className="min-w-[150px]">
+                        <Button
+                          variant="ghost"
+                          className="h-8 px-2 text-left font-medium"
+                          onClick={() => handleSort("time")}
+                        >
+                          <span>Thời gian còn lại</span>
+                          <span className="ml-1">{renderSortIcon()}</span>
+                        </Button>
+                      </TableHead>
+                      <TableHead className="min-w-[220px]">
+                        Lớp học / Buổi
+                      </TableHead>
+                      <TableHead className="min-w-[200px]">Lý do</TableHead>
+                      <TableHead className="min-w-[130px]">Loại</TableHead>
+                      <TableHead className="min-w-[120px]">
+                        <Button
+                          variant="ghost"
+                          className="h-8 px-2 text-left font-medium"
+                          onClick={() => handleSort("status")}
+                        >
+                          <span>Trạng thái</span>
+                          <span className="ml-1">{renderSortIcon()}</span>
+                        </Button>
+                      </TableHead>
+                      <TableHead className="min-w-[130px]">
+                        <Button
+                          variant="ghost"
+                          className="h-8 px-2 text-left font-medium"
+                          onClick={() => handleSort("submittedAt")}
+                        >
+                          <span>Ngày gửi</span>
+                          <span className="ml-1">{renderSortIcon()}</span>
+                        </Button>
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -815,17 +1009,44 @@ export default function AcademicTeacherRequestsPage() {
                             </span>
                           </TableCell>
                           <TableCell>
+                            {(() => {
+                              const daysUntilSession =
+                                getDaysUntilSession(request);
+                              const { label, className } =
+                                getTimeDisplayMeta(daysUntilSession);
+                              return (
+                                <span
+                                  className={cn(
+                                    "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium",
+                                    className
+                                  )}
+                                >
+                                  {label}
+                                </span>
+                              );
+                            })()}
+                          </TableCell>
+                          <TableCell>
                             <div className="flex flex-col">
                               <span className="font-medium text-sm">
-                                {request.className} · {format(parseISO(request.sessionDate), "dd/MM/yyyy", { locale: vi })}
+                                {request.className} ·{" "}
+                                {format(
+                                  parseISO(request.sessionDate),
+                                  "dd/MM/yyyy",
+                                  { locale: vi }
+                                )}
                               </span>
                               <span className="text-xs text-muted-foreground">
-                                {request.sessionStartTime} - {request.sessionEndTime}
+                                {request.sessionStartTime} -{" "}
+                                {request.sessionEndTime}
                                 {topic && ` · ${topic}`}
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell className="text-sm text-muted-foreground" title={reason}>
+                          <TableCell
+                            className="text-sm text-muted-foreground"
+                            title={reason}
+                          >
                             {truncatedReason || "Không có lý do"}
                           </TableCell>
                           <TableCell>
@@ -849,7 +1070,11 @@ export default function AcademicTeacherRequestsPage() {
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
                             {request.submittedAt
-                              ? format(parseISO(request.submittedAt), "HH:mm dd/MM", { locale: vi })
+                              ? format(
+                                  parseISO(request.submittedAt),
+                                  "HH:mm dd/MM",
+                                  { locale: vi }
+                                )
                               : "—"}
                           </TableCell>
                         </TableRow>
@@ -922,12 +1147,53 @@ export default function AcademicTeacherRequestsPage() {
                 <Table className="min-w-[900px]">
                   <TableHeader>
                     <TableRow className="bg-muted/50 hover:bg-muted/50">
-                      <TableHead className="min-w-[140px]">Giáo viên</TableHead>
-                      <TableHead className="min-w-[200px]">Lớp học / Buổi</TableHead>
-                      <TableHead className="min-w-[140px]">Người xử lý</TableHead>
-                      <TableHead className="min-w-[140px]">Loại</TableHead>
-                      <TableHead className="min-w-[100px]">Trạng thái</TableHead>
-                      <TableHead className="min-w-[100px]">Thời gian</TableHead>
+                      <TableHead className="min-w-[160px]">
+                        <Button
+                          variant="ghost"
+                          className="h-8 px-2 text-left font-medium"
+                          onClick={() => handleSort("teacher")}
+                        >
+                          <span>Giáo viên</span>
+                          <span className="ml-1">{renderSortIcon()}</span>
+                        </Button>
+                      </TableHead>
+                      <TableHead className="min-w-[150px]">
+                        <Button
+                          variant="ghost"
+                          className="h-8 px-2 text-left font-medium"
+                          onClick={() => handleSort("time")}
+                        >
+                          <span>Thời gian còn lại</span>
+                          <span className="ml-1">{renderSortIcon()}</span>
+                        </Button>
+                      </TableHead>
+                      <TableHead className="min-w-[220px]">
+                        Lớp học / Buổi
+                      </TableHead>
+                      <TableHead className="min-w-[140px]">
+                        Người xử lý
+                      </TableHead>
+                      <TableHead className="min-w-[130px]">Loại</TableHead>
+                      <TableHead className="min-w-[120px]">
+                        <Button
+                          variant="ghost"
+                          className="h-8 px-2 text-left font-medium"
+                          onClick={() => handleSort("status")}
+                        >
+                          <span>Trạng thái</span>
+                          <span className="ml-1">{renderSortIcon()}</span>
+                        </Button>
+                      </TableHead>
+                      <TableHead className="min-w-[130px]">
+                        <Button
+                          variant="ghost"
+                          className="h-8 px-2 text-left font-medium"
+                          onClick={() => handleSort("submittedAt")}
+                        >
+                          <span>Ngày gửi</span>
+                          <span className="ml-1">{renderSortIcon()}</span>
+                        </Button>
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -946,12 +1212,36 @@ export default function AcademicTeacherRequestsPage() {
                             </span>
                           </TableCell>
                           <TableCell>
+                            {(() => {
+                              const daysUntilSession =
+                                getDaysUntilSession(request);
+                              const { label, className } =
+                                getTimeDisplayMeta(daysUntilSession);
+                              return (
+                                <span
+                                  className={cn(
+                                    "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium",
+                                    className
+                                  )}
+                                >
+                                  {label}
+                                </span>
+                              );
+                            })()}
+                          </TableCell>
+                          <TableCell>
                             <div className="flex flex-col">
                               <span className="font-medium text-sm">
-                                {request.className} · {format(parseISO(request.sessionDate), "dd/MM/yyyy", { locale: vi })}
+                                {request.className} ·{" "}
+                                {format(
+                                  parseISO(request.sessionDate),
+                                  "dd/MM/yyyy",
+                                  { locale: vi }
+                                )}
                               </span>
                               <span className="text-xs text-muted-foreground">
-                                {request.sessionStartTime} - {request.sessionEndTime}
+                                {request.sessionStartTime} -{" "}
+                                {request.sessionEndTime}
                                 {topic && ` · ${topic}`}
                               </span>
                             </div>
@@ -982,7 +1272,11 @@ export default function AcademicTeacherRequestsPage() {
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
                             {request.decidedAt
-                              ? format(parseISO(request.decidedAt), "HH:mm dd/MM", { locale: vi })
+                              ? format(
+                                  parseISO(request.decidedAt),
+                                  "HH:mm dd/MM",
+                                  { locale: vi }
+                                )
                               : "—"}
                           </TableCell>
                         </TableRow>
@@ -1062,7 +1356,7 @@ export default function AcademicTeacherRequestsPage() {
           }
         }}
       >
-        <DialogContent className="max-w-[90vw] sm:max-w-5xl lg:max-w-6xl rounded-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Chi tiết yêu cầu</DialogTitle>
           </DialogHeader>

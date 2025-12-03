@@ -82,6 +82,21 @@ export default function AssessmentScoresPage() {
       return;
     }
 
+    const maxScore =
+      scores && scores.length > 0
+        ? scores[0].maxScore || assessmentInfo.maxScore
+        : assessmentInfo.maxScore;
+
+    if (editingScore.score < 0) {
+      toast.error("Điểm không được nhỏ hơn 0");
+      return;
+    }
+
+    if (maxScore !== undefined && editingScore.score > maxScore) {
+      toast.error(`Điểm tối đa của bài kiểm tra là ${maxScore}`);
+      return;
+    }
+
     try {
       await saveScore({
         assessmentId: Number(assessmentId),
@@ -112,6 +127,21 @@ export default function AssessmentScoresPage() {
         score: data.score,
         feedback: data.feedback || undefined,
       }));
+
+      const maxScore =
+        scores && scores.length > 0
+          ? scores[0].maxScore || assessmentInfo.maxScore
+          : assessmentInfo.maxScore;
+
+      if (maxScore !== undefined) {
+        const hasInvalid = scoreInputs.some(
+          (s) => s.score < 0 || s.score > maxScore
+        );
+        if (hasInvalid) {
+          toast.error(`Điểm phải nằm trong khoảng 0 đến ${maxScore}`);
+          return;
+        }
+      }
 
       await batchSaveScores({
         assessmentId: Number(assessmentId),
@@ -341,6 +371,14 @@ export default function AssessmentScoresPage() {
                                         setEditingStudentId(null);
                                       }
                                     }}
+                                    onBlur={() => {
+                                      // Khi rời ô nhập, nếu đã có điểm hợp lệ thì tự lưu
+                                      if (editingScore.score !== null) {
+                                        void handleSaveScore();
+                                      } else {
+                                        setEditingStudentId(null);
+                                      }
+                                    }}
                                     className="w-24"
                                     autoFocus
                                     placeholder="Nhập điểm"
@@ -407,6 +445,14 @@ export default function AssessmentScoresPage() {
                                         }
                                       } else if (e.key === "Escape") {
                                         e.preventDefault();
+                                        setEditingStudentId(null);
+                                      }
+                                    }}
+                                    onBlur={() => {
+                                      // Khi rời ô nhận xét, nếu đã có điểm thì tự lưu kèm nhận xét
+                                      if (editingScore.score !== null) {
+                                        void handleSaveScore();
+                                      } else {
                                         setEditingStudentId(null);
                                       }
                                     }}

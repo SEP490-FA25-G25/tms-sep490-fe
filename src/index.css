@@ -141,6 +141,18 @@
     @apply bg-background text-foreground;
   }
 
+  /* Hide default number input spinners for a cleaner score input UI */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
   /* Clean default scrollbar styles */
   *::-webkit-scrollbar {
     width: 6px;
