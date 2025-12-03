@@ -52,6 +52,8 @@ import EditClassPage from "./app/academic/classes/[id]/edit/page";
 import CenterHeadApprovalsPage from "./app/center-head/approvals/page";
 import CenterHeadResourcesPage from "./app/center-head/resources/page";
 import CenterHeadTimeSlotsPage from "./app/center-head/timeslots/page";
+import CenterHeadQAReportsPage from "./app/center-head/qa-reports/page";
+import CenterHeadQAReportDetailPage from "./app/center-head/qa-reports/[id]/page";
 import CurriculumPage from "./features/curriculum/pages/CurriculumPage";
 import TeacherAvailabilityPage from "./app/teacher/availability/page";
 import AvailabilityCampaignPage from "./app/academic/teacher-availability/page";
@@ -764,6 +766,22 @@ function App() {
               element={
                 <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
                   <TimeSlotDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/center-head/qa-reports"
+              element={
+                <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
+                  <CenterHeadQAReportsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/center-head/qa-reports/:id"
+              element={
+                <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
+                  <CenterHeadQAReportDetailPage />
                 </ProtectedRoute>
               }
             />

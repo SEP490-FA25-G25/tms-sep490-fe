@@ -161,6 +161,11 @@ const roleBasedNav = {
         icon: UsersIcon,
       },
       {
+        title: "Báo cáo QA chi nhánh",
+        url: "/center-head/qa-reports",
+        icon: ClipboardCheckIcon,
+      },
+      {
         title: "Báo cáo trung tâm",
         url: "/center/reports",
         icon: FileTextIcon,
