@@ -51,14 +51,14 @@ export default function SessionDetailsPage() {
     }
 
     const getHomeworkStatusColor = (status?: string) => {
-        const value = status?.toLowerCase() || 'unknown'
+        const value = status?.toUpperCase() || 'UNKNOWN'
         switch (value) {
-            case 'completed':
+            case 'COMPLETED':
                 return 'text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/30'
-            case 'incomplete':
+            case 'INCOMPLETE':
                 return 'text-rose-700 bg-rose-50 dark:text-rose-400 dark:bg-rose-950/30'
-            case 'partial':
-                return 'text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/30'
+            case 'NO_HOMEWORK':
+                return 'text-slate-700 bg-slate-50 dark:text-slate-400 dark:bg-slate-800/50'
             default:
                 return 'text-slate-700 bg-slate-50 dark:text-slate-400 dark:bg-slate-800/50'
         }
@@ -80,13 +80,14 @@ export default function SessionDetailsPage() {
 
     const getHomeworkStatusBadge = (status?: string) => {
         const statusMap: Record<string, string> = {
-            'completed': 'Đã nộp',
-            'incomplete': 'Chưa nộp',
-            'partial': 'Nộp thiếu'
+            'COMPLETED': 'Đã hoàn thành',
+            'INCOMPLETE': 'Chưa hoàn thành',
+            'NO_HOMEWORK': 'Không có bài tập'
         }
+        const normalizedStatus = status?.toUpperCase()
         return (
             <Badge className={getHomeworkStatusColor(status)}>
-                {status ? statusMap[status.toLowerCase()] || status : 'Không xác định'}
+                {normalizedStatus ? statusMap[normalizedStatus] || status : 'Chưa cập nhật'}
             </Badge>
         )
     }
@@ -218,12 +219,16 @@ export default function SessionDetailsPage() {
                                     </div>
                                 </div>
 
-                                {session.teacherNote && (
-                                    <div className="pt-4 border-t">
-                                        <p className="text-sm text-muted-foreground mb-2">Ghi chú giáo viên</p>
-                                        <p className="text-sm">{session.teacherNote}</p>
-                                    </div>
-                                )}
+                                <div className="pt-4 border-t">
+                                    <p className="text-sm font-medium text-muted-foreground mb-2">Ghi chú giáo viên</p>
+                                    {session.teacherNote ? (
+                                        <div className="p-3 bg-muted/50 rounded-lg">
+                                            <p className="text-sm whitespace-pre-wrap">{session.teacherNote}</p>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground italic">Chưa có ghi chú từ giáo viên</p>
+                                    )}
+                                </div>
                             </CardContent>
                         </Card>
 

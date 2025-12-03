@@ -97,14 +97,14 @@ export default function SessionDetailsPage() {
     }
 
     const getHomeworkStatusColor = (status?: string) => {
-        const value = status?.toLowerCase() || 'unknown'
+        const value = status?.toUpperCase() || 'UNKNOWN'
         switch (value) {
-            case 'completed':
+            case 'COMPLETED':
                 return 'text-green-600 bg-green-50'
-            case 'incomplete':
+            case 'INCOMPLETE':
                 return 'text-red-600 bg-red-50'
-            case 'partial':
-                return 'text-yellow-600 bg-yellow-50'
+            case 'NO_HOMEWORK':
+                return 'text-gray-600 bg-gray-50'
             default:
                 return 'text-gray-600 bg-gray-50'
         }
@@ -126,13 +126,14 @@ export default function SessionDetailsPage() {
 
     const getHomeworkStatusBadge = (status?: string) => {
         const statusMap: Record<string, string> = {
-            'completed': 'Đã nộp',
-            'incomplete': 'Chưa nộp',
-            'partial': 'Nộp thiếu'
+            'COMPLETED': 'Đã hoàn thành',
+            'INCOMPLETE': 'Chưa hoàn thành',
+            'NO_HOMEWORK': 'Không có bài tập'
         }
+        const normalizedStatus = status?.toUpperCase()
         return (
             <Badge className={getHomeworkStatusColor(status)}>
-                {status ? statusMap[status.toLowerCase()] || status : 'Không xác định'}
+                {normalizedStatus ? statusMap[normalizedStatus] || status : 'Chưa cập nhật'}
             </Badge>
         )
     }
