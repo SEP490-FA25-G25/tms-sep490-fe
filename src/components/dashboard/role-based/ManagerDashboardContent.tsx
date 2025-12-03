@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -9,91 +9,152 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Activity,
   CheckCircle,
   CalendarDays,
   Users,
   Building2,
+  PieChart,
 } from "lucide-react";
-import { useGetManagerAnalyticsQuery } from "@/store/services/analyticsApi";
+import { useGetManagerDashboardQuery } from "@/store/services/analyticsApi";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import {
+  ResponsiveContainer,
+  LineChart as ReLineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  AreaChart,
+  Area,
+  PieChart as RePieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+} from "recharts";
+
+type SummarySnapshot = {
+  totalTeachers: number;
+  totalStudents: number;
+  activeClasses: number;
+  pendingApprovals: number;
+};
 
 export function ManagerDashboardContent() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [summarySnapshot, setSummarySnapshot] =
+    useState<SummarySnapshot | null>(null);
+
+  const dateFromParam = searchParams.get("dateFrom");
+  const dateToParam = searchParams.get("dateTo");
+
+  const dateFrom = useMemo(
+    () => (dateFromParam ? new Date(dateFromParam) : undefined),
+    [dateFromParam]
+  );
+  const dateTo = useMemo(
+    () => (dateToParam ? new Date(dateToParam) : undefined),
+    [dateToParam]
+  );
+
+  const initialDateRange = useMemo(() => {
+    if (dateFrom && dateTo) {
+      return { from: dateFrom, to: dateTo };
+    }
+    return undefined;
+  }, [dateFrom, dateTo]);
+
+  const handleDateRangeChange = (
+    range: { from: Date; to: Date } | undefined
+  ) => {
+    if (range) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set("dateFrom", range.from.toISOString().split("T")[0]);
+      newParams.set("dateTo", range.to.toISOString().split("T")[0]);
+      setSearchParams(newParams);
+    } else {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("dateFrom");
+      newParams.delete("dateTo");
+      setSearchParams(newParams);
+    }
+  };
+
   const {
-    data: analytics,
+    data: dashboard,
     isLoading,
     isError,
     refetch,
-  } = useGetManagerAnalyticsQuery();
-
-  const overview = analytics?.overview;
-  const classAnalytics = analytics?.classAnalytics;
-  const userAnalytics = analytics?.userAnalytics;
-  const branchAnalytics = analytics?.branchAnalytics;
-
-  const summary = useMemo(
-    () => ({
-      totalTeachers: overview?.totalTeachers ?? 0,
-      totalStudents: overview?.totalStudents ?? 0,
-      activeClasses: overview?.activeClasses ?? 0,
-      pendingApprovals: overview?.pendingApprovals ?? 0,
-    }),
-    [
-      overview?.totalTeachers,
-      overview?.totalStudents,
-      overview?.activeClasses,
-      overview?.pendingApprovals,
-    ]
+  } = useGetManagerDashboardQuery(
+    dateFrom && dateTo
+      ? {
+          rangeType: "CUSTOM",
+          fromDate: dateFrom.toISOString().split("T")[0],
+          toDate: dateTo.toISOString().split("T")[0],
+        }
+      : undefined
   );
 
-  const alerts = useMemo(() => {
-    if (!overview || !classAnalytics) return [];
+  const overview = dashboard?.summary;
 
-    const items: Array<{
-      id: string;
-      title: string;
-      description: string;
-      type: "warning" | "info";
-      action?: () => void;
-    }> = [];
-
-    if (overview.pendingApprovals > 0) {
-      items.push({
-        id: "pending-approvals",
-        title: "Khóa học / lớp đang chờ phê duyệt",
-        description: `${overview.pendingApprovals} mục đang chờ được bạn hoặc bộ phận liên quan duyệt.`,
-        type: "warning",
-        action: () => navigate("/manager/courses/approve"),
+  // Snapshot summary ngay lần load đầu, không thay đổi theo bộ lọc ngày
+  useEffect(() => {
+    if (!summarySnapshot && overview) {
+      setSummarySnapshot({
+        totalTeachers: overview.teachers.total ?? 0,
+        totalStudents: overview.students.activeTotal ?? 0,
+        activeClasses: overview.classes.activeTotal ?? 0,
+        pendingApprovals: overview.pendingRequests.totalPending ?? 0,
       });
     }
+  }, [overview, summarySnapshot]);
 
-    if (classAnalytics.scheduledClasses ?? 0 > 0) {
-      items.push({
-        id: "upcoming-classes",
-        title: "Lớp sắp khai giảng",
-        description:
-          "Kiểm tra lại việc phân công giáo viên và chuẩn bị nguồn lực cho các lớp sắp bắt đầu.",
-        type: "info",
-        action: () => navigate("/manager/courses/approve"),
-      });
+  const summary = useMemo(() => {
+    if (summarySnapshot) {
+      return summarySnapshot;
     }
+    return {
+      totalTeachers: overview?.teachers.total ?? 0,
+      totalStudents: overview?.students.activeTotal ?? 0,
+      activeClasses: overview?.classes.activeTotal ?? 0,
+      pendingApprovals: overview?.pendingRequests.totalPending ?? 0,
+    };
+  }, [
+    overview?.teachers.total,
+    overview?.students.activeTotal,
+    overview?.classes.activeTotal,
+    overview?.pendingRequests.totalPending,
+    summarySnapshot,
+  ]);
 
-    return items.slice(0, 4);
-  }, [overview, classAnalytics, navigate]);
+  const teacherWorkload = dashboard?.teachingWorkload;
 
   const teacherLoad = useMemo(() => {
-    const total = userAnalytics?.usersByRole?.TEACHER ?? 0;
-    const active = overview?.totalTeachers ?? 0;
+    const total = teacherWorkload?.totalTeachers ?? 0;
+    const active = teacherWorkload?.teachingTeachers ?? 0;
     return {
       total,
       active,
       idle: Math.max(total - active, 0),
     };
-  }, [overview?.totalTeachers, userAnalytics?.usersByRole]);
+  }, [teacherWorkload?.totalTeachers, teacherWorkload?.teachingTeachers]);
 
-  if (isLoading && !analytics) {
+  const branchClassChartData = useMemo(
+    () =>
+      dashboard?.classesPerBranch
+        ?.filter((b) => b.active)
+        .map((b) => ({
+          name: b.branchName,
+          activeClasses: b.activeClasses,
+        })) ?? [],
+    [dashboard?.classesPerBranch]
+  );
+
+  if (isLoading && !dashboard) {
     return (
       <div className="px-4 lg:px-6 space-y-6">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -121,11 +182,11 @@ export function ManagerDashboardContent() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {[
             {
-              label: "Khóa học / lớp chờ duyệt",
-              value: summary.pendingApprovals,
-              helper: "Cần xem lại nội dung / điều kiện mở lớp",
-              icon: CheckCircle,
-              onClick: () => navigate("/manager/courses/approve"),
+              label: "Tổng học viên",
+              value: summary.totalStudents,
+              helper: "Bao gồm tất cả chi nhánh thuộc phạm vi",
+              icon: Activity,
+              onClick: () => navigate("/manager/reports"),
             },
             {
               label: "Giáo viên đang hoạt động",
@@ -142,11 +203,12 @@ export function ManagerDashboardContent() {
               onClick: () => navigate("/manager/reports"),
             },
             {
-              label: "Tổng học viên",
-              value: summary.totalStudents,
-              helper: "Bao gồm tất cả chi nhánh thuộc phạm vi",
-              icon: Activity,
-              onClick: () => navigate("/manager/reports"),
+              label: "Yêu cầu đang chờ phê duyệt",
+              value: summary.pendingApprovals,
+              helper:
+                "Gồm yêu cầu chương trình đào tạo, giáo viên, học viên từ các chi nhánh.",
+              icon: CheckCircle,
+              onClick: () => navigate("/curriculum?tab=courses"),
             },
           ].map((card) => (
             <Card
@@ -169,266 +231,381 @@ export function ManagerDashboardContent() {
         </div>
       </div>
 
-      {/* Việc cần xử lý */}
-      <div className="px-4 lg:px-6 mt-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Cần bạn xử lý</CardTitle>
+      {/* Thống kê chi nhánh, lớp học, lịch dạy và tỷ lệ chuyên cần + filter cho toàn bộ biểu đồ */}
+      <div className="px-4 lg:px-6 mt-6 mb-4 space-y-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">
+              Phạm vi thời gian cho biểu đồ
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <DateRangePicker
+              value={initialDateRange}
+              onChange={handleDateRangeChange}
+              placeholder="Chọn khoảng thời gian"
+              className="w-full sm:w-80"
+            />
+          </div>
+        </div>
+
+        {/* Hàng 1: Thống kê chi nhánh & Tóm tắt lớp học */}
+        <div className="grid gap-4 lg:grid-cols-[1.5fr_minmax(0,1fr)]">
+          <Card>
+            <CardHeader>
+              <CardTitle>Thống kê chi nhánh và trung tâm</CardTitle>
               <CardDescription>
-                Danh sách ngắn các mục Manager nên xem trong hôm nay.
+                Chỉ số chi tiết của các chi nhánh thuộc phạm vi quản lý, được
+                nhóm theo trung tâm.
               </CardDescription>
-            </div>
-            <Badge
-              variant="outline"
-              className="flex items-center gap-1 text-xs"
-            >
-              <Activity className="h-3 w-3" />
-              {alerts.length > 0 ? `${alerts.length} mục` : "Không có cảnh báo"}
-            </Badge>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {alerts.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                Chưa có cảnh báo nổi bật. Bạn có thể xem chi tiết hơn ở các tab{" "}
-                <span className="font-semibold">Phê duyệt khóa học</span> hoặc{" "}
-                <span className="font-semibold">Báo cáo</span>.
-              </p>
-            )}
-            {alerts.map((alert) => (
-              <Alert
-                key={alert.id}
-                variant={alert.type === "warning" ? "destructive" : "default"}
-                className="border border-border/60 cursor-pointer"
-                onClick={alert.action}
-              >
-                <AlertTitle className="text-sm font-semibold">
-                  {alert.title}
-                </AlertTitle>
-                <AlertDescription className="text-xs text-muted-foreground">
-                  {alert.description}
-                </AlertDescription>
-              </Alert>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tổng quan giáo viên */}
-      <div className="px-4 lg:px-6 mt-6 mb-4 grid gap-4 lg:grid-cols-[1.5fr_minmax(0,1fr)]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Tổng quan giáo viên</CardTitle>
-            <CardDescription>
-              Phân bổ giáo viên giữa đang dạy và đang rảnh.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div>
-                <p className="text-xs text-muted-foreground">Tổng giáo viên</p>
-                <div className="mt-1 text-2xl font-bold">
-                  {teacherLoad.total}
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Đang dạy</p>
-                <div className="mt-1 text-2xl font-bold">
-                  {teacherLoad.active}
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Đang rảnh</p>
-                <div className="mt-1 text-2xl font-bold">
-                  {teacherLoad.idle}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Tóm tắt lớp học</CardTitle>
-            <CardDescription>
-              Dựa trên trạng thái lớp trong hệ thống.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {classAnalytics ? (
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Tổng lớp</span>
-                  <span className="font-semibold">
-                    {classAnalytics.totalClasses}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Đang diễn ra</span>
-                  <span className="font-semibold">
-                    {classAnalytics.activeClasses}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Hoàn thành</span>
-                  <span className="font-semibold">
-                    {classAnalytics.completedClasses}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Đã hủy</span>
-                  <span className="font-semibold">
-                    {classAnalytics.cancelledClasses}
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Không lấy được dữ liệu lớp học. Vui lòng thử lại sau.
-              </p>
-            )}
-            {isError && (
-              <div className="mt-4 text-xs text-destructive">
-                Không thể tải dữ liệu tổng quan.{" "}
-                <button
-                  type="button"
-                  className="underline underline-offset-2"
-                  onClick={() => refetch()}
-                >
-                  Thử lại
-                </button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Thống kê chi nhánh và trung tâm */}
-      <div className="px-4 lg:px-6 mt-6 mb-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Thống kê chi nhánh và trung tâm</CardTitle>
-            <CardDescription>
-              Chỉ số chi tiết của các chi nhánh thuộc phạm vi quản lý, được nhóm theo trung tâm.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {branchAnalytics && branchAnalytics.branchStats.length > 0 ? (
-              (() => {
-                // Group branches by center
-                const groupedByCenter = branchAnalytics.branchStats.reduce((acc, branch) => {
-                  const centerKey = `${branch.centerId}-${branch.centerName}`;
-                  if (!acc[centerKey]) {
-                    acc[centerKey] = {
-                      centerId: branch.centerId,
-                      centerName: branch.centerName,
-                      branches: [],
-                      totals: { students: 0, teachers: 0, classes: 0, activeClasses: 0 },
-                    };
-                  }
-                  acc[centerKey].branches.push(branch);
-                  acc[centerKey].totals.students += branch.studentCount;
-                  acc[centerKey].totals.teachers += branch.teacherCount;
-                  acc[centerKey].totals.classes += branch.classCount;
-                  acc[centerKey].totals.activeClasses += branch.activeClassCount;
-                  return acc;
-                }, {} as Record<string, {
-                  centerId: number;
-                  centerName: string;
-                  branches: typeof branchAnalytics.branchStats;
-                  totals: { students: number; teachers: number; classes: number; activeClasses: number };
-                }>);
-
-                const centerGroups = Object.values(groupedByCenter);
-
-                return (
-                  <div className="space-y-6">
-                    {centerGroups.map((center) => (
-                      <div key={center.centerId} className="space-y-2">
-                        <div className="flex items-center gap-2 pb-2 border-b">
-                          <Building2 className="h-5 w-5 text-primary" />
-                          <h3 className="font-semibold text-base">{center.centerName}</h3>
-                          <Badge variant="outline" className="ml-auto">
-                            {center.branches.length} chi nhánh
-                          </Badge>
-                        </div>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="border-b bg-muted/50">
-                                <th className="text-left p-2 font-semibold">Chi nhánh</th>
-                                <th className="text-right p-2 font-semibold">Học viên</th>
-                                <th className="text-right p-2 font-semibold">Giáo viên</th>
-                                <th className="text-right p-2 font-semibold">Tổng lớp</th>
-                                <th className="text-right p-2 font-semibold">Lớp đang diễn ra</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {center.branches.map((branch) => (
-                                <tr key={branch.branchId} className="border-b hover:bg-muted/50">
-                                  <td className="p-2 font-medium">{branch.branchName}</td>
-                                  <td className="text-right p-2">{branch.studentCount}</td>
-                                  <td className="text-right p-2">{branch.teacherCount}</td>
-                                  <td className="text-right p-2">{branch.classCount}</td>
-                                  <td className="text-right p-2">
-                                    <Badge variant={branch.activeClassCount > 0 ? "default" : "secondary"}>
-                                      {branch.activeClassCount}
-                                    </Badge>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                            <tfoot>
-                              <tr className="border-t font-semibold bg-muted/30">
-                                <td className="p-2">Tổng cộng ({center.centerName})</td>
-                                <td className="text-right p-2">{center.totals.students}</td>
-                                <td className="text-right p-2">{center.totals.teachers}</td>
-                                <td className="text-right p-2">{center.totals.classes}</td>
-                                <td className="text-right p-2">
-                                  <Badge variant={center.totals.activeClasses > 0 ? "default" : "secondary"}>
-                                    {center.totals.activeClasses}
-                                  </Badge>
-                                </td>
-                              </tr>
-                            </tfoot>
-                          </table>
-                        </div>
+            </CardHeader>
+            <CardContent>
+              {dashboard?.classesPerBranch &&
+              dashboard.classesPerBranch.length > 0 ? (
+                <div className="flex flex-col gap-4 md:flex-row">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Building2 className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">
+                        Số lớp đang hoạt động theo chi nhánh
+                      </span>
+                    </div>
+                    {dashboard.classesPerBranch.map((b) => (
+                      <div
+                        key={b.branchId}
+                        className="flex items-center gap-2 text-sm"
+                      >
+                        <span className="flex-1 truncate">{b.branchName}</span>
+                        {b.active ? (
+                          <Badge variant="outline">{b.activeClasses} lớp</Badge>
+                        ) : (
+                          <Badge variant="outline">Không hoạt động</Badge>
+                        )}
                       </div>
                     ))}
-                    {/* Grand total */}
-                    <div className="pt-4 border-t-2">
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <tfoot>
-                            <tr className="font-semibold bg-primary/10">
-                              <td className="p-2">TỔNG CỘNG TẤT CẢ TRUNG TÂM</td>
-                              <td className="text-right p-2">
-                                {branchAnalytics.branchStats.reduce((sum, b) => sum + b.studentCount, 0)}
-                              </td>
-                              <td className="text-right p-2">
-                                {branchAnalytics.branchStats.reduce((sum, b) => sum + b.teacherCount, 0)}
-                              </td>
-                              <td className="text-right p-2">
-                                {branchAnalytics.branchStats.reduce((sum, b) => sum + b.classCount, 0)}
-                              </td>
-                              <td className="text-right p-2">
-                                <Badge variant="default">
-                                  {branchAnalytics.branchStats.reduce((sum, b) => sum + b.activeClassCount, 0)}
-                                </Badge>
-                              </td>
-                            </tr>
-                          </tfoot>
-                        </table>
-                      </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="h-40 w-full">
+                      <ResponsiveContainer>
+                        <BarChart
+                          data={branchClassChartData}
+                          margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                        >
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            vertical={false}
+                          />
+                          <XAxis
+                            dataKey="name"
+                            tickLine={false}
+                            tickMargin={8}
+                            fontSize={11}
+                          />
+                          <YAxis
+                            allowDecimals={false}
+                            tickLine={false}
+                            tickMargin={8}
+                            fontSize={11}
+                          />
+                          <Tooltip
+                            formatter={(
+                              value: number,
+                              _name: string | number,
+                              entry: { name?: string }
+                            ) => [`${value} lớp`, entry.name ?? ""]}
+                          />
+                          <Bar
+                            dataKey="activeClasses"
+                            fill="#6366f1"
+                            radius={[4, 4, 0, 0]}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
                     </div>
                   </div>
-                );
-              })()
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  {isLoading
+                    ? "Đang tải dữ liệu..."
+                    : "Chưa có dữ liệu chi nhánh. Vui lòng liên hệ Admin để được phân công chi nhánh."}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Tổng số lớp học</CardTitle>
+              <CardDescription>
+                Số lượng lớp đang hoạt động trong phạm vi bạn quản lý.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    Lớp đang hoạt động trong khoảng thời gian đã chọn
+                  </span>
+                </div>
+              </div>
+              {branchClassChartData.length > 0 && (
+                <div className="mt-4 h-32 w-full">
+                  <ResponsiveContainer>
+                    <RePieChart>
+                      <Pie
+                        data={branchClassChartData}
+                        dataKey="activeClasses"
+                        nameKey="name"
+                        innerRadius={30}
+                        outerRadius={45}
+                        paddingAngle={2}
+                      >
+                        {branchClassChartData.map((_, index) => (
+                          <Cell
+                            // đơn giản chia màu theo index, không cần quá cầu kỳ
+                            key={index}
+                            fill={
+                              ["#6366f1", "#22c55e", "#f97316", "#ec4899"][
+                                index % 4
+                              ]
+                            }
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(
+                          value: number,
+                          _name: string | number,
+                          entry: { name?: string }
+                        ) => [`${value} lớp`, entry.name ?? ""]}
+                      />
+                    </RePieChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+              {isError && (
+                <div className="mt-4 text-xs text-destructive">
+                  Không thể tải dữ liệu tổng quan.{" "}
+                  <button
+                    type="button"
+                    className="underline underline-offset-2"
+                    onClick={() => refetch()}
+                  >
+                    Thử lại
+                  </button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Hàng 2: Tổng quan lịch dạy & Tỷ lệ chuyên cần toàn hệ thống */}
+        <div className="grid gap-4 lg:grid-cols-[1.5fr_minmax(0,1fr)]">
+          <Card>
+            <CardHeader>
+              <CardTitle>Tổng quan lịch dạy (Teaching Workload)</CardTitle>
+              <CardDescription>
+                Phân bố giáo viên đang dạy và đang available trong khoảng thời
+                gian đã chọn.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                <div className="flex-1">
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground">
+                        Tổng giáo viên
+                      </p>
+                      <div className="mt-1 text-2xl font-bold">
+                        {teacherLoad.total}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Đang dạy</p>
+                      <div className="mt-1 text-2xl font-bold">
+                        {teacherLoad.active}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {dashboard?.teachingWorkload
+                          ? `${dashboard.teachingWorkload.teachingPercent.toFixed(
+                              1
+                            )}%`
+                          : "-"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Đang rảnh</p>
+                      <div className="mt-1 text-2xl font-bold">
+                        {teacherLoad.idle}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {dashboard?.teachingWorkload
+                          ? `${dashboard.teachingWorkload.availablePercent.toFixed(
+                              1
+                            )}%`
+                          : "-"}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-4 text-xs text-muted-foreground">
+                    Tổng giờ dạy trong khoảng thời gian này:{" "}
+                    <span className="font-semibold">
+                      {dashboard?.teachingWorkload
+                        ? `${dashboard.teachingWorkload.totalTeachingHoursInRange.toFixed(
+                            1
+                          )} giờ`
+                        : "-"}
+                    </span>
+                  </p>
+                </div>
+                <div className="flex-1">
+                  <div className="h-40 w-full">
+                    <ResponsiveContainer>
+                      <RePieChart>
+                        <Pie
+                          data={[
+                            {
+                              name: "Đang dạy",
+                              value:
+                                dashboard?.teachingWorkload?.teachingTeachers ??
+                                0,
+                            },
+                            {
+                              name: "Đang rảnh",
+                              value:
+                                dashboard?.teachingWorkload
+                                  ?.availableTeachers ?? 0,
+                            },
+                          ]}
+                          innerRadius={40}
+                          outerRadius={60}
+                          paddingAngle={2}
+                          dataKey="value"
+                        >
+                          <Cell fill="#6366f1" />
+                          <Cell fill="#e5e7eb" />
+                        </Pie>
+                        <Tooltip
+                          formatter={(
+                            value: number,
+                            _name,
+                            entry: { name?: string }
+                          ) => {
+                            const total =
+                              (dashboard?.teachingWorkload?.teachingTeachers ??
+                                0) +
+                              (dashboard?.teachingWorkload?.availableTeachers ??
+                                0);
+                            const percent =
+                              total > 0 ? ((value as number) / total) * 100 : 0;
+                            return [
+                              `${value} GV (${percent.toFixed(1)}%)`,
+                              entry.name ?? "",
+                            ];
+                          }}
+                        />
+                      </RePieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Tỷ lệ chuyên cần toàn hệ thống</CardTitle>
+              <CardDescription>
+                Tỷ lệ chuyên cần theo ngày trong khoảng thời gian đã chọn.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {dashboard?.attendanceTrend &&
+              dashboard.attendanceTrend.length > 0 ? (
+                <div className="h-40 w-full">
+                  <ResponsiveContainer>
+                    <ReLineChart data={dashboard.attendanceTrend}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis
+                        dataKey="date"
+                        tickLine={false}
+                        tickMargin={8}
+                        fontSize={11}
+                      />
+                      <YAxis
+                        tickLine={false}
+                        tickMargin={8}
+                        fontSize={11}
+                        domain={[0, 100]}
+                        tickFormatter={(v) => `${v}%`}
+                      />
+                      <Tooltip
+                        formatter={(value: number) => `${value.toFixed(1)}%`}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="attendanceRate"
+                        stroke="#6366f1"
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={{ r: 4 }}
+                      />
+                    </ReLineChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Chưa có dữ liệu chuyên cần trong khoảng thời gian này.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Xu hướng ghi danh */}
+      <div className="px-4 lg:px-6 mt-4 mb-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-2">
+            <div>
+              <CardTitle>Xu hướng ghi danh học viên</CardTitle>
+              <CardDescription>
+                Số lượng học viên ghi danh theo tuần trong khoảng thời gian đã
+                chọn.
+              </CardDescription>
+            </div>
+            <PieChart className="h-5 w-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {dashboard?.enrollmentTrend &&
+            dashboard.enrollmentTrend.length > 0 ? (
+              <div className="h-52 w-full">
+                <ResponsiveContainer>
+                  <AreaChart data={dashboard.enrollmentTrend}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis
+                      dataKey="label"
+                      tickLine={false}
+                      tickMargin={8}
+                      fontSize={11}
+                    />
+                    <YAxis tickLine={false} tickMargin={8} fontSize={11} />
+                    <Tooltip />
+                    <Area
+                      type="monotone"
+                      dataKey="enrollments"
+                      stroke="#22c55e"
+                      fill="#22c55e33"
+                      strokeWidth={2}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             ) : (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                {isLoading 
-                  ? "Đang tải dữ liệu..." 
-                  : "Chưa có dữ liệu chi nhánh. Vui lòng liên hệ Admin để được phân công chi nhánh."}
+              <p className="text-sm text-muted-foreground">
+                Chưa có dữ liệu ghi danh cho khoảng thời gian này.
               </p>
             )}
           </CardContent>
