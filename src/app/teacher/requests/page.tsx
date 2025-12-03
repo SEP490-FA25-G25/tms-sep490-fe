@@ -3694,6 +3694,20 @@ export function TeacherRequestDetailContent({
   const replacementTeacherSkills =
     getNestedArray<unknown>(request, ["replacementTeacher", "skills"]) ??
     getNestedArray<unknown>(fallbackRequest, ["replacementTeacher", "skills"]);
+
+  // Compute days until the original session date (for display similar to student requests)
+  let daysUntilSession: number | null = null;
+  if (sessionDate) {
+    try {
+      const sessionDateObj = parseISO(sessionDate);
+      const now = new Date();
+      daysUntilSession = Math.ceil(
+        (sessionDateObj.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+      );
+    } catch {
+      daysUntilSession = null;
+    }
+  }
   const formattedReplacementSkills = replacementTeacherSkills
     ?.map((skill) => {
       if (!skill) return undefined;
@@ -3791,6 +3805,20 @@ export function TeacherRequestDetailContent({
                 {sessionStart && sessionEnd
                   ? `${sessionStart} - ${sessionEnd}`
                   : sessionStart || sessionEnd || ""}
+              </p>
+            )}
+            {daysUntilSession !== null && (
+              <p
+                className={cn(
+                  "text-xs font-medium",
+                  daysUntilSession >= 0
+                    ? "text-muted-foreground"
+                    : "text-amber-600 dark:text-amber-400"
+                )}
+              >
+                {daysUntilSession >= 0
+                  ? `Còn ${daysUntilSession} ngày`
+                  : `Đã qua ${Math.abs(daysUntilSession)} ngày`}
               </p>
             )}
             {branchName && (

@@ -91,14 +91,25 @@ export default function ClassAttendanceMatrixPage() {
 
     // Build matrix from cells
     const matrix: Record<number, Record<number, "P" | "A" | "E" | "-">> = {};
+    const homeworkMatrix: Record<
+      number,
+      Record<number, "DONE" | "NOT_DONE" | "NONE">
+    > = {};
     apiData.students.forEach((student) => {
       matrix[student.studentId] = {};
+      homeworkMatrix[student.studentId] = {};
       student.cells?.forEach((cell) => {
         let status: "P" | "A" | "E" | "-" = "-";
         if (cell.attendanceStatus === "PRESENT") status = "P";
         else if (cell.attendanceStatus === "ABSENT") status = "A";
         else if (cell.attendanceStatus === "EXCUSED") status = "E";
         matrix[student.studentId][cell.sessionId] = status;
+
+        // Map homework status into simplified matrix for UI
+        let hwStatus: "DONE" | "NOT_DONE" | "NONE" = "NONE";
+        if (cell.homeworkStatus === "COMPLETED") hwStatus = "DONE";
+        else if (cell.homeworkStatus === "INCOMPLETE") hwStatus = "NOT_DONE";
+        homeworkMatrix[student.studentId][cell.sessionId] = hwStatus;
       });
     });
 
@@ -127,6 +138,7 @@ export default function ClassAttendanceMatrixPage() {
       students,
       sessions,
       matrix,
+      homeworkMatrix,
     };
   })();
 

@@ -15,8 +15,9 @@ import type { ClassDetailDTO as StudentClassDetailDTO } from '@/types/studentCla
 import SyllabusTab from '@/app/student/my-classes/[classId]/components/SyllabusTab';
 import AttendanceMatrixTab from './components/AttendanceMatrixTab';
 import GradesTab from './components/GradesTab';
+import SessionsTab from './components/SessionsTab';
 
-const VALID_TABS = ['syllabus', 'attendance', 'grades'] as const;
+const VALID_TABS = ['syllabus', 'sessions', 'attendance', 'grades'] as const;
 type TabValue = typeof VALID_TABS[number];
 
 const TeacherClassDetailPage = () => {
@@ -209,13 +210,19 @@ const TeacherClassDetailPage = () => {
 
                   {!isDetailLoading && classDetail && (
                     <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full space-y-6">
-                      <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2 -mt-6 pt-6">
-                        <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-muted/50">
+                      <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-40 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2 -mt-6 pt-6">
+                        <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted/50">
                           <TabsTrigger
                             value="syllabus"
                             className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
                           >
                             Giáo trình
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="sessions"
+                            className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
+                          >
+                            Buổi học
                           </TabsTrigger>
                           <TabsTrigger
                             value="attendance"
@@ -237,6 +244,10 @@ const TeacherClassDetailPage = () => {
                           classDetail={classDetail}
                           isLoading={false}
                         />
+                      </TabsContent>
+
+                      <TabsContent value="sessions" className="space-y-4">
+                        <SessionsTab classId={classIdNumber} />
                       </TabsContent>
 
                       <TabsContent value="attendance" className="space-y-4">

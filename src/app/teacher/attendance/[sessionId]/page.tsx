@@ -15,13 +15,6 @@ import { format, parseISO, addHours, isAfter } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
@@ -34,15 +27,27 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 
 // Helper function to check if attendance can be edited
-// Returns true if session has already occurred and it's within 48 hours from session end time
+// Returns true if session has already occurred and it's within 2 calendar days from session date
 // Works regardless of session status
+// Note: This should match backend logic in AttendanceServiceImpl.canEditAttendance()
 const canEditAttendance = (sessionDate: string, endTime?: string): boolean => {
   if (!endTime) {
     // If no end time, check if session date has passed
     try {
       const sessionDateOnly = parseISO(sessionDate);
       const now = new Date();
-      return !isAfter(sessionDateOnly, now);
+      const sessionEndOfDay = new Date(sessionDateOnly);
+      sessionEndOfDay.setHours(23, 59, 59, 999);
+
+      // Session must have taken place (date already passed)
+      if (isAfter(sessionEndOfDay, now)) {
+        return false;
+      }
+
+      // Allow editing until end of the second day after the session date
+      const deadline = new Date(sessionEndOfDay);
+      deadline.setDate(deadline.getDate() + 2);
+      return !isAfter(now, deadline);
     } catch {
       return false;
     }
@@ -50,7 +55,24 @@ const canEditAttendance = (sessionDate: string, endTime?: string): boolean => {
 
   try {
     // Parse session date and end time
-    const sessionEndDateTime = parseISO(`${sessionDate}T${endTime}`);
+    // Backend uses LocalDateTime (server timezone), so we need to parse as local time
+    // Format: "YYYY-MM-DD" + "HH:mm:ss" or "HH:mm"
+    const endTimeFormatted = endTime.length === 5 ? `${endTime}:00` : endTime; // Ensure HH:mm:ss format
+    const sessionEndDateTimeStr = `${sessionDate}T${endTimeFormatted}`;
+
+    // Parse as local datetime (not UTC) to match backend LocalDateTime behavior
+    const [datePart, timePart] = sessionEndDateTimeStr.split("T");
+    const [year, month, day] = datePart.split("-").map(Number);
+    const [hour, minute, second = 0] = timePart.split(":").map(Number);
+
+    const sessionEndDateTime = new Date(
+      year,
+      month - 1,
+      day,
+      hour,
+      minute,
+      second
+    );
     const now = new Date();
 
     // Check if session has ended (not a future session)
@@ -58,9 +80,11 @@ const canEditAttendance = (sessionDate: string, endTime?: string): boolean => {
       return false;
     }
 
-    // Check if it's within 48 hours from session end time
-    const deadline = addHours(sessionEndDateTime, 48);
-    return isAfter(deadline, now);
+    // Allow editing until end of the second day after the session date
+    const deadline = new Date(sessionEndDateTime);
+    deadline.setDate(deadline.getDate() + 2);
+    deadline.setHours(23, 59, 59, 999);
+    return !isAfter(now, deadline);
   } catch {
     // If parsing fails, don't allow editing
     return false;
@@ -77,8 +101,13 @@ const formatBackendError = (
   }
 
   // Map common error codes to user-friendly messages
-  if (errorMessage.includes("SESSION_ALREADY_DONE")) {
-    return "Không được sửa điểm danh hoặc nộp báo cáo cho buổi học đã kết thúc";
+  if (
+    errorMessage.includes("SESSION_ALREADY_DONE") ||
+    errorMessage.includes("1295") ||
+    errorMessage.includes("đã hoàn thành") ||
+    errorMessage.includes("đã kết thúc")
+  ) {
+    return "Bạn chỉ có thể chỉnh sửa điểm danh trong vòng 2 ngày kể từ khi buổi học kết thúc.";
   }
 
   if (errorMessage.includes("ATTENDANCE_RECORDS_EMPTY")) {
@@ -171,6 +200,35 @@ export default function AttendanceDetailPage() {
       : undefined;
 
   const session: SessionInfo | null = useMemo(() => {
+    const normalizeStart = (source?: unknown) => {
+      if (!source) return undefined;
+      const data = source as Record<string, unknown>;
+      return (
+        (data.sessionStartTime as string | undefined) ??
+        (data.startTime as string | undefined) ??
+        (data.session as { startTime?: string })?.startTime ??
+        (data.timeSlot as { startTime?: string })?.startTime ??
+        (data.timeSlotTemplate as { startTime?: string })?.startTime
+      );
+    };
+
+    const normalizeEnd = (source?: unknown) => {
+      if (!source) return undefined;
+      const data = source as Record<string, unknown>;
+      return (
+        (data.sessionEndTime as string | undefined) ??
+        (data.endTime as string | undefined) ??
+        (data.session as { endTime?: string })?.endTime ??
+        (data.timeSlot as { endTime?: string })?.endTime ??
+        (data.timeSlotTemplate as { endTime?: string })?.endTime
+      );
+    };
+
+    const mergedStart =
+      normalizeStart(sessionDetail) ?? normalizeStart(fallbackSession);
+    const mergedEnd =
+      normalizeEnd(sessionDetail) ?? normalizeEnd(fallbackSession);
+
     if (sessionDetail) {
       return {
         sessionId: sessionDetail.sessionId,
@@ -179,8 +237,8 @@ export default function AttendanceDetailPage() {
         courseCode: sessionDetail.courseCode,
         courseName: sessionDetail.courseName,
         date: sessionDetail.date,
-        startTime: sessionDetail.sessionStartTime,
-        endTime: sessionDetail.sessionEndTime,
+        startTime: mergedStart,
+        endTime: mergedEnd,
         timeSlotName: sessionDetail.timeSlotName,
         topic: sessionDetail.sessionTopic,
         teacherName: sessionDetail.teacherName,
@@ -198,8 +256,8 @@ export default function AttendanceDetailPage() {
         courseCode: fallbackSession.courseCode,
         courseName: fallbackSession.courseName,
         date: fallbackSession.date,
-        startTime: fallbackSession.startTime,
-        endTime: fallbackSession.endTime,
+        startTime: mergedStart,
+        endTime: mergedEnd,
         timeSlotName: fallbackTimeSlotName,
         topic: fallbackSession.topic,
         totalStudents: fallbackSession.totalStudents,
@@ -699,19 +757,22 @@ export default function AttendanceDetailPage() {
                           {/* Cột 2: Điểm danh */}
                           <td className="p-4 border-r">
                             <div className="flex items-center justify-center gap-3">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleStatusChange(
-                                    student.studentId,
-                                    "PRESENT"
-                                  )
+                              <div
+                                role="button"
+                                tabIndex={isEditable ? 0 : -1}
+                                onClick={
+                                  isEditable
+                                    ? () =>
+                                        handleStatusChange(
+                                          student.studentId,
+                                          "PRESENT"
+                                        )
+                                    : undefined
                                 }
-                                disabled={!isEditable}
                                 className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                                   !isEditable
                                     ? "opacity-50 cursor-not-allowed"
-                                    : ""
+                                    : "cursor-pointer"
                                 } ${
                                   attendanceStatus[student.studentId] ===
                                   "PRESENT"
@@ -726,22 +787,26 @@ export default function AttendanceDetailPage() {
                                   }
                                   onCheckedChange={() => {}}
                                   className="pointer-events-none"
+                                  disabled={!isEditable}
                                 />
                                 <span>Có mặt</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleStatusChange(
-                                    student.studentId,
-                                    "ABSENT"
-                                  )
+                              </div>
+                              <div
+                                role="button"
+                                tabIndex={isEditable ? 0 : -1}
+                                onClick={
+                                  isEditable
+                                    ? () =>
+                                        handleStatusChange(
+                                          student.studentId,
+                                          "ABSENT"
+                                        )
+                                    : undefined
                                 }
-                                disabled={!isEditable}
                                 className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                                   !isEditable
                                     ? "opacity-50 cursor-not-allowed"
-                                    : ""
+                                    : "cursor-pointer"
                                 } ${
                                   attendanceStatus[student.studentId] ===
                                   "ABSENT"
@@ -756,9 +821,10 @@ export default function AttendanceDetailPage() {
                                   }
                                   onCheckedChange={() => {}}
                                   className="pointer-events-none"
+                                  disabled={!isEditable}
                                 />
                                 <span>Vắng</span>
-                              </button>
+                              </div>
                             </div>
                           </td>
 
@@ -766,30 +832,76 @@ export default function AttendanceDetailPage() {
                           <td className="p-4 border-r">
                             <div className="flex justify-center">
                               {hasHomework ? (
-                                <Select
-                                  value={
-                                    homeworkStatus[student.studentId] || ""
-                                  }
-                                  onValueChange={(value) =>
-                                    handleHomeworkStatusChange(
-                                      student.studentId,
-                                      value as "COMPLETED" | "INCOMPLETE"
-                                    )
-                                  }
-                                  disabled={!isEditable}
-                                >
-                                  <SelectTrigger className="w-full max-w-[200px]">
-                                    <SelectValue placeholder="Chọn trạng thái" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="COMPLETED">
-                                      Đã hoàn thành
-                                    </SelectItem>
-                                    <SelectItem value="INCOMPLETE">
-                                      Chưa hoàn thành
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
+                                <div className="flex items-center justify-center gap-3">
+                                  <div
+                                    role="button"
+                                    tabIndex={isEditable ? 0 : -1}
+                                    onClick={
+                                      isEditable
+                                        ? () =>
+                                            handleHomeworkStatusChange(
+                                              student.studentId,
+                                              "COMPLETED"
+                                            )
+                                        : undefined
+                                    }
+                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                                      !isEditable
+                                        ? "opacity-50 cursor-not-allowed"
+                                        : "cursor-pointer"
+                                    } ${
+                                      homeworkStatus[student.studentId] ===
+                                      "COMPLETED"
+                                        ? "bg-emerald-100 text-emerald-700 border border-emerald-300"
+                                        : "bg-muted text-muted-foreground border border-border hover:bg-muted/80"
+                                    }`}
+                                  >
+                                    <Checkbox
+                                      checked={
+                                        homeworkStatus[student.studentId] ===
+                                        "COMPLETED"
+                                      }
+                                      onCheckedChange={() => {}}
+                                      className="pointer-events-none"
+                                      disabled={!isEditable}
+                                    />
+                                    <span>Đã làm</span>
+                                  </div>
+                                  <div
+                                    role="button"
+                                    tabIndex={isEditable ? 0 : -1}
+                                    onClick={
+                                      isEditable
+                                        ? () =>
+                                            handleHomeworkStatusChange(
+                                              student.studentId,
+                                              "INCOMPLETE"
+                                            )
+                                        : undefined
+                                    }
+                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                                      !isEditable
+                                        ? "opacity-50 cursor-not-allowed"
+                                        : "cursor-pointer"
+                                    } ${
+                                      homeworkStatus[student.studentId] ===
+                                      "INCOMPLETE"
+                                        ? "bg-rose-100 text-rose-700 border border-rose-300"
+                                        : "bg-muted text-muted-foreground border border-border hover:bg-muted/80"
+                                    }`}
+                                  >
+                                    <Checkbox
+                                      checked={
+                                        homeworkStatus[student.studentId] ===
+                                        "INCOMPLETE"
+                                      }
+                                      onCheckedChange={() => {}}
+                                      className="pointer-events-none"
+                                      disabled={!isEditable}
+                                    />
+                                    <span>Chưa làm</span>
+                                  </div>
+                                </div>
                               ) : (
                                 <p className="text-sm text-muted-foreground">
                                   Không có bài tập về nhà

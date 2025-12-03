@@ -233,6 +233,7 @@ export interface AttendanceMatrixCellDTO {
   sessionId: number;
   attendanceStatus: "PRESENT" | "ABSENT" | "EXCUSED" | null;
   makeup?: boolean;
+  homeworkStatus?: "COMPLETED" | "INCOMPLETE" | "NO_HOMEWORK" | null;
 }
 
 export interface AttendanceMatrixStudentResponseDTO {
@@ -275,6 +276,10 @@ export interface AttendanceMatrixDTO {
     number,
     Record<number, "P" | "A" | "E" | "-">
   >; // { studentId: { sessionId: status } }
+  homeworkMatrix: Record<
+    number,
+    Record<number, "DONE" | "NOT_DONE" | "NONE">
+  >; // { studentId: { sessionId: homeworkStatus } }
 }
 
 export interface AttendanceMatrixResponse {
@@ -481,6 +486,19 @@ export const attendanceApi = createApi({
         { type: "AttendanceSession", id: `class-${classId}` },
       ],
     }),
+    getTeacherClassSessionsMetrics: builder.query<
+      {
+        success: boolean;
+        message: string;
+        data: import("@/types/qa").QASessionListResponse;
+      },
+      number
+    >({
+      query: (classId) => ({
+        url: `/teacher/classes/${classId}/sessions/metrics`,
+        method: "GET",
+      }),
+    }),
   }),
 });
 
@@ -495,5 +513,6 @@ export const {
   useGetClassAttendanceMatrixQuery,
   useGetStudentAttendanceOverviewQuery,
   useGetStudentAttendanceReportQuery,
+  useGetTeacherClassSessionsMetricsQuery,
 } = attendanceApi;
 
