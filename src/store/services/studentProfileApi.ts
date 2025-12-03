@@ -41,6 +41,15 @@ export interface StudentActiveClass {
   enrolledAt: string;
 }
 
+export interface UpdateMyProfileRequest {
+  phone?: string;
+  facebookUrl?: string;
+  address?: string;
+  avatarUrl?: string;
+  gender?: 'MALE' | 'FEMALE' | 'OTHER';
+  dateOfBirth?: string;
+}
+
 export const studentProfileApi = createApi({
   reducerPath: 'studentProfileApi',
   baseQuery: baseQueryWithReauth,
@@ -51,7 +60,16 @@ export const studentProfileApi = createApi({
       transformResponse: (response: { data: StudentProfile }) => response.data,
       providesTags: ['StudentProfile'],
     }),
+    updateMyProfile: builder.mutation<StudentProfile, UpdateMyProfileRequest>({
+      query: (data) => ({
+        url: '/students/me/profile',
+        method: 'PUT',
+        body: data,
+      }),
+      transformResponse: (response: { data: StudentProfile }) => response.data,
+      invalidatesTags: ['StudentProfile'],
+    }),
   }),
 });
 
-export const { useGetMyProfileQuery } = studentProfileApi;
+export const { useGetMyProfileQuery, useUpdateMyProfileMutation } = studentProfileApi;

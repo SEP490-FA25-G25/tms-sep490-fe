@@ -188,8 +188,27 @@ export const authApi = createApi({
         },
       }),
     }),
+    changePassword: builder.mutation<ApiResponse<ChangePasswordResponse>, ChangePasswordRequest>({
+      query: (request) => ({
+        url: '/auth/change-password',
+        method: 'POST',
+        body: request,
+      }),
+    }),
   }),
 })
+
+// Change password types
+export interface ChangePasswordRequest {
+  currentPassword: string
+  newPassword: string
+  confirmPassword: string
+}
+
+export interface ChangePasswordResponse {
+  success: boolean
+  message: string
+}
 
 // Export hooks for usage in components
 export const {
@@ -198,4 +217,5 @@ export const {
   useLogoutMutation,
   useForgotPasswordMutation,
   useResetPasswordMutation,
+  useChangePasswordMutation,
 } = authApi
