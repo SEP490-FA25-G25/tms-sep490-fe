@@ -76,8 +76,7 @@ export default function AcademicAbsenceRequestsPage() {
     isFetching: isLoadingPending,
   } = useGetPendingRequestsQuery({
     requestType: 'ABSENCE',
-    studentName: searchKeyword || undefined,
-    classCode: classCode || undefined,
+    keyword: searchKeyword || classCode || undefined,
     sessionDateFrom: dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined,
     sessionDateTo: dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : undefined,
     page: pendingPage,
@@ -90,8 +89,7 @@ export default function AcademicAbsenceRequestsPage() {
     isFetching: isLoadingHistory,
   } = useGetAcademicRequestsQuery({
     status: historyFilter === 'ALL' ? undefined : historyFilter,
-    studentName: searchKeyword || undefined,
-    classCode: classCode || undefined,
+    keyword: searchKeyword || classCode || undefined,
     page: historyPage,
     size: HISTORY_PAGE_SIZE,
     sort: 'submittedAt,desc',

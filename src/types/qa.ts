@@ -7,40 +7,6 @@ export interface BaseResponse<T> {
 
 // ========== Dashboard V2 Types ==========
 
-// Action Items
-export interface ActionItems {
-  draftReportsCount: number;
-  phasesNeedingReviewCount: number;
-  unanalyzedFeedbackCount: number;
-  draftReports?: DraftReportItem[];
-  phasesNeedingReview?: PhaseNeedingReview[];
-  unanalyzedFeedbacks?: UnanalyzedFeedbackItem[];
-}
-
-export interface DraftReportItem {
-  reportId: number;
-  reportType: string;
-  classCode: string;
-  lastUpdated?: string;
-  contentPreview: string;
-}
-
-export interface PhaseNeedingReview {
-  classId: number;
-  classCode: string;
-  phaseId: number;
-  phaseName: string;
-  phaseEndDate?: string;
-}
-
-export interface UnanalyzedFeedbackItem {
-  classId: number;
-  classCode: string;
-  phaseId: number;
-  phaseName: string;
-  feedbackCount: number;
-}
-
 // Class Comparison (Bar Chart)
 export interface ClassComparisonData {
   courseId: number;
@@ -99,7 +65,6 @@ export interface CourseOption {
 // Main Dashboard DTO (V2)
 export interface QADashboardDTO {
   // New V2 fields
-  actionItems?: ActionItems;
   classComparison?: ClassComparisonData;
   trendData?: TrendData;
   recentReports?: RecentReport[];

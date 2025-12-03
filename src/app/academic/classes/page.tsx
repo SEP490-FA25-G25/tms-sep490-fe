@@ -137,7 +137,7 @@ export default function ClassListPage() {
   // Check if any filter is active
   const hasActiveFilters = useMemo(() => {
     return (
-      filters.search.trim() !== '' ||
+      (filters.search?.trim() ?? '') !== '' ||
       filters.status !== undefined ||
       filters.approvalStatus !== undefined ||
       filters.modality !== undefined

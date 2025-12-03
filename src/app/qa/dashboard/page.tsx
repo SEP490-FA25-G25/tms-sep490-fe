@@ -3,7 +3,6 @@
 import * as React from "react"
 import { useGetQADashboardQuery, useGetClassTrendDataQuery, useGetClassComparisonQuery } from "@/store/services/qaApi"
 import { DashboardLayout } from "@/components/DashboardLayout"
-import { ActionItems } from "@/components/qa/ActionItems"
 import { RecentReports } from "@/components/qa/RecentReports"
 import { ClassComparisonChart, TrendChart } from "@/components/qa/charts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -155,12 +154,7 @@ export default function QADashboardPage() {
             description="Quản lý chất lượng đào tạo"
         >
             <div className="space-y-6">
-                {/* Row 1: Action Items */}
-                {dashboard.actionItems && (
-                    <ActionItems data={dashboard.actionItems} />
-                )}
-
-                {/* Row 2: Class Comparison Chart + Recent Reports */}
+                {/* Row 1: Class Comparison Chart + Recent Reports */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Class Comparison Chart */}
                     <Card className="lg:col-span-2">
@@ -214,7 +208,7 @@ export default function QADashboardPage() {
 
                     {/* Recent Reports */}
                     {dashboard.recentReports && (
-                        <RecentReports reports={dashboard.recentReports} />
+                        <RecentReports data={dashboard.recentReports} />
                     )}
                 </div>
 

@@ -30,7 +30,7 @@ export function RecentReports({ data, className }: RecentReportsProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-medium flex items-center gap-2">
             <FileText className="h-4 w-4" />
-            Báo Cáo Đã Submit
+            Báo Cáo Đã Submit Gần Đây
           </CardTitle>
           <Link to="/qa/reports/create">
             <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
