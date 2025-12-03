@@ -58,8 +58,7 @@ export default function AcademicRequestsPage() {
 
   // Pending tab filter states
   const [requestTypeFilter, setRequestTypeFilter] = useState<RequestType>('ALL')
-  const [searchKeyword, setSearchKeyword] = useState('')
-  const [classCode, setClassCode] = useState('')
+  const [keyword, setKeyword] = useState('')
 
   // Pending tab pagination
   const [page, setPage] = useState(0)
@@ -67,8 +66,7 @@ export default function AcademicRequestsPage() {
   // History tab filter states
   const [historyRequestType, setHistoryRequestType] = useState<RequestType>('ALL')
   const [historyStatus, setHistoryStatus] = useState<RequestStatus | 'ALL'>('ALL')
-  const [historySearchKeyword, setHistorySearchKeyword] = useState('')
-  const [historyClassCode, setHistoryClassCode] = useState('')
+  const [historyKeyword, setHistoryKeyword] = useState('')
   const [historyDecidedBy, setHistoryDecidedBy] = useState<number | undefined>(undefined)
 
   // History tab pagination
@@ -85,8 +83,7 @@ export default function AcademicRequestsPage() {
     isFetching: isLoadingPending,
   } = useGetPendingRequestsQuery({
     requestType: requestTypeFilter === 'ALL' ? undefined : requestTypeFilter,
-    studentName: searchKeyword || undefined,
-    classCode: classCode || undefined,
+    keyword: keyword || undefined,
     page,
     size: PAGE_SIZE,
     sort: 'submittedAt,asc', // Oldest first (most urgent)
@@ -99,8 +96,7 @@ export default function AcademicRequestsPage() {
   } = useGetAcademicRequestsQuery({
     requestType: historyRequestType === 'ALL' ? undefined : historyRequestType,
     status: historyStatus === 'ALL' ? undefined : historyStatus,
-    studentName: historySearchKeyword || undefined,
-    classCode: historyClassCode || undefined,
+    keyword: historyKeyword || undefined,
     decidedBy: historyDecidedBy,
     page: historyPage,
     size: PAGE_SIZE,
@@ -127,22 +123,20 @@ export default function AcademicRequestsPage() {
 
   const handleClearFilters = () => {
     setRequestTypeFilter('ALL')
-    setSearchKeyword('')
-    setClassCode('')
+    setKeyword('')
     setPage(0)
   }
 
   const handleClearHistoryFilters = () => {
     setHistoryRequestType('ALL')
     setHistoryStatus('ALL')
-    setHistorySearchKeyword('')
-    setHistoryClassCode('')
+    setHistoryKeyword('')
     setHistoryDecidedBy(undefined)
     setHistoryPage(0)
   }
 
-  const hasActiveFilters = requestTypeFilter !== 'ALL' || searchKeyword !== '' || classCode !== ''
-  const hasActiveHistoryFilters = historyRequestType !== 'ALL' || historyStatus !== 'ALL' || historySearchKeyword !== '' || historyClassCode !== '' || historyDecidedBy !== undefined
+  const hasActiveFilters = requestTypeFilter !== 'ALL' || keyword !== ''
+  const hasActiveHistoryFilters = historyRequestType !== 'ALL' || historyStatus !== 'ALL' || historyKeyword !== '' || historyDecidedBy !== undefined
 
   return (
     <DashboardLayout
@@ -235,26 +229,13 @@ export default function AcademicRequestsPage() {
             {/* Search - bên trái */}
             {activeTab === 'pending' ? (
               <>
-                <div className="relative w-48">
+                <div className="relative w-64">
                   <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Tìm học viên..."
-                    value={searchKeyword}
+                    placeholder="Tìm học viên, mã học viên, mã lớp..."
+                    value={keyword}
                     onChange={(e) => {
-                      setSearchKeyword(e.target.value)
-                      setPage(0)
-                    }}
-                    className="pl-8 h-9"
-                  />
-                </div>
-
-                <div className="relative w-36">
-                  <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Mã lớp..."
-                    value={classCode}
-                    onChange={(e) => {
-                      setClassCode(e.target.value)
+                      setKeyword(e.target.value)
                       setPage(0)
                     }}
                     className="pl-8 h-9"
@@ -296,26 +277,13 @@ export default function AcademicRequestsPage() {
               </>
             ) : (
               <>
-                <div className="relative w-48">
+                <div className="relative w-64">
                   <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Tìm học viên..."
-                    value={historySearchKeyword}
+                    placeholder="Tìm học viên, mã học viên, mã lớp..."
+                    value={historyKeyword}
                     onChange={(e) => {
-                      setHistorySearchKeyword(e.target.value)
-                      setHistoryPage(0)
-                    }}
-                    className="pl-8 h-9"
-                  />
-                </div>
-
-                <div className="relative w-36">
-                  <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Mã lớp..."
-                    value={historyClassCode}
-                    onChange={(e) => {
-                      setHistoryClassCode(e.target.value)
+                      setHistoryKeyword(e.target.value)
                       setHistoryPage(0)
                     }}
                     className="pl-8 h-9"

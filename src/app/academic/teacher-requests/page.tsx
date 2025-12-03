@@ -753,19 +753,11 @@ export default function AcademicTeacherRequestsPage() {
   };
 
   return (
-    <DashboardLayout>
+    <DashboardLayout
+      title="Quản lý yêu cầu giáo viên"
+      description="Xem xét và phê duyệt các yêu cầu xin đổi lịch, dạy thay, đổi phương thức dạy của giáo viên"
+    >
       <div className="space-y-6">
-        {/* Page Header - aligned with student-requests UI */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Quản lý yêu cầu giáo viên</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Xem xét và phê duyệt các yêu cầu xin đổi lịch, dạy thay, đổi
-              phương thức dạy của giáo viên
-            </p>
-          </div>
-        </div>
-
         {/* Summary cards for teacher requests */}
         <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           <Card>

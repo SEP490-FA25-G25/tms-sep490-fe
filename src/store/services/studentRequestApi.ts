@@ -309,8 +309,7 @@ export interface StudentRequestsQuery {
 export interface PendingRequestsQuery {
   branchId?: number
   requestType?: RequestType
-  studentName?: string
-  classCode?: string
+  keyword?: string // Search by student name, student code, or class code
   sessionDateFrom?: string
   sessionDateTo?: string
   page?: number
@@ -322,8 +321,7 @@ export interface PendingRequestsQuery {
 export interface AcademicHistoryQuery {
   requestType?: RequestType
   status?: RequestStatus
-  studentName?: string
-  classCode?: string
+  keyword?: string // Search by student name, student code, or class code
   decidedBy?: number
   submittedDateFrom?: string
   submittedDateTo?: string
