@@ -33,6 +33,7 @@ export type ClassStatus = keyof typeof CLASS_STATUS_STYLES;
 // ============================================
 export const ENROLLMENT_STATUS_STYLES = {
   ENROLLED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  ONGOING: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   COMPLETED: 'bg-slate-50 text-slate-700 border-slate-200',
   DROPPED: 'bg-rose-50 text-rose-700 border-rose-200',
   WITHDRAWN: 'bg-amber-50 text-amber-700 border-amber-200',

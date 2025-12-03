@@ -6,8 +6,16 @@ import { SiteHeader } from '@/components/site-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
@@ -16,13 +24,17 @@ import { cn } from '@/lib/utils';
 import { ENROLLMENT_STATUS_STYLES, getStatusStyle } from '@/lib/status-colors';
 import { useGetStudentTranscriptQuery } from '@/store/services/studentApi';
 import type { StudentTranscriptDTO } from '@/store/services/studentApi';
-import { AlertCircle, BookOpen, GraduationCap } from 'lucide-react';
+import { AlertCircle, BookOpen, GraduationCap, RotateCcw, Search } from 'lucide-react';
 import TranscriptDetailPanel from './components/TranscriptDetailPanel';
+
+type StatusFilter = 'ALL' | 'ONGOING' | 'COMPLETED' | 'DROPPED';
 
 const TranscriptPage = () => {
   const { user } = useAuth();
   const studentId = user?.id || 0;
   const [selectedClass, setSelectedClass] = useState<StudentTranscriptDTO | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
 
   const {
     data: transcriptResponse,
@@ -61,6 +73,31 @@ const TranscriptPage = () => {
     });
   }, [transcriptResponse]);
 
+  // Filter transcript data based on search and status filter
+  const filteredData = useMemo(() => {
+    return transcriptData.filter((item) => {
+      // Search filter
+      const query = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        query === '' ||
+        item.courseName.toLowerCase().includes(query) ||
+        item.classCode.toLowerCase().includes(query) ||
+        item.className.toLowerCase().includes(query);
+
+      // Status filter
+      const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [transcriptData, searchQuery, statusFilter]);
+
+  const hasActiveFilter = searchQuery !== '' || statusFilter !== 'ALL';
+
+  const handleResetFilter = () => {
+    setSearchQuery('');
+    setStatusFilter('ALL');
+  };
+
   // Auto-select first class when data loads
   useMemo(() => {
     if (transcriptData.length > 0 && !selectedClass) {
@@ -97,11 +134,54 @@ const TranscriptPage = () => {
           <div className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col">
               {/* Header */}
-              <header className="flex flex-col gap-1 border-b border-border px-6 py-4">
-                <h1 className="text-2xl font-bold tracking-tight">Bảng điểm</h1>
-                <p className="text-sm text-muted-foreground">
-                  Xem kết quả học tập và điểm số các lớp học đã tham gia
-                </p>
+              <header className="flex flex-col gap-4 border-b border-border px-4 sm:px-6 py-5">
+                <div className="flex flex-col gap-1">
+                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Bảng điểm</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Xem kết quả học tập và điểm số các lớp học đã tham gia
+                  </p>
+                </div>
+                {/* Search & Filter */}
+                {!isLoading && !error && transcriptData.length > 0 && (
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Tìm kiếm lớp..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-8 h-9 w-[200px] sm:w-[280px]"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Select
+                        value={statusFilter}
+                        onValueChange={(value: StatusFilter) => setStatusFilter(value)}
+                      >
+                        <SelectTrigger className="w-[140px] h-9">
+                          <SelectValue placeholder="Trạng thái" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">Tất cả</SelectItem>
+                          <SelectItem value="ONGOING">Đang học</SelectItem>
+                          <SelectItem value="COMPLETED">Đã hoàn thành</SelectItem>
+                          <SelectItem value="DROPPED">Đã nghỉ</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {hasActiveFilter && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 shrink-0"
+                          onClick={handleResetFilter}
+                          title="Xóa bộ lọc"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </header>
 
               {/* Main Content - 2 Columns Layout */}
@@ -144,12 +224,34 @@ const TranscriptPage = () => {
                     <div className="border-r border-border flex flex-col min-w-0">
                       <div className="px-4 py-3 border-b bg-muted/30 shrink-0">
                         <p className="text-sm font-medium text-muted-foreground">
-                          {transcriptData.length} lớp học
+                          {hasActiveFilter
+                            ? `Tìm thấy ${filteredData.length}/${transcriptData.length} lớp học`
+                            : `${transcriptData.length} lớp học`}
                         </p>
                       </div>
                       <ScrollArea className="flex-1">
                         <div className="p-3 space-y-2">
-                          {transcriptData.map((item: StudentTranscriptDTO) => (
+                          {filteredData.length === 0 && hasActiveFilter ? (
+                            <div className="flex flex-col items-center justify-center py-8 text-center">
+                              <Search className="h-10 w-10 text-muted-foreground/50 mb-3" />
+                              <p className="text-sm font-medium text-muted-foreground">
+                                Không tìm thấy lớp học
+                              </p>
+                              <p className="text-xs text-muted-foreground/70 mt-1">
+                                Thử thay đổi từ khóa hoặc bộ lọc
+                              </p>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="mt-3"
+                                onClick={handleResetFilter}
+                              >
+                                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                                Xóa bộ lọc
+                              </Button>
+                            </div>
+                          ) : (
+                            filteredData.map((item: StudentTranscriptDTO) => (
                             <Card
                               key={item.classId}
                               className={cn(
@@ -197,7 +299,8 @@ const TranscriptPage = () => {
                                 </div>
                               </div>
                             </Card>
-                          ))}
+                          ))
+                          )}
                         </div>
                       </ScrollArea>
                     </div>
