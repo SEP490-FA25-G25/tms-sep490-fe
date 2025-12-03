@@ -131,8 +131,8 @@ const TranscriptPage = () => {
         <AppSidebar variant="inset" />
         <SidebarInset>
           <SiteHeader />
-          <div className="flex flex-1 flex-col">
-            <div className="@container/main flex flex-1 flex-col">
+          <div className="flex flex-1 flex-col overflow-hidden">
+            <div className="@container/main flex flex-1 flex-col min-h-0 overflow-hidden">
               {/* Header */}
               <header className="flex flex-col gap-4 border-b border-border px-4 sm:px-6 py-5">
                 <div className="flex flex-col gap-1">
@@ -184,7 +184,7 @@ const TranscriptPage = () => {
               </header>
 
               {/* Main Content - 2 Columns Layout */}
-              <main className="flex-1 overflow-hidden">
+              <main className="flex-1 min-h-0 overflow-hidden">
                 {isLoading && (
                   <div className="flex items-center justify-center h-full">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -211,9 +211,9 @@ const TranscriptPage = () => {
                 )}
 
                 {!isLoading && !error && transcriptData.length > 0 && (
-                  <div className="grid grid-cols-1 lg:grid-cols-[minmax(340px,_2fr)_3fr] xl:grid-cols-[minmax(360px,_1fr)_2fr] h-full">
+                  <div className="grid grid-cols-1 lg:grid-cols-[minmax(340px,_2fr)_3fr] xl:grid-cols-[minmax(360px,_1fr)_2fr] h-full overflow-hidden">
                     {/* Left Column - Class List */}
-                    <div className="border-r border-border flex flex-col min-w-0">
+                    <div className="border-r border-border flex flex-col min-w-0 min-h-0 h-full overflow-hidden">
                       <div className="px-4 py-3 border-b bg-muted/30 shrink-0">
                         <p className="text-sm font-medium text-muted-foreground">
                           {hasActiveFilter
@@ -221,7 +221,7 @@ const TranscriptPage = () => {
                             : `${transcriptData.length} lớp học`}
                         </p>
                       </div>
-                      <ScrollArea className="flex-1">
+                      <ScrollArea className="h-full w-full">
                         <div className="p-3 space-y-2">
                           {filteredData.length === 0 && hasActiveFilter ? (
                             <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -298,7 +298,7 @@ const TranscriptPage = () => {
                     </div>
 
                     {/* Right Column - Detail Panel */}
-                    <div className="flex flex-col overflow-hidden bg-muted/10 min-w-0">
+                    <div className="flex flex-col min-h-0 overflow-hidden bg-muted/10 min-w-0">
                       {selectedClass ? (
                         <TranscriptDetailPanel selectedClass={selectedClass} />
                       ) : (

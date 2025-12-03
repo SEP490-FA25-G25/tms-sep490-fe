@@ -1,475 +1,638 @@
 "use client"
 
-import { useState } from "react"
-import { useSearchParams } from "react-router-dom"
-import { skipToken } from "@reduxjs/toolkit/query"
+import type { CSSProperties } from 'react'
+import { useMemo, useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { skipToken } from '@reduxjs/toolkit/query'
 import {
-    BarChart3Icon,
-    UsersIcon,
-    MessageSquareIcon,
-    CalendarIcon,
-    TrendingUpIcon,
-    CheckCircleIcon,
-    AlertCircleIcon,
-    Loader2,
-    AlertTriangle
-} from "lucide-react"
+  BarChart3Icon,
+  Check,
+  CheckCircle2,
+  ChevronsUpDown,
+  Loader2,
+  MessageCircleIcon,
+  RotateCcw,
+  Search,
+  Star,
+  TrendingUp,
+  Users,
+} from 'lucide-react'
 
-import { DashboardLayout } from "@/components/DashboardLayout"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
+import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { AppSidebar } from '@/components/app-sidebar'
+import { SiteHeader } from '@/components/site-header'
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Progress } from '@/components/ui/progress'
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { QAReportStatus } from "@/types/qa"
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
-    useGetClassFeedbacksQuery,
-    useGetQAClassesQuery,
-    useGetAllPhasesQuery,
-    useGetPhasesByCourseIdQuery,
-    useGetQAClassDetailQuery
-} from "@/store/services/qaApi"
-import type { CoursePhaseDTO } from "@/types/qa"
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import { cn } from '@/lib/utils'
+import {
+  useGetQAClassesQuery,
+  useGetClassFeedbacksQuery,
+  useGetPhasesByCourseIdQuery,
+} from '@/store/services/qaApi'
+import { useGetMyBranchesQuery } from '@/store/services/branchApi'
+import type { StudentFeedbackListResponse } from '@/types/qa'
+import QAFeedbackDetailPanel from './components/QAFeedbackDetailPanel'
 
-export default function StudentFeedbackPage() {
-    const [searchParams, setSearchParams] = useSearchParams()
+type FeedbackItem = StudentFeedbackListResponse['feedbacks'][number]
 
-    // Get classId from URL params or state
-    const urlClassId = searchParams.get('classId')
-    const [selectedClassId, setSelectedClassId] = useState<number | null>(
-        urlClassId ? parseInt(urlClassId) : null
-    )
+export default function QAStudentFeedbackPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
 
-    const [selectedPhase, setSelectedPhase] = useState<string>("all")
-    const [selectedStatus, setSelectedStatus] = useState<string>("all")
+  // URL params
+  const urlClassId = searchParams.get('classId')
+  const urlBranchId = searchParams.get('branchId')
 
-    // Fetch available classes
-    const { data: classesData, isLoading: classesLoading } = useGetQAClassesQuery({
-        page: 0,
-        size: 100,
-        sort: 'startDate',
-        sortDir: 'desc'
-    })
+  // Filter states
+  const [selectedBranchId, setSelectedBranchId] = useState<number | null>(
+    urlBranchId ? parseInt(urlBranchId) : null
+  )
+  const [selectedClassId, setSelectedClassId] = useState<number | null>(
+    urlClassId ? parseInt(urlClassId) : null
+  )
+  const [selectedPhase, setSelectedPhase] = useState<string>('all')
+  const [selectedStatus, setSelectedStatus] = useState<string>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
 
-    // Fetch phases - use all phases for dropdown, or course-specific if class is selected
-    const { data: allPhases } = useGetAllPhasesQuery()
-    const { data: classDetail } = useGetQAClassDetailQuery(
-        selectedClassId ? selectedClassId : skipToken,
-        { skip: !selectedClassId }
-    )
+  // Combobox state for class selector
+  const [classComboboxOpen, setClassComboboxOpen] = useState(false)
 
-    const courseId = classDetail?.courseId
+  // Selected feedback for detail panel
+  const [selectedFeedback, setSelectedFeedback] = useState<FeedbackItem | null>(null)
 
-    const { data: coursePhases } = useGetPhasesByCourseIdQuery(
-        courseId ? courseId : skipToken
-    )
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
-    // Use course-specific phases if class is selected, otherwise use all phases
-    const availablePhases: CoursePhaseDTO[] = selectedClassId ? (coursePhases ?? allPhases ?? []) : (allPhases ?? [])
+  // Fetch branches that QA can manage
+  const { data: branchesData, isLoading: branchesLoading } = useGetMyBranchesQuery()
+  const myBranches = branchesData?.data || []
 
-    // Fetch feedback data for selected class
-    const feedbackQueryArgs = selectedClassId
-        ? {
-            classId: selectedClassId,
-            filters: {
-                phaseId: selectedPhase !== "all" ? parseInt(selectedPhase) : undefined,
-                isFeedback: selectedStatus === "not_submitted" ? false :
-                    selectedStatus === QAReportStatus.SUBMITTED ? true : undefined,
-                page: 0,
-                size: 100
-            }
+  // Auto-select first branch if not selected
+  useEffect(() => {
+    if (!selectedBranchId && myBranches.length > 0) {
+      setSelectedBranchId(myBranches[0].id)
+    }
+  }, [myBranches, selectedBranchId])
+
+  // Fetch classes for selected branch
+  const { data: classesData, isLoading: classesLoading } = useGetQAClassesQuery({
+    branchIds: selectedBranchId ? [selectedBranchId] : undefined,
+    page: 0,
+    size: 100,
+    sort: 'startDate',
+    sortDir: 'desc',
+  }, {
+    skip: !selectedBranchId,
+  })
+
+  // Reset class when branch changes
+  useEffect(() => {
+    setSelectedClassId(null)
+    setSelectedFeedback(null)
+  }, [selectedBranchId])
+
+  // Selected class info (moved up for courseId access)
+  const selectedClass = classesData?.data.find((c) => c.classId === selectedClassId)
+
+  // Fetch phases for the selected class's course
+  const { data: phases = [] } = useGetPhasesByCourseIdQuery(
+    selectedClass?.courseId ?? skipToken
+  )
+
+  // Fetch feedbacks for selected class
+  const {
+    data: feedbackData,
+    isLoading: feedbackLoading,
+  } = useGetClassFeedbacksQuery(
+    selectedClassId
+      ? {
+          classId: selectedClassId,
+          filters: {
+            phaseId: selectedPhase !== 'all' ? parseInt(selectedPhase) : undefined,
+            isFeedback: selectedStatus === 'all' ? undefined : selectedStatus === 'submitted',
+          },
         }
-        : skipToken
+      : skipToken
+  )
 
-    const { data: feedbackData, isLoading: feedbackLoading, error: feedbackError } = useGetClassFeedbacksQuery(
-        feedbackQueryArgs,
-        { skip: !selectedClassId }
+  // Filter feedbacks by search
+  const filteredFeedbacks = useMemo(() => {
+    if (!feedbackData?.feedbacks) return []
+
+    const searchLower = debouncedSearch.toLowerCase().trim()
+    if (!searchLower) return feedbackData.feedbacks
+
+    return feedbackData.feedbacks.filter((feedback) =>
+      feedback.studentName?.toLowerCase().includes(searchLower)
     )
+  }, [feedbackData?.feedbacks, debouncedSearch])
 
-    const feedbacks = Array.isArray(feedbackData?.feedbacks) ? feedbackData.feedbacks : []
-    const {
-        totalStudents = 0,
-        submittedCount = 0,
-        submissionRate = 0,
-        averageRating = 0,
-        positiveFeedbackCount = 0,
-        negativeFeedbackCount = 0,
-    } = feedbackData?.statistics || {}
+  // Statistics
+  const statistics = feedbackData?.statistics
 
-    const neutralFeedbackCount = Math.max(0, submittedCount - positiveFeedbackCount - negativeFeedbackCount)
-    const positiveFeedbackRate = submittedCount > 0
-        ? ((positiveFeedbackCount / submittedCount) * 100)
-        : 0
+  // Auto-select first feedback when data loads
+  useEffect(() => {
+    if (filteredFeedbacks.length > 0 && !selectedFeedback) {
+      setSelectedFeedback(filteredFeedbacks[0])
+    }
+  }, [filteredFeedbacks, selectedFeedback])
 
-    const filteredFeedbacks = feedbacks.filter(feedback => {
-        const phaseMatch = selectedPhase === "all" ||
-                          (feedback.phaseId !== undefined && feedback.phaseId?.toString() === selectedPhase)
-        const statusMatch = selectedStatus === "all" ||
-            (selectedStatus === QAReportStatus.SUBMITTED && feedback.isFeedback) ||
-            (selectedStatus === "not_submitted" && !feedback.isFeedback)
-        return phaseMatch && statusMatch
-    })
+  // Update selected feedback when list changes
+  useEffect(() => {
+    if (selectedFeedback && filteredFeedbacks.length > 0) {
+      const stillExists = filteredFeedbacks.find(
+        (f) => f.feedbackId === selectedFeedback.feedbackId
+      )
+      if (!stillExists) {
+        setSelectedFeedback(filteredFeedbacks[0])
+      }
+    } else if (filteredFeedbacks.length === 0) {
+      setSelectedFeedback(null)
+    }
+  }, [filteredFeedbacks, selectedFeedback])
 
-    const handleClassSelect = (classId: string) => {
-        const id = parseInt(classId)
-        setSelectedClassId(id)
-        if (id) {
-            setSearchParams({ classId: id.toString() })
-        } else {
-            setSearchParams({})
+  // Reset filters when class changes
+  useEffect(() => {
+    setSelectedPhase('all')
+    setSelectedStatus('all')
+    setSearchQuery('')
+    setSelectedFeedback(null)
+  }, [selectedClassId])
+
+  // Handlers
+  const handleBranchSelect = (branchId: string) => {
+    const id = branchId === 'all' ? null : parseInt(branchId)
+    setSelectedBranchId(id)
+    updateSearchParams(id, null)
+  }
+
+  const handleClassSelect = (classId: number | null) => {
+    setSelectedClassId(classId)
+    setClassComboboxOpen(false)
+    updateSearchParams(selectedBranchId, classId)
+  }
+
+  const updateSearchParams = (branchId: number | null, classId: number | null) => {
+    const params: Record<string, string> = {}
+    if (branchId) params.branchId = branchId.toString()
+    if (classId) params.classId = classId.toString()
+    setSearchParams(params)
+  }
+
+  const handleResetFilters = () => {
+    setSelectedPhase('all')
+    setSelectedStatus('all')
+    setSearchQuery('')
+  }
+
+  const classes = classesData?.data || []
+
+  return (
+    <ProtectedRoute requiredRoles={['QA', 'ADMIN', 'MANAGER']}>
+      <SidebarProvider
+        style={
+          {
+            '--sidebar-width': 'calc(var(--spacing) * 72)',
+            '--header-height': 'calc(var(--spacing) * 12)',
+          } as CSSProperties
         }
-    }
-
-    const getSentimentIcon = (sentiment?: string) => {
-        const value = sentiment || "neutral"
-        switch (value) {
-            case "positive":
-                return <CheckCircleIcon className="h-4 w-4 text-green-500" />
-            case "negative":
-                return <AlertCircleIcon className="h-4 w-4 text-red-500" />
-            default:
-                return <MessageSquareIcon className="h-4 w-4 text-yellow-500" />
-        }
-    }
-
-    const getSentimentColor = (sentiment?: string) => {
-        const value = sentiment || "neutral"
-        switch (value) {
-            case "positive":
-                return "text-green-700 bg-green-50 border-green-200"
-            case "negative":
-                return "text-red-700 bg-red-50 border-red-200"
-            default:
-                return "text-yellow-700 bg-yellow-50 border-yellow-200"
-        }
-    }
-
-    const formatDate = (dateString: string | null) => {
-        if (!dateString) return "Chưa nộp"
-        return new Date(dateString).toLocaleDateString("vi-VN", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
-        })
-    }
-
-    const getRatingStars = (rating?: number) => {
-        const value = rating ?? 0
-        return Array.from({ length: 5 }, (_, i) => (
-            <span key={i} className={i < value ? "text-yellow-400" : "text-gray-300"}>
-                ★
-            </span>
-        ))
-    }
-
-    // Loading state
-    if (classesLoading) {
-        return (
-            <DashboardLayout
-                title="Phản Hồi Học Viên"
-                description="Phân tích phản hồi từ học viên để cải thiện chất lượng giảng dạy"
-            >
-                <div className="flex items-center justify-center h-64">
-                    <Loader2 className="h-8 w-8 animate-spin" />
+      >
+        <AppSidebar variant="inset" />
+        <SidebarInset>
+          <SiteHeader />
+          <div className="flex flex-1 flex-col overflow-hidden">
+            <div className="@container/main flex flex-1 flex-col min-h-0 overflow-hidden">
+              {/* Header */}
+              <header className="flex flex-col gap-4 border-b border-border px-4 sm:px-6 py-5">
+                <div className="flex flex-col gap-1">
+                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                    Phản hồi học viên
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    Xem và phân tích phản hồi của học viên theo lớp học
+                  </p>
                 </div>
-            </DashboardLayout>
-        );
-    }
 
-    return (
-        <DashboardLayout
-            title="Phản Hồi Học Viên"
-            description="Phân tích phản hồi từ học viên để cải thiện chất lượng giảng dạy"
-        >
-            <div className="space-y-6">
-                {/* Class Selector */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Chọn lớp học</CardTitle>
-                        <CardDescription>
-                            Chọn lớp học để xem phản hồi của học viên
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex-1 min-w-[300px]">
-                            <Select value={selectedClassId?.toString() || ""} onValueChange={handleClassSelect}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Chọn lớp học để xem phản hồi" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {classesData?.data.map((classItem) => (
-                                        <SelectItem key={classItem.classId} value={classItem.classId.toString()}>
-                                            {classItem.classCode} - {classItem.className} ({classItem.courseName})
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </CardContent>
-                </Card>
+                {/* Branch + Class Selector Row */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  {/* Branch Selector */}
+                  <Select
+                    value={selectedBranchId?.toString() || 'all'}
+                    onValueChange={handleBranchSelect}
+                    disabled={branchesLoading}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Chọn chi nhánh..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {myBranches.length > 1 && (
+                        <SelectItem value="all">Tất cả chi nhánh</SelectItem>
+                      )}
+                      {myBranches.map((branch) => (
+                        <SelectItem key={branch.id} value={branch.id.toString()}>
+                          {branch.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-                {/* Show content only when class is selected */}
-                {selectedClassId ? (
-                    <>
-                        {feedbackLoading ? (
-                            <div className="flex items-center justify-center h-64">
-                                <Loader2 className="h-8 w-8 animate-spin" />
-                            </div>
-                        ) : feedbackError ? (
-                            <Alert variant="destructive">
-                                <AlertTriangle className="h-4 w-4" />
-                                <AlertDescription>
-                                    Không thể tải phản hồi của học viên. Vui lòng thử lại.
-                                </AlertDescription>
-                            </Alert>
+                  {/* Class Selector - Combobox */}
+                  <Popover open={classComboboxOpen} onOpenChange={setClassComboboxOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={classComboboxOpen}
+                        className="w-[300px] justify-between font-normal"
+                        disabled={!selectedBranchId || classesLoading}
+                      >
+                        {classesLoading ? (
+                          <span className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Đang tải...
+                          </span>
+                        ) : selectedClass ? (
+                          <span className="truncate">
+                            <span className="font-medium">{selectedClass.classCode}</span>
+                            <span className="text-muted-foreground ml-2">
+                              - {selectedClass.className}
+                            </span>
+                          </span>
                         ) : (
-                            <>
-                                {/* Statistics Cards */}
-                                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                                    <Card>
-                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                            <CardTitle className="text-sm font-medium">Tổng số học viên</CardTitle>
-                                            <UsersIcon className="h-4 w-4 text-muted-foreground" />
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="text-2xl font-bold">{totalStudents}</div>
-                                            <p className="text-xs text-muted-foreground">
-                                                Trong lớp học
-                                            </p>
-                                        </CardContent>
-                                    </Card>
-                                    <Card>
-                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                            <CardTitle className="text-sm font-medium">Đã nộp phản hồi</CardTitle>
-                                            <CheckCircleIcon className="h-4 w-4 text-muted-foreground" />
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="text-2xl font-bold">{submittedCount}/{totalStudents}</div>
-                                            <p className="text-xs text-muted-foreground">
-                                                Tỷ lệ {submissionRate.toFixed(1)}%
-                                            </p>
-                                        </CardContent>
-                                    </Card>
-                                    <Card>
-                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                            <CardTitle className="text-sm font-medium">Đánh giá trung bình</CardTitle>
-                                            <TrendingUpIcon className="h-4 w-4 text-muted-foreground" />
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="text-2xl font-bold">{averageRating.toFixed(1)}/5.0</div>
-                                            <p className="text-xs text-muted-foreground">
-                                                {getRatingStars(Math.round(averageRating))}
-                                            </p>
-                                        </CardContent>
-                                    </Card>
-                                    <Card>
-                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                            <CardTitle className="text-sm font-medium">Phản hồi tích cực</CardTitle>
-                                            <BarChart3Icon className="h-4 w-4 text-muted-foreground" />
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="text-2xl font-bold">{positiveFeedbackCount}</div>
-                                            <p className="text-xs text-muted-foreground">
-                                                {submittedCount > 0 ? positiveFeedbackRate.toFixed(1) : '0'}% tổng phản hồi
-                                            </p>
-                                        </CardContent>
-                                    </Card>
-                                </div>
-
-                                {/* Progress Overview */}
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Tỷ lệ phản hồi</CardTitle>
-                                        <CardDescription>
-                                            Tiến độ nộp phản hồi của học viên
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="space-y-4">
-                                            <div className="space-y-2">
-                                                <div className="flex justify-between text-sm">
-                                                    <span>Đã nộp</span>
-                                                    <span>{submissionRate.toFixed(1)}%</span>
-                                                </div>
-                                                <Progress value={submissionRate} className="h-2" />
-                                            </div>
-                                            <div className="grid grid-cols-3 gap-4 text-center">
-                                                <div>
-                                                    <div className="text-2xl font-bold text-green-600">{positiveFeedbackCount}</div>
-                                                    <p className="text-xs text-muted-foreground">Tích cực</p>
-                                                </div>
-                                                <div>
-                                                    <div className="text-2xl font-bold text-yellow-600">{neutralFeedbackCount}</div>
-                                                    <p className="text-xs text-muted-foreground">Trung bình</p>
-                                                </div>
-                                                <div>
-                                                    <div className="text-2xl font-bold text-red-600">{negativeFeedbackCount}</div>
-                                                    <p className="text-xs text-muted-foreground">Tiêu cực</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
-                                {/* Filters */}
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Bộ lọc</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="flex flex-wrap gap-4">
-                                            <div className="flex-1 min-w-[200px]">
-                                                <label className="text-sm font-medium mb-2 block">Giai đoạn</label>
-                                                <Select value={selectedPhase} onValueChange={setSelectedPhase}>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Chọn giai đoạn" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="all">Tất cả giai đoạn</SelectItem>
-                                                        {[...availablePhases]
-                                                            .sort((a, b) => (a.phaseNumber ?? 0) - (b.phaseNumber ?? 0))
-                                                            .map((phase) => (
-                                                                <SelectItem key={phase.id} value={phase.id.toString()}>
-                                                                    {phase.name || `Phase ${phase.phaseNumber}`}
-                                                                </SelectItem>
-                                                            ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div className="flex-1 min-w-[200px]">
-                                                <label className="text-sm font-medium mb-2 block">Trạng thái</label>
-                                                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Chọn trạng thái" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                                                        <SelectItem value={QAReportStatus.SUBMITTED}>Đã nộp</SelectItem>
-                                                        <SelectItem value="not_submitted">Chưa nộp</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
-                                {/* Feedback List */}
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Danh sách phản hồi ({filteredFeedbacks.length})</CardTitle>
-                                        <CardDescription>
-                                            Xem chi tiết phản hồi từ học viên
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        {filteredFeedbacks.length === 0 ? (
-                                            <div className="text-center py-8">
-                                                <MessageSquareIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                                                <p className="text-muted-foreground">Không có phản hồi nào phù hợp với bộ lọc.</p>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-4">
-                                                {filteredFeedbacks.map((feedback) => (
-                                                    <div key={feedback.feedbackId} className="border rounded-lg p-4 space-y-3">
-                                                        <div className="flex items-center justify-between">
-                                                            <div className="flex items-center space-x-3">
-                                                                <div>
-                                                                    <h4 className="font-semibold">{feedback.studentName}</h4>
-                                                                    <p className="text-sm text-muted-foreground">{feedback.phaseName || 'Chưa xác định'}</p>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex items-center space-x-2">
-                                                                <Badge
-                                                                    variant={feedback.isFeedback ? "default" : "secondary"}
-                                                                    className="flex items-center space-x-1"
-                                                                >
-                                                                    {feedback.isFeedback ? (
-                                                                        <>
-                                                                            <CheckCircleIcon className="h-3 w-3" />
-                                                                            <span>Đã nộp</span>
-                                                                        </>
-                                                                    ) : (
-                                                                        <>
-                                                                            <AlertCircleIcon className="h-3 w-3" />
-                                                                            <span>Chưa nộp</span>
-                                                                        </>
-                                                                    )}
-                                                                </Badge>
-                                                                {feedback.isFeedback && (
-                                                                    <Badge
-                                                                        variant="outline"
-                                                                        className={getSentimentColor(feedback.sentiment)}
-                                                                    >
-                                                                        <span className="flex items-center space-x-1">
-                                                                            {getSentimentIcon(feedback.sentiment)}
-                                                                            <span>{feedback.sentiment === "positive" ? "Tích cực" : feedback.sentiment === "negative" ? "Tiêu cực" : "Trung bình"}</span>
-                                                                        </span>
-                                                                    </Badge>
-                                                                )}
-                                                            </div>
-                                                        </div>
-
-                                                        {feedback.isFeedback ? (
-                                                            <>
-                                                                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                                                                    <div className="flex items-center space-x-1">
-                                                                        <CalendarIcon className="h-4 w-4" />
-                                                                        <span>{formatDate(feedback.submittedAt || null)}</span>
-                                                                    </div>
-                                                                    <div className="flex items-center space-x-1">
-                                                                        <span>Đánh giá:</span>
-                                                                        <div className="flex items-center">
-                                                                            {getRatingStars(feedback.rating)}
-                                                                            <span className="ml-2 font-medium">
-                                                                                {(feedback.rating ?? 0).toFixed(1)}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="space-y-2">
-                                                                    <p className="text-sm text-gray-700 line-clamp-2">
-                                                                        {feedback.responsePreview}
-                                                                    </p>
-                                                                    <Button variant="link" className="p-0 h-auto text-sm">
-                                                                        Xem chi tiết phản hồi
-                                                                    </Button>
-                                                                </div>
-                                                            </>
-                                                        ) : (
-                                                            <div className="text-sm text-muted-foreground">
-                                                                Chưa có phản hồi từ học viên này
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            </>
+                          <span className="text-muted-foreground">Chọn lớp học...</span>
                         )}
-                    </>
-                ) : (
-                    <Card>
-                        <CardContent className="flex flex-col items-center justify-center py-12">
-                            <MessageSquareIcon className="h-12 w-12 text-muted-foreground mb-4" />
-                            <h3 className="text-lg font-semibold mb-2">Chọn lớp học để bắt đầu</h3>
-                            <p className="text-sm text-muted-foreground text-center max-w-md">
-                                Vui lòng chọn một lớp học từ danh sách bên trên để xem phân tích phản hồi của học viên.
-                            </p>
-                        </CardContent>
-                    </Card>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Tìm kiếm lớp học..." />
+                        <CommandList>
+                          <CommandEmpty>Không tìm thấy lớp học.</CommandEmpty>
+                          <CommandGroup>
+                            {classes.map((classItem) => (
+                              <CommandItem
+                                key={classItem.classId}
+                                value={`${classItem.classCode} ${classItem.className} ${classItem.courseName}`}
+                                onSelect={() => handleClassSelect(classItem.classId)}
+                              >
+                                <Check
+                                  className={cn(
+                                    'mr-2 h-4 w-4',
+                                    selectedClassId === classItem.classId
+                                      ? 'opacity-100'
+                                      : 'opacity-0'
+                                  )}
+                                />
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{classItem.classCode}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {classItem.className} • {classItem.courseName}
+                                  </span>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Search (left) + Filters (right) Row */}
+                {selectedClassId && (
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    {/* Search - Left */}
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Tìm theo tên học viên..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-8 h-9 w-[200px] sm:w-[280px]"
+                      />
+                    </div>
+
+                    {/* Filters - Right */}
+                    <div className="flex items-center gap-2">
+                      {/* Phase Filter */}
+                      <Select value={selectedPhase} onValueChange={setSelectedPhase}>
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Giai đoạn" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Tất cả giai đoạn</SelectItem>
+                          {[...phases]
+                            .sort((a, b) => a.phaseNumber - b.phaseNumber)
+                            .map((phase) => (
+                              <SelectItem key={phase.id} value={phase.id.toString()}>
+                                {phase.name || `Phase ${phase.phaseNumber}`}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+
+                      {/* Status Filter */}
+                      <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                        <SelectTrigger className="w-[160px]">
+                          <SelectValue placeholder="Trạng thái" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                          <SelectItem value="submitted">Đã nộp</SelectItem>
+                          <SelectItem value="not_submitted">Chưa nộp</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      {/* Reset Filter Button */}
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 shrink-0"
+                        onClick={handleResetFilters}
+                        disabled={
+                          !searchQuery && selectedPhase === 'all' && selectedStatus === 'all'
+                        }
+                        title="Xóa bộ lọc"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 )}
+              </header>
+
+              {/* Main Content */}
+              <main className="flex-1 min-h-0 overflow-hidden">
+                {/* No branch selected */}
+                {!selectedBranchId && !branchesLoading && (
+                  <div className="flex items-center justify-center h-full">
+                    <Empty>
+                      <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                          <MessageCircleIcon className="h-10 w-10" />
+                        </EmptyMedia>
+                        <EmptyTitle>Chọn chi nhánh để bắt đầu</EmptyTitle>
+                        <EmptyDescription>
+                          Vui lòng chọn một chi nhánh từ danh sách
+                        </EmptyDescription>
+                      </EmptyHeader>
+                    </Empty>
+                  </div>
+                )}
+
+                {/* No class selected */}
+                {selectedBranchId && !selectedClassId && !classesLoading && (
+                  <div className="flex items-center justify-center h-full">
+                    <Empty>
+                      <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                          <MessageCircleIcon className="h-10 w-10" />
+                        </EmptyMedia>
+                        <EmptyTitle>Chọn lớp học để xem phản hồi</EmptyTitle>
+                        <EmptyDescription>
+                          {classes.length > 0
+                            ? 'Vui lòng chọn một lớp học từ danh sách'
+                            : 'Không có lớp học nào trong chi nhánh này'}
+                        </EmptyDescription>
+                      </EmptyHeader>
+                    </Empty>
+                  </div>
+                )}
+
+                {/* Loading */}
+                {(branchesLoading || (selectedBranchId && classesLoading) || (selectedClassId && feedbackLoading)) && (
+                  <div className="flex items-center justify-center h-full">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+
+                {/* Content with feedback */}
+                {selectedClassId && !feedbackLoading && feedbackData && (
+                  <div className="flex flex-col h-full min-h-0 overflow-hidden">
+                    {/* Statistics Bar */}
+                    {statistics && (
+                      <div className="border-b bg-muted/30 px-4 sm:px-6 py-3">
+                        <div className="flex items-center gap-6 flex-wrap">
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">
+                              <span className="font-semibold">{statistics.totalStudents}</span>{' '}
+                              <span className="text-muted-foreground">học viên</span>
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                            <span className="text-sm">
+                              <span className="font-semibold text-emerald-600">
+                                {statistics.submittedCount}
+                              </span>{' '}
+                              <span className="text-muted-foreground">đã nộp</span>
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">
+                              <span className="font-semibold">
+                                {statistics.submissionRate.toFixed(1)}%
+                              </span>{' '}
+                              <span className="text-muted-foreground">tỷ lệ</span>
+                            </span>
+                            <Progress
+                              value={statistics.submissionRate}
+                              className="w-20 h-1.5"
+                            />
+                          </div>
+                          {statistics.averageRating != null && (
+                            <div className="flex items-center gap-2">
+                              <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                              <span className="text-sm">
+                                <span className="font-semibold">
+                                  {statistics.averageRating.toFixed(1)}
+                                </span>
+                                <span className="text-muted-foreground">/5</span>
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Two-column layout - Fixed height with scroll */}
+                    {filteredFeedbacks.length > 0 ? (
+                      <div className="grid grid-cols-1 lg:grid-cols-[minmax(340px,2fr)_3fr] xl:grid-cols-[minmax(360px,1fr)_2fr] h-full min-h-0 overflow-hidden">
+                        {/* Left Column - Feedback List */}
+                        <div className="border-r border-border flex flex-col min-h-0 h-full overflow-hidden">
+                          <ScrollArea className="h-full w-full">
+                            <div className="p-3 space-y-2">
+                              {filteredFeedbacks.map((item) => (
+                                <Card
+                                  key={item.feedbackId}
+                                  className={cn(
+                                    'p-3 cursor-pointer transition-all hover:bg-muted/50',
+                                    selectedFeedback?.feedbackId === item.feedbackId
+                                      ? 'ring-2 ring-primary bg-primary/5'
+                                      : 'hover:shadow-sm'
+                                  )}
+                                  onClick={() => setSelectedFeedback(item)}
+                                >
+                                  <div className="space-y-2">
+                                    {/* Header */}
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                                          {item.phaseName && (
+                                            <Badge
+                                              variant="outline"
+                                              className="text-[10px] px-1.5 py-0.5"
+                                            >
+                                              {item.phaseName}
+                                            </Badge>
+                                          )}
+                                          <Badge
+                                            variant={item.isFeedback ? 'default' : 'secondary'}
+                                            className={cn(
+                                              'text-[10px] px-1.5 py-0.5',
+                                              item.isFeedback
+                                                ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100'
+                                                : ''
+                                            )}
+                                          >
+                                            {item.isFeedback ? 'Đã nộp' : 'Chưa nộp'}
+                                          </Badge>
+                                        </div>
+                                        <p className="font-semibold text-sm leading-tight">
+                                          {item.studentName}
+                                        </p>
+                                        {item.responsePreview && (
+                                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                            {item.responsePreview}
+                                          </p>
+                                        )}
+                                      </div>
+
+                                      {/* Rating badge */}
+                                      {item.isFeedback && item.rating != null && (
+                                        <div className="flex items-center gap-1 shrink-0">
+                                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                                          <span className="text-sm font-medium">
+                                            {item.rating.toFixed(1)}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Footer */}
+                                    {item.submittedAt && (
+                                      <div className="text-[10px] text-muted-foreground pt-1 border-t border-border/50">
+                                        Nộp:{' '}
+                                        {new Date(item.submittedAt).toLocaleDateString('vi-VN', {
+                                          day: '2-digit',
+                                          month: '2-digit',
+                                          year: 'numeric',
+                                        })}
+                                      </div>
+                                    )}
+                                  </div>
+                                </Card>
+                              ))}
+                            </div>
+                          </ScrollArea>
+                        </div>
+
+                        {/* Right Column - Detail Panel */}
+                        <div className="flex flex-col min-h-0 overflow-hidden bg-muted/10 min-w-0">
+                          {selectedFeedback ? (
+                            <QAFeedbackDetailPanel
+                              key={selectedFeedback.feedbackId}
+                              feedback={selectedFeedback}
+                              classCode={selectedClass?.classCode || ''}
+                              className={selectedClass?.className || ''}
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-full">
+                              <Empty>
+                                <EmptyHeader>
+                                  <EmptyMedia variant="icon">
+                                    <MessageCircleIcon className="h-10 w-10" />
+                                  </EmptyMedia>
+                                  <EmptyTitle>Chọn một phản hồi</EmptyTitle>
+                                  <EmptyDescription>
+                                    Chọn một phản hồi từ danh sách bên trái để xem chi tiết
+                                  </EmptyDescription>
+                                </EmptyHeader>
+                              </Empty>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center flex-1">
+                        <Empty>
+                          <EmptyHeader>
+                            <EmptyMedia variant="icon">
+                              <MessageCircleIcon className="h-10 w-10" />
+                            </EmptyMedia>
+                            <EmptyTitle>
+                              {debouncedSearch
+                                ? 'Không tìm thấy kết quả'
+                                : 'Chưa có phản hồi'}
+                            </EmptyTitle>
+                            <EmptyDescription>
+                              {debouncedSearch
+                                ? 'Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc'
+                                : 'Chưa có phản hồi nào cho lớp học này'}
+                            </EmptyDescription>
+                          </EmptyHeader>
+                          {(debouncedSearch ||
+                            selectedPhase !== 'all' ||
+                            selectedStatus !== 'all') && (
+                            <Button variant="ghost" size="sm" onClick={handleResetFilters}>
+                              <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                              Xóa bộ lọc
+                            </Button>
+                          )}
+                        </Empty>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </main>
             </div>
-        </DashboardLayout>
-    )
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    </ProtectedRoute>
+  )
 }

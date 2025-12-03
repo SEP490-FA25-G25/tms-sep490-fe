@@ -8,7 +8,6 @@ import { SiteHeader } from '@/components/site-header'
 import { QAClassHeader } from "@/components/qa/QAClassHeader"
 import { SessionsListTab } from "@/components/qa/SessionsListTab"
 import { QAReportsListTab } from "@/components/qa/QAReportsListTab"
-import { StudentFeedbackTab } from "@/components/qa/StudentFeedbackTab"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -104,7 +103,7 @@ export default function ClassDetailsPage() {
                                 {!isLoading && classInfo && (
                                     <Tabs defaultValue="sessions" className="w-full space-y-6">
                                         <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2 -mt-6 pt-6">
-                                            <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-muted/50">
+                                            <TabsList className="grid w-full grid-cols-2 h-auto p-1 bg-muted/50">
                                                 <TabsTrigger
                                                     value="sessions"
                                                     className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
@@ -117,12 +116,6 @@ export default function ClassDetailsPage() {
                                                 >
                                                     Báo cáo QA
                                                 </TabsTrigger>
-                                                <TabsTrigger
-                                                    value="feedback"
-                                                    className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
-                                                >
-                                                    Phản hồi HV
-                                                </TabsTrigger>
                                             </TabsList>
                                         </div>
 
@@ -132,10 +125,6 @@ export default function ClassDetailsPage() {
 
                                         <TabsContent value="reports" className="space-y-6">
                                             <QAReportsListTab classId={classInfo.classId} />
-                                        </TabsContent>
-
-                                        <TabsContent value="feedback" className="space-y-6">
-                                            <StudentFeedbackTab classId={classInfo.classId} courseId={classInfo.courseId} />
                                         </TabsContent>
                                     </Tabs>
                                 )}

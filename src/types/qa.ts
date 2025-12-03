@@ -46,6 +46,7 @@ export interface QAClassListItemDTO {
   classId: number;
   classCode: string;
   className: string;
+  courseId: number;
   courseName: string;
   branchName: string;
   modality: string;

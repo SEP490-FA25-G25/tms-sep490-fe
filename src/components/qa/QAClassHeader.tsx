@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ClassStatusBadge } from '@/components/qa/ClassStatusBadge'
 import type { QAClassDetailDTO } from '@/types/qa'
-import { BookOpen, Calendar, Clock, MapPin, Users, CheckCircle, BookCheck, UserX, Plus } from 'lucide-react'
+import { BookOpen, Calendar, Clock, MapPin, Users, CheckCircle, BookCheck, Plus } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 interface QAClassHeaderProps {
@@ -25,7 +25,6 @@ export function QAClassHeader({ classInfo }: QAClassHeaderProps) {
   const totalSessions = classInfo.sessionSummary?.totalSessions ?? 0
   const attendanceRate = classInfo.performanceMetrics?.attendanceRate ?? 0
   const homeworkRate = classInfo.performanceMetrics?.homeworkCompletionRate ?? 0
-  const totalAbsences = classInfo.performanceMetrics?.totalAbsences ?? 0
 
   return (
     <div className="border-b bg-background">
@@ -74,7 +73,7 @@ export function QAClassHeader({ classInfo }: QAClassHeaderProps) {
           </div>
 
           {/* Stats grid - responsive */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-3 sm:grid-cols-5">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-4">
             <div className="rounded-lg border bg-card shadow-sm p-2 sm:p-3 space-y-0.5 sm:space-y-1">
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
@@ -112,16 +111,6 @@ export function QAClassHeader({ classInfo }: QAClassHeaderProps) {
               </div>
               <p className="text-xs sm:text-sm font-semibold text-foreground">
                 {homeworkRate.toFixed(1)}%
-              </p>
-            </div>
-
-            <div className="rounded-lg border bg-card shadow-sm p-2 sm:p-3 space-y-0.5 sm:space-y-1">
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <UserX className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                <span className="text-[10px] sm:text-xs font-medium truncate">Vắng</span>
-              </div>
-              <p className="text-xs sm:text-sm font-semibold text-foreground">
-                {totalAbsences}
               </p>
             </div>
           </div>

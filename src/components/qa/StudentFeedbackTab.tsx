@@ -292,24 +292,6 @@ export function StudentFeedbackTab({ classId, courseId }: StudentFeedbackTabProp
                                             ({feedbackDetail.rating.toFixed(1)}/5)
                                         </span>
                                     </div>
-                                    {feedbackDetail.sentiment && (
-                                        <Badge 
-                                            variant="outline"
-                                            className={
-                                                feedbackDetail.sentiment === "positive"
-                                                    ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-                                                    : feedbackDetail.sentiment === "negative"
-                                                        ? "bg-rose-100 text-rose-700 border-rose-200"
-                                                        : "bg-amber-100 text-amber-700 border-amber-200"
-                                            }
-                                        >
-                                            {feedbackDetail.sentiment === "positive"
-                                                ? "Tích cực"
-                                                : feedbackDetail.sentiment === "negative"
-                                                    ? "Tiêu cực"
-                                                    : "Trung bình"}
-                                        </Badge>
-                                    )}
                                 </div>
                             )}
                             <div className="space-y-2">
