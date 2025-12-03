@@ -145,22 +145,17 @@ export default function AcademicRequestsPage() {
   const hasActiveHistoryFilters = historyRequestType !== 'ALL' || historyStatus !== 'ALL' || historySearchKeyword !== '' || historyClassCode !== '' || historyDecidedBy !== undefined
 
   return (
-    <DashboardLayout>
+    <DashboardLayout
+      title="Quản lý yêu cầu học viên"
+      description="Xem xét và phê duyệt các yêu cầu xin nghỉ, học bù, chuyển lớp"
+      actions={
+        <Button variant="outline" className="gap-2" onClick={() => setShowOnBehalfDialog(true)}>
+          <PlusCircleIcon className="h-4 w-4" />
+          Tạo thay học viên
+        </Button>
+      }
+    >
       <div className="space-y-6">
-        {/* Page Header */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Quản lý yêu cầu học viên</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Xem xét và phê duyệt các yêu cầu xin nghỉ, học bù, chuyển lớp
-            </p>
-          </div>
-          <Button variant="outline" className="gap-2" onClick={() => setShowOnBehalfDialog(true)}>
-            <PlusCircleIcon className="h-4 w-4" />
-            Tạo thay học viên
-          </Button>
-        </div>
-
         {/* Summary Stats */}
         {summary && (
           <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">

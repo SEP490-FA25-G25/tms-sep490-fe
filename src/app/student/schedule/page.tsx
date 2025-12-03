@@ -288,9 +288,9 @@ export default function StudentSchedulePage() {
         <SidebarInset className="h-svh overflow-hidden">
           <SiteHeader />
           <main className="flex flex-1 flex-col overflow-hidden min-h-0">
-            <header className="flex flex-col gap-4 border-b px-4 sm:px-6 py-4 bg-background lg:flex-row lg:items-center lg:justify-between">
+            <header className="flex flex-col gap-4 border-b border-border px-4 lg:px-6 py-5 bg-background lg:flex-row lg:items-center lg:justify-between">
               <div className="flex flex-col gap-1">
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Lịch học của tôi</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Lịch học của tôi</h1>
                 <p className="text-sm text-muted-foreground">
                   Theo dõi lịch học, tài liệu và trạng thái điểm danh
                 </p>

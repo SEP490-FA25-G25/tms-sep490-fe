@@ -212,9 +212,9 @@ const MyClassesPage = () => {
           <SiteHeader />
           <div className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col">
-              <header className="flex flex-col gap-2 border-b border-border px-6 py-5">
-                <div className="flex flex-col gap-2">
-                  <h1 className="text-3xl font-bold tracking-tight">Lớp của tôi</h1>
+              <header className="flex flex-col gap-2 border-b border-border px-4 lg:px-6 py-5">
+                <div className="flex flex-col gap-1">
+                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Lớp của tôi</h1>
                   <p className="text-sm text-muted-foreground">
                     Quản lý và xem thông tin các lớp học đã đăng ký
                   </p>

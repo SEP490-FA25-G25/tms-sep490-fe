@@ -214,8 +214,11 @@ const AvailabilityCampaignPage = () => {
     });
 
     return (
-        <DashboardLayout>
-            <div className="flex h-[calc(100vh-12rem)] gap-4">
+        <DashboardLayout
+            title="Quản lý lịch rảnh giáo viên"
+            description="Theo dõi và quản lý các đợt cập nhật lịch rảnh của giáo viên"
+        >
+            <div className="flex h-[calc(100vh-16rem)] gap-4">
                 {/* Left Panel: Campaign List */}
                 <Card className="w-1/3 min-w-[320px] flex flex-col overflow-hidden min-h-0">
                     <CardHeader className="pb-3 border-b shrink-0">
