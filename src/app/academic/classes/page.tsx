@@ -46,7 +46,8 @@ import {
   CheckCircle2,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  RotateCcw
 } from 'lucide-react'
 import { useGetClassesQuery } from '@/store/services/classApi'
 import type { ClassListItemDTO, ClassListRequest, TeacherSummaryDTO } from '@/store/services/classApi'
@@ -132,6 +133,28 @@ export default function ClassListPage() {
     sortDir: sortDir,
     ...pagination,
   }), [debouncedSearch, filters.courseId, filters.status, filters.approvalStatus, filters.modality, sortField, sortDir, pagination])
+
+  // Check if any filter is active
+  const hasActiveFilters = useMemo(() => {
+    return (
+      filters.search.trim() !== '' ||
+      filters.status !== undefined ||
+      filters.approvalStatus !== undefined ||
+      filters.modality !== undefined
+    )
+  }, [filters])
+
+  // Reset all filters
+  const resetFilters = () => {
+    setFilters({
+      search: '',
+      courseId: undefined,
+      status: undefined,
+      approvalStatus: undefined,
+      modality: undefined,
+    })
+    setPagination(prev => ({ ...prev, page: 0 }))
+  }
 
   const {
     data: response,
@@ -424,6 +447,17 @@ export default function ClassListPage() {
                 <SelectItem value="HYBRID">Kết hợp</SelectItem>
               </SelectContent>
             </Select>
+
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={resetFilters}
+              disabled={!hasActiveFilters}
+              title="Xóa bộ lọc"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 

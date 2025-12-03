@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/pagination'
 import {
   PlusCircleIcon,
-  XIcon,
+  RotateCcwIcon,
   ClockIcon,
   AlertTriangleIcon,
   CalendarXIcon,
@@ -282,11 +282,16 @@ export default function AcademicRequestsPage() {
                     </SelectContent>
                   </Select>
 
-                  {hasActiveFilters && (
-                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleClearFilters}>
-                      <XIcon className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    onClick={handleClearFilters}
+                    disabled={!hasActiveFilters}
+                    title="Xóa bộ lọc"
+                  >
+                    <RotateCcwIcon className="h-4 w-4" />
+                  </Button>
                 </div>
               </>
             ) : (
@@ -377,11 +382,16 @@ export default function AcademicRequestsPage() {
                     </SelectContent>
                   </Select>
 
-                  {hasActiveHistoryFilters && (
-                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleClearHistoryFilters}>
-                      <XIcon className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    onClick={handleClearHistoryFilters}
+                    disabled={!hasActiveHistoryFilters}
+                    title="Xóa bộ lọc"
+                  >
+                    <RotateCcwIcon className="h-4 w-4" />
+                  </Button>
                 </div>
               </>
             )}

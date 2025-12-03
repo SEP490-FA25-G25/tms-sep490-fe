@@ -38,6 +38,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  RotateCcw,
 } from 'lucide-react'
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { StudentStatusBadge } from './components/StudentStatusBadge'
@@ -196,6 +197,27 @@ export default function StudentListPage() {
       notEnrolled: notEnrolledCount,
     }
   }, [rawStudents, pageInfo?.totalElements])
+
+  // Check if any filter is active
+  const hasActiveFilters = useMemo(() => {
+    return (
+      filters.search.trim() !== '' ||
+      filters.status !== undefined ||
+      filters.gender !== undefined ||
+      filters.enrollmentStatus !== 'all'
+    )
+  }, [filters])
+
+  // Reset all filters
+  const resetFilters = () => {
+    setFilters({
+      search: '',
+      status: undefined,
+      gender: undefined,
+      enrollmentStatus: 'all',
+    })
+    setPagination((prev) => ({ ...prev, page: 0 }))
+  }
 
   // Handlers
   const handleFilterChange = <K extends keyof FilterState>(
@@ -404,6 +426,17 @@ export default function StudentListPage() {
                 <SelectItem value="not_enrolled">Chưa ghi danh</SelectItem>
               </SelectContent>
             </Select>
+
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={resetFilters}
+              disabled={!hasActiveFilters}
+              title="Xóa bộ lọc"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 

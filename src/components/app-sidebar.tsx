@@ -313,16 +313,6 @@ const roleBasedNav = {
         icon: UsersIcon,
       },
       {
-        title: "Hỗ trợ học thuật",
-        url: "/academic/support",
-        icon: HelpCircleIcon,
-      },
-      {
-        title: "Tài liệu",
-        url: "/academic/docs",
-        icon: FileTextIcon,
-      },
-      {
         title: "Quản lý yêu cầu học viên",
         url: "/academic/student-requests",
         icon: ClipboardCheckIcon,
