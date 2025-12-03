@@ -39,7 +39,8 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Search, Loader2, AlertTriangle, GraduationCap } from "lucide-react"
+import { Search, Loader2, AlertTriangle, GraduationCap, RotateCcw } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 // Status options
 const classStatusOptions = [
@@ -128,6 +129,19 @@ export default function QAClassesListPage() {
         setPage(newPage)
         updateUrlParams({ page: newPage.toString() })
     }
+
+    // Clear all filters
+    const handleClearFilters = () => {
+        setSearchTerm("")
+        setStatusFilter("all")
+        setModalityFilter("all")
+        setBranchFilter("all")
+        setPage(0)
+        setSearchParams(new URLSearchParams())
+    }
+
+    // Check if any filter is active
+    const hasActiveFilters = searchTerm !== "" || statusFilter !== "all" || modalityFilter !== "all" || branchFilter !== "all"
 
     const { data: classesData, isLoading, error } = useGetQAClassesQuery({
         branchIds: branchFilter === 'all' ? undefined : [parseInt(branchFilter)],
@@ -249,6 +263,17 @@ export default function QAClassesListPage() {
                                 ))}
                             </SelectContent>
                         </Select>
+
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            onClick={handleClearFilters}
+                            disabled={!hasActiveFilters}
+                            title="Xóa bộ lọc"
+                            className="h-9 w-9 shrink-0"
+                        >
+                            <RotateCcw className="h-4 w-4" />
+                        </Button>
                     </div>
                 </div>
 

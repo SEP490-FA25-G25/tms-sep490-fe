@@ -24,6 +24,12 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
     Pagination,
@@ -32,9 +38,8 @@ import {
     PaginationLink,
     PaginationNext,
     PaginationPrevious,
-    PaginationEllipsis,
 } from "@/components/ui/pagination"
-import { Plus, Search, Loader2, AlertTriangle, FileText } from "lucide-react"
+import { Plus, Search, Loader2, AlertTriangle, FileText, HelpCircle, RotateCcw } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { getQAReportTypeDisplayName, qaReportTypeOptions, QAReportStatus } from "@/types/qa"
 
@@ -123,30 +128,48 @@ export default function QAReportsListPage() {
         }
     }
 
-    // Helper function for scope info display
-    const getScopeInfo = (report: QAReportListItemDTO) => {
+    // Helper function for scope info display as tooltip text
+    const getScopeTooltipText = (report: QAReportListItemDTO) => {
         if (report.sessionDate) {
-            return (
-                <p className="text-xs text-muted-foreground">
-                    {new Date(report.sessionDate).toLocaleDateString('vi-VN')}
-                </p>
-            )
+            return new Date(report.sessionDate).toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+            })
         }
         if (report.phaseName) {
-            return (
-                <p className="text-xs text-muted-foreground">
-                    {report.phaseName}
-                </p>
-            )
+            return report.phaseName
         }
         return null
     }
+
+    // Clear all filters
+    const handleClearFilters = () => {
+        setSearchTerm("")
+        setReportTypeFilter("all")
+        setStatusFilter("all")
+        setPage(0)
+        setSearchParams(new URLSearchParams())
+    }
+
+    // Check if any filter is active
+    const hasActiveFilters = searchTerm !== "" || reportTypeFilter !== "all" || statusFilter !== "all"
+
+    const headerActions = (
+        <Button asChild>
+            <Link to="/qa/reports/create">
+                <Plus className="h-4 w-4 mr-2" />
+                Tạo Báo Cáo
+            </Link>
+        </Button>
+    )
 
     if (isLoading) {
         return (
             <DashboardLayout
                 title="Danh Sách Báo Cáo QA"
                 description="Quản lý và theo dõi các báo cáo đảm bảo chất lượng."
+                actions={headerActions}
             >
                 <div className="flex items-center justify-center h-64">
                     <Loader2 className="h-8 w-8 animate-spin" />
@@ -160,6 +183,7 @@ export default function QAReportsListPage() {
             <DashboardLayout
                 title="Danh Sách Báo Cáo QA"
                 description="Quản lý và theo dõi các báo cáo đảm bảo chất lượng."
+                actions={headerActions}
             >
                 <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
@@ -175,11 +199,12 @@ export default function QAReportsListPage() {
         <DashboardLayout
             title="Danh Sách Báo Cáo QA"
             description="Quản lý và theo dõi các báo cáo đảm bảo chất lượng."
+            actions={headerActions}
         >
             <div className="space-y-6">
-                {/* Header Actions */}
+                {/* Search & Filters */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="relative flex-1 max-w-md w-full">
+                    <div className="relative w-full sm:w-80">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Tìm theo mã lớp, người báo cáo, nội dung..."
@@ -188,19 +213,10 @@ export default function QAReportsListPage() {
                             className="pl-8"
                         />
                     </div>
-                    <Button asChild>
-                        <Link to="/qa/reports/create">
-                            <Plus className="h-4 w-4 mr-2" />
-                            Tạo Báo Cáo Mới
-                        </Link>
-                    </Button>
-                </div>
 
-                {/* Filters */}
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex flex-wrap items-center gap-3">
                         <Select value={reportTypeFilter} onValueChange={handleReportTypeChange}>
-                            <SelectTrigger className="w-[220px]">
+                            <SelectTrigger className="w-[200px]">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -223,10 +239,17 @@ export default function QAReportsListPage() {
                                 <SelectItem value={QAReportStatus.SUBMITTED}>Đã nộp</SelectItem>
                             </SelectContent>
                         </Select>
-                    </div>
 
-                    <div className="text-sm text-muted-foreground">
-                        Hiển thị {reports.length} / {totalCount} báo cáo
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            onClick={handleClearFilters}
+                            disabled={!hasActiveFilters}
+                            title="Xóa bộ lọc"
+                            className="h-9 w-9 shrink-0"
+                        >
+                            <RotateCcw className="h-4 w-4" />
+                        </Button>
                     </div>
                 </div>
 
@@ -260,9 +283,20 @@ export default function QAReportsListPage() {
                                         </TableCell>
                                         <TableCell>{report.classCode}</TableCell>
                                         <TableCell>
-                                            <div className="space-y-1">
+                                            <div className="flex items-center gap-1.5">
                                                 {getReportLevelBadge(report)}
-                                                {getScopeInfo(report)}
+                                                {getScopeTooltipText(report) && (
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                <p>{getScopeTooltipText(report)}</p>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                )}
                                             </div>
                                         </TableCell>
                                         <TableCell>{report.reportedByName}</TableCell>
@@ -300,74 +334,55 @@ export default function QAReportsListPage() {
                 </div>
 
                 {/* Pagination */}
-                <Pagination>
-                    <PaginationContent>
-                        <PaginationItem>
-                            <PaginationPrevious 
-                                onClick={() => page > 0 && handlePageChange(page - 1)}
-                                disabled={page === 0}
-                            />
-                        </PaginationItem>
-
-                        {/* First page - always show at least page 1 */}
-                        <PaginationItem>
-                            <PaginationLink
-                                onClick={() => handlePageChange(0)}
-                                isActive={page === 0}
-                            >
-                                1
-                            </PaginationLink>
-                        </PaginationItem>
-
-                        {/* Ellipsis before current */}
-                        {page > 2 && totalPages > 4 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+                    <p className="text-muted-foreground">
+                        Trang {page + 1} / {Math.max(totalPages, 1)} · {totalCount} báo cáo
+                    </p>
+                    <Pagination>
+                        <PaginationContent>
                             <PaginationItem>
-                                <PaginationEllipsis />
+                                <PaginationPrevious 
+                                    href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        if (page > 0) handlePageChange(page - 1)
+                                    }}
+                                    className={page === 0 ? "pointer-events-none opacity-50" : ""}
+                                />
                             </PaginationItem>
-                        )}
-
-                        {/* Pages around current */}
-                        {Array.from({ length: Math.max(totalPages, 1) }, (_, i) => i)
-                            .filter(i => i !== 0 && i !== Math.max(totalPages, 1) - 1 && Math.abs(i - page) <= 1)
-                            .map(i => (
-                                <PaginationItem key={i}>
-                                    <PaginationLink
-                                        onClick={() => handlePageChange(i)}
-                                        isActive={page === i}
-                                    >
-                                        {i + 1}
-                                    </PaginationLink>
-                                </PaginationItem>
-                            ))
-                        }
-
-                        {/* Ellipsis after current */}
-                        {page < totalPages - 3 && totalPages > 4 && (
+                            {Array.from({ length: Math.min(Math.max(totalPages, 1), 5) }, (_, i) => {
+                                let pageNum = i
+                                if (totalPages > 5 && page > 2) {
+                                    pageNum = Math.min(page - 2 + i, totalPages - 1)
+                                }
+                                return (
+                                    <PaginationItem key={pageNum}>
+                                        <PaginationLink
+                                            href="#"
+                                            onClick={(e) => {
+                                                e.preventDefault()
+                                                handlePageChange(pageNum)
+                                            }}
+                                            isActive={pageNum === page}
+                                        >
+                                            {pageNum + 1}
+                                        </PaginationLink>
+                                    </PaginationItem>
+                                )
+                            })}
                             <PaginationItem>
-                                <PaginationEllipsis />
+                                <PaginationNext 
+                                    href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        if (page < totalPages - 1) handlePageChange(page + 1)
+                                    }}
+                                    className={page >= totalPages - 1 ? "pointer-events-none opacity-50" : ""}
+                                />
                             </PaginationItem>
-                        )}
-
-                        {/* Last page */}
-                        {totalPages > 1 && (
-                            <PaginationItem>
-                                <PaginationLink
-                                    onClick={() => handlePageChange(totalPages - 1)}
-                                    isActive={page === totalPages - 1}
-                                >
-                                    {totalPages}
-                                </PaginationLink>
-                            </PaginationItem>
-                        )}
-
-                        <PaginationItem>
-                            <PaginationNext 
-                                onClick={() => page < totalPages - 1 && handlePageChange(page + 1)}
-                                disabled={page >= totalPages - 1 || totalPages <= 1}
-                            />
-                        </PaginationItem>
-                    </PaginationContent>
-                </Pagination>
+                        </PaginationContent>
+                    </Pagination>
+                </div>
             </div>
         </DashboardLayout>
     )
