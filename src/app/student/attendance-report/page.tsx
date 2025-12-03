@@ -1,5 +1,5 @@
 import type React from "react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { StudentRoute } from "@/components/ProtectedRoute";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -12,7 +12,7 @@ import {
   type StudentAttendanceOverviewClassDTO,
   useGetStudentAttendanceOverviewQuery,
 } from "@/store/services/attendanceApi";
-import { ClipboardList, AlertCircle } from "lucide-react";
+import { ClipboardList, AlertCircle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AttendanceClassCard } from "@/components/attendance/AttendanceClassCard";
 
@@ -34,6 +34,12 @@ export default function StudentAttendanceReportOverviewPage() {
     if (statusFilter === 'completed') return item.status === 'COMPLETED';
     return true;
   }), [classes, statusFilter]);
+
+  const hasActiveFilter = statusFilter !== 'all';
+
+  const resetFilter = useCallback(() => {
+    setStatusFilter('all');
+  }, []);
 
   return (
     <StudentRoute>
@@ -109,24 +115,36 @@ export default function StudentAttendanceReportOverviewPage() {
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <h2 className="text-lg font-semibold">Chi tiết theo lớp</h2>
-                        <ToggleGroup
-                          type="single"
-                          value={statusFilter}
-                          onValueChange={(value) => {
-                            if (value) setStatusFilter(value as StatusFilter);
-                          }}
-                          className="border rounded-lg p-1"
-                        >
-                          <ToggleGroupItem value="all" className="text-sm">
-                            Tất cả
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="ongoing" className="text-sm">
-                            Đang học
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="completed" className="text-sm">
-                            Đã hoàn thành
-                          </ToggleGroupItem>
-                        </ToggleGroup>
+                        <div className="flex items-center gap-2">
+                          <ToggleGroup
+                            type="single"
+                            value={statusFilter}
+                            onValueChange={(value) => {
+                              if (value) setStatusFilter(value as StatusFilter);
+                            }}
+                            className="border rounded-lg p-1"
+                          >
+                            <ToggleGroupItem value="all" className="text-sm">
+                              Tất cả
+                            </ToggleGroupItem>
+                            <ToggleGroupItem value="ongoing" className="text-sm">
+                              Đang học
+                            </ToggleGroupItem>
+                            <ToggleGroupItem value="completed" className="text-sm">
+                              Đã hoàn thành
+                            </ToggleGroupItem>
+                          </ToggleGroup>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9 shrink-0"
+                            onClick={resetFilter}
+                            disabled={!hasActiveFilter}
+                            title="Xóa bộ lọc"
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
 
                       {filteredClasses.length === 0 && (

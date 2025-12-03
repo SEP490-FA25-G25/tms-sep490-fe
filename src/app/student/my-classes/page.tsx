@@ -20,7 +20,7 @@ import { useGetStudentClassesQuery } from '@/store/services/studentClassApi';
 import type { ClassStatus, EnrollmentStatus, Modality, StudentClassDTO } from '@/types/studentClass';
 import { CLASS_STATUSES, MODALITIES } from '@/types/studentClass';
 import { CLASS_STATUS_STYLES, getStatusStyle } from '@/lib/status-colors';
-import { AlertCircle, BookOpen, Search } from 'lucide-react';
+import { AlertCircle, BookOpen, RotateCcw, Search } from 'lucide-react';
 
 interface FilterState {
   status: ClassStatus | 'all';
@@ -292,11 +292,16 @@ const MyClassesPage = () => {
                       </SelectContent>
                     </Select>
 
-                    {hasActiveFilters && (
-                      <Button variant="ghost" size="sm" onClick={resetFilters}>
-                        Xóa bộ lọc
-                      </Button>
-                    )}
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9 shrink-0"
+                      onClick={resetFilters}
+                      disabled={!hasActiveFilters}
+                      title="Xóa bộ lọc"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               </div>

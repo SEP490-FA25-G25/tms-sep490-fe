@@ -9,6 +9,7 @@ import {
   MapPinIcon,
   NotebookPenIcon,
   RefreshCcwIcon,
+  RotateCcwIcon,
   UsersIcon,
 } from 'lucide-react'
 
@@ -267,6 +268,12 @@ export default function StudentSchedulePage() {
   const isLoading = (!weekStart && !isCurrentWeekError) || isCurrentWeekLoading || isScheduleLoading
   const hasError = isScheduleError || (isCurrentWeekError && !weekStart && !isCurrentWeekLoading)
 
+  // Check if current week is selected
+  const isNotCurrentWeek = useMemo(() => {
+    if (!weekStart || !currentWeekResponse?.data) return false
+    return weekStart !== currentWeekResponse.data
+  }, [weekStart, currentWeekResponse?.data])
+
   return (
     <StudentRoute>
       <SidebarProvider
@@ -382,11 +389,11 @@ export default function StudentSchedulePage() {
                   variant="outline" 
                   size="icon"
                   className="h-8 w-8"
-                  onClick={handleRetry}
-                  disabled={isScheduleFetching}
-                  title="Làm mới dữ liệu"
+                  onClick={() => handleWeekChange('current')}
+                  disabled={!isNotCurrentWeek || isScheduleFetching}
+                  title="Về tuần hiện tại"
                 >
-                  <RefreshCcwIcon className={cn("h-4 w-4", isScheduleFetching && "animate-spin")} />
+                  <RotateCcwIcon className="h-4 w-4" />
                 </Button>
               </div>
             </header>

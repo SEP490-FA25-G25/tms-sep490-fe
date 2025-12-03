@@ -142,17 +142,16 @@ export default function StudentPendingFeedbackPage() {
                         className="pl-8 h-9 w-[200px] sm:w-[280px]"
                       />
                     </div>
-                    {searchQuery && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 shrink-0"
-                        onClick={handleResetSearch}
-                        title="Xóa tìm kiếm"
-                      >
-                        <RotateCcw className="h-4 w-4" />
-                      </Button>
-                    )}
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9 shrink-0"
+                      onClick={handleResetSearch}
+                      disabled={!searchQuery}
+                      title="Xóa tìm kiếm"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               </header>

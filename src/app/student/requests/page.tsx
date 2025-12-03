@@ -8,7 +8,7 @@ import {
   ClockIcon,
   NotebookPenIcon,
   PlusIcon,
-  RefreshCcwIcon,
+  RotateCcwIcon,
   SearchIcon,
   XCircleIcon,
   XIcon,
@@ -106,6 +106,15 @@ export default function StudentRequestsPage() {
 
     return () => clearTimeout(timer)
   }, [searchQuery])
+
+  const hasActiveFilters = typeFilter !== 'ALL' || statusFilter !== 'ALL' || searchQuery !== ''
+
+  const resetFilters = () => {
+    setTypeFilter('ALL')
+    setStatusFilter('ALL')
+    setSearchQuery('')
+    setPage(0)
+  }
 
   const {
     data: requestsResponse,
@@ -300,8 +309,15 @@ export default function StudentRequestsPage() {
                   </SelectContent>
                 </Select>
 
-                <Button variant="outline" size="icon" onClick={() => refetchRequests()}>
-                  <RefreshCcwIcon className="h-4 w-4" />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 shrink-0"
+                  onClick={resetFilters}
+                  disabled={!hasActiveFilters}
+                  title="Xóa bộ lọc"
+                >
+                  <RotateCcwIcon className="h-4 w-4" />
                 </Button>
               </div>
             </div>

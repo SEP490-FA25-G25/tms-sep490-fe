@@ -168,17 +168,16 @@ const TranscriptPage = () => {
                           <SelectItem value="DROPPED">Đã nghỉ</SelectItem>
                         </SelectContent>
                       </Select>
-                      {hasActiveFilter && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9 shrink-0"
-                          onClick={handleResetFilter}
-                          title="Xóa bộ lọc"
-                        >
-                          <RotateCcw className="h-4 w-4" />
-                        </Button>
-                      )}
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 shrink-0"
+                        onClick={handleResetFilter}
+                        disabled={!hasActiveFilter}
+                        title="Xóa bộ lọc"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 )}
