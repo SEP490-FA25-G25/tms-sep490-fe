@@ -5,15 +5,114 @@ export interface BaseResponse<T> {
   data: T;
 }
 
-// Dashboard Types
+// ========== Dashboard V2 Types ==========
+
+// Action Items
+export interface ActionItems {
+  draftReportsCount: number;
+  phasesNeedingReviewCount: number;
+  unanalyzedFeedbackCount: number;
+  draftReports?: DraftReportItem[];
+  phasesNeedingReview?: PhaseNeedingReview[];
+  unanalyzedFeedbacks?: UnanalyzedFeedbackItem[];
+}
+
+export interface DraftReportItem {
+  reportId: number;
+  reportType: string;
+  classCode: string;
+  lastUpdated?: string;
+  contentPreview: string;
+}
+
+export interface PhaseNeedingReview {
+  classId: number;
+  classCode: string;
+  phaseId: number;
+  phaseName: string;
+  phaseEndDate?: string;
+}
+
+export interface UnanalyzedFeedbackItem {
+  classId: number;
+  classCode: string;
+  phaseId: number;
+  phaseName: string;
+  feedbackCount: number;
+}
+
+// Class Comparison (Bar Chart)
+export interface ClassComparisonData {
+  courseId: number;
+  courseName: string;
+  metricType: 'ATTENDANCE' | 'HOMEWORK';
+  courseAverage: number;
+  threshold: number;
+  classes: ClassMetric[];
+}
+
+export interface ClassMetric {
+  classId: number;
+  classCode: string;
+  value: number;
+  isBelowThreshold: boolean;
+  studentCount: number;
+}
+
+// Trend Data (Line Chart)
+export interface TrendData {
+  classId: number;
+  classCode: string;
+  className?: string;
+  metricType: 'ATTENDANCE' | 'HOMEWORK';
+  dataPoints: WeeklyDataPoint[];
+  insight?: string;
+  currentValue?: number;
+  previousWeekValue?: number;
+  changePercent?: number;
+}
+
+export interface WeeklyDataPoint {
+  weekNumber: number;
+  weekStart: string;
+  weekEnd: string;
+  value: number;
+  sessionCount: number;
+}
+
+// Recent Reports
+export interface RecentReport {
+  reportId: number;
+  reportType: string;
+  classCode: string;
+  status: string;
+  createdDate?: string;
+}
+
+// Course Options (dropdown)
+export interface CourseOption {
+  courseId: number;
+  courseName: string;
+  classCount: number;
+}
+
+// Main Dashboard DTO (V2)
 export interface QADashboardDTO {
-  kpiMetrics: {
+  // New V2 fields
+  actionItems?: ActionItems;
+  classComparison?: ClassComparisonData;
+  trendData?: TrendData;
+  recentReports?: RecentReport[];
+  courseOptions?: CourseOption[];
+  
+  // Legacy fields (backward compatible)
+  kpiMetrics?: {
     ongoingClassesCount: number;
     qaReportsCreatedThisMonth: number;
     averageAttendanceRate: number;
     averageHomeworkCompletionRate: number;
   };
-  classesRequiringAttention: Array<{
+  classesRequiringAttention?: Array<{
     classId: number;
     classCode: string;
     courseName: string;
@@ -23,7 +122,7 @@ export interface QADashboardDTO {
     qaReportCount: number;
     warningReason: string;
   }>;
-  recentQAReports: Array<{
+  recentQAReports?: Array<{
     reportId: number;
     reportType: string;
     classId: number;
@@ -41,7 +140,7 @@ export interface QADashboardDTO {
   };
 }
 
-// Classes Types
+// ========== Classes Types ==========
 export interface QAClassListItemDTO {
   classId: number;
   classCode: string;

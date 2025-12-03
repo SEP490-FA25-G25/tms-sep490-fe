@@ -1,281 +1,296 @@
 "use client"
 
 import * as React from "react"
-import { useSearchParams } from "react-router-dom"
-import { useGetQADashboardQuery } from "@/store/services/qaApi"
+import { useGetQADashboardQuery, useGetClassTrendDataQuery, useGetClassComparisonQuery } from "@/store/services/qaApi"
 import { DashboardLayout } from "@/components/DashboardLayout"
-import { QAStatsCard } from "@/components/qa/QAStatsCard"
-import { QAReportStatusBadge } from "@/components/qa/QAReportStatusBadge"
-import { QAExportButton } from "@/components/qa/QAExportButton"
-import { DateRangePicker } from "@/components/ui/date-range-picker"
-import { Button } from "@/components/ui/button"
+import { ActionItems } from "@/components/qa/ActionItems"
+import { RecentReports } from "@/components/qa/RecentReports"
+import { ClassComparisonChart, TrendChart } from "@/components/qa/charts"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
-import {
-    FileText,
-    Users,
-    ClipboardCheck,
-    ArrowRight,
-    AlertTriangle,
-    TrendingUp,
-    Loader2,
-} from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Button } from "@/components/ui/button"
+import { AlertTriangle, BarChart3, TrendingUp, FileText } from "lucide-react"
 import { Link } from "react-router-dom"
 
 export default function QADashboardPage() {
-    const [searchParams, setSearchParams] = useSearchParams()
+    // State for chart selections
+    const [selectedCourseId, setSelectedCourseId] = React.useState<number | null>(null)
+    const [selectedClassId, setSelectedClassId] = React.useState<number | null>(null)
 
-    // Get date range from URL parameters
-    const dateFromParam = searchParams.get('dateFrom')
-    const dateToParam = searchParams.get('dateTo')
+    const { data: dashboard, isLoading, error } = useGetQADashboardQuery({})
 
-    // Parse URL dates or use undefined
-    const dateFrom = React.useMemo(
-        () => (dateFromParam ? new Date(dateFromParam) : undefined),
-        [dateFromParam]
-    )
-    const dateTo = React.useMemo(
-        () => (dateToParam ? new Date(dateToParam) : undefined),
-        [dateToParam]
-    )
-
-    const initialDateRange = React.useMemo(() => {
-        if (dateFrom && dateTo) {
-            return { from: dateFrom, to: dateTo }
-        }
-        return undefined
-    }, [dateFrom, dateTo])
-
-    const handleDateRangeChange = React.useCallback((range: { from: Date; to: Date } | undefined) => {
-        if (range) {
-            const newParams = new URLSearchParams(searchParams)
-            newParams.set('dateFrom', range.from.toISOString().split('T')[0])
-            newParams.set('dateTo', range.to.toISOString().split('T')[0])
-            setSearchParams(newParams)
-        } else {
-            const newParams = new URLSearchParams(searchParams)
-            newParams.delete('dateFrom')
-            newParams.delete('dateTo')
-            setSearchParams(newParams)
-        }
-    }, [searchParams, setSearchParams])
-
-    const { data: dashboard, isLoading, error } = useGetQADashboardQuery({
-        dateFrom: dateFrom ? dateFrom.toISOString().split('T')[0] : undefined,
-        dateTo: dateTo ? dateTo.toISOString().split('T')[0] : undefined,
+    // Fetch trend data when class is selected
+    const { 
+        data: trendData, 
+        isLoading: isTrendLoading,
+        isFetching: isTrendFetching 
+    } = useGetClassTrendDataQuery(selectedClassId!, {
+        skip: !selectedClassId,
     })
+
+    // Fetch comparison data when course is selected (dynamic)
+    const {
+        data: comparisonData,
+        isLoading: isComparisonLoading,
+        isFetching: isComparisonFetching
+    } = useGetClassComparisonQuery(
+        { courseId: selectedCourseId!, metricType: 'ATTENDANCE' },
+        { skip: !selectedCourseId }
+    )
+
+    // Set default course selection when data loads
+    React.useEffect(() => {
+        if (dashboard?.courseOptions && dashboard.courseOptions.length > 0 && !selectedCourseId) {
+            setSelectedCourseId(dashboard.courseOptions[0].courseId)
+        }
+    }, [dashboard?.courseOptions, selectedCourseId])
+
+    // Get classes for selected course from dynamic comparison data
+    const classesForSelectedCourse = React.useMemo(() => {
+        if (!comparisonData) return []
+        return comparisonData.classes || []
+    }, [comparisonData])
+
+    // Set default class when course changes or when classComparison loads
+    React.useEffect(() => {
+        if (classesForSelectedCourse.length > 0) {
+            // Find worst performing class (lowest value) as default
+            const worstClass = classesForSelectedCourse.reduce((prev, curr) => 
+                curr.value < prev.value ? curr : prev
+            )
+            setSelectedClassId(worstClass.classId)
+        } else if (dashboard?.trendData?.classId && !selectedClassId) {
+            // Fallback to default trend data class
+            setSelectedClassId(dashboard.trendData.classId)
+        }
+    }, [classesForSelectedCourse, dashboard?.trendData?.classId, selectedClassId])
+
+    // Handle course change
+    const handleCourseChange = (value: string) => {
+        const courseId = parseInt(value, 10)
+        setSelectedCourseId(courseId)
+        // Reset class selection - will be auto-set by useEffect
+        setSelectedClassId(null)
+    }
+
+    // Handle class change for trend chart
+    const handleClassChange = (value: string) => {
+        setSelectedClassId(parseInt(value, 10))
+    }
+
+    // Get selected class info for display
+    const selectedClassInfo = React.useMemo(() => {
+        if (!selectedClassId) return null
+        const fromComparison = classesForSelectedCourse.find(c => c.classId === selectedClassId)
+        if (fromComparison) {
+            return { classCode: fromComparison.classCode, classId: fromComparison.classId }
+        }
+        if (trendData) {
+            return { classCode: trendData.classCode, classId: trendData.classId }
+        }
+        return null
+    }, [selectedClassId, classesForSelectedCourse, trendData])
 
     if (isLoading) {
         return (
             <DashboardLayout
-                title="Quản Lý Chất Lượng Đào Tạo"
-                description="Tổng quan về chất lượng giảng dạy và học tập."
+                title="Tổng Quan QA"
+                description="Quản lý chất lượng đào tạo"
             >
-                <div className="flex items-center justify-center h-64">
-                    <Loader2 className="h-8 w-8 animate-spin" />
+                <div className="space-y-6">
+                    <Skeleton className="h-32 w-full" />
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <Skeleton className="h-80 lg:col-span-2" />
+                        <Skeleton className="h-80" />
+                    </div>
+                    <Skeleton className="h-72 w-full" />
                 </div>
             </DashboardLayout>
-        );
+        )
     }
 
     if (error) {
         return (
             <DashboardLayout
-                title="Quản Lý Chất Lượng Đào Tạo"
-                description="Tổng quan về chất lượng giảng dạy và học tập."
+                title="Tổng Quan QA"
+                description="Quản lý chất lượng đào tạo"
             >
                 <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertDescription>
-                        Không thể tải dữ liệu dashboard. Vui lòng thử lại.
+                        Không thể tải dữ liệu dashboard. Vui lòng thử lại sau.
                     </AlertDescription>
                 </Alert>
             </DashboardLayout>
-        );
+        )
     }
 
     if (!dashboard) {
         return (
             <DashboardLayout
-                title="Quản Lý Chất Lượng Đào Tạo"
-                description="Tổng quan về chất lượng giảng dạy và học tập."
+                title="Tổng Quan QA"
+                description="Quản lý chất lượng đào tạo"
             >
-                <div className="text-center text-muted-foreground">
+                <div className="text-center py-12 text-muted-foreground">
                     Không có dữ liệu để hiển thị.
                 </div>
             </DashboardLayout>
-        );
+        )
     }
+
+    // Use fetched trendData or fallback to dashboard's default trendData
+    const displayTrendData = trendData || dashboard.trendData
 
     return (
         <DashboardLayout
-            title="Quản Lý Chất Lượng Đào Tạo"
-            description="Tổng quan về chất lượng giảng dạy và học tập."
+            title="Tổng Quan QA"
+            description="Quản lý chất lượng đào tạo"
         >
-            <div className="space-y-8">
-                {/* Date Range Filter */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="flex items-center gap-2">
-                        <h1 className="text-xl font-semibold">Phân tích Khoảng Thời Gian</h1>
-                        {dashboard?.dateRangeInfo && !dashboard.dateRangeInfo.isDefaultRange && (
-                            <span className="text-sm text-muted-foreground">
-                                {dashboard.dateRangeInfo.displayText}
-                            </span>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-3 w-full sm:w-auto">
-                        <QAExportButton variant="outline" size="sm" />
-                        <DateRangePicker
-                            value={initialDateRange}
-                            onChange={handleDateRangeChange}
-                            placeholder="Chọn khoảng thời gian"
-                            className="w-full sm:w-80"
-                        />
-                    </div>
-                </div>
+            <div className="space-y-6">
+                {/* Row 1: Action Items */}
+                {dashboard.actionItems && (
+                    <ActionItems data={dashboard.actionItems} />
+                )}
 
-                {/* KPI Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <QAStatsCard
-                        title="Lớp đang diễn ra"
-                        value={dashboard.kpiMetrics.ongoingClassesCount}
-                        subtitle="Đang giảng dạy"
-                        icon={Users}
-                    />
-                    <QAStatsCard
-                        title="Báo cáo QA tháng này"
-                        value={dashboard.kpiMetrics.qaReportsCreatedThisMonth}
-                        subtitle="Đã tạo"
-                        icon={FileText}
-                    />
-                    <QAStatsCard
-                        title="Tỷ lệ điểm danh"
-                        value={`${dashboard.kpiMetrics.averageAttendanceRate.toFixed(1)}%`}
-                        subtitle="Trung bình"
-                        icon={TrendingUp}
-                    />
-                    <QAStatsCard
-                        title="Tỷ lệ hoàn thành BT"
-                        value={`${dashboard.kpiMetrics.averageHomeworkCompletionRate.toFixed(1)}%`}
-                        subtitle="Bài tập về nhà"
-                        icon={ClipboardCheck}
-                    />
-                </div>
-
-                {dashboard.classesRequiringAttention.length > 0 && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Classes Requiring Attention */}
-                    <div className="lg:col-span-2 space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-semibold tracking-tight">Lớp Cần Chú Ý</h2>
-                            <Link to="/qa/classes">
-                                <Button variant="ghost" size="sm" className="gap-1">
-                                    Xem tất cả <ArrowRight className="h-4 w-4" />
-                                </Button>
-                            </Link>
-                        </div>
-                        <div className="rounded-lg border overflow-hidden">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="bg-muted/50">
-                                        <TableHead>Mã Lớp</TableHead>
-                                        <TableHead>Khóa Học</TableHead>
-                                        <TableHead>Chi Nhánh</TableHead>
-                                        <TableHead className="text-center">Điểm Danh</TableHead>
-                                        <TableHead className="text-center">Báo Cáo</TableHead>
-                                        <TableHead className="text-right">Hành Động</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {dashboard.classesRequiringAttention.map((cls) => (
-                                        <TableRow key={cls.classId}>
-                                            <TableCell className="font-medium">{cls.classCode}</TableCell>
-                                            <TableCell>{cls.courseName}</TableCell>
-                                            <TableCell>{cls.branchName}</TableCell>
-                                            <TableCell className="text-center">
-                                                <span
-                                                    className={
-                                                        cls.attendanceRate < 80
-                                                            ? "text-red-600 font-medium"
-                                                            : "text-yellow-600 font-medium"
-                                                    }
-                                                >
-                                                    {cls.attendanceRate.toFixed(1)}%
-                                                </span>
-                                            </TableCell>
-                                            <TableCell className="text-center">{cls.qaReportCount}</TableCell>
-                                            <TableCell className="text-right">
-                                                <Link to={`/qa/classes/${cls.classId}`}>
-                                                    <Button variant="outline" size="sm">
-                                                        Chi Tiết
-                                                    </Button>
-                                                </Link>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    </div>
-
-                    {/* Recent QA Reports */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-semibold tracking-tight">Báo Cáo Gần Đây</h2>
-                            <Link to="/qa/reports">
-                                <Button variant="ghost" size="sm" className="gap-1">
-                                    Xem tất cả <ArrowRight className="h-4 w-4" />
-                                </Button>
-                            </Link>
-                        </div>
-                        <div className="space-y-4">
-                            {dashboard.recentQAReports.map((report) => (
-                                <div
-                                    key={report.reportId}
-                                    className="rounded-lg border bg-card p-4 flex flex-col gap-3 shadow-sm"
-                                >
-                                    <div className="flex items-start justify-between">
-                                        <div className="space-y-1">
-                                            <p className="font-medium text-sm">{report.reportType}</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {report.classCode} - {report.sessionDate}
-                                            </p>
-                                        </div>
-                                        <QAReportStatusBadge status={report.status} />
+                {/* Row 2: Class Comparison Chart + Recent Reports */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Class Comparison Chart */}
+                    <Card className="lg:col-span-2">
+                        <CardHeader className="pb-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                <div className="flex items-center gap-2">
+                                    <BarChart3 className="h-5 w-5 text-muted-foreground" />
+                                    <div>
+                                        <CardTitle className="text-lg">So Sánh Lớp Học</CardTitle>
+                                        <CardDescription>
+                                            Tỷ lệ điểm danh theo lớp trong cùng khóa học
+                                        </CardDescription>
                                     </div>
-                                    <div className="flex items-center justify-between pt-2 border-t">
-                                        <span className="text-xs text-muted-foreground">
-                                            {new Date(report.createdAt).toLocaleDateString('vi-VN')}
+                                </div>
+                                {dashboard.courseOptions && dashboard.courseOptions.length > 0 && (
+                                    <Select
+                                        value={selectedCourseId?.toString() || ""}
+                                        onValueChange={handleCourseChange}
+                                    >
+                                        <SelectTrigger className="w-[200px]">
+                                            <SelectValue placeholder="Chọn khóa học" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {dashboard.courseOptions.map((course) => (
+                                                <SelectItem
+                                                    key={course.courseId}
+                                                    value={course.courseId.toString()}
+                                                >
+                                                    {course.courseName}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            {isComparisonLoading || isComparisonFetching ? (
+                                <div className="flex items-center justify-center h-64">
+                                    <Skeleton className="h-48 w-full" />
+                                </div>
+                            ) : comparisonData && comparisonData.classes && comparisonData.classes.length > 0 ? (
+                                <ClassComparisonChart data={comparisonData} />
+                            ) : (
+                                <div className="flex items-center justify-center h-64 text-muted-foreground">
+                                    Chọn khóa học để xem so sánh
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Recent Reports */}
+                    {dashboard.recentReports && (
+                        <RecentReports reports={dashboard.recentReports} />
+                    )}
+                </div>
+
+                {/* Row 3: Trend Chart - Xu hướng theo thời gian */}
+                <Card>
+                    <CardHeader className="pb-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div className="flex items-center gap-2">
+                                <TrendingUp className="h-5 w-5 text-muted-foreground" />
+                                <div>
+                                    <CardTitle className="text-lg">Xu Hướng Theo Thời Gian</CardTitle>
+                                    <CardDescription>
+                                        Theo dõi tỷ lệ điểm danh của lớp qua các tuần
+                                    </CardDescription>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                {classesForSelectedCourse.length > 0 && (
+                                    <Select
+                                        value={selectedClassId?.toString() || ""}
+                                        onValueChange={handleClassChange}
+                                    >
+                                        <SelectTrigger className="w-[180px]">
+                                            <SelectValue placeholder="Chọn lớp" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {classesForSelectedCourse.map((cls) => (
+                                                <SelectItem
+                                                    key={cls.classId}
+                                                    value={cls.classId.toString()}
+                                                >
+                                                    {cls.classCode}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        {isTrendLoading || isTrendFetching ? (
+                            <div className="space-y-4">
+                                <Skeleton className="h-4 w-32" />
+                                <Skeleton className="h-56 w-full" />
+                            </div>
+                        ) : displayTrendData && displayTrendData.dataPoints && displayTrendData.dataPoints.length > 0 ? (
+                            <div className="space-y-4">
+                                <TrendChart
+                                    data={displayTrendData}
+                                    metricLabel="Điểm danh"
+                                />
+                                {/* Quick action to create report */}
+                                {selectedClassInfo && (
+                                    <div className="flex items-center justify-between pt-4 border-t">
+                                        <span className="text-sm text-muted-foreground">
+                                            <FileText className="h-4 w-4 inline mr-1" />
+                                            Tạo báo cáo về {selectedClassInfo.classCode}
                                         </span>
-                                        <Link to={`/qa/reports/${report.reportId}`}>
-                                            <Button variant="ghost" size="sm" className="h-7 text-xs">
-                                                Xem
+                                        <Link to={`/qa/reports/create?classId=${selectedClassInfo.classId}`}>
+                                            <Button variant="outline" size="sm">
+                                                Tạo báo cáo →
                                             </Button>
                                         </Link>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-                )}
-
-                {/* Show warning if no classes need attention */}
-                {dashboard.classesRequiringAttention.length === 0 && dashboard.recentQAReports.length === 0 && (
-                    <Alert>
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertDescription>
-                            Hiện tại không có lớp nào cần chú ý và không có báo cáo QA nào gần đây.
-                        </AlertDescription>
-                    </Alert>
-                )}
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center h-64 text-muted-foreground">
+                                {selectedClassId
+                                    ? "Chưa có dữ liệu điểm danh cho lớp này"
+                                    : "Chọn lớp để xem xu hướng"}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
         </DashboardLayout>
     )

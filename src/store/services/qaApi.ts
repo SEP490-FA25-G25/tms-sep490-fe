@@ -17,7 +17,9 @@ import type {
   FeedbackFilters,
   QASessionListResponse,
   QAExportRequest,
-  CoursePhaseDTO
+  CoursePhaseDTO,
+  TrendData,
+  ClassComparisonData,
 } from '@/types/qa';
 
 export const qaApi = createApi({
@@ -46,6 +48,26 @@ export const qaApi = createApi({
       }),
       transformResponse: (response: { data: QADashboardDTO }) => response.data,
       providesTags: ['QADashboard'],
+    }),
+
+    // Dashboard - Trend Data for specific class
+    getClassTrendData: builder.query<TrendData, number>({
+      query: (classId) => ({
+        url: '/qa/dashboard/trend',
+        params: { classId },
+      }),
+      transformResponse: (response: { data: TrendData }) => response.data,
+      providesTags: (_result, _error, classId) => [{ type: 'QADashboard', id: `trend-${classId}` }],
+    }),
+
+    // Dashboard - Class Comparison for specific course
+    getClassComparison: builder.query<ClassComparisonData, { courseId: number; metricType?: string; sortBy?: string }>({
+      query: ({ courseId, metricType = 'ATTENDANCE', sortBy = 'VALUE_ASC' }) => ({
+        url: '/qa/dashboard/comparison',
+        params: { courseId, metricType, sortBy },
+      }),
+      transformResponse: (response: { data: ClassComparisonData }) => response.data,
+      providesTags: (_result, _error, { courseId }) => [{ type: 'QADashboard', id: `comparison-${courseId}` }],
     }),
 
     // Classes
@@ -203,6 +225,7 @@ export const {
   useGetAllPhasesQuery,
   useGetPhasesByCourseIdQuery,
   useGetQADashboardQuery,
+  useGetClassComparisonQuery,
   useGetQAClassesQuery,
   useGetQAClassDetailQuery,
   useGetQASessionListQuery,
@@ -216,6 +239,7 @@ export const {
   useGetClassFeedbacksQuery,
   useGetFeedbackDetailQuery,
   useExportQADataMutation,
+  useGetClassTrendDataQuery,
 } = qaApi;
 
 // Export types for external use
@@ -236,5 +260,6 @@ export type {
   FeedbackFilters,
   QASessionListResponse,
   QAExportRequest,
-  CoursePhaseDTO
+  CoursePhaseDTO,
+  TrendData,
 } from '@/types/qa';
