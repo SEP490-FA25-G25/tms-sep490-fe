@@ -156,6 +156,7 @@ export const qaApi = createApi({
 
     getFeedbackDetail: builder.query<StudentFeedbackDetailDTO, number>({
       query: (feedbackId) => `/feedbacks/${feedbackId}`,
+      transformResponse: (response: { data: StudentFeedbackDetailDTO }) => response.data,
       providesTags: (_result, _error, feedbackId) => [{ type: 'QAFeedback', id: feedbackId }],
     }),
 

@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ClassStatusBadge } from '@/components/qa/ClassStatusBadge'
 import type { QAClassDetailDTO } from '@/types/qa'
-import { BookOpen, Calendar, Clock, MapPin, Users, FileText, CheckCircle, BookCheck, UserX, AlertTriangle, Plus } from 'lucide-react'
+import { BookOpen, Calendar, Clock, MapPin, Users, CheckCircle, BookCheck, UserX, Plus } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 interface QAClassHeaderProps {
@@ -26,8 +26,6 @@ export function QAClassHeader({ classInfo }: QAClassHeaderProps) {
   const attendanceRate = classInfo.performanceMetrics?.attendanceRate ?? 0
   const homeworkRate = classInfo.performanceMetrics?.homeworkCompletionRate ?? 0
   const totalAbsences = classInfo.performanceMetrics?.totalAbsences ?? 0
-  const studentsAtRisk = classInfo.performanceMetrics?.studentsAtRisk ?? 0
-  const qaReportsCount = classInfo.qaReports?.length ?? 0
 
   return (
     <div className="border-b bg-background">
@@ -76,7 +74,7 @@ export function QAClassHeader({ classInfo }: QAClassHeaderProps) {
           </div>
 
           {/* Stats grid - responsive */}
-          <div className="grid grid-cols-4 gap-2 sm:gap-3 lg:grid-cols-8">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 sm:grid-cols-5">
             <div className="rounded-lg border bg-card shadow-sm p-2 sm:p-3 space-y-0.5 sm:space-y-1">
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
@@ -124,36 +122,6 @@ export function QAClassHeader({ classInfo }: QAClassHeaderProps) {
               </div>
               <p className="text-xs sm:text-sm font-semibold text-foreground">
                 {totalAbsences}
-              </p>
-            </div>
-
-            <div className="rounded-lg border bg-card shadow-sm p-2 sm:p-3 space-y-0.5 sm:space-y-1">
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                <span className="text-[10px] sm:text-xs font-medium truncate">Rủi ro</span>
-              </div>
-              <p className={`text-xs sm:text-sm font-semibold ${studentsAtRisk > 0 ? 'text-amber-600' : 'text-foreground'}`}>
-                {studentsAtRisk}
-              </p>
-            </div>
-
-            <div className="rounded-lg border bg-card shadow-sm p-2 sm:p-3 space-y-0.5 sm:space-y-1">
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                <span className="text-[10px] sm:text-xs font-medium truncate">Báo cáo</span>
-              </div>
-              <p className="text-xs sm:text-sm font-semibold text-foreground">
-                {qaReportsCount}
-              </p>
-            </div>
-
-            <div className="rounded-lg border bg-card shadow-sm p-2 sm:p-3 space-y-0.5 sm:space-y-1">
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                <span className="text-[10px] sm:text-xs font-medium truncate">Buổi tiếp</span>
-              </div>
-              <p className="text-xs sm:text-sm font-semibold text-foreground truncate" title={classInfo.sessionSummary?.nextSessionDate || 'Không có'}>
-                {classInfo.sessionSummary?.nextSessionDate || '—'}
               </p>
             </div>
           </div>

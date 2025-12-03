@@ -23,11 +23,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import {
-    Calendar,
-    Clock,
     Users,
-    CheckCircle,
-    XCircle,
     BookOpen,
     Loader2,
     AlertTriangle,
@@ -109,47 +105,8 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
         }
     }
 
-    const completedCount = sessions.filter(s => s.status === "DONE").length
-    const plannedCount = sessions.filter(s => s.status === "PLANNED").length
-    const cancelledCount = sessions.filter(s => s.status === "CANCELLED").length
-
     return (
         <div className="space-y-6">
-            {/* Summary Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="rounded-lg border bg-card shadow-sm p-3 space-y-1">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        <span className="text-sm font-medium">Tổng số buổi</span>
-                    </div>
-                    <p className="text-lg font-semibold text-foreground">{sessionListData.totalSessions}</p>
-                </div>
-
-                <div className="rounded-lg border bg-card shadow-sm p-3 space-y-1">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                        <CheckCircle className="h-4 w-4" />
-                        <span className="text-sm font-medium">Đã hoàn thành</span>
-                    </div>
-                    <p className="text-lg font-semibold text-green-600">{completedCount}</p>
-                </div>
-
-                <div className="rounded-lg border bg-card shadow-sm p-3 space-y-1">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        <span className="text-sm font-medium">Sắp tới</span>
-                    </div>
-                    <p className="text-lg font-semibold text-blue-600">{plannedCount}</p>
-                </div>
-
-                <div className="rounded-lg border bg-card shadow-sm p-3 space-y-1">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                        <XCircle className="h-4 w-4" />
-                        <span className="text-sm font-medium">Đã hủy</span>
-                    </div>
-                    <p className="text-lg font-semibold text-red-600">{cancelledCount}</p>
-                </div>
-            </div>
-
             {/* Filter */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">

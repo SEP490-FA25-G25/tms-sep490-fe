@@ -25,8 +25,6 @@ import {
     FileText,
     Loader2,
     AlertTriangle,
-    FileCheck,
-    FilePen,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
@@ -72,10 +70,6 @@ export function QAReportsListTab({ classId }: QAReportsListTabProps) {
         return typeMatch && statusMatch
     })
 
-    // Stats
-    const draftCount = reports.filter(r => r.status === "DRAFT").length
-    const submittedCount = reports.filter(r => r.status === "SUBMITTED").length
-
     const getReportLevelBadge = (report: QAReportListItemDTO) => {
         if (report.sessionId) {
             return <Badge variant="outline" className="text-xs">Buổi học</Badge>
@@ -106,67 +100,34 @@ export function QAReportsListTab({ classId }: QAReportsListTabProps) {
 
     return (
         <div className="space-y-6">
-            {/* Summary Stats */}
-            <div className="grid grid-cols-3 gap-3 sm:gap-4">
-                <div className="rounded-lg border bg-card shadow-sm p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
-                    <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground">
-                        <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                        <span className="text-xs sm:text-sm font-medium">Tổng báo cáo</span>
-                    </div>
-                    <p className="text-base sm:text-lg font-semibold text-foreground">{reports.length}</p>
-                </div>
-
-                <div className="rounded-lg border bg-card shadow-sm p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
-                    <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground">
-                        <FileCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                        <span className="text-xs sm:text-sm font-medium">Đã nộp</span>
-                    </div>
-                    <p className="text-base sm:text-lg font-semibold text-green-600">{submittedCount}</p>
-                </div>
-
-                <div className="rounded-lg border bg-card shadow-sm p-2.5 sm:p-3 space-y-0.5 sm:space-y-1">
-                    <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground">
-                        <FilePen className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                        <span className="text-xs sm:text-sm font-medium">Bản nháp</span>
-                    </div>
-                    <p className="text-base sm:text-lg font-semibold text-amber-600">{draftCount}</p>
-                </div>
-            </div>
-
             {/* Filters */}
             <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-muted-foreground">Loại:</span>
-                        <Select value={reportTypeFilter} onValueChange={setReportTypeFilter}>
-                            <SelectTrigger className="w-[220px]">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Tất cả loại báo cáo</SelectItem>
-                                <SelectItem value="CLASSROOM_OBSERVATION">Quan sát lớp học</SelectItem>
-                                <SelectItem value="PHASE_REVIEW">Đánh giá giai đoạn</SelectItem>
-                                <SelectItem value="CLO_ACHIEVEMENT_ANALYSIS">Phân tích kết quả CLO</SelectItem>
-                                <SelectItem value="STUDENT_FEEDBACK_ANALYSIS">Phân tích phản hồi HV</SelectItem>
-                                <SelectItem value="ATTENDANCE_ENGAGEMENT_REVIEW">Đánh giá chuyên cần</SelectItem>
-                                <SelectItem value="TEACHING_QUALITY_ASSESSMENT">Đánh giá chất lượng GD</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                <div className="flex items-center gap-2">
+                    <Select value={reportTypeFilter} onValueChange={setReportTypeFilter}>
+                        <SelectTrigger className="w-[220px]">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Tất cả loại báo cáo</SelectItem>
+                            <SelectItem value="CLASSROOM_OBSERVATION">Quan sát lớp học</SelectItem>
+                            <SelectItem value="PHASE_REVIEW">Đánh giá giai đoạn</SelectItem>
+                            <SelectItem value="CLO_ACHIEVEMENT_ANALYSIS">Phân tích kết quả CLO</SelectItem>
+                            <SelectItem value="STUDENT_FEEDBACK_ANALYSIS">Phân tích phản hồi HV</SelectItem>
+                            <SelectItem value="ATTENDANCE_ENGAGEMENT_REVIEW">Đánh giá chuyên cần</SelectItem>
+                            <SelectItem value="TEACHING_QUALITY_ASSESSMENT">Đánh giá chất lượng GD</SelectItem>
+                        </SelectContent>
+                    </Select>
 
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-muted-foreground">Trạng thái:</span>
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="w-[150px]">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Tất cả</SelectItem>
-                                <SelectItem value="DRAFT">Bản nháp</SelectItem>
-                                <SelectItem value="SUBMITTED">Đã nộp</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-[160px]">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                            <SelectItem value="DRAFT">Bản nháp</SelectItem>
+                            <SelectItem value="SUBMITTED">Đã nộp</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 <div className="text-sm text-muted-foreground">

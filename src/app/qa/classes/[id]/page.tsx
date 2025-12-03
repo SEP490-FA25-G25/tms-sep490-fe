@@ -34,8 +34,8 @@ export default function ClassDetailsPage() {
                                     <Skeleton className="h-4 w-56" />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-                                {Array.from({ length: 6 }).map((_, idx) => (
+                            <div className="grid grid-cols-3 gap-2 sm:gap-3 sm:grid-cols-5">
+                                {Array.from({ length: 5 }).map((_, idx) => (
                                     <Skeleton key={idx} className="h-16 w-full" />
                                 ))}
                             </div>
@@ -135,7 +135,7 @@ export default function ClassDetailsPage() {
                                         </TabsContent>
 
                                         <TabsContent value="feedback" className="space-y-6">
-                                            <StudentFeedbackTab classId={classInfo.classId} />
+                                            <StudentFeedbackTab classId={classInfo.classId} courseId={classInfo.courseId} />
                                         </TabsContent>
                                     </Tabs>
                                 )}
