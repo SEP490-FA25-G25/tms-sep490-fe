@@ -198,9 +198,9 @@ export function QAReportsListTab({ classId }: QAReportsListTabProps) {
                                             <p className="font-medium">
                                                 {getQAReportTypeDisplayName(report.reportType)}
                                             </p>
-                                            {report.findingsPreview && (
+                                            {report.contentPreview && (
                                                 <p className="text-xs text-muted-foreground line-clamp-1">
-                                                    {report.findingsPreview}
+                                                    {report.contentPreview}
                                                 </p>
                                             )}
                                         </div>

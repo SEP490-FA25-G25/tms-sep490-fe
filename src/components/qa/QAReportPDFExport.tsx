@@ -96,20 +96,9 @@ export function QAReportPDFExport({
                         NỘI DUNG BÁO CÁO
                     </div>
                     <div style="white-space: pre-wrap; font-size: 12px; line-height: 1.6; padding-left: 10px; border-left: 2px solid #000;">
-${report.findings.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+${report.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
                     </div>
                 </div>
-
-                ${report.actionItems ? `
-                <div style="margin-bottom: 20px;">
-                    <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; border-bottom: 1px solid #000; padding-bottom: 5px;">
-                        GHI CHÚ / HÀNH ĐỘNG CẦN THỰC HIỆN
-                    </div>
-                    <div style="white-space: pre-wrap; font-size: 12px; line-height: 1.6; padding-left: 10px; border-left: 2px solid #666;">
-${report.actionItems.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
-                    </div>
-                </div>
-                ` : ''}
 
                 <div style="margin-top: 30px; padding-top: 10px; border-top: 1px solid #ccc; text-align: center; font-size: 10px; color: #666;">
                     Xuất từ TMS · ${new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}

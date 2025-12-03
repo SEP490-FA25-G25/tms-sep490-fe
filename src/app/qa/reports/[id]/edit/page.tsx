@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams, useNavigate, Link } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom"
 import { useGetQAReportDetailQuery, useUpdateQAReportMutation } from "@/store/services/qaApi"
 import { DashboardLayout } from "@/components/DashboardLayout"
 import { Button } from "@/components/ui/button"
@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ArrowLeft, Save, Send, Loader2, AlertTriangle } from "lucide-react"
+import { Save, Send, Loader2, AlertTriangle } from "lucide-react"
 import { QAReportType, QAReportStatus } from "@/types/qa"
 
 export default function EditQAReportPage() {
@@ -30,8 +30,7 @@ export default function EditQAReportPage() {
 
     const [formData, setFormData] = useState({
         reportType: QAReportType.CLASSROOM_OBSERVATION as QAReportType,
-        findings: "",
-        actionItems: "",
+        content: "",
         status: QAReportStatus.DRAFT as QAReportStatus,
     })
 
@@ -40,8 +39,7 @@ export default function EditQAReportPage() {
         if (report) {
             setFormData({
                 reportType: report.reportType as QAReportType,
-                findings: report.findings,
-                actionItems: report.actionItems,
+                content: report.content,
                 status: report.status as QAReportStatus,
             })
         }
@@ -113,15 +111,6 @@ export default function EditQAReportPage() {
             description="Cập nhật thông tin báo cáo."
         >
             <div className="max-w-3xl mx-auto space-y-6">
-                {/* Back Button */}
-                <div>
-                    <Link to={`/qa/reports/${reportId}`}>
-                        <Button variant="ghost" size="sm" className="gap-1 pl-0">
-                            <ArrowLeft className="h-4 w-4" /> Hủy và quay lại
-                        </Button>
-                    </Link>
-                </div>
-
                 {error && (
                     <Alert variant="destructive">
                         <AlertTriangle className="h-4 w-4" />
@@ -136,58 +125,36 @@ export default function EditQAReportPage() {
                         <CardTitle>Thông Tin Báo Cáo</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="reportType">Loại báo cáo *</Label>
-                                <Select
-                                    value={formData.reportType}
-                                    onValueChange={(value) => handleInputChange('reportType', value)}
-                                >
-                                    <SelectTrigger id="reportType">
-                                        <SelectValue placeholder="Chọn loại báo cáo" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value={QAReportType.CLASSROOM_OBSERVATION}>
-                                            Classroom Observation
-                                        </SelectItem>
-                                        <SelectItem value={QAReportType.PHASE_REVIEW}>
-                                            Phase Review
-                                        </SelectItem>
-                                        <SelectItem value={QAReportType.CLO_ACHIEVEMENT_ANALYSIS}>
-                                            CLO Achievement Analysis
-                                        </SelectItem>
-                                        <SelectItem value={QAReportType.STUDENT_FEEDBACK_ANALYSIS}>
-                                            Student Feedback Analysis
-                                        </SelectItem>
-                                        <SelectItem value={QAReportType.ATTENDANCE_ENGAGEMENT_REVIEW}>
-                                            Attendance & Engagement Review
-                                        </SelectItem>
-                                        <SelectItem value={QAReportType.TEACHING_QUALITY_ASSESSMENT}>
-                                            Teaching Quality Assessment
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="status">Trạng thái</Label>
-                                <Select
-                                    value={formData.status}
-                                    onValueChange={(value) => handleInputChange('status', value)}
-                                >
-                                    <SelectTrigger id="status">
-                                        <SelectValue placeholder="Chọn trạng thái" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value={QAReportStatus.DRAFT}>
-                                            Nháp (Draft) - Lưu lại để chỉnh sửa sau
-                                        </SelectItem>
-                                        <SelectItem value={QAReportStatus.SUBMITTED}>
-                                            Nộp báo cáo (Submitted) - Gửi đi phê duyệt
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="reportType">Loại báo cáo *</Label>
+                            <Select
+                                value={formData.reportType}
+                                onValueChange={(value) => handleInputChange('reportType', value)}
+                            >
+                                <SelectTrigger id="reportType">
+                                    <SelectValue placeholder="Chọn loại báo cáo" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={QAReportType.CLASSROOM_OBSERVATION}>
+                                        Classroom Observation
+                                    </SelectItem>
+                                    <SelectItem value={QAReportType.PHASE_REVIEW}>
+                                        Phase Review
+                                    </SelectItem>
+                                    <SelectItem value={QAReportType.CLO_ACHIEVEMENT_ANALYSIS}>
+                                        CLO Achievement Analysis
+                                    </SelectItem>
+                                    <SelectItem value={QAReportType.STUDENT_FEEDBACK_ANALYSIS}>
+                                        Student Feedback Analysis
+                                    </SelectItem>
+                                    <SelectItem value={QAReportType.ATTENDANCE_ENGAGEMENT_REVIEW}>
+                                        Attendance & Engagement Review
+                                    </SelectItem>
+                                    <SelectItem value={QAReportType.TEACHING_QUALITY_ASSESSMENT}>
+                                        Teaching Quality Assessment
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
 
                         {/* Read-only fields */}
@@ -218,26 +185,23 @@ export default function EditQAReportPage() {
                         )}
 
                         <div className="space-y-2">
-                            <Label htmlFor="findings">Kết quả tìm thấy *</Label>
+                            <Label htmlFor="content">Nội dung báo cáo * (tối thiểu 50 ký tự)</Label>
                             <Textarea
-                                id="findings"
+                                id="content"
                                 placeholder="Mô tả chi tiết các kết quả quan sát, đánh giá được..."
-                                value={formData.findings}
-                                onChange={(e) => handleInputChange('findings', e.target.value)}
-                                rows={6}
+                                value={formData.content}
+                                onChange={(e) => handleInputChange('content', e.target.value)}
+                                rows={8}
                                 required
                             />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="actionItems">Hành động đề xuất</Label>
-                            <Textarea
-                                id="actionItems"
-                                placeholder="Đề xuất các hành động cải thiện cụ thể..."
-                                value={formData.actionItems}
-                                onChange={(e) => handleInputChange('actionItems', e.target.value)}
-                                rows={4}
-                            />
+                            <p className="text-xs text-muted-foreground">
+                                {formData.content.length}/50 ký tự tối thiểu
+                                {formData.content.length < 50 && formData.content.length > 0 && (
+                                    <span className="text-red-500 ml-2">
+                                        (Còn thiếu {50 - formData.content.length} ký tự)
+                                    </span>
+                                )}
+                            </p>
                         </div>
                     </CardContent>
                 </Card>
@@ -247,7 +211,7 @@ export default function EditQAReportPage() {
                     <Button
                         variant="outline"
                         onClick={() => handleSubmit(true)}
-                        disabled={updating || !formData.findings}
+                        disabled={updating || !formData.content || formData.content.length < 50}
                     >
                         {updating ? (
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -258,7 +222,7 @@ export default function EditQAReportPage() {
                     </Button>
                     <Button
                         onClick={() => handleSubmit(false)}
-                        disabled={updating || !formData.findings}
+                        disabled={updating || !formData.content || formData.content.length < 50}
                     >
                         {updating ? (
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />

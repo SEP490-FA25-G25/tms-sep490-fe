@@ -18,8 +18,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ArrowLeft, Save, Send, Loader2, AlertTriangle, Check, ChevronsUpDown } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Save, Send, Loader2, AlertTriangle, Check, ChevronsUpDown } from "lucide-react"
 import { QAReportType, QAReportStatus, qaReportTypeOptions, isValidQAReportType } from "@/types/qa"
 import { cn } from "@/lib/utils"
 import {
@@ -41,8 +40,7 @@ type ReportFormState = {
     sessionId?: number;
     phaseId?: number;
     reportType: QAReportType;
-    findings: string;
-    actionItems: string;
+    content: string;
     status: QAReportStatus;
 }
 
@@ -56,8 +54,7 @@ export default function CreateQAReportPage() {
         sessionId: undefined as number | undefined,
         phaseId: undefined as number | undefined,
         reportType: QAReportType.CLASSROOM_OBSERVATION as QAReportType,
-        findings: "",
-        actionItems: "",
+        content: "",
         status: QAReportStatus.DRAFT as QAReportStatus,
     })
 
@@ -115,8 +112,8 @@ export default function CreateQAReportPage() {
             return // Required field validation handled by button disabled state
         }
 
-        if (formData.findings.length < 50) {
-            alert('Kết quả đánh giá phải có ít nhất 50 ký tự')
+        if (formData.content.length < 50) {
+            alert('Nội dung báo cáo phải có ít nhất 50 ký tự')
             return
         }
 
@@ -168,15 +165,6 @@ export default function CreateQAReportPage() {
             description="Lập báo cáo đánh giá chất lượng giảng dạy và học tập."
         >
             <div className="max-w-3xl mx-auto space-y-6">
-                {/* Back Button */}
-                <div>
-                    <Link to="/qa/reports">
-                        <Button variant="ghost" size="sm" className="gap-1 pl-0">
-                            <ArrowLeft className="h-4 w-4" /> Hủy và quay lại
-                        </Button>
-                    </Link>
-                </div>
-
                 {error && (
                     <Alert variant="destructive">
                         <AlertTriangle className="h-4 w-4" />
@@ -315,54 +303,23 @@ export default function CreateQAReportPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="findings">Kết quả tìm thấy * (tối thiểu 50 ký tự)</Label>
+                            <Label htmlFor="content">Nội dung báo cáo * (tối thiểu 50 ký tự)</Label>
                             <Textarea
-                                id="findings"
+                                id="content"
                                 placeholder="Mô tả chi tiết các kết quả quan sát, đánh giá được..."
-                                value={formData.findings}
-                                onChange={(e) => handleInputChange('findings', e.target.value)}
-                                rows={6}
+                                value={formData.content}
+                                onChange={(e) => handleInputChange('content', e.target.value)}
+                                rows={8}
                                 required
                             />
                             <p className="text-xs text-muted-foreground">
-                                {formData.findings.length}/50 ký tự tối thiểu
-                                {formData.findings.length < 50 && formData.findings.length > 0 && (
+                                {formData.content.length}/50 ký tự tối thiểu
+                                {formData.content.length < 50 && formData.content.length > 0 && (
                                     <span className="text-red-500 ml-2">
-                                        (Còn thiếu {50 - formData.findings.length} ký tự)
+                                        (Còn thiếu {50 - formData.content.length} ký tự)
                                     </span>
                                 )}
                             </p>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="actionItems">Hành động đề xuất</Label>
-                            <Textarea
-                                id="actionItems"
-                                placeholder="Đề xuất các hành động cải thiện cụ thể..."
-                                value={formData.actionItems}
-                                onChange={(e) => handleInputChange('actionItems', e.target.value)}
-                                rows={4}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="status">Trạng thái</Label>
-                            <Select
-                                value={formData.status}
-                                onValueChange={(value) => handleInputChange('status', value)}
-                            >
-                                <SelectTrigger id="status" className="w-full">
-                                    <SelectValue placeholder="Chọn trạng thái" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value={QAReportStatus.DRAFT}>
-                                        Nháp (Draft) - Lưu lại để chỉnh sửa sau
-                                    </SelectItem>
-                                    <SelectItem value={QAReportStatus.SUBMITTED}>
-                                        Nộp báo cáo (Submitted) - Gửi đi phê duyệt
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
                         </div>
                     </CardContent>
                 </Card>
@@ -372,7 +329,7 @@ export default function CreateQAReportPage() {
                     <Button
                         variant="outline"
                         onClick={() => handleSubmit(true)}
-                        disabled={isLoading || !formData.classId || !formData.findings || formData.findings.length < 50}
+                        disabled={isLoading || !formData.classId || !formData.content || formData.content.length < 50}
                     >
                         {isLoading ? (
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -383,7 +340,7 @@ export default function CreateQAReportPage() {
                     </Button>
                     <Button
                         onClick={() => handleSubmit(false)}
-                        disabled={isLoading || !formData.classId || !formData.findings || formData.findings.length < 50}
+                        disabled={isLoading || !formData.classId || !formData.content || formData.content.length < 50}
                     >
                         {isLoading ? (
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />

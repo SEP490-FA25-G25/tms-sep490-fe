@@ -193,7 +193,7 @@ export interface QAReportListItemDTO {
   reportedByName: string;
   createdAt: string;
   updatedAt: string;
-  findingsPreview: string;
+  contentPreview: string;
 }
 
 export interface QAReportDetailDTO {
@@ -207,8 +207,7 @@ export interface QAReportDetailDTO {
   sessionDate?: string;
   phaseId?: number;
   phaseName?: string;
-  findings: string;
-  actionItems: string;
+  content: string;
   reportedById: number;
   reportedByName: string;
   createdAt: string;
@@ -232,15 +231,13 @@ export interface CreateQAReportRequest {
   phaseId?: number;
   reportType: string;
   status: string;
-  findings: string;
-  actionItems: string;
+  content: string;
 }
 
 export interface UpdateQAReportRequest {
   reportType: string;
   status: string;
-  findings: string;
-  actionItems: string;
+  content: string;
 }
 
 export interface ChangeQAReportStatusRequest {

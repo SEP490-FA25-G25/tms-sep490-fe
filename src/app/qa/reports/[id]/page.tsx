@@ -90,7 +90,7 @@ export default function QAReportDetailsPage() {
             actions={headerActions}
         >
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Main Content - Findings */}
+                {/* Main Content */}
                 <div className="lg:col-span-2">
                     <Card className="py-0 gap-0">
                         <CardHeader className="py-3">
@@ -99,21 +99,9 @@ export default function QAReportDetailsPage() {
                         <CardContent className="pb-4">
                             <div className="prose prose-sm max-w-none dark:prose-invert">
                                 <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                                    {report.findings}
+                                    {report.content}
                                 </p>
                             </div>
-
-                            {/* Action Items - inline if exists */}
-                            {report.actionItems && (
-                                <div className="mt-6 pt-4 border-t">
-                                    <h4 className="text-sm font-medium text-muted-foreground mb-2">
-                                        Ghi chú
-                                    </h4>
-                                    <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                                        {report.actionItems}
-                                    </p>
-                                </div>
-                            )}
                         </CardContent>
                     </Card>
                 </div>
