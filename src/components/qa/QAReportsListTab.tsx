@@ -4,9 +4,10 @@ import { useState } from "react"
 import { useGetQAReportsQuery } from "@/store/services/qaApi"
 import { QAReportStatusBadge } from "@/components/qa/QAReportStatusBadge"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Input } from "@/components/ui/input"
-import { getQAReportTypeDisplayName, type QAReportListItemDTO } from "@/types/qa"
+import { getQAReportTypeDisplayName, qaReportTypeOptions, QAReportStatus, type QAReportListItemDTO } from "@/types/qa"
 import {
     Select,
     SelectContent,
@@ -35,6 +36,7 @@ import {
     Loader2,
     AlertTriangle,
     Search,
+    RotateCcw,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
@@ -51,11 +53,16 @@ export function QAReportsListTab({ classId }: QAReportsListTabProps) {
     const [page, setPage] = useState(0)
     const navigate = useNavigate()
   
+    // API already handles filtering - pass page/size for server-side pagination
     const { data: reportsData, isLoading, error } = useGetQAReportsQuery({
         classId,
         reportType: reportTypeFilter === "all" ? undefined : reportTypeFilter,
         status: statusFilter === "all" ? undefined : statusFilter,
         search: searchQuery || undefined,
+        page,
+        size: PAGE_SIZE,
+        sort: 'createdAt',
+        sortDir: 'desc',
     })
 
     // Reset page when filters/search change
@@ -68,6 +75,17 @@ export function QAReportsListTab({ classId }: QAReportsListTabProps) {
         setSearchQuery(value)
         setPage(0)
     }
+
+    // Clear all filters
+    const handleClearFilters = () => {
+        setSearchQuery("")
+        setReportTypeFilter("all")
+        setStatusFilter("all")
+        setPage(0)
+    }
+
+    // Check if any filter is active
+    const hasActiveFilters = searchQuery !== "" || reportTypeFilter !== "all" || statusFilter !== "all"
 
     if (isLoading) {
         return (
@@ -88,18 +106,10 @@ export function QAReportsListTab({ classId }: QAReportsListTabProps) {
         )
     }
 
+    // Use API response directly - no client-side filtering needed
     const reports = reportsData?.data || []
-
-    const filteredReports = reports.filter(report => {
-        const typeMatch = reportTypeFilter === "all" || report.reportType === reportTypeFilter
-        const statusMatch = statusFilter === "all" || report.status === statusFilter
-        return typeMatch && statusMatch
-    })
-
-    // Pagination calculations
-    const totalItems = filteredReports.length
+    const totalItems = reportsData?.total || 0
     const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE))
-    const paginatedReports = filteredReports.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
     const getReportLevelBadge = (report: QAReportListItemDTO) => {
         if (report.sessionId) {
@@ -151,12 +161,11 @@ export function QAReportsListTab({ classId }: QAReportsListTabProps) {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">Loại: Tất cả</SelectItem>
-                            <SelectItem value="CLASSROOM_OBSERVATION">Quan sát lớp học</SelectItem>
-                            <SelectItem value="PHASE_REVIEW">Đánh giá giai đoạn</SelectItem>
-                            <SelectItem value="CLO_ACHIEVEMENT_ANALYSIS">Phân tích kết quả CLO</SelectItem>
-                            <SelectItem value="STUDENT_FEEDBACK_ANALYSIS">Phân tích phản hồi HV</SelectItem>
-                            <SelectItem value="ATTENDANCE_ENGAGEMENT_REVIEW">Đánh giá chuyên cần</SelectItem>
-                            <SelectItem value="TEACHING_QUALITY_ASSESSMENT">Đánh giá chất lượng GD</SelectItem>
+                            {qaReportTypeOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
 
@@ -166,16 +175,27 @@ export function QAReportsListTab({ classId }: QAReportsListTabProps) {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">Trạng thái: Tất cả</SelectItem>
-                            <SelectItem value="DRAFT">Bản nháp</SelectItem>
-                            <SelectItem value="SUBMITTED">Đã nộp</SelectItem>
+                            <SelectItem value={QAReportStatus.DRAFT}>Bản nháp</SelectItem>
+                            <SelectItem value={QAReportStatus.SUBMITTED}>Đã nộp</SelectItem>
                         </SelectContent>
                     </Select>
+
+                    <Button 
+                        variant="outline" 
+                        size="icon" 
+                        onClick={handleClearFilters}
+                        disabled={!hasActiveFilters}
+                        title="Xóa bộ lọc"
+                        className="h-9 w-9 shrink-0"
+                    >
+                        <RotateCcw className="h-4 w-4" />
+                    </Button>
                 </div>
             </div>
 
             {/* Reports Table */}
             <div className="rounded-lg border">
-                {paginatedReports.length > 0 ? (
+                {reports.length > 0 ? (
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted/50">
@@ -187,7 +207,7 @@ export function QAReportsListTab({ classId }: QAReportsListTabProps) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedReports.map((report) => (
+                            {reports.map((report) => (
                                 <TableRow 
                                     key={report.id} 
                                     className="cursor-pointer hover:bg-muted/50"
@@ -237,12 +257,12 @@ export function QAReportsListTab({ classId }: QAReportsListTabProps) {
                     <div className="flex flex-col items-center justify-center py-12 text-center">
                         <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
                         <p className="text-muted-foreground">
-                            {reports.length === 0
-                                ? "Chưa có báo cáo QA nào cho lớp học này."
-                                : "Không có báo cáo nào phù hợp với bộ lọc đã chọn."
+                            {hasActiveFilters
+                                ? "Không có báo cáo nào phù hợp với bộ lọc đã chọn."
+                                : "Chưa có báo cáo QA nào cho lớp học này."
                             }
                         </p>
-                        {reports.length === 0 && (
+                        {!hasActiveFilters && (
                             <p className="text-sm text-muted-foreground mt-2">
                                 Sử dụng nút "Tạo Báo Cáo QA" ở trên để tạo báo cáo đầu tiên.
                             </p>

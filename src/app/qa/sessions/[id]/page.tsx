@@ -26,6 +26,7 @@ import {
     AlertTriangle,
     Plus
 } from "lucide-react"
+import { getSessionStatusDisplayName, SessionStatus } from "@/types/qa"
 
 export default function SessionDetailsPage() {
     const params = useParams()
@@ -126,14 +127,29 @@ export default function SessionDetailsPage() {
         );
     }
 
+    // Helper for session status badge with Vietnamese text
+    const getStatusBadge = (status: string) => {
+        const displayStatus = getSessionStatusDisplayName(status)
+        switch (status.toUpperCase()) {
+            case SessionStatus.DONE:
+                return <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200">{displayStatus}</Badge>
+            case SessionStatus.PLANNED:
+                return <Badge variant="outline" className="bg-sky-100 text-sky-700 border-sky-200">{displayStatus}</Badge>
+            case SessionStatus.CANCELLED:
+                return <Badge variant="outline" className="bg-rose-100 text-rose-700 border-rose-200">{displayStatus}</Badge>
+            default:
+                return <Badge variant="outline">{displayStatus}</Badge>
+        }
+    }
+
     return (
         <DashboardLayout
             title={`Buổi #${session.sessionId} - ${session.classCode}`}
             description={session.courseName}
             actions={
                 <Button asChild>
-                    <Link to={`/qa/reports/create?sessionId=${session.sessionId}`}>
-                        <Plus className="h-4 w-4" />
+                    <Link to={`/qa/reports/create?classId=${session.classId}&sessionId=${session.sessionId}`}>
+                        <Plus className="h-4 w-4 mr-2" />
                         Tạo báo cáo
                     </Link>
                 </Button>
@@ -198,7 +214,7 @@ export default function SessionDetailsPage() {
                                     </div>
                                     <div>
                                         <p className="text-sm text-muted-foreground">Trạng thái</p>
-                                        <Badge variant="outline">{session.status}</Badge>
+                                        {getStatusBadge(session.status)}
                                     </div>
                                 </div>
 

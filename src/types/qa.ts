@@ -382,20 +382,21 @@ export const getQAReportStatusDisplayName = (status: QAReportStatus | string): s
   }
 }
 
+// Vietnamese display names aligned with backend QAReportType enum displayNames
 export const getQAReportTypeDisplayName = (reportType: QAReportType | string): string => {
   const normalizedType = (reportType as string).toUpperCase()
 
   switch (normalizedType) {
     case QAReportType.CLASSROOM_OBSERVATION:
-      return "Giám sát lớp học"
+      return "Quan sát lớp học"
     case QAReportType.PHASE_REVIEW:
       return "Đánh giá giai đoạn"
     case QAReportType.CLO_ACHIEVEMENT_ANALYSIS:
-      return "Phân tích đạt được CLO"
+      return "Phân tích mức độ đạt CLO"
     case QAReportType.STUDENT_FEEDBACK_ANALYSIS:
-      return "Phân tích phản hồi sinh viên"
+      return "Phân tích phản hồi học viên"
     case QAReportType.ATTENDANCE_ENGAGEMENT_REVIEW:
-      return "Đánh giá chuyên cần & tham gia"
+      return "Đánh giá chuyên cần và tham gia"
     case QAReportType.TEACHING_QUALITY_ASSESSMENT:
       return "Đánh giá chất lượng giảng dạy"
     default:

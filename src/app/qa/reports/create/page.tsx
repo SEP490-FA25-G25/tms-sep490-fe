@@ -6,7 +6,7 @@ import { skipToken } from '@reduxjs/toolkit/query'
 import { useCreateQAReportMutation, useGetQAClassesQuery, useGetQASessionListQuery, useGetPhasesByCourseIdQuery, useGetQAClassDetailQuery } from "@/store/services/qaApi"
 import { DashboardLayout } from "@/components/DashboardLayout"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import {
     Select,
@@ -57,7 +57,7 @@ const REPORT_TYPE_CONFIG: Record<QAReportType, {
         level: 'phase'
     },
     [QAReportType.CLO_ACHIEVEMENT_ANALYSIS]: {
-        label: "Phân tích đạt CLO",
+        label: "Phân tích mức độ đạt CLO",
         description: "Phân tích mức độ đạt được các chuẩn đầu ra của buổi/giai đoạn.",
         requiresSession: false,
         requiresPhase: false,
@@ -71,7 +71,7 @@ const REPORT_TYPE_CONFIG: Record<QAReportType, {
         level: 'session_or_phase'
     },
     [QAReportType.ATTENDANCE_ENGAGEMENT_REVIEW]: {
-        label: "Đánh giá chuyên cần",
+        label: "Đánh giá chuyên cần và tham gia",
         description: "Đánh giá tỷ lệ tham gia và mức độ hoàn thành bài tập.",
         requiresSession: false,
         requiresPhase: false,

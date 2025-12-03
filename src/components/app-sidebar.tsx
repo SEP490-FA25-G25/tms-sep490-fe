@@ -8,7 +8,6 @@ import {
   GraduationCapIcon,
   HomeIcon,
   UsersIcon,
-  HelpCircleIcon,
   BuildingIcon,
   AwardIcon,
   ClipboardCheckIcon,

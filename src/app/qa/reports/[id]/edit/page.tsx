@@ -6,7 +6,6 @@ import { useGetQAReportDetailQuery, useUpdateQAReportMutation } from "@/store/se
 import { DashboardLayout } from "@/components/DashboardLayout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
     Select,
@@ -18,7 +17,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Save, Send, Loader2, AlertTriangle } from "lucide-react"
-import { QAReportType, QAReportStatus } from "@/types/qa"
+import { QAReportType, QAReportStatus, qaReportTypeOptions } from "@/types/qa"
 
 export default function EditQAReportPage() {
     const params = useParams()
@@ -135,24 +134,11 @@ export default function EditQAReportPage() {
                                     <SelectValue placeholder="Chọn loại báo cáo" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value={QAReportType.CLASSROOM_OBSERVATION}>
-                                        Classroom Observation
-                                    </SelectItem>
-                                    <SelectItem value={QAReportType.PHASE_REVIEW}>
-                                        Phase Review
-                                    </SelectItem>
-                                    <SelectItem value={QAReportType.CLO_ACHIEVEMENT_ANALYSIS}>
-                                        CLO Achievement Analysis
-                                    </SelectItem>
-                                    <SelectItem value={QAReportType.STUDENT_FEEDBACK_ANALYSIS}>
-                                        Student Feedback Analysis
-                                    </SelectItem>
-                                    <SelectItem value={QAReportType.ATTENDANCE_ENGAGEMENT_REVIEW}>
-                                        Attendance & Engagement Review
-                                    </SelectItem>
-                                    <SelectItem value={QAReportType.TEACHING_QUALITY_ASSESSMENT}>
-                                        Teaching Quality Assessment
-                                    </SelectItem>
+                                    {qaReportTypeOptions.map((option) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -161,24 +147,34 @@ export default function EditQAReportPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <Label>Lớp học</Label>
-                                <Input value={`${report.classCode} - ${report.className}`} disabled />
+                                <div className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm">
+                                    {report.classCode} - {report.className}
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <Label>Người báo cáo</Label>
-                                <Input value={report.reportedByName} disabled />
+                                <div className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm">
+                                    {report.reportedByName}
+                                </div>
                             </div>
                         </div>
 
-                        {report.sessionDate && (
+                        {(report.sessionDate || report.phaseName) && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <Label>Buổi học</Label>
-                                    <Input value={new Date(report.sessionDate).toLocaleDateString('vi-VN')} disabled />
-                                </div>
+                                {report.sessionDate && (
+                                    <div className="space-y-2">
+                                        <Label>Buổi học</Label>
+                                        <div className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm">
+                                            {new Date(report.sessionDate).toLocaleDateString('vi-VN')}
+                                        </div>
+                                    </div>
+                                )}
                                 {report.phaseName && (
                                     <div className="space-y-2">
                                         <Label>Giai đoạn</Label>
-                                        <Input value={report.phaseName} disabled />
+                                        <div className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm">
+                                            {report.phaseName}
+                                        </div>
                                     </div>
                                 )}
                             </div>
