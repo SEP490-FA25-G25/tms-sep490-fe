@@ -4,6 +4,7 @@ import { useParams, Link } from "react-router-dom"
 import { useGetQAReportDetailQuery } from "@/store/services/qaApi"
 import { DashboardLayout } from "@/components/DashboardLayout"
 import { QAReportStatusBadge } from "@/components/qa/QAReportStatusBadge"
+import { QAReportPDFExport } from "@/components/qa/QAReportPDFExport"
 import { QAReportStatus, getQAReportTypeDisplayName } from "@/types/qa"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -59,14 +60,19 @@ export default function QAReportDetailsPage() {
     }
 
     // Header actions
-    const headerActions = report.status === QAReportStatus.DRAFT ? (
-        <Button asChild>
-            <Link to={`/qa/reports/${report.id}/edit`}>
-                <Edit className="h-4 w-4 mr-2" />
-                Chỉnh sửa
-            </Link>
-        </Button>
-    ) : null
+    const headerActions = (
+        <div className="flex items-center gap-2">
+            <QAReportPDFExport report={report} />
+            {report.status === QAReportStatus.DRAFT && (
+                <Button asChild>
+                    <Link to={`/qa/reports/${report.id}/edit`}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Chỉnh sửa
+                    </Link>
+                </Button>
+            )}
+        </div>
+    )
 
     // Description with badge
     const headerDescription = (
