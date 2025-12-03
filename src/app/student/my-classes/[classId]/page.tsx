@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
 import { AppSidebar } from '@/components/app-sidebar';
@@ -10,22 +10,18 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/contexts/AuthContext';
-import { useGetClassAssessmentsQuery, useGetClassDetailQuery, useGetClassmatesQuery, useGetStudentAssessmentScoresQuery } from '@/store/services/studentClassApi';
+import { useGetClassDetailQuery, useGetClassmatesQuery } from '@/store/services/studentClassApi';
 
-import AssessmentsTab from './components/AssessmentsTab';
 import ClassmatesTab from './components/ClassmatesTab';
 import SyllabusTab from './components/SyllabusTab';
 
-const VALID_TABS = ['syllabus', 'assessments', 'classmates'] as const;
+const VALID_TABS = ['syllabus', 'classmates'] as const;
 type TabValue = typeof VALID_TABS[number];
 
 const ClassDetailPage = () => {
   const { classId } = useParams<{ classId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  // studentId not needed - backend gets it from JWT token via StudentContextHelper
 
   // Read tab from URL query param, fallback to 'syllabus'
   const tabFromUrl = searchParams.get('tab') || 'syllabus';
@@ -50,21 +46,6 @@ const ClassDetailPage = () => {
   } = useGetClassDetailQuery({ classId: classIdNumber }, { skip: !isValidClassId });
 
   const {
-    data: assessmentsResponse,
-    isLoading: isAssessmentsLoading,
-  } = useGetClassAssessmentsQuery(
-    { classId: classIdNumber },
-    { skip: !classDetailResponse || !isValidClassId }
-  );
-
-  const {
-    data: scoresResponse,
-  } = useGetStudentAssessmentScoresQuery(
-    { classId: classIdNumber, studentId: user?.id || 0 },
-    { skip: !classDetailResponse || !isValidClassId }
-  );
-
-  const {
     data: classmatesResponse,
     isLoading: isClassmatesLoading,
   } = useGetClassmatesQuery(
@@ -73,15 +54,7 @@ const ClassDetailPage = () => {
   );
 
   const classDetail = classDetailResponse?.data;
-  const assessments = assessmentsResponse?.data;
-  const scores = scoresResponse?.data;
   const classmates = classmatesResponse?.data;
-
-  const averageScore = useMemo(() => {
-    if (!scores || scores.length === 0) return undefined;
-    const total = scores.reduce((acc, score) => acc + (score.score || 0), 0);
-    return total / scores.length;
-  }, [scores]);
 
   const renderHeader = () => {
     if (isDetailLoading) {
@@ -185,18 +158,12 @@ const ClassDetailPage = () => {
                   {!isDetailLoading && classDetail && (
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
                       <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2 -mt-6 pt-6">
-                        <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-muted/50">
+                        <TabsList className="grid w-full grid-cols-2 h-auto p-1 bg-muted/50">
                           <TabsTrigger
                             value="syllabus"
                             className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
                           >
                             Giáo trình
-                          </TabsTrigger>
-                          <TabsTrigger
-                            value="assessments"
-                            className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
-                          >
-                            Bài kiểm tra
                           </TabsTrigger>
                           <TabsTrigger
                             value="classmates"
@@ -211,15 +178,6 @@ const ClassDetailPage = () => {
                         <SyllabusTab
                           classDetail={classDetail}
                           isLoading={false}
-                        />
-                      </TabsContent>
-
-                      <TabsContent value="assessments" className="space-y-4">
-                        <AssessmentsTab
-                          assessments={assessments || []}
-                          isLoading={isAssessmentsLoading}
-                          scores={scores || []}
-                          averageScore={averageScore}
                         />
                       </TabsContent>
 
