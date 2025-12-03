@@ -28,7 +28,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/hooks/useAuth"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 
 export function NavUser({
   user,
@@ -48,6 +48,15 @@ export function NavUser({
     logout()
     navigate("/login")
   }
+
+  // Xác định URL hồ sơ dựa trên role của user
+  const getProfileUrl = () => {
+    if (user.roles?.includes("STUDENT")) return "/student/profile"
+    if (user.roles?.includes("TEACHER")) return "/teacher/profile"
+    return null
+  }
+
+  const profileUrl = getProfileUrl()
 
   return (
     <SidebarMenu>
@@ -114,6 +123,14 @@ export function NavUser({
                 <BellIcon />
                 Thông báo
               </DropdownMenuItem>
+              {profileUrl && (
+                <DropdownMenuItem asChild>
+                  <Link to={profileUrl}>
+                    <UserCircleIcon />
+                    Hồ sơ cá nhân
+                  </Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem asChild>
                 <div className="flex items-center justify-between w-full">
                   <span>Chủ đề</span>

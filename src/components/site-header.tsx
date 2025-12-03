@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from "react-router-dom"
+import { useNavigate, useLocation, Link } from "react-router-dom"
 import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -28,6 +28,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useState, useMemo } from "react"
+import { UserCircleIcon } from "lucide-react"
 
 export function SiteHeader() {
   const navigate = useNavigate()
@@ -76,6 +77,15 @@ export function SiteHeader() {
   }
 
   const highestRole = getHighestRole()
+
+  // Xác định URL hồ sơ dựa trên role của user
+  const getProfileUrl = () => {
+    if (user?.roles?.includes("STUDENT")) return "/student/profile"
+    if (user?.roles?.includes("TEACHER")) return "/teacher/profile"
+    return null
+  }
+
+  const profileUrl = getProfileUrl()
 
   return (
     <header className="group-has-data-[collapsible=icon]/sidebar-wrapper:h-14 flex h-14 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear">
@@ -134,6 +144,14 @@ export function SiteHeader() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
+                {profileUrl && (
+                  <DropdownMenuItem asChild>
+                    <Link to={profileUrl} className="flex items-center gap-2">
+                      <UserCircleIcon className="h-4 w-4" />
+                      <span>Hồ sơ cá nhân</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild>
                   <div className="flex items-center justify-between w-full cursor-default">
                     <span>Chế độ tối</span>

@@ -13,7 +13,6 @@ import {
   ClipboardCheckIcon,
   NotebookPenIcon,
   SchoolIcon,
-  UserCircleIcon,
   SlidersHorizontalIcon,
   PlusIcon,
   MessageCircleIcon,
@@ -223,11 +222,6 @@ const roleBasedNav = {
         url: "/teacher/grades",
         icon: AwardIcon,
       },
-      {
-        title: "Hồ sơ cá nhân",
-        url: "/teacher/profile",
-        icon: UserCircleIcon,
-      },
     ],
   },
   [ROLES.STUDENT]: {
@@ -262,11 +256,6 @@ const roleBasedNav = {
         url: "/student/feedbacks",
         icon: MessageCircleIcon,
         badge: <StudentFeedbackNavBadge />,
-      },
-      {
-        title: "Hồ sơ cá nhân",
-        url: "/student/profile",
-        icon: UserCircleIcon,
       },
     ],
   },
