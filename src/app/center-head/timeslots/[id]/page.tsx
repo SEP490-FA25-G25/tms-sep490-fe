@@ -90,11 +90,12 @@ export default function TimeSlotDetailPage() {
                     rangeStart = startOfMonth(now);
                     rangeEnd = endOfMonth(now);
                     break;
-                case "LAST_MONTH":
+                case "LAST_MONTH": {
                     const lastMonth = subMonths(now, 1);
                     rangeStart = startOfMonth(lastMonth);
                     rangeEnd = endOfMonth(lastMonth);
                     break;
+                }
                 default:
                     rangeStart = new Date(0);
                     rangeEnd = new Date(8640000000000000);

@@ -1,92 +1,93 @@
-import React, { useMemo, useState } from 'react'
+import type { CSSProperties } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { MessageCircleIcon, RefreshCcwIcon, StarIcon } from 'lucide-react'
-import { toast } from 'sonner'
+import { MessageCircleIcon, RotateCcw, Search, Star } from 'lucide-react'
 
 import { StudentRoute } from '@/components/ProtectedRoute'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SiteHeader } from '@/components/site-header'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Separator } from '@/components/ui/separator'
+import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Loader2 } from 'lucide-react'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { cn } from '@/lib/utils'
 import {
-  useGetPendingFeedbacksQuery,
-  useSubmitFeedbackMutation,
-  useGetQuestionsQuery,
-  type PendingFeedback,
-  type FeedbackQuestion,
+  useGetStudentFeedbacksQuery,
+  type StudentFeedbackItem,
 } from '@/store/services/studentFeedbackApi'
+import FeedbackFormPanel from './components/FeedbackFormPanel'
+import FeedbackDetailPanel from './components/FeedbackDetailPanel'
+
+type TabValue = 'PENDING' | 'SUBMITTED'
 
 export default function StudentPendingFeedbackPage() {
-  const { data: pending = [], isLoading, isFetching, refetch } = useGetPendingFeedbacksQuery()
-  const { data: questions = [] } = useGetQuestionsQuery()
-  const [selected, setSelected] = useState<PendingFeedback | null>(null)
-  const [ratings, setRatings] = useState<Record<number, number>>({})
-  const [comment, setComment] = useState('')
-  const [submitFeedback, { isLoading: isSubmitting }] = useSubmitFeedbackMutation()
+  const [activeTab, setActiveTab] = useState<TabValue>('PENDING')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [selectedFeedback, setSelectedFeedback] = useState<StudentFeedbackItem | null>(null)
 
-  const ratingQuestions = useMemo<FeedbackQuestion[]>(
-    () =>
-      questions
-        .filter((q) => (q.questionType || '').toLowerCase() === 'rating')
-        .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)),
-    [questions]
-  )
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
-  const isFormValid = useMemo(
-    () => ratingQuestions.length > 0 && ratingQuestions.every((q) => ratings[q.id] && ratings[q.id] > 0),
-    [ratings, ratingQuestions]
-  )
+  const { data: feedbacks = [], isLoading, refetch } = useGetStudentFeedbacksQuery({
+    status: activeTab,
+    search: debouncedSearch || undefined,
+  })
 
-  const handleOpenModal = (feedback: PendingFeedback) => {
-    setSelected(feedback)
-    setRatings({})
-    setComment('')
-  }
+  // Reset selection when tab changes
+  useEffect(() => {
+    setSelectedFeedback(null)
+  }, [activeTab])
 
-  const handleSubmit = async () => {
-    if (!selected) return
-    if (!isFormValid) {
-      toast.error('Vui lòng đánh giá đầy đủ tất cả câu hỏi')
-      return
+  // Auto-select first feedback when data loads
+  useEffect(() => {
+    if (feedbacks.length > 0 && !selectedFeedback) {
+      setSelectedFeedback(feedbacks[0])
     }
+  }, [feedbacks, selectedFeedback])
 
-    try {
-      await submitFeedback({
-        feedbackId: selected.feedbackId,
-        payload: {
-          responses: ratingQuestions.map((q) => ({
-            questionId: q.id,
-            rating: ratings[q.id],
-          })),
-          comment: comment?.trim() || undefined,
-        },
-      }).unwrap()
-      toast.success('Đã gửi phản hồi')
-      setSelected(null)
-      refetch()
-    } catch (error) {
-      const message = (error as { data?: { message?: string } })?.data?.message ?? 'Không thể gửi phản hồi. Thử lại sau.'
-      toast.error(message)
+  // Update selected feedback when list changes (after submit)
+  useEffect(() => {
+    if (selectedFeedback && feedbacks.length > 0) {
+      const stillExists = feedbacks.find(f => f.feedbackId === selectedFeedback.feedbackId)
+      if (!stillExists) {
+        setSelectedFeedback(feedbacks[0] || null)
+      }
+    } else if (feedbacks.length === 0) {
+      setSelectedFeedback(null)
     }
-  }
+  }, [feedbacks, selectedFeedback])
+
+  const pendingCount = useMemo(() => {
+    return feedbacks.filter(f => !f.isFeedback).length
+  }, [feedbacks])
 
   const formatDate = (value?: string) => {
     if (!value) return '—'
     try {
-      return format(parseISO(value), "HH:mm dd/MM/yyyy", { locale: vi })
+      return format(parseISO(value), "dd/MM/yyyy", { locale: vi })
     } catch {
       return value
     }
+  }
+
+  const handleSubmitSuccess = () => {
+    refetch()
+  }
+
+  const handleResetSearch = () => {
+    setSearchQuery('')
   }
 
   return (
@@ -96,203 +97,230 @@ export default function StudentPendingFeedbackPage() {
           {
             '--sidebar-width': 'calc(var(--spacing) * 72)',
             '--header-height': 'calc(var(--spacing) * 12)',
-          } as React.CSSProperties
+          } as CSSProperties
         }
       >
         <AppSidebar variant="inset" />
         <SidebarInset>
           <SiteHeader />
-          <main className="flex flex-1 flex-col">
-            <header className="flex items-center justify-between border-b border-border px-6 py-5">
-              <div className="space-y-1">
-                <h1 className="text-3xl font-bold tracking-tight">Phản hồi khóa học</h1>
-                <p className="text-sm text-muted-foreground">
-                  Danh sách phản hồi sau phase bạn cần hoàn thành
-                </p>
-              </div>
-              <Button variant="outline" size="icon" onClick={() => refetch()} disabled={isFetching}>
-                <RefreshCcwIcon className="h-4 w-4" />
-              </Button>
-            </header>
-
-            <div className="flex flex-1 flex-col gap-4 px-6 py-6">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <div className="flex flex-1 flex-col">
+            <div className="@container/main flex flex-1 flex-col">
+              {/* Header */}
+              <header className="flex flex-col gap-4 border-b border-border px-4 sm:px-6 py-5">
+                <div className="flex flex-col gap-1">
+                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Phản hồi khóa học</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Đánh giá và xem lịch sử phản hồi các phase học tập
+                  </p>
                 </div>
-              ) : pending.length === 0 ? (
-                <Empty>
-                  <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                      <MessageCircleIcon className="h-10 w-10" />
-                    </EmptyMedia>
-                    <EmptyTitle>Không có phản hồi cần hoàn thành</EmptyTitle>
-                    <EmptyDescription>
-                      Khi phase kết thúc, phản hồi mới sẽ xuất hiện tại đây.
-                    </EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
-              ) : (
-                <div className="grid gap-3">
-                  {pending.map((item) => (
-                    <Card
-                      key={item.feedbackId}
-                      className="flex flex-col gap-2 p-4 md:flex-row md:items-center md:justify-between transition-shadow hover:shadow-md"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="secondary">{item.classCode}</Badge>
-                          {item.phaseName && <Badge variant="outline">{item.phaseName}</Badge>}
-                        </div>
-                        <p className="text-sm font-semibold text-foreground">
-                          {item.className} · {item.courseName}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Tạo lúc: {formatDate(item.createdAt)}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-muted-foreground">Feedback #{item.feedbackId}</span>
-                        <Button size="sm" onClick={() => handleOpenModal(item)}>
-                          Đánh giá
-                        </Button>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </div>
-          </main>
-        </SidebarInset>
-      </SidebarProvider>
 
-      <Dialog open={!!selected} onOpenChange={(open) => (!open ? setSelected(null) : null)}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Đánh giá phase</DialogTitle>
-            {selected && (
-              <DialogDescription asChild>
-                <div className="text-sm text-muted-foreground">
-                  <div className="flex flex-wrap items-center gap-2 mb-2 pt-2">
-                    <Badge variant="secondary" className="rounded-sm px-2 font-normal">
-                      {selected.classCode}
-                    </Badge>
-                    {selected.phaseName && (
-                      <Badge variant="outline" className="rounded-sm px-2 font-normal">
-                        {selected.phaseName}
-                      </Badge>
+                {/* Tabs + Search */}
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
+                    <TabsList>
+                      <TabsTrigger value="PENDING" className="gap-1.5">
+                        Cần nộp
+                        {pendingCount > 0 && activeTab !== 'PENDING' && (
+                          <Badge variant="destructive" className="h-5 px-1.5 text-[10px]">
+                            {pendingCount}
+                          </Badge>
+                        )}
+                      </TabsTrigger>
+                      <TabsTrigger value="SUBMITTED" className="gap-1.5">
+                        Lịch sử
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Tìm theo lớp, khóa học..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-8 h-9 w-[200px] sm:w-[280px]"
+                      />
+                    </div>
+                    {searchQuery && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0"
+                        onClick={handleResetSearch}
+                        title="Xóa tìm kiếm"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </Button>
                     )}
                   </div>
-                  <div className="space-y-0.5">
-                    <p className="font-medium text-foreground text-base">{selected.courseName}</p>
-                    <p>{selected.className}</p>
+                </div>
+              </header>
+
+              {/* Main Content - 2 Columns Layout */}
+              <main className="flex-1 overflow-hidden">
+                {isLoading && (
+                  <div className="flex items-center justify-center h-full">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>
-                </div>
-              </DialogDescription>
-            )}
-          </DialogHeader>
+                )}
 
-          <div className="space-y-6 px-1">
-            {ratingQuestions.map((q, index) => (
-              <div key={q.id} className="space-y-3">
-                <div className="flex items-start justify-between gap-4">
-                  <Label className="text-base font-medium leading-relaxed">
-                    <span className="mr-2 text-muted-foreground">{index + 1}.</span>
-                    {q.questionText}
-                  </Label>
-                </div>
-                <StarRatingRow
-                  value={ratings[q.id] ?? 0}
-                  onChange={(value) => setRatings((prev) => ({ ...prev, [q.id]: value }))}
-                  ariaLabel={`Đánh giá câu ${index + 1}`}
-                />
-                {index < ratingQuestions.length - 1 && <Separator className="mt-6" />}
-              </div>
-            ))}
+                {!isLoading && feedbacks.length > 0 && (
+                  <div className="grid grid-cols-1 lg:grid-cols-[minmax(340px,2fr)_3fr] xl:grid-cols-[minmax(360px,1fr)_2fr] h-full">
+                    {/* Left Column - Feedback List */}
+                    <div className="border-r border-border flex flex-col min-w-0">
+                      <div className="px-4 py-3 border-b bg-muted/30 shrink-0">
+                        <p className="text-sm font-medium text-muted-foreground">
+                          {feedbacks.length} phản hồi {activeTab === 'PENDING' ? 'cần hoàn thành' : 'đã nộp'}
+                        </p>
+                      </div>
+                      <ScrollArea className="flex-1">
+                        <div className="p-3 space-y-2">
+                          {feedbacks.map((item) => (
+                            <Card
+                              key={item.feedbackId}
+                              className={cn(
+                                "p-3 cursor-pointer transition-all hover:bg-muted/50",
+                                selectedFeedback?.feedbackId === item.feedbackId
+                                  ? "ring-2 ring-primary bg-primary/5"
+                                  : "hover:shadow-sm"
+                              )}
+                              onClick={() => setSelectedFeedback(item)}
+                            >
+                              <div className="space-y-2">
+                                {/* Header */}
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
+                                        {item.classCode}
+                                      </Badge>
+                                      {item.phaseName && (
+                                        <Badge variant="outline" className="text-[10px] px-1.5 py-0.5">
+                                          {item.phaseName}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <p className="font-semibold text-sm leading-tight line-clamp-2">
+                                      {item.courseName}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-0.5">
+                                      {item.className}
+                                    </p>
+                                  </div>
 
-            <Separator className="my-6" />
+                                  {/* Rating badge for submitted */}
+                                  {item.isFeedback && item.averageRating != null && (
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                                      <span className="text-sm font-medium">
+                                        {item.averageRating.toFixed(1)}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
 
-            <div className="space-y-3">
-              <Label htmlFor="comment" className="text-base font-medium">
-                Nhận xét thêm (không bắt buộc)
-              </Label>
-              <Textarea
-                id="comment"
-                placeholder="Chia sẻ điểm bạn hài lòng hoặc đề xuất cải thiện..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                rows={4}
-                className="resize-none"
-              />
+                                {/* Footer */}
+                                <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1 border-t border-border/50">
+                                  <span>
+                                    {item.isFeedback 
+                                      ? `Nộp: ${formatDate(item.submittedAt)}`
+                                      : `Tạo: ${formatDate(item.createdAt)}`
+                                    }
+                                  </span>
+                                  <span className="tabular-nums">#{item.feedbackId}</span>
+                                </div>
+                              </div>
+                            </Card>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </div>
+
+                    {/* Right Column - Form/Detail Panel */}
+                    <div className="flex flex-col overflow-hidden bg-muted/10 min-w-0">
+                      {selectedFeedback ? (
+                        activeTab === 'PENDING' && !selectedFeedback.isFeedback ? (
+                          <FeedbackFormPanel
+                            key={selectedFeedback.feedbackId}
+                            feedback={{
+                              feedbackId: selectedFeedback.feedbackId,
+                              classId: selectedFeedback.classId,
+                              classCode: selectedFeedback.classCode,
+                              className: selectedFeedback.className,
+                              courseName: selectedFeedback.courseName,
+                              phaseId: selectedFeedback.phaseId,
+                              phaseName: selectedFeedback.phaseName,
+                              createdAt: selectedFeedback.createdAt,
+                            }}
+                            onSubmitSuccess={handleSubmitSuccess}
+                          />
+                        ) : (
+                          <FeedbackDetailPanel
+                            key={selectedFeedback.feedbackId}
+                            feedback={selectedFeedback}
+                          />
+                        )
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <Empty>
+                            <EmptyHeader>
+                              <EmptyMedia variant="icon">
+                                <MessageCircleIcon className="h-10 w-10" />
+                              </EmptyMedia>
+                              <EmptyTitle>Chọn một phản hồi</EmptyTitle>
+                              <EmptyDescription>
+                                {activeTab === 'PENDING'
+                                  ? 'Chọn một phản hồi từ danh sách bên trái để đánh giá'
+                                  : 'Chọn một phản hồi từ danh sách bên trái để xem chi tiết'
+                                }
+                              </EmptyDescription>
+                            </EmptyHeader>
+                          </Empty>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {!isLoading && feedbacks.length === 0 && (
+                  <div className="flex items-center justify-center h-full">
+                    <Empty>
+                      <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                          <MessageCircleIcon className="h-10 w-10" />
+                        </EmptyMedia>
+                        <EmptyTitle>
+                          {searchQuery 
+                            ? 'Không tìm thấy kết quả'
+                            : activeTab === 'PENDING'
+                              ? 'Không có phản hồi cần hoàn thành'
+                              : 'Chưa có lịch sử phản hồi'
+                          }
+                        </EmptyTitle>
+                        <EmptyDescription>
+                          {searchQuery 
+                            ? 'Thử thay đổi từ khóa tìm kiếm'
+                            : activeTab === 'PENDING'
+                              ? 'Khi phase kết thúc, phản hồi mới sẽ xuất hiện tại đây.'
+                              : 'Các phản hồi bạn đã nộp sẽ hiển thị tại đây.'
+                          }
+                        </EmptyDescription>
+                      </EmptyHeader>
+                      {searchQuery && (
+                        <Button variant="ghost" size="sm" onClick={handleResetSearch}>
+                          <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                          Xóa tìm kiếm
+                        </Button>
+                      )}
+                    </Empty>
+                  </div>
+                )}
+              </main>
             </div>
           </div>
-
-          <Separator />
-
-          <DialogFooter className="flex items-center justify-end gap-2">
-            <Button variant="outline" onClick={() => setSelected(null)}>
-              Để sau
-            </Button>
-            <Button onClick={handleSubmit} disabled={!isFormValid || isSubmitting}>
-              {isSubmitting ? 'Đang gửi...' : 'Gửi phản hồi'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </SidebarInset>
+      </SidebarProvider>
     </StudentRoute>
-  )
-}
-
-type StarRatingRowProps = {
-  value: number
-  onChange: (value: number) => void
-  ariaLabel?: string
-}
-
-function StarRatingRow({ value, onChange, ariaLabel }: StarRatingRowProps) {
-  const [hovered, setHovered] = useState<number | null>(null)
-  const activeValue = hovered ?? value ?? 0
-
-  const ratingLabels: Record<number, string> = {
-    1: 'Rất tệ',
-    2: 'Tệ',
-    3: 'Bình thường',
-    4: 'Tốt',
-    5: 'Rất tốt',
-  }
-
-  return (
-    <div className="flex flex-col gap-2" role="group" aria-label={ariaLabel}>
-      <div className="flex items-center gap-1">
-        {[1, 2, 3, 4, 5].map((val) => {
-          const isActive = val <= activeValue
-          return (
-            <button
-              key={val}
-              type="button"
-              onClick={() => onChange(val)}
-              onMouseEnter={() => setHovered(val)}
-              onMouseLeave={() => setHovered(null)}
-              onFocus={() => setHovered(null)}
-              className="group relative p-1 focus-visible:outline-none"
-              aria-pressed={value === val}
-              aria-label={`${val} sao - ${ratingLabels[val]}`}
-            >
-              <StarIcon
-                className={cn(
-                  'h-8 w-8 transition-all duration-200',
-                  isActive
-                    ? 'fill-amber-400 text-amber-400 drop-shadow-sm'
-                    : 'fill-transparent text-muted-foreground/30 group-hover:text-amber-200'
-                )}
-              />
-            </button>
-          )
-        })}
-        <span className="ml-3 text-sm font-medium text-muted-foreground min-w-[100px]">
-          {activeValue ? ratingLabels[activeValue] : 'Chưa đánh giá'}
-        </span>
-      </div>
-    </div>
   )
 }

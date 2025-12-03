@@ -12,6 +12,35 @@ export interface PendingFeedback {
   createdAt?: string
 }
 
+export interface FeedbackResponseItem {
+  questionId: number
+  questionText: string
+  rating: number
+  displayOrder?: number
+}
+
+export interface StudentFeedbackItem {
+  feedbackId: number
+  classId: number
+  classCode: string
+  className: string
+  courseName: string
+  phaseId?: number
+  phaseName?: string
+  isFeedback: boolean        // true = submitted, false = pending
+  submittedAt?: string
+  averageRating?: number
+  comment?: string
+  responses?: FeedbackResponseItem[]  // detailed responses per question
+  createdAt: string
+}
+
+export interface StudentFeedbacksParams {
+  status?: 'PENDING' | 'SUBMITTED'
+  classId?: number
+  search?: string
+}
+
 export interface FeedbackQuestion {
   id: number
   questionText: string
@@ -45,6 +74,26 @@ export const studentFeedbackApi = createApi({
       transformResponse: (response: { data: FeedbackQuestion[] }) => response.data,
       providesTags: ['StudentFeedback'],
     }),
+    // New: Get all feedbacks with filters
+    getStudentFeedbacks: builder.query<StudentFeedbackItem[], StudentFeedbacksParams | void>({
+      query: (params) => {
+        const searchParams = new URLSearchParams()
+        if (params?.status) searchParams.append('status', params.status)
+        if (params?.classId) searchParams.append('classId', params.classId.toString())
+        if (params?.search) searchParams.append('search', params.search)
+        const queryString = searchParams.toString()
+        return `/student/feedbacks${queryString ? `?${queryString}` : ''}`
+      },
+      transformResponse: (response: { data: StudentFeedbackItem[] }) => response.data,
+      providesTags: ['StudentFeedback'],
+    }),
+    // New: Get single feedback detail
+    getFeedbackDetail: builder.query<StudentFeedbackItem, number>({
+      query: (feedbackId) => `/student/feedbacks/${feedbackId}`,
+      transformResponse: (response: { data: StudentFeedbackItem }) => response.data,
+      providesTags: ['StudentFeedback'],
+    }),
+    // Legacy: backward compatibility
     getPendingFeedbacks: builder.query<PendingFeedback[], void>({
       query: () => '/student/feedbacks/pending',
       transformResponse: (response: { data: PendingFeedback[] }) => response.data,
@@ -72,6 +121,8 @@ export const studentFeedbackApi = createApi({
 
 export const {
   useGetQuestionsQuery,
+  useGetStudentFeedbacksQuery,
+  useGetFeedbackDetailQuery,
   useGetPendingFeedbacksQuery,
   useGetPendingCountQuery,
   useSubmitFeedbackMutation,

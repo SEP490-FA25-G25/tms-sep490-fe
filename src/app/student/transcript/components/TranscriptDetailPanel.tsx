@@ -65,12 +65,11 @@ const TranscriptDetailPanel: React.FC<TranscriptDetailPanelProps> = ({
   );
 
   const assessments = assessmentsResponse?.data || [];
-  const scores = scoresResponse?.data || [];
 
-  const scoreMap = useMemo(
-    () => new Map(scores.map((score) => [score.assessmentId, score])),
-    [scores]
-  );
+  const scoreMap = useMemo(() => {
+    const scores = scoresResponse?.data || [];
+    return new Map(scores.map((score) => [score.assessmentId, score]));
+  }, [scoresResponse?.data]);
 
   const isLoading = isAssessmentsLoading || isScoresLoading;
 
