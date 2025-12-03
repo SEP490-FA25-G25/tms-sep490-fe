@@ -382,19 +382,19 @@ export default function TimeSlotDetailPage() {
                                                                 <Badge variant="outline" className="font-normal">
                                                                     {session.type === "CLASS" ? "Buổi học" :
                                                                         session.type === "TEACHER_RESCHEDULE" ? "Dạy bù" : session.type}
-                                                                </Badge>
+                                                        </Badge>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <Badge variant={
-                                                        session.status === "PLANNED" ? "secondary" :
+                                                        <Badge variant={
+                                                            session.status === "PLANNED" ? "secondary" :
                                                             session.status === "DONE" ? "outline" :
-                                                                session.status === "CANCELLED" ? "destructive" : "outline"
+                                                                        session.status === "CANCELLED" ? "destructive" : "outline"
                                                     } className={session.status === "DONE" ? "bg-green-100 text-green-700 border-green-200" : ""}>
-                                                        {session.status === "PLANNED" ? "Dự kiến" :
+                                                            {session.status === "PLANNED" ? "Dự kiến" :
                                                             session.status === "DONE" ? "Hoàn thành" :
-                                                                session.status === "CANCELLED" ? "Đã hủy" : session.status}
-                                                    </Badge>
+                                                                        session.status === "CANCELLED" ? "Đã hủy" : session.status}
+                                                        </Badge>
                                                 </div>
                                             );
                                         })}
