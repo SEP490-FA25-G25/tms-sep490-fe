@@ -250,6 +250,8 @@ export interface QAReportListItemDTO {
   reportLevel: string;
   classId: number;
   classCode: string;
+  branchId?: number;
+  branchName?: string;
   sessionId?: number;
   sessionDate?: string;
   phaseId?: number;
@@ -268,6 +270,8 @@ export interface QAReportDetailDTO {
   classId: number;
   classCode: string;
   className: string;
+  branchId?: number;
+  branchName?: string;
   sessionId?: number;
   sessionDate?: string;
   phaseId?: number;

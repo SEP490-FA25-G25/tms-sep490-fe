@@ -117,9 +117,9 @@ const roleBasedNav = {
         icon: GraduationCapIcon,
       },
       {
-        title: "Báo cáo",
-        url: "/manager/reports",
-        icon: FileTextIcon,
+        title: "Báo Cáo Chất Lượng",
+        url: "/manager/qa-reports",
+        icon: ClipboardCheckIcon,
       },
       {
         title: "Phân tích",
@@ -161,7 +161,7 @@ const roleBasedNav = {
         icon: UsersIcon,
       },
       {
-        title: "Báo cáo QA chi nhánh",
+        title: "Báo Cáo Chất Lượng",
         url: "/center-head/qa-reports",
         icon: ClipboardCheckIcon,
       },

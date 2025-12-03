@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, AlertTriangle } from "lucide-react"
 
-export default function CenterHeadQAReportDetailPage() {
+export default function ManagerQAReportDetailPage() {
     const params = useParams()
     const reportId = parseInt(params.id as string)
 
@@ -58,6 +58,12 @@ export default function CenterHeadQAReportDetailPage() {
             <Badge variant="outline">{getQAReportTypeDisplayName(report.reportType)}</Badge>
             <span>·</span>
             <span>{report.classCode}</span>
+            {report.branchName && (
+                <>
+                    <span>·</span>
+                    <Badge variant="secondary" className="text-xs">{report.branchName}</Badge>
+                </>
+            )}
         </div>
     )
 
@@ -95,6 +101,16 @@ export default function CenterHeadQAReportDetailPage() {
                                 <span className="text-sm text-muted-foreground">Trạng thái</span>
                                 <QAReportStatusBadge status={report.status} />
                             </div>
+
+                            {/* Branch */}
+                            {report.branchName && (
+                                <div className="flex justify-between items-start">
+                                    <span className="text-sm text-muted-foreground">Chi nhánh</span>
+                                    <span className="text-sm font-medium text-right">
+                                        {report.branchName}
+                                    </span>
+                                </div>
+                            )}
 
                             {/* Class */}
                             <div className="flex justify-between items-start">

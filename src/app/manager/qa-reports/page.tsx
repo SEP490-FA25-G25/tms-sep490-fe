@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useGetQAReportsQuery } from "@/store/services/qaApi"
+import { useGetAllBranchesQuery } from "@/store/services/branchApi"
 import type { QAReportListItemDTO } from "@/types/qa"
 import { DashboardLayout } from "@/components/DashboardLayout"
 import { QAReportStatusBadge } from "@/components/qa/QAReportStatusBadge"
@@ -44,17 +45,22 @@ import { getQAReportTypeDisplayName, qaReportTypeOptions, QAReportStatus } from 
 
 const PAGE_SIZE = 20
 
-export default function CenterHeadQAReportsPage() {
+export default function ManagerQAReportsPage() {
     const [searchTerm, setSearchTerm] = useState("")
     const [reportTypeFilter, setReportTypeFilter] = useState<string>("all")
+    const [branchFilter, setBranchFilter] = useState<string>("all")
     const [page, setPage] = useState(0)
     const navigate = useNavigate()
 
-    // Always filter by SUBMITTED status for Center Head
+    // Fetch branches for filter
+    const { data: branchesData } = useGetAllBranchesQuery()
+    const branches = branchesData?.data || []
+
+    // Always filter by SUBMITTED status for Manager
     const { data: reportsData, isLoading, error } = useGetQAReportsQuery({
         search: searchTerm || undefined,
         reportType: reportTypeFilter === 'all' ? undefined : reportTypeFilter,
-        status: QAReportStatus.SUBMITTED, // Center Head only sees SUBMITTED reports
+        status: QAReportStatus.SUBMITTED, // Manager only sees SUBMITTED reports
         page,
         size: PAGE_SIZE,
         sort: 'createdAt',
@@ -64,6 +70,11 @@ export default function CenterHeadQAReportsPage() {
     const reports = reportsData?.data || []
     const totalCount = reportsData?.total || 0
     const totalPages = Math.ceil(totalCount / PAGE_SIZE)
+
+    // Client-side branch filtering (since backend returns all branches for MANAGER)
+    const filteredReports = branchFilter === 'all' 
+        ? reports 
+        : reports.filter((report: QAReportListItemDTO) => report.branchId?.toString() === branchFilter)
 
     // Helper function for report level badge
     const getReportLevelBadge = (report: QAReportListItemDTO) => {
@@ -95,6 +106,7 @@ export default function CenterHeadQAReportsPage() {
     const handleClearFilters = () => {
         setSearchTerm("")
         setReportTypeFilter("all")
+        setBranchFilter("all")
         setPage(0)
     }
 
@@ -110,19 +122,24 @@ export default function CenterHeadQAReportsPage() {
         setPage(0)
     }
 
+    const handleBranchChange = (value: string) => {
+        setBranchFilter(value)
+        setPage(0)
+    }
+
     // Handle page change
     const handlePageChange = (newPage: number) => {
         setPage(newPage)
     }
 
     // Check if any filter is active
-    const hasActiveFilters = searchTerm !== "" || reportTypeFilter !== "all"
+    const hasActiveFilters = searchTerm !== "" || reportTypeFilter !== "all" || branchFilter !== "all"
 
     if (isLoading) {
         return (
             <DashboardLayout
                 title="Báo Cáo Chất Lượng"
-                description="Xem và theo dõi báo cáo chất lượng từ các QA của chi nhánh."
+                description="Xem và theo dõi báo cáo chất lượng từ tất cả các chi nhánh."
             >
                 <div className="flex items-center justify-center h-64">
                     <Loader2 className="h-8 w-8 animate-spin" />
@@ -135,7 +152,7 @@ export default function CenterHeadQAReportsPage() {
         return (
             <DashboardLayout
                 title="Báo Cáo Chất Lượng"
-                description="Xem và theo dõi báo cáo chất lượng từ các QA của chi nhánh."
+                description="Xem và theo dõi báo cáo chất lượng từ tất cả các chi nhánh."
             >
                 <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
@@ -150,7 +167,7 @@ export default function CenterHeadQAReportsPage() {
     return (
         <DashboardLayout
             title="Báo Cáo Chất Lượng"
-            description="Xem và theo dõi báo cáo chất lượng từ các QA của chi nhánh."
+            description="Xem và theo dõi báo cáo chất lượng từ tất cả các chi nhánh."
         >
             <div className="space-y-6">
                 {/* Search & Filters */}
@@ -168,6 +185,20 @@ export default function CenterHeadQAReportsPage() {
 
                     {/* Filters - Right */}
                     <div className="flex items-center gap-2 ml-auto">
+                        <Select value={branchFilter} onValueChange={handleBranchChange}>
+                            <SelectTrigger className="h-9 w-auto min-w-[180px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Chi nhánh: Tất cả</SelectItem>
+                                {branches.map((branch) => (
+                                    <SelectItem key={branch.id} value={branch.id.toString()}>
+                                        {branch.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
                         <Select value={reportTypeFilter} onValueChange={handleReportTypeChange}>
                             <SelectTrigger className="h-9 w-auto min-w-[180px]">
                                 <SelectValue />
@@ -202,6 +233,7 @@ export default function CenterHeadQAReportsPage() {
                             <TableRow className="bg-muted/50">
                                 <TableHead className="font-semibold">Loại Báo Cáo</TableHead>
                                 <TableHead className="font-semibold">Lớp</TableHead>
+                                <TableHead className="font-semibold">Chi nhánh</TableHead>
                                 <TableHead className="font-semibold">Phạm vi</TableHead>
                                 <TableHead className="font-semibold">Người Báo Cáo</TableHead>
                                 <TableHead className="font-semibold">Trạng Thái</TableHead>
@@ -209,12 +241,12 @@ export default function CenterHeadQAReportsPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {reports.length > 0 ? (
-                                reports.map((report: QAReportListItemDTO) => (
+                            {filteredReports.length > 0 ? (
+                                filteredReports.map((report: QAReportListItemDTO) => (
                                     <TableRow 
                                         key={report.id} 
                                         className="cursor-pointer hover:bg-muted/50"
-                                        onClick={() => navigate(`/center-head/qa-reports/${report.id}`)}
+                                        onClick={() => navigate(`/manager/qa-reports/${report.id}`)}
                                     >
                                         <TableCell>
                                             <div className="space-y-1">
@@ -224,6 +256,11 @@ export default function CenterHeadQAReportsPage() {
                                             </div>
                                         </TableCell>
                                         <TableCell>{report.classCode}</TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className="text-xs">
+                                                {report.branchName || 'N/A'}
+                                            </Badge>
+                                        </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-1.5">
                                                 {getReportLevelBadge(report)}
@@ -258,11 +295,11 @@ export default function CenterHeadQAReportsPage() {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="h-32">
+                                    <TableCell colSpan={7} className="h-32">
                                         <div className="flex flex-col items-center justify-center text-center">
                                             <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
                                             <p className="text-muted-foreground">
-                                                {searchTerm || reportTypeFilter !== 'all'
+                                                {searchTerm || reportTypeFilter !== 'all' || branchFilter !== 'all'
                                                     ? "Không có báo cáo nào phù hợp với bộ lọc đã chọn."
                                                     : "Chưa có báo cáo QA nào được nộp."
                                                 }
@@ -278,7 +315,7 @@ export default function CenterHeadQAReportsPage() {
                 {/* Pagination */}
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
                     <p className="text-muted-foreground">
-                        Trang {page + 1} / {Math.max(totalPages, 1)} · {totalCount} báo cáo
+                        Trang {page + 1} / {Math.max(totalPages, 1)} · {branchFilter === 'all' ? totalCount : filteredReports.length} báo cáo
                     </p>
                     <Pagination>
                         <PaginationContent>

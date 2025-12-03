@@ -54,6 +54,11 @@ import CenterHeadResourcesPage from "./app/center-head/resources/page";
 import CenterHeadTimeSlotsPage from "./app/center-head/timeslots/page";
 import CenterHeadQAReportsPage from "./app/center-head/qa-reports/page";
 import CenterHeadQAReportDetailPage from "./app/center-head/qa-reports/[id]/page";
+
+// Manager imports
+import ManagerQAReportsPage from "./app/manager/qa-reports/page";
+import ManagerQAReportDetailPage from "./app/manager/qa-reports/[id]/page";
+
 import CurriculumPage from "./features/curriculum/pages/CurriculumPage";
 import TeacherAvailabilityPage from "./app/teacher/availability/page";
 import AvailabilityCampaignPage from "./app/academic/teacher-availability/page";
@@ -119,6 +124,24 @@ function App() {
               element={
                 <ProtectedRoute>
                   <NotificationsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Manager routes */}
+            <Route
+              path="/manager/qa-reports"
+              element={
+                <ProtectedRoute requiredRoles={["MANAGER"]}>
+                  <ManagerQAReportsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/manager/qa-reports/:id"
+              element={
+                <ProtectedRoute requiredRoles={["MANAGER"]}>
+                  <ManagerQAReportDetailPage />
                 </ProtectedRoute>
               }
             />
