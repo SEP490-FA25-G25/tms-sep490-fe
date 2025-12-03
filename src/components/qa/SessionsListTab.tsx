@@ -145,7 +145,8 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
     return (
         <div className="space-y-4">
             {/* Search & Filter */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+                {/* Search - Left */}
                 <div className="relative w-64">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -155,19 +156,22 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
                         className="pl-8 h-9"
                     />
                 </div>
-                <Select value={statusFilter} onValueChange={handleFilterChange}>
-                    <SelectTrigger className="w-[200px]">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                        {sessionStatusOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                {/* Filter - Right */}
+                <div className="flex items-center gap-2 ml-auto">
+                    <Select value={statusFilter} onValueChange={handleFilterChange}>
+                        <SelectTrigger className="h-9 w-auto min-w-[150px]">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Trạng thái: Tất cả</SelectItem>
+                            {sessionStatusOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
 
             {/* Sessions Table */}

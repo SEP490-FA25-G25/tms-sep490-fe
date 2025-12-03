@@ -132,7 +132,8 @@ export function QAReportsListTab({ classId }: QAReportsListTabProps) {
     return (
         <div className="space-y-4">
             {/* Search & Filters */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+                {/* Search - Left */}
                 <div className="relative w-64">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -142,13 +143,14 @@ export function QAReportsListTab({ classId }: QAReportsListTabProps) {
                         className="pl-8 h-9"
                     />
                 </div>
-                <div className="flex items-center gap-2">
+                {/* Filters - Right */}
+                <div className="flex items-center gap-2 ml-auto">
                     <Select value={reportTypeFilter} onValueChange={(v) => handleFilterChange(setReportTypeFilter, v)}>
-                        <SelectTrigger className="w-[220px]">
+                        <SelectTrigger className="h-9 w-auto min-w-[180px]">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">Tất cả loại báo cáo</SelectItem>
+                            <SelectItem value="all">Loại: Tất cả</SelectItem>
                             <SelectItem value="CLASSROOM_OBSERVATION">Quan sát lớp học</SelectItem>
                             <SelectItem value="PHASE_REVIEW">Đánh giá giai đoạn</SelectItem>
                             <SelectItem value="CLO_ACHIEVEMENT_ANALYSIS">Phân tích kết quả CLO</SelectItem>
@@ -159,11 +161,11 @@ export function QAReportsListTab({ classId }: QAReportsListTabProps) {
                     </Select>
 
                     <Select value={statusFilter} onValueChange={(v) => handleFilterChange(setStatusFilter, v)}>
-                        <SelectTrigger className="w-[160px]">
+                        <SelectTrigger className="h-9 w-auto min-w-[140px]">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                            <SelectItem value="all">Trạng thái: Tất cả</SelectItem>
                             <SelectItem value="DRAFT">Bản nháp</SelectItem>
                             <SelectItem value="SUBMITTED">Đã nộp</SelectItem>
                         </SelectContent>

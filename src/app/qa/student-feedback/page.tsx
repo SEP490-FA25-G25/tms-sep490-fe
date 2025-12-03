@@ -5,7 +5,6 @@ import { useMemo, useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { skipToken } from '@reduxjs/toolkit/query'
 import {
-  BarChart3Icon,
   Check,
   CheckCircle2,
   ChevronsUpDown,
@@ -96,7 +95,7 @@ export default function QAStudentFeedbackPage() {
 
   // Fetch branches that QA can manage
   const { data: branchesData, isLoading: branchesLoading } = useGetMyBranchesQuery()
-  const myBranches = branchesData?.data || []
+  const myBranches = useMemo(() => branchesData?.data || [], [branchesData?.data])
 
   // Auto-select first branch if not selected
   useEffect(() => {
@@ -233,122 +232,127 @@ export default function QAStudentFeedbackPage() {
           <SiteHeader />
           <div className="flex flex-1 flex-col overflow-hidden">
             <div className="@container/main flex flex-1 flex-col min-h-0 overflow-hidden">
-              {/* Header */}
-              <header className="flex flex-col gap-4 border-b border-border px-4 sm:px-6 py-5">
-                <div className="flex flex-col gap-1">
-                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                    Phản hồi học viên
-                  </h1>
-                  <p className="text-sm text-muted-foreground">
-                    Xem và phân tích phản hồi của học viên theo lớp học
-                  </p>
-                </div>
+              {/* Header - Only Title + Context Selectors */}
+              <header className="flex flex-col gap-2 border-b border-border px-4 lg:px-6 py-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-col gap-1">
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                      Phản hồi học viên
+                    </h1>
+                    <p className="text-sm text-muted-foreground">
+                      Xem và phân tích phản hồi của học viên theo lớp học
+                    </p>
+                  </div>
 
-                {/* Branch + Class Selector Row */}
-                <div className="flex items-center gap-3 flex-wrap">
-                  {/* Branch Selector */}
-                  <Select
-                    value={selectedBranchId?.toString() || 'all'}
-                    onValueChange={handleBranchSelect}
-                    disabled={branchesLoading}
-                  >
-                    <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Chọn chi nhánh..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {myBranches.length > 1 && (
-                        <SelectItem value="all">Tất cả chi nhánh</SelectItem>
-                      )}
-                      {myBranches.map((branch) => (
-                        <SelectItem key={branch.id} value={branch.id.toString()}>
-                          {branch.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  {/* Class Selector - Combobox */}
-                  <Popover open={classComboboxOpen} onOpenChange={setClassComboboxOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={classComboboxOpen}
-                        className="w-[300px] justify-between font-normal"
-                        disabled={!selectedBranchId || classesLoading}
-                      >
-                        {classesLoading ? (
-                          <span className="flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Đang tải...
-                          </span>
-                        ) : selectedClass ? (
-                          <span className="truncate">
-                            <span className="font-medium">{selectedClass.classCode}</span>
-                            <span className="text-muted-foreground ml-2">
-                              - {selectedClass.className}
-                            </span>
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">Chọn lớp học...</span>
+                  {/* Branch + Class Selector - Right side of header */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Branch Selector */}
+                    <Select
+                      value={selectedBranchId?.toString() || 'all'}
+                      onValueChange={handleBranchSelect}
+                      disabled={branchesLoading}
+                    >
+                      <SelectTrigger className="h-9 w-auto min-w-[160px]">
+                        <SelectValue placeholder="Chọn chi nhánh..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {myBranches.length > 1 && (
+                          <SelectItem value="all">Tất cả chi nhánh</SelectItem>
                         )}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Tìm kiếm lớp học..." />
-                        <CommandList>
-                          <CommandEmpty>Không tìm thấy lớp học.</CommandEmpty>
-                          <CommandGroup>
-                            {classes.map((classItem) => (
-                              <CommandItem
-                                key={classItem.classId}
-                                value={`${classItem.classCode} ${classItem.className} ${classItem.courseName}`}
-                                onSelect={() => handleClassSelect(classItem.classId)}
-                              >
-                                <Check
-                                  className={cn(
-                                    'mr-2 h-4 w-4',
-                                    selectedClassId === classItem.classId
-                                      ? 'opacity-100'
-                                      : 'opacity-0'
-                                  )}
-                                />
-                                <div className="flex flex-col">
-                                  <span className="font-medium">{classItem.classCode}</span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {classItem.className} • {classItem.courseName}
-                                  </span>
-                                </div>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                </div>
+                        {myBranches.map((branch) => (
+                          <SelectItem key={branch.id} value={branch.id.toString()}>
+                            {branch.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
 
-                {/* Search (left) + Filters (right) Row */}
+                    {/* Class Selector - Combobox */}
+                    <Popover open={classComboboxOpen} onOpenChange={setClassComboboxOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={classComboboxOpen}
+                          className="h-9 w-[280px] justify-between font-normal"
+                          disabled={!selectedBranchId || classesLoading}
+                        >
+                          {classesLoading ? (
+                            <span className="flex items-center gap-2">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Đang tải...
+                            </span>
+                          ) : selectedClass ? (
+                            <span className="truncate">
+                              <span className="font-medium">{selectedClass.classCode}</span>
+                              <span className="text-muted-foreground ml-2">
+                                - {selectedClass.className}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">Chọn lớp học...</span>
+                          )}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[280px] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Tìm kiếm lớp học..." />
+                          <CommandList>
+                            <CommandEmpty>Không tìm thấy lớp học.</CommandEmpty>
+                            <CommandGroup>
+                              {classes.map((classItem) => (
+                                <CommandItem
+                                  key={classItem.classId}
+                                  value={`${classItem.classCode} ${classItem.className} ${classItem.courseName}`}
+                                  onSelect={() => handleClassSelect(classItem.classId)}
+                                >
+                                  <Check
+                                    className={cn(
+                                      'mr-2 h-4 w-4',
+                                      selectedClassId === classItem.classId
+                                        ? 'opacity-100'
+                                        : 'opacity-0'
+                                    )}
+                                  />
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{classItem.classCode}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {classItem.className} • {classItem.courseName}
+                                    </span>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+              </header>
+
+              {/* Main Content */}
+              <main className="flex-1 min-h-0 overflow-hidden">
+                {/* Search & Filters - Below header border, only when class is selected */}
                 {selectedClassId && (
-                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex flex-wrap items-center gap-2 px-4 lg:px-6 py-4 border-b bg-background">
                     {/* Search - Left */}
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <div className="relative w-64">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                       <Input
                         placeholder="Tìm theo tên học viên..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-8 h-9 w-[200px] sm:w-[280px]"
+                        className="pl-8 h-9"
                       />
                     </div>
 
                     {/* Filters - Right */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 ml-auto">
                       {/* Phase Filter */}
                       <Select value={selectedPhase} onValueChange={setSelectedPhase}>
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="h-9 w-auto min-w-[160px]">
                           <SelectValue placeholder="Giai đoạn" />
                         </SelectTrigger>
                         <SelectContent>
@@ -365,7 +369,7 @@ export default function QAStudentFeedbackPage() {
 
                       {/* Status Filter */}
                       <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                        <SelectTrigger className="w-[160px]">
+                        <SelectTrigger className="h-9 w-auto min-w-[150px]">
                           <SelectValue placeholder="Trạng thái" />
                         </SelectTrigger>
                         <SelectContent>
@@ -391,10 +395,7 @@ export default function QAStudentFeedbackPage() {
                     </div>
                   </div>
                 )}
-              </header>
 
-              {/* Main Content */}
-              <main className="flex-1 min-h-0 overflow-hidden">
                 {/* No branch selected */}
                 {!selectedBranchId && !branchesLoading && (
                   <div className="flex items-center justify-center h-full">

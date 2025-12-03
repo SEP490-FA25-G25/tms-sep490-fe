@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useGetClassFeedbacksQuery, useGetFeedbackDetailQuery, useGetPhasesByCourseIdQuery } from "@/store/services/qaApi"
 import { skipToken } from "@reduxjs/toolkit/query"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
     Select,
@@ -145,7 +144,8 @@ export function StudentFeedbackTab({ classId, courseId }: StudentFeedbackTabProp
     return (
         <div className="space-y-4">
             {/* Search & Filters */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+                {/* Search - Left */}
                 <div className="relative w-64">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -155,13 +155,14 @@ export function StudentFeedbackTab({ classId, courseId }: StudentFeedbackTabProp
                         className="pl-8 h-9"
                     />
                 </div>
-                <div className="flex items-center gap-2">
+                {/* Filters - Right */}
+                <div className="flex items-center gap-2 ml-auto">
                     <Select value={phaseFilter} onValueChange={(v) => handleFilterChange(setPhaseFilter, v)}>
-                        <SelectTrigger className="w-[200px]">
+                        <SelectTrigger className="h-9 w-auto min-w-[160px]">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">Tất cả giai đoạn</SelectItem>
+                            <SelectItem value="all">Giai đoạn: Tất cả</SelectItem>
                             {[...phases].sort((a, b) => a.phaseNumber - b.phaseNumber).map((phase) => (
                                 <SelectItem key={phase.id} value={phase.id.toString()}>
                                     {phase.name || `Phase ${phase.phaseNumber}`}
@@ -171,11 +172,11 @@ export function StudentFeedbackTab({ classId, courseId }: StudentFeedbackTabProp
                     </Select>
 
                     <Select value={statusFilter} onValueChange={(v) => handleFilterChange(setStatusFilter, v)}>
-                        <SelectTrigger className="w-[160px]">
+                        <SelectTrigger className="h-9 w-auto min-w-[150px]">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                            <SelectItem value="all">Trạng thái: Tất cả</SelectItem>
                             <SelectItem value="submitted">Đã nộp</SelectItem>
                             <SelectItem value="not_submitted">Chưa nộp</SelectItem>
                         </SelectContent>

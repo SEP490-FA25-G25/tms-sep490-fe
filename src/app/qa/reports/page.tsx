@@ -203,24 +203,26 @@ export default function QAReportsListPage() {
         >
             <div className="space-y-6">
                 {/* Search & Filters */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="relative w-full sm:w-80">
-                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <div className="flex flex-wrap items-center gap-2">
+                    {/* Search - Left */}
+                    <div className="relative w-64">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Tìm theo mã lớp, người báo cáo, nội dung..."
+                            placeholder="Tìm theo mã lớp, người báo cáo..."
                             value={searchTerm}
                             onChange={(e) => handleSearchChange(e.target.value)}
-                            className="pl-8"
+                            className="pl-8 h-9"
                         />
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3">
+                    {/* Filters - Right */}
+                    <div className="flex items-center gap-2 ml-auto">
                         <Select value={reportTypeFilter} onValueChange={handleReportTypeChange}>
-                            <SelectTrigger className="w-[200px]">
+                            <SelectTrigger className="h-9 w-auto min-w-[180px]">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Tất cả loại báo cáo</SelectItem>
+                                <SelectItem value="all">Loại: Tất cả</SelectItem>
                                 {qaReportTypeOptions.map((option) => (
                                     <SelectItem key={option.value} value={option.value}>
                                         {option.label}
@@ -230,11 +232,11 @@ export default function QAReportsListPage() {
                         </Select>
 
                         <Select value={statusFilter} onValueChange={handleStatusChange}>
-                            <SelectTrigger className="w-[150px]">
+                            <SelectTrigger className="h-9 w-auto min-w-[140px]">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                                <SelectItem value="all">Trạng thái: Tất cả</SelectItem>
                                 <SelectItem value={QAReportStatus.DRAFT}>Bản nháp</SelectItem>
                                 <SelectItem value={QAReportStatus.SUBMITTED}>Đã nộp</SelectItem>
                             </SelectContent>

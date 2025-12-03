@@ -210,20 +210,22 @@ export default function QAClassesListPage() {
         >
             <div className="space-y-6">
                 {/* Search & Filters */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="relative w-full sm:w-80">
-                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <div className="flex flex-wrap items-center gap-2">
+                    {/* Search - Left */}
+                    <div className="relative w-64">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Tìm theo mã lớp, tên khóa học..."
                             value={searchTerm}
                             onChange={(e) => handleSearchChange(e.target.value)}
-                            className="pl-8"
+                            className="pl-8 h-9"
                         />
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3">
+                    {/* Filters - Right */}
+                    <div className="flex items-center gap-2 ml-auto">
                         <Select value={branchFilter} onValueChange={handleBranchChange}>
-                            <SelectTrigger className="w-[180px]">
+                            <SelectTrigger className="h-9 w-auto min-w-[160px]">
                                 <SelectValue placeholder="Chi nhánh" />
                             </SelectTrigger>
                             <SelectContent>
@@ -237,11 +239,11 @@ export default function QAClassesListPage() {
                         </Select>
 
                         <Select value={statusFilter} onValueChange={handleStatusChange}>
-                            <SelectTrigger className="w-40">
+                            <SelectTrigger className="h-9 w-auto min-w-[140px]">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                                <SelectItem value="all">Trạng thái: Tất cả</SelectItem>
                                 {classStatusOptions.map((option) => (
                                     <SelectItem key={option.value} value={option.value}>
                                         {option.label}
@@ -251,11 +253,11 @@ export default function QAClassesListPage() {
                         </Select>
 
                         <Select value={modalityFilter} onValueChange={handleModalityChange}>
-                            <SelectTrigger className="w-[150px]">
+                            <SelectTrigger className="h-9 w-auto min-w-[130px]">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Tất cả hình thức</SelectItem>
+                                <SelectItem value="all">Hình thức: Tất cả</SelectItem>
                                 {modalityOptions.map((option) => (
                                     <SelectItem key={option.value} value={option.value}>
                                         {option.label}
