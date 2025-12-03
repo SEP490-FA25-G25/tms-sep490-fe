@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Loader2 } from 'lucide-react';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
@@ -303,22 +303,8 @@ const MyClassesPage = () => {
 
               <main className="flex-1 px-4 lg:px-6 py-6 md:py-8">
                 {isLoading && (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {Array.from({ length: 6 }).map((_, idx) => (
-                      <Card key={idx} className="h-full">
-                        <CardHeader className="space-y-2">
-                          <Skeleton className="h-3 w-24" />
-                          <Skeleton className="h-5 w-32" />
-                          <Skeleton className="h-4 w-40" />
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          <Skeleton className="h-4 w-48" />
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-2 w-full" />
-                          <Skeleton className="h-8 w-full" />
-                        </CardContent>
-                      </Card>
-                    ))}
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>
                 )}
 

@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { REQUEST_STATUS_META } from '@/constants/absence'
 import type { StudentRequest } from '@/store/services/studentRequestApi'
@@ -43,10 +43,8 @@ export function RequestDetailDialog({
         <ScrollArea className="flex-1">
           <div className="pr-4">
             {isLoading || !request ? (
-              <div className="space-y-3">
-                <Skeleton className="h-4 w-2/3" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-32 w-full" />
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : (
               <RequestDetail request={request} />

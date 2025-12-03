@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Loader2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -120,20 +120,8 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
 
   if (isLoadingData) {
     return (
-      <div className="space-y-6">
-        <div className="space-y-4">
-          <Skeleton className="h-6 w-48" />
-          <div className="rounded-lg border bg-card p-6 space-y-4">
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-20 w-full" />
-          </div>
-        </div>
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="rounded-lg border bg-card p-6 space-y-4">
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-32 w-full" />
-          </div>
-        ))}
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }

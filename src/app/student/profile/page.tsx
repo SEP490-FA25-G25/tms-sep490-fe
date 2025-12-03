@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import {
   Select,
@@ -225,53 +224,8 @@ export default function StudentProfilePage() {
           <AppSidebar variant="inset" />
           <SidebarInset>
             <SiteHeader />
-            <div className="flex flex-1 flex-col">
-              <div className="min-h-screen bg-background">
-                {/* Header Skeleton */}
-                <div className="border-b bg-background">
-                  <div className="@container/main py-6 md:py-8">
-                    <div className="px-4 lg:px-6 max-w-7xl mx-auto space-y-8">
-                      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="space-y-3">
-                          <div className="flex flex-wrap items-center gap-3">
-                            <Skeleton className="h-6 w-24" />
-                            <Skeleton className="h-6 w-20" />
-                          </div>
-                          <div className="space-y-1">
-                            <Skeleton className="h-8 w-48" />
-                            <Skeleton className="h-4 w-32" />
-                          </div>
-                          <div className="flex flex-wrap gap-4">
-                            <Skeleton className="h-4 w-28" />
-                            <Skeleton className="h-4 w-36" />
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-3">
-                          <Skeleton className="h-10 w-36" />
-                          <Skeleton className="h-10 w-28" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {/* Content Skeleton */}
-                <div className="@container/main py-6 md:py-8">
-                  <div className="px-4 lg:px-6 max-w-7xl mx-auto space-y-6">
-                    <Card className="p-6">
-                      <Skeleton className="h-6 w-40 mb-4" />
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {Array.from({ length: 6 }).map((_, idx) => (
-                          <div key={idx} className="space-y-2">
-                            <Skeleton className="h-4 w-24" />
-                            <Skeleton className="h-5 w-40" />
-                          </div>
-                        ))}
-                      </div>
-                    </Card>
-                    <Skeleton className="h-64 w-full" />
-                  </div>
-                </div>
-              </div>
+            <div className="flex flex-1 flex-col items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           </SidebarInset>
         </SidebarProvider>

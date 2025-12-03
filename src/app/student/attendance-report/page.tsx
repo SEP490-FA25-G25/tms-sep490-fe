@@ -5,7 +5,7 @@ import { StudentRoute } from "@/components/ProtectedRoute";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2 } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import {
@@ -65,13 +65,8 @@ export default function StudentAttendanceReportOverviewPage() {
               {(isLoading || isError || classes.length === 0) && (
                 <section className="flex flex-col gap-4 px-6 py-6">
                   {isLoading && (
-                    <div className="space-y-3">
-                      {[...Array(3)].map((_, index) => (
-                        <Skeleton
-                          key={index}
-                          className="h-24 w-full rounded-2xl"
-                        />
-                      ))}
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                     </div>
                   )}
 

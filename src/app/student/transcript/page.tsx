@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Loader2 } from 'lucide-react';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { useAuth } from '@/contexts/AuthContext';
@@ -187,15 +187,8 @@ const TranscriptPage = () => {
               {/* Main Content - 2 Columns Layout */}
               <main className="flex-1 overflow-hidden">
                 {isLoading && (
-                  <div className="grid grid-cols-1 lg:grid-cols-[minmax(340px,_2fr)_3fr] xl:grid-cols-[minmax(360px,_1fr)_2fr] h-full">
-                    <div className="border-r p-4 space-y-3">
-                      {Array.from({ length: 5 }).map((_, idx) => (
-                        <Skeleton key={idx} className="h-24 w-full" />
-                      ))}
-                    </div>
-                    <div className="p-6">
-                      <Skeleton className="h-full w-full" />
-                    </div>
+                  <div className="flex items-center justify-center h-full">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>
                 )}
 

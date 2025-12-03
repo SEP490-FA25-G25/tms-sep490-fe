@@ -18,7 +18,7 @@ import { SiteHeader } from '@/components/site-header'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Loader2 } from 'lucide-react'
 import {
   FullScreenModal,
   FullScreenModalBody,
@@ -393,8 +393,8 @@ export default function StudentSchedulePage() {
 
             <div className="flex-1 px-4 lg:px-6 py-6 overflow-hidden bg-muted/10 min-h-0">
               {isLoading && !hasError && (
-                <div className="h-full w-full rounded-xl border bg-background p-6">
-                  <Skeleton className="h-full w-full" />
+                <div className="flex h-full items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
               )}
 
@@ -530,10 +530,8 @@ function SessionDetailDialog({ sessionId, onClose }: SessionDetailDialogProps) {
         <FullScreenModalBody>
 
         {isLoading && (
-          <div className="space-y-3 py-4">
-            <Skeleton className="h-5 w-64" />
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-32 w-full" />
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         )}
 

@@ -7,7 +7,7 @@ import { ClassHeader } from '@/components/class/ClassHeader';
 import { StudentRoute } from '@/components/ProtectedRoute';
 import { SiteHeader } from '@/components/site-header';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Loader2 } from 'lucide-react';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGetClassDetailQuery, useGetClassmatesQuery } from '@/store/services/studentClassApi';
@@ -61,19 +61,8 @@ const ClassDetailPage = () => {
       return (
         <div className="border-b bg-background">
           <div className="@container/main py-6 md:py-8">
-            <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-4">
-              <div className="flex items-start gap-3">
-                <Skeleton className="h-10 w-10" />
-                <div className="space-y-2">
-                  <Skeleton className="h-6 w-48" />
-                  <Skeleton className="h-4 w-56" />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {Array.from({ length: 4 }).map((_, idx) => (
-                  <Skeleton key={idx} className="h-20 w-full" />
-                ))}
-              </div>
+            <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           </div>
         </div>
@@ -133,9 +122,8 @@ const ClassDetailPage = () => {
               <main className="flex-1">
                 <div className="max-w-7xl mx-auto space-y-6 px-4 py-6 sm:px-6 lg:px-8 md:py-8">
                   {isDetailLoading && (
-                    <div className="space-y-4">
-                      <Skeleton className="h-10 w-full" />
-                      <Skeleton className="h-40 w-full" />
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
                   )}
 
