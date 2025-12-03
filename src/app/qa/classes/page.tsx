@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useSearchParams, useNavigate } from "react-router-dom"
 import { useGetQAClassesQuery } from "@/store/services/qaApi"
+import { useGetMyBranchesQuery } from "@/store/services/branchApi"
 import type { QAClassListItemDTO } from "@/types/qa"
 import { DashboardLayout } from "@/components/DashboardLayout"
 import { ClassStatusBadge } from "@/components/qa/ClassStatusBadge"
@@ -31,7 +32,6 @@ import {
     PaginationLink,
     PaginationNext,
     PaginationPrevious,
-    PaginationEllipsis,
 } from "@/components/ui/pagination"
 import {
     Tooltip,
@@ -62,18 +62,25 @@ export default function QAClassesListPage() {
     const [searchTerm, setSearchTerm] = useState("")
     const [statusFilter, setStatusFilter] = useState<string>("all")
     const [modalityFilter, setModalityFilter] = useState<string>("all")
+    const [branchFilter, setBranchFilter] = useState<string>("all")
     const [page, setPage] = useState(0)
+
+    // Fetch branches assigned to current user for filter dropdown
+    const { data: branchesResponse } = useGetMyBranchesQuery()
+    const branches = branchesResponse?.data || []
 
     // Initialize state from URL parameters
     useEffect(() => {
         const search = searchParams.get('search') || ''
         const status = searchParams.get('status') || 'all'
         const modality = searchParams.get('modality') || 'all'
+        const branch = searchParams.get('branch') || 'all'
         const pageNum = parseInt(searchParams.get('page') || '0')
 
         setSearchTerm(search)
         setStatusFilter(status)
         setModalityFilter(modality)
+        setBranchFilter(branch)
         setPage(pageNum)
     }, [searchParams])
 
@@ -110,6 +117,12 @@ export default function QAClassesListPage() {
         updateUrlParams({ modality: value === 'all' ? null : value, page: '0' })
     }
 
+    const handleBranchChange = (value: string) => {
+        setBranchFilter(value)
+        setPage(0)
+        updateUrlParams({ branch: value === 'all' ? null : value, page: '0' })
+    }
+
     // Handle page change
     const handlePageChange = (newPage: number) => {
         setPage(newPage)
@@ -117,6 +130,7 @@ export default function QAClassesListPage() {
     }
 
     const { data: classesData, isLoading, error } = useGetQAClassesQuery({
+        branchIds: branchFilter === 'all' ? undefined : [parseInt(branchFilter)],
         search: searchTerm || undefined,
         status: statusFilter === 'all' ? undefined : statusFilter,
         page,
@@ -181,9 +195,9 @@ export default function QAClassesListPage() {
             description="Quản lý và theo dõi chất lượng các lớp học."
         >
             <div className="space-y-6">
-                {/* Header Actions */}
+                {/* Search & Filters */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="relative flex-1 max-w-md w-full">
+                    <div className="relative w-full sm:w-80">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Tìm theo mã lớp, tên khóa học..."
@@ -192,11 +206,22 @@ export default function QAClassesListPage() {
                             className="pl-8"
                         />
                     </div>
-                </div>
 
-                {/* Filters */}
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <Select value={branchFilter} onValueChange={handleBranchChange}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Chi nhánh" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Tất cả chi nhánh</SelectItem>
+                                {branches.map((branch) => (
+                                    <SelectItem key={branch.id} value={branch.id.toString()}>
+                                        {branch.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
                         <Select value={statusFilter} onValueChange={handleStatusChange}>
                             <SelectTrigger className="w-40">
                                 <SelectValue />
@@ -224,10 +249,6 @@ export default function QAClassesListPage() {
                                 ))}
                             </SelectContent>
                         </Select>
-                    </div>
-
-                    <div className="text-sm text-muted-foreground">
-                        Hiển thị {classes.length} / {totalCount} lớp học
                     </div>
                 </div>
 
@@ -309,7 +330,7 @@ export default function QAClassesListPage() {
                                         <div className="flex flex-col items-center justify-center text-center">
                                             <GraduationCap className="h-12 w-12 text-muted-foreground/50 mb-4" />
                                             <p className="text-muted-foreground">
-                                                {searchTerm || statusFilter !== 'all' || modalityFilter !== 'all'
+                                                {searchTerm || statusFilter !== 'all' || modalityFilter !== 'all' || branchFilter !== 'all'
                                                     ? "Không có lớp học nào phù hợp với bộ lọc đã chọn."
                                                     : "Chưa có lớp học nào."
                                                 }
@@ -323,79 +344,55 @@ export default function QAClassesListPage() {
                 </div>
 
                 {/* Pagination */}
-                {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+                    <p className="text-muted-foreground">
+                        Trang {page + 1} / {Math.max(totalPages, 1)} · {totalCount} lớp học
+                    </p>
                     <Pagination>
                         <PaginationContent>
                             <PaginationItem>
                                 <PaginationPrevious
-                                    onClick={() => page > 0 && handlePageChange(page - 1)}
-                                    className={page === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        if (page > 0) handlePageChange(page - 1)
+                                    }}
+                                    className={page === 0 ? "pointer-events-none opacity-50" : ""}
                                 />
                             </PaginationItem>
-
-                            {/* First page */}
-                            <PaginationItem>
-                                <PaginationLink
-                                    onClick={() => handlePageChange(0)}
-                                    isActive={page === 0}
-                                    className="cursor-pointer"
-                                >
-                                    1
-                                </PaginationLink>
-                            </PaginationItem>
-
-                            {/* Ellipsis before current */}
-                            {page > 2 && totalPages > 4 && (
-                                <PaginationItem>
-                                    <PaginationEllipsis />
-                                </PaginationItem>
-                            )}
-
-                            {/* Pages around current */}
-                            {Array.from({ length: Math.max(totalPages, 1) }, (_, i) => i)
-                                .filter(i => i !== 0 && i !== Math.max(totalPages, 1) - 1 && Math.abs(i - page) <= 1)
-                                .map(i => (
-                                    <PaginationItem key={i}>
+                            {Array.from({ length: Math.min(Math.max(totalPages, 1), 5) }, (_, i) => {
+                                let pageNum = i
+                                if (totalPages > 5 && page > 2) {
+                                    pageNum = Math.min(page - 2 + i, totalPages - 1)
+                                }
+                                return (
+                                    <PaginationItem key={pageNum}>
                                         <PaginationLink
-                                            onClick={() => handlePageChange(i)}
-                                            isActive={page === i}
-                                            className="cursor-pointer"
+                                            href="#"
+                                            onClick={(e) => {
+                                                e.preventDefault()
+                                                handlePageChange(pageNum)
+                                            }}
+                                            isActive={pageNum === page}
                                         >
-                                            {i + 1}
+                                            {pageNum + 1}
                                         </PaginationLink>
                                     </PaginationItem>
-                                ))
-                            }
-
-                            {/* Ellipsis after current */}
-                            {page < totalPages - 3 && totalPages > 4 && (
-                                <PaginationItem>
-                                    <PaginationEllipsis />
-                                </PaginationItem>
-                            )}
-
-                            {/* Last page */}
-                            {totalPages > 1 && (
-                                <PaginationItem>
-                                    <PaginationLink
-                                        onClick={() => handlePageChange(totalPages - 1)}
-                                        isActive={page === totalPages - 1}
-                                        className="cursor-pointer"
-                                    >
-                                        {totalPages}
-                                    </PaginationLink>
-                                </PaginationItem>
-                            )}
-
+                                )
+                            })}
                             <PaginationItem>
                                 <PaginationNext
-                                    onClick={() => page < totalPages - 1 && handlePageChange(page + 1)}
-                                    className={page >= totalPages - 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        if (page < totalPages - 1) handlePageChange(page + 1)
+                                    }}
+                                    className={page >= totalPages - 1 ? "pointer-events-none opacity-50" : ""}
                                 />
                             </PaginationItem>
                         </PaginationContent>
                     </Pagination>
-                )}
+                </div>
             </div>
         </DashboardLayout>
     )

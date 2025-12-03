@@ -43,6 +43,11 @@ export const branchApi = createApi({
       providesTags: ['Branch'],
     }),
 
+    getMyBranches: builder.query<ApiResponse<BranchResponse[]>, void>({
+      query: () => '/branches/my-branches',
+      providesTags: ['Branch'],
+    }),
+
     getBranchesByCenterId: builder.query<ApiResponse<BranchResponse[]>, number>({
       query: (centerId) => `/branches/center/${centerId}`,
       providesTags: (_result, _error, centerId) => [
@@ -102,6 +107,7 @@ export const branchApi = createApi({
 
 export const {
   useGetAllBranchesQuery,
+  useGetMyBranchesQuery,
   useGetBranchesByCenterIdQuery,
   useGetBranchByIdQuery,
   useCreateBranchMutation,
