@@ -2,6 +2,13 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import {
+  ResponsiveContainer,
+  PieChart as RePieChart,
+  Pie,
+  Cell,
+  Tooltip,
+} from "recharts";
 import { CLASS_STATUS_STYLES, getStatusStyle } from "@/lib/status-colors";
 
 interface AttendanceClassCardProps {
@@ -43,111 +50,115 @@ interface ProgressRingProps {
   attended: number;
   absent: number;
   excused?: number;
+  upcoming?: number;
   size?: number;
 }
 
-function AttendanceProgressRing({ attended, absent, excused = 0, size = 64 }: ProgressRingProps) {
-  // Tỷ lệ chuyên cần = có mặt / (có mặt + vắng không phép)
-  // EXCUSED không tính vào mẫu số vì đã xin phép
-  const total = attended + absent;
-  const totalWithExcused = attended + absent + excused;
-  const percentage = total > 0 ? Math.round((attended / total) * 100) : 0;
-  const hasOnlyExcused = total === 0 && excused > 0;
-  
-  // Proportional calculations
-  const strokeWidth = size * 0.1; // 10% of size
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
-  const center = size / 2;
+function AttendanceProgressRing({ attended, absent, excused = 0, upcoming = 0, size = 80 }: ProgressRingProps) {
+  // Proportional radius based on size - thicker ring
+  const innerRadius = size * 0.32;
+  const outerRadius = size * 0.48;
 
-  // Determine color based on percentage
-  const getProgressColor = () => {
-    if (percentage >= 80) return "text-emerald-500";
-    if (percentage >= 50) return "text-amber-500";
-    return "text-rose-500";
+  // Tính tỷ lệ chuyên cần = có mặt / (có mặt + vắng không phép)
+  const attendedAndAbsent = attended + absent;
+  const percentage = attendedAndAbsent > 0 ? Math.round((attended / attendedAndAbsent) * 100) : 0;
+  
+  const total = attended + absent + excused + upcoming;
+  const hasNoData = total === 0;
+
+  // Colors matching the legend
+  const COLORS = {
+    attended: "#10b981",  // emerald-500
+    absent: "#f43f5e",    // rose-500
+    excused: "#6366f1",   // indigo-500
+    upcoming: "#0ea5e9",  // sky-500
+    empty: "#e5e7eb",     // gray-200
   };
 
-  // Trường hợp đặc biệt: chỉ có buổi vắng có phép
-  if (hasOnlyExcused) {
+  // Trường hợp không có dữ liệu
+  if (hasNoData) {
     return (
       <div 
         className="relative shrink-0 flex items-center justify-center" 
         style={{ width: size, height: size }}
         role="img"
-        aria-label={`Chỉ có ${excused} buổi vắng có phép`}
+        aria-label="Chưa có dữ liệu điểm danh"
       >
-        <svg 
-          className="transform -rotate-90" 
-          width={size} 
-          height={size}
-          viewBox={`0 0 ${size} ${size}`}
-        >
-          <circle
-            className="text-muted/30"
-            strokeWidth={strokeWidth}
-            stroke="currentColor"
-            fill="transparent"
-            r={radius}
-            cx={center}
-            cy={center}
-          />
-        </svg>
+        <ResponsiveContainer width={size} height={size}>
+          <RePieChart>
+            <Pie
+              data={[{ name: "Chưa có dữ liệu", value: 1 }]}
+              innerRadius={innerRadius}
+              outerRadius={outerRadius}
+              paddingAngle={0}
+              dataKey="value"
+            >
+              <Cell fill={COLORS.empty} />
+            </Pie>
+          </RePieChart>
+        </ResponsiveContainer>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-xs font-medium text-muted-foreground">Có phép</span>
+          <span className="text-[10px] font-medium text-muted-foreground">N/A</span>
         </div>
       </div>
     );
   }
 
+  // Build chart data - chỉ thêm những phần có giá trị > 0
+  const chartData = [];
+  if (attended > 0) chartData.push({ name: "Có mặt", value: attended, color: COLORS.attended });
+  if (absent > 0) chartData.push({ name: "Vắng", value: absent, color: COLORS.absent });
+  if (excused > 0) chartData.push({ name: "Có phép", value: excused, color: COLORS.excused });
+  if (upcoming > 0) chartData.push({ name: "Sắp tới", value: upcoming, color: COLORS.upcoming });
+
   return (
     <div 
-      className="relative shrink-0" 
+      className="relative shrink-0 overflow-visible" 
       style={{ width: size, height: size }}
       role="progressbar"
       aria-valuenow={percentage}
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-label={`Tỉ lệ có mặt: ${percentage}% (${attended}/${totalWithExcused} buổi)`}
+      aria-label={`Tỉ lệ có mặt: ${percentage}%`}
     >
-      <svg 
-        className="transform -rotate-90" 
-        width={size} 
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
-      >
-        {/* Track (background circle) */}
-        <circle
-          className="text-muted/30"
-          strokeWidth={strokeWidth}
-          stroke="currentColor"
-          fill="transparent"
-          r={radius}
-          cx={center}
-          cy={center}
-        />
-        {/* Progress indicator */}
-        <circle
-          className={cn(
-            getProgressColor(),
-            "transition-all duration-700 ease-out"
-          )}
-          strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
-          stroke="currentColor"
-          fill="transparent"
-          r={radius}
-          cx={center}
-          cy={center}
-          style={{
-            // Animation on mount
-            animation: "progress-ring 1s ease-out forwards",
-          }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
+      <ResponsiveContainer width={size} height={size}>
+        <RePieChart>
+          <Pie
+            data={chartData}
+            innerRadius={innerRadius}
+            outerRadius={outerRadius}
+            paddingAngle={2}
+            dataKey="value"
+          >
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color} />
+            ))}
+          </Pie>
+          <Tooltip
+            wrapperStyle={{ zIndex: 1000, pointerEvents: 'none' }}
+            allowEscapeViewBox={{ x: true, y: true }}
+            position={{ x: size + 8, y: size / 2 - 20 }}
+            content={({ active, payload }) => {
+              if (active && payload && payload.length) {
+                const data = payload[0];
+                const value = data.value as number;
+                const name = data.name as string;
+                const pct = total > 0 ? (value / total) * 100 : 0;
+                return (
+                  <div className="rounded-lg border bg-background px-3 py-2 shadow-lg whitespace-nowrap">
+                    <p className="text-sm font-medium">{name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {value} buổi ({pct.toFixed(1)}%)
+                    </p>
+                  </div>
+                );
+              }
+              return null;
+            }}
+          />
+        </RePieChart>
+      </ResponsiveContainer>
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <span className="text-sm font-bold text-foreground tabular-nums">
           {percentage}%
         </span>
@@ -212,8 +223,8 @@ export function AttendanceClassCard({
       </div>
 
       {/* Stats Row */}
-      <div className="flex items-center gap-5">
-        <AttendanceProgressRing attended={attended} absent={absent} excused={excused} size={64} />
+      <div className="flex items-center gap-6">
+        <AttendanceProgressRing attended={attended} absent={absent} excused={excused} upcoming={upcoming} size={80} />
 
         <div className="flex-1 space-y-2 text-sm">
           {/* Total sessions */}
