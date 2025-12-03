@@ -23,6 +23,7 @@ export interface ClassMetric {
   value: number;
   isBelowThreshold: boolean;
   studentCount: number;
+  status?: 'DRAFT' | 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
 }
 
 // Trend Data (Line Chart)

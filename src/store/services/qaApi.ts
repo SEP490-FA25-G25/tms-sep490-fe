@@ -61,10 +61,10 @@ export const qaApi = createApi({
     }),
 
     // Dashboard - Class Comparison for specific course
-    getClassComparison: builder.query<ClassComparisonData, { courseId: number; metricType?: string; sortBy?: string }>({
-      query: ({ courseId, metricType = 'ATTENDANCE', sortBy = 'VALUE_ASC' }) => ({
+    getClassComparison: builder.query<ClassComparisonData, { courseId: number; metricType?: string; sortBy?: string; status?: string }>({
+      query: ({ courseId, metricType = 'ATTENDANCE', sortBy = 'VALUE_ASC', status }) => ({
         url: '/qa/dashboard/comparison',
-        params: { courseId, metricType, sortBy },
+        params: { courseId, metricType, sortBy, ...(status && { status }) },
       }),
       transformResponse: (response: { data: ClassComparisonData }) => response.data,
       providesTags: (_result, _error, { courseId }) => [{ type: 'QADashboard', id: `comparison-${courseId}` }],

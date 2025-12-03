@@ -13,16 +13,26 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { Combobox, type ComboboxOption } from "@/components/ui/combobox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { AlertTriangle, BarChart3, TrendingUp, FileText } from "lucide-react"
 import { Link } from "react-router-dom"
 
+// Class status options for filter
+const CLASS_STATUS_OPTIONS: ComboboxOption[] = [
+    { value: "ALL", label: "Tất cả trạng thái" },
+    { value: "ONGOING", label: "Đang học" },
+    { value: "SCHEDULED", label: "Đã lên lịch" },
+    { value: "COMPLETED", label: "Hoàn thành" },
+]
+
 export default function QADashboardPage() {
     // State for chart selections
     const [selectedCourseId, setSelectedCourseId] = React.useState<number | null>(null)
     const [selectedClassId, setSelectedClassId] = React.useState<number | null>(null)
+    const [selectedStatus, setSelectedStatus] = React.useState<string>("ALL")
 
     const { data: dashboard, isLoading, error } = useGetQADashboardQuery({})
 
@@ -41,7 +51,11 @@ export default function QADashboardPage() {
         isLoading: isComparisonLoading,
         isFetching: isComparisonFetching
     } = useGetClassComparisonQuery(
-        { courseId: selectedCourseId!, metricType: 'ATTENDANCE' },
+        { 
+            courseId: selectedCourseId!, 
+            metricType: 'ATTENDANCE',
+            status: selectedStatus !== "ALL" ? selectedStatus : undefined 
+        },
         { skip: !selectedCourseId }
     )
 
@@ -97,6 +111,22 @@ export default function QADashboardPage() {
         }
         return null
     }, [selectedClassId, classesForSelectedCourse, trendData])
+
+    // Memoized options for comboboxes
+    const courseOptions: ComboboxOption[] = React.useMemo(() => {
+        if (!dashboard?.courseOptions) return []
+        return dashboard.courseOptions.map(course => ({
+            value: course.courseId.toString(),
+            label: course.courseName,
+        }))
+    }, [dashboard?.courseOptions])
+
+    const classOptions: ComboboxOption[] = React.useMemo(() => {
+        return classesForSelectedCourse.map(cls => ({
+            value: cls.classId.toString(),
+            label: cls.classCode,
+        }))
+    }, [classesForSelectedCourse])
 
     if (isLoading) {
         return (
@@ -169,26 +199,36 @@ export default function QADashboardPage() {
                                         </CardDescription>
                                     </div>
                                 </div>
-                                {dashboard.courseOptions && dashboard.courseOptions.length > 0 && (
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {/* Course Combobox */}
+                                    {courseOptions.length > 0 && (
+                                        <Combobox
+                                            options={courseOptions}
+                                            value={selectedCourseId?.toString() || ""}
+                                            onValueChange={handleCourseChange}
+                                            placeholder="Chọn khóa học"
+                                            searchPlaceholder="Tìm khóa học..."
+                                            emptyText="Không tìm thấy khóa học"
+                                            className="w-[200px]"
+                                        />
+                                    )}
+                                    {/* Status Filter */}
                                     <Select
-                                        value={selectedCourseId?.toString() || ""}
-                                        onValueChange={handleCourseChange}
+                                        value={selectedStatus}
+                                        onValueChange={setSelectedStatus}
                                     >
-                                        <SelectTrigger className="w-[200px]">
-                                            <SelectValue placeholder="Chọn khóa học" />
+                                        <SelectTrigger className="w-[160px]">
+                                            <SelectValue placeholder="Trạng thái" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {dashboard.courseOptions.map((course) => (
-                                                <SelectItem
-                                                    key={course.courseId}
-                                                    value={course.courseId.toString()}
-                                                >
-                                                    {course.courseName}
+                                            {CLASS_STATUS_OPTIONS.map((option) => (
+                                                <SelectItem key={option.value} value={option.value}>
+                                                    {option.label}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                )}
+                                </div>
                             </div>
                         </CardHeader>
                         <CardContent>
@@ -200,7 +240,10 @@ export default function QADashboardPage() {
                                 <ClassComparisonChart data={comparisonData} />
                             ) : (
                                 <div className="flex items-center justify-center h-64 text-muted-foreground">
-                                    Chọn khóa học để xem so sánh
+                                    {selectedCourseId 
+                                        ? "Không có lớp học nào phù hợp với bộ lọc"
+                                        : "Chọn khóa học để xem so sánh"
+                                    }
                                 </div>
                             )}
                         </CardContent>
@@ -226,25 +269,16 @@ export default function QADashboardPage() {
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
-                                {classesForSelectedCourse.length > 0 && (
-                                    <Select
+                                {classOptions.length > 0 && (
+                                    <Combobox
+                                        options={classOptions}
                                         value={selectedClassId?.toString() || ""}
                                         onValueChange={handleClassChange}
-                                    >
-                                        <SelectTrigger className="w-[180px]">
-                                            <SelectValue placeholder="Chọn lớp" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {classesForSelectedCourse.map((cls) => (
-                                                <SelectItem
-                                                    key={cls.classId}
-                                                    value={cls.classId.toString()}
-                                                >
-                                                    {cls.classCode}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                        placeholder="Chọn lớp"
+                                        searchPlaceholder="Tìm lớp..."
+                                        emptyText="Không tìm thấy lớp"
+                                        className="w-[180px]"
+                                    />
                                 )}
                             </div>
                         </div>
