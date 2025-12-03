@@ -58,17 +58,17 @@ const REPORT_TYPE_CONFIG: Record<QAReportType, {
     },
     [QAReportType.CLO_ACHIEVEMENT_ANALYSIS]: {
         label: "Phân tích mức độ đạt CLO",
-        description: "Phân tích mức độ đạt được các chuẩn đầu ra của buổi/giai đoạn.",
+        description: "Phân tích mức độ đạt được các chuẩn đầu ra của giai đoạn học.",
         requiresSession: false,
-        requiresPhase: false,
-        level: 'session_or_phase'
+        requiresPhase: true,
+        level: 'phase'
     },
     [QAReportType.STUDENT_FEEDBACK_ANALYSIS]: {
         label: "Phân tích phản hồi học viên",
-        description: "Tổng hợp và phân tích phản hồi từ học viên sau buổi/giai đoạn.",
+        description: "Tổng hợp và phân tích phản hồi từ học viên sau giai đoạn học.",
         requiresSession: false,
-        requiresPhase: false,
-        level: 'session_or_phase'
+        requiresPhase: true,
+        level: 'phase'
     },
     [QAReportType.ATTENDANCE_ENGAGEMENT_REVIEW]: {
         label: "Đánh giá chuyên cần và tham gia",
