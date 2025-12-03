@@ -164,7 +164,7 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
                     </Button>
                     <Button>
                         <FileText className="h-4 w-4 mr-2" />
-                        Tạo Báo Cáo QA
+                        Tạo báo cáo
                     </Button>
                 </div>
             </div>
@@ -377,7 +377,7 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
                 <Button>
                     <Plus className="h-4 w-4 mr-2" />
                     <FileText className="h-4 w-4 mr-2" />
-                    Tạo Báo Cáo QA từ Phản Hồi
+                    Tạo báo cáo từ phản hồi
                 </Button>
             </div>
         </div>

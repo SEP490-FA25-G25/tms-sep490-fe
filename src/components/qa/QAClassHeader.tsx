@@ -66,7 +66,7 @@ export function QAClassHeader({ classInfo }: QAClassHeaderProps) {
               <Button asChild>
                 <Link to={`/qa/reports/create?classId=${classInfo.classId}`}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Tạo Báo Cáo QA
+                  Tạo báo cáo
                 </Link>
               </Button>
             </div>

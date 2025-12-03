@@ -159,7 +159,7 @@ export default function QAReportsListPage() {
         <Button asChild>
             <Link to="/qa/reports/create">
                 <Plus className="h-4 w-4 mr-2" />
-                Tạo Báo Cáo
+                Tạo báo cáo
             </Link>
         </Button>
     )

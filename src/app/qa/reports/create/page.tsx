@@ -265,7 +265,7 @@ export default function CreateQAReportPage() {
 
     return (
         <DashboardLayout
-            title="Tạo Báo Cáo QA"
+            title="Tạo báo cáo"
             description="Lập báo cáo đánh giá chất lượng giảng dạy và học tập"
         >
             <div className="space-y-6">

@@ -376,7 +376,7 @@ export default function SessionDetailsPage() {
                         <Button asChild>
                             <Link to={`/qa/reports/create?classId=${classId}&sessionId=${sessionId}`}>
                                 <Plus className="h-4 w-4 mr-2" />
-                                Tạo Báo Cáo
+                                Tạo báo cáo
                             </Link>
                         </Button>
                     </div>

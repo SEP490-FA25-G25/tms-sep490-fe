@@ -264,7 +264,7 @@ export function QAReportsListTab({ classId }: QAReportsListTabProps) {
                         </p>
                         {!hasActiveFilters && (
                             <p className="text-sm text-muted-foreground mt-2">
-                                Sử dụng nút "Tạo Báo Cáo QA" ở trên để tạo báo cáo đầu tiên.
+                                Sử dụng nút "Tạo báo cáo" ở trên để tạo báo cáo đầu tiên.
                             </p>
                         )}
                     </div>

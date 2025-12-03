@@ -278,7 +278,7 @@ const roleBasedNav = {
         icon: SchoolIcon,
       },
       {
-        title: "Tạo báo cáo QA",
+        title: "Tạo báo cáo",
         url: "/qa/reports/create",
         icon: PlusIcon,
       },
