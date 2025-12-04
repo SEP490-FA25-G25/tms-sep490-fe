@@ -28,6 +28,8 @@ import { qaApi } from "./services/qaApi";
 import { studentFeedbackApi } from "./services/studentFeedbackApi";
 import { resourceApi } from "./services/resourceApi";
 import { timeSlotApi } from "./services/timeSlotApi";
+import { publicApi } from "./services/publicApi";
+import { consultationApi } from "./services/consultationApi";
 import authSlice, {
   setCredentials,
   logout,
@@ -75,6 +77,8 @@ export const store = configureStore({
     [studentFeedbackApi.reducerPath]: studentFeedbackApi.reducer,
     [resourceApi.reducerPath]: resourceApi.reducer,
     [timeSlotApi.reducerPath]: timeSlotApi.reducer,
+    [publicApi.reducerPath]: publicApi.reducer,
+    [consultationApi.reducerPath]: consultationApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -116,7 +120,9 @@ export const store = configureStore({
       .concat(qaApi.middleware)
       .concat(studentFeedbackApi.middleware)
       .concat(resourceApi.middleware)
-      .concat(timeSlotApi.middleware),
+      .concat(timeSlotApi.middleware)
+      .concat(publicApi.middleware)
+      .concat(consultationApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

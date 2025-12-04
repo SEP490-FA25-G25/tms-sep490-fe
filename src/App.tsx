@@ -70,6 +70,7 @@ const AcademicStudentsPage = lazy(() => import("./app/academic/students/page"));
 const CreateClassPage = lazy(() => import("./app/academic/classes/create/page"));
 const EditClassPage = lazy(() => import("./app/academic/classes/[id]/edit/page"));
 const AvailabilityCampaignPage = lazy(() => import("./app/academic/teacher-availability/page"));
+const ConsultationRegistrationsPage = lazy(() => import("./app/academic/consultation-registrations/page"));
 
 // Center Head pages
 const CenterHeadApprovalsPage = lazy(() => import("./app/center-head/approvals/page"));
@@ -686,6 +687,14 @@ function App() {
                   ]}
                 >
                   <AvailabilityCampaignPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academic/consultation-registrations"
+              element={
+                <ProtectedRoute requiredRoles={["ACADEMIC_AFFAIR"]}>
+                  <ConsultationRegistrationsPage />
                 </ProtectedRoute>
               }
             />

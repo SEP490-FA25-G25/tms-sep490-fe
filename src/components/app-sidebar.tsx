@@ -296,6 +296,11 @@ const roleBasedNav = {
         icon: HomeIcon,
       },
       {
+        title: "Đăng ký tư vấn",
+        url: "/academic/consultation-registrations",
+        icon: MessageCircleIcon,
+      },
+      {
         title: "Quản lý lớp học",
         url: "/academic/classes",
         icon: CalendarIcon,

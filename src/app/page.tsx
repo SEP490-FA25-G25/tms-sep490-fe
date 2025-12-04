@@ -18,6 +18,7 @@ import { FeatureCarousel } from "@/components/FeatureCarousel"
 import { LearningModes } from '@/components/LearningModes';
 import { FeaturedCourses } from '@/components/FeaturedCourses';
 import { Studywithpannacle } from '@/components/Studywithpannacle';
+import { ConsultationForm } from '@/components/ConsultationForm';
 
 const topBanner = new URL("../assets/Linhvat2.png", import.meta.url).href
 const consultLogo = new URL("../assets/logo.png", import.meta.url).href
@@ -264,38 +265,7 @@ export default function LandingPage() {
             </div>
 
             <div className="lp-form-wrapper">
-              <form onSubmit={(e) => e.preventDefault()}>
-                <div className="lp-form-group">
-                  <label className="lp-form-label">Họ và tên</label>
-                  <input type="text" className="lp-form-input" placeholder="Nhập họ và tên" required />
-                </div>
-
-                <div className="lp-form-group">
-                  <label className="lp-form-label">Email</label>
-                  <input type="email" className="lp-form-input" placeholder="Nhập email" required />
-                </div>
-
-                <div className="lp-form-group">
-                  <label className="lp-form-label">Số điện thoại</label>
-                  <input type="tel" className="lp-form-input" placeholder="Nhập số điện thoại" required />
-                </div>
-
-                <div className="lp-form-group">
-                  <label className="lp-form-label">Chọn khóa học quan tâm</label>
-                  <select className="lp-form-select" defaultValue="">
-                    <option value="" disabled>Chọn khóa học</option>
-                    <option value="ielts">IELTS Foundation / Intermediate / Advanced</option>
-                    <option value="toeic">TOEIC 450+ / 650+ / 800+</option>
-                    <option value="cambridge">Cambridge Starters / Movers / Flyers</option>
-                    <option value="giao-tiep">Tiếng Anh Giao Tiếp</option>
-                    <option value="other">Khác</option>
-                  </select>
-                </div>
-
-                <button type="submit" className="lp-btn lp-btn-primary" style={{ width: "100%", marginTop: "1rem" }}>
-                  Gửi đăng ký
-                </button>
-              </form>
+              <ConsultationForm />
             </div>
           </div>
         </section>
