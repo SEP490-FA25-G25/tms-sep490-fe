@@ -28,13 +28,13 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
     readOnly = false,
 }) => {
     const isAvailable = (dayId: number, slotId: number) => {
-        return availabilityData?.availabilities.some(
+        return (availabilityData?.availabilities || []).some(
             (a) => a.dayOfWeek === dayId && a.timeSlotTemplateId === slotId
         );
     };
 
     const isLocked = (dayId: number, slotId: number) => {
-        return availabilityData?.lockedSlots.some(
+        return (availabilityData?.lockedSlots || []).some(
             (l) => l.dayOfWeek === dayId && l.timeSlotId === slotId
         );
     };
