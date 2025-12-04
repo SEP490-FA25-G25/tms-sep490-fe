@@ -1,35 +1,12 @@
 import { Badge } from '@/components/ui/badge'
-import type { ClassDetailDTO, SessionDTO, TeacherSummaryDTO } from '@/store/services/classApi'
-import { Calendar, Clock, MapPin, User } from 'lucide-react'
+import type { ClassDetailDTO, TeacherSummaryDTO } from '@/store/services/classApi'
+import { User } from 'lucide-react'
 
 interface OverviewTabProps {
   classData: ClassDetailDTO
 }
 
-const formatDate = (dateString?: string) => {
-  if (!dateString) return '—'
-  return new Date(dateString).toLocaleDateString('vi-VN', {
-    weekday: 'short',
-    day: '2-digit',
-    month: '2-digit',
-  })
-}
-
-const getSessionStatusBadge = (status: string) => {
-  switch (status) {
-    case 'SCHEDULED':
-      return <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">Sắp diễn ra</Badge>
-    case 'COMPLETED':
-      return <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">Hoàn thành</Badge>
-    case 'CANCELLED':
-      return <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-200">Đã hủy</Badge>
-    default:
-      return <Badge variant="outline" className="text-xs">{status}</Badge>
-  }
-}
-
 export function OverviewTab({ classData }: OverviewTabProps) {
-  const upcomingSessions = classData.upcomingSessions || []
   const teachers = classData.teachers || []
 
   const formatDateTime = (dateString?: string) => {
@@ -76,61 +53,6 @@ export function OverviewTab({ classData }: OverviewTabProps) {
         </div>
       )}
 
-      {/* Upcoming Sessions Section */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Buổi học sắp tới</h3>
-          {upcomingSessions.length > 6 && (
-            <span className="text-sm text-muted-foreground">
-              Hiển thị 6/{upcomingSessions.length} buổi
-            </span>
-          )}
-        </div>
-
-        {upcomingSessions.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {upcomingSessions.slice(0, 6).map((session: SessionDTO) => (
-              <div
-                key={session.id}
-                className="rounded-lg border bg-card p-4 space-y-3"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{formatDate(session.date)}</span>
-                  </div>
-                  {getSessionStatusBadge(session.status)}
-                </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Clock className="h-3.5 w-3.5" />
-                    <span>{session.startTime} - {session.endTime}</span>
-                  </div>
-                  {session.room && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5" />
-                      <span>{session.room}</span>
-                    </div>
-                  )}
-                  {session.teachers && session.teachers.length > 0 && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <User className="h-3.5 w-3.5" />
-                      <span className="truncate">
-                        {session.teachers.map(t => t.fullName).join(', ')}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-lg border border-dashed p-8 text-center">
-            <Calendar className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
-            <p className="text-muted-foreground">Chưa có buổi học nào được lên lịch</p>
-          </div>
-        )}
-      </div>
 
       {/* Course Info Section */}
       <div>
