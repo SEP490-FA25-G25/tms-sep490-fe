@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { Step1BasicInfo, validateStep1 } from "./Step1BasicInfo";
 import { Step2CLO, validateStep2 } from "./Step2CLO";
 import { Step3Structure, validateStep3 } from "./Step3Structure";
-import { Step4Assessment } from "./Step4Assessment";
+import { Step4Assessment, validateStep4 } from "./Step4Assessment";
 import { Step6Review } from "./Step6Review";
 import { useCreateCourseMutation, useUpdateCourseMutation, useSubmitCourseMutation, useGetAllCoursesQuery } from "@/store/services/courseApi";
 import type { CourseDetail } from "@/store/services/courseApi";
@@ -315,6 +315,16 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                     return;
                 }
             }
+
+            // Validate Step 4: Assessment validation
+            if (currentStep === 4) {
+                const step4Validation = validateStep4(formData);
+                
+                if (!step4Validation.isValid) {
+                    step4Validation.errors.forEach(error => toast.error(error));
+                    return;
+                }
+            }
             setCurrentStep((prev) => prev + 1);
         } else {
             // Validate before submit
@@ -598,126 +608,208 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
     };
 
     return (
-        <div className="container mx-auto py-6 max-w-7xl">
-            {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold">
-                    {isEditMode
-                        ? (initialData?.status === 'DRAFT' ? "Tiếp tục tạo Khóa học" : "Chỉnh sửa Khóa học")
-                        : "Tạo Khóa học Mới"}
-                </h1>
-                <p className="text-muted-foreground">
-                    {isEditMode
-                        ? (initialData?.status === 'DRAFT' ? "Hoàn thiện các thông tin để tạo khóa học." : "Cập nhật thông tin đề cương khóa học.")
-                        : "Thực hiện theo các bước để định nghĩa đề cương khóa học."}
-                </p>
-            </div>
-
-            {/* Stepper */}
-            <div className="mb-8">
-                <div className="flex items-center justify-between relative">
-                    <div className="absolute left-0 top-1/2 w-full h-0.5 bg-muted -z-10" />
-                    {STEPS.map((step) => {
-                        const isActive = step.id === currentStep;
-                        const isCompleted = step.id < currentStep;
-
-                        return (
-                            <div key={step.id} className="flex flex-col items-center gap-2 bg-background px-2">
-                                <div
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors ${isActive
-                                        ? "border-primary bg-primary text-primary-foreground"
-                                        : isCompleted
-                                            ? "border-primary bg-primary text-primary-foreground"
-                                            : "border-muted-foreground text-muted-foreground"
-                                        }`}
-                                >
-                                    {isCompleted ? <Check className="w-4 h-4" /> : step.id}
-                                </div>
-                                <span
-                                    className={`text-xs font-medium ${isActive ? "text-primary" : "text-muted-foreground"
-                                        }`}
-                                >
-                                    {step.title}
-                                </span>
+        <div className="min-h-screen bg-muted/30">
+            {/* Sticky Header */}
+            <div className="sticky top-0 z-50 bg-background border-b shadow-sm">
+                <div className="w-full px-6">
+                    <div className="flex items-center justify-between h-16">
+                        <div className="flex items-center gap-4">
+                            <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={handleBack}
+                                className="text-muted-foreground hover:text-foreground"
+                            >
+                                {currentStep === 1 ? (
+                                    <>
+                                        <LogOut className="mr-2 h-4 w-4" />
+                                        Thoát
+                                    </>
+                                ) : (
+                                    <>
+                                        <ChevronRight className="mr-2 h-4 w-4 rotate-180" />
+                                        Quay lại
+                                    </>
+                                )}
+                            </Button>
+                            <Separator orientation="vertical" className="h-6" />
+                            <div>
+                                <h1 className="text-lg font-semibold">
+                                    {isEditMode
+                                        ? (initialData?.status === 'DRAFT' ? "Tiếp tục tạo Khóa học" : "Chỉnh sửa Khóa học")
+                                        : "Tạo Khóa học Mới"}
+                                </h1>
+                                <p className="text-xs text-muted-foreground">
+                                    {formData.basicInfo?.name || "Chưa đặt tên"}
+                                    {formData.basicInfo?.code && ` • ${formData.basicInfo.code}`}
+                                </p>
                             </div>
-                        );
-                    })}
+                        </div>
+
+                        {/* Action Buttons in Header */}
+                        <div className="flex items-center gap-2">
+                            {/* Save Draft Split Button */}
+                            <div className="flex">
+                                <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={handleSaveAndContinue} 
+                                    disabled={isLoading || isSubmitting}
+                                    className="rounded-r-none border-r-0"
+                                >
+                                    {isLoading ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Save className="mr-2 h-4 w-4" />
+                                    )}
+                                    Lưu nháp
+                                </Button>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm"
+                                            disabled={isLoading || isSubmitting}
+                                            className="rounded-l-none px-2"
+                                        >
+                                            <ChevronDown className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={handleSaveAndContinue}>
+                                            <Save className="mr-2 h-4 w-4" />
+                                            Lưu & Tiếp tục
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={handleSaveAndExit}>
+                                            <LogOut className="mr-2 h-4 w-4" />
+                                            Lưu & Thoát
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+
+                            {currentStep === STEPS.length && canSubmit && (
+                                <Button
+                                    size="sm"
+                                    onClick={handleNext}
+                                    disabled={isLoading || isSubmitting}
+                                    className="bg-green-600 hover:bg-green-700"
+                                >
+                                    {isSubmitting ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Check className="mr-2 h-4 w-4" />
+                                    )}
+                                    Gửi phê duyệt
+                                </Button>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Content */}
-            <Card className="min-h-[500px] flex flex-col">
-                <CardContent className="p-6 flex-1">
-                    {currentStep === 1 && <Step1BasicInfo data={formData} setData={setFormData} courseStatus={initialData?.status} courseId={initialData?.id} />}
-                    {currentStep === 2 && <Step2CLO data={formData} setData={setFormData} />}
-                    {currentStep === 3 && <Step3Structure data={formData} setData={setFormData} />}
-                    {currentStep === 4 && <Step4Assessment data={formData} setData={setFormData} />}
-                    {currentStep === 5 && <Step6Review data={formData} />}
-                </CardContent>
+            <div className="container mx-auto max-w-7xl px-6 py-6">
+                {/* Enhanced Stepper */}
+                <div className="mb-8">
+                    <div className="relative">
+                        {/* Progress Line */}
+                        <div className="absolute top-5 left-0 right-0 h-0.5 bg-muted" />
+                        <div 
+                            className="absolute top-5 left-0 h-0.5 bg-primary transition-all duration-500"
+                            style={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 100}%` }}
+                        />
+                        
+                        {/* Steps */}
+                        <div className="relative flex justify-between">
+                            {STEPS.map((step) => {
+                                const isActive = step.id === currentStep;
+                                const isCompleted = step.id < currentStep;
 
-                <Separator />
-
-                <div className="p-6 flex justify-between bg-muted/10">
-                    <Button variant="outline" onClick={handleBack}>
-                        {currentStep === 1 ? "Hủy" : "Quay lại"}
-                    </Button>
-                    <div className="flex gap-2">
-                        {/* Split Button for Save Draft */}
-                        <div className="flex">
-                            <Button 
-                                variant="outline" 
-                                onClick={handleSaveAndContinue} 
-                                disabled={isLoading || isSubmitting}
-                                className="rounded-r-none border-r-0"
-                            >
-                                <Save className="mr-2 h-4 w-4" />
-                                Lưu nháp
-                            </Button>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button 
-                                        variant="outline" 
-                                        size="icon"
-                                        disabled={isLoading || isSubmitting}
-                                        className="rounded-l-none"
+                                return (
+                                    <div 
+                                        key={step.id} 
+                                        className="flex flex-col items-center"
+                                        onClick={() => {
+                                            // Allow navigation to completed steps
+                                            if (isCompleted) {
+                                                setCurrentStep(step.id);
+                                            }
+                                        }}
                                     >
-                                        <ChevronDown className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={handleSaveAndContinue}>
-                                        <Save className="mr-2 h-4 w-4" />
-                                        Lưu & Tiếp tục
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={handleSaveAndExit}>
-                                        <LogOut className="mr-2 h-4 w-4" />
-                                        Lưu & Thoát
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                                        <div
+                                            className={`w-10 h-10 rounded-full flex items-center justify-center border-2 bg-background transition-all duration-300 ${
+                                                isActive
+                                                    ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-110"
+                                                    : isCompleted
+                                                        ? "border-primary bg-primary text-primary-foreground cursor-pointer hover:scale-105"
+                                                        : "border-muted text-muted-foreground"
+                                            }`}
+                                        >
+                                            {isCompleted ? (
+                                                <Check className="w-5 h-5" />
+                                            ) : (
+                                                <span className="font-semibold">{step.id}</span>
+                                            )}
+                                        </div>
+                                        <div className="mt-3 text-center">
+                                            <span
+                                                className={`text-sm font-medium block ${
+                                                    isActive 
+                                                        ? "text-primary" 
+                                                        : isCompleted 
+                                                            ? "text-foreground cursor-pointer" 
+                                                            : "text-muted-foreground"
+                                                }`}
+                                            >
+                                                {step.title}
+                                            </span>
+                                            {isActive && (
+                                                <span className="text-xs text-muted-foreground mt-0.5 block">
+                                                    Bước hiện tại
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
+                    </div>
+                </div>
 
-                        {(currentStep < STEPS.length || canSubmit) && (
-                            <Button
-                                onClick={handleNext}
-                                disabled={isLoading || isSubmitting}
-                                className={currentStep === STEPS.length ? "bg-green-600 hover:bg-green-700" : ""}
-                            >
-                                {isLoading || isSubmitting ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                ) : currentStep === STEPS.length ? (
-                                    "Gửi phê duyệt"
-                                ) : (
-                                    <>
-                                        Tiếp theo
-                                        <ChevronRight className="ml-2 h-4 w-4" />
-                                    </>
-                                )}
+                {/* Main Content Card */}
+                <Card className="shadow-sm border-muted/50">
+                    <CardContent className="p-6 min-h-[500px]">
+                        {currentStep === 1 && <Step1BasicInfo data={formData} setData={setFormData} courseStatus={initialData?.status} courseId={initialData?.id} />}
+                        {currentStep === 2 && <Step2CLO data={formData} setData={setFormData} />}
+                        {currentStep === 3 && <Step3Structure data={formData} setData={setFormData} />}
+                        {currentStep === 4 && <Step4Assessment data={formData} setData={setFormData} />}
+                        {currentStep === 5 && <Step6Review data={formData} />}
+                    </CardContent>
+                </Card>
+
+                {/* Bottom Navigation */}
+                <div className="mt-6 flex justify-between items-center">
+                    <div className="text-sm text-muted-foreground">
+                        Bước {currentStep} / {STEPS.length}
+                    </div>
+                    
+                    <div className="flex gap-3">
+                        {currentStep > 1 && (
+                            <Button variant="outline" onClick={handleBack}>
+                                <ChevronRight className="mr-2 h-4 w-4 rotate-180" />
+                                Quay lại
+                            </Button>
+                        )}
+                        
+                        {currentStep < STEPS.length && (
+                            <Button onClick={handleNext} disabled={isLoading}>
+                                Tiếp theo
+                                <ChevronRight className="ml-2 h-4 w-4" />
                             </Button>
                         )}
                     </div>
                 </div>
-            </Card>
+            </div>
 
             {/* Confirmation Dialog for leaving page */}
             <AlertDialog open={showLeaveConfirm} onOpenChange={setShowLeaveConfirm}>

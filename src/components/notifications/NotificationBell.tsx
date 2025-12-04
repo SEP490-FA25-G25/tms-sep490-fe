@@ -38,7 +38,12 @@ export function NotificationBell({ variant = "sidebar" }: NotificationBellProps)
   const isMobile = variant === "sidebar" ? sidebar.isMobile : false
 
   // Luôn fetch unread count để hiển thị badge
-  const { data: unreadCount = 0 } = useGetUnreadCountQuery()
+  // Polling every 30 seconds to get realtime notification updates
+  const { data: unreadCount = 0, refetch: refetchUnreadCount } = useGetUnreadCountQuery(undefined, {
+    pollingInterval: 30000, // 30 seconds
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+  })
 
   const {
     data: notifications = [],
@@ -47,9 +52,17 @@ export function NotificationBell({ variant = "sidebar" }: NotificationBellProps)
     refetch,
   } = useGetRecentNotificationsQuery(undefined, {
     skip: !isOpen, // Only fetch when dropdown is open
+    refetchOnMountOrArgChange: true,
   })
 
   const [markAsRead] = useMarkAsReadMutation()
+
+  // Refetch unread count when dropdown opens
+  React.useEffect(() => {
+    if (isOpen) {
+      refetchUnreadCount()
+    }
+  }, [isOpen, refetchUnreadCount])
 
   const handleMarkAsRead = async (notificationId: number, e?: React.MouseEvent) => {
     e?.stopPropagation()

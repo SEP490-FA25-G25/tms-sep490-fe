@@ -6,7 +6,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { SubjectList } from "../components/SubjectList";
 import { CourseList } from "../components/CourseList";
 import { LevelList } from "../components/LevelList";
-import { CourseApprovalList } from "../components/CourseApprovalList";
 import { DashboardLayout } from "@/components/DashboardLayout";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,7 +15,6 @@ export default function CurriculumPage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const { user } = useAuth();
     const isSubjectLeader = user?.roles?.includes("SUBJECT_LEADER");
-    const isManager = user?.roles?.some(role => ["MANAGER", "ADMIN", "ACADEMIC_AFFAIR"].includes(role));
 
     const [currentTab, setCurrentTab] = useState(() => {
         const urlTab = searchParams.get("tab");
@@ -43,8 +41,6 @@ export default function CurriculumPage() {
         setSearchParams({ tab: value });
     };
 
-    const canViewApprovals = isManager;
-
     return (
         <DashboardLayout
             title="Quản lý Chương trình đào tạo"
@@ -56,7 +52,6 @@ export default function CurriculumPage() {
                         <TabsTrigger value="subjects">Môn học</TabsTrigger>
                         <TabsTrigger value="levels">Cấp độ</TabsTrigger>
                         <TabsTrigger value="courses">Khóa học</TabsTrigger>
-                        {canViewApprovals && <TabsTrigger value="approvals">Phê duyệt</TabsTrigger>}
                     </TabsList>
                     <div className="flex items-center gap-2">
                         {isSubjectLeader && (
@@ -81,11 +76,6 @@ export default function CurriculumPage() {
                 <TabsContent value="courses" className="space-y-4">
                     <CourseList />
                 </TabsContent>
-                {canViewApprovals && (
-                    <TabsContent value="approvals" className="space-y-4">
-                        <CourseApprovalList readOnly={!isManager} />
-                    </TabsContent>
-                )}
             </Tabs>
         </DashboardLayout>
     );

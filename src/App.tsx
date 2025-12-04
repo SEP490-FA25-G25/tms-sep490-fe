@@ -13,6 +13,9 @@ const PageLoader = () => (
     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
   </div>
 );
+const CourseApprovalPage = lazy(
+  () => import("./features/curriculum/pages/CourseApprovalPage")
+);
 
 // Lazy load all pages
 const LandingPage = lazy(() => import("./app/page"));
@@ -726,6 +729,14 @@ function App() {
                   requiredRoles={["SUBJECT_LEADER", "MANAGER", "ADMIN"]}
                 >
                   <CurriculumPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/curriculum/approvals"
+              element={
+                <ProtectedRoute requiredRoles={["MANAGER", "ADMIN"]}>
+                  <CourseApprovalPage />
                 </ProtectedRoute>
               }
             />

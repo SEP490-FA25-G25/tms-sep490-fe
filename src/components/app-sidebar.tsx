@@ -106,6 +106,11 @@ const roleBasedNav = {
         icon: HomeIcon,
       },
       {
+        title: "Quản lý yêu cầu phê duyệt khóa học",
+        url: "/curriculum/approvals",
+        icon: ClipboardCheckIcon,
+      },
+      {
         title: "Quản lý chương trình đào tạo",
         url: "/curriculum",
         icon: BookOpenIcon,
