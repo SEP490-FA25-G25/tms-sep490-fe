@@ -262,7 +262,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
       }
       isSubmitDisabled={!step3Complete}
       isSubmitting={isSubmitting}
-      submitLabel="Tạo yêu cầu"
+      submitLabel="Xử lý yêu cầu"
     >
       {/* Step 1: Student selection */}
       {currentStep === 1 && (

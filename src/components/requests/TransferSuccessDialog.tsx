@@ -121,7 +121,7 @@ export default function TransferSuccessDialog({
               onClick={() => onOpenChange(false)}
               className="flex-1"
             >
-              {isAA ? 'Tạo yêu cầu khác' : 'Tạo yêu cầu mới'}
+              {isAA ? 'Xử lý yêu cầu khác' : 'Tạo yêu cầu mới'}
             </Button>
             <Button onClick={handleViewRequests} className="flex-1">
               {isAA ? 'Về trang Học vụ' : 'Về trang yêu cầu'}

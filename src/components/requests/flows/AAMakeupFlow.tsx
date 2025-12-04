@@ -191,7 +191,7 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
     {
       id: 1,
       title: 'Chọn học viên',
-      description: 'Tìm kiếm học viên để tạo yêu cầu học bù',
+      description: 'Tìm kiếm học viên cần xử lý',
       isComplete: step1Complete,
       isAvailable: true
     },
@@ -224,7 +224,7 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
       }
       isSubmitDisabled={!step3Complete}
       isSubmitting={isCreating}
-      submitLabel="Tạo yêu cầu"
+      submitLabel="Xử lý yêu cầu"
     >
       {/* Step 1: Student selection */}
       {currentStep === 1 && (

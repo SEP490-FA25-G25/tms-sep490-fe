@@ -501,7 +501,7 @@ export default function AcademicRequestsPage() {
       <FullScreenModal open={showOnBehalfDialog} onOpenChange={setShowOnBehalfDialog}>
         <FullScreenModalContent size="2xl">
           <FullScreenModalHeader>
-            <FullScreenModalTitle>Tạo yêu cầu cho học viên</FullScreenModalTitle>
+            <FullScreenModalTitle>Xử lý yêu cầu học viên</FullScreenModalTitle>
             <FullScreenModalDescription>
               Xử lý yêu cầu từ học viên qua điện thoại, tin nhắn hoặc trực tiếp. Hệ thống sẽ tự động duyệt.
             </FullScreenModalDescription>
@@ -580,7 +580,7 @@ export default function AcademicRequestsPage() {
                   onSuccess={() => {
                     setActiveRequestType(null)
                     setShowOnBehalfDialog(false)
-                    toast.success('Đã tạo yêu cầu xin nghỉ thay học viên')
+                    toast.success('Đã xử lý yêu cầu xin nghỉ thành công')
                   }}
                 />
               )}
@@ -590,7 +590,7 @@ export default function AcademicRequestsPage() {
                   onSuccess={() => {
                     setActiveRequestType(null)
                     setShowOnBehalfDialog(false)
-                    toast.success('Đã tạo yêu cầu học bù thành công')
+                    toast.success('Đã xử lý yêu cầu học bù thành công')
                   }}
                 />
               )}
@@ -600,7 +600,7 @@ export default function AcademicRequestsPage() {
                   onSuccess={() => {
                     setActiveRequestType(null)
                     setShowOnBehalfDialog(false)
-                    toast.success('Đã tạo yêu cầu chuyển lớp thành công')
+                    toast.success('Đã xử lý yêu cầu chuyển lớp thành công')
                   }}
                 />
               )}
