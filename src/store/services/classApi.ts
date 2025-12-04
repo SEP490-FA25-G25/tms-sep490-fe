@@ -38,6 +38,9 @@ export interface ClassListItemDTO {
   utilizationRate: number
   teachers: TeacherSummaryDTO[] // Changed from teacherName to teachers array
   scheduleSummary?: string
+  // Session progress
+  completedSessions?: number
+  totalSessions?: number
   canEnrollStudents: boolean
   enrollmentRestrictionReason?: string
 }

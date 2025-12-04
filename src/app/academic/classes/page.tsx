@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
@@ -11,6 +10,20 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { Progress } from '@/components/ui/progress'
 import {
   Table,
   TableBody,
@@ -36,10 +49,7 @@ import {
 import {
   Search,
   Plus,
-  Users,
   Calendar,
-  MapPin,
-  User,
   ChevronRight,
   PlayCircle,
   Clock,
@@ -47,13 +57,18 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  RotateCcw
+  RotateCcw,
+  ChevronsUpDown,
+  Check,
+  BookOpen
 } from 'lucide-react'
 import { useGetClassesQuery } from '@/store/services/classApi'
 import type { ClassListItemDTO, ClassListRequest, TeacherSummaryDTO } from '@/store/services/classApi'
+import { useGetAllCoursesQuery } from '@/store/services/courseApi'
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { useNavigate } from 'react-router-dom'
 import { useDebounce } from '@/hooks/useDebounce'
+import { cn } from '@/lib/utils'
 
 // ========== Types ==========
 type SortField = 'startDate' | 'name' | 'code' | 'currentEnrolled' | 'status'
@@ -123,6 +138,12 @@ export default function ClassListPage() {
     size: 20, // Backend uses 'size' instead of 'limit'
   })
 
+  // State cho course combobox
+  const [courseOpen, setCourseOpen] = useState(false)
+
+  // Fetch courses for filter
+  const { data: courses = [] } = useGetAllCoursesQuery()
+
   const queryParams = useMemo(() => ({
     search: debouncedSearch || undefined,
     courseId: filters.courseId || undefined,
@@ -138,6 +159,7 @@ export default function ClassListPage() {
   const hasActiveFilters = useMemo(() => {
     return (
       (filters.search?.trim() ?? '') !== '' ||
+      filters.courseId !== undefined ||
       filters.status !== undefined ||
       filters.approvalStatus !== undefined ||
       filters.modality !== undefined
@@ -158,8 +180,6 @@ export default function ClassListPage() {
 
   const {
     data: response,
-    isLoading,
-    isFetching,
     error
   } = useGetClassesQuery(queryParams, {
     // Force refetch when quay lại màn hình để thấy lớp mới/lưu nháp ngay,
@@ -259,10 +279,7 @@ export default function ClassListPage() {
   const renderTeachers = (teachers: TeacherSummaryDTO[]) => {
     if (!teachers || teachers.length === 0) {
       return (
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <User className="h-4 w-4" />
-          <span>Chưa phân công</span>
-        </div>
+        <span className="text-muted-foreground">Chưa phân công</span>
       )
     }
 
@@ -274,7 +291,6 @@ export default function ClassListPage() {
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="flex items-center gap-2 cursor-help">
-              <User className="h-4 w-4 text-muted-foreground shrink-0" />
               <div className="flex flex-col gap-0.5">
                 {displayTeachers.map((teacher) => (
                   <span key={teacher.id} className="text-sm">
@@ -401,6 +417,70 @@ export default function ClassListPage() {
 
           {/* Filters - bên phải */}
           <div className="flex items-center gap-2 ml-auto">
+            {/* Course Combobox Filter */}
+            <Popover open={courseOpen} onOpenChange={setCourseOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={courseOpen}
+                  className="h-9 w-auto min-w-[180px] justify-between"
+                >
+                  <BookOpen className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                  {filters.courseId
+                    ? courses.find((course) => course.id === filters.courseId)?.name || 'Chọn khóa học'
+                    : 'Khóa học: Tất cả'}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[300px] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Tìm khóa học..." />
+                  <CommandList>
+                    <CommandEmpty>Không tìm thấy khóa học.</CommandEmpty>
+                    <CommandGroup>
+                      <CommandItem
+                        value="all"
+                        onSelect={() => {
+                          handleFilterChange('courseId', undefined)
+                          setCourseOpen(false)
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            'mr-2 h-4 w-4',
+                            !filters.courseId ? 'opacity-100' : 'opacity-0'
+                          )}
+                        />
+                        Tất cả khóa học
+                      </CommandItem>
+                      {courses.map((course) => (
+                        <CommandItem
+                          key={course.id}
+                          value={`${course.code} ${course.name}`}
+                          onSelect={() => {
+                            handleFilterChange('courseId', course.id)
+                            setCourseOpen(false)
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              'mr-2 h-4 w-4',
+                              filters.courseId === course.id ? 'opacity-100' : 'opacity-0'
+                            )}
+                          />
+                          <div className="flex flex-col">
+                            <span className="font-medium">{course.name}</span>
+                            <span className="text-xs text-muted-foreground">{course.code}</span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+
             <Select
               value={filters.status || 'all'}
               onValueChange={(value) => handleFilterChange('status', value === 'all' ? undefined : value)}
@@ -463,63 +543,12 @@ export default function ClassListPage() {
 
         {/* Class List */}
         <div>
-          {isLoading || isFetching ? (
-            /* Table Skeleton */
-            <div className="rounded-lg border bg-card overflow-hidden">
-              <Table className="min-w-[900px]">
+          {response?.data?.content ? (
+            <div className="rounded-lg border bg-card">
+              <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="min-w-[180px] font-semibold">Lớp học</TableHead>
-                    <TableHead className="min-w-[150px] font-semibold">Khóa học</TableHead>
-                    <TableHead className="min-w-[150px] font-semibold">Giáo viên</TableHead>
-                    <TableHead className="min-w-[120px] font-semibold">Chi nhánh</TableHead>
-                    <TableHead className="min-w-20 font-semibold">Sĩ số</TableHead>
-                    <TableHead className="min-w-[100px] font-semibold">Trạng thái</TableHead>
-                    <TableHead className="w-[70px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {[...Array(8)].map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell>
-                        <div className="space-y-2">
-                          <Skeleton className="h-4 w-32" />
-                          <Skeleton className="h-3 w-24" />
-                          <Skeleton className="h-3 w-40" />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-2">
-                          <Skeleton className="h-4 w-28" />
-                          <Skeleton className="h-3 w-20" />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-24" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-20" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-6 w-12" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-6 w-20" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-8 w-8" />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : response?.data?.content ? (
-            <div className="rounded-lg border bg-card overflow-x-auto">
-              <Table className="min-w-[900px]">
-                <TableHeader>
-                  <TableRow className="bg-muted/50">
-                    <TableHead className="min-w-[180px]">
+                    <TableHead className="w-[20%]">
                       <SortableHeader
                         label="Lớp học"
                         field="name"
@@ -528,10 +557,10 @@ export default function ClassListPage() {
                         onSort={handleSort}
                       />
                     </TableHead>
-                    <TableHead className="min-w-[150px] font-semibold">Khóa học</TableHead>
-                    <TableHead className="min-w-[150px] font-semibold">Giáo viên</TableHead>
-                    <TableHead className="min-w-[120px] font-semibold">Chi nhánh</TableHead>
-                    <TableHead className="min-w-20">
+                    <TableHead className="w-[22%] font-semibold">Khóa học</TableHead>
+                    <TableHead className="w-[10%] font-semibold">Tiến trình</TableHead>
+                    <TableHead className="w-[18%] font-semibold">Giáo viên</TableHead>
+                    <TableHead className="w-[10%]">
                       <SortableHeader
                         label="Sĩ số"
                         field="currentEnrolled"
@@ -540,7 +569,7 @@ export default function ClassListPage() {
                         onSort={handleSort}
                       />
                     </TableHead>
-                    <TableHead className="min-w-[100px]">
+                    <TableHead className="w-[12%]">
                       <SortableHeader
                         label="Trạng thái"
                         field="status"
@@ -549,71 +578,85 @@ export default function ClassListPage() {
                         onSort={handleSort}
                       />
                     </TableHead>
-                    <TableHead className="w-[70px]"></TableHead>
+                    <TableHead className="w-[8%]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {response.data.content.map((classItem: ClassListItemDTO) => (
-                    <TableRow
-                      key={classItem.id}
-                      className="cursor-pointer hover:bg-muted/50 transition-colors"
-                      onClick={() => navigate(`/academic/classes/${classItem.id}`)}
-                    >
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{classItem.name}</div>
-                          <div className="text-sm text-muted-foreground">{classItem.code}</div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Calendar className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(classItem.startDate).toLocaleDateString('vi-VN')} - {new Date(classItem.plannedEndDate).toLocaleDateString('vi-VN')}
-                            </span>
+                  {response.data.content.map((classItem: ClassListItemDTO) => {
+                    const totalSessions = classItem.totalSessions || 0
+                    const completedSessions = classItem.completedSessions || 0
+                    const progressPercent = totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0
+
+                    return (
+                      <TableRow
+                        key={classItem.id}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => navigate(`/academic/classes/${classItem.id}`)}
+                      >
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{classItem.name}</div>
+                            <div className="text-sm text-muted-foreground">{classItem.code}</div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Calendar className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(classItem.startDate).toLocaleDateString('vi-VN')} - {new Date(classItem.plannedEndDate).toLocaleDateString('vi-VN')}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{classItem.courseName}</div>
-                          <div className="text-sm text-muted-foreground">{classItem.courseCode}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {renderTeachers(classItem.teachers)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <span>{classItem.branchName}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-muted-foreground" />
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{classItem.courseName}</div>
+                            <div className="text-sm text-muted-foreground">{classItem.courseCode}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="space-y-1 cursor-help">
+                                  <div className="text-xs text-muted-foreground">
+                                    {completedSessions}/{totalSessions}
+                                  </div>
+                                  <Progress value={progressPercent} className="h-2 w-20" />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Đã hoàn thành {completedSessions} trên {totalSessions} buổi</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </TableCell>
+                        <TableCell>
+                          {renderTeachers(classItem.teachers)}
+                        </TableCell>
+                        <TableCell>
                           <Badge
                             variant="outline"
                             className={getCapacityColor(classItem.currentEnrolled, classItem.maxCapacity)}
                           >
                             {classItem.currentEnrolled}/{classItem.maxCapacity}
                           </Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {(() => {
-                          const unified = getUnifiedStatus(classItem.status, classItem.approvalStatus)
-                          return (
-                            <Badge variant="outline" className={unified.color}>
-                              {unified.label}
-                            </Badge>
-                          )
-                        })()}
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm">
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const unified = getUnifiedStatus(classItem.status, classItem.approvalStatus)
+                            return (
+                              <Badge variant="outline" className={unified.color}>
+                                {unified.label}
+                              </Badge>
+                            )
+                          })()}
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm">
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
                 </TableBody>
               </Table>
             </div>
