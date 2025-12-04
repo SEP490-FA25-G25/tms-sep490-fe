@@ -8,6 +8,21 @@ export interface AvailabilityDTO {
     note?: string;
 }
 
+export interface TimeSlotTemplateDTO {
+    id: number;
+    name: string;
+    startTime: string;
+    endTime: string;
+    displayName: string;
+}
+
+export interface CampaignInfo {
+    id: number;
+    name: string;
+    deadline: string;
+    isActive: boolean;
+}
+
 export interface TeacherAvailabilityResponse {
     teacherId: number;
     availabilities: AvailabilityDTO[];
@@ -16,6 +31,8 @@ export interface TeacherAvailabilityResponse {
         dayOfWeek: number;
         reason: string;
     }[];
+    timeSlots?: TimeSlotTemplateDTO[];
+    activeCampaign?: CampaignInfo;
 }
 
 export interface UpdateAvailabilityRequest {
@@ -53,9 +70,11 @@ export const teacherAvailabilityApi = createApi({
     tagTypes: ["Availability", "Campaign", "TeacherStatus"],
     endpoints: (builder) => ({
         // Teacher endpoints
-        getMyAvailability: builder.query<TeacherAvailabilityResponse, void>({
+        getMyAvailability: builder.query<TeacherAvailabilityResponse, number | void>({
             query: () => "/teacher/availability/me",
             providesTags: ["Availability"],
+            // Force refetch when query arg (userId) changes
+            keepUnusedDataFor: 0,
         }),
 
         updateMyAvailability: builder.mutation<void, UpdateAvailabilityRequest>({
