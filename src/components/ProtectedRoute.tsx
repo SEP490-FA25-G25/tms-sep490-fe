@@ -74,7 +74,7 @@ export function AdminRoute({ children }: { children: ReactNode }) {
 
 export function ManagerRoute({ children }: { children: ReactNode }) {
   return (
-    <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']}>
+    <ProtectedRoute requiredRoles={['MANAGER']}>
       {children}
     </ProtectedRoute>
   )

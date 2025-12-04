@@ -18,6 +18,7 @@ import {
   MessageCircleIcon,
   LogOutIcon,
   Clock,
+  BellIcon,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -91,11 +92,6 @@ const roleBasedNav = {
         url: "/admin/subjects",
         icon: BookOpenIcon,
       },
-      {
-        title: "Chính sách hệ thống",
-        url: "/admin/policies",
-        icon: SlidersHorizontalIcon,
-      },
     ],
   },
   [ROLES.MANAGER]: {
@@ -104,6 +100,16 @@ const roleBasedNav = {
         title: "Bảng điều khiển",
         url: "/manager/dashboard",
         icon: HomeIcon,
+      },
+      {
+        title: "Quản lý chi nhánh",
+        url: "/manager/branches",
+        icon: BuildingIcon,
+      },
+      {
+        title: "Quản lý lớp học",
+        url: "/manager/classes",
+        icon: CalendarIcon,
       },
       {
         title: "Quản lý yêu cầu phê duyệt khóa học",
@@ -121,14 +127,34 @@ const roleBasedNav = {
         icon: GraduationCapIcon,
       },
       {
-        title: "Báo Cáo Chất Lượng",
-        url: "/manager/qa-reports",
-        icon: ClipboardCheckIcon,
+        title: "Quản lý tài nguyên",
+        url: "/manager/resources",
+        icon: BuildingIcon,
       },
       {
-        title: "Phân tích",
-        url: "/manager/analytics",
-        icon: BarChartIcon,
+        title: "Quản lý khung giờ học",
+        url: "/manager/timeslots",
+        icon: Clock,
+      },
+      {
+        title: "Chính sách hệ thống",
+        url: "/manager/policies",
+        icon: SlidersHorizontalIcon,
+      },
+      {
+        title: "Danh sách phản hồi từ học viên",
+        url: "/manager/student-feedback",
+        icon: MessageCircleIcon,
+      },
+      {
+        title: "Báo cáo",
+        url: "/manager/reports",
+        icon: FileTextIcon,
+      },
+      {
+        title: "Thông báo",
+        url: "/notifications",
+        icon: BellIcon,
       },
     ],
   },

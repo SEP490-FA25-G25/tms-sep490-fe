@@ -66,7 +66,7 @@ export const policyApi = createApi({
 
         const query = searchParams.toString()
         return {
-          url: `/admin/policies${query ? `?${query}` : ''}`,
+          url: `/manager/policies${query ? `?${query}` : ''}`,
           method: 'GET',
         }
       },
@@ -75,7 +75,7 @@ export const policyApi = createApi({
 
     updatePolicy: builder.mutation<ApiResponse<Policy>, { id: number; body: UpdatePolicyRequest }>({
       query: ({ id, body }) => ({
-        url: `/admin/policies/${id}`,
+        url: `/manager/policies/${id}`,
         method: 'PUT',
         body,
       }),
@@ -95,7 +95,7 @@ export const policyApi = createApi({
 
         const query = searchParams.toString()
         return {
-          url: `/admin/policies/history${query ? `?${query}` : ''}`,
+          url: `/manager/policies/history${query ? `?${query}` : ''}`,
           method: 'GET',
         }
       },

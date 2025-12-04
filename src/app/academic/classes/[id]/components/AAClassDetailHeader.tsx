@@ -25,9 +25,9 @@ import { Link } from 'react-router-dom'
 
 interface AAClassDetailHeaderProps {
   classData: ClassDetailDTO
-  onEnrollFromExisting: () => void
-  onEnrollNewStudent: () => void
-  onEnrollFromExcel: () => void
+  onEnrollFromExisting?: () => void
+  onEnrollNewStudent?: () => void
+  onEnrollFromExcel?: () => void
 }
 
 const formatDate = (dateString?: string) => {
@@ -188,15 +188,15 @@ export function AAClassDetailHeader({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={onEnrollFromExisting}>
+                  <DropdownMenuItem onClick={onEnrollFromExisting || undefined}>
                     <Users className="mr-2 h-4 w-4" />
                     Chọn từ học viên có sẵn
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={onEnrollNewStudent}>
+                  <DropdownMenuItem onClick={onEnrollNewStudent || undefined}>
                     <UserPlus className="mr-2 h-4 w-4" />
                     Tạo học viên mới
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={onEnrollFromExcel}>
+                  <DropdownMenuItem onClick={onEnrollFromExcel || undefined}>
                     <FileUp className="mr-2 h-4 w-4" />
                     Nhập từ Excel
                   </DropdownMenuItem>

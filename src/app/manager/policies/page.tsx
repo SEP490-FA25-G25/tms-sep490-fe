@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { AdminRoute } from "@/components/ProtectedRoute";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -52,7 +52,7 @@ const CATEGORY_OPTIONS = [
   { value: "LICENSE", label: "Giấy phép" },
 ];
 
-export default function AdminPoliciesPage() {
+export default function ManagerPoliciesPage() {
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("ALL");
@@ -89,7 +89,6 @@ export default function AdminPoliciesPage() {
     const value = policy.currentValue ?? "";
     const unit = policy.unit ?? "";
 
-    // Dịch unit sang tiếng Việt
     const unitMap: Record<string, string> = {
       days: "ngày",
       day: "ngày",
@@ -107,29 +106,24 @@ export default function AdminPoliciesPage() {
       percentage: "phần trăm",
     };
 
-    // Xử lý giá trị boolean
     if (policy.valueType === "BOOLEAN") {
       const lowerValue = value.toLowerCase();
       if (lowerValue === "true") return "Bật";
       if (lowerValue === "false") return "Tắt";
     }
 
-    // Kiểm tra xem value có chứa unit không (ví dụ: "15 characters", "24 hours")
     const valueParts = value.trim().split(/\s+/);
     if (valueParts.length >= 2) {
       const lastPart = valueParts[valueParts.length - 1].toLowerCase();
       if (unitMap[lastPart]) {
-        // Unit đã có trong value, tách ra và dịch
         const numericValue = valueParts.slice(0, -1).join(" ");
         const translatedUnit = unitMap[lastPart];
         return `${numericValue} ${translatedUnit}`;
       }
     }
 
-    // Dịch unit từ policy.unit
     const translatedUnit = unit ? unitMap[unit.toLowerCase()] || unit : "";
 
-    // Kết hợp giá trị và unit
     if (translatedUnit) {
       return `${value} ${translatedUnit}`;
     }
@@ -141,7 +135,6 @@ export default function AdminPoliciesPage() {
     const value = policy.defaultValue ?? "";
     const unit = policy.unit ?? "";
 
-    // Dịch unit sang tiếng Việt (dùng cùng unitMap)
     const unitMap: Record<string, string> = {
       days: "ngày",
       day: "ngày",
@@ -159,29 +152,24 @@ export default function AdminPoliciesPage() {
       percentage: "phần trăm",
     };
 
-    // Xử lý giá trị boolean
     if (policy.valueType === "BOOLEAN") {
       const lowerValue = value.toLowerCase();
       if (lowerValue === "true") return "Bật";
       if (lowerValue === "false") return "Tắt";
     }
 
-    // Kiểm tra xem value có chứa unit không (ví dụ: "15 characters", "24 hours")
     const valueParts = value.trim().split(/\s+/);
     if (valueParts.length >= 2) {
       const lastPart = valueParts[valueParts.length - 1].toLowerCase();
       if (unitMap[lastPart]) {
-        // Unit đã có trong value, tách ra và dịch
         const numericValue = valueParts.slice(0, -1).join(" ");
         const translatedUnit = unitMap[lastPart];
         return `${numericValue} ${translatedUnit}`;
       }
     }
 
-    // Dịch unit từ policy.unit
     const translatedUnit = unit ? unitMap[unit.toLowerCase()] || unit : "";
 
-    // Kết hợp giá trị và unit
     if (translatedUnit) {
       return `${value} ${translatedUnit}`;
     }
@@ -234,7 +222,7 @@ export default function AdminPoliciesPage() {
   const histories: PolicyHistory[] = historyPageData?.content ?? [];
 
   return (
-    <AdminRoute>
+    <ProtectedRoute requiredRoles={["MANAGER"]}>
       <SidebarProvider
         style={
           {
@@ -249,7 +237,6 @@ export default function AdminPoliciesPage() {
           <div className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col gap-2">
               <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-                {/* Header */}
                 <div className="px-4 lg:px-6">
                   <div className="flex flex-col gap-1">
                     <h1 className="text-3xl font-bold tracking-tight">
@@ -262,7 +249,6 @@ export default function AdminPoliciesPage() {
                   </div>
                 </div>
 
-                {/* Filters + actions */}
                 <div className="px-4 lg:px-6 space-y-3">
                   <div className="flex flex-wrap gap-3 items-center justify-between">
                     <div className="relative flex-1 min-w-[220px]">
@@ -278,39 +264,38 @@ export default function AdminPoliciesPage() {
                       />
                     </div>
                     <div className="flex flex-wrap gap-3 items-center">
-                    <Select
-                      value={category}
-                      onValueChange={(v) => {
-                        setCategory(v);
-                        setPage(0);
-                      }}
-                    >
-                      <SelectTrigger className="w-[190px]">
-                        <SelectValue placeholder="Nhóm policy" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CATEGORY_OPTIONS.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <Select
+                        value={category}
+                        onValueChange={(v) => {
+                          setCategory(v);
+                          setPage(0);
+                        }}
+                      >
+                        <SelectTrigger className="w-[190px]">
+                          <SelectValue placeholder="Nhóm policy" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CATEGORY_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => {
                           setHistoryOpen(true);
                           setHistoryPage(0);
-                      }}
-                    >
+                        }}
+                      >
                         Xem lịch sử thay đổi
                       </Button>
                     </div>
                   </div>
                 </div>
 
-                {/* Table */}
                 <div className="px-4 lg:px-6">
                   <div className="overflow-hidden rounded-xl border bg-card">
                     <div className="overflow-x-auto">
@@ -615,7 +600,7 @@ export default function AdminPoliciesPage() {
               </div>
 
               {historyPageData && historyPageData.totalPages > 1 && (
-                <div className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
+                <div className="flex items-center justify_between pt-1 text-xs text-muted-foreground">
                   <span>
                     Trang {historyPageData.number + 1} /{" "}
                     {historyPageData.totalPages}
@@ -646,6 +631,8 @@ export default function AdminPoliciesPage() {
           )}
         </DialogContent>
       </Dialog>
-    </AdminRoute>
+    </ProtectedRoute>
   );
 }
+
+
