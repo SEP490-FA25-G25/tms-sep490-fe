@@ -100,7 +100,7 @@ export default function CourseDetailPage() {
     const plos = plosData || [];
 
     // Fetch ALL PLOs from the subject for the matrix
-    const { data: subjectData } = useGetSubjectQuery(course?.subjectId!, {
+    const { data: subjectData } = useGetSubjectQuery(course?.subjectId ?? 0, {
         skip: !course?.subjectId
     });
     const allSubjectPlos = subjectData?.data?.plos || [];
