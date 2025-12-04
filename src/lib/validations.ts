@@ -24,29 +24,21 @@ export function isValidPhone(phone: string): boolean {
 }
 
 /**
- * Validate score based on score scale
+ * Validate score - only supports n/n format (e.g., "35/40")
  */
-export function isValidScore(score: number, scoreScale: string): boolean {
-  if (isNaN(score) || score < 0) return false
-
-  switch (scoreScale) {
-    case '0-9': // IELTS - allows 0.5 increments
-      return score >= 0 && score <= 9 && score % 0.5 === 0
-
-    case '0-990': // TOEIC - integer only
-      return Number.isInteger(score) && score >= 0 && score <= 990
-
-    case 'N1':
-    case 'N2':
-    case 'N3':
-    case 'N4':
-    case 'N5': // JLPT - percentage
-    case '0-100': // Custom percentage
-      return score >= 0 && score <= 100
-
-    default:
-      return score >= 0
-  }
+export function isValidScore(score: string | undefined): boolean {
+  // Empty score is valid (optional field)
+  if (!score) return true
+  
+  // Must be in n/n format
+  const parts = score.split('/')
+  if (parts.length !== 2) return false
+  
+  const achieved = parseFloat(parts[0])
+  const max = parseFloat(parts[1])
+  
+  // Both must be valid numbers, max > 0, achieved >= 0 and <= max
+  return !isNaN(achieved) && !isNaN(max) && max > 0 && achieved >= 0 && achieved <= max
 }
 
 /**

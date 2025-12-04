@@ -37,6 +37,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import {
   useUpdateStudentMutation,
   useDeleteSkillAssessmentMutation,
@@ -107,6 +108,75 @@ function getInitials(name: string) {
     .slice(0, 2)
 }
 
+// Score Input Component with validation
+function ScoreInputEdit({
+  rawScore,
+  onChange,
+}: {
+  rawScore?: string
+  onChange: (value: string | undefined) => void
+}) {
+  const scoreValue = rawScore?.split('/')[0] ?? ''
+  const maxScoreValue = rawScore?.split('/')[1] ?? ''
+  
+  const scoreNum = parseFloat(scoreValue)
+  const maxScoreNum = parseFloat(maxScoreValue)
+  
+  const hasScore = scoreValue !== ''
+  const hasMaxScore = maxScoreValue !== ''
+  const isMaxScoreValid = hasMaxScore && !isNaN(maxScoreNum) && maxScoreNum > 0 && maxScoreNum <= 9999
+  const isScoreInRange = !hasScore || (hasMaxScore && scoreNum >= 0 && scoreNum <= maxScoreNum)
+  
+  const showScoreError = hasScore && !isScoreInRange
+
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs">Điểm đầu vào</Label>
+      <div className="flex items-center gap-1">
+        <Input
+          type="text"
+          inputMode="numeric"
+          placeholder="Điểm"
+          disabled={!isMaxScoreValid}
+          className={cn(
+            'h-9 w-20 text-center',
+            showScoreError && 'border-destructive focus-visible:ring-destructive'
+          )}
+          value={scoreValue}
+          onChange={(e) => {
+            const score = e.target.value.replace(/[^0-9.]/g, '')
+            // Prevent score > maxScore
+            const scoreNumNew = parseFloat(score)
+            if (score && !isNaN(scoreNumNew) && scoreNumNew > maxScoreNum) return
+            onChange(`${score}/${maxScoreValue}`)
+          }}
+        />
+        <span className="text-muted-foreground font-medium">/</span>
+        <Input
+          type="text"
+          inputMode="numeric"
+          placeholder="Tối đa"
+          maxLength={4}
+          className="h-9 w-20 text-center"
+          value={maxScoreValue}
+          onChange={(e) => {
+            const maxScore = e.target.value.replace(/[^0-9]/g, '')
+            // Prevent maxScore > 9999 (maxLength=4 handles this, but extra safety)
+            if (maxScore.length > 4) return
+            // Clear score if max score changes
+            onChange(maxScore ? `/${maxScore}` : undefined)
+          }}
+        />
+      </div>
+      {showScoreError && (
+        <p className="text-xs text-destructive">
+          Điểm phải từ 0-{maxScoreNum}
+        </p>
+      )}
+    </div>
+  )
+}
+
 export function StudentEditDialog({
   open,
   onOpenChange,
@@ -170,7 +240,6 @@ export function StudentEditDialog({
         skill: a.skill as Skill,
         levelId: 0, // Will be resolved from levelCode
         rawScore: a.rawScore,
-        scaledScore: a.scaledScore,
         scoreScale: a.scoreScale,
         assessmentCategory: a.assessmentCategory,
         assessmentDate: formatDateForInput(a.assessmentDate),
@@ -245,7 +314,7 @@ export function StudentEditDialog({
     const newAssessment: SkillAssessmentUpdateInput = {
       skill: 'GENERAL',
       levelId: levels[0]?.id || 0,
-      scaledScore: undefined,
+      rawScore: undefined,
       assessmentDate: new Date().toISOString().split('T')[0],
       assessmentCategory: 'PLACEMENT',
       assessedByUserId: undefined, // User will select assessor
@@ -321,7 +390,6 @@ export function StudentEditDialog({
             skill: a.skill,
             levelId: a.levelId,
             rawScore: a.rawScore,
-            scaledScore: a.scaledScore,
             scoreScale: a.scoreScale,
             assessmentCategory: a.assessmentCategory,
             assessmentDate: a.assessmentDate,
@@ -638,37 +706,11 @@ export function StudentEditDialog({
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-3">
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">Điểm quy đổi</Label>
-                          <Input
-                            type="number"
-                            step="0.1"
-                            placeholder="7.5"
-                            className="h-9"
-                            value={assessment.scaledScore ?? ''}
-                            onChange={(e) => handleAssessmentChange(index, 'scaledScore', e.target.value ? Number(e.target.value) : undefined)}
-                          />
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <Label className="text-xs">Loại đánh giá</Label>
-                          <Select
-                            value={assessment.assessmentCategory || ''}
-                            onValueChange={(value) => handleAssessmentChange(index, 'assessmentCategory', value)}
-                          >
-                            <SelectTrigger className="h-9 w-full">
-                              <SelectValue placeholder="Chọn loại" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {assessmentCategoryOptions.map((opt) => (
-                                <SelectItem key={opt.value} value={opt.value}>
-                                  {opt.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <ScoreInputEdit
+                          rawScore={assessment.rawScore}
+                          onChange={(value) => handleAssessmentChange(index, 'rawScore', value)}
+                        />
 
                         <div className="space-y-1.5">
                           <Label className="text-xs">Ngày đánh giá</Label>

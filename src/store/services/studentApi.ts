@@ -54,8 +54,7 @@ export interface SkillAssessmentDetailDTO {
   skill: string
   levelCode: string
   levelName: string
-  rawScore?: number
-  scaledScore?: number
+  rawScore?: string
   scoreScale?: string
   assessmentCategory?: string
   assessmentDate: string
@@ -152,10 +151,9 @@ export interface StudentListRequest {
 export interface SkillAssessmentInput {
   skill: 'GENERAL' | 'READING' | 'WRITING' | 'SPEAKING' | 'LISTENING' | 'VOCABULARY' | 'GRAMMAR' | 'KANJI'
   levelId: number
-  rawScore?: number // Optional - raw score from test (e.g., 32 out of 40)
-  scaledScore?: number // Optional but recommended - standardized score (e.g., 7.5 for IELTS)
+  rawScore?: string // Raw score from test (e.g., 6.5 IELTS band, 650 TOEIC, 32/40)
   scoreScale?: string // Optional - score scale type (e.g., '0-9', '0-990', 'N1-N5')
-  assessmentCategory?: string // Optional - e.g., 'PLACEMENT', 'MOCK', 'OFFICIAL', 'PRACTICE'
+  assessmentCategory?: string // Optional - e.g., 'PLACEMENT'
   note?: string
 }
 
@@ -165,6 +163,7 @@ export interface CreateStudentRequest {
   phone?: string
   facebookUrl?: string
   address?: string
+  avatarUrl?: string
   gender: 'MALE' | 'FEMALE' | 'OTHER'
   dob?: string
   branchId: number
@@ -184,7 +183,7 @@ export interface CreateStudentResponse {
   branchName: string
   status: string
   defaultPassword: string
-  skillAssessmentCount: number // Fixed: changed from skillAssessmentsCreated to match API response
+  skillAssessmentsCreated: number
   createdAt: string
   createdBy: {
     userId: number
@@ -197,8 +196,7 @@ export interface SkillAssessmentUpdateInput {
   id?: number // null = create new, has value = update existing
   skill: 'GENERAL' | 'READING' | 'WRITING' | 'SPEAKING' | 'LISTENING' | 'VOCABULARY' | 'GRAMMAR' | 'KANJI'
   levelId: number
-  rawScore?: number
-  scaledScore?: number
+  rawScore?: string
   scoreScale?: string
   assessmentCategory?: string
   assessmentDate?: string

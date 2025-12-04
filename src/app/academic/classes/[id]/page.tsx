@@ -8,11 +8,10 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { AlertCircle } from 'lucide-react'
 import { useGetClassByIdQuery, useGetClassStudentsQuery } from '@/store/services/classApi'
 import { useGetStudentDetailQuery } from '@/store/services/studentApi'
-import type { CreateStudentResponse } from '@/store/services/studentApi'
+
 import { EnrollmentImportDialog } from './EnrollmentImportDialog'
 import { StudentSelectionDialog } from './StudentSelectionDialog'
-import { CreateStudentDialog } from './CreateStudentDialog'
-import { StudentCreatedSuccessDialog } from './StudentCreatedSuccessDialog'
+import { CreateStudentDialog } from '@/components/student'
 import { AAClassDetailHeader } from './components/AAClassDetailHeader'
 import { AAClassDetailHeaderSkeleton, AAClassDetailContentSkeleton } from './components/AAClassDetailSkeleton'
 import { OverviewTab } from './components/OverviewTab'
@@ -30,8 +29,6 @@ export default function ClassDetailPage() {
   const [enrollmentDialogOpen, setEnrollmentDialogOpen] = useState(false)
   const [studentSelectionOpen, setStudentSelectionOpen] = useState(false)
   const [createStudentOpen, setCreateStudentOpen] = useState(false)
-  const [successDialogOpen, setSuccessDialogOpen] = useState(false)
-  const [createdStudentData, setCreatedStudentData] = useState<CreateStudentResponse | null>(null)
   const [studentDrawerOpen, setStudentDrawerOpen] = useState(false)
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null)
   const [studentEditDialogOpen, setStudentEditDialogOpen] = useState(false)
@@ -209,26 +206,9 @@ export default function ClassDetailPage() {
           />
 
           <CreateStudentDialog
-            classId={classId}
             branchId={classData.branch.id}
             open={createStudentOpen}
             onOpenChange={setCreateStudentOpen}
-            onSuccess={(studentData) => {
-              setCreatedStudentData(studentData)
-              setSuccessDialogOpen(true)
-            }}
-          />
-
-          <StudentCreatedSuccessDialog
-            open={successDialogOpen}
-            onOpenChange={setSuccessDialogOpen}
-            studentData={createdStudentData}
-            onEnrollNow={() => {
-              toast.info('Tính năng ghi danh sẽ được triển khai sau')
-            }}
-            onAddLater={() => {
-              toast.success('Học viên đã được tạo thành công')
-            }}
           />
 
           <EnrollmentImportDialog

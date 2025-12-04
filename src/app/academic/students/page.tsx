@@ -1,4 +1,6 @@
 import { useState, useMemo } from 'react'
+import { useAuth } from '@/hooks/useAuth'
+import { CreateStudentDialog } from '@/components/student'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -133,6 +135,12 @@ export default function StudentListPage() {
 
   // State cho dialog chỉnh sửa
   const [editDialogOpen, setEditDialogOpen] = useState(false)
+
+  // State cho dialog tạo mới
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+
+  // Lấy branchId từ user đang đăng nhập
+  const { user } = useAuth()
 
   // RTK Query - Lấy danh sách học viên
   const {
@@ -302,7 +310,7 @@ export default function StudentListPage() {
             )}
             Xuất Excel
           </Button>
-          <Button>
+          <Button onClick={() => setCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Thêm học viên
           </Button>
@@ -683,6 +691,15 @@ export default function StudentListPage() {
         student={studentDetail ?? null}
         onSuccess={handleEditSuccess}
       />
+
+      {/* Create Student Dialog */}
+      {user?.branchId && (
+        <CreateStudentDialog
+          branchId={user.branchId}
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+        />
+      )}
     </DashboardLayout>
   )
 }
