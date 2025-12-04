@@ -204,20 +204,22 @@ export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDe
                     </div>
                   </div>
 
-                  {/* Class Information */}
-                  <div className="rounded-xl border border-border/60 bg-muted/10 p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <MapPinIcon className="h-4 w-4 text-muted-foreground" />
-                      <h3 className="text-sm font-semibold text-foreground">Lớp học hiện tại</h3>
+                  {/* Class Information - Hide for TRANSFER as it's shown in TransferRequestContent */}
+                  {detailRequest.requestType !== 'TRANSFER' && (
+                    <div className="rounded-xl border border-border/60 bg-muted/10 p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <MapPinIcon className="h-4 w-4 text-muted-foreground" />
+                        <h3 className="text-sm font-semibold text-foreground">Lớp học hiện tại</h3>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <InfoItem label="Mã lớp" value={detailRequest.currentClass.code} />
+                        <InfoItem label="Chi nhánh" value={detailRequest.currentClass.branch?.name ?? 'Chưa rõ'} />
+                        {detailClassTeacherName && (
+                          <InfoItem label="Giảng viên" value={detailClassTeacherName} className="sm:col-span-2" />
+                        )}
+                      </div>
                     </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <InfoItem label="Mã lớp" value={detailRequest.currentClass.code} />
-                      <InfoItem label="Chi nhánh" value={detailRequest.currentClass.branch?.name ?? 'Chưa rõ'} />
-                      {detailClassTeacherName && (
-                        <InfoItem label="Giảng viên" value={detailClassTeacherName} className="sm:col-span-2" />
-                      )}
-                    </div>
-                  </div>
+                  )}
 
                   {/* Request-specific content */}
                   {detailRequest.requestType === 'ABSENCE' && (

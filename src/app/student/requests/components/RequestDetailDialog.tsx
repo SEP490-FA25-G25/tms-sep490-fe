@@ -103,17 +103,19 @@ function RequestDetailContent({ request }: { request: StudentRequest }) {
 
   return (
     <div className="space-y-5">
-      {/* Current Class Section */}
-      <div className="rounded-xl border border-border/60 bg-muted/10 p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <MapPinIcon className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold text-foreground">Lớp học hiện tại</h3>
+      {/* Current Class Section - Hide for TRANSFER as it's shown in TransferRequestContent */}
+      {request.requestType !== 'TRANSFER' && (
+        <div className="rounded-xl border border-border/60 bg-muted/10 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <MapPinIcon className="h-4 w-4 text-muted-foreground" />
+            <h3 className="text-sm font-semibold text-foreground">Lớp học hiện tại</h3>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <InfoItem label="Mã lớp" value={request.currentClass.code} />
+            <InfoItem label="Chi nhánh" value={request.currentClass.branch?.name || 'Chưa cập nhật'} />
+          </div>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <InfoItem label="Mã lớp" value={request.currentClass.code} />
-          <InfoItem label="Chi nhánh" value={request.currentClass.branch?.name || 'Chưa cập nhật'} />
-        </div>
-      </div>
+      )}
 
       {/* Request-specific content */}
       {request.requestType === 'ABSENCE' && (
