@@ -46,8 +46,8 @@ export interface CourseDetail {
   logicalCourseCode?: string;
   version?: number;
   totalHours?: number;
-  durationWeeks?: number;
-  sessionPerWeek?: number;
+  numberOfSessions?: number; // From course.number_of_sessions
+  totalDurationWeeks?: number; // Computed sum from phase durations
   hoursPerSession?: number;
   scoreScale?: string;
   prerequisites?: string;
@@ -61,7 +61,7 @@ export interface CourseDetail {
   materials?: CourseMaterial[];
   clos?: CourseCLO[];
   assessments?: CourseAssessment[];
-  totalSessions?: number;
+  totalSessions?: number; // Actual count from phases
   totalMaterials?: number;
   progressPercentage?: number;
   completedSessions?: number;
@@ -86,7 +86,9 @@ export interface CoursePhase {
   id: number;
   phaseNumber: number;
   name: string;
-  description?: string;
+  durationWeeks?: number; // Duration of this phase in weeks
+  learningFocus?: string; // Learning focus for this phase
+  description?: string; // Alias for learningFocus (compatibility)
   sequenceNo?: number;
   sessions?: CourseSession[];
   materials?: CourseMaterial[];
@@ -99,9 +101,10 @@ export interface CourseSession {
   sequenceNo: number;
   topic: string;
   studentTask?: string;
-  description?: string;
+  description?: string; // Alias for studentTask (compatibility)
   objectives?: string;
   skill?: string;
+  mappedCLOs?: string[]; // List of CLO codes mapped to this session
   materials?: CourseMaterial[];
   totalMaterials?: number;
   isCompleted?: boolean;

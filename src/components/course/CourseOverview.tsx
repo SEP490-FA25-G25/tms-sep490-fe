@@ -26,36 +26,36 @@ export function CourseOverview({ course }: CourseOverviewProps) {
             </div>
           )}
 
-          {course.durationWeeks && (
+          {course.totalDurationWeeks && course.totalDurationWeeks > 0 && (
             <div className="lg:border-l lg:pl-6">
               <div className="flex items-center gap-3 mb-2">
                 <Calendar className="h-5 w-5 text-green-600" />
                 <span className="font-medium text-gray-900">Thời gian</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{course.durationWeeks}</p>
+              <p className="text-2xl font-bold text-gray-900">{course.totalDurationWeeks}</p>
               <p className="text-sm text-gray-600">tuần</p>
             </div>
           )}
 
-          {course.totalSessions && (
+          {(course.totalSessions || course.numberOfSessions) && (
             <div className="md:border-l md:pl-6">
               <div className="flex items-center gap-3 mb-2">
                 <BookOpen className="h-5 w-5 text-purple-600" />
                 <span className="font-medium text-gray-900">Buổi học</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{course.totalSessions}</p>
+              <p className="text-2xl font-bold text-gray-900">{course.totalSessions || course.numberOfSessions}</p>
               <p className="text-sm text-gray-600">buổi</p>
             </div>
           )}
 
-          {course.sessionPerWeek && (
+          {course.hoursPerSession && (
             <div className="lg:border-l lg:pl-6">
               <div className="flex items-center gap-3 mb-2">
                 <Users className="h-5 w-5 text-orange-600" />
-                <span className="font-medium text-gray-900">Lịch học</span>
+                <span className="font-medium text-gray-900">Giờ/buổi</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{course.sessionPerWeek}</p>
-              <p className="text-sm text-gray-600">buổi/tuần</p>
+              <p className="text-2xl font-bold text-gray-900">{course.hoursPerSession}</p>
+              <p className="text-sm text-gray-600">giờ/buổi</p>
             </div>
           )}
         </div>

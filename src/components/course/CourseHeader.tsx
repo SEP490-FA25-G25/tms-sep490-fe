@@ -122,33 +122,33 @@ export function CourseHeader({ course, progress, materials }: CourseHeaderProps)
               </div>
             )}
 
-            {course.durationWeeks && (
+            {course.totalDurationWeeks && course.totalDurationWeeks > 0 && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Calendar className="h-4 w-4" />
                   <span className="text-sm font-medium">Thời gian</span>
                 </div>
-                <p className="text-xl font-semibold text-foreground">{course.durationWeeks} tuần</p>
+                <p className="text-xl font-semibold text-foreground">{course.totalDurationWeeks} tuần</p>
               </div>
             )}
 
-            {course.totalSessions && (
+            {(course.totalSessions || course.numberOfSessions) && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <BookOpen className="h-4 w-4" />
                   <span className="text-sm font-medium">Buổi học</span>
                 </div>
-                <p className="text-xl font-semibold text-foreground">{course.totalSessions} buổi</p>
+                <p className="text-xl font-semibold text-foreground">{course.totalSessions || course.numberOfSessions} buổi</p>
               </div>
             )}
 
-            {course.sessionPerWeek && (
+            {course.hoursPerSession && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Users className="h-4 w-4" />
-                  <span className="text-sm font-medium">Lịch học</span>
+                  <span className="text-sm font-medium">Giờ/buổi</span>
                 </div>
-                <p className="text-xl font-semibold text-foreground">{course.sessionPerWeek} buổi/tuần</p>
+                <p className="text-xl font-semibold text-foreground">{course.hoursPerSession} giờ/buổi</p>
               </div>
             )}
           </div>
@@ -157,3 +157,4 @@ export function CourseHeader({ course, progress, materials }: CourseHeaderProps)
     </div>
   )
 }
+
