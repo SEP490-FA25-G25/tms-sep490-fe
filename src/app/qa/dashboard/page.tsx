@@ -4,6 +4,8 @@ import * as React from "react"
 import { useGetQADashboardQuery, useGetClassTrendDataQuery, useGetClassComparisonQuery } from "@/store/services/qaApi"
 import { DashboardLayout } from "@/components/DashboardLayout"
 import { RecentReports } from "@/components/qa/RecentReports"
+import { QAKPISummary } from "@/components/qa/QAKPISummary"
+import { QATasksPanel } from "@/components/qa/QATasksPanel"
 import { ClassComparisonChart, TrendChart } from "@/components/qa/charts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -72,19 +74,23 @@ export default function QADashboardPage() {
         return comparisonData.classes || []
     }, [comparisonData])
 
+    // Track if user has manually selected a class (to prevent auto-override)
+    const [userSelectedClass, setUserSelectedClass] = React.useState(false)
+
     // Set default class when course changes or when classComparison loads
+    // Only auto-select if user hasn't manually chosen
     React.useEffect(() => {
-        if (classesForSelectedCourse.length > 0) {
+        if (!userSelectedClass && classesForSelectedCourse.length > 0) {
             // Find worst performing class (lowest value) as default
             const worstClass = classesForSelectedCourse.reduce((prev, curr) => 
                 curr.value < prev.value ? curr : prev
             )
             setSelectedClassId(worstClass.classId)
-        } else if (dashboard?.trendData?.classId && !selectedClassId) {
+        } else if (!userSelectedClass && dashboard?.trendData?.classId && !selectedClassId) {
             // Fallback to default trend data class
             setSelectedClassId(dashboard.trendData.classId)
         }
-    }, [classesForSelectedCourse, dashboard?.trendData?.classId, selectedClassId])
+    }, [classesForSelectedCourse, dashboard?.trendData?.classId, userSelectedClass])
 
     // Handle course change
     const handleCourseChange = (value: string) => {
@@ -92,11 +98,14 @@ export default function QADashboardPage() {
         setSelectedCourseId(courseId)
         // Reset class selection - will be auto-set by useEffect
         setSelectedClassId(null)
+        setUserSelectedClass(false) // Reset manual selection flag when course changes
     }
 
     // Handle class change for trend chart
     const handleClassChange = (value: string) => {
-        setSelectedClassId(parseInt(value, 10))
+        const newClassId = parseInt(value, 10)
+        setSelectedClassId(newClassId)
+        setUserSelectedClass(true) // Mark as manually selected
     }
 
     // Get selected class info for display
@@ -134,9 +143,16 @@ export default function QADashboardPage() {
                 title="Tổng Quan QA"
                 description="Quản lý chất lượng đào tạo"
             >
-                <div className="space-y-6">
-                    <Skeleton className="h-32 w-full" />
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="space-y-4">
+                    {/* KPI Summary skeleton */}
+                    <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+                        <Skeleton className="h-24" />
+                        <Skeleton className="h-24" />
+                        <Skeleton className="h-24" />
+                        <Skeleton className="h-24" />
+                    </div>
+                    {/* Charts skeleton */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                         <Skeleton className="h-80 lg:col-span-2" />
                         <Skeleton className="h-80" />
                     </div>
@@ -183,18 +199,21 @@ export default function QADashboardPage() {
             title="Tổng Quan QA"
             description="Quản lý chất lượng đào tạo"
         >
-            <div className="space-y-6">
-                {/* Row 1: Class Comparison Chart + Recent Reports */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="space-y-4">
+                {/* Row 0: KPI Summary Cards */}
+                <QAKPISummary data={dashboard.kpiSummary} />
+
+                {/* Row 1: Class Comparison Chart + Tasks Panel */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     {/* Class Comparison Chart */}
                     <Card className="lg:col-span-2">
-                        <CardHeader className="pb-4">
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <CardHeader className="pb-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                 <div className="flex items-center gap-2">
-                                    <BarChart3 className="h-5 w-5 text-muted-foreground" />
+                                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
                                     <div>
-                                        <CardTitle className="text-lg">So Sánh Lớp Học</CardTitle>
-                                        <CardDescription>
+                                        <CardTitle className="text-base">So Sánh Lớp Học</CardTitle>
+                                        <CardDescription className="text-xs">
                                             Tỷ lệ điểm danh theo lớp trong cùng khóa học
                                         </CardDescription>
                                     </div>
@@ -209,7 +228,7 @@ export default function QADashboardPage() {
                                             placeholder="Chọn khóa học"
                                             searchPlaceholder="Tìm khóa học..."
                                             emptyText="Không tìm thấy khóa học"
-                                            className="w-[200px]"
+                                            className="w-[180px]"
                                         />
                                     )}
                                     {/* Status Filter */}
@@ -217,7 +236,7 @@ export default function QADashboardPage() {
                                         value={selectedStatus}
                                         onValueChange={setSelectedStatus}
                                     >
-                                        <SelectTrigger className="w-[160px]">
+                                        <SelectTrigger className="w-[140px] h-9">
                                             <SelectValue placeholder="Trạng thái" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -231,7 +250,7 @@ export default function QADashboardPage() {
                                 </div>
                             </div>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="pt-0">
                             {isComparisonLoading || isComparisonFetching ? (
                                 <div className="flex items-center justify-center h-64">
                                     <Skeleton className="h-48 w-full" />
@@ -249,76 +268,84 @@ export default function QADashboardPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Recent Reports */}
-                    {dashboard.recentReports && (
-                        <RecentReports data={dashboard.recentReports} />
-                    )}
+                    {/* Tasks Panel (Draft Reports + Phases to Review) */}
+                    <QATasksPanel 
+                        draftReports={dashboard.draftReports}
+                        completedPhases={dashboard.completedPhases}
+                        className="min-h-[360px]"
+                    />
                 </div>
 
-                {/* Row 3: Trend Chart - Xu hướng theo thời gian */}
-                <Card>
-                    <CardHeader className="pb-4">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <div className="flex items-center gap-2">
-                                <TrendingUp className="h-5 w-5 text-muted-foreground" />
-                                <div>
-                                    <CardTitle className="text-lg">Xu Hướng Theo Thời Gian</CardTitle>
-                                    <CardDescription>
-                                        Theo dõi tỷ lệ điểm danh của lớp qua các tuần
-                                    </CardDescription>
+                {/* Row 2: Trend Chart + Recent Reports */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    {/* Trend Chart - Xu hướng theo thời gian */}
+                    <Card className="lg:col-span-2">
+                        <CardHeader className="pb-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div className="flex items-center gap-2">
+                                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                                    <div>
+                                        <CardTitle className="text-base">Xu Hướng Theo Thời Gian</CardTitle>
+                                        <CardDescription className="text-xs">
+                                            Theo dõi tỷ lệ điểm danh của lớp qua các tuần
+                                        </CardDescription>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {classOptions.length > 0 && (
+                                        <Combobox
+                                            options={classOptions}
+                                            value={selectedClassId?.toString() || ""}
+                                            onValueChange={handleClassChange}
+                                            placeholder="Chọn lớp"
+                                            searchPlaceholder="Tìm lớp..."
+                                            emptyText="Không tìm thấy lớp"
+                                            className="w-[160px]"
+                                        />
+                                    )}
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                                {classOptions.length > 0 && (
-                                    <Combobox
-                                        options={classOptions}
-                                        value={selectedClassId?.toString() || ""}
-                                        onValueChange={handleClassChange}
-                                        placeholder="Chọn lớp"
-                                        searchPlaceholder="Tìm lớp..."
-                                        emptyText="Không tìm thấy lớp"
-                                        className="w-[180px]"
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                            {isTrendLoading || isTrendFetching ? (
+                                <div className="space-y-4">
+                                    <Skeleton className="h-4 w-32" />
+                                    <Skeleton className="h-48 w-full" />
+                                </div>
+                            ) : displayTrendData && displayTrendData.dataPoints && displayTrendData.dataPoints.length > 0 ? (
+                                <div className="space-y-3">
+                                    <TrendChart
+                                        data={displayTrendData}
+                                        metricLabel="Điểm danh"
                                     />
-                                )}
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        {isTrendLoading || isTrendFetching ? (
-                            <div className="space-y-4">
-                                <Skeleton className="h-4 w-32" />
-                                <Skeleton className="h-56 w-full" />
-                            </div>
-                        ) : displayTrendData && displayTrendData.dataPoints && displayTrendData.dataPoints.length > 0 ? (
-                            <div className="space-y-4">
-                                <TrendChart
-                                    data={displayTrendData}
-                                    metricLabel="Điểm danh"
-                                />
-                                {/* Quick action to create report */}
-                                {selectedClassInfo && (
-                                    <div className="flex items-center justify-between pt-4 border-t">
-                                        <span className="text-sm text-muted-foreground">
-                                            <FileText className="h-4 w-4 inline mr-1" />
-                                            Tạo báo cáo về {selectedClassInfo.classCode}
-                                        </span>
-                                        <Link to={`/qa/reports/create?classId=${selectedClassInfo.classId}`}>
-                                            <Button variant="outline" size="sm">
-                                                Tạo báo cáo →
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="flex items-center justify-center h-64 text-muted-foreground">
-                                {selectedClassId
-                                    ? "Chưa có dữ liệu điểm danh cho lớp này"
-                                    : "Chọn lớp để xem xu hướng"}
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                                    {/* Quick action to create report */}
+                                    {selectedClassInfo && (
+                                        <div className="flex items-center justify-between pt-3 border-t">
+                                            <span className="text-xs text-muted-foreground">
+                                                <FileText className="h-3.5 w-3.5 inline mr-1" />
+                                                Tạo báo cáo về {selectedClassInfo.classCode}
+                                            </span>
+                                            <Link to={`/qa/reports/create?classId=${selectedClassInfo.classId}`}>
+                                                <Button variant="outline" size="sm" className="h-7 text-xs">
+                                                    Tạo báo cáo →
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">
+                                    {selectedClassId
+                                        ? "Chưa có dữ liệu điểm danh cho lớp này"
+                                        : "Chọn lớp để xem xu hướng"}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Recent Reports */}
+                    <RecentReports data={dashboard.recentReports} className="min-h-[320px]" />
+                </div>
             </div>
         </DashboardLayout>
     )

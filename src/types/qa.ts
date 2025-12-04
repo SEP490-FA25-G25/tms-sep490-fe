@@ -63,6 +63,38 @@ export interface CourseOption {
   classCount: number;
 }
 
+// KPI Summary (tổng quan nhanh)
+export interface KPISummary {
+  ongoingClassesCount: number;      // Số lớp đang giám sát
+  totalStudentsCount: number;       // Tổng số học viên đang học
+  averageAttendanceRate: number;    // Điểm danh TB
+  averageHomeworkRate: number;      // BTVN TB
+}
+
+// Draft Report (báo cáo đang viết dở)
+export interface DraftReport {
+  reportId: number;
+  reportType: string;
+  classCode: string;
+  className?: string;
+  lastUpdated?: string;
+  phaseName?: string;
+}
+
+// Completed Phase Info (lớp vừa hết phase)
+export interface CompletedPhaseInfo {
+  classId: number;
+  classCode: string;
+  className?: string;
+  phaseId: number;
+  phaseName: string;
+  phaseEndDate: string;
+  totalSessions: number;
+  hasPhaseReview: boolean;
+  hasFeedbackAnalysis: boolean;
+  daysSinceEnded: number;
+}
+
 // Main Dashboard DTO (V2)
 export interface QADashboardDTO {
   // New V2 fields
@@ -70,6 +102,11 @@ export interface QADashboardDTO {
   trendData?: TrendData;
   recentReports?: RecentReport[];
   courseOptions?: CourseOption[];
+  
+  // KPI Summary & Tasks (NEW)
+  kpiSummary?: KPISummary;
+  draftReports?: DraftReport[];
+  completedPhases?: CompletedPhaseInfo[];
   
   // Legacy fields (backward compatible)
   kpiMetrics?: {
