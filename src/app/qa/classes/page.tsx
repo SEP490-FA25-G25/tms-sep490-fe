@@ -54,7 +54,6 @@ const classStatusOptions = [
 const modalityOptions = [
     { value: "ONLINE", label: "Trực tuyến" },
     { value: "OFFLINE", label: "Trực tiếp" },
-    { value: "HYBRID", label: "Kết hợp" },
 ]
 
 export default function QAClassesListPage() {

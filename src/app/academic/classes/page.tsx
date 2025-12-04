@@ -536,7 +536,6 @@ export default function ClassListPage() {
                 <SelectItem value="all">Hình thức: Tất cả</SelectItem>
                 <SelectItem value="ONLINE">Trực tuyến</SelectItem>
                 <SelectItem value="OFFLINE">Trực tiếp</SelectItem>
-                <SelectItem value="HYBRID">Kết hợp</SelectItem>
               </SelectContent>
             </Select>
 

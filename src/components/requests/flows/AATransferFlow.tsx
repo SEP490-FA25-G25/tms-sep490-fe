@@ -377,7 +377,6 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                   <option value="">Tất cả hình thức</option>
                   <option value="OFFLINE">Tại trung tâm</option>
                   <option value="ONLINE">Trực tuyến</option>
-                  <option value="HYBRID">Kết hợp</option>
                 </select>
               </div>
             </div>

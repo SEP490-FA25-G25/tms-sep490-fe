@@ -45,14 +45,13 @@ interface FilterState {
   status: string;
   branchName: string;
   courseName: string;
-  modality: "ALL" | "ONLINE" | "OFFLINE" | "HYBRID";
+  modality: "ALL" | "ONLINE" | "OFFLINE";
   searchTerm: string;
 }
 
-const MODALITY_LABELS: Record<"ONLINE" | "OFFLINE" | "HYBRID", string> = {
+const MODALITY_LABELS: Record<"ONLINE" | "OFFLINE", string> = {
   ONLINE: "Trực tuyến",
   OFFLINE: "Trực tiếp",
-  HYBRID: "Kết hợp",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -343,8 +342,7 @@ export default function TeacherClassesPage() {
                       modality: value as
                         | "ALL"
                         | "ONLINE"
-                        | "OFFLINE"
-                        | "HYBRID",
+                        | "OFFLINE",
                     }))
                   }
                 >
@@ -358,9 +356,6 @@ export default function TeacherClassesPage() {
                     </SelectItem>
                     <SelectItem value="OFFLINE">
                       {MODALITY_LABELS.OFFLINE}
-                    </SelectItem>
-                    <SelectItem value="HYBRID">
-                      {MODALITY_LABELS.HYBRID}
                     </SelectItem>
                   </SelectContent>
                 </Select>
