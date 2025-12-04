@@ -139,6 +139,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    scrollbar-gutter: stable;
   }
 
   /* Hide default number input spinners for a cleaner score input UI */
@@ -153,62 +154,43 @@
     appearance: textfield;
   }
 
-  /* Clean default scrollbar styles */
+  /* 
+   * Scrollbar styles matching shadcn/ui ScrollArea component
+   * - Clean, minimal design with border color
+   * - 10px width (w-2.5) matching ScrollBar component
+   * - Rounded thumb with smooth hover transition
+   */
+  
+  /* Webkit browsers (Chrome, Safari, Edge) */
   *::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 10px;
+    height: 10px;
   }
 
   *::-webkit-scrollbar-track {
     background: transparent;
-    border-radius: 3px;
   }
 
   *::-webkit-scrollbar-thumb {
-    background: oklch(0.708 0 0 / 0.2);
-    border-radius: 3px;
-    transition: background 0.2s ease;
+    background: var(--border);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
   }
 
   *::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.708 0 0 / 0.4);
-  }
-
-  /* Make scrollbar buttons (arrows) transparent instead of hiding them */
-  *::-webkit-scrollbar-button {
-    background: transparent;
-    border: none;
-    border-radius: 0;
-  }
-
-  *::-webkit-scrollbar-button:hover {
-    background: transparent;
-  }
-
-  *::-webkit-scrollbar-button:active {
-    background: transparent;
+    background: color-mix(in srgb, var(--border) 100%, var(--foreground) 20%);
+    border: 2px solid transparent;
+    background-clip: content-box;
   }
 
   *::-webkit-scrollbar-corner {
     background: transparent;
   }
 
-  /* For dark mode */
-  .dark *::-webkit-scrollbar-thumb {
-    background: oklch(0.556 0 0 / 0.2);
-  }
-
-  .dark *::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.556 0 0 / 0.5);
-  }
-
   /* Firefox scrollbar styles */
   * {
     scrollbar-width: thin;
-    scrollbar-color: oklch(0.708 0 0 / 0.2) transparent;
-  }
-
-  .dark * {
-    scrollbar-color: oklch(0.556 0 0 / 0.2) transparent;
+    scrollbar-color: var(--border) transparent;
   }
 }
