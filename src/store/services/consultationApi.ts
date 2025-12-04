@@ -97,6 +97,22 @@ export const consultationApi = createApi({
       query: () => '/consultation-registrations/count-new',
       providesTags: ['ConsultationRegistration'],
     }),
+
+    // Export registrations to Excel
+    exportRegistrations: builder.mutation<Blob, { status?: ConsultationStatus }>({
+      query: ({ status }) => ({
+        url: '/consultation-registrations/export',
+        method: 'GET',
+        params: status ? { status } : undefined,
+        responseHandler: async (response) => {
+          if (response.ok) {
+            return await response.blob()
+          }
+          return response.json()
+        },
+        cache: 'no-cache',
+      }),
+    }),
   }),
 })
 
@@ -105,4 +121,5 @@ export const {
   useGetRegistrationByIdQuery,
   useUpdateRegistrationStatusMutation,
   useCountNewRegistrationsQuery,
+  useExportRegistrationsMutation,
 } = consultationApi

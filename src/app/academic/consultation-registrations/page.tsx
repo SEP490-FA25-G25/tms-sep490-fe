@@ -45,18 +45,19 @@ import {
   Calendar,
   MessageSquare,
   CheckCircle,
-  XCircle,
   Clock,
   RotateCcw,
   SearchIcon,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  Download,
 } from 'lucide-react'
 import { DashboardLayout } from '@/components/DashboardLayout'
 import {
   useGetRegistrationsQuery,
   useUpdateRegistrationStatusMutation,
+  useExportRegistrationsMutation,
   type ConsultationRegistrationResponse,
   type ConsultationStatus,
 } from '@/store/services/consultationApi'
@@ -274,6 +275,8 @@ export default function ConsultationRegistrationsPage() {
     size: pageSize,
   })
 
+  const [exportRegistrations, { isLoading: isExporting }] = useExportRegistrationsMutation()
+
   const registrations = data?.data?.content || []
   const totalPages = data?.data?.totalPages || 0
   const totalElements = data?.data?.totalElements || 0
@@ -335,6 +338,29 @@ export default function ConsultationRegistrationsPage() {
     setIsDialogOpen(true)
   }
 
+  const handleExport = async () => {
+    try {
+      const result = await exportRegistrations({
+        status: statusFilter === 'all' ? undefined : statusFilter,
+      }).unwrap()
+
+      // Create download link
+      const url = window.URL.createObjectURL(result)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `dang-ky-tu-van-${new Date().toISOString().split('T')[0]}.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      toast.success('Xuất danh sách đăng ký tư vấn thành công!')
+    } catch (error) {
+      console.error('Export error:', error)
+      toast.error('Có lỗi xảy ra khi xuất file. Vui lòng thử lại.')
+    }
+  }
+
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), 'dd/MM/yyyy HH:mm', { locale: vi })
   }
@@ -343,6 +369,16 @@ export default function ConsultationRegistrationsPage() {
     <DashboardLayout
       title="Đăng ký tư vấn"
       description="Quản lý các đăng ký tư vấn từ khách hàng tiềm năng"
+      actions={
+        <Button variant="outline" onClick={handleExport} disabled={isExporting}>
+          {isExporting ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Download className="mr-2 h-4 w-4" />
+          )}
+          Xuất Excel
+        </Button>
+      }
     >
       <div className="flex flex-col gap-6">
         {/* Statistics Summary */}
