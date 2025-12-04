@@ -268,7 +268,7 @@ export function CenterDetailDialog({
                             {branch.address || "-"}
                           </td>
                           <td className="px-4 py-2 text-sm">
-                            {getStatusBadge(branch.status)}
+                            {getStatusBadge(branch.status || "INACTIVE")}
                           </td>
                           <td className="px-4 py-2 text-right">
                             <div className="flex justify-end gap-2">

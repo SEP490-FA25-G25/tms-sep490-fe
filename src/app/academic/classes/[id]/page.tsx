@@ -21,6 +21,7 @@ import { SessionsTab } from './components/SessionsTab'
 import { StudentDetailDrawer } from '../../students/components/StudentDetailDrawer'
 import { StudentEditDialog } from '../../students/components/StudentEditDialog'
 import { toast } from 'sonner'
+import { useIsAcademicAffair } from '@/hooks/useRoleBasedAccess'
 
 export default function ClassDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -34,6 +35,7 @@ export default function ClassDetailPage() {
   const [studentDrawerOpen, setStudentDrawerOpen] = useState(false)
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null)
   const [studentEditDialogOpen, setStudentEditDialogOpen] = useState(false)
+  const isAcademicAffair = useIsAcademicAffair()
 
   const {
     data: classResponse,
@@ -101,9 +103,15 @@ export default function ClassDetailPage() {
     return (
       <AAClassDetailHeader
         classData={classData}
-        onEnrollFromExisting={() => setStudentSelectionOpen(true)}
-        onEnrollNewStudent={() => setCreateStudentOpen(true)}
-        onEnrollFromExcel={() => setEnrollmentDialogOpen(true)}
+        onEnrollFromExisting={
+          isAcademicAffair ? () => setStudentSelectionOpen(true) : undefined
+        }
+        onEnrollNewStudent={
+          isAcademicAffair ? () => setCreateStudentOpen(true) : undefined
+        }
+        onEnrollFromExcel={
+          isAcademicAffair ? () => setEnrollmentDialogOpen(true) : undefined
+        }
       />
     )
   }
@@ -189,7 +197,7 @@ export default function ClassDetailPage() {
       </SidebarInset>
 
       {/* Enrollment Dialogs */}
-      {classData && (
+      {classData && isAcademicAffair && (
         <>
           <StudentSelectionDialog
             classId={classId}
