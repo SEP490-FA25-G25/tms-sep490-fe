@@ -16,7 +16,7 @@ export function CourseHeader({ course, progress, materials }: CourseHeaderProps)
 
   // Use course session data if detailed progress is not available
   const completedSessions = course.completedSessions || progress?.completedSessions || 0
-  const totalSessions = course.totalSessions || progress?.totalSessions || 0
+  const totalSessions = course.numberOfSessions || course.totalSessions || progress?.totalSessions || 0
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -132,13 +132,13 @@ export function CourseHeader({ course, progress, materials }: CourseHeaderProps)
               </div>
             )}
 
-            {(course.totalSessions || course.numberOfSessions) && (
+            {(course.numberOfSessions || course.totalSessions) && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <BookOpen className="h-4 w-4" />
                   <span className="text-sm font-medium">Buổi học</span>
                 </div>
-                <p className="text-xl font-semibold text-foreground">{course.totalSessions || course.numberOfSessions} buổi</p>
+                <p className="text-xl font-semibold text-foreground">{course.numberOfSessions || course.totalSessions} buổi</p>
               </div>
             )}
 

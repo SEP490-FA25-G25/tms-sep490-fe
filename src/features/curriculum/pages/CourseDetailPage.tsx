@@ -260,7 +260,7 @@ export default function CourseDetailPage() {
                                 <CardContent className="space-y-4">
                                     <div className="flex justify-between border-b pb-2">
                                         <span className="text-muted-foreground">Số buổi học</span>
-                                        <span className="font-medium">{course.totalSessions} buổi</span>
+                                        <span className="font-medium">{course.numberOfSessions || course.totalSessions} buổi</span>
                                     </div>
                                     <div className="flex justify-between border-b pb-2">
                                         <span className="text-muted-foreground">Thời lượng/buổi</span>

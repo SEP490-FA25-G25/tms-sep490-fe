@@ -178,7 +178,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                   <span>Cấu trúc khóa học</span>
                 </div>
                 <p className="text-base text-foreground">
-                  {courseSyllabus?.totalSessions || courseSyllabus?.numberOfSessions || 0} buổi học
+                  {courseSyllabus?.numberOfSessions || 0} buổi học
                   {courseSyllabus?.hoursPerSession && ` • ${courseSyllabus.hoursPerSession} giờ/buổi`}
                 </p>
               </div>

@@ -37,13 +37,13 @@ export function CourseOverview({ course }: CourseOverviewProps) {
             </div>
           )}
 
-          {(course.totalSessions || course.numberOfSessions) && (
+          {(course.numberOfSessions || course.totalSessions) && (
             <div className="md:border-l md:pl-6">
               <div className="flex items-center gap-3 mb-2">
                 <BookOpen className="h-5 w-5 text-purple-600" />
                 <span className="font-medium text-gray-900">Buổi học</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{course.totalSessions || course.numberOfSessions}</p>
+              <p className="text-2xl font-bold text-gray-900">{course.numberOfSessions || course.totalSessions}</p>
               <p className="text-sm text-gray-600">buổi</p>
             </div>
           )}

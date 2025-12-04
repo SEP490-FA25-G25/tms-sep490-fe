@@ -208,10 +208,10 @@ export default function StudentCoursesPage() {
                             </div>
 
                             {/* Statistics */}
-                            {course.completedSessions !== undefined && course.totalSessions && (
+                            {course.completedSessions !== undefined && (course.numberOfSessions || course.totalSessions) && (
                               <div className="flex items-center justify-between text-sm bg-gray-50 rounded-lg p-3">
                                 <span className="text-gray-600">
-                                  {course.completedSessions}/{course.totalSessions} buổi học
+                                  {course.completedSessions}/{course.numberOfSessions || course.totalSessions} buổi học
                                 </span>
                                 <span className="font-medium text-gray-900">
                                   {course.attendanceRate}
