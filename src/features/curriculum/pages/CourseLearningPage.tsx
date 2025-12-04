@@ -96,6 +96,7 @@ export default function CourseLearningPage() {
                 setExpandedPhases([allVideos[0].phaseId]);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [course]);
 
     const togglePhase = (phaseId: number) => {
@@ -129,7 +130,7 @@ export default function CourseLearningPage() {
             link.click();
             document.body.removeChild(link);
             window.URL.revokeObjectURL(blobUrl);
-        } catch (error) {
+        } catch {
             // Fallback: open in new tab if download fails
             window.open(url, '_blank');
         }

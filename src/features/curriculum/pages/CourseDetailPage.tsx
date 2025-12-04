@@ -156,7 +156,7 @@ export default function CourseDetailPage() {
             link.click();
             document.body.removeChild(link);
             window.URL.revokeObjectURL(blobUrl);
-        } catch (error) {
+        } catch {
             // Fallback: open in new tab if download fails
             window.open(url, '_blank');
         }
