@@ -717,7 +717,11 @@ function TeacherAssignmentSection({
   const { data: branchesResponse } = useGetManagerBranchesQuery();
   const allBranches = branchesResponse?.data ?? [];
 
-  const { data: teachersResponse, isLoading } = useGetManagerTeachersQuery();
+  const {
+    data: teachersResponse,
+    isLoading,
+    refetch: refetchTeachers,
+  } = useGetManagerTeachersQuery();
   const allTeachers: ManagerScopeTeacher[] = teachersResponse?.data ?? [];
 
   const [updatingTeacherIds, setUpdatingTeacherIds] = useState<number[]>([]);
@@ -747,9 +751,12 @@ function TeacherAssignmentSection({
         nextBranchIds = [...nextBranchIds, branchId];
       }
     } else {
+      // Validate: chỉ cho phép bỏ gắn nếu giáo viên không có lớp đang dạy hoặc lớp trong tương lai
+      // Validation này được thực hiện ở backend
       nextBranchIds = nextBranchIds.filter((id) => id !== branchId);
     }
 
+    // Set updating state trước khi gọi API để disable checkbox
     setUpdatingTeacherIds((prev) =>
       prev.includes(teacher.teacherId) ? prev : [...prev, teacher.teacherId]
     );
@@ -760,11 +767,16 @@ function TeacherAssignmentSection({
         branchIds: nextBranchIds,
       }).unwrap();
       toast.success("Cập nhật chi nhánh cho giáo viên thành công");
+      // Refetch để cập nhật danh sách giáo viên (bao gồm cả những giáo viên đã bỏ gắn)
+      // Giáo viên vẫn sẽ hiển thị trong danh sách để có thể tích lại
+      await refetchTeachers();
     } catch (error) {
       const message =
         (error as { data?: { message?: string } })?.data?.message ??
         "Không thể cập nhật chi nhánh cho giáo viên";
       toast.error(message);
+      // Refetch để đảm bảo UI đồng bộ với backend (checkbox sẽ tự động revert)
+      await refetchTeachers();
     } finally {
       setUpdatingTeacherIds((prev) =>
         prev.filter((id) => id !== teacher.teacherId)
