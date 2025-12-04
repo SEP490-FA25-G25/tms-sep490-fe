@@ -168,17 +168,17 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                 </div>
                 <p className="text-base text-foreground">
                   {courseSyllabus?.totalHours || 0} giờ
-                  {courseSyllabus?.durationWeeks && ` (${courseSyllabus.durationWeeks} tuần)`}
+                  {courseSyllabus?.totalDurationWeeks && courseSyllabus.totalDurationWeeks > 0 && ` (${courseSyllabus.totalDurationWeeks} tuần)`}
                 </p>
               </div>
 
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                   <Target className="h-4 w-4" />
-                  <span>Ca học</span>
+                  <span>Cấu trúc khóa học</span>
                 </div>
                 <p className="text-base text-foreground">
-                  {courseSyllabus?.sessionPerWeek || 0} buổi/tuần
+                  {courseSyllabus?.totalSessions || courseSyllabus?.numberOfSessions || 0} buổi học
                   {courseSyllabus?.hoursPerSession && ` • ${courseSyllabus.hoursPerSession} giờ/buổi`}
                 </p>
               </div>
@@ -310,13 +310,14 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                       <div className="space-y-1">
                         <p className="text-xs uppercase tracking-wide text-muted-foreground">
                           Giai đoạn {phase.phaseNumber}
+                          {phase.durationWeeks && phase.durationWeeks > 0 && ` • ${phase.durationWeeks} tuần`}
                         </p>
                         <div className="text-base font-semibold text-foreground">
                           {phase.name}
                         </div>
-                        {phase.description && (
+                        {(phase.learningFocus || phase.description) && (
                           <p className="text-sm text-muted-foreground line-clamp-2">
-                            {phase.description}
+                            {phase.learningFocus || phase.description}
                           </p>
                         )}
                       </div>
