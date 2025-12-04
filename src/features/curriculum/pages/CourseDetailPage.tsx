@@ -143,6 +143,25 @@ export default function CourseDetailPage() {
     const getPhaseMaterials = (phaseId: number) => course?.materials?.filter(m => m.scope === 'PHASE' && m.phaseId === phaseId) || [];
     const getSessionMaterials = (sessionId: number) => course?.materials?.filter(m => m.scope === 'SESSION' && m.sessionId === sessionId) || [];
 
+    // Download file by fetching blob and creating download link
+    const handleDownload = async (url: string, fileName: string) => {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            // Fallback: open in new tab if download fails
+            window.open(url, '_blank');
+        }
+    };
+
     // Render Header
     const renderHeader = () => {
         if (isLoading) {
@@ -184,6 +203,16 @@ export default function CourseDetailPage() {
                                     </h1>
                                     <p className="text-lg text-muted-foreground">{course.code}</p>
                                 </div>
+                                {/* Thumbnail image */}
+                                {course.thumbnailUrl && (
+                                    <div className="mt-3">
+                                        <img
+                                            src={course.thumbnailUrl}
+                                            alt={course.name}
+                                            className="w-full max-w-md h-40 object-cover rounded-lg border"
+                                        />
+                                    </div>
+                                )}
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
                                     {course.subjectName && (
                                         <div className="flex items-center gap-2">
@@ -213,6 +242,11 @@ export default function CourseDetailPage() {
 
                             {/* Action buttons */}
                             <div className="flex flex-wrap items-center gap-2">
+                                {/* "Vào học" button - always visible */}
+                                <Button onClick={() => navigate(`/curriculum/courses/${id}/learn`)}>
+                                    <PlayCircle className="mr-2 h-4 w-4" />
+                                    Vào học
+                                </Button>
                                 {isSubjectLeader && (course.status === 'DRAFT' || course.approvalStatus === 'REJECTED') && (
                                     <Button variant="outline" onClick={() => navigate(`/curriculum/courses/${id}/edit`)}>
                                         <Edit className="mr-2 h-4 w-4" />
@@ -261,7 +295,7 @@ export default function CourseDetailPage() {
                                     <span className="text-sm font-medium">Cấu trúc</span>
                                 </div>
                                 <p className="text-sm font-semibold text-foreground">
-                                    {course.numberOfSessions || course.totalSessions || 0} buổi • {course.hoursPerSession || 0} giờ/buổi
+                                    {course.numberOfSessions || course.totalSessions || course.phases?.reduce((acc, p) => acc + (p.sessions?.length || 0), 0) || 0} buổi • {course.hoursPerSession || 0} giờ/buổi
                                 </p>
                             </div>
 
@@ -302,38 +336,48 @@ export default function CourseDetailPage() {
 
         return (
             <div className="rounded-lg border divide-y overflow-hidden bg-muted/20">
-                {materials.map((material) => (
-                    <div key={material.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40">
-                        <div className="shrink-0 text-muted-foreground">
-                            {getMaterialIcon(material.type)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                                <h6 className="font-medium text-sm truncate">{material.name}</h6>
-                                <span className="text-xs text-muted-foreground">
-                                    {getMaterialTypeLabel(material.type)}
-                                </span>
+                {materials.map((material) => {
+                    // Get the material URL (use fileUrl as fallback)
+                    const materialUrl = material.url || material.fileUrl;
+                    const materialType = material.type || material.materialType;
+
+                    return (
+                        <div key={material.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40">
+                            <div className="shrink-0 text-muted-foreground">
+                                {getMaterialIcon(materialType)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <h6 className="font-medium text-sm truncate">{material.title || material.name || material.fileName || 'Tài liệu'}</h6>
+                                    <span className="text-xs text-muted-foreground">
+                                        {getMaterialTypeLabel(materialType)}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                {materialUrl ? (
+                                    <>
+                                        <Button size="icon" variant="ghost" asChild>
+                                            <a href={materialUrl} target="_blank" rel="noopener noreferrer" title="Xem">
+                                                <Eye className="h-4 w-4" />
+                                            </a>
+                                        </Button>
+                                        <Button size="icon" variant="ghost" onClick={() => handleDownload(materialUrl, material.title || material.name || material.fileName || 'file')} title="Tải xuống">
+                                            <Download className="h-4 w-4" />
+                                        </Button>
+                                        {materialType?.toUpperCase() === 'VIDEO' && (
+                                            <Button size="icon" variant="ghost" onClick={() => setVideoUrl(materialUrl)} title="Xem video">
+                                                <PlayCircle className="h-4 w-4" />
+                                            </Button>
+                                        )}
+                                    </>
+                                ) : (
+                                    <span className="text-xs text-muted-foreground">Không có link</span>
+                                )}
                             </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                            <Button size="icon" variant="ghost" asChild>
-                                <a href={material.url} target="_blank" rel="noopener noreferrer" title="Xem">
-                                    <Eye className="h-4 w-4" />
-                                </a>
-                            </Button>
-                            <Button size="icon" variant="ghost" asChild>
-                                <a href={material.url} download title="Tải xuống">
-                                    <Download className="h-4 w-4" />
-                                </a>
-                            </Button>
-                            {material.type?.toUpperCase() === 'VIDEO' && (
-                                <Button size="icon" variant="ghost" onClick={() => setVideoUrl(material.url || null)} title="Xem video">
-                                    <PlayCircle className="h-4 w-4" />
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         );
     };
@@ -682,6 +726,13 @@ export default function CourseDetailPage() {
                                                     ploList = uniquePloCodes.map((code, idx) => ({ id: idx, code, description: code }));
                                                 }
 
+                                                // Sort PLOs by numeric order (PLO1, PLO2, PLO3, etc.)
+                                                ploList.sort((a, b) => {
+                                                    const numA = parseInt(a.code.replace(/\D/g, '')) || 0;
+                                                    const numB = parseInt(b.code.replace(/\D/g, '')) || 0;
+                                                    return numA - numB;
+                                                });
+
                                                 if (!course.clos || course.clos.length === 0 || ploList.length === 0) {
                                                     return null;
                                                 }
@@ -791,11 +842,15 @@ export default function CourseDetailPage() {
                                                                     <TableCell>
                                                                         <Badge variant="secondary" className="text-xs">{assessment.type}</Badge>
                                                                     </TableCell>
-                                                                    <TableCell className="text-center">{assessment.duration || '—'}</TableCell>
+                                                                    <TableCell className="text-center">
+                                                                        {assessment.durationMinutes
+                                                                            ? `${assessment.durationMinutes} phút`
+                                                                            : (assessment.duration || '—')}
+                                                                    </TableCell>
                                                                     <TableCell className="text-center font-bold">{assessment.maxScore || 0}</TableCell>
                                                                     <TableCell>
                                                                         <div className="flex gap-1 flex-wrap">
-                                                                            {(assessment as { skills?: string[] }).skills?.map((skill: string, idx: number) => (
+                                                                            {assessment.skills?.map((skill: string, idx: number) => (
                                                                                 <Badge key={idx} variant="outline" className="text-xs">{skill}</Badge>
                                                                             ))}
                                                                         </div>

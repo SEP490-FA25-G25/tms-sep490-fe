@@ -160,6 +160,8 @@ export interface CourseAssessment {
   type?: string; // Alias for assessmentType if needed, or specific type
   maxScore?: number;
   duration?: string;
+  durationMinutes?: number;
+  skills?: string[];
   sessionIds?: number[];
   cloMappings?: string[];
   mappedCLOs?: string[];

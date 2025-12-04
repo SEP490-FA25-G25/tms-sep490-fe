@@ -23,9 +23,9 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { 
-    BookOpen, 
-    Clock, 
+import {
+    BookOpen,
+    Clock,
     FileText,
     Video,
     Link as LinkIcon,
@@ -62,7 +62,7 @@ const assessmentTypeLabels: Record<string, string> = {
 export function Step6Review({ data }: Step6Props) {
     const [showPLOMatrix, setShowPLOMatrix] = useState(false);
     const { data: subjectsData } = useGetSubjectsWithLevelsQuery();
-    
+
     // Get subject for PLO data
     const { data: subjectDetail } = useGetSubjectQuery(
         data.basicInfo?.subjectId ? parseInt(data.basicInfo.subjectId) : 0,
@@ -215,7 +215,7 @@ export function Step6Review({ data }: Step6Props) {
                     <h3 className="text-lg font-medium">Chuẩn đầu ra (CLO)</h3>
                     <Badge variant="secondary">{data.clos?.length || 0} CLO</Badge>
                 </div>
-                
+
                 {data.clos && data.clos.length > 0 ? (
                     <div className="rounded-md border">
                         <Table>
@@ -236,9 +236,15 @@ export function Step6Review({ data }: Step6Props) {
                                         <TableCell>
                                             <div className="flex flex-wrap gap-1">
                                                 {clo.mappedPLOs && clo.mappedPLOs.length > 0 ? (
-                                                    clo.mappedPLOs.map(plo => (
-                                                        <Badge key={plo} variant="secondary" className="text-xs">{plo}</Badge>
-                                                    ))
+                                                    [...new Set(clo.mappedPLOs)]
+                                                        .sort((a, b) => {
+                                                            const numA = parseInt(a.replace(/\D/g, '')) || 0;
+                                                            const numB = parseInt(b.replace(/\D/g, '')) || 0;
+                                                            return numA - numB;
+                                                        })
+                                                        .map(plo => (
+                                                            <Badge key={plo} variant="secondary" className="text-xs">{plo}</Badge>
+                                                        ))
                                                 ) : (
                                                     <span className="text-sm text-muted-foreground">—</span>
                                                 )}
@@ -259,8 +265,8 @@ export function Step6Review({ data }: Step6Props) {
                 {data.clos && data.clos.length > 0 && subjectDetail?.data?.plos && subjectDetail.data.plos.length > 0 && (
                     <Dialog open={showPLOMatrix} onOpenChange={setShowPLOMatrix}>
                         <DialogTrigger asChild>
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 size="sm"
                                 className="gap-2"
                             >
@@ -268,7 +274,7 @@ export function Step6Review({ data }: Step6Props) {
                                 Xem ma trận PLO-CLO
                             </Button>
                         </DialogTrigger>
-                        <DialogContent 
+                        <DialogContent
                             className="max-w-none w-auto"
                             style={{
                                 maxWidth: 'calc(100vw - 2rem)',
@@ -288,21 +294,27 @@ export function Step6Review({ data }: Step6Props) {
                                             <TableHead className="bg-background whitespace-nowrap">
                                                 CLO / PLO
                                             </TableHead>
-                                            {subjectDetail.data.plos.map((plo) => (
-                                                <TableHead 
-                                                    key={plo.code} 
-                                                    className="text-center whitespace-nowrap px-4"
-                                                    title={plo.description}
-                                                >
-                                                    {plo.code}
-                                                </TableHead>
-                                            ))}
+                                            {[...subjectDetail.data.plos]
+                                                .sort((a, b) => {
+                                                    const numA = parseInt(a.code.replace(/\D/g, '')) || 0;
+                                                    const numB = parseInt(b.code.replace(/\D/g, '')) || 0;
+                                                    return numA - numB;
+                                                })
+                                                .map((plo) => (
+                                                    <TableHead
+                                                        key={plo.code}
+                                                        className="text-center whitespace-nowrap px-4"
+                                                        title={plo.description}
+                                                    >
+                                                        {plo.code}
+                                                    </TableHead>
+                                                ))}
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {data.clos.map((clo) => (
                                             <TableRow key={clo.code}>
-                                                <TableCell 
+                                                <TableCell
                                                     className="bg-background font-medium whitespace-nowrap"
                                                     title={clo.description}
                                                 >
@@ -310,27 +322,33 @@ export function Step6Review({ data }: Step6Props) {
                                                         {clo.code}
                                                     </Badge>
                                                 </TableCell>
-                                                {subjectDetail.data.plos?.map((plo) => {
-                                                    const isLinked = clo.mappedPLOs?.includes(plo.code);
-                                                    return (
-                                                        <TableCell 
-                                                            key={plo.code} 
-                                                            className="text-center px-4"
-                                                        >
-                                                            {isLinked ? (
-                                                                <div className="flex items-center justify-center">
-                                                                    <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                                                                        <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                                {[...(subjectDetail.data.plos || [])]
+                                                    .sort((a, b) => {
+                                                        const numA = parseInt(a.code.replace(/\D/g, '')) || 0;
+                                                        const numB = parseInt(b.code.replace(/\D/g, '')) || 0;
+                                                        return numA - numB;
+                                                    })
+                                                    .map((plo) => {
+                                                        const isLinked = clo.mappedPLOs?.includes(plo.code);
+                                                        return (
+                                                            <TableCell
+                                                                key={plo.code}
+                                                                className="text-center px-4"
+                                                            >
+                                                                {isLinked ? (
+                                                                    <div className="flex items-center justify-center">
+                                                                        <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                                                                            <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="flex items-center justify-center">
-                                                                    <X className="h-4 w-4 text-muted-foreground/30" />
-                                                                </div>
-                                                            )}
-                                                        </TableCell>
-                                                    );
-                                                })}
+                                                                ) : (
+                                                                    <div className="flex items-center justify-center">
+                                                                        <X className="h-4 w-4 text-muted-foreground/30" />
+                                                                    </div>
+                                                                )}
+                                                            </TableCell>
+                                                        );
+                                                    })}
                                             </TableRow>
                                         ))}
                                     </TableBody>
@@ -374,9 +392,9 @@ export function Step6Review({ data }: Step6Props) {
                                             {material.type === 'LINK' ? 'LINK' : 'DOCUMENT'}
                                         </Badge>
                                         {material.url && (
-                                            <a 
-                                                href={material.url} 
-                                                target="_blank" 
+                                            <a
+                                                href={material.url}
+                                                target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="text-sm text-blue-600 hover:underline flex items-center gap-1"
                                             >
@@ -437,9 +455,9 @@ export function Step6Review({ data }: Step6Props) {
                                                                         {m.type === 'LINK' ? 'LINK' : 'DOCUMENT'}
                                                                     </Badge>
                                                                     {m.url && (
-                                                                        <a 
-                                                                            href={m.url} 
-                                                                            target="_blank" 
+                                                                        <a
+                                                                            href={m.url}
+                                                                            target="_blank"
                                                                             rel="noopener noreferrer"
                                                                             className="text-xs text-blue-600 hover:underline flex items-center gap-1"
                                                                         >
@@ -516,9 +534,9 @@ export function Step6Review({ data }: Step6Props) {
                                                                                                     {m.type === 'LINK' ? 'LINK' : 'DOCUMENT'}
                                                                                                 </Badge>
                                                                                                 {m.url && (
-                                                                                                    <a 
-                                                                                                        href={m.url} 
-                                                                                                        target="_blank" 
+                                                                                                    <a
+                                                                                                        href={m.url}
+                                                                                                        target="_blank"
                                                                                                         rel="noopener noreferrer"
                                                                                                         className="text-[10px] text-blue-600 hover:underline flex items-center gap-0.5"
                                                                                                     >
