@@ -64,6 +64,7 @@ const StudentPendingFeedbackPage = lazy(() => import("./app/student/feedbacks/pa
 // Academic pages
 const AcademicClassesPage = lazy(() => import("./app/academic/classes/page"));
 const AcademicClassDetailPage = lazy(() => import("./app/academic/classes/[id]/page"));
+const AcademicSessionDetailPage = lazy(() => import("./app/academic/sessions/[id]/page"));
 const AcademicStudentRequestsPage = lazy(() => import("./app/academic/student-requests/page"));
 const AcademicTeacherRequestsPage = lazy(() => import("./app/academic/teacher-requests/page"));
 const AcademicStudentsPage = lazy(() => import("./app/academic/students/page"));
@@ -609,6 +610,22 @@ function App() {
                   ]}
                 >
                   <AcademicClassDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/academic/sessions/:id"
+              element={
+                <ProtectedRoute
+                  requiredRoles={[
+                    "ACADEMIC_AFFAIR",
+                    "ADMIN",
+                    "MANAGER",
+                    "CENTER_HEAD",
+                    "SUBJECT_LEADER",
+                  ]}
+                >
+                  <AcademicSessionDetailPage />
                 </ProtectedRoute>
               }
             />

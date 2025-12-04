@@ -20,7 +20,12 @@ import {
 } from "lucide-react"
 import { getSessionStatusDisplayName, SessionStatus } from "@/types/qa"
 
-export default function SessionDetailsPage() {
+/**
+ * Academic Affairs - Session Detail Page
+ * Cho phép AA xem chi tiết buổi học của một lớp
+ * Route: /academic/sessions/:id
+ */
+export default function AcademicSessionDetailPage() {
     const params = useParams()
     const sessionId = parseInt(params.id as string)
 
@@ -276,8 +281,6 @@ export default function SessionDetailsPage() {
                                 </CardContent>
                             </Card>
                         )}
-
-
                     </div>
                 </div>
             </div>

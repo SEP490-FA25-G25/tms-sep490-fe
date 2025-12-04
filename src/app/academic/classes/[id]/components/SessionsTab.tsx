@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useGetClassSessionsWithMetricsQuery } from "@/store/services/classApi";
 import {
   SessionStatus,
@@ -33,6 +34,7 @@ interface SessionsTabProps {
 
 export function SessionsTab({ classId }: SessionsTabProps) {
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const navigate = useNavigate();
 
   const {
     data: response,
@@ -172,7 +174,11 @@ export function SessionsTab({ classId }: SessionsTabProps) {
             </TableHeader>
             <TableBody>
               {filteredSessions.map((session) => (
-                <TableRow key={session.sessionId}>
+                <TableRow 
+                  key={session.sessionId}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => navigate(`/academic/sessions/${session.sessionId}`)}
+                >
                   <TableCell>
                     {new Date(session.date).toLocaleDateString("vi-VN")}
                   </TableCell>
