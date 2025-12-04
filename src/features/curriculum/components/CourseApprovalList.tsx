@@ -140,11 +140,27 @@ export function CourseApprovalList({ readOnly = false }: CourseApprovalListProps
             );
         }
 
+        // Course approved but waiting for effective date
+        if (status === "PENDING_ACTIVATION") {
+            return (
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger>
+                            <Badge variant="default" className="bg-blue-100 text-blue-700 hover:bg-blue-200 cursor-help">Chờ kích hoạt</Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Sẽ hoạt động từ ngày hiệu lực</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            );
+        }
+
         switch (status) {
             case "SUBMITTED":
                 return <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-200">Chờ duyệt</Badge>;
             case "ACTIVE":
-                return <Badge variant="default" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200">Đã duyệt</Badge>;
+                return <Badge variant="default" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200">Hoạt động</Badge>;
             default:
                 return <Badge variant="outline">{status}</Badge>;
         }

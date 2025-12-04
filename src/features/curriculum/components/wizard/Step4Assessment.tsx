@@ -37,7 +37,7 @@ export function Step4Assessment({ data, setData }: Step4Props) {
             type: "QUIZ",
             durationMinutes: 60,
             maxScore: 0,
-            skill: "",
+            skills: [],
             description: "",
             note: "",
             cloIds: [],
@@ -144,21 +144,18 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                                 </TableCell>
 
                                 <TableCell>
-                                    <Select
-                                        value={assessment.skill}
-                                        onValueChange={(val) => updateAssessment(index, "skill", val)}
-                                    >
-                                        <SelectTrigger className="w-full h-8">
-                                            <SelectValue placeholder="Chọn Kỹ năng" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {skillsList?.map((skill: string) => (
-                                                <SelectItem key={skill} value={skill}>
-                                                    {skill}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <MultiSelect
+                                        options={skillsList?.map((skill: string) => ({
+                                            label: skill,
+                                            value: skill,
+                                        })) || []}
+                                        selected={assessment.skills || []}
+                                        onChange={(selected) => updateAssessment(index, "skills", selected)}
+                                        placeholder="Chọn Kỹ năng"
+                                        searchPlaceholder="Tìm kỹ năng..."
+                                        emptyMessage="Không tìm thấy kỹ năng."
+                                        badgeClassName="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
+                                    />
                                 </TableCell>
                                 <TableCell>
                                     <MultiSelect

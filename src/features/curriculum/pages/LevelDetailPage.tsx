@@ -1,34 +1,47 @@
 import { useNavigate, useParams } from "react-router-dom";
+import { format } from "date-fns";
 import {
-    useGetLevelQuery,
-    useReactivateLevelMutation
+    useGetLevelQuery
 } from "@/store/services/curriculumApi";
+import { useGetAllCoursesQuery } from "@/store/services/courseApi";
 import { getStatusLabel, getStatusColor } from "@/utils/statusMapping";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, Loader2, CheckCircle } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, BookOpen, GraduationCap, Layers, CheckCircle2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
-
-
-import { useAuth } from "@/contexts/AuthContext";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 
 export default function LevelDetailPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { user } = useAuth();
-    const isSubjectLeader = user?.roles?.includes("SUBJECT_LEADER");
-    const { data: levelData, isLoading, refetch } = useGetLevelQuery(Number(id), {
+    const { data: levelData, isLoading } = useGetLevelQuery(Number(id), {
         skip: !id || isNaN(Number(id))
     });
-    const [reactivateLevel, { isLoading: isReactivating }] = useReactivateLevelMutation();
+    const { data: coursesData, isLoading: isLoadingCourses } = useGetAllCoursesQuery(
+        { levelId: Number(id) },
+        { skip: !id || isNaN(Number(id)) }
+    );
 
     if (isLoading) {
         return (
-            <div className="flex h-screen items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
+            <DashboardLayout
+                title="Chi tiết Cấp độ"
+                description="Đang tải thông tin cấp độ..."
+            >
+                <div className="flex justify-center items-center h-64">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+            </DashboardLayout>
         );
     }
 
@@ -36,115 +49,201 @@ export default function LevelDetailPage() {
 
     if (!level) {
         return (
-            <DashboardLayout title="Không tìm thấy cấp độ">
-                <div className="flex flex-col items-center justify-center space-y-4">
-                    <p className="text-muted-foreground">Cấp độ không tồn tại hoặc đã bị xóa.</p>
-                    <Button onClick={() => navigate("/curriculum")}>
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Quay lại
-                    </Button>
+            <DashboardLayout
+                title="Chi tiết Cấp độ"
+                description="Không tìm thấy thông tin cấp độ"
+            >
+                <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">Cấp độ không tồn tại hoặc đã bị xóa.</p>
+                    <Button onClick={() => navigate("/curriculum")}>Quay lại danh sách</Button>
                 </div>
             </DashboardLayout>
         );
     }
 
-
-
-    const handleReactivate = async () => {
-        try {
-            await reactivateLevel(Number(id)).unwrap();
-            toast.success("Đã kích hoạt lại cấp độ");
-            refetch();
-        } catch (error) {
-            console.error("Failed to reactivate level:", error);
-            toast.error("Kích hoạt lại thất bại");
-        }
-    };
-
-    const isActive = level.status === "ACTIVE";
+    const courses = coursesData || [];
 
     return (
         <DashboardLayout
-            title={`Chi tiết cấp độ: ${level.code}`}
-            description="Xem thông tin chi tiết của cấp độ."
+            title={level.name}
+            description={`Mã cấp độ: ${level.code}`}
         >
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <Button variant="outline" onClick={() => navigate("/curriculum")}>
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Quay lại
-                    </Button>
-
-                    <div className="flex gap-2">
-                        {isSubjectLeader && (
-                            <>
-                                {!isActive && (
-                                    <Button
-                                        variant="outline"
-                                        className="text-green-600 border-green-600 hover:bg-green-50"
-                                        onClick={handleReactivate}
-                                        disabled={isReactivating}
-                                    >
-                                        {isReactivating ? (
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        ) : (
-                                            <CheckCircle className="mr-2 h-4 w-4" />
-                                        )}
-                                        Kích hoạt lại
-                                    </Button>
-                                )}
-                                <Button onClick={() => navigate(`/curriculum/levels/${level.id}/edit`)}>
-                                    <Edit className="mr-2 h-4 w-4" />
-                                    Chỉnh sửa
-                                </Button>
-                            </>
-                        )}
-                    </div>
-                </div>
-
-                <div className="grid gap-6 md:grid-cols-2">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Thông tin chung</CardTitle>
+                {/* Header Stats */}
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Mã cấp độ</CardTitle>
+                            <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", "bg-slate-100 dark:bg-slate-800/50")}>
+                                <Layers className={cn("h-4 w-4", "text-slate-600 dark:text-slate-400")} />
+                            </div>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div>
-                                <h3 className="font-medium text-sm text-muted-foreground">Mã cấp độ</h3>
-                                <p className="text-lg font-semibold">{level.code}</p>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{level.code}</div>
+                            <p className="text-xs text-muted-foreground">Mã định danh cấp độ</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Môn học</CardTitle>
+                            <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", "bg-blue-50 dark:bg-blue-950/30")}>
+                                <BookOpen className={cn("h-4 w-4", "text-blue-600 dark:text-blue-400")} />
                             </div>
-                            <div>
-                                <h3 className="font-medium text-sm text-muted-foreground">Tên cấp độ</h3>
-                                <p className="text-lg">{level.name}</p>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-lg font-bold truncate" title={level.subjectName}>{level.subjectName}</div>
+                            <p className="text-xs text-muted-foreground">({level.subjectCode})</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Số khóa học</CardTitle>
+                            <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", "bg-orange-50 dark:bg-orange-950/30")}>
+                                <GraduationCap className={cn("h-4 w-4", "text-orange-600 dark:text-orange-400")} />
                             </div>
-                            <div>
-                                <h3 className="font-medium text-sm text-muted-foreground">Mô tả</h3>
-                                <p className="text-gray-700 whitespace-pre-wrap">{level.description || "Không có mô tả"}</p>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{courses.length}</div>
+                            <p className="text-xs text-muted-foreground">Khóa học thuộc cấp độ</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Trạng thái</CardTitle>
+                            <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", "bg-emerald-50 dark:bg-emerald-950/30")}>
+                                <CheckCircle2 className={cn("h-4 w-4", "text-emerald-600 dark:text-emerald-400")} />
                             </div>
-                            <div>
-                                <h3 className="font-medium text-sm text-muted-foreground">Trạng thái</h3>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="mt-1">
                                 <Badge variant={getStatusColor(level.status)}>
                                     {getStatusLabel(level.status)}
                                 </Badge>
                             </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Thông tin bổ sung</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div>
-                                <h3 className="font-medium text-sm text-muted-foreground">Môn học</h3>
-                                <p className="text-lg">{level.subjectName} ({level.subjectCode})</p>
-                            </div>
-                            <div>
-                                <h3 className="font-medium text-sm text-muted-foreground">Thứ tự sắp xếp</h3>
-                                <p className="text-lg">{level.sortOrder}</p>
-                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">Trạng thái hiện tại</p>
                         </CardContent>
                     </Card>
                 </div>
+
+                {/* Main Content */}
+                <Tabs defaultValue="overview" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
+                        <TabsTrigger value="overview">Tổng quan</TabsTrigger>
+                        <TabsTrigger value="courses">Danh sách khóa học</TabsTrigger>
+                    </TabsList>
+
+                    {/* Overview Tab */}
+                    <TabsContent value="overview" className="mt-6 space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Mô tả cấp độ</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-muted-foreground leading-relaxed">
+                                    {level.description || "Chưa có mô tả cho cấp độ này."}
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-base">Thông tin chi tiết</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex justify-between border-b pb-2">
+                                    <span className="text-muted-foreground">Mã cấp độ</span>
+                                    <span className="font-medium">{level.code}</span>
+                                </div>
+                                <div className="flex justify-between border-b pb-2">
+                                    <span className="text-muted-foreground">Tên cấp độ</span>
+                                    <span className="font-medium">{level.name}</span>
+                                </div>
+                                <div className="flex justify-between border-b pb-2">
+                                    <span className="text-muted-foreground">Môn học</span>
+                                    <span className="font-medium">{level.subjectName} ({level.subjectCode})</span>
+                                </div>
+                                <div className="flex justify-between border-b pb-2">
+                                    <span className="text-muted-foreground">Trạng thái</span>
+                                    <Badge variant={getStatusColor(level.status)}>
+                                        {getStatusLabel(level.status)}
+                                    </Badge>
+                                </div>
+                                <div className="flex justify-between border-b pb-2">
+                                    <span className="text-muted-foreground">Ngày tạo</span>
+                                    <span className="font-medium">
+                                        {level.createdAt ? format(new Date(level.createdAt), "dd/MM/yyyy HH:mm") : "-"}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Ngày cập nhật</span>
+                                    <span className="font-medium">
+                                        {level.updatedAt ? format(new Date(level.updatedAt), "dd/MM/yyyy HH:mm") : "-"}
+                                    </span>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* Courses Tab */}
+                    <TabsContent value="courses" className="mt-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Danh sách Khóa học</CardTitle>
+                                <CardDescription>
+                                    Các khóa học thuộc cấp độ này.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {isLoadingCourses ? (
+                                    <div className="flex justify-center py-8">
+                                        <Loader2 className="h-6 w-6 animate-spin" />
+                                    </div>
+                                ) : (
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead className="w-[150px]">Mã khóa học</TableHead>
+                                                <TableHead>Tên khóa học</TableHead>
+                                                <TableHead className="w-[120px]">Trạng thái</TableHead>
+                                                <TableHead className="text-right w-[100px]">Hành động</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {courses.length > 0 ? (
+                                                courses.map((course) => (
+                                                    <TableRow key={course.id}>
+                                                        <TableCell className="font-medium">{course.code}</TableCell>
+                                                        <TableCell>{course.name}</TableCell>
+                                                        <TableCell>
+                                                            <Badge variant={getStatusColor(course.status)}>
+                                                                {getStatusLabel(course.status)}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => navigate(`/curriculum/courses/${course.id}`)}
+                                                            >
+                                                                Chi tiết
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            ) : (
+                                                <TableRow>
+                                                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                                                        Chưa có khóa học nào thuộc cấp độ này.
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                </Tabs>
             </div>
         </DashboardLayout>
     );

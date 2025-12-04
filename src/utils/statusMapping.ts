@@ -7,6 +7,7 @@ export const statusMapping: Record<string, string> = {
 
     // Course Specific
     SUBMITTED: "Đã gửi",
+    PENDING_ACTIVATION: "Chờ kích hoạt",  // Đã duyệt, chờ ngày hiệu lực
     REJECTED: "Đã từ chối",
     PENDING: "Chờ duyệt",
     APPROVED: "Đã duyệt",
@@ -38,6 +39,7 @@ export const getStatusColor = (status: string | null | undefined): "default" | "
             return 'success';
         case 'DRAFT':
         case 'PENDING':
+        case 'PENDING_ACTIVATION':
         case 'ENROLLED':
         case 'LATE':
         case 'EXCUSED':

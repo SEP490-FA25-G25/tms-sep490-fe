@@ -198,7 +198,7 @@ export function SubjectList() {
                                                 <RotateCcw className="h-4 w-4" />
                                                 Kích hoạt lại
                                             </Button>
-                                        ) : (
+                                        ) : subject.status === "ACTIVE" ? (
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
@@ -208,7 +208,7 @@ export function SubjectList() {
                                                 <Trash2 className="h-4 w-4" />
                                                 Hủy kích hoạt
                                             </Button>
-                                        )}
+                                        ) : null}
                                         <Button
                                             variant="ghost"
                                             size="sm"
@@ -250,7 +250,9 @@ export function SubjectList() {
 
             <DataTable
                 columns={columns}
-                data={subjectsData?.data || []}
+                data={[...(subjectsData?.data || [])].sort((a, b) => 
+                    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                )}
                 searchKey="name"
                 searchPlaceholder="Tìm kiếm theo tên môn học..."
             />

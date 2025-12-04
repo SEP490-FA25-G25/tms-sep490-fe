@@ -3,17 +3,34 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Check, ChevronRight, Save, Loader2 } from "lucide-react";
+import { Check, ChevronRight, Save, Loader2, ChevronDown, LogOut } from "lucide-react";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
-import { Step1BasicInfo } from "./Step1BasicInfo";
-import { Step2CLO } from "./Step2CLO";
-import { Step3Structure } from "./Step3Structure";
+import { Step1BasicInfo, validateStep1 } from "./Step1BasicInfo";
+import { Step2CLO, validateStep2 } from "./Step2CLO";
+import { Step3Structure, validateStep3 } from "./Step3Structure";
 import { Step4Assessment } from "./Step4Assessment";
 import { Step6Review } from "./Step6Review";
-import { useCreateCourseMutation, useUpdateCourseMutation, useSubmitCourseMutation } from "@/store/services/courseApi";
+import { useCreateCourseMutation, useUpdateCourseMutation, useSubmitCourseMutation, useGetAllCoursesQuery } from "@/store/services/courseApi";
 import type { CourseDetail } from "@/store/services/courseApi";
 import { toast } from "sonner";
 import type { CourseData } from "@/types/course";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useNavigationGuard } from "@/contexts/NavigationGuardContext";
 
 const STEPS = [
     { id: 1, title: "Thông tin cơ bản" },
@@ -28,12 +45,148 @@ interface CourseWizardProps {
     isEditMode?: boolean;
 }
 
+// Helper function to transform CourseDetail to CourseData (for syncing after save)
+const transformCourseDetailToFormData = (courseDetail: CourseDetail): CourseData => {
+    // Get phases from response
+    const phases = (courseDetail as any).structure?.phases || courseDetail.phases || [];
+    
+    // Collect ALL materials from all sources:
+    // 1. COURSE level materials from courseDetail.materials
+    // 2. PHASE level materials from phases[].materials
+    // 3. SESSION level materials from phases[].sessions[].materials
+    const allMaterials: any[] = [];
+    
+    // 1. Add COURSE level materials
+    (courseDetail.materials || []).forEach((material: any) => {
+        allMaterials.push({
+            id: material.id?.toString() || crypto.randomUUID(),
+            name: material.name || material.title,
+            type: material.type || material.materialType || "DOCUMENT",
+            scope: material.scope || material.level || "COURSE",
+            url: material.url || material.fileUrl || "",
+            phaseId: material.phaseId?.toString(),
+            sessionId: material.sessionId?.toString(),
+        });
+    });
+    
+    // 2. Add PHASE and SESSION level materials from phases structure
+    phases.forEach((phase: any) => {
+        const phaseIdStr = phase.id?.toString();
+        
+        // Add PHASE level materials
+        (phase.materials || []).forEach((material: any) => {
+            // Check if this material is already added (avoid duplicates)
+            const existingMaterial = allMaterials.find(m => m.id === material.id?.toString());
+            if (!existingMaterial) {
+                allMaterials.push({
+                    id: material.id?.toString() || crypto.randomUUID(),
+                    name: material.name || material.title,
+                    type: material.type || material.materialType || "DOCUMENT",
+                    scope: material.scope || "PHASE",
+                    url: material.url || material.fileUrl || "",
+                    phaseId: phaseIdStr,
+                    sessionId: undefined,
+                });
+            }
+        });
+        
+        // Add SESSION level materials
+        (phase.sessions || []).forEach((session: any) => {
+            const sessionIdStr = session.id?.toString();
+            (session.materials || []).forEach((material: any) => {
+                // Check if this material is already added (avoid duplicates)
+                const existingMaterial = allMaterials.find(m => m.id === material.id?.toString());
+                if (!existingMaterial) {
+                    allMaterials.push({
+                        id: material.id?.toString() || crypto.randomUUID(),
+                        name: material.name || material.title,
+                        type: material.type || material.materialType || "DOCUMENT",
+                        scope: material.scope || "SESSION",
+                        url: material.url || material.fileUrl || "",
+                        phaseId: phaseIdStr,
+                        sessionId: sessionIdStr,
+                    });
+                }
+            });
+        });
+    });
+    
+    return {
+        id: courseDetail.id,
+        basicInfo: {
+            subjectId: courseDetail.basicInfo?.subjectId?.toString() || courseDetail.subjectId?.toString() || "",
+            levelId: courseDetail.basicInfo?.levelId?.toString() || courseDetail.levelId?.toString() || "",
+            name: courseDetail.basicInfo?.name || courseDetail.name,
+            code: courseDetail.basicInfo?.code || courseDetail.code,
+            description: courseDetail.basicInfo?.description || courseDetail.description,
+            durationHours: courseDetail.basicInfo?.durationHours || courseDetail.totalHours,
+            numberOfSessions: courseDetail.basicInfo?.numberOfSessions || courseDetail.totalSessions,
+            hoursPerSession: courseDetail.basicInfo?.hoursPerSession || courseDetail.hoursPerSession,
+            targetAudience: courseDetail.basicInfo?.targetAudience || courseDetail.targetAudience,
+            teachingMethods: courseDetail.basicInfo?.teachingMethods || courseDetail.teachingMethods,
+            prerequisites: courseDetail.basicInfo?.prerequisites || courseDetail.prerequisites,
+            scoreScale: courseDetail.basicInfo?.scoreScale || courseDetail.scoreScale,
+            effectiveDate: courseDetail.basicInfo?.effectiveDate || courseDetail.effectiveDate,
+            thumbnailUrl: courseDetail.basicInfo?.thumbnailUrl || courseDetail.thumbnailUrl,
+        },
+        clos: courseDetail.clos
+            ?.slice()
+            .sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }))
+            .map((clo) => ({
+                id: clo.id?.toString() || crypto.randomUUID(),
+                code: clo.code,
+                description: clo.description,
+                mappedPLOs: (clo as any).mappedPLOs || [],
+            })) || [],
+        structure: phases
+            .slice()
+            .sort((a: any, b: any) => (a.phaseNumber || 0) - (b.phaseNumber || 0))
+            .map((phase: any) => ({
+                id: phase.id?.toString() || crypto.randomUUID(),
+                name: phase.name,
+                sessions: phase.sessions
+                    ?.slice()
+                    .sort((a: any, b: any) => (a.sequenceNo || 0) - (b.sequenceNo || 0))
+                    .map((session: any) => ({
+                        id: session.id?.toString() || crypto.randomUUID(),
+                        sequence: session.sequenceNo,
+                        topic: session.topic,
+                        studentTask: session.studentTask || "",
+                        skills: session.skills || [],
+                        cloIds: (session as any).mappedCLOs || [],
+                    })) || [],
+            })) || [],
+        assessments: courseDetail.assessments?.map((assessment) => ({
+            id: assessment.id?.toString() || crypto.randomUUID(),
+            name: assessment.name,
+            type: assessment.assessmentType || (assessment as any).type,
+            maxScore: assessment.maxScore || (assessment as any).weight,
+            durationMinutes: (assessment as any).durationMinutes || 0,
+            skills: (assessment as any).skills || [],
+            description: assessment.description || "",
+            note: (assessment as any).note || "",
+            cloIds: assessment.cloMappings || (assessment as any).mappedCLOs || [],
+        })) || [],
+        materials: allMaterials,
+        status: courseDetail.status,
+    };
+};
+
 export function CourseWizard({ initialData, isEditMode = false }: CourseWizardProps) {
     const navigate = useNavigate();
     const [currentStep, setCurrentStep] = useState(1);
+    const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+    const { setIsBlocking } = useNavigationGuard();
     const [createCourse, { isLoading: isCreating }] = useCreateCourseMutation();
     const [updateCourse, { isLoading: isUpdating }] = useUpdateCourseMutation();
+    const { data: existingCourses } = useGetAllCoursesQuery();
     const isLoading = isCreating || isUpdating;
+
+    // Enable navigation blocking when component mounts
+    useEffect(() => {
+        setIsBlocking(true);
+        return () => setIsBlocking(false); // Disable when unmounting
+    }, [setIsBlocking]);
 
     // Global form state
     const [formData, setFormData] = useState<CourseData>({
@@ -75,6 +228,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                     prerequisites: initialData.basicInfo?.prerequisites || initialData.prerequisites,
                     scoreScale: initialData.basicInfo?.scoreScale || initialData.scoreScale,
                     effectiveDate: initialData.basicInfo?.effectiveDate || initialData.effectiveDate,
+                    thumbnailUrl: initialData.basicInfo?.thumbnailUrl || initialData.thumbnailUrl,
                 },
                 clos: initialData.clos
                     ?.slice()
@@ -99,7 +253,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                                 sequence: session.sequenceNo,
                                 topic: session.topic,
                                 studentTask: session.studentTask || "",
-                                skill: session.skill || "",
+                                skills: session.skills || [],
                                 cloIds: (session as any).mappedCLOs || [],
                             })) || [],
                     })) || [],
@@ -109,7 +263,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                     type: assessment.assessmentType || (assessment as any).type,
                     maxScore: assessment.maxScore || (assessment as any).weight,
                     durationMinutes: (assessment as any).durationMinutes || 0,
-                    skill: (assessment as any).skill || "",
+                    skills: (assessment as any).skills || [],
                     description: assessment.description || "",
                     note: (assessment as any).note || "",
                     cloIds: assessment.cloMappings || (assessment as any).mappedCLOs || [],
@@ -129,18 +283,35 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
 
     const handleNext = async () => {
         if (currentStep < STEPS.length) {
-            // Validate Step 3: Check if total sessions match required sessions
-            if (currentStep === 3) {
-                const totalCreatedSessions = formData.structure?.reduce(
-                    (sum, phase) => sum + (phase.sessions?.length || 0),
-                    0
-                ) || 0;
-                const requiredSessions = Number(formData.basicInfo.numberOfSessions) || 0;
+            // Validate Step 1: Basic Info validation
+            if (currentStep === 1) {
+                const coursesForValidation = existingCourses?.map(c => ({ id: c.id, code: c.code })) || [];
+                // Use initialData?.id for edit mode, or createdCourseId after first save
+                const courseIdToExclude = initialData?.id || createdCourseId || undefined;
+                const step1Validation = validateStep1(formData, coursesForValidation, courseIdToExclude);
+                
+                if (!step1Validation.isValid) {
+                    step1Validation.errors.forEach(error => toast.error(error));
+                    return;
+                }
+            }
 
-                if (totalCreatedSessions !== requiredSessions) {
-                    toast.error(
-                        `Số buổi đã tạo (${totalCreatedSessions}) không khớp với Tổng số buổi (${requiredSessions}). Vui lòng điều chỉnh lại.`
-                    );
+            // Validate Step 2: CLO validation
+            if (currentStep === 2) {
+                const step2Validation = validateStep2(formData);
+                
+                if (!step2Validation.isValid) {
+                    step2Validation.errors.forEach(error => toast.error(error));
+                    return;
+                }
+            }
+
+            // Validate Step 3: Complete validation
+            if (currentStep === 3) {
+                const step3Validation = validateStep3(formData);
+                
+                if (!step3Validation.isValid) {
+                    step3Validation.errors.forEach(error => toast.error(error));
                     return;
                 }
             }
@@ -174,7 +345,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                             id: session.id && !isNaN(Number(session.id)) ? Number(session.id) : null,
                             topic: session.topic,
                             studentTask: session.studentTask,
-                            skill: session.skill || "",
+                            skills: session.skills || [],
                             mappedCLOs: session.cloIds || [],
                             materials: formData.materials?.filter(m => m.scope === "SESSION" && m.sessionId === session.id).map(m => ({
                                 id: m.id && !isNaN(Number(m.id)) ? Number(m.id) : null,
@@ -194,7 +365,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                     type: assessment.type,
                     weight: Number(assessment.maxScore), // Backend expects weight/maxScore
                     durationMinutes: assessment.durationMinutes ? Number(assessment.durationMinutes) : undefined,
-                    skill: assessment.skill || "",
+                    skills: assessment.skills || [],
                     description: assessment.description,
                     note: assessment.note,
                     mappedCLOs: assessment.cloIds || [],
@@ -229,6 +400,8 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                     toast.success(isEditMode ? "Đã cập nhật khóa học thành công!" : "Đã tạo khóa học thành công!");
                 }
 
+                setIsBlocking(false); // Disable blocking before navigation
+
                 navigate("/curriculum");
             } catch (error) {
                 console.error("Failed to save/submit course:", error);
@@ -237,15 +410,9 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
         }
     };
 
-    const handleSaveDraft = async () => {
-        // Validate minimum required fields
-        if (!formData.basicInfo?.subjectId || !formData.basicInfo?.name || !formData.basicInfo?.code) {
-            toast.error("Vui lòng nhập Môn học, Tên khóa học và Mã khóa học để lưu nháp.");
-            return;
-        }
-
-        // Transform data to match API DTO
-        const requestData = {
+    // Helper function to prepare request data for saving
+    const prepareRequestData = () => {
+        return {
             basicInfo: {
                 ...formData.basicInfo,
                 subjectId: Number(formData.basicInfo.subjectId),
@@ -267,7 +434,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                         id: session.id && !isNaN(Number(session.id)) ? Number(session.id) : null,
                         topic: session.topic,
                         studentTask: session.studentTask,
-                        skill: session.skill || "",
+                        skills: session.skills || [],
                         mappedCLOs: session.cloIds || [],
                         materials: formData.materials?.filter(m => m.scope === "SESSION" && m.sessionId === session.id).map(m => ({
                             id: m.id && !isNaN(Number(m.id)) ? Number(m.id) : null,
@@ -296,7 +463,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                 type: assessment.type,
                 weight: Number(assessment.maxScore),
                 durationMinutes: assessment.durationMinutes ? Number(assessment.durationMinutes) : undefined,
-                skill: assessment.skill || "",
+                skills: assessment.skills || [],
                 description: assessment.description,
                 note: assessment.note,
                 mappedCLOs: assessment.cloIds || [],
@@ -312,21 +479,78 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
             })) || [],
             status: 'DRAFT',
         };
+    };
+
+    // Track created course ID for subsequent saves
+    const [createdCourseId, setCreatedCourseId] = useState<number | null>(null);
+
+    // Save and continue editing
+    const handleSaveAndContinue = async () => {
+        // Validate minimum required fields
+        if (!formData.basicInfo?.subjectId || !formData.basicInfo?.name || !formData.basicInfo?.code) {
+            toast.error("Vui lòng nhập Môn học, Tên khóa học và Mã khóa học để lưu nháp.");
+            return;
+        }
+
+        const requestData = prepareRequestData();
+        const courseIdToUpdate = initialData?.id || createdCourseId;
 
         try {
-            if (isEditMode && initialData?.id) {
-                await updateCourse({ id: initialData.id, data: requestData }).unwrap();
+            let savedCourse;
+            if (courseIdToUpdate) {
+                // Update existing course
+                savedCourse = await updateCourse({ id: courseIdToUpdate, data: requestData }).unwrap();
                 toast.success("Đã cập nhật bản nháp thành công!");
             } else {
+                // Create new course
+                savedCourse = await createCourse(requestData).unwrap();
+                setCreatedCourseId(savedCourse.id); // Track for subsequent saves
+                toast.success("Đã lưu nháp khóa học thành công!");
+            }
+            
+            // Sync formData with response to get new IDs from database
+            if (savedCourse) {
+                console.log('=== DEBUG: savedCourse from API ===', savedCourse);
+                const syncedData = transformCourseDetailToFormData(savedCourse);
+                console.log('=== DEBUG: syncedData after transform ===', syncedData);
+                setFormData(syncedData);
+            }
+            // Stay on current page - don't navigate away
+        } catch (error) {
+            console.error("Failed to save course:", error);
+            toast.error(courseIdToUpdate ? "Cập nhật khóa học thất bại." : "Tạo khóa học thất bại. Vui lòng thử lại.");
+        }
+    };
+
+    // Save and exit to curriculum list
+    const handleSaveAndExit = async () => {
+        // Validate minimum required fields
+        if (!formData.basicInfo?.subjectId || !formData.basicInfo?.name || !formData.basicInfo?.code) {
+            toast.error("Vui lòng nhập Môn học, Tên khóa học và Mã khóa học để lưu nháp.");
+            return;
+        }
+
+        const requestData = prepareRequestData();
+        const courseIdToUpdate = initialData?.id || createdCourseId;
+
+        try {
+            if (courseIdToUpdate) {
+                // Update existing course
+                await updateCourse({ id: courseIdToUpdate, data: requestData }).unwrap();
+                toast.success("Đã cập nhật bản nháp thành công!");
+            } else {
+                // Create new course
                 await createCourse(requestData).unwrap();
                 toast.success("Đã lưu nháp khóa học thành công!");
             }
+            setIsBlocking(false); // Disable blocking before navigation
             navigate("/curriculum");
         } catch (error) {
             console.error("Failed to save course:", error);
-            toast.error(isEditMode ? "Cập nhật khóa học thất bại." : "Tạo khóa học thất bại. Vui lòng thử lại.");
+            toast.error(courseIdToUpdate ? "Cập nhật khóa học thất bại." : "Tạo khóa học thất bại. Vui lòng thử lại.");
         }
-    }
+    };
+
     const [submitCourse, { isLoading: isSubmitting }] = useSubmitCourseMutation();
 
     const isCourseValid = (data: CourseData) => {
@@ -362,8 +586,15 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
         if (currentStep > 1) {
             setCurrentStep((prev) => prev - 1);
         } else {
-            navigate("/curriculum");
+            // Show confirmation when leaving from step 1
+            setShowLeaveConfirm(true);
         }
+    };
+
+    const handleConfirmLeave = () => {
+        setShowLeaveConfirm(false);
+        setIsBlocking(false); // Disable blocking before navigation
+        navigate("/curriculum");
     };
 
     return (
@@ -417,7 +648,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
             {/* Content */}
             <Card className="min-h-[500px] flex flex-col">
                 <CardContent className="p-6 flex-1">
-                    {currentStep === 1 && <Step1BasicInfo data={formData} setData={setFormData} courseStatus={initialData?.status} />}
+                    {currentStep === 1 && <Step1BasicInfo data={formData} setData={setFormData} courseStatus={initialData?.status} courseId={initialData?.id} />}
                     {currentStep === 2 && <Step2CLO data={formData} setData={setFormData} />}
                     {currentStep === 3 && <Step3Structure data={formData} setData={setFormData} />}
                     {currentStep === 4 && <Step4Assessment data={formData} setData={setFormData} />}
@@ -431,10 +662,40 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                         {currentStep === 1 ? "Hủy" : "Quay lại"}
                     </Button>
                     <div className="flex gap-2">
-                        <Button variant="outline" onClick={handleSaveDraft} disabled={isLoading || isSubmitting}>
-                            <Save className="mr-2 h-4 w-4" />
-                            Lưu lại
-                        </Button>
+                        {/* Split Button for Save Draft */}
+                        <div className="flex">
+                            <Button 
+                                variant="outline" 
+                                onClick={handleSaveAndContinue} 
+                                disabled={isLoading || isSubmitting}
+                                className="rounded-r-none border-r-0"
+                            >
+                                <Save className="mr-2 h-4 w-4" />
+                                Lưu nháp
+                            </Button>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button 
+                                        variant="outline" 
+                                        size="icon"
+                                        disabled={isLoading || isSubmitting}
+                                        className="rounded-l-none"
+                                    >
+                                        <ChevronDown className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={handleSaveAndContinue}>
+                                        <Save className="mr-2 h-4 w-4" />
+                                        Lưu & Tiếp tục
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={handleSaveAndExit}>
+                                        <LogOut className="mr-2 h-4 w-4" />
+                                        Lưu & Thoát
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
 
                         {(currentStep < STEPS.length || canSubmit) && (
                             <Button
@@ -457,6 +718,24 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                     </div>
                 </div>
             </Card>
+
+            {/* Confirmation Dialog for leaving page */}
+            <AlertDialog open={showLeaveConfirm} onOpenChange={setShowLeaveConfirm}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Thay đổi chưa được lưu</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Bạn có thay đổi chưa được lưu. Vui lòng sử dụng nút <strong>"Lưu & Thoát"</strong> để lưu trước khi rời khỏi trang, hoặc nhấn "Hủy thay đổi" để bỏ qua các thay đổi.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Quay lại chỉnh sửa</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmLeave} className="bg-destructive hover:bg-destructive/90">
+                            Hủy thay đổi
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

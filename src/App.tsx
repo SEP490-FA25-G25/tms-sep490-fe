@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { NavigationGuardProvider } from "@/contexts/NavigationGuardContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AuthRedirect } from "@/components/AuthRedirect";
 import { ApiSetup } from "@/components/ApiSetup";
@@ -112,6 +113,7 @@ function App() {
     <BrowserRouter>
       <ApiSetup>
         <AuthProvider>
+          <NavigationGuardProvider>
           <Suspense fallback={<PageLoader />}>
             <Routes>
             <Route path="/" element={<LandingPage />} />
@@ -937,6 +939,7 @@ function App() {
           </Routes>
           </Suspense>
           <Toaster />
+          </NavigationGuardProvider>
         </AuthProvider>
       </ApiSetup>
     </BrowserRouter>

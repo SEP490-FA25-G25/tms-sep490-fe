@@ -29,24 +29,17 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useState, useMemo } from "react"
 import { UserCircleIcon } from "lucide-react"
+import { useNavigationGuard } from "@/contexts/NavigationGuardContext"
 
 export function SiteHeader() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuth()
+  const { isBlocking } = useNavigationGuard()
   const [showBackConfirm, setShowBackConfirm] = useState(false)
 
-  const shouldConfirmBack = useMemo(() => {
-    const guarded = [
-      "/curriculum/subjects/create",
-      "/curriculum/levels/create",
-      "/curriculum/courses/create",
-    ]
-    return guarded.some((path) => location.pathname.startsWith(path))
-  }, [location.pathname])
-
   const handleBack = () => {
-    if (shouldConfirmBack) {
+    if (isBlocking) {
       setShowBackConfirm(true)
     } else {
       navigate(-1)
@@ -167,20 +160,21 @@ export function SiteHeader() {
       <AlertDialog open={showBackConfirm} onOpenChange={setShowBackConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận rời trang</AlertDialogTitle>
+            <AlertDialogTitle>Thay đổi chưa được lưu</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc muốn hủy và rời khỏi trang? Các thay đổi sẽ không được lưu.
+              Bạn có thay đổi chưa được lưu. Vui lòng sử dụng nút <strong>"Lưu & Thoát"</strong> để lưu trước khi rời khỏi trang, hoặc nhấn "Hủy thay đổi" để bỏ qua các thay đổi.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Ở lại</AlertDialogCancel>
+            <AlertDialogCancel>Quay lại chỉnh sửa</AlertDialogCancel>
             <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90"
               onClick={() => {
                 setShowBackConfirm(false)
                 navigate(-1)
               }}
             >
-              Rời trang
+              Hủy thay đổi
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

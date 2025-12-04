@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useCreateSubjectMutation, useUpdateSubjectMutation } from "@/store/services/curriculumApi";
+import { useCreateSubjectMutation, useUpdateSubjectMutation, useGetSubjectsWithLevelsQuery } from "@/store/services/curriculumApi";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -48,6 +48,8 @@ interface SubjectDialogProps {
 export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProps) {
     const [createSubject, { isLoading: isCreating }] = useCreateSubjectMutation();
     const [updateSubject, { isLoading: isUpdating }] = useUpdateSubjectMutation();
+    const { data: subjectsResponse } = useGetSubjectsWithLevelsQuery();
+    const existingSubjects = subjectsResponse?.data || [];
     const isLoading = isCreating || isUpdating;
 
     const [formData, setFormData] = useState({
@@ -60,6 +62,10 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
     const [pendingRemoveIndex, setPendingRemoveIndex] = useState<number | null>(null);
     const [isDirty, setIsDirty] = useState(false);
     const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+    const [codeError, setCodeError] = useState<string | null>(null);
+    const [nameError, setNameError] = useState<string | null>(null);
+    const [descriptionError, setDescriptionError] = useState<string | null>(null);
+    const [ploErrors, setPloErrors] = useState<{ [key: number]: string }>();
 
     useEffect(() => {
         if (subject) {
@@ -78,6 +84,10 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
             });
         }
         setIsDirty(false);
+        setCodeError(null);
+        setNameError(null);
+        setDescriptionError(null);
+        setPloErrors({});
     }, [subject, open]);
 
     const handleOpenChangeWrapper = (newOpen: boolean) => {
@@ -94,26 +104,55 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
         onOpenChange(false);
     };
 
+    const validateDescription = (value: string): string | null => {
+        if (value.length > 0 && value.length < 10) {
+            return "Mô tả phải để trống hoặc có ít nhất 10 ký tự";
+        }
+        return null;
+    };
+
+    const validateCode = (value: string): string | null => {
+        const trimmedValue = value.trim().toLowerCase();
+        const isDuplicate = existingSubjects.some(
+            (s) => s.code.toLowerCase() === trimmedValue && s.id !== subject?.id
+        );
+        if (isDuplicate) {
+            return "Mã môn học đã tồn tại";
+        }
+        return null;
+    };
+
+    const validateName = (value: string): string | null => {
+        const trimmedValue = value.trim().toLowerCase();
+        const isDuplicate = existingSubjects.some(
+            (s) => s.name.toLowerCase() === trimmedValue && s.id !== subject?.id
+        );
+        if (isDuplicate) {
+            return "Tên môn học đã tồn tại";
+        }
+        return null;
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { id, value } = e.target;
         setFormData((prev) => ({ ...prev, [id]: value }));
         setIsDirty(true);
-    };
-
-    const getNextPloCode = (plos: { code: string; description: string }[]) => {
-        const maxIndex = plos
-            .map((plo) => {
-                const match = plo.code.match(/(\d+)$/);
-                return match ? Number(match[1]) : 0;
-            })
-            .reduce((max, curr) => Math.max(max, curr), 0);
-        return `PLO${maxIndex + 1}`;
+        
+        // Validate on change
+        if (id === "code") {
+            setCodeError(validateCode(value));
+        } else if (id === "name") {
+            setNameError(validateName(value));
+        } else if (id === "description") {
+            setDescriptionError(validateDescription(value));
+        }
     };
 
     const addPLO = () => {
+        const newIndex = formData.plos.length + 1;
         setFormData((prev) => ({
             ...prev,
-            plos: [...prev.plos, { code: getNextPloCode(prev.plos), description: "" }],
+            plos: [...prev.plos, { code: `PLO${newIndex}`, description: "" }],
         }));
         setIsDirty(true);
     };
@@ -126,20 +165,82 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
             ),
         }));
         setIsDirty(true);
+        
+        // Clear PLO description error when user starts typing
+        if (field === "description" && value.trim().length > 0) {
+            setPloErrors((prev) => {
+                const newErrors = { ...prev };
+                delete newErrors[index];
+                return newErrors;
+            });
+        }
     };
 
     const handleConfirmRemove = () => {
         if (pendingRemoveIndex === null) return;
-        setFormData((prev) => ({
-            ...prev,
-            plos: prev.plos.filter((_, i) => i !== pendingRemoveIndex),
-        }));
+        setFormData((prev) => {
+            const newPlos = prev.plos.filter((_, i) => i !== pendingRemoveIndex);
+            // Auto-renumber PLOs after deletion
+            const renumberedPlos = newPlos.map((plo, index) => ({
+                ...plo,
+                code: `PLO${index + 1}`,
+            }));
+            return {
+                ...prev,
+                plos: renumberedPlos,
+            };
+        });
         setPendingRemoveIndex(null);
         setIsDirty(true);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Validate code and name for duplicates
+        const codeErr = validateCode(formData.code);
+        const nameErr = validateName(formData.name);
+        
+        if (codeErr) {
+            setCodeError(codeErr);
+            toast.error(codeErr);
+            return;
+        }
+        
+        if (nameErr) {
+            setNameError(nameErr);
+            toast.error(nameErr);
+            return;
+        }
+        
+        // Validate description
+        const descError = validateDescription(formData.description);
+        if (descError) {
+            setDescriptionError(descError);
+            toast.error(descError);
+            return;
+        }
+        
+        // Validate at least 1 PLO required
+        if (formData.plos.length === 0) {
+            toast.error("Môn học phải có ít nhất 1 PLO");
+            return;;
+        }
+        
+        // Validate PLO descriptions
+        const ploValidationErrors: { [key: number]: string } = {};
+        formData.plos.forEach((plo, index) => {
+            if (!plo.description.trim()) {
+                ploValidationErrors[index] = "Mô tả PLO không được để trống";
+            }
+        });
+        
+        if (Object.keys(ploValidationErrors).length > 0) {
+            setPloErrors(ploValidationErrors);
+            toast.error("Vui lòng nhập mô tả cho tất cả PLO");
+            return;
+        }
+        
         try {
             if (subject) {
                 await updateSubject({ id: subject.id, data: formData }).unwrap();
@@ -174,7 +275,11 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
                                 required
                                 value={formData.code}
                                 onChange={handleChange}
+                                className={codeError ? "border-red-500" : ""}
                             />
+                            {codeError && (
+                                <p className="text-sm text-red-500">{codeError}</p>
+                            )}
                         </div>
 
                         <div className="space-y-2">
@@ -185,7 +290,11 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
                                 required
                                 value={formData.name}
                                 onChange={handleChange}
+                                className={nameError ? "border-red-500" : ""}
                             />
+                            {nameError && (
+                                <p className="text-sm text-red-500">{nameError}</p>
+                            )}
                         </div>
                     </div>
 
@@ -193,11 +302,14 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
                         <Label htmlFor="description">Mô tả</Label>
                         <Textarea
                             id="description"
-                            placeholder="Nhập mô tả về môn học..."
-                            className="min-h-[100px]"
+                            placeholder="Nhập mô tả về môn học (để trống hoặc ít nhất 10 ký tự)..."
+                            className={`min-h-[100px] ${descriptionError ? "border-red-500" : ""}`}
                             value={formData.description}
                             onChange={handleChange}
                         />
+                        {descriptionError && (
+                            <p className="text-sm text-red-500">{descriptionError}</p>
+                        )}
                     </div>
 
                     <div className="space-y-4">
@@ -214,7 +326,7 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead className="w-[150px]">Mã PLO</TableHead>
-                                        <TableHead>Mô tả</TableHead>
+                                        <TableHead>Mô tả <span className="text-red-500">*</span></TableHead>
                                         <TableHead className="w-[50px]"></TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -231,16 +343,22 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
                                                 <TableCell>
                                                     <Input
                                                         value={plo.code}
-                                                        onChange={(e) => updatePLO(index, "code", e.target.value)}
-                                                        placeholder="VD: PLO-1"
+                                                        disabled
+                                                        className="bg-muted"
                                                     />
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Input
-                                                        value={plo.description}
-                                                        onChange={(e) => updatePLO(index, "description", e.target.value)}
-                                                        placeholder="Mô tả chuẩn đầu ra..."
-                                                    />
+                                                    <div className="space-y-1">
+                                                        <Input
+                                                            value={plo.description}
+                                                            onChange={(e) => updatePLO(index, "description", e.target.value)}
+                                                            placeholder="Mô tả chuẩn đầu ra..."
+                                                            className={ploErrors[index] ? "border-red-500" : ""}
+                                                        />
+                                                        {ploErrors[index] && (
+                                                            <p className="text-xs text-red-500">{ploErrors[index]}</p>
+                                                        )}
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <Button

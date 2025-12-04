@@ -1,11 +1,12 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { ArrowLeft, Loader2, Edit, BookOpen, Clock, GraduationCap, CheckCircle, XCircle, FileText, Target, PlayCircle, Download } from "lucide-react";
+import { Loader2, Edit, BookOpen, Clock, GraduationCap, CheckCircle, XCircle, FileText, Target, PlayCircle, Download } from "lucide-react";
 import { useGetCourseDetailsQuery, useApproveCourseMutation, useRejectCourseMutation } from "@/store/services/courseApi";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import {
     Table,
     TableBody,
@@ -124,11 +125,28 @@ export default function CourseDetailPage() {
                 </TooltipProvider>
             );
         }
+        
+        // Course approved but waiting for effective date
+        if (status === "PENDING_ACTIVATION") {
+            return (
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger>
+                            <Badge variant="default" className="bg-blue-100 text-blue-700 hover:bg-blue-200 cursor-help px-3 py-1 text-sm">Chờ kích hoạt</Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Sẽ hoạt động từ ngày hiệu lực: {course.effectiveDate || "Chưa xác định"}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            );
+        }
+        
         switch (status) {
             case "SUBMITTED":
                 return <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-200 px-3 py-1 text-sm">Chờ duyệt</Badge>;
             case "ACTIVE":
-                return <Badge variant="default" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-1 text-sm">Đã duyệt</Badge>;
+                return <Badge variant="default" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-1 text-sm">Hoạt động</Badge>;
             case "DRAFT":
                 return <Badge variant="outline" className="px-3 py-1 text-sm">Nháp</Badge>;
             default:
@@ -142,10 +160,6 @@ export default function CourseDetailPage() {
             description={`Mã khóa học: ${course.code || "N/A"}`}
             actions={
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" onClick={() => navigate("/curriculum")}>
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Quay lại
-                    </Button>
                     <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={() => navigate(`/curriculum/courses/${id}/learn`)}>
                         <PlayCircle className="mr-2 h-4 w-4" />
                         Vào học
@@ -177,54 +191,54 @@ export default function CourseDetailPage() {
             }
         >
             <div className="space-y-6">
-                {/* Header Stats */}
+                {/* Header Stats - SummaryCard Pattern */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <Card>
-                        <CardContent className="p-4 flex items-center gap-4">
-                            <div className="p-2 bg-primary/10 rounded-full">
-                                <BookOpen className="h-5 w-5 text-primary" />
+                    <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Môn học</CardTitle>
+                            <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", "bg-primary/10")}>
+                                <BookOpen className={cn("h-4 w-4", "text-primary")} />
                             </div>
-                            <div>
-                                <p className="text-sm text-muted-foreground">Môn học</p>
-                                <p className="font-semibold">{course.subjectName}</p>
-                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{course.subjectName}</div>
+                            <p className="text-xs text-muted-foreground">Thuộc chương trình giảng dạy</p>
                         </CardContent>
                     </Card>
-                    <Card>
-                        <CardContent className="p-4 flex items-center gap-4">
-                            <div className="p-2 bg-blue-100 rounded-full">
-                                <GraduationCap className="h-5 w-5 text-blue-600" />
+                    <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Cấp độ</CardTitle>
+                            <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", "bg-blue-100")}>
+                                <GraduationCap className={cn("h-4 w-4", "text-blue-600")} />
                             </div>
-                            <div>
-                                <p className="text-sm text-muted-foreground">Cấp độ</p>
-                                <p className="font-semibold">{course.levelName}</p>
-                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{course.levelName}</div>
+                            <p className="text-xs text-muted-foreground">Trình độ học viên</p>
                         </CardContent>
                     </Card>
-                    <Card>
-                        <CardContent className="p-4 flex items-center gap-4">
-                            <div className="p-2 bg-orange-100 rounded-full">
-                                <Clock className="h-5 w-5 text-orange-600" />
+                    <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Thời lượng</CardTitle>
+                            <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", "bg-orange-100")}>
+                                <Clock className={cn("h-4 w-4", "text-orange-600")} />
                             </div>
-                            <div>
-                                <span className="text-sm font-medium text-muted-foreground">Thời lượng</span>
-                                <p>{course.totalHours} giờ</p>
-                            </div>
-                            <div>
-                                <span className="text-sm font-medium text-muted-foreground">Giờ/buổi</span>
-                                <p>{course.hoursPerSession} giờ</p>
-                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{course.totalHours} giờ</div>
+                            <p className="text-xs text-muted-foreground">{course.totalSessions} buổi • {course.hoursPerSession} giờ/buổi</p>
                         </CardContent>
                     </Card>
-                    <Card>
-                        <CardContent className="p-4 flex items-center gap-4">
-                            <div className="p-2 bg-purple-100 rounded-full">
-                                <Target className="h-5 w-5 text-purple-600" />
+                    <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Trạng thái</CardTitle>
+                            <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", "bg-purple-100")}>
+                                <Target className={cn("h-4 w-4", "text-purple-600")} />
                             </div>
-                            <div>
-                                <p className="text-sm text-muted-foreground">Trạng thái</p>
-                                <div className="mt-1">{getStatusBadge(course.status, course.approvalStatus)}</div>
-                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{getStatusBadge(course.status, course.approvalStatus)}</div>
+                            <p className="text-xs text-muted-foreground">Mã: {course.code}</p>
                         </CardContent>
                     </Card>
                 </div>

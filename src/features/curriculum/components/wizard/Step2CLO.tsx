@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,7 +14,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Plus, Trash2 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import type { CourseData, CLO } from "@/types/course";
 import { useGetSubjectQuery } from "@/store/services/curriculumApi";
 
@@ -24,9 +23,52 @@ interface Step2Props {
     setData: React.Dispatch<React.SetStateAction<CourseData>>;
 }
 
+// Validation constants
+const MIN_DESCRIPTION_LENGTH = 10;
+const MAX_DESCRIPTION_LENGTH = 500;
+
+// Validation function for Step2 - exported for use in CourseWizard
+export function validateStep2(data: CourseData): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
+    
+    // Check if there are any CLOs
+    if (!data.clos || data.clos.length === 0) {
+        errors.push("Cần có ít nhất 1 CLO.");
+    } else {
+        // Check for duplicate descriptions
+        const descriptions = data.clos.map(clo => clo.description?.trim().toLowerCase());
+        const duplicates = descriptions.filter((desc, index) => 
+            desc && descriptions.indexOf(desc) !== index
+        );
+        if (duplicates.length > 0) {
+            errors.push("Nội dung mô tả CLO không được trùng nhau.");
+        }
+
+        // Validate each CLO
+        data.clos.forEach((clo, index) => {
+            // Check description
+            if (!clo.description || clo.description.trim() === "") {
+                errors.push(`${clo.code}: Mô tả không được để trống.`);
+            } else if (clo.description.trim().length < MIN_DESCRIPTION_LENGTH) {
+                errors.push(`${clo.code}: Mô tả phải có ít nhất ${MIN_DESCRIPTION_LENGTH} ký tự.`);
+            } else if (clo.description.trim().length > MAX_DESCRIPTION_LENGTH) {
+                errors.push(`${clo.code}: Mô tả không được vượt quá ${MAX_DESCRIPTION_LENGTH} ký tự.`);
+            }
+            
+            // Check PLO mapping - required
+            if (!clo.mappedPLOs || clo.mappedPLOs.length === 0) {
+                errors.push(`${clo.code}: Cần map với ít nhất 1 PLO.`);
+            }
+        });
+    }
+    
+    return { isValid: errors.length === 0, errors };
+}
+
 export function Step2CLO({ data, setData }: Step2Props) {
     const [selectedCloIndex, setSelectedCloIndex] = useState<number | null>(null);
     const [pendingRemoveIndex, setPendingRemoveIndex] = useState<number | null>(null);
+    const [descriptionErrors, setDescriptionErrors] = useState<Record<number, string | null>>({});
 
     // Fetch Subject Details to get PLOs
     const subjectId = data.basicInfo.subjectId ? parseInt(data.basicInfo.subjectId) : undefined;
@@ -34,13 +76,43 @@ export function Step2CLO({ data, setData }: Step2Props) {
         skip: !subjectId
     });
 
+    // Get PLOs and sort them by code
     const plos = useMemo(() => {
-        return subjectResponse?.data?.plos?.map(plo => ({
+        const ploList = subjectResponse?.data?.plos?.map(plo => ({
             id: plo.code, // Use code as ID since backend doesn't provide ID
             code: plo.code,
             description: plo.description
         })) || [];
+        
+        // Sort PLOs by code (e.g., PLO1, PLO2, PLO10 should be in correct order)
+        return ploList.sort((a, b) => {
+            const numA = parseInt(a.code.replace(/\D/g, '')) || 0;
+            const numB = parseInt(b.code.replace(/\D/g, '')) || 0;
+            return numA - numB;
+        });
     }, [subjectResponse]);
+
+    // Validate description
+    const validateDescription = useCallback((value: string, currentIndex: number): string | null => {
+        if (!value || value.trim() === "") {
+            return "Mô tả CLO không được để trống";
+        }
+        if (value.trim().length < MIN_DESCRIPTION_LENGTH) {
+            return `Mô tả phải có ít nhất ${MIN_DESCRIPTION_LENGTH} ký tự`;
+        }
+        if (value.trim().length > MAX_DESCRIPTION_LENGTH) {
+            return `Mô tả không được vượt quá ${MAX_DESCRIPTION_LENGTH} ký tự`;
+        }
+        // Check for duplicate description
+        const isDuplicate = data.clos?.some((clo, index) => 
+            index !== currentIndex && 
+            clo.description?.trim().toLowerCase() === value.trim().toLowerCase()
+        );
+        if (isDuplicate) {
+            return "Nội dung mô tả này đã tồn tại ở CLO khác";
+        }
+        return null;
+    }, [data.clos]);
 
     const addClo = () => {
         const nextIndex = (data.clos?.length || 0) + 1;
@@ -60,6 +132,12 @@ export function Step2CLO({ data, setData }: Step2Props) {
         const newClos = [...(data.clos || [])];
         newClos[index] = { ...newClos[index], [field]: value };
         setData((prev) => ({ ...prev, clos: newClos }));
+
+        // Validate description on change
+        if (field === "description") {
+            const error = validateDescription(value as string, index);
+            setDescriptionErrors(prev => ({ ...prev, [index]: error }));
+        }
     };
 
     const togglePloMapping = (cloIndex: number, ploId: string) => {
@@ -77,9 +155,36 @@ export function Step2CLO({ data, setData }: Step2Props) {
 
     const handleConfirmRemove = () => {
         if (pendingRemoveIndex === null) return;
+        
+        // Remove the CLO
         const newClos = data.clos.filter((_, i) => i !== pendingRemoveIndex);
-        setData((prev) => ({ ...prev, clos: newClos }));
-        if (selectedCloIndex === pendingRemoveIndex) setSelectedCloIndex(null);
+        
+        // Reindex CLO codes after removal
+        const reindexedClos = newClos.map((clo, index) => ({
+            ...clo,
+            code: `CLO${index + 1}`
+        }));
+        
+        setData((prev) => ({ ...prev, clos: reindexedClos }));
+        
+        // Clear description errors and reindex them
+        const newErrors: Record<number, string | null> = {};
+        Object.keys(descriptionErrors).forEach(key => {
+            const oldIndex = parseInt(key);
+            if (oldIndex < pendingRemoveIndex) {
+                newErrors[oldIndex] = descriptionErrors[oldIndex];
+            } else if (oldIndex > pendingRemoveIndex) {
+                newErrors[oldIndex - 1] = descriptionErrors[oldIndex];
+            }
+        });
+        setDescriptionErrors(newErrors);
+        
+        if (selectedCloIndex === pendingRemoveIndex) {
+            setSelectedCloIndex(null);
+        } else if (selectedCloIndex !== null && selectedCloIndex > pendingRemoveIndex) {
+            setSelectedCloIndex(selectedCloIndex - 1);
+        }
+        
         setPendingRemoveIndex(null);
     };
 
@@ -107,19 +212,27 @@ export function Step2CLO({ data, setData }: Step2Props) {
                         >
                             <div className="flex gap-3 items-start">
                                 <div className="flex-1 space-y-2">
-                                    <div className="flex gap-2">
-                                        <Input
-                                            value={clo.code}
-                                            onChange={(e) => updateClo(index, "code", e.target.value)}
-                                            className="w-24 font-bold"
-                                        />
-                                        <Textarea
-                                            value={clo.description}
-                                            onChange={(e) => updateClo(index, "description", e.target.value)}
-                                            placeholder="Nhập mô tả chuẩn đầu ra..."
-                                            className="min-h-[40px] resize-none"
-                                            rows={2}
-                                        />
+                                    <div className="flex gap-2 items-start">
+                                        {/* CLO Code - Auto generated, disabled */}
+                                        <div className="w-20 h-10 flex items-center justify-center bg-muted rounded-md font-bold text-sm shrink-0">
+                                            {clo.code}
+                                        </div>
+                                        <div className="flex-1 space-y-1">
+                                            <Textarea
+                                                value={clo.description}
+                                                onChange={(e) => updateClo(index, "description", e.target.value)}
+                                                onBlur={() => {
+                                                    const error = validateDescription(clo.description, index);
+                                                    setDescriptionErrors(prev => ({ ...prev, [index]: error }));
+                                                }}
+                                                placeholder="Nhập mô tả chuẩn đầu ra (ít nhất 10 ký tự)..."
+                                                className={`min-h-10 resize-none ${descriptionErrors[index] ? 'border-destructive' : ''}`}
+                                                rows={2}
+                                            />
+                                            {descriptionErrors[index] && (
+                                                <p className="text-xs text-destructive">{descriptionErrors[index]}</p>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="flex gap-2 flex-wrap">
                                         {clo.mappedPLOs?.map((ploId) => (

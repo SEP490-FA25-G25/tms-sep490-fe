@@ -46,7 +46,10 @@ const formSchema = z.object({
     subjectId: z.number().min(1, "Vui lòng chọn môn học"),
     code: z.string().min(1, "Mã cấp độ là bắt buộc"),
     name: z.string().min(1, "Tên cấp độ là bắt buộc"),
-    description: z.string().optional(),
+    description: z.string().optional().refine(
+        (val) => !val || val.length === 0 || val.length >= 10,
+        "Mô tả phải để trống hoặc có ít nhất 10 ký tự"
+    ),
 });
 
 type LevelFormValues = z.infer<typeof formSchema>;
@@ -70,6 +73,11 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
     const [updateLevel, { isLoading: isUpdating }] = useUpdateLevelMutation();
     const isLoading = isCreating || isUpdating;
     const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+    const [codeError, setCodeError] = useState<string | null>(null);
+    const [nameError, setNameError] = useState<string | null>(null);
+
+    // Get all subjects with their levels for duplicate check
+    const subjects = subjectsData?.data || [];
 
     const form = useForm<LevelFormValues>({
         resolver: zodResolver(formSchema),
@@ -98,6 +106,9 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
                     description: "",
                 });
             }
+            // Reset custom errors
+            setCodeError(null);
+            setNameError(null);
         }
     }, [level, open, subjectId, form]);
 
@@ -115,7 +126,54 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
         onOpenChange(false);
     };
 
+    // Validation functions for duplicate check within same subject
+    const validateCode = (code: string, currentSubjectId: number): string | null => {
+        const trimmedCode = code.trim().toLowerCase();
+        // Find the subject and check its levels
+        const subject = subjects.find(s => s.id === currentSubjectId);
+        if (!subject) return null;
+        
+        const isDuplicate = subject.levels?.some(
+            (l) => l.code.toLowerCase() === trimmedCode && String(l.id) !== String(level?.id)
+        );
+        if (isDuplicate) {
+            return "Mã cấp độ đã tồn tại trong môn học này";
+        }
+        return null;
+    };
+
+    const validateName = (name: string, currentSubjectId: number): string | null => {
+        const trimmedName = name.trim().toLowerCase();
+        // Find the subject and check its levels
+        const subject = subjects.find(s => s.id === currentSubjectId);
+        if (!subject) return null;
+        
+        const isDuplicate = subject.levels?.some(
+            (l) => l.name.toLowerCase() === trimmedName && String(l.id) !== String(level?.id)
+        );
+        if (isDuplicate) {
+            return "Tên cấp độ đã tồn tại trong môn học này";
+        }
+        return null;
+    };
+
     const onSubmit = async (values: LevelFormValues) => {
+        // Validate duplicates before submit
+        const codeErr = validateCode(values.code, values.subjectId);
+        const nameErr = validateName(values.name, values.subjectId);
+
+        if (codeErr) {
+            setCodeError(codeErr);
+            toast.error(codeErr);
+            return;
+        }
+
+        if (nameErr) {
+            setNameError(nameErr);
+            toast.error(nameErr);
+            return;
+        }
+
         try {
             if (level) {
                 await updateLevel({ id: level.id, data: values }).unwrap();
@@ -154,24 +212,38 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Môn học <span className="text-red-500">*</span></FormLabel>
-                                            <Select
-                                                onValueChange={(value) => field.onChange(Number(value))}
-                                                value={field.value ? field.value.toString() : ""}
-                                                disabled={!!level} // Disable subject selection when editing
-                                            >
+                                            {level ? (
+                                                // When editing, show subject name as readonly input
                                                 <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Chọn môn học" />
-                                                    </SelectTrigger>
+                                                    <Input
+                                                        value={(() => {
+                                                            const subject = subjects.find(s => s.id === field.value);
+                                                            return subject ? `${subject.name} (${subject.code})` : "";
+                                                        })()}
+                                                        disabled
+                                                        className="bg-muted"
+                                                    />
                                                 </FormControl>
-                                                <SelectContent>
-                                                    {subjectsData?.data?.map((subject) => (
-                                                        <SelectItem key={subject.id} value={subject.id.toString()}>
-                                                            {subject.name} ({subject.code})
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                            ) : (
+                                                // When creating, show dropdown
+                                                <Select
+                                                    onValueChange={(value) => field.onChange(Number(value))}
+                                                    value={field.value ? field.value.toString() : ""}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Chọn môn học" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {subjectsData?.data?.map((subject) => (
+                                                            <SelectItem key={subject.id} value={subject.id.toString()}>
+                                                                {subject.name} ({subject.code})
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            )}
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -184,9 +256,21 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
                                         <FormItem>
                                             <FormLabel>Mã cấp độ <span className="text-red-500">*</span></FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Ví dụ: L1" {...field} />
+                                                <Input 
+                                                    placeholder="Ví dụ: L1" 
+                                                    {...field}
+                                                    className={codeError ? "border-red-500" : ""}
+                                                    onChange={(e) => {
+                                                        field.onChange(e);
+                                                        const currentSubjectId = form.getValues("subjectId");
+                                                        if (currentSubjectId) {
+                                                            setCodeError(validateCode(e.target.value, currentSubjectId));
+                                                        }
+                                                    }}
+                                                />
                                             </FormControl>
                                             <FormMessage />
+                                            {codeError && <p className="text-sm text-red-500">{codeError}</p>}
                                         </FormItem>
                                     )}
                                 />
@@ -198,9 +282,21 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
                                     <FormItem>
                                         <FormLabel>Tên cấp độ <span className="text-red-500">*</span></FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Ví dụ: Level 1" {...field} />
+                                            <Input 
+                                                placeholder="Ví dụ: Level 1" 
+                                                {...field}
+                                                className={nameError ? "border-red-500" : ""}
+                                                onChange={(e) => {
+                                                    field.onChange(e);
+                                                    const currentSubjectId = form.getValues("subjectId");
+                                                    if (currentSubjectId) {
+                                                        setNameError(validateName(e.target.value, currentSubjectId));
+                                                    }
+                                                }}
+                                            />
                                         </FormControl>
                                         <FormMessage />
+                                        {nameError && <p className="text-sm text-red-500">{nameError}</p>}
                                     </FormItem>
                                 )}
                             />
@@ -208,17 +304,24 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
                             <FormField
                                 control={form.control}
                                 name="description"
-                                render={({ field }) => (
+                                render={({ field, fieldState }) => (
                                     <FormItem>
                                         <FormLabel>Mô tả</FormLabel>
                                         <FormControl>
                                             <Textarea
-                                                placeholder="Mô tả chi tiết về cấp độ..."
-                                                className="min-h-[100px]"
+                                                placeholder="Mô tả chi tiết về cấp độ (để trống hoặc ít nhất 10 ký tự)..."
+                                                className={`min-h-[100px] ${fieldState.error ? "border-red-500" : ""}`}
                                                 {...field}
+                                                onChange={(e) => {
+                                                    field.onChange(e);
+                                                    // Trigger validation on change
+                                                    form.trigger("description");
+                                                }}
                                             />
                                         </FormControl>
-                                        <FormMessage />
+                                        {fieldState.error && (
+                                            <p className="text-sm text-red-500">{fieldState.error.message}</p>
+                                        )}
                                     </FormItem>
                                 )}
                             />

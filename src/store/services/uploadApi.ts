@@ -22,7 +22,20 @@ export const uploadApi = createApi({
             },
             transformResponse: (response: ApiResponse<UploadResponse>) => response.data,
         }),
+        deleteFile: builder.mutation<void, string>({
+            query: (fileUrl) => ({
+                url: `/upload?url=${encodeURIComponent(fileUrl)}`,
+                method: 'DELETE',
+            }),
+        }),
+        // Delete material from database (also deletes S3 file if applicable)
+        deleteMaterial: builder.mutation<void, number>({
+            query: (materialId) => ({
+                url: `/materials/${materialId}`,
+                method: 'DELETE',
+            }),
+        }),
     }),
 });
 
-export const { useUploadFileMutation } = uploadApi;
+export const { useUploadFileMutation, useDeleteFileMutation, useDeleteMaterialMutation } = uploadApi;

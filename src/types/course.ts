@@ -12,6 +12,7 @@ export interface CourseBasicInfo {
     prerequisites?: string;
     durationHours?: number;
     numberOfSessions?: number;
+    thumbnailUrl?: string;
 }
 
 export interface CLO {
@@ -26,7 +27,7 @@ export interface Session {
     sequence?: number;
     topic: string;
     studentTask: string;
-    skill: string;
+    skills: string[];
     cloIds: string[];
 }
 
@@ -43,7 +44,7 @@ export interface Assessment {
     type: "QUIZ" | "MIDTERM" | "FINAL" | "MOCK_TEST" | "PHASE_TEST" | "PLACEMENT_TEST" | "HOMEWORK" | "ORAL" | "PRACTICE" | "OTHER";
     durationMinutes?: number;
     maxScore?: number;
-    skill?: string;
+    skills?: string[];
     description?: string;
     note?: string;
     cloIds: string[];

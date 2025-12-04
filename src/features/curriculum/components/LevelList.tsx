@@ -176,7 +176,10 @@ export function LevelList() {
                     </Button>
                 )
             },
-            cell: ({ row }) => <div className="pl-4">{row.getValue("updatedAt") ? format(new Date(row.getValue("updatedAt")), "dd/MM/yyyy") : "-"}</div>,
+            cell: ({ row }) => {
+                const date = row.getValue("updatedAt");
+                return <div className="pl-4">{date ? format(new Date(date as string), "dd/MM/yyyy") : "-"}</div>;
+            },
         },
         {
             accessorKey: "status",
@@ -232,7 +235,7 @@ export function LevelList() {
                                                 <RotateCcw className="h-4 w-4" />
                                                 Kích hoạt lại
                                             </Button>
-                                        ) : (
+                                        ) : level.status === "ACTIVE" ? (
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
@@ -242,7 +245,7 @@ export function LevelList() {
                                                 <Trash2 className="h-4 w-4" />
                                                 Hủy kích hoạt
                                             </Button>
-                                        )}
+                                        ) : null}
                                         <Button
                                             variant="ghost"
                                             size="sm"
@@ -296,7 +299,9 @@ export function LevelList() {
             <div className="rounded-md border">
                 <DataTable
                     columns={columns}
-                    data={levels || []}
+                    data={[...(levels || [])].sort((a, b) => 
+                        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+                    )}
                     searchKey="name"
                     searchPlaceholder="Tìm kiếm theo tên cấp độ..."
                 />

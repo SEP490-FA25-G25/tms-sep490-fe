@@ -54,6 +54,7 @@ export interface CourseDetail {
   targetAudience?: string;
   teachingMethods?: string;
   effectiveDate?: string;
+  thumbnailUrl?: string;
   status: string;
   approvalStatus: string;
   rejectionReason?: string;
@@ -79,6 +80,7 @@ export interface CourseDetail {
     effectiveDate?: string;
     numberOfSessions?: number;
     hoursPerSession?: number;
+    thumbnailUrl?: string;
   };
 }
 
@@ -236,6 +238,7 @@ export interface CourseDTO {
   submittedAt?: string;
   decidedAt?: string;
   effectiveDate?: string;
+  createdAt?: string;
   updatedAt?: string;
 }
 
@@ -360,21 +363,22 @@ export const courseApi = createApi({
     }),
 
     // Create new course
-    createCourse: builder.mutation<CourseDTO, CreateCourseRequest>({
+    createCourse: builder.mutation<CourseDetail, CreateCourseRequest>({
       query: (body) => ({
         url: '/courses',
         method: 'POST',
         body,
       }),
-      transformResponse: (response: { data: CourseDTO }) => response.data,
+      transformResponse: (response: { data: CourseDetail }) => response.data,
       invalidatesTags: ['Course'],
     }),
-    updateCourse: builder.mutation<void, { id: number; data: CreateCourseRequest }>({
+    updateCourse: builder.mutation<CourseDetail, { id: number; data: CreateCourseRequest }>({
       query: ({ id, data }) => ({
         url: `/courses/${id}`,
         method: 'PUT',
         body: data,
       }),
+      transformResponse: (response: { data: CourseDetail }) => response.data,
       invalidatesTags: (_result, _error, { id }) => [{ type: 'Course', id }],
     }),
     deactivateCourse: builder.mutation<void, number>({
@@ -437,6 +441,19 @@ export const courseApi = createApi({
       }),
       invalidatesTags: ['Course'],
     }),
+    cloneCourse: builder.mutation<{ success: boolean; data: { id: number; name: string; code: string; status: string } }, number>({
+      query: (id) => ({
+        url: `/courses/${id}/clone`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['Course'],
+    }),
+    getNextVersion: builder.query<{ success: boolean; data: number }, { subjectCode: string; levelCode: string; year: number }>({
+      query: ({ subjectCode, levelCode, year }) => ({
+        url: `/courses/next-version`,
+        params: { subjectCode, levelCode, year },
+      }),
+    }),
   }),
 });
 
@@ -460,4 +477,7 @@ export const {
   useSubmitCourseMutation,
   useApproveCourseMutation,
   useRejectCourseMutation,
+  useCloneCourseMutation,
+  useGetNextVersionQuery,
+  useLazyGetNextVersionQuery,
 } = courseApi;

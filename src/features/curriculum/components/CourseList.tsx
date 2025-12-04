@@ -10,13 +10,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Edit, Eye, Loader2, Trash2, RotateCcw, MoreVertical } from "lucide-react";
+import { Edit, Eye, Loader2, Trash2, RotateCcw, MoreVertical, Copy, Calendar } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
 import {
     useGetAllCoursesQuery,
     useDeactivateCourseMutation,
     useReactivateCourseMutation,
-    useDeleteCourseMutation
+    useDeleteCourseMutation,
+    useCloneCourseMutation
 } from "@/store/services/courseApi";
 import type { CourseDTO } from "@/store/services/courseApi";
 import { useGetSubjectsWithLevelsQuery } from "@/store/services/curriculumApi";
@@ -54,6 +56,7 @@ export function CourseList() {
     const [courseToDelete, setCourseToDelete] = useState<number | null>(null);
     const [courseToReactivate, setCourseToReactivate] = useState<number | null>(null);
     const [courseToDeletePermanently, setCourseToDeletePermanently] = useState<number | null>(null);
+    const [courseToClone, setCourseToClone] = useState<number | null>(null);
 
     // Fetch filters data
     const { data: subjectsData } = useGetSubjectsWithLevelsQuery();
@@ -67,6 +70,7 @@ export function CourseList() {
     const [deactivateCourse, { isLoading: isDeactivating }] = useDeactivateCourseMutation();
     const [reactivateCourse, { isLoading: isReactivating }] = useReactivateCourseMutation();
     const [deleteCourse, { isLoading: isDeleting }] = useDeleteCourseMutation();
+    const [cloneCourse, { isLoading: isCloning }] = useCloneCourseMutation();
 
     // Get levels for selected subject
     const selectedSubject = subjectsData?.data?.find(s => s.id === selectedSubjectId);
@@ -118,6 +122,23 @@ export function CourseList() {
                 console.error("Failed to delete course:", error);
                 const apiError = error as { data?: { message?: string } };
                 const errorMessage = apiError.data?.message || "Xóa thất bại. Vui lòng thử lại.";
+                toast.error(errorMessage);
+            }
+        }
+    };
+
+    const handleClone = async () => {
+        if (courseToClone) {
+            try {
+                const result = await cloneCourse(courseToClone).unwrap();
+                toast.success(`Đã tạo phiên bản mới: ${result.data.code}`);
+                setCourseToClone(null);
+                // Navigate to edit the new cloned course
+                navigate(`/curriculum/courses/${result.data.id}/edit`);
+            } catch (error: unknown) {
+                console.error("Failed to clone course:", error);
+                const apiError = error as { data?: { message?: string } };
+                const errorMessage = apiError.data?.message || "Tạo phiên bản mới thất bại. Vui lòng thử lại.";
                 toast.error(errorMessage);
             }
         }
@@ -184,19 +205,68 @@ export function CourseList() {
             },
         },
         {
-            accessorKey: "updatedAt",
-            header: ({ column }) => {
+            id: "timeline",
+            header: "Lịch sử",
+            cell: ({ row }) => {
+                const course = row.original;
+                const createdAt = course.createdAt ? new Date(course.createdAt) : null;
+                const updatedAt = course.updatedAt ? new Date(course.updatedAt) : null;
+                const submittedAt = course.submittedAt ? new Date(course.submittedAt) : null;
+                const decidedAt = course.decidedAt ? new Date(course.decidedAt) : null;
+                
+                // Determine the most recent significant date to show
+                const latestDate = decidedAt || submittedAt || createdAt;
+                
                 return (
-                    <Button
-                        variant="ghost"
-                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                    >
-                        Ngày thay đổi
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
-                )
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 gap-1 px-2">
+                                <Calendar className="h-4 w-4" />
+                                <span className="text-sm">
+                                    {latestDate ? format(latestDate, "dd/MM/yyyy") : "-"}
+                                </span>
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-64 p-0" align="start">
+                            <div className="p-3">
+                                <h4 className="font-medium text-sm mb-2">Lịch sử thời gian</h4>
+                                <Separator className="mb-3" />
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Ngày tạo:</span>
+                                        <span className="font-medium">
+                                            {createdAt ? format(createdAt, "dd/MM/yyyy HH:mm") : "-"}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Gửi duyệt:</span>
+                                        <span className="font-medium">
+                                            {submittedAt ? format(submittedAt, "dd/MM/yyyy HH:mm") : "-"}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Quyết định:</span>
+                                        <span className="font-medium">
+                                            {decidedAt ? format(decidedAt, "dd/MM/yyyy HH:mm") : "-"}
+                                        </span>
+                                    </div>
+                                    {updatedAt && (
+                                        <>
+                                            <Separator className="my-2" />
+                                            <div className="flex justify-between text-orange-600">
+                                                <span>Sửa lại:</span>
+                                                <span className="font-medium">
+                                                    {format(updatedAt, "dd/MM/yyyy HH:mm")}
+                                                </span>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+                );
             },
-            cell: ({ row }) => <div className="pl-4">{row.getValue("updatedAt") ? format(new Date(row.getValue("updatedAt")), "dd/MM/yyyy") : "-"}</div>,
         },
         {
             accessorKey: "status",
@@ -204,26 +274,48 @@ export function CourseList() {
             cell: ({ row }) => {
                 const status = row.getValue("status") as string;
                 const approvalStatus = row.original.approvalStatus;
+                
+                // Special case: PENDING_ACTIVATION = Approved but waiting for effective date
+                if (status === "PENDING_ACTIVATION") {
+                    return (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <Badge variant="info" className="bg-blue-100 text-blue-700 hover:bg-blue-200 cursor-help">
+                                        Chờ kích hoạt
+                                    </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Sẽ hoạt động từ ngày hiệu lực</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    );
+                }
+                
+                // Rejected case
+                if (approvalStatus === "REJECTED") {
+                    return (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <Badge variant="destructive" className="cursor-help">
+                                        Đã từ chối
+                                    </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Lý do: {row.original.rejectionReason || "Không có lý do"}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    );
+                }
+                
+                // Normal status display
                 return (
-                    <div className="flex gap-2 items-center">
-                        <Badge variant={getStatusColor(status)}>
-                            {getStatusLabel(status)}
-                        </Badge>
-                        {approvalStatus && (
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        <Badge variant={getStatusColor(approvalStatus)} className="cursor-help">
-                                            {getStatusLabel(approvalStatus)}
-                                        </Badge>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Lý do: {row.original.rejectionReason || "Không có lý do"}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        )}
-                    </div>
+                    <Badge variant={getStatusColor(status)}>
+                        {getStatusLabel(status)}
+                    </Badge>
                 );
             },
         },
@@ -273,6 +365,18 @@ export function CourseList() {
                                             >
                                                 <Edit className="h-4 w-4" />
                                                 Chỉnh sửa
+                                            </Button>
+                                        )}
+                                        {/* Clone button - show for non-DRAFT courses */}
+                                        {course.status !== 'DRAFT' && (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="w-full justify-start gap-2 h-9 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                                                onClick={() => setCourseToClone(course.id)}
+                                            >
+                                                <Copy className="h-4 w-4" />
+                                                Tạo phiên bản mới
                                             </Button>
                                         )}
                                         {course.status === 'INACTIVE' ? (
@@ -365,7 +469,9 @@ export function CourseList() {
             <div className="rounded-md border">
                 <DataTable
                     columns={columns}
-                    data={courses || []}
+                    data={[...(courses || [])].sort((a, b) => 
+                        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                    )}
                     searchKey="name"
                     searchPlaceholder="Tìm kiếm theo tên khóa học..."
                 />
@@ -419,6 +525,25 @@ export function CourseList() {
                         <AlertDialogCancel>Hủy</AlertDialogCancel>
                         <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                             {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Xóa vĩnh viễn"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={!!courseToClone} onOpenChange={(open) => !open && setCourseToClone(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Tạo phiên bản mới?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Hệ thống sẽ tạo một bản sao của khóa học này với phiên bản mới (V2, V3,...).
+                            <br />
+                            Phiên bản mới sẽ ở trạng thái Nháp để bạn có thể chỉnh sửa trước khi gửi duyệt.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleClone} className="bg-purple-600 text-white hover:bg-purple-700">
+                            {isCloning ? <Loader2 className="h-4 w-4 animate-spin" /> : "Tạo phiên bản mới"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

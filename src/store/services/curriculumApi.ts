@@ -239,6 +239,13 @@ export const curriculumApi = createApi({
         method: 'GET',
       }),
     }),
+    // Get all unique timeslot durations
+    getTimeslotDurations: builder.query<ApiResponse<number[]>, void>({
+      query: () => ({
+        url: '/curriculum/timeslot-durations',
+        method: 'GET',
+      }),
+    }),
     // Delete subject
     deleteSubject: builder.mutation<ApiResponse<void>, number>({
       query: (id) => ({
@@ -275,4 +282,5 @@ export const {
   useDeleteLevelMutation,
   useUpdateLevelSortOrderMutation,
   useGetTimeslotDurationQuery,
+  useGetTimeslotDurationsQuery,
 } = curriculumApi
