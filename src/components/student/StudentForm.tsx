@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -57,9 +57,13 @@ import {
 
 import { useUploadFileMutation } from '@/store/services/uploadApi'
 import { useGetSubjectsWithLevelsQuery } from '@/store/services/curriculumApi'
-import type { SkillAssessmentInput } from '@/store/services/studentApi'
+import { useGetAssessorsForBranchQuery } from '@/store/services/studentApi'
+import type { SkillAssessmentInput, StudentDetailDTO, SkillAssessmentDetailDTO } from '@/store/services/studentApi'
 
 // ========== Types ==========
+export type Gender = 'MALE' | 'FEMALE' | 'OTHER'
+export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
+
 export interface StudentFormData {
   fullName: string
   email: string
@@ -69,22 +73,33 @@ export interface StudentFormData {
   gender: string
   dob: string
   avatarUrl: string
+  status?: UserStatus
 }
 
 export interface SkillAssessmentFormData {
+  id?: number // For edit mode - existing assessment ID
   skill: string
   levelId: number
   rawScore?: string
   scoreScale?: string
   note?: string
   subjectId?: number
+  assessedByUserId?: number
+  assessmentDate?: string
+  // For display purposes (edit mode)
+  _levelCode?: string
+  _levelName?: string
+  _assessedByFullName?: string
 }
 
-export interface CreateStudentFormProps {
+export interface StudentFormProps {
+  mode: 'create' | 'edit'
   branchId: number
+  initialData?: StudentDetailDTO
   onSubmit: (data: {
     formData: StudentFormData
     skillAssessments: SkillAssessmentInput[]
+    assessmentsToDelete?: number[]
   }) => Promise<void>
   isSubmitting?: boolean
   onCancel?: () => void
@@ -104,6 +119,18 @@ interface SkillOption {
   label: string
 }
 
+interface AssessorOption {
+  userId: number
+  fullName: string
+}
+
+// ========== Status Options ==========
+const statusOptions: { value: UserStatus; label: string }[] = [
+  { value: 'ACTIVE', label: 'Hoạt động' },
+  { value: 'SUSPENDED', label: 'Tạm khóa' },
+  { value: 'INACTIVE', label: 'Đã nghỉ' },
+]
+
 // ========== Score Input Component ==========
 function ScoreInput({
   rawScore,
@@ -114,16 +141,16 @@ function ScoreInput({
 }) {
   const scoreValue = rawScore?.split('/')[0] ?? ''
   const maxScoreValue = rawScore?.split('/')[1] ?? ''
-  
+
   const scoreNum = parseFloat(scoreValue)
   const maxScoreNum = parseFloat(maxScoreValue)
-  
+
   // Validation states
   const hasScore = scoreValue !== ''
   const hasMaxScore = maxScoreValue !== ''
   const isMaxScoreValid = hasMaxScore && !isNaN(maxScoreNum) && maxScoreNum > 0 && maxScoreNum <= 9999
   const isScoreInRange = !hasScore || (hasMaxScore && scoreNum >= 0 && scoreNum <= maxScoreNum)
-  
+
   const showScoreError = hasScore && !isScoreInRange
 
   return (
@@ -166,10 +193,77 @@ function ScoreInput({
         />
       </div>
       {showScoreError && (
-        <p className="text-xs text-destructive">
-          Điểm phải từ 0-{maxScoreNum}
-        </p>
+        <p className="text-xs text-destructive">Điểm phải từ 0-{maxScoreNum}</p>
       )}
+    </div>
+  )
+}
+
+// ========== Assessor Combobox Component ==========
+function AssessorCombobox({
+  assessors,
+  selectedUserId,
+  fallbackName,
+  onChange,
+}: {
+  assessors: AssessorOption[]
+  selectedUserId?: number
+  fallbackName?: string
+  onChange: (value: number | undefined) => void
+}) {
+  const [open, setOpen] = useState(false)
+
+  const selectedAssessor = assessors.find((a) => a.userId === selectedUserId)
+  const displayName = selectedAssessor?.fullName || fallbackName
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs">Người đánh giá</Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between font-normal"
+          >
+            {displayName ? (
+              <span className="truncate">{displayName}</span>
+            ) : (
+              <span className="text-muted-foreground">Chọn người đánh giá</span>
+            )}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Tìm giáo viên..." />
+            <CommandList>
+              <CommandEmpty>Không tìm thấy giáo viên</CommandEmpty>
+              <CommandGroup>
+                {assessors.map((assessor) => (
+                  <CommandItem
+                    key={assessor.userId}
+                    value={assessor.fullName}
+                    onSelect={() => {
+                      onChange(assessor.userId)
+                      setOpen(false)
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        'mr-2 h-4 w-4',
+                        selectedUserId === assessor.userId ? 'opacity-100' : 'opacity-0'
+                      )}
+                    />
+                    <span className="truncate">{assessor.fullName}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
     </div>
   )
 }
@@ -182,6 +276,7 @@ function SkillAssessmentItem({
   selectedSubject,
   availableLevels,
   availableSkills,
+  assessors,
   onRemove,
   onChange,
 }: {
@@ -191,15 +286,18 @@ function SkillAssessmentItem({
   selectedSubject: SubjectWithLevels | undefined
   availableLevels: { id: number; code: string; name: string }[]
   availableSkills: SkillOption[]
+  assessors: AssessorOption[]
   onRemove: (index: number) => void
-  onChange: (index: number, field: keyof SkillAssessmentFormData, value: string | undefined) => void
+  onChange: (index: number, field: keyof SkillAssessmentFormData, value: string | number | undefined) => void
 }) {
   const [subjectOpen, setSubjectOpen] = useState(false)
 
   return (
     <div className="border rounded-lg p-4 space-y-4 bg-card">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium">Đánh giá {index + 1}</span>
+        <span className="text-sm font-medium">
+          {assessment.id ? `Đánh giá #${assessment.id}` : `Đánh giá ${index + 1}`}
+        </span>
         <Button
           type="button"
           variant="ghost"
@@ -244,7 +342,7 @@ function SkillAssessmentItem({
                         key={subject.id}
                         value={`${subject.name} ${subject.code}`}
                         onSelect={() => {
-                          onChange(index, 'subjectId', subject.id.toString())
+                          onChange(index, 'subjectId', subject.id)
                           setSubjectOpen(false)
                         }}
                       >
@@ -272,7 +370,7 @@ function SkillAssessmentItem({
           </Label>
           <Select
             value={assessment.levelId?.toString() || ''}
-            onValueChange={(value) => onChange(index, 'levelId', value)}
+            onValueChange={(value) => onChange(index, 'levelId', parseInt(value))}
             disabled={!assessment.subjectId}
           >
             <SelectTrigger className="w-full">
@@ -317,6 +415,14 @@ function SkillAssessmentItem({
         />
       </div>
 
+      {/* Assessor - Combobox with search */}
+      <AssessorCombobox
+        assessors={assessors}
+        selectedUserId={assessment.assessedByUserId}
+        fallbackName={assessment._assessedByFullName}
+        onChange={(value) => onChange(index, 'assessedByUserId', value)}
+      />
+
       {/* Note - full width */}
       <div className="space-y-2">
         <Label className="text-xs">Ghi chú</Label>
@@ -341,13 +447,23 @@ function getInitials(name: string): string {
     .slice(0, 2)
 }
 
+function formatDateForInput(dateStr: string | null | undefined): string {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return ''
+  return date.toISOString().split('T')[0]
+}
+
 // ========== Component ==========
-export function CreateStudentForm({
+export function StudentForm({
+  mode,
+  branchId,
+  initialData,
   onSubmit,
   isSubmitting = false,
   onCancel,
-  submitLabel = 'Tạo học viên',
-}: CreateStudentFormProps) {
+  submitLabel,
+}: StudentFormProps) {
   // Form state
   const [formData, setFormData] = useState<StudentFormData>({
     fullName: '',
@@ -358,20 +474,93 @@ export function CreateStudentForm({
     gender: '',
     dob: '',
     avatarUrl: '',
+    status: 'ACTIVE',
   })
   const [skillAssessments, setSkillAssessments] = useState<SkillAssessmentFormData[]>([])
+  const [assessmentsToDelete, setAssessmentsToDelete] = useState<number[]>([])
   const [showSkillAssessments, setShowSkillAssessments] = useState(false)
 
   // API hooks
   const [uploadFile, { isLoading: isUploading }] = useUploadFileMutation()
   const { data: subjectsResponse } = useGetSubjectsWithLevelsQuery()
+  const { data: assessorsResponse } = useGetAssessorsForBranchQuery(branchId, {
+    skip: !branchId,
+  })
 
   const subjects = useMemo(() => subjectsResponse?.data || [], [subjectsResponse?.data])
+  const assessors = useMemo(() => assessorsResponse?.data || [], [assessorsResponse?.data])
+
+  // Initialize form data when in edit mode
+  useEffect(() => {
+    if (mode === 'edit' && initialData) {
+      setFormData({
+        fullName: initialData.fullName || '',
+        email: initialData.email || '',
+        phone: initialData.phone || '',
+        facebookUrl: initialData.facebookUrl || '',
+        address: initialData.address || '',
+        gender: initialData.gender || '',
+        dob: formatDateForInput(initialData.dateOfBirth),
+        avatarUrl: initialData.avatarUrl || '',
+        status: (initialData.status as UserStatus) || 'ACTIVE',
+      })
+
+      // Convert existing assessments to form format
+      const existingAssessments: SkillAssessmentFormData[] = (initialData.skillAssessments || []).map(
+        (a: SkillAssessmentDetailDTO) => ({
+          id: a.id,
+          skill: a.skill,
+          levelId: 0, // Will be resolved from levelCode
+          rawScore: a.rawScore,
+          scoreScale: a.scoreScale,
+          note: a.note,
+          assessedByUserId: a.assessedBy?.userId,
+          assessmentDate: formatDateForInput(a.assessmentDate),
+          // For display purposes
+          _levelCode: a.levelCode,
+          _levelName: a.levelName,
+          _assessedByFullName: a.assessedBy?.fullName,
+          // Need to find subjectId from levelCode
+          subjectId: undefined,
+        })
+      )
+
+      setSkillAssessments(existingAssessments)
+      setAssessmentsToDelete([])
+
+      // Auto-expand if there are assessments
+      if (existingAssessments.length > 0) {
+        setShowSkillAssessments(true)
+      }
+    }
+  }, [mode, initialData])
+
+  // Resolve levelId and subjectId from levelCode when subjects are loaded (edit mode)
+  useEffect(() => {
+    if (mode === 'edit' && subjects.length > 0 && skillAssessments.length > 0) {
+      setSkillAssessments((prev) =>
+        prev.map((a) => {
+          if (a._levelCode && (a.levelId === 0 || !a.subjectId)) {
+            // Find the subject and level from levelCode
+            for (const subject of subjects) {
+              const level = subject.levels.find((l) => l.code === a._levelCode)
+              if (level) {
+                return {
+                  ...a,
+                  subjectId: subject.id,
+                  levelId: level.id,
+                }
+              }
+            }
+          }
+          return a
+        })
+      )
+    }
+  }, [mode, subjects, skillAssessments.length])
 
   // Auto-detect score scale from subject
-  const detectScoreScaleFromSubject = (
-    subject: { name: string; code?: string } | undefined
-  ): string => {
+  const detectScoreScaleFromSubject = (subject: { name: string; code?: string } | undefined): string => {
     if (!subject) return '0-100'
 
     const name = subject.name.toLowerCase()
@@ -440,24 +629,31 @@ export function CreateStudentForm({
         scoreScale: '0-100',
         note: '',
         subjectId: undefined,
+        assessedByUserId: undefined,
+        assessmentDate: new Date().toISOString().split('T')[0],
       },
     ])
   }
 
   const handleRemoveSkillAssessment = (index: number) => {
+    const assessment = skillAssessments[index]
+    if (assessment.id) {
+      // Mark existing assessment for deletion (edit mode)
+      setAssessmentsToDelete((prev) => [...prev, assessment.id!])
+    }
     setSkillAssessments((prev) => prev.filter((_, i) => i !== index))
   }
 
   const handleSkillAssessmentChange = (
     index: number,
     field: keyof SkillAssessmentFormData,
-    value: string | undefined
+    value: string | number | undefined
   ) => {
     setSkillAssessments((prev) => {
       const updated = [...prev]
 
       if (field === 'subjectId' && value) {
-        const subjectIdNum = parseInt(value)
+        const subjectIdNum = typeof value === 'string' ? parseInt(value) : value
         const selectedSubject = subjects.find((s) => s.id === subjectIdNum)
         const detectedScale = detectScoreScaleFromSubject(selectedSubject)
 
@@ -468,7 +664,13 @@ export function CreateStudentForm({
           scoreScale: detectedScale,
         }
       } else if (field === 'levelId' && value) {
-        updated[index] = { ...updated[index], levelId: parseInt(value) }
+        const levelIdNum = typeof value === 'string' ? parseInt(value) : value
+        updated[index] = { ...updated[index], levelId: levelIdNum }
+      } else if (field === 'assessedByUserId') {
+        updated[index] = {
+          ...updated[index],
+          assessedByUserId: value ? (typeof value === 'string' ? parseInt(value) : value) : undefined,
+        }
       } else {
         updated[index] = { ...updated[index], [field]: value }
       }
@@ -529,9 +731,7 @@ export function CreateStudentForm({
       }
       if (assessment.rawScore !== undefined) {
         if (!isValidScore(assessment.rawScore)) {
-          toast.error(
-            `Đánh giá kỹ năng ${i + 1}: Điểm số phải có định dạng n/n (ví dụ: 35/40)`
-          )
+          toast.error(`Đánh giá kỹ năng ${i + 1}: Điểm số phải có định dạng n/n (ví dụ: 35/40)`)
           return false
         }
       }
@@ -544,21 +744,28 @@ export function CreateStudentForm({
     if (!validateForm()) return
 
     // Transform to API format
-    const assessmentsToSubmit: SkillAssessmentInput[] = skillAssessments.map(
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      ({ subjectId, ...rest }) => ({
-        ...rest,
+    const assessmentsToSubmit: SkillAssessmentInput[] = skillAssessments
+      .filter((a) => a.levelId > 0) // Only include valid assessments
+      .map(({ subjectId: _subjectId, _levelCode: _lc, _levelName: _ln, _assessedByFullName: _af, ...rest }) => ({
+        id: rest.id,
         skill: rest.skill as SkillAssessmentInput['skill'],
-      })
-    )
+        levelId: rest.levelId,
+        rawScore: rest.rawScore,
+        scoreScale: rest.scoreScale,
+        note: rest.note,
+        assessedByUserId: rest.assessedByUserId,
+        assessmentDate: rest.assessmentDate,
+      }))
 
     await onSubmit({
       formData,
       skillAssessments: assessmentsToSubmit,
+      assessmentsToDelete: mode === 'edit' ? assessmentsToDelete : undefined,
     })
   }
 
   const isLoading = isSubmitting || isUploading
+  const defaultSubmitLabel = mode === 'create' ? 'Tạo học viên' : 'Lưu thay đổi'
 
   return (
     <div className="space-y-6">
@@ -711,6 +918,28 @@ export function CreateStudentForm({
             </Popover>
           </div>
 
+          {/* Status (only in edit mode) */}
+          {mode === 'edit' && (
+            <div className="space-y-2">
+              <Label>Trạng thái</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => handleChange('status', value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Address */}
           <div className="space-y-2">
             <Label htmlFor="address">Địa chỉ</Label>
@@ -736,17 +965,33 @@ export function CreateStudentForm({
         </div>
       </div>
 
-      {/* Auto-generated Fields Info */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Mã học viên</Label>
-          <div className="text-sm font-medium">Tự động tạo sau khi lưu</div>
+      {/* Auto-generated Fields Info (only in create mode) */}
+      {mode === 'create' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Mã học viên</Label>
+            <div className="text-sm font-medium">Tự động tạo sau khi lưu</div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Mật khẩu mặc định</Label>
+            <div className="text-sm font-mono">12345678</div>
+          </div>
         </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Mật khẩu mặc định</Label>
-          <div className="text-sm font-mono">12345678</div>
+      )}
+
+      {/* Student Info (only in edit mode) */}
+      {mode === 'edit' && initialData && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Mã học viên</Label>
+            <div className="text-sm font-mono font-medium">{initialData.studentCode}</div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Chi nhánh</Label>
+            <div className="text-sm font-medium">{initialData.branchName}</div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Skill Assessments Section - Collapsible */}
       <Collapsible open={showSkillAssessments} onOpenChange={setShowSkillAssessments}>
@@ -763,6 +1008,11 @@ export function CreateStudentForm({
                   {skillAssessments.length}
                 </span>
               )}
+              {assessmentsToDelete.length > 0 && (
+                <span className="text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded-full">
+                  -{assessmentsToDelete.length}
+                </span>
+              )}
             </div>
             {showSkillAssessments ? (
               <ChevronUp className="h-4 w-4 text-muted-foreground" />
@@ -774,14 +1024,14 @@ export function CreateStudentForm({
 
         <CollapsibleContent className="mt-4 space-y-4">
           <p className="text-sm text-muted-foreground">
-            Thêm đánh giá kỹ năng đầu vào cho học viên (tùy chọn). Có thể bổ sung sau.
+            {mode === 'create'
+              ? 'Thêm đánh giá kỹ năng đầu vào cho học viên (tùy chọn). Có thể bổ sung sau.'
+              : 'Quản lý đánh giá kỹ năng của học viên.'}
           </p>
 
           {skillAssessments.length === 0 ? (
             <div className="text-center py-6 border rounded-lg border-dashed">
-              <p className="text-sm text-muted-foreground mb-3">
-                Chưa có đánh giá kỹ năng nào
-              </p>
+              <p className="text-sm text-muted-foreground mb-3">Chưa có đánh giá kỹ năng nào</p>
               <Button type="button" variant="outline" size="sm" onClick={handleAddSkillAssessment}>
                 <Plus className="h-4 w-4 mr-2" />
                 Thêm đánh giá
@@ -792,20 +1042,18 @@ export function CreateStudentForm({
               {skillAssessments.map((assessment, index) => {
                 const availableLevels = getLevelsForSubject(assessment.subjectId)
                 const selectedSubject = subjects.find((s) => s.id === assessment.subjectId)
-                const availableSkills = getAvailableSkills(
-                  selectedSubject?.name,
-                  selectedSubject?.code
-                )
+                const availableSkills = getAvailableSkills(selectedSubject?.name, selectedSubject?.code)
 
                 return (
                   <SkillAssessmentItem
-                    key={index}
+                    key={assessment.id || `new-${index}`}
                     index={index}
                     assessment={assessment}
                     subjects={subjects}
                     selectedSubject={selectedSubject}
                     availableLevels={availableLevels}
                     availableSkills={availableSkills}
+                    assessors={assessors}
                     onRemove={handleRemoveSkillAssessment}
                     onChange={handleSkillAssessmentChange}
                   />
@@ -837,10 +1085,10 @@ export function CreateStudentForm({
           {isSubmitting ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Đang tạo...
+              {mode === 'create' ? 'Đang tạo...' : 'Đang lưu...'}
             </>
           ) : (
-            submitLabel
+            submitLabel || defaultSubmitLabel
           )}
         </Button>
       </div>

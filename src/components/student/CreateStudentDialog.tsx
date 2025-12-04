@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
 import { useCreateStudentMutation, type CreateStudentResponse } from '@/store/services/studentApi'
-import { CreateStudentForm, type StudentFormData } from './CreateStudentForm'
+import { StudentForm, type StudentFormData } from './StudentForm'
 import type { SkillAssessmentInput } from '@/store/services/studentApi'
 
 // ========== Types ==========
@@ -179,7 +179,8 @@ export function CreateStudentDialog({
           </FullScreenModalHeader>
 
           <FullScreenModalBody>
-            <CreateStudentForm
+            <StudentForm
+              mode="create"
               branchId={branchId}
               onSubmit={handleSubmit}
               isSubmitting={isSubmitting}

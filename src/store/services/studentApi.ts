@@ -155,6 +155,7 @@ export interface SkillAssessmentInput {
   scoreScale?: string // Optional - score scale type (e.g., '0-9', '0-990', 'N1-N5')
   assessmentCategory?: string // Optional - e.g., 'PLACEMENT'
   note?: string
+  assessedByUserId?: number // ID of the assessor (teacher or AA)
 }
 
 export interface CreateStudentRequest {
