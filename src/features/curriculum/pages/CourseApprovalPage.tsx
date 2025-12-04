@@ -97,7 +97,7 @@ const STATUS_META: Record<string, { label: string; badgeClass: string }> = {
 
 export default function CourseApprovalPage() {
     const navigate = useNavigate();
-    
+
     // Filter states
     const [activeTab, setActiveTab] = useState<"pending" | "history">("pending");
     const [searchKeyword, setSearchKeyword] = useState("");
@@ -118,7 +118,7 @@ export default function CourseApprovalPage() {
     const [rejectCourse, { isLoading: isRejecting }] = useRejectCourseMutation();
 
     // Filter courses
-    const allCourses = courses || [];
+    const allCourses = useMemo(() => courses || [], [courses]);
 
     // Pending courses (status = SUBMITTED)
     const pendingCourses = useMemo(() => {
@@ -142,11 +142,11 @@ export default function CourseApprovalPage() {
             .filter(c => {
                 const status = c.status || "";
                 const approvalStatus = c.approvalStatus || "";
-                
+
                 // Include: ACTIVE, PENDING_ACTIVATION, or REJECTED
                 if (status === "SUBMITTED") return false;
                 if (status === "DRAFT" && approvalStatus !== "REJECTED") return false;
-                
+
                 // Filter by status if selected
                 if (historyStatusFilter !== "ALL") {
                     if (historyStatusFilter === "APPROVED") {
@@ -156,7 +156,7 @@ export default function CourseApprovalPage() {
                         return approvalStatus === "REJECTED";
                     }
                 }
-                
+
                 return true;
             })
             .filter(c => {
@@ -174,7 +174,7 @@ export default function CourseApprovalPage() {
     // Pagination
     const pendingTotalPages = Math.ceil(pendingCourses.length / PAGE_SIZE);
     const historyTotalPages = Math.ceil(historyCourses.length / PAGE_SIZE);
-    
+
     const paginatedPendingCourses = pendingCourses.slice(
         pendingPage * PAGE_SIZE,
         (pendingPage + 1) * PAGE_SIZE
@@ -187,11 +187,11 @@ export default function CourseApprovalPage() {
     // Summary stats
     const summary = useMemo(() => {
         const pending = allCourses.filter(c => c.status === "SUBMITTED").length;
-        const approved = allCourses.filter(c => 
+        const approved = allCourses.filter(c =>
             c.status === "ACTIVE" || c.status === "PENDING_ACTIVATION" || c.approvalStatus === "APPROVED"
         ).length;
         const rejected = allCourses.filter(c => c.approvalStatus === "REJECTED").length;
-        
+
         return { pending, approved, rejected, total: pending + approved + rejected };
     }, [allCourses]);
 
@@ -320,7 +320,7 @@ export default function CourseApprovalPage() {
                             <TooltipContent>Xem chi tiết</TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
-                    
+
                     {isPending && (
                         <>
                             <TooltipProvider>
@@ -343,7 +343,7 @@ export default function CourseApprovalPage() {
                                     <TooltipContent>Phê duyệt</TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
-                            
+
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -393,7 +393,7 @@ export default function CourseApprovalPage() {
                             )}
                         </CardContent>
                     </Card>
-                    
+
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Đã phê duyệt</CardTitle>
@@ -412,7 +412,7 @@ export default function CourseApprovalPage() {
                             )}
                         </CardContent>
                     </Card>
-                    
+
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Đã từ chối</CardTitle>
@@ -431,7 +431,7 @@ export default function CourseApprovalPage() {
                             )}
                         </CardContent>
                     </Card>
-                    
+
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Tổng yêu cầu</CardTitle>

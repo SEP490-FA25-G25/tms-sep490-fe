@@ -74,7 +74,7 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
     }, [subjectsData, data.basicInfo?.subjectId]);
 
     // ========== VALIDATION FUNCTIONS ==========
-    
+
     const validateSubjectId = useCallback((value: string): string | null => {
         if (!value || value.trim() === "") {
             return "Vui lòng chọn môn học";
@@ -103,15 +103,15 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
         if (!value || value.trim() === "") {
             return "Mã khóa học không được để trống";
         }
-        
+
         // Check trùng lặp mã khóa học
         const trimmedValue = value.trim().toLowerCase();
         const isDuplicate = existingCourses?.some(
-            (course) => 
-                course.code.toLowerCase() === trimmedValue && 
+            (course) =>
+                course.code.toLowerCase() === trimmedValue &&
                 course.id !== courseId // Loại trừ khóa học đang edit
         );
-        
+
         if (isDuplicate) {
             return "Mã khóa học đã tồn tại";
         }
@@ -132,11 +132,11 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
         if (!value) {
             return null; // Không bắt buộc
         }
-        
+
         const selectedDate = new Date(value);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
+
         if (selectedDate < today) {
             return "Ngày hiệu lực không được là ngày trong quá khứ";
         }
@@ -148,17 +148,17 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
         if (!value || value.trim() === "") {
             return null; // Không bắt buộc
         }
-        
+
         const trimmedValue = value.trim();
-        
+
         if (trimmedValue.length < 10) {
             return `${fieldName} phải có ít nhất 10 ký tự nếu nhập`;
         }
-        
+
         if (trimmedValue.length > maxLength) {
             return `${fieldName} không được vượt quá ${maxLength} ký tự`;
         }
-        
+
         return null;
     }, []);
 
@@ -205,8 +205,8 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
     const handleSubjectChange = useCallback((val: string) => {
         handleChange("subjectId", val);
         handleChange("levelId", ""); // Reset level when subject changes
-        setErrors(prev => ({ 
-            ...prev, 
+        setErrors(prev => ({
+            ...prev,
             subjectId: validateSubjectId(val),
             levelId: null // Clear level error since it's reset
         }));
@@ -344,7 +344,7 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
                                 code: generatedCode,
                             },
                         }));
-                        
+
                         // Validate the generated code
                         setErrors(prev => ({ ...prev, code: validateCode(generatedCode) }));
                     })
@@ -599,6 +599,7 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
 }
 
 // Export validation function for use in parent component (CourseWizard)
+// eslint-disable-next-line react-refresh/only-export-components
 export function validateStep1(data: CourseData, existingCourses: { id: number; code: string }[] = [], courseId?: number): { isValid: boolean; errors: string[] } {
     const validationErrors: string[] = [];
 

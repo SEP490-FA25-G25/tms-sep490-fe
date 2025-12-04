@@ -28,16 +28,17 @@ const MIN_DESCRIPTION_LENGTH = 10;
 const MAX_DESCRIPTION_LENGTH = 500;
 
 // Validation function for Step2 - exported for use in CourseWizard
+// eslint-disable-next-line react-refresh/only-export-components
 export function validateStep2(data: CourseData): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
-    
+
     // Check if there are any CLOs
     if (!data.clos || data.clos.length === 0) {
         errors.push("Cần có ít nhất 1 CLO.");
     } else {
         // Check for duplicate descriptions
         const descriptions = data.clos.map(clo => clo.description?.trim().toLowerCase());
-        const duplicates = descriptions.filter((desc, index) => 
+        const duplicates = descriptions.filter((desc, index) =>
             desc && descriptions.indexOf(desc) !== index
         );
         if (duplicates.length > 0) {
@@ -54,14 +55,14 @@ export function validateStep2(data: CourseData): { isValid: boolean; errors: str
             } else if (clo.description.trim().length > MAX_DESCRIPTION_LENGTH) {
                 errors.push(`${clo.code}: Mô tả không được vượt quá ${MAX_DESCRIPTION_LENGTH} ký tự.`);
             }
-            
+
             // Check PLO mapping - required
             if (!clo.mappedPLOs || clo.mappedPLOs.length === 0) {
                 errors.push(`${clo.code}: Cần map với ít nhất 1 PLO.`);
             }
         });
     }
-    
+
     return { isValid: errors.length === 0, errors };
 }
 
@@ -83,7 +84,7 @@ export function Step2CLO({ data, setData }: Step2Props) {
             code: plo.code,
             description: plo.description
         })) || [];
-        
+
         // Sort PLOs by code (e.g., PLO1, PLO2, PLO10 should be in correct order)
         return ploList.sort((a, b) => {
             const numA = parseInt(a.code.replace(/\D/g, '')) || 0;
@@ -104,8 +105,8 @@ export function Step2CLO({ data, setData }: Step2Props) {
             return `Mô tả không được vượt quá ${MAX_DESCRIPTION_LENGTH} ký tự`;
         }
         // Check for duplicate description
-        const isDuplicate = data.clos?.some((clo, index) => 
-            index !== currentIndex && 
+        const isDuplicate = data.clos?.some((clo, index) =>
+            index !== currentIndex &&
             clo.description?.trim().toLowerCase() === value.trim().toLowerCase()
         );
         if (isDuplicate) {
@@ -157,18 +158,18 @@ export function Step2CLO({ data, setData }: Step2Props) {
 
     const handleConfirmRemove = () => {
         if (pendingRemoveIndex === null) return;
-        
+
         // Remove the CLO
         const newClos = data.clos.filter((_, i) => i !== pendingRemoveIndex);
-        
+
         // Reindex CLO codes after removal
         const reindexedClos = newClos.map((clo, index) => ({
             ...clo,
             code: `CLO${index + 1}`
         }));
-        
+
         setData((prev) => ({ ...prev, clos: reindexedClos }));
-        
+
         // Clear description errors and reindex them
         const newErrors: Record<number, string | null> = {};
         Object.keys(descriptionErrors).forEach(key => {
@@ -180,13 +181,13 @@ export function Step2CLO({ data, setData }: Step2Props) {
             }
         });
         setDescriptionErrors(newErrors);
-        
+
         if (selectedCloIndex === pendingRemoveIndex) {
             setSelectedCloIndex(null);
         } else if (selectedCloIndex !== null && selectedCloIndex > pendingRemoveIndex) {
             setSelectedCloIndex(selectedCloIndex - 1);
         }
-        
+
         setPendingRemoveIndex(null);
     };
 

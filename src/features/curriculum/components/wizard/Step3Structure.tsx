@@ -44,6 +44,7 @@ import type { CourseData, Phase, Session, Material } from "@/types/course";
 import { MaterialSection } from "./MaterialSection";
 
 // Validation function for Step 3
+// eslint-disable-next-line react-refresh/only-export-components
 export function validateStep3(data: CourseData): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
@@ -136,11 +137,11 @@ export function Step3Structure({ data, setData }: Step3Props) {
     const { data: skills = [] } = useGetSkillsQuery();
     const [deleteFile] = useDeleteFileMutation();
     const [deleteMaterial] = useDeleteMaterialMutation();
-    
+
     // Validation error states for sessions
     // Format: { "phaseIndex-sessionIndex-field": "error message" }
     const [sessionErrors, setSessionErrors] = useState<Record<string, string>>({});
-    
+
     const [deleteSessionDialog, setDeleteSessionDialog] = useState<{
         open: boolean;
         phaseIndex: number;
@@ -198,7 +199,7 @@ export function Step3Structure({ data, setData }: Step3Props) {
 
         // Real-time validation
         const errorKey = `${phaseIndex}-${sessionIndex}-${field}`;
-        
+
         if (field === 'topic') {
             const trimmedValue = (value as string).trim();
             if (!trimmedValue) {
@@ -213,7 +214,7 @@ export function Step3Structure({ data, setData }: Step3Props) {
                 });
             }
         }
-        
+
         if (field === 'studentTask') {
             const trimmedValue = (value as string).trim();
             if (!trimmedValue) {
@@ -228,7 +229,7 @@ export function Step3Structure({ data, setData }: Step3Props) {
                 });
             }
         }
-        
+
         if (field === 'skills') {
             if (!(value as string[]).length) {
                 setSessionErrors(prev => ({ ...prev, [errorKey]: 'Vui lòng chọn ít nhất 1 kỹ năng' }));
@@ -282,19 +283,19 @@ export function Step3Structure({ data, setData }: Step3Props) {
         const hasCustomName = phase.name?.trim() && !phase.name.match(/^Giai đoạn \d+\s*$/);
         // Check if any session has data
         const hasSessionData = phase.sessions?.some(sessionHasData) || false;
-        
+
         return !!(hasCustomName || phaseMaterials.length > 0 || hasSessionData);
     };
 
     const handleDeleteSessionClick = (phaseIndex: number, sessionIndex: number) => {
         const session = data.structure[phaseIndex].sessions[sessionIndex];
-        
+
         // If session has no data, delete directly without confirmation
         if (!sessionHasData(session)) {
             deleteSessionDirectly(phaseIndex, sessionIndex);
             return;
         }
-        
+
         // Show confirmation dialog
         setDeleteSessionDialog({
             open: true,
@@ -308,7 +309,7 @@ export function Step3Structure({ data, setData }: Step3Props) {
     const deleteSessionDirectly = (phaseIndex: number, sessionIndex: number) => {
         const newStructure = [...data.structure];
         const sessionToDelete = newStructure[phaseIndex].sessions[sessionIndex];
-        
+
         newStructure[phaseIndex].sessions = newStructure[phaseIndex].sessions.filter(
             (_, i) => i !== sessionIndex
         );
@@ -380,13 +381,13 @@ export function Step3Structure({ data, setData }: Step3Props) {
 
     const handleDeletePhaseClick = (phaseIndex: number) => {
         const phase = data.structure[phaseIndex];
-        
+
         // If phase has no data, delete directly without confirmation
         if (!phaseHasData(phase)) {
             deletePhaseDirectly(phaseIndex);
             return;
         }
-        
+
         // Show confirmation dialog
         setDeletePhaseDialog({
             open: true,
@@ -511,11 +512,10 @@ export function Step3Structure({ data, setData }: Step3Props) {
                     <h3 className="text-xl font-semibold text-primary">Cấu trúc chương trình</h3>
                     <div className="flex items-center gap-4">
                         {/* Session Count Badge */}
-                        <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
-                            isSessionCountValid
+                        <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${isSessionCountValid
                                 ? "bg-green-50 text-green-700 border border-green-200"
                                 : "bg-amber-50 text-amber-700 border border-amber-200"
-                        }`}>
+                            }`}>
                             <span>Buổi học:</span>
                             <span className="font-bold">{currentSessionCount}</span>
                             <span>/</span>
@@ -551,8 +551,8 @@ export function Step3Structure({ data, setData }: Step3Props) {
                             {data.clos && data.clos.length > 0 ? (
                                 <div className="grid gap-2">
                                     {data.clos.map((clo, index) => (
-                                        <div 
-                                            key={clo.code || index} 
+                                        <div
+                                            key={clo.code || index}
                                             className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-colors"
                                         >
                                             <Badge className="shrink-0 bg-green-100 text-green-700 border-green-200 hover:bg-green-100">
@@ -600,218 +600,216 @@ export function Step3Structure({ data, setData }: Step3Props) {
             {/* Scrollable Content Section */}
             <div className="flex-1 overflow-y-auto mt-4 pr-2 -mr-2">
                 <Accordion type="multiple" className="w-full space-y-4" defaultValue={["item-0"]}>
-                {data.structure?.map((phase, pIndex) => (
-                    <AccordionItem
-                        key={phase.id}
-                        value={`item-${pIndex}`}
-                        className="border rounded-lg px-4 bg-slate-50/50 data-[state=open]:bg-white data-[state=open]:shadow-sm data-[state=open]:border-l-4 data-[state=open]:border-l-primary transition-all duration-200"
-                    >
-                        <AccordionPrimitive.Header className="flex items-center px-4 py-4 hover:no-underline group">
-                            <AccordionPrimitive.Trigger className="font-bold text-lg min-w-[100px] text-primary/80 group-hover:text-primary transition-colors text-left">
-                                Giai đoạn {pIndex + 1}:
-                            </AccordionPrimitive.Trigger>
-                            <Input
-                                value={phase.name}
-                                onChange={(e) => updatePhaseName(pIndex, e.target.value)}
-                                className="max-w-md h-9 font-medium bg-white ml-4"
-                                placeholder="Tên giai đoạn (VD: Giai đoạn nền tảng)"
-                                onClick={(e) => e.stopPropagation()}
-                                onKeyDown={(e) => e.stopPropagation()}
-                            />
-                            <div className="ml-auto mr-4 flex items-center gap-2">
-                                <Badge variant="outline" className="bg-white">
-                                    {phase.sessions?.length || 0} buổi
-                                </Badge>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeletePhaseClick(pIndex);
-                                    }}
-                                    title="Xóa giai đoạn"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </Button>
-                            </div>
-                            <AccordionPrimitive.Trigger>
-                                <ChevronDown className="text-muted-foreground size-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                            </AccordionPrimitive.Trigger>
-                        </AccordionPrimitive.Header>
-                        <AccordionContent className="pb-6 pt-2 space-y-6">
-                            {/* Phase Level Materials - Collapsible */}
-                            <div className="px-1">
-                                <MaterialSection
-                                    title="Tài liệu Giai đoạn"
-                                    materials={getMaterials("PHASE", phase.id)}
-                                    onUpdate={(m) => updateMaterials(m, "PHASE", phase.id)}
-                                    scope="PHASE"
-                                    phaseId={phase.id}
-                                    collapsible
-                                    defaultOpen={false}
+                    {data.structure?.map((phase, pIndex) => (
+                        <AccordionItem
+                            key={phase.id}
+                            value={`item-${pIndex}`}
+                            className="border rounded-lg px-4 bg-slate-50/50 data-[state=open]:bg-white data-[state=open]:shadow-sm data-[state=open]:border-l-4 data-[state=open]:border-l-primary transition-all duration-200"
+                        >
+                            <AccordionPrimitive.Header className="flex items-center px-4 py-4 hover:no-underline group">
+                                <AccordionPrimitive.Trigger className="font-bold text-lg min-w-[100px] text-primary/80 group-hover:text-primary transition-colors text-left">
+                                    Giai đoạn {pIndex + 1}:
+                                </AccordionPrimitive.Trigger>
+                                <Input
+                                    value={phase.name}
+                                    onChange={(e) => updatePhaseName(pIndex, e.target.value)}
+                                    className="max-w-md h-9 font-medium bg-white ml-4"
+                                    placeholder="Tên giai đoạn (VD: Giai đoạn nền tảng)"
+                                    onClick={(e) => e.stopPropagation()}
+                                    onKeyDown={(e) => e.stopPropagation()}
                                 />
-                            </div>
+                                <div className="ml-auto mr-4 flex items-center gap-2">
+                                    <Badge variant="outline" className="bg-white">
+                                        {phase.sessions?.length || 0} buổi
+                                    </Badge>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeletePhaseClick(pIndex);
+                                        }}
+                                        title="Xóa giai đoạn"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                                <AccordionPrimitive.Trigger>
+                                    <ChevronDown className="text-muted-foreground size-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                                </AccordionPrimitive.Trigger>
+                            </AccordionPrimitive.Header>
+                            <AccordionContent className="pb-6 pt-2 space-y-6">
+                                {/* Phase Level Materials - Collapsible */}
+                                <div className="px-1">
+                                    <MaterialSection
+                                        title="Tài liệu Giai đoạn"
+                                        materials={getMaterials("PHASE", phase.id)}
+                                        onUpdate={(m) => updateMaterials(m, "PHASE", phase.id)}
+                                        scope="PHASE"
+                                        phaseId={phase.id}
+                                        collapsible
+                                        defaultOpen={false}
+                                    />
+                                </div>
 
-                            <div className="rounded-md border bg-white shadow-sm overflow-hidden">
-                                <Table>
-                                    <TableHeader className="bg-muted/50">
-                                        <TableRow>
-                                            <TableHead className="w-[50px]"></TableHead>
-                                            <TableHead className="w-[60px] text-center">STT</TableHead>
-                                            <TableHead className="min-w-[200px]">Chủ đề</TableHead>
-                                            <TableHead className="min-w-[200px]">Nhiệm vụ sinh viên</TableHead>
-                                            <TableHead className="w-[180px]">Kỹ năng</TableHead>
-                                            <TableHead className="w-[180px]">Ánh xạ CLO</TableHead>
-                                            <TableHead className="w-20 text-center">Tài liệu</TableHead>
-                                            <TableHead className="w-[50px]"></TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {phase.sessions?.map((session, sIndex) => (
-                                            <TableRow key={session.id} className="hover:bg-slate-50/80 transition-colors align-top">
-                                                <TableCell className="pt-3">
-                                                    <GripVertical className="w-4 h-4 text-muted-foreground/50 cursor-grab hover:text-primary" />
-                                                </TableCell>
-                                                <TableCell className="font-medium text-center text-muted-foreground pt-3">
-                                                    {session.sequence}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="space-y-1">
-                                                        <Textarea
-                                                            value={session.topic}
-                                                            onChange={(e) => updateSession(pIndex, sIndex, "topic", e.target.value)}
-                                                            className={`min-h-10 border-transparent hover:border-input focus:border-input transition-colors bg-transparent focus:bg-white resize-none ${
-                                                                getSessionError(pIndex, sIndex, 'topic') ? 'border-red-500 hover:border-red-500 focus:border-red-500' : ''
-                                                            }`}
-                                                            placeholder="Nhập chủ đề..."
-                                                            rows={1}
-                                                        />
-                                                        {getSessionError(pIndex, sIndex, 'topic') && (
-                                                            <p className="text-xs text-red-500">{getSessionError(pIndex, sIndex, 'topic')}</p>
-                                                        )}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="space-y-1">
-                                                        <Textarea
-                                                            value={session.studentTask}
-                                                            onChange={(e) => updateSession(pIndex, sIndex, "studentTask", e.target.value)}
-                                                            className={`min-h-10 border-transparent hover:border-input focus:border-input transition-colors bg-transparent focus:bg-white resize-none ${
-                                                                getSessionError(pIndex, sIndex, 'studentTask') ? 'border-red-500 hover:border-red-500 focus:border-red-500' : ''
-                                                            }`}
-                                                            placeholder="Nhập nhiệm vụ..."
-                                                            rows={1}
-                                                        />
-                                                        {getSessionError(pIndex, sIndex, 'studentTask') && (
-                                                            <p className="text-xs text-red-500">{getSessionError(pIndex, sIndex, 'studentTask')}</p>
-                                                        )}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="space-y-1">
-                                                        <MultiSelect
-                                                            options={skills.map((skill) => ({
-                                                                label: skill,
-                                                                value: skill,
-                                                            })) || []}
-                                                            selected={session.skills || []}
-                                                            onChange={(selected) => updateSession(pIndex, sIndex, "skills", selected)}
-                                                            placeholder="Chọn Kỹ năng"
-                                                            searchPlaceholder="Tìm Kỹ năng..."
-                                                            emptyMessage="Không tìm thấy Kỹ năng."
-                                                            badgeClassName="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
-                                                            className={getSessionError(pIndex, sIndex, 'skills') ? 'border-red-500' : ''}
-                                                        />
-                                                        {getSessionError(pIndex, sIndex, 'skills') && (
-                                                            <p className="text-xs text-red-500">{getSessionError(pIndex, sIndex, 'skills')}</p>
-                                                        )}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="space-y-1">
-                                                        <MultiSelect
-                                                            options={data.clos?.map((clo) => ({
-                                                                label: clo.code,
-                                                                value: clo.code,
-                                                            })) || []}
-                                                            selected={session.cloIds || []}
-                                                            onChange={(selected) => updateSession(pIndex, sIndex, "cloIds", selected)}
-                                                            placeholder="Chọn CLO"
-                                                            searchPlaceholder="Tìm CLO..."
-                                                            emptyMessage="Không tìm thấy CLO."
-                                                            badgeClassName="bg-green-50 text-green-700 hover:bg-green-100 border-green-200"
-                                                            className={getSessionError(pIndex, sIndex, 'cloIds') ? 'border-red-500' : ''}
-                                                        />
-                                                        {getSessionError(pIndex, sIndex, 'cloIds') && (
-                                                            <p className="text-xs text-red-500">{getSessionError(pIndex, sIndex, 'cloIds')}</p>
-                                                        )}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-center">
-                                                    <Dialog>
-                                                        <DialogTrigger asChild>
-                                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                                                <div className="relative">
-                                                                    <FileText className="w-4 h-4 text-muted-foreground" />
-                                                                    {getMaterials("SESSION", undefined, session.id).length > 0 && (
-                                                                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
-                                                                    )}
-                                                                </div>
-                                                            </Button>
-                                                        </DialogTrigger>
-                                                        <DialogContent className="max-w-4xl! w-[90vw]">
-                                                            <DialogHeader>
-                                                                <DialogTitle>Tài liệu Buổi học {session.sequence}</DialogTitle>
-                                                            </DialogHeader>
-                                                            <MaterialSection
-                                                                materials={getMaterials("SESSION", undefined, session.id)}
-                                                                onUpdate={(m) => updateMaterials(m, "SESSION", undefined, session.id)}
-                                                                scope="SESSION"
-                                                                sessionId={session.id}
-                                                            />
-                                                        </DialogContent>
-                                                    </Dialog>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10"
-                                                        onClick={() => handleDeleteSessionClick(pIndex, sIndex)}
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
-                                                </TableCell>
+                                <div className="rounded-md border bg-white shadow-sm overflow-hidden">
+                                    <Table>
+                                        <TableHeader className="bg-muted/50">
+                                            <TableRow>
+                                                <TableHead className="w-[50px]"></TableHead>
+                                                <TableHead className="w-[60px] text-center">STT</TableHead>
+                                                <TableHead className="min-w-[200px]">Chủ đề</TableHead>
+                                                <TableHead className="min-w-[200px]">Nhiệm vụ sinh viên</TableHead>
+                                                <TableHead className="w-[180px]">Kỹ năng</TableHead>
+                                                <TableHead className="w-[180px]">Ánh xạ CLO</TableHead>
+                                                <TableHead className="w-20 text-center">Tài liệu</TableHead>
+                                                <TableHead className="w-[50px]"></TableHead>
                                             </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                            <div className="mt-4">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => addSession(pIndex)}
-                                    className="w-full border-dashed border-2 hover:border-primary/50 hover:bg-primary/5 text-muted-foreground hover:text-primary transition-all py-4 h-auto"
-                                >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Thêm Buổi học vào {phase.name}
-                                </Button>
-                            </div>
-                        </AccordionContent>
-                    </AccordionItem>
-                ))}
-            </Accordion>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {phase.sessions?.map((session, sIndex) => (
+                                                <TableRow key={session.id} className="hover:bg-slate-50/80 transition-colors align-top">
+                                                    <TableCell className="pt-3">
+                                                        <GripVertical className="w-4 h-4 text-muted-foreground/50 cursor-grab hover:text-primary" />
+                                                    </TableCell>
+                                                    <TableCell className="font-medium text-center text-muted-foreground pt-3">
+                                                        {session.sequence}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="space-y-1">
+                                                            <Textarea
+                                                                value={session.topic}
+                                                                onChange={(e) => updateSession(pIndex, sIndex, "topic", e.target.value)}
+                                                                className={`min-h-10 border-transparent hover:border-input focus:border-input transition-colors bg-transparent focus:bg-white resize-none ${getSessionError(pIndex, sIndex, 'topic') ? 'border-red-500 hover:border-red-500 focus:border-red-500' : ''
+                                                                    }`}
+                                                                placeholder="Nhập chủ đề..."
+                                                                rows={1}
+                                                            />
+                                                            {getSessionError(pIndex, sIndex, 'topic') && (
+                                                                <p className="text-xs text-red-500">{getSessionError(pIndex, sIndex, 'topic')}</p>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="space-y-1">
+                                                            <Textarea
+                                                                value={session.studentTask}
+                                                                onChange={(e) => updateSession(pIndex, sIndex, "studentTask", e.target.value)}
+                                                                className={`min-h-10 border-transparent hover:border-input focus:border-input transition-colors bg-transparent focus:bg-white resize-none ${getSessionError(pIndex, sIndex, 'studentTask') ? 'border-red-500 hover:border-red-500 focus:border-red-500' : ''
+                                                                    }`}
+                                                                placeholder="Nhập nhiệm vụ..."
+                                                                rows={1}
+                                                            />
+                                                            {getSessionError(pIndex, sIndex, 'studentTask') && (
+                                                                <p className="text-xs text-red-500">{getSessionError(pIndex, sIndex, 'studentTask')}</p>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="space-y-1">
+                                                            <MultiSelect
+                                                                options={skills.map((skill) => ({
+                                                                    label: skill,
+                                                                    value: skill,
+                                                                })) || []}
+                                                                selected={session.skills || []}
+                                                                onChange={(selected) => updateSession(pIndex, sIndex, "skills", selected)}
+                                                                placeholder="Chọn Kỹ năng"
+                                                                searchPlaceholder="Tìm Kỹ năng..."
+                                                                emptyMessage="Không tìm thấy Kỹ năng."
+                                                                badgeClassName="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
+                                                                className={getSessionError(pIndex, sIndex, 'skills') ? 'border-red-500' : ''}
+                                                            />
+                                                            {getSessionError(pIndex, sIndex, 'skills') && (
+                                                                <p className="text-xs text-red-500">{getSessionError(pIndex, sIndex, 'skills')}</p>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="space-y-1">
+                                                            <MultiSelect
+                                                                options={data.clos?.map((clo) => ({
+                                                                    label: clo.code,
+                                                                    value: clo.code,
+                                                                })) || []}
+                                                                selected={session.cloIds || []}
+                                                                onChange={(selected) => updateSession(pIndex, sIndex, "cloIds", selected)}
+                                                                placeholder="Chọn CLO"
+                                                                searchPlaceholder="Tìm CLO..."
+                                                                emptyMessage="Không tìm thấy CLO."
+                                                                badgeClassName="bg-green-50 text-green-700 hover:bg-green-100 border-green-200"
+                                                                className={getSessionError(pIndex, sIndex, 'cloIds') ? 'border-red-500' : ''}
+                                                            />
+                                                            {getSessionError(pIndex, sIndex, 'cloIds') && (
+                                                                <p className="text-xs text-red-500">{getSessionError(pIndex, sIndex, 'cloIds')}</p>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
+                                                        <Dialog>
+                                                            <DialogTrigger asChild>
+                                                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                                    <div className="relative">
+                                                                        <FileText className="w-4 h-4 text-muted-foreground" />
+                                                                        {getMaterials("SESSION", undefined, session.id).length > 0 && (
+                                                                            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
+                                                                        )}
+                                                                    </div>
+                                                                </Button>
+                                                            </DialogTrigger>
+                                                            <DialogContent className="max-w-4xl! w-[90vw]">
+                                                                <DialogHeader>
+                                                                    <DialogTitle>Tài liệu Buổi học {session.sequence}</DialogTitle>
+                                                                </DialogHeader>
+                                                                <MaterialSection
+                                                                    materials={getMaterials("SESSION", undefined, session.id)}
+                                                                    onUpdate={(m) => updateMaterials(m, "SESSION", undefined, session.id)}
+                                                                    scope="SESSION"
+                                                                    sessionId={session.id}
+                                                                />
+                                                            </DialogContent>
+                                                        </Dialog>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10"
+                                                            onClick={() => handleDeleteSessionClick(pIndex, sIndex)}
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                                <div className="mt-4">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => addSession(pIndex)}
+                                        className="w-full border-dashed border-2 hover:border-primary/50 hover:bg-primary/5 text-muted-foreground hover:text-primary transition-all py-4 h-auto"
+                                    >
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        Thêm Buổi học vào {phase.name}
+                                    </Button>
+                                </div>
+                            </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                </Accordion>
 
-            {(!data.structure || data.structure.length === 0) && (
-                <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg bg-slate-50/50">
-                    <p className="mb-2">Chưa có giai đoạn nào được tạo.</p>
-                    <Button variant="outline" onClick={addPhase}>
-                        Bắt đầu bằng cách thêm Giai đoạn 1
-                    </Button>
-                </div>
-            )}
+                {(!data.structure || data.structure.length === 0) && (
+                    <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg bg-slate-50/50">
+                        <p className="mb-2">Chưa có giai đoạn nào được tạo.</p>
+                        <Button variant="outline" onClick={addPhase}>
+                            Bắt đầu bằng cách thêm Giai đoạn 1
+                        </Button>
+                    </div>
+                )}
             </div>
 
             {/* Delete Session Confirmation Dialog */}
@@ -859,7 +857,7 @@ export function Step3Structure({ data, setData }: Step3Props) {
                             <br />
                             {deletePhaseDialog?.sessionCount && deletePhaseDialog.sessionCount > 0 ? (
                                 <span className="text-destructive font-medium">
-                                    ⚠️ Giai đoạn này có {deletePhaseDialog.sessionCount} buổi học. 
+                                    ⚠️ Giai đoạn này có {deletePhaseDialog.sessionCount} buổi học.
                                     Tất cả buổi học và tài liệu trong giai đoạn này sẽ bị xóa vĩnh viễn.
                                 </span>
                             ) : (

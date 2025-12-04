@@ -30,6 +30,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
 // Validation function for Step 4
+// eslint-disable-next-line react-refresh/only-export-components
 export function validateStep4(data: CourseData): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
@@ -173,10 +174,10 @@ interface AssessmentErrors {
 
 export function Step4Assessment({ data, setData }: Step4Props) {
     const { data: skillsList } = useGetSkillsQuery();
-    
+
     // Get max duration from basicInfo (hoursPerSession in minutes)
     const maxDurationMinutes = (data.basicInfo?.hoursPerSession || 0) * 60;
-    
+
     // Error states for each assessment (by index)
     const [assessmentErrors, setAssessmentErrors] = useState<{ [key: number]: AssessmentErrors }>({});
 
@@ -188,11 +189,11 @@ export function Step4Assessment({ data, setData }: Step4Props) {
     // Validation functions
     const validateName = (value: string, currentIndex: number): string | null => {
         const trimmedValue = value.trim();
-        
+
         if (!trimmedValue) {
             return "Tên bài kiểm tra không được để trống";
         }
-        
+
         if (trimmedValue.length < 3) {
             return "Tên bài kiểm tra phải có ít nhất 3 ký tự";
         }
@@ -295,7 +296,7 @@ export function Step4Assessment({ data, setData }: Step4Props) {
         }
 
         switch (field) {
-            case "name":
+            case "name": {
                 const nameError = validateName(value as string, index);
                 if (nameError) {
                     newErrors[index].name = nameError;
@@ -312,7 +313,8 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                     }
                 });
                 break;
-            case "skills":
+            }
+            case "skills": {
                 const skillsError = validateSkills(value as string[]);
                 if (skillsError) {
                     newErrors[index].skills = skillsError;
@@ -320,7 +322,8 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                     delete newErrors[index].skills;
                 }
                 break;
-            case "cloIds":
+            }
+            case "cloIds": {
                 const cloError = validateCloIds(value as string[]);
                 if (cloError) {
                     newErrors[index].cloIds = cloError;
@@ -328,7 +331,8 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                     delete newErrors[index].cloIds;
                 }
                 break;
-            case "durationMinutes":
+            }
+            case "durationMinutes": {
                 const durationError = validateDuration(value as number | undefined);
                 if (durationError) {
                     newErrors[index].durationMinutes = durationError;
@@ -336,7 +340,8 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                     delete newErrors[index].durationMinutes;
                 }
                 break;
-            case "maxScore":
+            }
+            case "maxScore": {
                 const maxScoreError = validateMaxScore(value as number | undefined);
                 if (maxScoreError) {
                     newErrors[index].maxScore = maxScoreError;
@@ -344,7 +349,8 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                     delete newErrors[index].maxScore;
                 }
                 break;
-            case "description":
+            }
+            case "description": {
                 const descError = validateDescription(value as string);
                 if (descError) {
                     newErrors[index].description = descError;
@@ -352,7 +358,8 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                     delete newErrors[index].description;
                 }
                 break;
-            case "note":
+            }
+            case "note": {
                 const noteError = validateNote(value as string);
                 if (noteError) {
                     newErrors[index].note = noteError;
@@ -360,6 +367,7 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                     delete newErrors[index].note;
                 }
                 break;
+            }
         }
 
         // Clean up empty error objects
@@ -373,7 +381,7 @@ export function Step4Assessment({ data, setData }: Step4Props) {
     const removeAssessment = (index: number) => {
         const newAssessments = data.assessments.filter((_, i) => i !== index);
         setData((prev) => ({ ...prev, assessments: newAssessments }));
-        
+
         // Re-index errors after removal
         const newErrors: { [key: number]: AssessmentErrors } = {};
         Object.keys(assessmentErrors).forEach((key) => {
