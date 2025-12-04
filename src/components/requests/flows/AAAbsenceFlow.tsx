@@ -255,7 +255,7 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
       {/* Step 1: Student selection */}
       {currentStep === 1 && (
         <Section>
-          <div className="space-y-3">
+          <div className="min-h-[280px] space-y-3">
             <Input
               placeholder="Nhập tên hoặc mã học viên (tối thiểu 2 ký tự)"
               value={studentSearch}
@@ -310,7 +310,7 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
       {/* Step 2: Class selection */}
       {currentStep === 2 && selectedStudent && (
         <Section>
-          <div className="space-y-3">
+          <div className="min-h-[280px] space-y-3">
             {!isLoadingClasses && classOptions.length === 0 ? (
               <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
                 Học viên chưa đăng ký lớp nào
@@ -345,7 +345,7 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
       {/* Step 3: Weekly schedule + reason */}
       {currentStep === 3 && selectedClass && (
         <Section>
-          <div className="space-y-4">
+          <div className="min-h-[280px] space-y-4">
             <div className="flex items-center justify-between gap-2 border-b pb-2">
               <span className="font-medium text-sm">{weekRangeLabel}</span>
               <div className="flex items-center gap-1">

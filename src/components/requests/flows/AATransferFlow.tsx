@@ -267,7 +267,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
       {/* Step 1: Student selection */}
       {currentStep === 1 && (
         <Section>
-          <div className="space-y-3">
+          <div className="min-h-[280px] space-y-3">
             <Input
               placeholder="Nhập tên hoặc mã học viên (tối thiểu 2 ký tự)"
               value={studentSearch}
@@ -311,7 +311,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
       {/* Step 2: Current class selection */}
       {currentStep === 2 && selectedStudent && (
         <Section>
-          <div className="space-y-3">
+          <div className="min-h-[280px] space-y-3">
             {!isLoadingEligibility && eligibilityOptions.length === 0 ? (
               <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
                 Học viên không có lớp nào đủ điều kiện chuyển
@@ -349,7 +349,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
       {/* Step 3: Target class selection */}
       {currentStep === 3 && selectedCurrentClass && (
         <Section>
-          <div className="space-y-4">
+          <div className="min-h-[280px] space-y-4">
             {/* Filters */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>

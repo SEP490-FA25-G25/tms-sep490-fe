@@ -149,9 +149,9 @@ export default function AcademicRequestsPage() {
       title="Quản lý yêu cầu học viên"
       description="Xem xét và phê duyệt các yêu cầu xin nghỉ, học bù, chuyển lớp"
       actions={
-        <Button variant="outline" className="gap-2" onClick={() => setShowOnBehalfDialog(true)}>
+        <Button className="gap-2" onClick={() => setShowOnBehalfDialog(true)}>
           <PlusCircleIcon className="h-4 w-4" />
-          Tạo thay học viên
+          Xử lý yêu cầu học viên
         </Button>
       }
     >

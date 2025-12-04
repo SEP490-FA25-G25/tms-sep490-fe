@@ -263,6 +263,7 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
       {/* Step 1: Chọn lớp hiện tại & loại chuyển */}
       {currentStep === 1 && (
         <Section>
+          <div className="min-h-[280px]">
           {/* Transfer Policy Info - Compact */}
           <div className="text-xs text-muted-foreground border-b pb-2 mb-3">
             <span>Tối đa {eligibilityData.data.policyInfo?.maxTransfersPerCourse ?? 1} lần/khóa</span>
@@ -362,6 +363,7 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
               </RadioGroup>
             </div>
           )}
+          </div>
         </Section>
       )}
 
@@ -511,7 +513,7 @@ export default function TransferFlow({ onSuccess }: TransferFlowProps) {
       {/* Step 3: Xác nhận và lý do */}
       {currentStep === 3 && transferType === 'schedule' && (
         <Section>
-          <div className="space-y-3">
+          <div className="min-h-[280px] space-y-3">
             {/* Summary */}
             <div className="rounded-lg bg-muted/30 p-3 border">
               <div className="flex items-center gap-3 text-sm">
