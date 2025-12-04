@@ -187,7 +187,6 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
                                 <TableHead className="font-semibold">Trạng thái</TableHead>
                                 <TableHead className="text-center font-semibold">Điểm danh</TableHead>
                                 <TableHead className="text-center font-semibold">Bài tập</TableHead>
-                                <TableHead className="text-center font-semibold">Báo cáo QA</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -226,17 +225,6 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
                                             <span className={`text-xs ${getHomeworkColor(session.homeworkCompletionRate)}`}>
                                                 ({session.homeworkCompletionRate.toFixed(1)}%)
                                             </span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                        <div className="flex items-center justify-center space-x-1">
-                                            {session.hasQAReport ? (
-                                                <Badge variant="default" className="bg-sky-100 text-sky-700">
-                                                    Có ({session.qaReportCount})
-                                                </Badge>
-                                            ) : (
-                                                <Badge variant="outline">Chưa có</Badge>
-                                            )}
                                         </div>
                                     </TableCell>
                                 </TableRow>

@@ -4,7 +4,6 @@ import { useParams } from "react-router-dom"
 import { Link } from "react-router-dom"
 import { useGetSessionDetailQuery } from "@/store/services/qaApi"
 import { DashboardLayout } from "@/components/DashboardLayout"
-import { QAStatsCard } from "@/components/qa/QAStatsCard"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -18,10 +17,6 @@ import {
 } from "@/components/ui/table"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
-    Clock,
-    Calendar,
-    BookOpen,
-    Users,
     Loader2,
     AlertTriangle,
     Plus
@@ -157,41 +152,6 @@ export default function SessionDetailsPage() {
             }
         >
             <div className="space-y-6">
-                {/* Session Overview */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <QAStatsCard
-                        title="Ngày học"
-                        value={new Date(session.date).toLocaleDateString('vi-VN')}
-                        subtitle={new Date(session.date).toLocaleDateString('vi-VN', { weekday: 'long' })}
-                        icon={Calendar}
-                        iconClassName="bg-blue-50 dark:bg-blue-950/30 [&>svg]:text-blue-600 dark:[&>svg]:text-blue-400"
-                    />
-
-                    <QAStatsCard
-                        title="Thời gian"
-                        value={session.timeSlot}
-                        subtitle="Khung giờ học"
-                        icon={Clock}
-                        iconClassName="bg-purple-50 dark:bg-purple-950/30 [&>svg]:text-purple-600 dark:[&>svg]:text-purple-400"
-                    />
-
-                    <QAStatsCard
-                        title="Điểm danh"
-                        value={`${session.attendanceStats.presentCount}/${session.attendanceStats.totalStudents}`}
-                        subtitle="Học viên có mặt"
-                        icon={Users}
-                        iconClassName="bg-emerald-50 dark:bg-emerald-950/30 [&>svg]:text-emerald-600 dark:[&>svg]:text-emerald-400"
-                    />
-
-                    <QAStatsCard
-                        title="Bài tập"
-                        value={`${session.attendanceStats.homeworkCompletionRate.toFixed(1)}%`}
-                        subtitle="Tỷ lệ hoàn thành"
-                        icon={BookOpen}
-                        iconClassName="bg-amber-50 dark:bg-amber-950/30 [&>svg]:text-amber-600 dark:[&>svg]:text-amber-400"
-                    />
-                </div>
-
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Session Information */}
                     <div className="lg:col-span-2 space-y-6">
@@ -201,6 +161,14 @@ export default function SessionDetailsPage() {
                             </CardHeader>
                             <CardContent className="space-y-4 pb-4">
                                 <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Ngày học</p>
+                                        <p className="font-medium">{new Date(session.date).toLocaleDateString('vi-VN')} ({new Date(session.date).toLocaleDateString('vi-VN', { weekday: 'long' })})</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Thời gian</p>
+                                        <p className="font-medium">{session.timeSlot}</p>
+                                    </div>
                                     <div>
                                         <p className="text-sm text-muted-foreground">Lớp học</p>
                                         <p className="font-medium">{session.classCode} - {session.courseName}</p>

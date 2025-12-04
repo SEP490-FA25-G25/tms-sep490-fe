@@ -49,9 +49,10 @@ interface FilterState {
   searchTerm: string;
 }
 
-const MODALITY_LABELS: Record<"ONLINE" | "OFFLINE", string> = {
+const MODALITY_LABELS: Record<"ONLINE" | "OFFLINE" | "HYBRID", string> = {
   ONLINE: "Trực tuyến",
   OFFLINE: "Trực tiếp",
+  HYBRID: "Kết hợp",
 };
 
 const STATUS_LABELS: Record<string, string> = {

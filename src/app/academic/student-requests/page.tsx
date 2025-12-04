@@ -27,7 +27,6 @@ import {
   PlusCircleIcon,
   RotateCcwIcon,
   ClockIcon,
-  AlertTriangleIcon,
   CalendarX2Icon,
   CalendarCheck2Icon,
   ArrowRightLeftIcon,
@@ -159,7 +158,7 @@ export default function AcademicRequestsPage() {
       <div className="space-y-6">
         {/* Summary Stats */}
         {summary && (
-          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Chờ duyệt</CardTitle>
@@ -172,18 +171,7 @@ export default function AcademicRequestsPage() {
                 <p className="text-xs text-muted-foreground">Tổng yêu cầu chờ xử lý</p>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Khẩn cấp</CardTitle>
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-950/30">
-                  <AlertTriangleIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{summary.needsUrgentReview}</div>
-                <p className="text-xs text-muted-foreground">Cần xử lý gấp</p>
-              </CardContent>
-            </Card>
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Xin nghỉ</CardTitle>
