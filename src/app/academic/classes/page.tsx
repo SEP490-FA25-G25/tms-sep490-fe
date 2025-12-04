@@ -74,7 +74,9 @@ import { cn } from '@/lib/utils'
 type SortField = 'startDate' | 'name' | 'code' | 'currentEnrolled' | 'status'
 type SortDirection = 'asc' | 'desc'
 
-type FilterState = Omit<ClassListRequest, 'page' | 'size' | 'sort' | 'sortDir'>
+type FilterState = Omit<ClassListRequest, 'page' | 'size' | 'sort' | 'sortDir' | 'status' | 'approvalStatus'> & {
+  unifiedStatus?: string // Gộp status + approvalStatus
+}
 
 // ========== Sortable Column Header Component ==========
 function SortableHeader({
@@ -121,8 +123,7 @@ export default function ClassListPage() {
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     courseId: undefined,
-    status: undefined,
-    approvalStatus: undefined,
+    unifiedStatus: undefined,
     modality: undefined,
   })
 
@@ -144,24 +145,49 @@ export default function ClassListPage() {
   // Fetch courses for filter
   const { data: courses = [] } = useGetAllCoursesQuery()
 
+  // Chuyển đổi unifiedStatus thành status/approvalStatus cho API
+  const { apiStatus, apiApprovalStatus } = useMemo(() => {
+    const unified = filters.unifiedStatus
+    if (!unified) return { apiStatus: undefined, apiApprovalStatus: undefined }
+    
+    // Map unifiedStatus -> API params
+    switch (unified) {
+      case 'DRAFT':
+        return { apiStatus: 'DRAFT' as const, apiApprovalStatus: undefined }
+      case 'PENDING':
+        return { apiStatus: undefined, apiApprovalStatus: 'PENDING' as const }
+      case 'REJECTED':
+        return { apiStatus: undefined, apiApprovalStatus: 'REJECTED' as const }
+      case 'SCHEDULED':
+        return { apiStatus: 'SCHEDULED' as const, apiApprovalStatus: 'APPROVED' as const }
+      case 'ONGOING':
+        return { apiStatus: 'ONGOING' as const, apiApprovalStatus: undefined }
+      case 'COMPLETED':
+        return { apiStatus: 'COMPLETED' as const, apiApprovalStatus: undefined }
+      case 'CANCELLED':
+        return { apiStatus: 'CANCELLED' as const, apiApprovalStatus: undefined }
+      default:
+        return { apiStatus: undefined, apiApprovalStatus: undefined }
+    }
+  }, [filters.unifiedStatus])
+
   const queryParams = useMemo(() => ({
     search: debouncedSearch || undefined,
     courseId: filters.courseId || undefined,
-    status: filters.status || undefined,
-    approvalStatus: filters.approvalStatus || undefined,
+    status: apiStatus,
+    approvalStatus: apiApprovalStatus,
     modality: filters.modality || undefined,
     sort: sortField,
     sortDir: sortDir,
     ...pagination,
-  }), [debouncedSearch, filters.courseId, filters.status, filters.approvalStatus, filters.modality, sortField, sortDir, pagination])
+  }), [debouncedSearch, filters.courseId, apiStatus, apiApprovalStatus, filters.modality, sortField, sortDir, pagination])
 
   // Check if any filter is active
   const hasActiveFilters = useMemo(() => {
     return (
       (filters.search?.trim() ?? '') !== '' ||
       filters.courseId !== undefined ||
-      filters.status !== undefined ||
-      filters.approvalStatus !== undefined ||
+      filters.unifiedStatus !== undefined ||
       filters.modality !== undefined
     )
   }, [filters])
@@ -171,8 +197,7 @@ export default function ClassListPage() {
     setFilters({
       search: '',
       courseId: undefined,
-      status: undefined,
-      approvalStatus: undefined,
+      unifiedStatus: undefined,
       modality: undefined,
     })
     setPagination(prev => ({ ...prev, page: 0 }))
@@ -482,34 +507,21 @@ export default function ClassListPage() {
             </Popover>
 
             <Select
-              value={filters.status || 'all'}
-              onValueChange={(value) => handleFilterChange('status', value === 'all' ? undefined : value)}
+              value={filters.unifiedStatus || 'all'}
+              onValueChange={(value) => handleFilterChange('unifiedStatus', value === 'all' ? undefined : value)}
             >
-              <SelectTrigger className="h-9 w-auto min-w-[140px]">
-                <SelectValue placeholder="Trạng thái" />
+              <SelectTrigger className="h-9 w-auto min-w-[160px]">
+                <SelectValue placeholder="Giai đoạn lớp" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Trạng thái: Tất cả</SelectItem>
+                <SelectItem value="all">Giai đoạn: Tất cả</SelectItem>
                 <SelectItem value="DRAFT">Bản nháp</SelectItem>
+                <SelectItem value="PENDING">Chờ duyệt</SelectItem>
+                <SelectItem value="REJECTED">Đã từ chối</SelectItem>
                 <SelectItem value="SCHEDULED">Đã lên lịch</SelectItem>
                 <SelectItem value="ONGOING">Đang diễn ra</SelectItem>
                 <SelectItem value="COMPLETED">Đã hoàn thành</SelectItem>
                 <SelectItem value="CANCELLED">Đã hủy</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={filters.approvalStatus || 'all'}
-              onValueChange={(value) => handleFilterChange('approvalStatus', value === 'all' ? undefined : value)}
-            >
-              <SelectTrigger className="h-9 w-auto min-w-[130px]">
-                <SelectValue placeholder="Phê duyệt" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Phê duyệt: Tất cả</SelectItem>
-                <SelectItem value="PENDING">Chờ duyệt</SelectItem>
-                <SelectItem value="APPROVED">Đã duyệt</SelectItem>
-                <SelectItem value="REJECTED">Đã từ chối</SelectItem>
               </SelectContent>
             </Select>
 
@@ -571,7 +583,7 @@ export default function ClassListPage() {
                     </TableHead>
                     <TableHead className="w-[12%]">
                       <SortableHeader
-                        label="Trạng thái"
+                        label="Giai đoạn"
                         field="status"
                         currentSort={sortField}
                         currentDir={sortDir}
