@@ -1,4 +1,4 @@
-import { useNavigate, useLocation, Link } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -27,13 +27,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { useState, useMemo } from "react"
+import { useState } from "react"
 import { UserCircleIcon } from "lucide-react"
 import { useNavigationGuard } from "@/contexts/NavigationGuardContext"
 
 export function SiteHeader() {
   const navigate = useNavigate()
-  const location = useLocation()
   const { user } = useAuth()
   const { isBlocking } = useNavigationGuard()
   const [showBackConfirm, setShowBackConfirm] = useState(false)

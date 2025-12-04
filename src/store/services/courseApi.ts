@@ -240,6 +240,8 @@ export interface CourseDTO {
   effectiveDate?: string;
   createdAt?: string;
   updatedAt?: string;
+  subjectName?: string;
+  levelName?: string;
 }
 
 export interface ApiResponse<T = unknown> {

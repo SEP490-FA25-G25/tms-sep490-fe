@@ -52,7 +52,7 @@ export function validateStep4(data: CourseData): { isValid: boolean; errors: str
     let hasNoteError = false;
     const assessmentNames = new Set<string>();
 
-    data.assessments.forEach((assessment, index) => {
+    data.assessments.forEach((assessment) => {
         // Check required fields: name, skills, cloIds
         if (!assessment.name?.trim()) {
             hasIncompleteAssessment = true;

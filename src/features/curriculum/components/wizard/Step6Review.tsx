@@ -26,11 +26,9 @@ import {
 import { 
     BookOpen, 
     Clock, 
-    Target,
     FileText,
     Video,
     Link as LinkIcon,
-    ChevronRight,
     GraduationCap,
     Layers,
     Users,
@@ -312,7 +310,7 @@ export function Step6Review({ data }: Step6Props) {
                                                         {clo.code}
                                                     </Badge>
                                                 </TableCell>
-                                                {subjectDetail.data.plos.map((plo) => {
+                                                {subjectDetail.data.plos?.map((plo) => {
                                                     const isLinked = clo.mappedPLOs?.includes(plo.code);
                                                     return (
                                                         <TableCell 

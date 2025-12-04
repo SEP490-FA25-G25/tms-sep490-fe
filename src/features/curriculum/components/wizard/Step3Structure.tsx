@@ -471,11 +471,6 @@ export function Step3Structure({ data, setData }: Step3Props) {
         setDeletePhaseDialog(null);
     };
 
-    const removePhase = (index: number) => {
-        const newStructure = data.structure.filter((_, i) => i !== index);
-        setData((prev) => ({ ...prev, structure: newStructure }));
-    };
-
     // Material Management Helpers
     const updateMaterials = (newMaterials: Material[], scope: "COURSE" | "PHASE" | "SESSION", phaseId?: string, sessionId?: string) => {
         setData((prev) => {
@@ -537,7 +532,7 @@ export function Step3Structure({ data, setData }: Step3Props) {
                 </div>
 
                 {/* Course Level Materials - Collapsible */}
-                <Accordion type="multiple" collapsible className="w-full space-y-2">
+                <Accordion type="multiple" className="w-full space-y-2">
                     {/* CLO Reference - Collapsible */}
                     <AccordionItem value="clo-reference" className="border rounded-xl bg-white shadow-sm">
                         <AccordionPrimitive.Header className="flex">

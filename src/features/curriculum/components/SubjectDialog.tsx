@@ -353,9 +353,9 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
                                                             value={plo.description}
                                                             onChange={(e) => updatePLO(index, "description", e.target.value)}
                                                             placeholder="Mô tả chuẩn đầu ra..."
-                                                            className={ploErrors[index] ? "border-red-500" : ""}
+                                                            className={ploErrors?.[index] ? "border-red-500" : ""}
                                                         />
-                                                        {ploErrors[index] && (
+                                                        {ploErrors?.[index] && (
                                                             <p className="text-xs text-red-500">{ploErrors[index]}</p>
                                                         )}
                                                     </div>

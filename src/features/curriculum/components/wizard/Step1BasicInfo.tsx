@@ -13,7 +13,7 @@ import { useGetAllCoursesQuery, useLazyGetNextVersionQuery } from "@/store/servi
 import { useUploadFileMutation, useDeleteFileMutation } from "@/store/services/uploadApi";
 import { useMemo, useEffect, useRef, useCallback, useState } from "react";
 import type { CourseData } from "@/types/course";
-import { Image, Upload, X, Loader2 } from "lucide-react";
+import { Image, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Step1Props {

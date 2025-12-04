@@ -470,7 +470,7 @@ export function CourseList() {
                 <DataTable
                     columns={columns}
                     data={[...(courses || [])].sort((a, b) => 
-                        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
                     )}
                     searchKey="name"
                     searchPlaceholder="Tìm kiếm theo tên khóa học..."

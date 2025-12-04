@@ -45,7 +45,7 @@ export function validateStep2(data: CourseData): { isValid: boolean; errors: str
         }
 
         // Validate each CLO
-        data.clos.forEach((clo, index) => {
+        data.clos.forEach((clo) => {
             // Check description
             if (!clo.description || clo.description.trim() === "") {
                 errors.push(`${clo.code}: Mô tả không được để trống.`);
