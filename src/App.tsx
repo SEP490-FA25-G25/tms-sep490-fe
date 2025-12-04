@@ -1,106 +1,117 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Suspense, lazy } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AuthRedirect } from "@/components/AuthRedirect";
 import { ApiSetup } from "@/components/ApiSetup";
-import LandingPage from "./app/page";
-import PublicCourseDetailPage from "./app/public-course-detail/page";
-import DashboardPage from "./app/dashboard/page";
-import LoginPage from "./app/login/page";
-import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage";
-import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage";
-import AdminUsersPage from "./app/admin/users/page";
-import AdminPoliciesPage from "./app/admin/policies/page";
-import AdminCentersPage from "./app/admin/centers/page";
-import AdminSubjectsPage from "./app/admin/subjects/page";
-import AdminAnalyticsPage from "./app/admin/analytics/page";
-import TeacherClassesPage from "./app/teacher/classes/page";
-import TeacherClassDetailPage from "./app/teacher/classes/[classId]/page";
-import TeacherSchedulePage from "./app/teacher/schedule/page";
-import TeacherAttendancePage from "./app/teacher/attendance/page";
-import TeacherAttendanceDetailPage from "./app/teacher/attendance/[sessionId]/page";
-import ClassAttendanceMatrixPage from "./app/teacher/attendance/classes/[classId]/matrix/page";
-import TeacherRequestsPage from "./app/teacher/requests/page";
-import SelectRequestTypePage from "./app/teacher/requests/create/select-type/page";
-import SelectSessionPage from "./app/teacher/requests/create/select-session/page";
-import SelectResourcePage from "./app/teacher/requests/create/select-resource/page";
-import RequestFormPage from "./app/teacher/requests/create/form/page";
-import RequestDetailPage from "./app/teacher/requests/[id]/page";
-import TeacherGradesListPage from "./app/teacher/grades/page";
-import TeacherGradesPage from "./app/teacher/classes/[classId]/grades/page";
-import AssessmentScoresPage from "./app/teacher/assessments/[assessmentId]/scores/page";
-import TeacherStudentsPage from "./app/teacher/students/page";
-import TeacherProfilePage from "./app/teacher/profile/page";
-import StudentSchedulePage from "./app/student/schedule/page";
-import StudentRequestsPage from "./app/student/requests/page";
-import StudentAttendanceReportOverviewPage from "./app/student/attendance-report/page";
-import StudentClassAttendanceDetailPage from "./app/student/attendance-report/[classId]/page";
-import StudentMyClassesPage from "./app/student/my-classes/page";
-import StudentClassDetailPage from "./app/student/my-classes/[classId]/page";
-import StudentProfilePage from "./app/student/profile/page";
-import StudentTranscriptPage from "./app/student/transcript/page";
-import StudentPendingFeedbackPage from "./app/student/feedbacks/page";
-import AcademicClassesPage from "./app/academic/classes/page";
-import AcademicClassDetailPage from "./app/academic/classes/[id]/page";
-import AcademicStudentRequestsPage from "./app/academic/student-requests/page";
-import AcademicTeacherRequestsPage from "./app/academic/teacher-requests/page";
-import AcademicStudentsPage from "./app/academic/students/page";
-
-import CreateClassPage from "./app/academic/classes/create/page";
-import EditClassPage from "./app/academic/classes/[id]/edit/page";
-
-import CenterHeadApprovalsPage from "./app/center-head/approvals/page";
-import CenterHeadResourcesPage from "./app/center-head/resources/page";
-import CenterHeadTimeSlotsPage from "./app/center-head/timeslots/page";
-import CenterHeadQAReportsPage from "./app/center-head/qa-reports/page";
-import CenterHeadQAReportDetailPage from "./app/center-head/qa-reports/[id]/page";
-
-// Manager imports
-import ManagerQAReportsPage from "./app/manager/qa-reports/page";
-import ManagerQAReportDetailPage from "./app/manager/qa-reports/[id]/page";
-
-import CurriculumPage from "./features/curriculum/pages/CurriculumPage";
-import TeacherAvailabilityPage from "./app/teacher/availability/page";
-import AvailabilityCampaignPage from "./app/academic/teacher-availability/page";
-
-// QA imports
-import QARootPage from "./app/qa/page";
-import QADashboardPage from "./app/qa/dashboard/page";
-import QAClassesPage from "./app/qa/classes/page";
-import QAClassDetailPage from "./app/qa/classes/[id]/page";
-import QASessionDetailPage from "./app/qa/sessions/[id]/page";
-import QAReportsPage from "./app/qa/reports/page";
-import QAReportCreatePage from "./app/qa/reports/create/page";
-import QAReportDetailPage from "./app/qa/reports/[id]/page";
-import QAReportEditPage from "./app/qa/reports/[id]/edit/page";
-import QAStudentFeedbackPage from "./app/qa/student-feedback/page";
-// import SubjectDetailPage from '@/features/curriculum/pages/SubjectDetailPage'
-import CurriculumCourseDetailPage from "./features/curriculum/pages/CourseDetailPage";
-import SubjectDetailPage from "@/features/curriculum/pages/SubjectDetailPage";
-import CourseLearningPage from "./features/curriculum/pages/CourseLearningPage";
-import EditCoursePage from "./features/curriculum/pages/EditCoursePage";
-import ResourceDetailPage from "./app/center-head/resources/[id]/page";
-import TimeSlotDetailPage from "./app/center-head/timeslots/[id]/page";
-import NotificationsPage from "./app/notifications/page";
 import { Toaster } from "@/components/ui/sonner";
-import { lazy } from "react";
 
-
-const CreateCoursePage = lazy(
-  () => import("./features/curriculum/pages/CreateCoursePage")
-);
-const LevelDetailPage = lazy(
-  () => import("@/features/curriculum/pages/LevelDetailPage")
+// Loading fallback component
+const PageLoader = () => (
+  <div className="flex h-screen w-full items-center justify-center">
+    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+  </div>
 );
 
-import SchedulePage from "./app/schedule/page";
+// Lazy load all pages
+const LandingPage = lazy(() => import("./app/page"));
+const PublicCourseDetailPage = lazy(() => import("./app/public-course-detail/page"));
+const DashboardPage = lazy(() => import("./app/dashboard/page"));
+const LoginPage = lazy(() => import("./app/login/page"));
+const ForgotPasswordPage = lazy(() => import("./features/auth/pages/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("./features/auth/pages/ResetPasswordPage"));
+const SchedulePage = lazy(() => import("./app/schedule/page"));
+const NotificationsPage = lazy(() => import("./app/notifications/page"));
+
+// Admin pages
+const AdminUsersPage = lazy(() => import("./app/admin/users/page"));
+const AdminPoliciesPage = lazy(() => import("./app/admin/policies/page"));
+const AdminCentersPage = lazy(() => import("./app/admin/centers/page"));
+const AdminSubjectsPage = lazy(() => import("./app/admin/subjects/page"));
+const AdminAnalyticsPage = lazy(() => import("./app/admin/analytics/page"));
+
+// Teacher pages
+const TeacherClassesPage = lazy(() => import("./app/teacher/classes/page"));
+const TeacherClassDetailPage = lazy(() => import("./app/teacher/classes/[classId]/page"));
+const TeacherSchedulePage = lazy(() => import("./app/teacher/schedule/page"));
+const TeacherAttendancePage = lazy(() => import("./app/teacher/attendance/page"));
+const TeacherAttendanceDetailPage = lazy(() => import("./app/teacher/attendance/[sessionId]/page"));
+const ClassAttendanceMatrixPage = lazy(() => import("./app/teacher/attendance/classes/[classId]/matrix/page"));
+const TeacherRequestsPage = lazy(() => import("./app/teacher/requests/page"));
+const SelectRequestTypePage = lazy(() => import("./app/teacher/requests/create/select-type/page"));
+const SelectSessionPage = lazy(() => import("./app/teacher/requests/create/select-session/page"));
+const SelectResourcePage = lazy(() => import("./app/teacher/requests/create/select-resource/page"));
+const RequestFormPage = lazy(() => import("./app/teacher/requests/create/form/page"));
+const RequestDetailPage = lazy(() => import("./app/teacher/requests/[id]/page"));
+const TeacherGradesListPage = lazy(() => import("./app/teacher/grades/page"));
+const TeacherGradesPage = lazy(() => import("./app/teacher/classes/[classId]/grades/page"));
+const AssessmentScoresPage = lazy(() => import("./app/teacher/assessments/[assessmentId]/scores/page"));
+const TeacherStudentsPage = lazy(() => import("./app/teacher/students/page"));
+const TeacherProfilePage = lazy(() => import("./app/teacher/profile/page"));
+const TeacherAvailabilityPage = lazy(() => import("./app/teacher/availability/page"));
+
+// Student pages
+const StudentSchedulePage = lazy(() => import("./app/student/schedule/page"));
+const StudentRequestsPage = lazy(() => import("./app/student/requests/page"));
+const StudentAttendanceReportOverviewPage = lazy(() => import("./app/student/attendance-report/page"));
+const StudentClassAttendanceDetailPage = lazy(() => import("./app/student/attendance-report/[classId]/page"));
+const StudentMyClassesPage = lazy(() => import("./app/student/my-classes/page"));
+const StudentClassDetailPage = lazy(() => import("./app/student/my-classes/[classId]/page"));
+const StudentProfilePage = lazy(() => import("./app/student/profile/page"));
+const StudentTranscriptPage = lazy(() => import("./app/student/transcript/page"));
+const StudentPendingFeedbackPage = lazy(() => import("./app/student/feedbacks/page"));
+
+// Academic pages
+const AcademicClassesPage = lazy(() => import("./app/academic/classes/page"));
+const AcademicClassDetailPage = lazy(() => import("./app/academic/classes/[id]/page"));
+const AcademicStudentRequestsPage = lazy(() => import("./app/academic/student-requests/page"));
+const AcademicTeacherRequestsPage = lazy(() => import("./app/academic/teacher-requests/page"));
+const AcademicStudentsPage = lazy(() => import("./app/academic/students/page"));
+const CreateClassPage = lazy(() => import("./app/academic/classes/create/page"));
+const EditClassPage = lazy(() => import("./app/academic/classes/[id]/edit/page"));
+const AvailabilityCampaignPage = lazy(() => import("./app/academic/teacher-availability/page"));
+
+// Center Head pages
+const CenterHeadApprovalsPage = lazy(() => import("./app/center-head/approvals/page"));
+const CenterHeadResourcesPage = lazy(() => import("./app/center-head/resources/page"));
+const CenterHeadTimeSlotsPage = lazy(() => import("./app/center-head/timeslots/page"));
+const CenterHeadQAReportsPage = lazy(() => import("./app/center-head/qa-reports/page"));
+const CenterHeadQAReportDetailPage = lazy(() => import("./app/center-head/qa-reports/[id]/page"));
+const ResourceDetailPage = lazy(() => import("./app/center-head/resources/[id]/page"));
+const TimeSlotDetailPage = lazy(() => import("./app/center-head/timeslots/[id]/page"));
+
+// Manager pages
+const ManagerQAReportsPage = lazy(() => import("./app/manager/qa-reports/page"));
+const ManagerQAReportDetailPage = lazy(() => import("./app/manager/qa-reports/[id]/page"));
+
+// Curriculum pages
+const CurriculumPage = lazy(() => import("./features/curriculum/pages/CurriculumPage"));
+const CurriculumCourseDetailPage = lazy(() => import("./features/curriculum/pages/CourseDetailPage"));
+const SubjectDetailPage = lazy(() => import("@/features/curriculum/pages/SubjectDetailPage"));
+const CourseLearningPage = lazy(() => import("./features/curriculum/pages/CourseLearningPage"));
+const EditCoursePage = lazy(() => import("./features/curriculum/pages/EditCoursePage"));
+const CreateCoursePage = lazy(() => import("./features/curriculum/pages/CreateCoursePage"));
+const LevelDetailPage = lazy(() => import("@/features/curriculum/pages/LevelDetailPage"));
+
+// QA pages
+const QARootPage = lazy(() => import("./app/qa/page"));
+const QADashboardPage = lazy(() => import("./app/qa/dashboard/page"));
+const QAClassesPage = lazy(() => import("./app/qa/classes/page"));
+const QAClassDetailPage = lazy(() => import("./app/qa/classes/[id]/page"));
+const QASessionDetailPage = lazy(() => import("./app/qa/sessions/[id]/page"));
+const QAReportsPage = lazy(() => import("./app/qa/reports/page"));
+const QAReportCreatePage = lazy(() => import("./app/qa/reports/create/page"));
+const QAReportDetailPage = lazy(() => import("./app/qa/reports/[id]/page"));
+const QAReportEditPage = lazy(() => import("./app/qa/reports/[id]/edit/page"));
+const QAStudentFeedbackPage = lazy(() => import("./app/qa/student-feedback/page"));
 
 function App() {
   return (
     <BrowserRouter>
       <ApiSetup>
         <AuthProvider>
-          <Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/schedule" element={<SchedulePage />} />
             <Route path="/courses/:id" element={<PublicCourseDetailPage />} />
@@ -898,6 +909,7 @@ function App() {
             {/* Catch all route - redirect based on auth state */}
             <Route path="*" element={<AuthRedirect />} />
           </Routes>
+          </Suspense>
           <Toaster />
         </AuthProvider>
       </ApiSetup>

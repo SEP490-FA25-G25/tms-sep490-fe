@@ -6,8 +6,18 @@ import { FileDown, Loader2 } from "lucide-react"
 import type { QAReportDetailDTO } from "@/types/qa"
 import { getQAReportTypeDisplayName, getQAReportStatusDisplayName } from "@/types/qa"
 import { toast } from "sonner"
-import jsPDF from "jspdf"
-import html2canvas from "html2canvas"
+
+// Dynamic imports for PDF libraries - only loaded when user clicks export
+const loadPDFLibraries = async () => {
+    const [jsPDFModule, html2canvasModule] = await Promise.all([
+        import("jspdf"),
+        import("html2canvas")
+    ])
+    return {
+        jsPDF: jsPDFModule.default,
+        html2canvas: html2canvasModule.default
+    }
+}
 
 interface QAReportPDFExportProps {
     report: QAReportDetailDTO
@@ -36,6 +46,9 @@ export function QAReportPDFExport({
         setIsExporting(true)
 
         try {
+            // Dynamic load PDF libraries
+            const { jsPDF, html2canvas } = await loadPDFLibraries()
+            
             // Create a temporary container for the PDF content
             const container = document.createElement('div')
             container.id = 'pdf-export-container'
