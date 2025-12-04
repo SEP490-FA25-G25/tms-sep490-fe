@@ -566,7 +566,7 @@ export function Step6Review({ data }: Step6Props) {
                 </div>
 
                 {data.assessments && data.assessments.length > 0 ? (
-                    <div className="rounded-md border">
+                    <div className="rounded-md border overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -576,6 +576,8 @@ export function Step6Review({ data }: Step6Props) {
                                     <TableHead className="w-[100px]">Điểm tối đa</TableHead>
                                     <TableHead className="w-[150px]">Kỹ năng</TableHead>
                                     <TableHead className="w-[120px]">CLO</TableHead>
+                                    <TableHead className="w-[200px]">Mô tả</TableHead>
+                                    <TableHead className="w-[150px]">Ghi chú</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -612,6 +614,16 @@ export function Step6Review({ data }: Step6Props) {
                                                     <span className="text-muted-foreground">—</span>
                                                 )}
                                             </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="line-clamp-2 text-sm text-muted-foreground">
+                                                {assessment.description || '—'}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="line-clamp-2 text-sm text-muted-foreground">
+                                                {assessment.note || '—'}
+                                            </span>
                                         </TableCell>
                                     </TableRow>
                                 ))}

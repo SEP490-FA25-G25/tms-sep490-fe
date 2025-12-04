@@ -271,28 +271,61 @@ export interface CreateCourseRequest {
   clos?: {
     code: string;
     description: string;
+    mappedPLOs?: string[];
   }[];
   structure?: {
     phases: {
+      id?: number | null;
       name: string;
-      sessions: {
+      description?: string;
+      sessions?: {
+        id?: number | null;
         topic: string;
         studentTask?: string;
+        skills?: string[];
         mappedCLOs?: string[];
+        materials?: {
+          id?: number | null;
+          title: string;
+          materialType: string;
+          scope?: string;
+          url: string;
+          phaseId?: number | null;
+          sessionId?: number | null;
+        }[];
+      }[];
+      materials?: {
+        id?: number | null;
+        title: string;
+        materialType: string;
+        scope?: string;
+        url: string;
+        phaseId?: number | null;
+        sessionId?: number | null;
       }[];
     }[];
   };
   assessments?: {
+    id?: number | null;
     name: string;
     type: string;
+    weight?: number;
     durationMinutes?: number;
+    skills?: string[];
+    description?: string;
+    note?: string;
     mappedCLOs?: string[];
   }[];
   materials?: {
-    name: string;
-    type: string;
+    id?: number | null;
+    title: string;
+    materialType: string;
+    scope?: string;
     url: string;
+    phaseId?: number | null;
+    sessionId?: number | null;
   }[];
+  status?: string;
 }
 
 export const courseApi = createApi({
