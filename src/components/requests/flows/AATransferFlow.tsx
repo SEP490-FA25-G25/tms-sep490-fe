@@ -4,7 +4,7 @@ import { vi } from 'date-fns/locale'
 import { skipToken } from '@reduxjs/toolkit/query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
+
 import { cn } from '@/lib/utils'
 import { ArrowRightIcon } from 'lucide-react'
 import {
@@ -273,41 +273,33 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
               value={studentSearch}
               onChange={(event) => setStudentSearch(event.target.value)}
             />
-            {studentSearch.trim().length > 0 && studentOptions.length > 0 && (
+            {studentSearch.trim().length > 0 && studentOptions.length > 0 && !isSearchingStudents && (
               <div className="space-y-2">
-                {isSearchingStudents ? (
-                  <Skeleton className="h-20 w-full" />
-                ) : (
-                  studentOptions.map((student) => (
+                {studentOptions.map((student) => (
                     <button
                       key={student.id}
                       type="button"
                       onClick={() => handleSelectStudent(student)}
                       className={cn(
-                        "w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30",
+                        "w-full rounded-lg border px-3 py-2.5 text-left transition hover:border-primary/50 hover:bg-muted/30",
                         selectedStudent?.id === student.id && "border-primary bg-primary/5"
                       )}
                     >
-                      <p className="font-medium">
-                        {student.fullName} <span className="text-muted-foreground">({student.studentCode})</span>
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {student.email} · {student.phone}
-                      </p>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium text-sm truncate">{student.fullName}</span>
+                        <span className="text-xs text-muted-foreground shrink-0">{student.studentCode}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate">{student.email}</p>
                     </button>
-                  ))
-                )}
+                  ))}
               </div>
             )}
             {selectedStudent && (
-              <div className="border-t pt-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Học viên đã chọn</p>
-                    <p className="font-semibold">{selectedStudent.fullName}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedStudent.studentCode} · {selectedStudent.email}
-                    </p>
+              <div className="border-t pt-3 mt-3">
+                <div className="rounded-lg bg-muted/30 p-3 border">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-sm">{selectedStudent.fullName}</span>
+                    <span className="text-xs text-muted-foreground">{selectedStudent.studentCode}</span>
                   </div>
                 </div>
               </div>
@@ -320,13 +312,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
       {currentStep === 2 && selectedStudent && (
         <Section>
           <div className="space-y-3">
-            {isLoadingEligibility ? (
-              <div className="space-y-2">
-                {[...Array(2)].map((_, index) => (
-                  <Skeleton key={index} className="h-20 w-full" />
-                ))}
-              </div>
-            ) : eligibilityOptions.length === 0 ? (
+            {!isLoadingEligibility && eligibilityOptions.length === 0 ? (
               <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
                 Học viên không có lớp nào đủ điều kiện chuyển
               </div>
@@ -397,13 +383,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
             </div>
 
             {/* Target class options */}
-            {isLoadingOptions ? (
-              <div className="space-y-2">
-                {[...Array(3)].map((_, index) => (
-                  <Skeleton key={index} className="h-20 w-full" />
-                ))}
-              </div>
-            ) : transferOptions.length === 0 ? (
+            {!isLoadingOptions && transferOptions.length === 0 ? (
               <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
                 Không có lớp mục tiêu phù hợp với bộ lọc hiện tại
               </div>
@@ -452,60 +432,37 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
             )}
 
             {selectedTargetClass && (
-              <div className="border-t pt-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Lớp mục tiêu đã chọn</p>
-                    <p className="font-medium">
-                      {selectedTargetClass.classCode} · {selectedTargetClass.className}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
+              <div className="border-t pt-3 mt-3">
+                <div className="rounded-lg bg-muted/30 p-3 border mb-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-sm">{selectedTargetClass.classCode}</span>
+                    <span className="text-xs text-muted-foreground">
                       {selectedTargetClass.branchName} · {getModalityLabel(selectedTargetClass.modality)}
-                    </p>
+                    </span>
                   </div>
                 </div>
 
-                <div className="mt-4 space-y-4">
+                <div className="space-y-3">
                   {/* Session Selection with Week Navigation */}
-                  <div className="space-y-3">
-                    <label className="block text-sm font-medium">Chọn buổi học bắt đầu</label>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium">Buổi bắt đầu</label>
 
                     {upcomingSessions.length === 0 ? (
-                      <p className="text-sm text-muted-foreground py-4 text-center border rounded-lg">
+                      <p className="text-sm text-muted-foreground py-3 text-center border rounded-lg">
                         Không có buổi học sắp tới
                       </p>
                     ) : (
                       <>
                         {/* Week Navigation */}
-                        <div className="flex items-center justify-between border-b pb-3">
-                          <div>
-                            <p className="text-xs text-muted-foreground">Tuần đang xem</p>
-                            <p className="font-medium text-sm">{weekRangeLabel}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleChangeWeek('prev')}
-                              disabled={weekOffset === 0}
-                            >
-                              <ArrowRightIcon className="h-4 w-4 rotate-180" />
+                        <div className="flex items-center justify-between border-b pb-2">
+                          <span className="font-medium text-sm">{weekRangeLabel}</span>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleChangeWeek('prev')} disabled={weekOffset === 0}>
+                              <ArrowRightIcon className="h-3 w-3 rotate-180" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setWeekOffset(0)}
-                              disabled={weekOffset === 0}
-                            >
-                              Tuần đầu
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleChangeWeek('next')}
-                              disabled={weekOffset >= sessionsByWeek.length - 1}
-                            >
-                              <ArrowRightIcon className="h-4 w-4" />
+                            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setWeekOffset(0)} disabled={weekOffset === 0}>Đầu</Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleChangeWeek('next')} disabled={weekOffset >= sessionsByWeek.length - 1}>
+                              <ArrowRightIcon className="h-3 w-3" />
                             </Button>
                           </div>
                         </div>

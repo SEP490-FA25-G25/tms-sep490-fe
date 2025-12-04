@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { skipToken } from '@reduxjs/toolkit/query'
-import { Skeleton } from '@/components/ui/skeleton'
+
+import { Badge } from '@/components/ui/badge'
 import {
   useGetMissedSessionsQuery,
   useGetMakeupOptionsQuery,
@@ -98,9 +99,6 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
     return 'Sức chứa đang cập nhật'
   }
 
-  const getClassDisplayName = (classInfo?: { className?: string; name?: string }) =>
-    classInfo?.className ?? classInfo?.name ?? 'Tên lớp đang cập nhật'
-
   // Handlers
   const handleNext = () => {
     if (currentStep === 1 && selectedMissedSession) setCurrentStep(2)
@@ -183,18 +181,18 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
       {/* Step 1: Chọn buổi đã vắng */}
       {currentStep === 1 && (
         <Section>
-          {isLoadingMissed ? (
-            <div className="space-y-2">
-              {[...Array(2)].map((_, index) => (
-                <Skeleton key={index} className="h-20 w-full" />
-              ))}
-            </div>
-          ) : missedSessions.length === 0 ? (
-            <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
-              Không có buổi vắng hợp lệ trong {makeupLookbackWeeks} tuần gần nhất
-            </div>
-          ) : (
-            <div className="space-y-2">
+          <div className="min-h-[280px]">
+            {!isLoadingMissed && missedSessions.length === 0 ? (
+              <div className="flex min-h-[200px] flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Không có buổi vắng hợp lệ trong {makeupLookbackWeeks} tuần gần nhất
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Bạn chỉ có thể xin học bù cho buổi đã vắng trong vòng 4 tuần.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
               {missedSessions.map((session) => (
                 <SelectionCard
                   key={session.sessionId}
@@ -202,62 +200,65 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
                   isSelected={selectedMissedId === session.sessionId}
                   onSelect={() => setSelectedMissedId(session.sessionId)}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <p className="font-medium">
-                        {format(parseISO(session.date), 'EEEE, dd/MM', { locale: vi })} · {session.classInfo.classCode}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {(session.classInfo?.classCode || session.classInfo?.code) && (
+                          <Badge variant="outline" className="text-xs shrink-0">
+                            {session.classInfo.classCode || session.classInfo.code}
+                          </Badge>
+                        )}
+                        <span className="text-xs text-muted-foreground">
+                          {format(parseISO(session.date), 'EEE, dd/MM', { locale: vi })}
+                          {typeof session.daysAgo === 'number' && ` · ${session.daysAgo === 0 ? 'Hôm nay' : `${session.daysAgo} ngày trước`}`}
+                        </span>
+                      </div>
+                      <p className="font-medium text-sm mt-1 truncate">
                         Buổi {session.courseSessionNumber}: {session.courseSessionTitle}
                       </p>
-                      {typeof session.daysAgo === 'number' && (
-                        <p className="text-xs text-muted-foreground">
-                          {session.daysAgo === 0
-                            ? 'Vắng hôm nay'
-                            : session.daysAgo === 1
-                              ? 'Cách đây 1 ngày'
-                              : `Cách đây ${session.daysAgo} ngày`}
-                          {session.isExcusedAbsence && ' · Đã xin nghỉ'}
-                        </p>
-                      )}
                     </div>
+                    {session.isExcusedAbsence && (
+                      <Badge variant="secondary" className="text-xs shrink-0">Có phép</Badge>
+                    )}
                   </div>
                 </SelectionCard>
               ))}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </Section>
       )}
 
       {/* Step 2: Chọn buổi học bù */}
       {currentStep === 2 && selectedMissedSession && (
         <Section>
-          <div className="rounded-lg bg-muted/30 p-4 border mb-4">
-            <h4 className="font-medium text-sm mb-2">Buổi vắng đã chọn</h4>
-            <div className="text-sm">
-              <p className="font-medium">
-                {format(parseISO(selectedMissedSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })} · {selectedMissedSession.classInfo.classCode}
-              </p>
-              <p className="text-muted-foreground">
-                {selectedMissedSession.courseSessionTitle}
-              </p>
+          <div className="rounded-lg bg-muted/30 p-3 border mb-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="outline" className="text-xs">
+                {selectedMissedSession.classInfo.classCode || selectedMissedSession.classInfo.code}
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                {format(parseISO(selectedMissedSession.date), 'EEE, dd/MM', { locale: vi })}
+              </span>
+              <span className="text-xs text-muted-foreground">·</span>
+              <span className="text-xs font-medium truncate">{selectedMissedSession.courseSessionTitle}</span>
             </div>
           </div>
 
-          <h4 className="font-medium text-sm mb-3">Các lớp có thể học bù:</h4>
+          <p className="text-xs font-medium text-muted-foreground mb-2 border-b pb-2">Chọn lớp học bù:</p>
 
-          {isLoadingOptions ? (
-            <div className="space-y-2">
-              {[...Array(2)].map((_, index) => (
-                <Skeleton key={index} className="h-20 w-full" />
-              ))}
-            </div>
-          ) : makeupOptions.length === 0 ? (
-            <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
-              Chưa có buổi học bù phù hợp cho buổi này.
-            </div>
-          ) : (
-            <div className="space-y-2">
+          <div className="min-h-[220px]">
+            {!isLoadingOptions && makeupOptions.length === 0 ? (
+              <div className="flex min-h-[180px] flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Chưa có buổi học bù phù hợp cho buổi này.
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Vui lòng thử lại sau hoặc liên hệ Giáo vụ.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
               {makeupOptions.map((option) => {
                 const availableSlots = option.availableSlots ?? option.classInfo?.availableSlots ?? null
                 const maxCapacity = option.maxCapacity ?? option.classInfo?.maxCapacity ?? null
@@ -271,38 +272,46 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
                     isSelected={selectedMakeupId === option.sessionId}
                     onSelect={() => setSelectedMakeupId(option.sessionId)}
                   >
-                    <div className="space-y-1">
-                      <p className="font-medium">
-                        {format(parseISO(option.date), 'dd/MM', { locale: vi })} · {option.classInfo.classCode}
-                      </p>
-                      <p className="text-sm text-muted-foreground">{getClassDisplayName(option.classInfo)}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {branchLabel} · {modalityLabel} · {option.timeSlotInfo.startTime}-{option.timeSlotInfo.endTime} · {getCapacityText(availableSlots, maxCapacity)}
-                      </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="outline" className="text-xs shrink-0">
+                            {option.classInfo.classCode || option.classInfo.code}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {format(parseISO(option.date), 'EEE, dd/MM', { locale: vi })} · {option.timeSlotInfo.startTime}-{option.timeSlotInfo.endTime}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {branchLabel} · {modalityLabel} · {getCapacityText(availableSlots, maxCapacity)}
+                        </p>
+                      </div>
                     </div>
                   </SelectionCard>
                 )
               })}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </Section>
       )}
 
       {/* Step 3: Điền lý do */}
       {currentStep === 3 && selectedMakeupOption && (
         <Section>
-          <div className="rounded-lg bg-muted/30 p-4 border mb-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
+          <div className="rounded-lg bg-muted/30 p-3 border mb-3">
+            <div className="flex items-center gap-3 text-sm">
+              <div className="flex-1">
                 <p className="text-xs text-muted-foreground">Buổi vắng</p>
-                <p className="font-medium">
-                  {format(parseISO(selectedMissedSession!.date), 'dd/MM')} · {selectedMissedSession!.classInfo.classCode}
+                <p className="font-medium text-sm">
+                  {format(parseISO(selectedMissedSession!.date), 'dd/MM')} · {selectedMissedSession!.classInfo.classCode || selectedMissedSession!.classInfo.code}
                 </p>
               </div>
-              <div>
+              <div className="text-muted-foreground">→</div>
+              <div className="flex-1">
                 <p className="text-xs text-muted-foreground">Học bù tại</p>
-                <p className="font-medium">
-                  {format(parseISO(selectedMakeupOption.date), 'dd/MM')} · {selectedMakeupOption.classInfo.classCode}
+                <p className="font-medium text-sm">
+                  {format(parseISO(selectedMakeupOption.date), 'dd/MM')} · {selectedMakeupOption.classInfo.classCode || selectedMakeupOption.classInfo.code}
                 </p>
               </div>
             </div>

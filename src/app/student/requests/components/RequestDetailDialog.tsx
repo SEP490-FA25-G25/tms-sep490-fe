@@ -9,7 +9,7 @@ import {
   FullScreenModalDescription,
   FullScreenModalBody,
 } from '@/components/ui/full-screen-modal'
-import { Loader2, UserIcon, CalendarIcon, MapPinIcon, ArrowRightIcon } from 'lucide-react'
+import { Loader2, CalendarIcon, MapPinIcon, ArrowRightIcon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { REQUEST_STATUS_META } from '@/constants/absence'
 import type { StudentRequest } from '@/store/services/studentRequestApi'

@@ -112,7 +112,8 @@ export interface SessionSummary {
 export interface ClassMeta {
   id?: number
   classId: number
-  classCode: string
+  classCode?: string  // Some endpoints use classCode
+  code?: string       // Some endpoints use code (backend MissedSessionDTO.ClassInfo)
   className?: string
   name?: string
   branchId?: number

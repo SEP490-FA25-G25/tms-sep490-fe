@@ -174,7 +174,7 @@ export function SelectionCard<T>({
       onClick={() => !disabled && onSelect(item)}
       disabled={disabled}
       className={cn(
-        'w-full rounded-lg border px-4 py-3 text-left transition',
+        'w-full rounded-lg border px-3 py-2.5 text-left transition',
         !disabled && 'cursor-pointer hover:border-primary/50 hover:bg-muted/30',
         disabled && 'cursor-not-allowed border-dashed opacity-50',
         isSelected && 'border-primary bg-primary/5 ring-1 ring-primary'

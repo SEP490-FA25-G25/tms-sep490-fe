@@ -4,7 +4,7 @@ import { vi } from 'date-fns/locale'
 import { skipToken } from '@reduxjs/toolkit/query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
+
 import {
   useSearchStudentsQuery,
   useGetStudentClassesQuery,
@@ -268,41 +268,37 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
               }}
             />
             {/* Chỉ hiển thị search results khi chưa chọn student - ẩn ngay khi click chọn */}
-            {!selectedStudent && studentSearch.trim().length > 0 && studentOptions.length > 0 && (
+            {!selectedStudent && studentSearch.trim().length > 0 && studentOptions.length > 0 && !isSearchingStudents && (
               <div className="space-y-2">
-                {isSearchingStudents ? (
-                  <Skeleton className="h-20 w-full" />
-                ) : (
-                  studentOptions.map((student) => (
+                {studentOptions.map((student) => (
                     <button
                       key={student.id}
                       type="button"
                       onClick={() => handleSelectStudent(student)}
-                      className="w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30"
+                      className="w-full rounded-lg border px-3 py-2.5 text-left transition hover:border-primary/50 hover:bg-muted/30"
                     >
-                      <p className="font-medium">
-                        {student.fullName} <span className="text-muted-foreground">({student.studentCode})</span>
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {student.email} · {student.phone}
-                      </p>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium text-sm truncate">{student.fullName}</span>
+                        <span className="text-xs text-muted-foreground shrink-0">{student.studentCode}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate">{student.email}</p>
                     </button>
-                  ))
-                )}
+                  ))}
               </div>
             )}
             {selectedStudent && (
-              <div className="border-t pt-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Học viên đã chọn</p>
-                    <p className="font-semibold">{selectedStudent.fullName}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedStudent.studentCode} · {selectedStudent.email}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Chi nhánh: {selectedStudent.branchName} · Đang học: {selectedStudent.activeEnrollments} lớp
-                    </p>
+              <div className="border-t pt-3 mt-3">
+                <div className="rounded-lg bg-muted/30 p-3 border">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm">{selectedStudent.fullName}</span>
+                        <span className="text-xs text-muted-foreground">{selectedStudent.studentCode}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {selectedStudent.branchName} · {selectedStudent.activeEnrollments} lớp
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -315,13 +311,7 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
       {currentStep === 2 && selectedStudent && (
         <Section>
           <div className="space-y-3">
-            {isLoadingClasses ? (
-              <div className="space-y-2">
-                {[...Array(2)].map((_, index) => (
-                  <Skeleton key={index} className="h-20 w-full" />
-                ))}
-              </div>
-            ) : classOptions.length === 0 ? (
+            {!isLoadingClasses && classOptions.length === 0 ? (
               <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
                 Học viên chưa đăng ký lớp nào
               </div>
@@ -356,50 +346,17 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
       {currentStep === 3 && selectedClass && (
         <Section>
           <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-3">
-              <div>
-                <p className="text-xs text-muted-foreground">Tuần đang xem</p>
-                <p className="font-medium">{weekRangeLabel}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleWeekChange('prev')}
-                  disabled={!baseWeekStart}
-                >
-                  ←
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setWeekCursor(null)
-                    setSelectedSessionId(null)
-                  }}
-                  disabled={!weekData}
-                >
-                  Tuần hiện tại
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleWeekChange('next')}
-                  disabled={!baseWeekStart}
-                >
-                  →
-                </Button>
+            <div className="flex items-center justify-between gap-2 border-b pb-2">
+              <span className="font-medium text-sm">{weekRangeLabel}</span>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleWeekChange('prev')} disabled={!baseWeekStart}>←</Button>
+                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setWeekCursor(null); setSelectedSessionId(null) }} disabled={!weekData}>Hôm nay</Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleWeekChange('next')} disabled={!baseWeekStart}>→</Button>
               </div>
             </div>
 
             <div className="space-y-4">
-              {isLoadingSchedule ? (
-                <div className="space-y-2">
-                  {[...Array(3)].map((_, index) => (
-                    <Skeleton key={index} className="h-20 w-full" />
-                  ))}
-                </div>
-              ) : displayedGroups.length === 0 ? (
+              {!isLoadingSchedule && displayedGroups.length === 0 ? (
                 <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
                   Tuần này chưa có buổi học nào trong lịch
                 </div>
@@ -448,24 +405,23 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
             </div>
 
             {selectedSession && (
-              <div className="border-t pt-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground">Buổi đã chọn</p>
-                    <p className="font-semibold">
-                      {selectedSession.classCode} · {selectedSession.startTime} - {selectedSession.endTime}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {format(parseISO(selectedSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{selectedSession.topic}</p>
+              <div className="border-t pt-3 mt-3">
+                <div className="rounded-lg bg-muted/30 p-3 border mb-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm">{selectedSession.classCode}</span>
+                        <span className="text-xs text-muted-foreground">{selectedSession.startTime}-{selectedSession.endTime}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {format(parseISO(selectedSession.date), 'EEE dd/MM', { locale: vi })} · {selectedSession.topic}
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs shrink-0" onClick={() => setSelectedSessionId(null)}>Đổi</Button>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => setSelectedSessionId(null)}>
-                    Đổi buổi
-                  </Button>
                 </div>
 
-                <div className="mt-4 space-y-4">
+                <div className="space-y-3">
                   <ReasonInput
                     value={reason}
                     onChange={(val) => {

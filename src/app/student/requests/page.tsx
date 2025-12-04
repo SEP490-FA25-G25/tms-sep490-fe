@@ -3,7 +3,9 @@ import { useState, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import {
-  ArrowRightIcon,
+  ArrowRightLeftIcon,
+  CalendarCheck2Icon,
+  CalendarX2Icon,
   CheckCircleIcon,
   ClockIcon,
   NotebookPenIcon,
@@ -23,6 +25,13 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  FullScreenModal,
+  FullScreenModalContent,
+  FullScreenModalHeader,
+  FullScreenModalTitle,
+  FullScreenModalBody,
+} from '@/components/ui/full-screen-modal'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -532,76 +541,84 @@ function CreateRequestDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Tạo yêu cầu mới</DialogTitle>
-        </DialogHeader>
-        {activeType === null ? (
-          <TypeSelection onSelect={handleTypeSelect} />
-        ) : (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between border-b pb-2">
-              <div>
-                <p className="text-xs text-muted-foreground">Loại yêu cầu</p>
-                <h3 className="text-base font-semibold">{REQUEST_TYPE_LABELS[activeType]}</h3>
+    <FullScreenModal open={open} onOpenChange={onOpenChange}>
+      <FullScreenModalContent size="xl">
+        <FullScreenModalHeader>
+          <FullScreenModalTitle>Tạo yêu cầu mới</FullScreenModalTitle>
+        </FullScreenModalHeader>
+        <FullScreenModalBody>
+          {activeType === null ? (
+            <TypeSelection onSelect={handleTypeSelect} />
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between border-b pb-2">
+                <div>
+                  <p className="text-xs text-muted-foreground">Loại yêu cầu</p>
+                  <h3 className="text-base font-semibold">{REQUEST_TYPE_LABELS[activeType]}</h3>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => onSelectType(null)}>
+                  Chọn loại khác
+                </Button>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => onSelectType(null)}>
-                Chọn loại khác
-              </Button>
-            </div>
 
-            <UnifiedRequestFlow type={activeType} onSuccess={onSuccess} />
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+              <UnifiedRequestFlow type={activeType} onSuccess={onSuccess} />
+            </div>
+          )}
+        </FullScreenModalBody>
+      </FullScreenModalContent>
+    </FullScreenModal>
   )
 }
 
 function TypeSelection({ onSelect }: { onSelect: (type: RequestType) => void }) {
-  const types: Array<{ type: RequestType; title: string; description: string; bullets: string[] }> = [
+  const types: Array<{
+    type: RequestType
+    icon: React.ReactNode
+    title: string
+    description: string
+    bullets: string[]
+  }> = [
     {
       type: 'ABSENCE',
+      icon: <CalendarX2Icon className="h-6 w-6" />,
       title: 'Xin nghỉ buổi học',
-      description: 'Chọn ngày, buổi học và gửi lý do trong 1 phút.',
-      bullets: ['Chỉ cho buổi chưa diễn ra', 'Theo dõi trạng thái xử lý', 'Có thể hủy trước khi duyệt'],
+      description: 'Báo trước khi vắng mặt',
+      bullets: ['Buổi chưa diễn ra', 'Cần lý do cụ thể', 'Chờ Giáo vụ duyệt'],
     },
     {
       type: 'MAKEUP',
+      icon: <CalendarCheck2Icon className="h-6 w-6" />,
       title: 'Xin học bù',
-      description: 'Hệ thống gợi ý buổi học bù phù hợp theo chi nhánh và sức chứa.',
-      bullets: ['Hiển thị buổi đã vắng', 'Ưu tiên gợi ý thông minh', 'Tự động cảnh báo trùng lịch'],
+      description: 'Bù lại buổi đã vắng',
+      bullets: ['Buổi vắng trong 4 tuần', 'Cùng nội dung học', 'Chờ Giáo vụ duyệt'],
     },
     {
       type: 'TRANSFER',
+      icon: <ArrowRightLeftIcon className="h-6 w-6" />,
       title: 'Chuyển lớp',
-      description: 'Chuyển giữa các lớp cùng khóa học với hướng dẫn từng bước.',
-      bullets: ['Kiểm tra điều kiện chuyển', 'Phân tích nội dung bị thiếu', 'Xử lý nhanh 4-8 giờ'],
+      description: 'Đổi lịch hoặc chi nhánh',
+      bullets: ['Cùng khóa học', 'Tối đa 1 lần', 'Xử lý 4-8 giờ'],
     },
   ]
 
   return (
-    <div className="space-y-3">
+    <div className="grid grid-cols-3 gap-4">
       {types.map((item) => (
         <button
           key={item.type}
           type="button"
           onClick={() => onSelect(item.type)}
-          className="w-full rounded-lg border border-border/60 p-3 text-left transition hover:border-primary/60 hover:bg-primary/5"
+          className="group flex min-h-[180px] flex-col rounded-xl border border-border/60 p-5 text-left transition hover:border-primary hover:bg-primary/5"
         >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1">
-              <p className="text-xs font-semibold uppercase tracking-wide text-primary">{REQUEST_TYPE_LABELS[item.type]}</p>
-              <h3 className="mt-1 text-base font-semibold text-foreground">{item.title}</h3>
-              <p className="mt-1 text-xs text-muted-foreground">{item.description}</p>
-            </div>
-            <ArrowRightIcon className="mt-1 h-5 w-5 shrink-0 text-muted-foreground" />
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+            {item.icon}
           </div>
-          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
+          <h3 className="text-base font-semibold text-foreground">{item.title}</h3>
+          <p className="mt-1.5 text-sm text-muted-foreground">{item.description}</p>
+          <ul className="mt-auto pt-4 space-y-1.5 text-xs text-muted-foreground">
             {item.bullets.map((bullet) => (
-              <li key={bullet} className="flex items-center gap-1">
-                <span className="text-primary">→</span>
+              <li key={bullet} className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary/60" />
                 <span>{bullet}</span>
               </li>
             ))}

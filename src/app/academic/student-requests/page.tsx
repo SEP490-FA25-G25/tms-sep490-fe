@@ -7,7 +7,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  FullScreenModal,
+  FullScreenModalContent,
+  FullScreenModalHeader,
+  FullScreenModalTitle,
+  FullScreenModalDescription,
+  FullScreenModalBody,
+} from '@/components/ui/full-screen-modal'
 import {
   Pagination,
   PaginationContent,
@@ -21,8 +28,8 @@ import {
   RotateCcwIcon,
   ClockIcon,
   AlertTriangleIcon,
-  CalendarXIcon,
-  CalendarCheckIcon,
+  CalendarX2Icon,
+  CalendarCheck2Icon,
   ArrowRightLeftIcon,
   SearchIcon
 } from 'lucide-react'
@@ -181,7 +188,7 @@ export default function AcademicRequestsPage() {
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Xin nghỉ</CardTitle>
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-50 dark:bg-orange-950/30">
-                  <CalendarXIcon className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                  <CalendarX2Icon className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                 </div>
               </CardHeader>
               <CardContent>
@@ -193,7 +200,7 @@ export default function AcademicRequestsPage() {
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Học bù</CardTitle>
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950/30">
-                  <CalendarCheckIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <CalendarCheck2Icon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
               </CardHeader>
               <CardContent>
@@ -503,58 +510,56 @@ export default function AcademicRequestsPage() {
       />
 
       {/* On-Behalf Creation Dialog */}
-      <Dialog open={showOnBehalfDialog} onOpenChange={setShowOnBehalfDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Tạo yêu cầu thay học viên</DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              Hệ thống sẽ tự động phê duyệt ngay sau khi chọn thông tin phù hợp.
-            </p>
-          </DialogHeader>
+      <FullScreenModal open={showOnBehalfDialog} onOpenChange={setShowOnBehalfDialog}>
+        <FullScreenModalContent size="2xl">
+          <FullScreenModalHeader>
+            <FullScreenModalTitle>Tạo yêu cầu cho học viên</FullScreenModalTitle>
+            <FullScreenModalDescription>
+              Xử lý yêu cầu từ học viên qua điện thoại, tin nhắn hoặc trực tiếp. Hệ thống sẽ tự động duyệt.
+            </FullScreenModalDescription>
+          </FullScreenModalHeader>
+          <FullScreenModalBody>
 
           {activeRequestType === null ? (
-            <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-4">
               {[
                 {
                   type: 'ABSENCE' as const,
-                  title: 'Xin nghỉ thay học viên',
-                  description: 'Tạo đơn xin nghỉ cho học viên với lý do cụ thể.',
-                  bullets: ['Chỉ cho buổi chưa diễn ra', 'AA có quyền duyệt trực tiếp', 'Ghi chú cho phụ huynh'],
+                  icon: <CalendarX2Icon className="h-6 w-6" />,
+                  title: 'Báo nghỉ học viên',
+                  description: 'Ghi nhận lý do vắng mặt',
+                  bullets: ['Buổi chưa diễn ra', 'Tự động duyệt', 'Ghi chú nội bộ'],
                 },
                 {
                   type: 'MAKEUP' as const,
-                  title: 'Xin học bù thay học viên',
-                  description: 'Gợi ý buổi học bù phù hợp theo lịch và chuyên môn.',
-                  bullets: ['Hiển thị buổi đã vắng', 'Ưu tiên gợi ý thông minh', 'Tự động duyệt ngay'],
+                  icon: <CalendarCheck2Icon className="h-6 w-6" />,
+                  title: 'Xếp lịch học bù',
+                  description: 'Chọn buổi bù cho học viên',
+                  bullets: ['Buổi vắng trong 4 tuần', 'Gợi ý thông minh', 'Tự động duyệt'],
                 },
                 {
                   type: 'TRANSFER' as const,
-                  title: 'Chuyển lớp thay học viên',
-                  description: 'Phân tích nội dung và chuyển lớp với quy trình nhất quán.',
-                  bullets: ['Kiểm tra điều kiện chuyển', 'Phân tích nội dung bị thiếu', 'AA duyệt ngay lập tức'],
+                  icon: <ArrowRightLeftIcon className="h-6 w-6" />,
+                  title: 'Đổi lớp học viên',
+                  description: 'Chuyển sang lớp khác',
+                  bullets: ['Cùng khóa học', 'Đổi lịch/chi nhánh', 'Tự động duyệt'],
                 },
               ].map((item) => (
                 <button
                   key={item.type}
                   type="button"
                   onClick={() => setActiveRequestType(item.type)}
-                  className="w-full rounded-lg border border-border/60 p-4 text-left transition hover:border-primary/60 hover:bg-primary/5"
+                  className="group flex min-h-[180px] flex-col rounded-xl border border-border/60 p-5 text-left transition hover:border-primary hover:bg-primary/5"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                        {item.type === 'ABSENCE' && 'Xin nghỉ'}
-                        {item.type === 'MAKEUP' && 'Học bù'}
-                        {item.type === 'TRANSFER' && 'Chuyển lớp'}
-                      </p>
-                      <h3 className="mt-1 text-base font-semibold text-foreground">{item.title}</h3>
-                      <p className="mt-1 text-xs text-muted-foreground">{item.description}</p>
-                    </div>
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+                    {item.icon}
                   </div>
-                  <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
+                  <h3 className="text-base font-semibold text-foreground">{item.title}</h3>
+                  <p className="mt-1.5 text-sm text-muted-foreground">{item.description}</p>
+                  <ul className="mt-auto pt-4 space-y-1.5 text-xs text-muted-foreground">
                     {item.bullets.map((bullet) => (
-                      <li key={bullet} className="flex items-center gap-1">
-                        <span className="text-primary">→</span>
+                      <li key={bullet} className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary/60" />
                         <span>{bullet}</span>
                       </li>
                     ))}
@@ -566,11 +571,11 @@ export default function AcademicRequestsPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b pb-3">
                 <div>
-                  <p className="text-xs text-muted-foreground">Loại yêu cầu</p>
+                  <p className="text-xs text-muted-foreground">Đang thực hiện</p>
                   <h3 className="text-base font-semibold">
-                    {activeRequestType === 'ABSENCE' && 'Xin nghỉ'}
-                    {activeRequestType === 'MAKEUP' && 'Học bù'}
-                    {activeRequestType === 'TRANSFER' && 'Chuyển lớp'}
+                    {activeRequestType === 'ABSENCE' && 'Báo nghỉ học viên'}
+                    {activeRequestType === 'MAKEUP' && 'Xếp lịch học bù'}
+                    {activeRequestType === 'TRANSFER' && 'Đổi lớp học viên'}
                   </h3>
                 </div>
                 <Button
@@ -613,8 +618,9 @@ export default function AcademicRequestsPage() {
               )}
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+          </FullScreenModalBody>
+        </FullScreenModalContent>
+      </FullScreenModal>
     </DashboardLayout>
   )
 }

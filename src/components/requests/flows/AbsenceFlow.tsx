@@ -1,8 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { addMonths, addWeeks, format, parseISO, startOfToday } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { Clock4Icon, MapPinIcon } from 'lucide-react'
-import { Skeleton } from '@/components/ui/skeleton'
+import { MapPinIcon } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Calendar } from '@/components/ui/calendar'
 import { Button } from '@/components/ui/button'
@@ -275,27 +274,23 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
               <TabsTrigger value="calendar">Chọn theo lịch</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="upcoming" className="space-y-3 mt-0">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  Tuần bắt đầu {weekStartCursor ? format(parseISO(weekStartCursor), 'dd/MM/yyyy') : '...'}
+            <TabsContent value="upcoming" className="mt-0">
+              <div className="flex items-center justify-between pb-2 border-b">
+                <p className="text-xs text-muted-foreground">
+                  Tuần {weekStartCursor ? format(parseISO(weekStartCursor), 'dd/MM') : '...'}
                 </p>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={handlePrevWeek} disabled={isPrevWeekDisabled}>
-                    Tuần trước
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="sm" className="h-7 px-2" onClick={handlePrevWeek} disabled={isPrevWeekDisabled}>
+                    ← Trước
                   </Button>
-                  <Button variant="outline" size="sm" onClick={handleNextWeek} disabled={!weekStartCursor}>
-                    Tuần sau
+                  <Button variant="ghost" size="sm" className="h-7 px-2" onClick={handleNextWeek} disabled={!weekStartCursor}>
+                    Sau →
                   </Button>
                 </div>
               </div>
-              {isLoadingSchedule ? (
-                <div className="space-y-3">
-                  <Skeleton className="h-20 w-full" />
-                  <Skeleton className="h-20 w-full" />
-                </div>
-              ) : upcomingSessions.length > 0 ? (
-                upcomingSessions.map(session => (
+              <div className="min-h-[280px] space-y-2 pt-2">
+                {!isLoadingSchedule && upcomingSessions.length > 0 ? (
+                  upcomingSessions.map(session => (
                   <SelectionCard
                     key={session.sessionId}
                     item={session}
@@ -311,42 +306,40 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
                     })}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge variant="outline" className="font-mono text-xs">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="outline" className="font-mono text-xs shrink-0">
                             {session.classCode}
                           </Badge>
-                          <span className="text-xs font-medium text-muted-foreground">
-                            {format(parseISO(session.date), 'EEEE, dd/MM', { locale: vi })}
+                          <span className="text-xs text-muted-foreground">
+                            {format(parseISO(session.date), 'EEE, dd/MM', { locale: vi })} · {session.startTime}-{session.endTime}
                           </span>
                         </div>
-                        <p className="font-semibold text-sm">{session.topic}</p>
-                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Clock4Icon className="h-3 w-3" />
-                            {session.startTime} - {session.endTime}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MapPinIcon className="h-3 w-3" />
-                            {session.branchName}
-                          </span>
-                        </div>
+                        <p className="font-medium text-sm mt-1 truncate">{session.topic}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                          <MapPinIcon className="h-3 w-3 shrink-0" />
+                          {session.branchName}
+                        </p>
                       </div>
                     </div>
                   </SelectionCard>
                 ))
               ) : (
-                <div className="text-center py-8 text-muted-foreground text-sm border border-dashed rounded-lg">
-                  Không có buổi học nào sắp tới trong tuần này.
-                  <br />
-                  Vui lòng chuyển sang tab <b>Chọn theo lịch</b>.
+                <div className="flex min-h-[200px] flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Không có buổi học nào sắp tới trong tuần này.
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Vui lòng chuyển sang tab <b>Chọn theo lịch</b>.
+                  </p>
                 </div>
               )}
+              </div>
             </TabsContent>
 
-            <TabsContent value="calendar" className="space-y-4 mt-0">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="rounded-lg border p-3 bg-background">
+            <TabsContent value="calendar" className="mt-0">
+              <div className="flex flex-col sm:flex-row gap-3 min-h-[280px]">
+                <div className="rounded-lg border p-2 bg-background shrink-0">
                   <Calendar
                     mode="single"
                     selected={selectedDate}
@@ -363,14 +356,12 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
                   />
                 </div>
 
-                <div className="flex-1 space-y-3">
-                  <p className="text-sm font-medium text-muted-foreground">
+                <div className="flex-1 space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground border-b pb-2">
                     Buổi học ngày {format(selectedDate, 'dd/MM/yyyy')}
                   </p>
 
-                  {isLoadingMonth ? (
-                    <Skeleton className="h-20 w-full" />
-                  ) : selectedDateSessions.length > 0 ? (
+                  {!isLoadingMonth && selectedDateSessions.length > 0 ? (
                     selectedDateSessions.map(session => (
                       <SelectionCard
                         key={session.sessionId}
@@ -386,21 +377,28 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
                           title: session.topic
                         })}
                       >
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center justify-between">
-                            <Badge variant="outline">{session.classCode}</Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {session.startTime} - {session.endTime}
-                            </span>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs shrink-0">{session.classCode}</Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {session.startTime}-{session.endTime}
+                              </span>
+                            </div>
+                            <p className="font-medium text-sm mt-1 truncate">{session.topic}</p>
+                            <p className="text-xs text-muted-foreground">{session.branchName}</p>
                           </div>
-                          <p className="font-medium text-sm mt-1">{session.topic}</p>
-                          <p className="text-xs text-muted-foreground">{session.branchName}</p>
                         </div>
                       </SelectionCard>
                     ))
                   ) : (
-                    <div className="text-center py-6 text-sm text-muted-foreground border border-dashed rounded-lg">
-                      Không có buổi học nào trong ngày này.
+                    <div className="flex min-h-[180px] flex-col items-center justify-center rounded-lg border border-dashed p-4 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        Không có buổi học nào trong ngày này.
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Chọn ngày khác trên lịch.
+                      </p>
                     </div>
                   )}
                 </div>
@@ -412,24 +410,16 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
 
       {currentStep === 2 && selectedSession && (
         <Section>
-          <div className="rounded-lg bg-muted/30 p-4 border mb-4">
-            <h4 className="font-medium text-sm mb-2">Thông tin buổi nghỉ</h4>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-xs text-muted-foreground">Lớp học</p>
-                <p className="font-medium">{selectedSession.classCode}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Thời gian</p>
-                <p className="font-medium">
-                  {format(parseISO(selectedSession.date), 'dd/MM/yyyy')}
-                  <br />
-                  {selectedSession.startTime} - {selectedSession.endTime}
-                </p>
-              </div>
-              <div className="col-span-2">
-                <p className="text-xs text-muted-foreground">Nội dung</p>
-                <p className="font-medium">{selectedSession.title}</p>
+          <div className="rounded-lg bg-muted/30 p-3 border mb-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="outline" className="text-xs">{selectedSession.classCode}</Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {format(parseISO(selectedSession.date), 'EEE, dd/MM', { locale: vi })} · {selectedSession.startTime}-{selectedSession.endTime}
+                  </span>
+                </div>
+                <p className="font-medium text-sm mt-1">{selectedSession.title}</p>
               </div>
             </div>
           </div>

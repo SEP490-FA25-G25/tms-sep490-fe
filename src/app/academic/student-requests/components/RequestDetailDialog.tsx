@@ -71,7 +71,7 @@ export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDe
   const detailAbsenceStats = detailRequest?.additionalInfo?.studentAbsenceStats
   const detailPreviousRequests = detailRequest?.additionalInfo?.previousRequests
   const detailDaysUntilSession =
-    detailRequest?.additionalInfo?.daysUntilSession ?? detailRequest?.daysUntilSession
+    detailRequest?.additionalInfo?.daysUntilSession ?? detailRequest?.daysUntilSession ?? null
   const detailAbsenceRate =
     detailAbsenceStats?.absenceRate ?? detailRequest?.studentAbsenceRate ?? 0
   const detailAbsenceRateDisplay = Number(detailAbsenceRate.toFixed(1))

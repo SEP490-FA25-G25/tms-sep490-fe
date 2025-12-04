@@ -4,7 +4,7 @@ import { vi } from 'date-fns/locale'
 import { skipToken } from '@reduxjs/toolkit/query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
+
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import {
@@ -235,38 +235,30 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
               value={studentSearch}
               onChange={(event) => setStudentSearch(event.target.value)}
             />
-            {studentSearch.trim().length > 0 && studentOptions.length > 0 && (
+            {studentSearch.trim().length > 0 && studentOptions.length > 0 && !isSearchingStudents && (
               <div className="space-y-2">
-                {isSearchingStudents ? (
-                  <Skeleton className="h-20 w-full" />
-                ) : (
-                  studentOptions.map((student) => (
+                {studentOptions.map((student) => (
                     <button
                       key={student.id}
                       type="button"
                       onClick={() => handleSelectStudent(student)}
-                      className="w-full rounded-lg border px-4 py-3 text-left transition hover:border-primary/50 hover:bg-muted/30"
+                      className="w-full rounded-lg border px-3 py-2.5 text-left transition hover:border-primary/50 hover:bg-muted/30"
                     >
-                      <p className="font-medium">
-                        {student.fullName} <span className="text-muted-foreground">({student.studentCode})</span>
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {student.email} · {student.phone}
-                      </p>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium text-sm truncate">{student.fullName}</span>
+                        <span className="text-xs text-muted-foreground shrink-0">{student.studentCode}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate">{student.email}</p>
                     </button>
-                  ))
-                )}
+                  ))}
               </div>
             )}
             {selectedStudent && (
-              <div className="border-t pt-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Học viên đã chọn</p>
-                    <p className="font-semibold">{selectedStudent.fullName}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedStudent.studentCode} · {selectedStudent.email}
-                    </p>
+              <div className="border-t pt-3 mt-3">
+                <div className="rounded-lg bg-muted/30 p-3 border">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-sm">{selectedStudent.fullName}</span>
+                    <span className="text-xs text-muted-foreground">{selectedStudent.studentCode}</span>
                   </div>
                 </div>
               </div>
@@ -292,13 +284,7 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
               </Button>
             </div>
 
-            {isLoadingMissed ? (
-              <div className="space-y-2">
-                {[...Array(2)].map((_, index) => (
-                  <Skeleton key={index} className="h-20 w-full" />
-                ))}
-              </div>
-            ) : missedSessions.length === 0 ? (
+            {!isLoadingMissed && missedSessions.length === 0 ? (
               <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
                 Không có buổi vắng hợp lệ trong {makeupLookbackWeeks} tuần gần nhất
               </div>
@@ -314,7 +300,7 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
                     <div className="flex items-start justify-between gap-2">
                       <div className="space-y-1">
                         <p className="font-medium">
-                          {format(parseISO(session.date), 'EEEE, dd/MM', { locale: vi })} · {session.classInfo.classCode}
+                          {format(parseISO(session.date), 'EEEE, dd/MM', { locale: vi })} · {session.classInfo.classCode || session.classInfo.code}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Buổi {session.courseSessionNumber}: {session.courseSessionTitle}
@@ -336,13 +322,7 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
       {currentStep === 3 && selectedMissedSession && (
         <Section>
           <div className="space-y-3">
-            {isLoadingStudentOptions ? (
-              <div className="space-y-2">
-                {[...Array(2)].map((_, index) => (
-                  <Skeleton key={index} className="h-20 w-full" />
-                ))}
-              </div>
-            ) : makeupOptions.length === 0 ? (
+            {!isLoadingStudentOptions && makeupOptions.length === 0 ? (
               <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
                 Không có buổi học bù khả dụng
               </div>
@@ -358,7 +338,7 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
                     <div className="flex items-start justify-between gap-2">
                       <div className="space-y-1">
                         <p className="font-medium">
-                          {format(parseISO(option.date), 'EEEE, dd/MM', { locale: vi })} · {option.classInfo.classCode}
+                          {format(parseISO(option.date), 'EEEE, dd/MM', { locale: vi })} · {option.classInfo.classCode || option.classInfo.code}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {option.timeSlotInfo.startTime} - {option.timeSlotInfo.endTime} · {getModalityLabel(option.classInfo.modality)}
@@ -375,21 +355,17 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
             )}
 
             {selectedMakeupOption && (
-              <div className="border-t pt-4 mt-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Buổi học bù đã chọn</p>
-                    <p className="font-medium">
-                      {format(parseISO(selectedMakeupOption.date), 'EEEE, dd/MM/yyyy', { locale: vi })} ·{' '}
-                      {selectedMakeupOption.classInfo.classCode}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedMakeupOption.timeSlotInfo.startTime} - {selectedMakeupOption.timeSlotInfo.endTime}
-                    </p>
+              <div className="border-t pt-3 mt-3">
+                <div className="rounded-lg bg-muted/30 p-3 border mb-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-sm">{selectedMakeupOption.classInfo.classCode || selectedMakeupOption.classInfo.code}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {format(parseISO(selectedMakeupOption.date), 'EEE dd/MM', { locale: vi })} · {selectedMakeupOption.timeSlotInfo.startTime}-{selectedMakeupOption.timeSlotInfo.endTime}
+                    </span>
                   </div>
                 </div>
 
-                <div className="mt-4 space-y-4">
+                <div className="space-y-3">
                   <ReasonInput
                     value={reason}
                     onChange={setReason}
