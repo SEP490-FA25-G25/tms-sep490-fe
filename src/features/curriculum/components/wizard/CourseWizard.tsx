@@ -438,6 +438,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                 levelId: formData.basicInfo.levelId ? Number(formData.basicInfo.levelId) : undefined,
                 durationHours: formData.basicInfo.durationHours ? Number(formData.basicInfo.durationHours) : undefined,
                 numberOfSessions: formData.basicInfo.numberOfSessions ? Number(formData.basicInfo.numberOfSessions) : undefined,
+                effectiveDate: formData.basicInfo.effectiveDate || undefined, // Ensure empty string becomes undefined
             },
             clos: formData.clos?.map((clo) => ({
                 code: clo.code,

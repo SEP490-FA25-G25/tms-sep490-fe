@@ -142,9 +142,11 @@ export function Step2CLO({ data, setData }: Step2Props) {
 
     const togglePloMapping = (cloIndex: number, ploId: string) => {
         const currentPloIds = data.clos[cloIndex].mappedPLOs || [];
-        const newPloIds = currentPloIds.includes(ploId)
-            ? currentPloIds.filter((id) => id !== ploId)
-            : [...currentPloIds, ploId];
+        // Ensure uniqueness using Set
+        const uniqueCurrentPloIds = [...new Set(currentPloIds)];
+        const newPloIds = uniqueCurrentPloIds.includes(ploId)
+            ? uniqueCurrentPloIds.filter((id) => id !== ploId)
+            : [...uniqueCurrentPloIds, ploId];
 
         updateClo(cloIndex, "mappedPLOs", newPloIds);
     };
@@ -235,7 +237,8 @@ export function Step2CLO({ data, setData }: Step2Props) {
                                         </div>
                                     </div>
                                     <div className="flex gap-2 flex-wrap">
-                                        {clo.mappedPLOs?.map((ploId) => (
+                                        {/* Use Set to ensure unique PLO display */}
+                                        {[...new Set(clo.mappedPLOs || [])].map((ploId) => (
                                             <span key={ploId} className="text-xs bg-secondary px-2 py-1 rounded-full text-secondary-foreground">
                                                 {ploId}
                                             </span>

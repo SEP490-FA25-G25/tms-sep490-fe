@@ -414,7 +414,7 @@ export const courseApi = createApi({
         body: data,
       }),
       transformResponse: (response: { data: CourseDetail }) => response.data,
-      invalidatesTags: (_result, _error, { id }) => [{ type: 'Course', id }],
+      invalidatesTags: (_result, _error, { id }) => [{ type: 'Course', id }, 'Course'],
     }),
     deactivateCourse: builder.mutation<void, number>({
       query: (id) => ({
