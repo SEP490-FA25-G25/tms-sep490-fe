@@ -221,6 +221,62 @@ export interface UpdateStudentRequest {
   skillAssessments?: SkillAssessmentUpdateInput[]
 }
 
+// ==================== STUDENT IMPORT TYPES ====================
+
+export type StudentImportStatus = 'FOUND' | 'CREATE' | 'ERROR'
+
+export interface StudentImportData {
+  fullName: string
+  email: string
+  phone?: string
+  facebookUrl?: string
+  address?: string
+  gender: 'MALE' | 'FEMALE' | 'OTHER'
+  dob?: string
+  status: StudentImportStatus
+  existingStudentId?: number
+  existingStudentCode?: string
+  errorMessage?: string
+}
+
+export interface StudentImportPreview {
+  branchId: number
+  branchName: string
+  students: StudentImportData[]
+  foundCount: number
+  createCount: number
+  errorCount: number
+  totalValid: number
+  warnings: string[]
+  errors: string[]
+}
+
+export interface StudentImportExecuteRequest {
+  branchId: number
+  students: StudentImportData[]
+  selectedIndices?: number[]
+}
+
+export interface CreatedStudentInfo {
+  studentId: number
+  studentCode: string
+  fullName: string
+  email: string
+  defaultPassword: string
+}
+
+export interface StudentImportResult {
+  branchId: number
+  branchName: string
+  totalAttempted: number
+  successfulCreations: number
+  skippedExisting: number
+  failedCreations: number
+  createdStudents: CreatedStudentInfo[]
+  importedBy: number
+  importedAt: string
+}
+
 // Base query with auth
 const baseQuery = fetchBaseQuery({
   baseUrl: '/api/v1',
@@ -399,6 +455,41 @@ export const studentApi = createApi({
     getAssessorsForBranch: builder.query<ApiResponse<AssessorDTO[]>, number>({
       query: (branchId) => `/students/assessors?branchId=${branchId}`,
     }),
+
+    // ==================== STUDENT IMPORT ====================
+
+    // Download student import template
+    downloadStudentImportTemplate: builder.query<Blob, void>({
+      query: () => ({
+        url: '/students/import/template',
+        method: 'GET',
+        responseHandler: (response) => response.blob(),
+      }),
+    }),
+
+    // Preview student import
+    previewStudentImport: builder.mutation<ApiResponse<StudentImportPreview>, { branchId: number; file: File }>({
+      query: ({ branchId, file }) => {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        return {
+          url: `/students/import/preview?branchId=${branchId}`,
+          method: 'POST',
+          body: formData,
+        }
+      },
+    }),
+
+    // Execute student import
+    executeStudentImport: builder.mutation<ApiResponse<StudentImportResult>, StudentImportExecuteRequest>({
+      query: (request) => ({
+        url: '/students/import/execute',
+        method: 'POST',
+        body: request,
+      }),
+      invalidatesTags: ['Student'],
+    }),
   }),
 })
 
@@ -412,4 +503,7 @@ export const {
   useUpdateStudentMutation,
   useDeleteSkillAssessmentMutation,
   useGetAssessorsForBranchQuery,
+  useDownloadStudentImportTemplateQuery,
+  usePreviewStudentImportMutation,
+  useExecuteStudentImportMutation,
 } = studentApi
