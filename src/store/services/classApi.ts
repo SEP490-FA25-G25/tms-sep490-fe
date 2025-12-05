@@ -262,7 +262,7 @@ export interface SkillAssessmentDTO {
   id: number
   skill: 'READING' | 'WRITING' | 'SPEAKING' | 'LISTENING' | 'GENERAL'
   level: LevelInfoDTO
-  score: number
+  score?: string // Format: "35/40" hoặc "650/990"
   assessmentDate: string
   assessmentType: string
   note?: string

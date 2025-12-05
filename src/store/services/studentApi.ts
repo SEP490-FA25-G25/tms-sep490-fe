@@ -54,9 +54,7 @@ export interface SkillAssessmentDetailDTO {
   skill: string
   levelCode: string
   levelName: string
-  rawScore?: string
-  scoreScale?: string
-  assessmentCategory?: string
+  score?: string
   assessmentDate: string
   assessmentType?: string
   note?: string
@@ -151,9 +149,7 @@ export interface StudentListRequest {
 export interface SkillAssessmentInput {
   skill: 'GENERAL' | 'READING' | 'WRITING' | 'SPEAKING' | 'LISTENING' | 'VOCABULARY' | 'GRAMMAR' | 'KANJI'
   levelId: number
-  rawScore?: string // Raw score from test (e.g., 6.5 IELTS band, 650 TOEIC, 32/40)
-  scoreScale?: string // Optional - score scale type (e.g., '0-9', '0-990', 'N1-N5')
-  assessmentCategory?: string // Optional - e.g., 'PLACEMENT'
+  score?: string // Điểm đánh giá dạng text linh hoạt (e.g., "35/40", "6.5", "650")
   note?: string
   assessedByUserId?: number // ID of the assessor (teacher or AA)
 }
@@ -197,9 +193,7 @@ export interface SkillAssessmentUpdateInput {
   id?: number // null = create new, has value = update existing
   skill: 'GENERAL' | 'READING' | 'WRITING' | 'SPEAKING' | 'LISTENING' | 'VOCABULARY' | 'GRAMMAR' | 'KANJI'
   levelId: number
-  rawScore?: string
-  scoreScale?: string
-  assessmentCategory?: string
+  score?: string // Điểm đánh giá dạng text linh hoạt (e.g., "35/40", "6.5", "650")
   assessmentDate?: string
   assessmentType?: string
   note?: string

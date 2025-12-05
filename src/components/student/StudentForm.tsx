@@ -80,8 +80,7 @@ export interface SkillAssessmentFormData {
   id?: number // For edit mode - existing assessment ID
   skill: string
   levelId: number
-  rawScore?: string
-  scoreScale?: string
+  score?: string
   note?: string
   subjectId?: number
   assessedByUserId?: number
@@ -133,14 +132,14 @@ const statusOptions: { value: UserStatus; label: string }[] = [
 
 // ========== Score Input Component ==========
 function ScoreInput({
-  rawScore,
+  score,
   onChange,
 }: {
-  rawScore?: string
+  score?: string
   onChange: (value: string | undefined) => void
 }) {
-  const scoreValue = rawScore?.split('/')[0] ?? ''
-  const maxScoreValue = rawScore?.split('/')[1] ?? ''
+  const scoreValue = score?.split('/')[0] ?? ''
+  const maxScoreValue = score?.split('/')[1] ?? ''
 
   const scoreNum = parseFloat(scoreValue)
   const maxScoreNum = parseFloat(maxScoreValue)
@@ -168,11 +167,11 @@ function ScoreInput({
           )}
           value={scoreValue}
           onChange={(e) => {
-            const score = e.target.value.replace(/[^0-9.]/g, '')
+            const scoreVal = e.target.value.replace(/[^0-9.]/g, '')
             // Prevent score > maxScore
-            const scoreNumNew = parseFloat(score)
-            if (score && !isNaN(scoreNumNew) && scoreNumNew > maxScoreNum) return
-            onChange(`${score}/${maxScoreValue}`)
+            const scoreNumNew = parseFloat(scoreVal)
+            if (scoreVal && !isNaN(scoreNumNew) && scoreNumNew > maxScoreNum) return
+            onChange(`${scoreVal}/${maxScoreValue}`)
           }}
         />
         <span className="text-muted-foreground font-medium">/</span>
@@ -410,8 +409,8 @@ function SkillAssessmentItem({
 
         {/* Score - format n/n */}
         <ScoreInput
-          rawScore={assessment.rawScore}
-          onChange={(value) => onChange(index, 'rawScore', value)}
+          score={assessment.score}
+          onChange={(value) => onChange(index, 'score', value)}
         />
       </div>
 
@@ -511,8 +510,7 @@ export function StudentForm({
           id: a.id,
           skill: a.skill,
           levelId: 0, // Will be resolved from levelCode
-          rawScore: a.rawScore,
-          scoreScale: a.scoreScale,
+          score: a.score,
           note: a.note,
           assessedByUserId: a.assessedBy?.userId,
           assessmentDate: formatDateForInput(a.assessmentDate),
@@ -558,24 +556,6 @@ export function StudentForm({
       )
     }
   }, [mode, subjects, skillAssessments.length])
-
-  // Auto-detect score scale from subject
-  const detectScoreScaleFromSubject = (subject: { name: string; code?: string } | undefined): string => {
-    if (!subject) return '0-100'
-
-    const name = subject.name.toLowerCase()
-    const code = subject.code?.toLowerCase() || ''
-
-    if (name.includes('ielts')) return '0-9'
-    if (name.includes('toeic')) return '0-990'
-    if (name.includes('n5') || code.includes('n5')) return 'N5'
-    if (name.includes('n4') || code.includes('n4')) return 'N4'
-    if (name.includes('n3') || code.includes('n3')) return 'N3'
-    if (name.includes('n2') || code.includes('n2')) return 'N2'
-    if (name.includes('n1') || code.includes('n1')) return 'N1'
-
-    return '0-100'
-  }
 
   // Get levels for a specific subject
   const getLevelsForSubject = (subjectId: number | undefined) => {
@@ -625,8 +605,7 @@ export function StudentForm({
       {
         skill: 'GENERAL',
         levelId: 0,
-        rawScore: undefined,
-        scoreScale: '0-100',
+        score: undefined,
         note: '',
         subjectId: undefined,
         assessedByUserId: undefined,
@@ -654,14 +633,11 @@ export function StudentForm({
 
       if (field === 'subjectId' && value) {
         const subjectIdNum = typeof value === 'string' ? parseInt(value) : value
-        const selectedSubject = subjects.find((s) => s.id === subjectIdNum)
-        const detectedScale = detectScoreScaleFromSubject(selectedSubject)
 
         updated[index] = {
           ...updated[index],
           subjectId: subjectIdNum,
           levelId: 0,
-          scoreScale: detectedScale,
         }
       } else if (field === 'levelId' && value) {
         const levelIdNum = typeof value === 'string' ? parseInt(value) : value
@@ -729,9 +705,9 @@ export function StudentForm({
         toast.error(`Đánh giá kỹ năng ${i + 1}: Vui lòng chọn trình độ`)
         return false
       }
-      if (assessment.rawScore !== undefined) {
-        if (!isValidScore(assessment.rawScore)) {
-          toast.error(`Đánh giá kỹ năng ${i + 1}: Điểm số phải có định dạng n/n (ví dụ: 35/40)`)
+      if (assessment.score !== undefined && assessment.score !== '') {
+        if (!isValidScore(assessment.score)) {
+          toast.error(`Đánh giá kỹ năng ${i + 1}: Điểm số phải có định dạng n/n (ví dụ: 35/40 hoặc 650/990)`)
           return false
         }
       }
@@ -750,8 +726,7 @@ export function StudentForm({
         id: assessment.id,
         skill: assessment.skill as SkillAssessmentUpdateInput['skill'],
         levelId: assessment.levelId,
-        rawScore: assessment.rawScore,
-        scoreScale: assessment.scoreScale,
+        score: assessment.score,
         note: assessment.note,
         assessedByUserId: assessment.assessedByUserId,
         assessmentDate: assessment.assessmentDate,

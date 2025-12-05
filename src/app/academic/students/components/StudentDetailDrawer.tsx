@@ -284,9 +284,9 @@ export function StudentDetailDrawer({
                                     {assessment.levelCode}
                                   </span>
                                 </div>
-                                {assessment.rawScore !== undefined && (
+                                {assessment.score && (
                                   <span className="text-sm font-medium">
-                                    {assessment.rawScore} {assessment.scoreScale === '0-9' ? 'bands' : 'điểm'}
+                                    {assessment.score}
                                   </span>
                                 )}
                               </div>
