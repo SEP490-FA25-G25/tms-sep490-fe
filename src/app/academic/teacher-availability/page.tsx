@@ -165,7 +165,7 @@ const AvailabilityCampaignPage = () => {
                 return (
                     <Badge
                         variant={isUpToDate ? "default" : "destructive"}
-                        className={isUpToDate ? "bg-green-600 hover:bg-green-700" : ""}
+                        className={isUpToDate ? "bg-emerald-600 hover:bg-emerald-700" : ""}
                     >
                         {isUpToDate ? "Đã cập nhật" : "Chưa cập nhật"}
                     </Badge>
@@ -317,7 +317,7 @@ const AvailabilityCampaignPage = () => {
                                         <Card className="bg-background">
                                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                                 <CardTitle className="text-sm font-medium">Đã cập nhật</CardTitle>
-                                                <CheckCircle className="h-4 w-4 text-green-600" />
+                                                <CheckCircle className="h-4 w-4 text-emerald-600" />
                                             </CardHeader>
                                             <CardContent>
                                                 <div className="text-2xl font-bold">{stats.updated}</div>
@@ -326,7 +326,7 @@ const AvailabilityCampaignPage = () => {
                                         <Card className="bg-background">
                                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                                 <CardTitle className="text-sm font-medium">Chưa cập nhật</CardTitle>
-                                                <Clock className="h-4 w-4 text-red-600" />
+                                                <Clock className="h-4 w-4 text-rose-600" />
                                             </CardHeader>
                                             <CardContent>
                                                 <div className="flex items-center justify-between">
@@ -335,7 +335,7 @@ const AvailabilityCampaignPage = () => {
                                                         <Button
                                                             variant="outline"
                                                             size="sm"
-                                                            className="h-8 text-xs border-red-200 hover:bg-red-50 hover:text-red-700 text-red-600"
+                                                            className="h-8 text-xs border-rose-200 hover:bg-rose-50 hover:text-rose-700 text-rose-600"
                                                             onClick={async () => {
                                                                 const outdatedTeachers = teacherStatuses
                                                                     .filter(t => t.status === "OUTDATED")

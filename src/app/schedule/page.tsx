@@ -23,7 +23,7 @@ const scheduleData = [
         time: "19h-21h",
         startDate: "29/12/2025",
         status: "Còn chỗ",
-        statusColor: "bg-green-500",
+        statusColor: "bg-emerald-500",
         total: 35,
         enrolled: 24,
         campus: "CS1"
@@ -33,7 +33,7 @@ const scheduleData = [
         time: "19h-21h",
         startDate: "16/12/2025",
         status: "Còn chỗ",
-        statusColor: "bg-green-500",
+        statusColor: "bg-emerald-500",
         total: 35,
         enrolled: 30,
         campus: "CS2"
@@ -53,7 +53,7 @@ const scheduleData = [
         time: "19h-21h",
         startDate: "22/12/2025",
         status: "Còn chỗ",
-        statusColor: "bg-green-500",
+        statusColor: "bg-emerald-500",
         total: 48,
         enrolled: 20,
         campus: "CS3"
@@ -83,7 +83,7 @@ const scheduleData = [
         time: "19h-21h",
         startDate: "26/01/2025",
         status: "Còn chỗ",
-        statusColor: "bg-green-500",
+        statusColor: "bg-emerald-500",
         total: 50,
         enrolled: 10,
         campus: "CS3"
@@ -93,7 +93,7 @@ const scheduleData = [
         time: "19h-21h",
         startDate: "20/01/2025",
         status: "Còn chỗ",
-        statusColor: "bg-green-500",
+        statusColor: "bg-emerald-500",
         total: 50,
         enrolled: 15,
         campus: "CS2"
@@ -218,14 +218,14 @@ export default function SchedulePage() {
                                     <input
                                         type="text"
                                         placeholder="Tìm kiếm lớp học..."
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                     />
                                 </div>
 
                                 <select
-                                    className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                                    className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
                                     value={selectedCampus}
                                     onChange={(e) => setSelectedCampus(e.target.value)}
                                 >

@@ -445,7 +445,7 @@ export const historyColumns: ColumnDef<AcademicStudentRequest>[] = [
 
       const truncated = rejectionReason.length > 30 ? `${rejectionReason.substring(0, 30)}...` : rejectionReason
       return (
-        <span className="text-sm text-red-600 dark:text-red-400" title={rejectionReason}>
+        <span className="text-sm text-rose-600 dark:text-rose-400" title={rejectionReason}>
           {truncated}
         </span>
       )

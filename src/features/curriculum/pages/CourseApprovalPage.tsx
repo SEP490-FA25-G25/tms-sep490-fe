@@ -329,7 +329,7 @@ export default function CourseApprovalPage() {
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                            className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                                             onClick={() => openApproveDialog(course.id)}
                                             disabled={isApproving}
                                         >
@@ -350,7 +350,7 @@ export default function CourseApprovalPage() {
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            className="h-8 w-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
                                             onClick={() => openRejectDialog(course.id)}
                                             disabled={isRejecting}
                                         >
@@ -760,7 +760,7 @@ export default function CourseApprovalPage() {
                             Hủy
                         </Button>
                         <Button
-                            className="bg-green-600 hover:bg-green-700"
+                            className="bg-emerald-600 hover:bg-emerald-700"
                             onClick={handleApprove}
                             disabled={isApproving}
                         >

@@ -66,7 +66,7 @@ export default function TeacherProfilePage() {
       case "ENDED":
         return "bg-slate-50 text-slate-700 border-slate-200";
       case "CANCELLED":
-        return "bg-red-50 text-red-700 border-red-200";
+        return "bg-rose-50 text-rose-700 border-rose-200";
       case "PLANNED":
         return "bg-blue-50 text-blue-700 border-blue-200";
       default:

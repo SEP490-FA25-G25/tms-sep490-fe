@@ -268,32 +268,32 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label htmlFor="code">Mã môn học <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="code">Mã môn học <span className="text-rose-500">*</span></Label>
                             <Input
                                 id="code"
                                 placeholder="VD: ENG"
                                 required
                                 value={formData.code}
                                 onChange={handleChange}
-                                className={codeError ? "border-red-500" : ""}
+                                className={codeError ? "border-rose-500" : ""}
                             />
                             {codeError && (
-                                <p className="text-sm text-red-500">{codeError}</p>
+                                <p className="text-sm text-rose-500">{codeError}</p>
                             )}
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="name">Tên môn học <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="name">Tên môn học <span className="text-rose-500">*</span></Label>
                             <Input
                                 id="name"
                                 placeholder="VD: Tiếng Anh Giao tiếp"
                                 required
                                 value={formData.name}
                                 onChange={handleChange}
-                                className={nameError ? "border-red-500" : ""}
+                                className={nameError ? "border-rose-500" : ""}
                             />
                             {nameError && (
-                                <p className="text-sm text-red-500">{nameError}</p>
+                                <p className="text-sm text-rose-500">{nameError}</p>
                             )}
                         </div>
                     </div>
@@ -303,12 +303,12 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
                         <Textarea
                             id="description"
                             placeholder="Nhập mô tả về môn học (để trống hoặc ít nhất 10 ký tự)..."
-                            className={`min-h-[100px] ${descriptionError ? "border-red-500" : ""}`}
+                            className={`min-h-[100px] ${descriptionError ? "border-rose-500" : ""}`}
                             value={formData.description}
                             onChange={handleChange}
                         />
                         {descriptionError && (
-                            <p className="text-sm text-red-500">{descriptionError}</p>
+                            <p className="text-sm text-rose-500">{descriptionError}</p>
                         )}
                     </div>
 
@@ -326,7 +326,7 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead className="w-[150px]">Mã PLO</TableHead>
-                                        <TableHead>Mô tả <span className="text-red-500">*</span></TableHead>
+                                        <TableHead>Mô tả <span className="text-rose-500">*</span></TableHead>
                                         <TableHead className="w-[50px]"></TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -353,10 +353,10 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
                                                             value={plo.description}
                                                             onChange={(e) => updatePLO(index, "description", e.target.value)}
                                                             placeholder="Mô tả chuẩn đầu ra..."
-                                                            className={ploErrors?.[index] ? "border-red-500" : ""}
+                                                            className={ploErrors?.[index] ? "border-rose-500" : ""}
                                                         />
                                                         {ploErrors?.[index] && (
-                                                            <p className="text-xs text-red-500">{ploErrors[index]}</p>
+                                                            <p className="text-xs text-rose-500">{ploErrors[index]}</p>
                                                         )}
                                                     </div>
                                                 </TableCell>

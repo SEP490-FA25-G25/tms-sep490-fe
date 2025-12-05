@@ -198,7 +198,7 @@ export function FeaturedCourses() {
 
                             {/* Course Content */}
                             <div className="p-6 flex flex-col flex-grow">
-                                <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-green-700 transition-colors">
+                                <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-emerald-700 transition-colors">
                                     {course.name}
                                 </h3>
                                 <p className="text-slate-600 text-sm mb-6 line-clamp-2 flex-grow">
@@ -209,7 +209,7 @@ export function FeaturedCourses() {
                                 <div className="space-y-2 mb-6">
                                     {course.features.map((feature, idx) => (
                                         <div key={idx} className="flex items-center gap-2 text-sm text-slate-700">
-                                            <CheckCircle size={16} className="text-green-600 flex-shrink-0" />
+                                            <CheckCircle size={16} className="text-emerald-600 flex-shrink-0" />
                                             <span>{feature}</span>
                                         </div>
                                     ))}

@@ -149,9 +149,9 @@ export function QAExportDialog({
         <div className="space-y-6">
             {/* Error Message */}
             {error && (
-                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
-                    <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0" />
-                    <span className="text-sm text-red-700">{error}</span>
+                <div className="flex items-center gap-2 p-3 bg-rose-50 border border-rose-200 rounded-md">
+                    <AlertTriangle className="h-4 w-4 text-rose-600 flex-shrink-0" />
+                    <span className="text-sm text-rose-700">{error}</span>
                 </div>
             )}
 

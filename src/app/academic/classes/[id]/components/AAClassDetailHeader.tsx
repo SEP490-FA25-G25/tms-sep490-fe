@@ -46,13 +46,13 @@ const getStatusColor = (status: string) => {
     case 'SUBMITTED':
       return 'bg-amber-100 text-amber-800 border-amber-200'
     case 'ONGOING':
-      return 'bg-green-100 text-green-800 border-green-200'
+      return 'bg-emerald-100 text-emerald-800 border-emerald-200'
     case 'SCHEDULED':
       return 'bg-blue-100 text-blue-800 border-blue-200'
     case 'COMPLETED':
       return 'bg-gray-100 text-gray-800 border-gray-200'
     case 'CANCELLED':
-      return 'bg-red-100 text-red-800 border-red-200'
+      return 'bg-rose-100 text-rose-800 border-rose-200'
     default:
       return 'bg-gray-100 text-gray-800 border-gray-200'
   }
@@ -95,16 +95,16 @@ const getUnifiedStatus = (status: string, approval?: string | null) => {
     return { label: 'Chờ duyệt', color: 'bg-amber-100 text-amber-800 border-amber-200' }
   }
   if (approval === 'REJECTED') {
-    return { label: 'Đã từ chối', color: 'bg-red-100 text-red-800 border-red-200' }
+    return { label: 'Đã từ chối', color: 'bg-rose-100 text-rose-800 border-rose-200' }
   }
   return { label: getStatusLabel(status), color: getStatusColor(status) }
 }
 
 const getCapacityColor = (current: number, max: number) => {
   const percentage = (current / max) * 100
-  if (percentage < 80) return 'text-green-600'
+  if (percentage < 80) return 'text-emerald-600'
   if (percentage < 95) return 'text-amber-600'
-  return 'text-red-600'
+  return 'text-rose-600'
 }
 
 export function AAClassDetailHeader({

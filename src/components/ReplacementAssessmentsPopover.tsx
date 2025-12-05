@@ -16,7 +16,7 @@ interface ReplacementAssessmentsPopoverProps {
 // Map skill types to Vietnamese icons and names
 const skillConfig = {
   READING: { icon: BookOpen, name: 'Đọc hiểu', color: 'text-blue-600' },
-  WRITING: { icon: PenTool, name: 'Viết', color: 'text-green-600' },
+  WRITING: { icon: PenTool, name: 'Viết', color: 'text-emerald-600' },
   SPEAKING: { icon: MessageCircle, name: 'Nói', color: 'text-orange-600' },
   LISTENING: { icon: Headphones, name: 'Nghe', color: 'text-purple-600' },
   GENERAL: { icon: Brain, name: 'Tổng quan', color: 'text-gray-600' },

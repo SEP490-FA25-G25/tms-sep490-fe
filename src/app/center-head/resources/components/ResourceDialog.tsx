@@ -266,7 +266,7 @@ export function ResourceDialog({ open, onOpenChange, resource, branchId, branche
                     {/* Show Branch Select if branchId is not pre-selected */}
                     {branchId === 0 && (
                         <div className="space-y-2">
-                            <Label htmlFor="branchId">Chi nhánh <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="branchId">Chi nhánh <span className="text-rose-500">*</span></Label>
                             <Select
                                 value={formData.branchId}
                                 onValueChange={(value) => handleChange("branchId", value)}
@@ -288,7 +288,7 @@ export function ResourceDialog({ open, onOpenChange, resource, branchId, branche
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="code">Mã tài nguyên <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="code">Mã tài nguyên <span className="text-rose-500">*</span></Label>
                             <Input
                                 id="code"
                                 value={formData.code}
@@ -298,7 +298,7 @@ export function ResourceDialog({ open, onOpenChange, resource, branchId, branche
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="name">Tên tài nguyên <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="name">Tên tài nguyên <span className="text-rose-500">*</span></Label>
                             <Input
                                 id="name"
                                 value={formData.name}

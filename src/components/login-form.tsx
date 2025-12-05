@@ -87,11 +87,11 @@ export function LoginForm({
                 setErrors({ ...errors, email: undefined })
               }
             }}
-            className={errors.email ? "border-red-500" : ""}
+            className={errors.email ? "border-rose-500" : ""}
             required
           />
           {errors.email && (
-            <p className="text-sm text-red-500 mt-1">{errors.email}</p>
+            <p className="text-sm text-rose-500 mt-1">{errors.email}</p>
           )}
         </Field>
 
@@ -108,11 +108,11 @@ export function LoginForm({
                 setErrors({ ...errors, password: undefined })
               }
             }}
-            className={errors.password ? "border-red-500" : ""}
+            className={errors.password ? "border-rose-500" : ""}
             required
           />
           {errors.password && (
-            <p className="text-sm text-red-500 mt-1">{errors.password}</p>
+            <p className="text-sm text-rose-500 mt-1">{errors.password}</p>
           )}
           <div className="flex justify-end mt-1">
             <a

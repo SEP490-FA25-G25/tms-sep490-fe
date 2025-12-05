@@ -649,9 +649,9 @@ export default function TeacherGradesPage() {
       case "MIDTERM":
         return "bg-purple-100 text-purple-800 border-purple-200";
       case "FINAL":
-        return "bg-red-100 text-red-800 border-red-200";
+        return "bg-rose-100 text-rose-800 border-rose-200";
       case "ASSIGNMENT":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-emerald-100 text-emerald-800 border-emerald-200";
       case "PROJECT":
         return "bg-orange-100 text-orange-800 border-orange-200";
       default:
@@ -1546,5 +1546,5 @@ function getScoreColor(score: number, maxScore: number): string {
   if (percentage >= 80) return "text-emerald-600";
   if (percentage >= 60) return "text-yellow-600";
   if (percentage >= 40) return "text-orange-600";
-  return "text-red-600";
+  return "text-rose-600";
 }

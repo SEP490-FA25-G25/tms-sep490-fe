@@ -68,14 +68,14 @@ export function PasswordStrengthIndicator({
     switch (strength.score) {
       case 0:
       case 1:
-        return "bg-red-500"
+        return "bg-rose-500"
       case 2:
         return "bg-orange-500"
       case 3:
         return "bg-yellow-500"
       case 4:
       case 5:
-        return "bg-green-500"
+        return "bg-emerald-500"
       default:
         return "bg-gray-300"
     }
@@ -105,10 +105,10 @@ export function PasswordStrengthIndicator({
           <span className="text-sm font-medium">Độ mạnh mật khẩu</span>
           <span className={cn(
             "text-sm font-medium",
-            strength.score <= 1 ? "text-red-500" :
+            strength.score <= 1 ? "text-rose-500" :
             strength.score === 2 ? "text-orange-500" :
             strength.score === 3 ? "text-yellow-500" :
-            "text-green-500"
+            "text-emerald-500"
           )}>
             {getStrengthText()}
           </span>
@@ -136,13 +136,13 @@ export function PasswordStrengthIndicator({
                 key={index}
                 className={cn(
                   "text-sm flex items-center gap-2",
-                  rule.regex.test(password) ? "text-green-600" : "text-gray-500"
+                  rule.regex.test(password) ? "text-emerald-600" : "text-gray-500"
                 )}
               >
                 <span className={cn(
                   "size-3 rounded-full border-2",
                   rule.regex.test(password)
-                    ? "bg-green-600 border-green-600"
+                    ? "bg-emerald-600 border-emerald-600"
                     : "border-gray-300"
                 )} />
                 {rule.message}
@@ -153,7 +153,7 @@ export function PasswordStrengthIndicator({
       )}
 
       {!strength.isValid && password && (
-        <p className="text-xs text-red-500">
+        <p className="text-xs text-rose-500">
           Mật khẩu phải đáp ứng ít nhất 3 yêu cầu trên
         </p>
       )}

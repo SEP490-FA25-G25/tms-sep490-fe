@@ -263,7 +263,7 @@ export default function TeacherStudentsPage() {
     if (score >= 80) return "text-emerald-600";
     if (score >= 60) return "text-yellow-600";
     if (score >= 40) return "text-orange-600";
-    return "text-red-600";
+    return "text-rose-600";
   };
 
   const getTrendIcon = (trend: StudentProgress["trend"]) => {
@@ -271,7 +271,7 @@ export default function TeacherStudentsPage() {
       case "up":
         return <TrendingUp className="h-4 w-4 text-emerald-600" />;
       case "down":
-        return <TrendingDown className="h-4 w-4 text-red-600" />;
+        return <TrendingDown className="h-4 w-4 text-rose-600" />;
       case "stable":
         return <Minus className="h-4 w-4 text-muted-foreground" />;
       default:

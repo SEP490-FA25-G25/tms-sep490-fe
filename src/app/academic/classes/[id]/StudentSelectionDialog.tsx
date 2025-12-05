@@ -275,7 +275,7 @@ export function StudentSelectionDialog({
                             student.accountStatus === 'SUSPENDED' ? 'destructive' : 'secondary'
                           } className={cn(
                             "text-xs",
-                            student.accountStatus === 'ACTIVE' && "bg-green-100 text-green-700 hover:bg-green-100"
+                            student.accountStatus === 'ACTIVE' && "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
                           )}>
                             {student.accountStatus === 'ACTIVE' ? 'Hoạt động' :
                              student.accountStatus === 'SUSPENDED' ? 'Tạm khóa' : 'Không hoạt động'}

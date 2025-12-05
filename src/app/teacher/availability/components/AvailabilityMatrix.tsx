@@ -157,7 +157,7 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
                                                 locked
                                                     ? "bg-gray-100 cursor-not-allowed opacity-70"
                                                     : available
-                                                        ? "bg-green-100 hover:bg-green-200 border-2 border-green-500"
+                                                        ? "bg-emerald-100 hover:bg-emerald-200 border-2 border-emerald-500"
                                                         : "bg-white hover:bg-gray-50 border border-gray-200"
                                             )}
                                             title={
@@ -171,7 +171,7 @@ export const AvailabilityMatrix: React.FC<AvailabilityMatrixProps> = ({
                                             {locked ? (
                                                 <Lock className="w-4 h-4 text-gray-400" />
                                             ) : available ? (
-                                                <Check className="w-5 h-5 text-green-600" />
+                                                <Check className="w-5 h-5 text-emerald-600" />
                                             ) : null}
                                         </button>
                                     </td>

@@ -61,13 +61,13 @@ const genderLabels: Record<string, string> = {
 // Skill assessment config
 const skillConfig = {
   READING: { icon: BookOpen, name: 'Đọc hiểu', color: 'text-blue-600 bg-blue-50' },
-  WRITING: { icon: PenTool, name: 'Viết', color: 'text-green-600 bg-green-50' },
+  WRITING: { icon: PenTool, name: 'Viết', color: 'text-emerald-600 bg-emerald-50' },
   SPEAKING: { icon: MessageCircle, name: 'Nói', color: 'text-orange-600 bg-orange-50' },
   LISTENING: { icon: Headphones, name: 'Nghe', color: 'text-purple-600 bg-purple-50' },
   GENERAL: { icon: Brain, name: 'Tổng quan', color: 'text-gray-600 bg-gray-50' },
   VOCABULARY: { icon: BookOpen, name: 'Từ vựng', color: 'text-cyan-600 bg-cyan-50' },
   GRAMMAR: { icon: FileText, name: 'Ngữ pháp', color: 'text-indigo-600 bg-indigo-50' },
-  KANJI: { icon: PenTool, name: 'Kanji', color: 'text-red-600 bg-red-50' },
+  KANJI: { icon: PenTool, name: 'Kanji', color: 'text-rose-600 bg-rose-50' },
 } as const
 
 function formatDate(dateStr: string | null) {

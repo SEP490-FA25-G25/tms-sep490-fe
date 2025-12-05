@@ -148,7 +148,7 @@ export function BranchFormDialog({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <div className="space-y-1">
               <Label>
-                Thuộc trung tâm <span className="text-red-500">*</span>
+                Thuộc trung tâm <span className="text-rose-500">*</span>
               </Label>
               <Select
                 value={selectedCenterId || undefined}
@@ -171,7 +171,7 @@ export function BranchFormDialog({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="code">
-                Mã chi nhánh <span className="text-red-500">*</span>
+                Mã chi nhánh <span className="text-rose-500">*</span>
               </Label>
               <Input
                 id="code"
@@ -184,7 +184,7 @@ export function BranchFormDialog({
 
           <div className="space-y-1">
             <Label htmlFor="name">
-              Tên chi nhánh <span className="text-red-500">*</span>
+              Tên chi nhánh <span className="text-rose-500">*</span>
             </Label>
             <Input
               id="name"

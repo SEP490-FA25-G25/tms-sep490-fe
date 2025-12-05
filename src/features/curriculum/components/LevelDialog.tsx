@@ -211,7 +211,7 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
                                     name="subjectId"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Môn học <span className="text-red-500">*</span></FormLabel>
+                                            <FormLabel>Môn học <span className="text-rose-500">*</span></FormLabel>
                                             {level ? (
                                                 // When editing, show subject name as readonly input
                                                 <FormControl>
@@ -254,12 +254,12 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
                                     name="code"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Mã cấp độ <span className="text-red-500">*</span></FormLabel>
+                                            <FormLabel>Mã cấp độ <span className="text-rose-500">*</span></FormLabel>
                                             <FormControl>
                                                 <Input 
                                                     placeholder="Ví dụ: L1" 
                                                     {...field}
-                                                    className={codeError ? "border-red-500" : ""}
+                                                    className={codeError ? "border-rose-500" : ""}
                                                     onChange={(e) => {
                                                         field.onChange(e);
                                                         const currentSubjectId = form.getValues("subjectId");
@@ -270,7 +270,7 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
                                                 />
                                             </FormControl>
                                             <FormMessage />
-                                            {codeError && <p className="text-sm text-red-500">{codeError}</p>}
+                                            {codeError && <p className="text-sm text-rose-500">{codeError}</p>}
                                         </FormItem>
                                     )}
                                 />
@@ -280,12 +280,12 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
                                 name="name"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Tên cấp độ <span className="text-red-500">*</span></FormLabel>
+                                        <FormLabel>Tên cấp độ <span className="text-rose-500">*</span></FormLabel>
                                         <FormControl>
                                             <Input 
                                                 placeholder="Ví dụ: Level 1" 
                                                 {...field}
-                                                className={nameError ? "border-red-500" : ""}
+                                                className={nameError ? "border-rose-500" : ""}
                                                 onChange={(e) => {
                                                     field.onChange(e);
                                                     const currentSubjectId = form.getValues("subjectId");
@@ -296,7 +296,7 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
                                             />
                                         </FormControl>
                                         <FormMessage />
-                                        {nameError && <p className="text-sm text-red-500">{nameError}</p>}
+                                        {nameError && <p className="text-sm text-rose-500">{nameError}</p>}
                                     </FormItem>
                                 )}
                             />
@@ -310,7 +310,7 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
                                         <FormControl>
                                             <Textarea
                                                 placeholder="Mô tả chi tiết về cấp độ (để trống hoặc ít nhất 10 ký tự)..."
-                                                className={`min-h-[100px] ${fieldState.error ? "border-red-500" : ""}`}
+                                                className={`min-h-[100px] ${fieldState.error ? "border-rose-500" : ""}`}
                                                 {...field}
                                                 onChange={(e) => {
                                                     field.onChange(e);
@@ -320,7 +320,7 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
                                             />
                                         </FormControl>
                                         {fieldState.error && (
-                                            <p className="text-sm text-red-500">{fieldState.error.message}</p>
+                                            <p className="text-sm text-rose-500">{fieldState.error.message}</p>
                                         )}
                                     </FormItem>
                                 )}

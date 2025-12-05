@@ -84,9 +84,9 @@ export default function SessionDetailsPage() {
         const value = status?.toLowerCase() || 'unknown'
         switch (value) {
             case 'present':
-                return 'text-green-600 bg-green-50'
+                return 'text-emerald-600 bg-emerald-50'
             case 'absent':
-                return 'text-red-600 bg-red-50'
+                return 'text-rose-600 bg-rose-50'
             case 'late':
                 return 'text-yellow-600 bg-yellow-50'
             case 'excused':
@@ -100,9 +100,9 @@ export default function SessionDetailsPage() {
         const value = status?.toUpperCase() || 'UNKNOWN'
         switch (value) {
             case 'COMPLETED':
-                return 'text-green-600 bg-green-50'
+                return 'text-emerald-600 bg-emerald-50'
             case 'INCOMPLETE':
-                return 'text-red-600 bg-red-50'
+                return 'text-rose-600 bg-rose-50'
             case 'NO_HOMEWORK':
                 return 'text-gray-600 bg-gray-50'
             default:

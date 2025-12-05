@@ -97,8 +97,8 @@ export function ResetPasswordForm({ className }: ResetPasswordFormProps) {
     return (
       <div className={cn("flex flex-col gap-6", className)}>
         <div className="flex flex-col items-center gap-4 text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-red-100">
-            <AlertTriangle className="h-6 w-6 text-red-600" />
+          <div className="flex size-12 items-center justify-center rounded-full bg-rose-100">
+            <AlertTriangle className="h-6 w-6 text-rose-600" />
           </div>
           <div className="space-y-2">
             <h1 className="text-2xl font-bold">Link không hợp lệ</h1>
@@ -126,8 +126,8 @@ export function ResetPasswordForm({ className }: ResetPasswordFormProps) {
     return (
       <div className={cn("flex flex-col gap-6", className)}>
         <div className="flex flex-col items-center gap-4 text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-green-100">
-            <CheckCircle className="h-6 w-6 text-green-600" />
+          <div className="flex size-12 items-center justify-center rounded-full bg-emerald-100">
+            <CheckCircle className="h-6 w-6 text-emerald-600" />
           </div>
           <div className="space-y-2">
             <h1 className="text-2xl font-bold">Mật khẩu đã được đặt lại</h1>
@@ -193,7 +193,7 @@ export function ResetPasswordForm({ className }: ResetPasswordFormProps) {
                     setErrors({ ...errors, newPassword: undefined })
                   }
                 }}
-                className={cn("pr-10 pl-9", errors.newPassword && "border-red-500")}
+                className={cn("pr-10 pl-9", errors.newPassword && "border-rose-500")}
                 required
                 disabled={isLoading}
               />
@@ -206,7 +206,7 @@ export function ResetPasswordForm({ className }: ResetPasswordFormProps) {
               </button>
             </div>
             {errors.newPassword && (
-              <p className="text-sm text-red-500 mt-1">{errors.newPassword}</p>
+              <p className="text-sm text-rose-500 mt-1">{errors.newPassword}</p>
             )}
           </div>
 
@@ -233,7 +233,7 @@ export function ResetPasswordForm({ className }: ResetPasswordFormProps) {
                     setErrors({ ...errors, confirmPassword: undefined })
                   }
                 }}
-                className={cn("pr-10 pl-9", errors.confirmPassword && "border-red-500")}
+                className={cn("pr-10 pl-9", errors.confirmPassword && "border-rose-500")}
                 required
                 disabled={isLoading}
               />
@@ -246,7 +246,7 @@ export function ResetPasswordForm({ className }: ResetPasswordFormProps) {
               </button>
             </div>
             {errors.confirmPassword && (
-              <p className="text-sm text-red-500 mt-1">{errors.confirmPassword}</p>
+              <p className="text-sm text-rose-500 mt-1">{errors.confirmPassword}</p>
             )}
           </div>
         </Field>

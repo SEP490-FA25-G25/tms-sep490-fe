@@ -227,7 +227,7 @@ export function ChangePasswordDialog({
                         key={index}
                         className={cn(
                           'flex items-center gap-2 text-sm',
-                          isMet ? 'text-green-600' : 'text-muted-foreground'
+                          isMet ? 'text-emerald-600' : 'text-muted-foreground'
                         )}
                       >
                         {isMet ? (
@@ -278,7 +278,7 @@ export function ChangePasswordDialog({
               </p>
             )}
             {passwordsMatch && (
-              <p className="text-sm text-green-600 flex items-center gap-1">
+              <p className="text-sm text-emerald-600 flex items-center gap-1">
                 <CheckCircle2 className="h-3 w-3" />
                 Mật khẩu khớp
               </p>

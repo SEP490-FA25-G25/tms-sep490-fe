@@ -76,7 +76,7 @@ export function ProgressIndicator({
                     className={cn(
                       'flex size-10 items-center justify-center rounded-full border-2 transition-colors',
                       'focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2',
-                      state === 'completed' && 'border-green-500 bg-green-500 text-white',
+                      state === 'completed' && 'border-emerald-500 bg-emerald-500 text-white',
                       state === 'active' && 'border-primary text-primary',
                       state === 'incomplete' && 'border-muted text-muted-foreground',
                       clickable ? 'cursor-pointer hover:border-primary hover:text-primary' : 'cursor-not-allowed opacity-70'
@@ -96,7 +96,7 @@ export function ProgressIndicator({
                       className={cn(
                         'text-xs font-semibold uppercase tracking-wide',
                         state === 'active' && 'text-primary',
-                        state === 'completed' && 'text-green-600',
+                        state === 'completed' && 'text-emerald-600',
                         state === 'incomplete' && 'text-muted-foreground'
                       )}
                     >
@@ -112,7 +112,7 @@ export function ProgressIndicator({
                     <div
                       className={cn(
                         'h-[2px] w-full rounded-full transition-colors',
-                        isStepCompleted(stepInfo.step) ? 'bg-green-500' : 'bg-muted'
+                        isStepCompleted(stepInfo.step) ? 'bg-emerald-500' : 'bg-muted'
                       )}
                     />
                   </div>

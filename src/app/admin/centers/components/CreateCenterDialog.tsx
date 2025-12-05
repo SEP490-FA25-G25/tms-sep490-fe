@@ -95,30 +95,30 @@ export function CreateCenterDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="code">
-                Mã trung tâm <span className="text-red-500">*</span>
+                Mã trung tâm <span className="text-rose-500">*</span>
               </Label>
               <Input
                 id="code"
                 {...register("code")}
                 placeholder="VD: CT01"
-                className={errors.code ? "border-red-500" : ""}
+                className={errors.code ? "border-rose-500" : ""}
               />
               {errors.code && (
-                <p className="text-sm text-red-500">{errors.code.message}</p>
+                <p className="text-sm text-rose-500">{errors.code.message}</p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="name">
-                Tên trung tâm <span className="text-red-500">*</span>
+                Tên trung tâm <span className="text-rose-500">*</span>
               </Label>
               <Input
                 id="name"
                 {...register("name")}
                 placeholder="VD: Trung tâm Hà Nội"
-                className={errors.name ? "border-red-500" : ""}
+                className={errors.name ? "border-rose-500" : ""}
               />
               {errors.name && (
-                <p className="text-sm text-red-500">{errors.name.message}</p>
+                <p className="text-sm text-rose-500">{errors.name.message}</p>
               )}
             </div>
           </div>
@@ -149,10 +149,10 @@ export function CreateCenterDialog({
                 type="email"
                 {...register("email")}
                 placeholder="VD: center@example.com"
-                className={errors.email ? "border-red-500" : ""}
+                className={errors.email ? "border-rose-500" : ""}
               />
               {errors.email && (
-                <p className="text-sm text-red-500">{errors.email.message}</p>
+                <p className="text-sm text-rose-500">{errors.email.message}</p>
               )}
             </div>
           </div>

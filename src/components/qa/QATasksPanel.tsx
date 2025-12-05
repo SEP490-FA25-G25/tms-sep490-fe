@@ -92,7 +92,7 @@ function DraftReportsList({ reports }: { reports: DraftReport[] | null | undefin
   if (!reports || reports.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-center py-6">
-        <CheckCircle2 className="h-8 w-8 text-green-500 mb-2" />
+        <CheckCircle2 className="h-8 w-8 text-emerald-500 mb-2" />
         <p className="text-sm text-muted-foreground">
           Không có báo cáo nháp nào
         </p>
@@ -254,7 +254,7 @@ function ReportStatusIndicator({
 }) {
   if (done) {
     return (
-      <div className="flex items-center gap-1 text-xs text-green-600">
+      <div className="flex items-center gap-1 text-xs text-emerald-600">
         <CheckCircle2 className="h-3.5 w-3.5" />
         <span>{label}</span>
       </div>

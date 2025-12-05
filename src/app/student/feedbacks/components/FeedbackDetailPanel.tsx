@@ -36,7 +36,7 @@ const FeedbackDetailPanel: React.FC<FeedbackDetailPanelProps> = ({ feedback }) =
   const getRatingColor = (rating: number) => {
     if (rating >= 4) return 'text-emerald-600'
     if (rating >= 3) return 'text-amber-600'
-    return 'text-red-600'
+    return 'text-rose-600'
   }
 
   return (

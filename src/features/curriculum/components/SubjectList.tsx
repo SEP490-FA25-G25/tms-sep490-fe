@@ -192,7 +192,7 @@ export function SubjectList() {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="w-full justify-start gap-2 h-9 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                className="w-full justify-start gap-2 h-9 px-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                                                 onClick={() => setSubjectToReactivate(subject.id)}
                                             >
                                                 <RotateCcw className="h-4 w-4" />
@@ -212,7 +212,7 @@ export function SubjectList() {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="w-full justify-start gap-2 h-9 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            className="w-full justify-start gap-2 h-9 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
                                             onClick={() => setSubjectToDeletePermanently(subject.id)}
                                         >
                                             <Trash2 className="h-4 w-4" />

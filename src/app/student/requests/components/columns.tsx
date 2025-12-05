@@ -244,7 +244,7 @@ export const columns: ColumnDef<StudentRequest>[] = [
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full justify-start gap-2 h-9 px-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
+                  className="w-full justify-start gap-2 h-9 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950"
                   onClick={(e) => {
                     e.stopPropagation()
                     meta.onCancelRequest?.(request.id)

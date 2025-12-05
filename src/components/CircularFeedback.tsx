@@ -64,7 +64,7 @@ export function CircularFeedback({ feedbacks }: CircularFeedbackProps) {
                 }}
             >
                 {/* The Circle Border */}
-                <div className="absolute inset-0 rounded-full border-[3px] border-green-500/30 pointer-events-none" />
+                <div className="absolute inset-0 rounded-full border-[3px] border-emerald-500/30 pointer-events-none" />
 
                 {/* Items */}
                 {feedbacks.map((fb, index) => {
@@ -96,7 +96,7 @@ export function CircularFeedback({ feedbacks }: CircularFeedbackProps) {
                                 {/* Avatar */}
                                 <div
                                     className={`relative rounded-full overflow-hidden border-2 transition-all duration-300 shadow-md bg-white flex-shrink-0
-                                        ${isActive ? 'w-20 h-20 border-green-600 scale-110' : 'w-14 h-14 border-green-200 opacity-80 hover:opacity-100'}
+                                        ${isActive ? 'w-20 h-20 border-emerald-600 scale-110' : 'w-14 h-14 border-emerald-200 opacity-80 hover:opacity-100'}
                                     `}
                                 >
                                     <img
@@ -111,14 +111,14 @@ export function CircularFeedback({ feedbacks }: CircularFeedbackProps) {
                                     className={`ml-4 transition-all duration-500 ease-out rounded-xl shadow-sm border
                                         ${isActive
                                             ? 'bg-[#4ade80] border-[#4ade80] text-white p-6 w-[400px] scale-100 opacity-100 z-20 shadow-xl'
-                                            : 'bg-white border-green-100 text-green-800 p-3 w-[200px] scale-95 opacity-80 hover:opacity-100 hover:scale-100 z-10'
+                                            : 'bg-white border-emerald-100 text-emerald-800 p-3 w-[200px] scale-95 opacity-80 hover:opacity-100 hover:scale-100 z-10'
                                         }
                                     `}
                                 >
                                     <h4 className={`font-bold ${isActive ? 'text-lg' : 'text-sm'}`}>
                                         {fb.name}
                                     </h4>
-                                    <p className={`font-medium ${isActive ? 'text-green-50 text-sm mb-2' : 'text-slate-500 text-xs'}`}>
+                                    <p className={`font-medium ${isActive ? 'text-emerald-50 text-sm mb-2' : 'text-slate-500 text-xs'}`}>
                                         {fb.role}
                                     </p>
 

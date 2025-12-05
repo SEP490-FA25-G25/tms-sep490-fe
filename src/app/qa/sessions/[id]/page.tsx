@@ -243,15 +243,15 @@ export default function SessionDetailsPage() {
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-sm text-muted-foreground">Có mặt</span>
-                                    <span className="font-medium text-green-600">{session.attendanceStats.presentCount}</span>
+                                    <span className="font-medium text-emerald-600">{session.attendanceStats.presentCount}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-sm text-muted-foreground">Vắng mặt</span>
-                                    <span className="font-medium text-red-600">{session.attendanceStats.absentCount}</span>
+                                    <span className="font-medium text-rose-600">{session.attendanceStats.absentCount}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-sm text-muted-foreground">Hoàn thành BT</span>
-                                    <span className="font-medium text-green-600">{session.attendanceStats.homeworkCompletedCount}</span>
+                                    <span className="font-medium text-emerald-600">{session.attendanceStats.homeworkCompletedCount}</span>
                                 </div>
                             </CardContent>
                         </Card>

@@ -703,7 +703,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                                     size="sm"
                                     onClick={handleNext}
                                     disabled={isLoading || isSubmitting}
-                                    className="bg-green-600 hover:bg-green-700"
+                                    className="bg-emerald-600 hover:bg-emerald-700"
                                 >
                                     {isSubmitting ? (
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />

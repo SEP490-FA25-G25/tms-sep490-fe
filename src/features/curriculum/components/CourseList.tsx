@@ -383,7 +383,7 @@ export function CourseList() {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="w-full justify-start gap-2 h-9 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                className="w-full justify-start gap-2 h-9 px-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                                                 onClick={() => setCourseToReactivate(course.id)}
                                             >
                                                 <RotateCcw className="h-4 w-4" />

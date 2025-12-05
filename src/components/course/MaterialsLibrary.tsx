@@ -296,7 +296,7 @@ function MaterialItem({ material }: MaterialItemProps) {
             {/* Status Icon */}
             <div className="flex-shrink-0">
               {material.isAccessible ? (
-                <CheckCircle className="h-5 w-5 text-green-600" />
+                <CheckCircle className="h-5 w-5 text-emerald-600" />
               ) : (
                 <Lock className="h-5 w-5 text-gray-400" />
               )}

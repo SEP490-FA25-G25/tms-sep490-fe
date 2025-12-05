@@ -29,7 +29,7 @@ const REQUEST_TYPE_COLORS: Record<"ABSENCE" | "MAKEUP" | "TRANSFER", string> = {
   ABSENCE:
     "bg-amber-100 text-amber-800 ring-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:ring-amber-800",
   MAKEUP:
-    "bg-green-100 text-green-800 ring-green-200 dark:bg-green-900/30 dark:text-green-400 dark:ring-green-800",
+    "bg-emerald-100 text-emerald-800 ring-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:ring-emerald-800",
   TRANSFER:
     "bg-purple-100 text-purple-800 ring-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:ring-purple-800",
 };
@@ -320,10 +320,10 @@ function MakeupRequestContent({
 
       {/* Makeup Session */}
       {request.makeupSession && (
-        <div className="rounded-xl border border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20 p-4">
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/20 p-4">
           <div className="flex items-center gap-2 mb-3">
-            <CalendarIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
-            <h3 className="text-sm font-semibold text-green-700 dark:text-green-400">
+            <CalendarIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <h3 className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
               Buổi học bù
             </h3>
           </div>

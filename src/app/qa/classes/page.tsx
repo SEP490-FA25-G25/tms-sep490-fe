@@ -158,9 +158,9 @@ export default function QAClassesListPage() {
 
     // Helper: Get progress bar color
     const getProgressColor = (rate: number) => {
-        if (rate >= 90) return "text-green-600"
+        if (rate >= 90) return "text-emerald-600"
         if (rate >= 70) return "text-yellow-600"
-        return "text-red-600"
+        return "text-rose-600"
     }
 
     // Helper: Format modality

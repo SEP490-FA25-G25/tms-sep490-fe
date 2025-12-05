@@ -284,10 +284,10 @@ export default function AcademicClassesPage({
 
   const getCapacityColor = (current: number, max: number) => {
     const percentage = (current / max) * 100;
-    if (percentage < 80) return "bg-green-100 text-green-800 border-green-200";
+    if (percentage < 80) return "bg-emerald-100 text-emerald-800 border-emerald-200";
     if (percentage < 95)
       return "bg-yellow-100 text-yellow-800 border-yellow-200";
-    return "bg-red-100 text-red-800 border-red-200";
+    return "bg-rose-100 text-rose-800 border-rose-200";
   };
 
   const getStatusColor = (status: string) => {
@@ -297,13 +297,13 @@ export default function AcademicClassesPage({
       case "SUBMITTED":
         return "bg-amber-100 text-amber-800 border-amber-200";
       case "ONGOING":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-emerald-100 text-emerald-800 border-emerald-200";
       case "SCHEDULED":
         return "bg-blue-100 text-blue-800 border-blue-200";
       case "COMPLETED":
         return "bg-gray-100 text-gray-800 border-gray-200";
       case "CANCELLED":
-        return "bg-red-100 text-red-800 border-red-200";
+        return "bg-rose-100 text-rose-800 border-rose-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -339,7 +339,7 @@ export default function AcademicClassesPage({
     if (approval === "REJECTED") {
       return {
         label: "Đã từ chối",
-        color: "bg-red-100 text-red-800 border-red-200",
+        color: "bg-rose-100 text-rose-800 border-rose-200",
       };
     }
     // APPROVED hoặc không có approvalStatus
@@ -445,8 +445,8 @@ export default function AcademicClassesPage({
               <CardTitle className="text-sm font-medium">
                 Đang diễn ra
               </CardTitle>
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-50 dark:bg-green-950/30">
-                <PlayCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950/30">
+                <PlayCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               </div>
             </CardHeader>
             <CardContent>

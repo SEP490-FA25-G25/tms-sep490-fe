@@ -29,7 +29,7 @@ export function CourseOverview({ course }: CourseOverviewProps) {
           {course.totalDurationWeeks && course.totalDurationWeeks > 0 && (
             <div className="lg:border-l lg:pl-6">
               <div className="flex items-center gap-3 mb-2">
-                <Calendar className="h-5 w-5 text-green-600" />
+                <Calendar className="h-5 w-5 text-emerald-600" />
                 <span className="font-medium text-gray-900">Thời gian</span>
               </div>
               <p className="text-2xl font-bold text-gray-900">{course.totalDurationWeeks}</p>

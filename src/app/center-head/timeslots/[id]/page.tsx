@@ -390,7 +390,7 @@ export default function TimeSlotDetailPage() {
                                                             session.status === "PLANNED" ? "secondary" :
                                                             session.status === "DONE" ? "outline" :
                                                                         session.status === "CANCELLED" ? "destructive" : "outline"
-                                                    } className={session.status === "DONE" ? "bg-green-100 text-green-700 border-green-200" : ""}>
+                                                    } className={session.status === "DONE" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : ""}>
                                                             {session.status === "PLANNED" ? "Dự kiến" :
                                                             session.status === "DONE" ? "Hoàn thành" :
                                                                         session.status === "CANCELLED" ? "Đã hủy" : session.status}

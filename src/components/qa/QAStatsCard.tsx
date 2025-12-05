@@ -46,8 +46,8 @@ export function QAStatsCard({
                             <span
                                 className={cn(
                                     "font-medium",
-                                    trend === "up" && "text-green-600",
-                                    trend === "down" && "text-red-600",
+                                    trend === "up" && "text-emerald-600",
+                                    trend === "down" && "text-rose-600",
                                     trend === "neutral" && "text-yellow-600"
                                 )}
                             >

@@ -75,13 +75,13 @@ export default function TransferConfirmationStep({
   const getContentGapSeverity = (severity: string) => {
     switch (severity) {
       case 'NONE':
-        return { icon: CheckCircle, text: 'Không thiếu nội dung', color: 'text-green-600' }
+        return { icon: CheckCircle, text: 'Không thiếu nội dung', color: 'text-emerald-600' }
       case 'MINOR':
         return { icon: AlertTriangle, text: 'Thiếu ít', color: 'text-yellow-600' }
       case 'MODERATE':
         return { icon: AlertTriangle, text: 'Thiếu vừa phải', color: 'text-orange-600' }
       case 'MAJOR':
-        return { icon: AlertTriangle, text: 'Thiếu nhiều', color: 'text-red-600' }
+        return { icon: AlertTriangle, text: 'Thiếu nhiều', color: 'text-rose-600' }
       default:
         return { icon: AlertTriangle, text: 'Không xác định', color: 'text-gray-600' }
     }
@@ -366,7 +366,7 @@ export default function TransferConfirmationStep({
         <div className="flex justify-between items-center">
           <div className={cn(
             "text-xs",
-            requestReason.trim().length >= 10 ? "text-green-700" : "text-muted-foreground"
+            requestReason.trim().length >= 10 ? "text-emerald-700" : "text-muted-foreground"
           )}>
             {requestReason.trim().length}/10 ký tự
           </div>

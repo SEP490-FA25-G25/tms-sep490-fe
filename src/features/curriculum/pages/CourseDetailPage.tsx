@@ -230,7 +230,7 @@ export default function CourseDetailPage() {
                                     </Badge>
                                 </div>
                                 {course.approvalStatus === 'REJECTED' && course.rejectionReason && (
-                                    <div className="flex items-start gap-2 text-sm text-red-600 bg-red-50 p-3 rounded-lg">
+                                    <div className="flex items-start gap-2 text-sm text-rose-600 bg-rose-50 p-3 rounded-lg">
                                         <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
                                         <div>
                                             <span className="font-medium">Lý do từ chối: </span>
@@ -257,7 +257,7 @@ export default function CourseDetailPage() {
                                     <>
                                         <Button
                                             variant="outline"
-                                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            className="text-rose-600 hover:text-rose-700 hover:bg-rose-50"
                                             onClick={() => setRejectDialogOpen(true)}
                                             disabled={isRejecting}
                                         >

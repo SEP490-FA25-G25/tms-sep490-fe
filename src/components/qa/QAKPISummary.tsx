@@ -35,7 +35,7 @@ export function QAKPISummary({ data, className }: QAKPISummaryProps) {
         value={data.totalStudentsCount}
         subtitle="học viên enrolled"
         icon={Users}
-        iconClassName="bg-green-100 dark:bg-green-900/30"
+        iconClassName="bg-emerald-100 dark:bg-emerald-900/30"
       />
 
       {/* Điểm danh TB */}

@@ -64,8 +64,8 @@ export function ForgotPasswordForm({ className }: ForgotPasswordFormProps) {
     return (
       <div className={cn("flex flex-col gap-6", className)}>
         <div className="flex flex-col items-center gap-4 text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-green-100">
-            <CheckCircle className="h-6 w-6 text-green-600" />
+          <div className="flex size-12 items-center justify-center rounded-full bg-emerald-100">
+            <CheckCircle className="h-6 w-6 text-emerald-600" />
           </div>
           <div className="space-y-2">
             <h1 className="text-2xl font-bold">Email đã được gửi</h1>
@@ -127,13 +127,13 @@ export function ForgotPasswordForm({ className }: ForgotPasswordFormProps) {
                     setErrors({ ...errors, email: undefined })
                   }
                 }}
-                className={cn("pl-9", errors.email && "border-red-500")}
+                className={cn("pl-9", errors.email && "border-rose-500")}
                 required
                 disabled={isLoading}
               />
             </div>
             {errors.email && (
-              <p className="text-sm text-red-500 mt-1">{errors.email}</p>
+              <p className="text-sm text-rose-500 mt-1">{errors.email}</p>
             )}
           </Field>
         </Field>

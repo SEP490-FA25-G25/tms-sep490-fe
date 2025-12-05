@@ -82,15 +82,15 @@ export function SessionsTab({ classId }: SessionsTabProps) {
   });
 
   const getAttendanceColor = (rate: number) => {
-    if (rate >= 90) return "text-green-600";
+    if (rate >= 90) return "text-emerald-600";
     if (rate >= 80) return "text-yellow-600";
-    return "text-red-600";
+    return "text-rose-600";
   };
 
   const getHomeworkColor = (rate: number) => {
-    if (rate >= 85) return "text-green-600";
+    if (rate >= 85) return "text-emerald-600";
     if (rate >= 70) return "text-yellow-600";
-    return "text-red-600";
+    return "text-rose-600";
   };
 
   const getStatusBadge = (status: string) => {

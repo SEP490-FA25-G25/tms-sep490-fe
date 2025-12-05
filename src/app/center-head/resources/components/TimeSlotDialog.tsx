@@ -167,7 +167,7 @@ export function TimeSlotDialog({ open, onOpenChange, timeSlot, branchId, branche
                     {/* Show Branch Select if branchId is not pre-selected */}
                     {branchId === 0 && (
                         <div className="space-y-2">
-                            <Label htmlFor="branchId">Chi nhánh <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="branchId">Chi nhánh <span className="text-rose-500">*</span></Label>
                             <Select
                                 value={formData.branchId}
                                 onValueChange={(value) => handleChange("branchId", value)}
@@ -187,7 +187,7 @@ export function TimeSlotDialog({ open, onOpenChange, timeSlot, branchId, branche
                         </div>
                     )}
                     <div className="space-y-2">
-                        <Label htmlFor="name">Tên khung giờ <span className="text-red-500">*</span></Label>
+                        <Label htmlFor="name">Tên khung giờ <span className="text-rose-500">*</span></Label>
                         <Input
                             id="name"
                             value={formData.name}
@@ -199,7 +199,7 @@ export function TimeSlotDialog({ open, onOpenChange, timeSlot, branchId, branche
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="startTime">Giờ bắt đầu <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="startTime">Giờ bắt đầu <span className="text-rose-500">*</span></Label>
                             <Input
                                 id="startTime"
                                 type="time"
@@ -209,7 +209,7 @@ export function TimeSlotDialog({ open, onOpenChange, timeSlot, branchId, branche
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="endTime">Giờ kết thúc <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="endTime">Giờ kết thúc <span className="text-rose-500">*</span></Label>
                             <Input
                                 id="endTime"
                                 type="time"

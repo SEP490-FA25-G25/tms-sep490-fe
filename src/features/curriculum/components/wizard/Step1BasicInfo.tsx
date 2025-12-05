@@ -372,13 +372,13 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    <Label>Môn học <span className="text-red-500">*</span></Label>
+                    <Label>Môn học <span className="text-rose-500">*</span></Label>
                     <Select
                         onValueChange={handleSubjectChange}
                         value={data.basicInfo?.subjectId}
                         disabled={isLoading}
                     >
-                        <SelectTrigger className={`w-full ${errors.subjectId ? "border-red-500" : ""}`}>
+                        <SelectTrigger className={`w-full ${errors.subjectId ? "border-rose-500" : ""}`}>
                             <SelectValue placeholder={isLoading ? "Đang tải..." : "Chọn môn học"} />
                         </SelectTrigger>
                         <SelectContent>
@@ -389,17 +389,17 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
                             ))}
                         </SelectContent>
                     </Select>
-                    {errors.subjectId && <p className="text-sm text-red-500">{errors.subjectId}</p>}
+                    {errors.subjectId && <p className="text-sm text-rose-500">{errors.subjectId}</p>}
                 </div>
 
                 <div className="space-y-2">
-                    <Label>Cấp độ <span className="text-red-500">*</span></Label>
+                    <Label>Cấp độ <span className="text-rose-500">*</span></Label>
                     <Select
                         onValueChange={handleLevelChange}
                         value={data.basicInfo?.levelId}
                         disabled={!data.basicInfo?.subjectId}
                     >
-                        <SelectTrigger className={`w-full ${errors.levelId ? "border-red-500" : ""}`}>
+                        <SelectTrigger className={`w-full ${errors.levelId ? "border-rose-500" : ""}`}>
                             <SelectValue placeholder="Chọn cấp độ" />
                         </SelectTrigger>
                         <SelectContent>
@@ -410,30 +410,30 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
                             ))}
                         </SelectContent>
                     </Select>
-                    {errors.levelId && <p className="text-sm text-red-500">{errors.levelId}</p>}
+                    {errors.levelId && <p className="text-sm text-rose-500">{errors.levelId}</p>}
                 </div>
             </div>
 
             <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    <Label>Tên khóa học <span className="text-red-500">*</span></Label>
+                    <Label>Tên khóa học <span className="text-rose-500">*</span></Label>
                     <Input
                         placeholder="VD: Tiếng Anh Giao tiếp A1 - 2024"
                         value={data.basicInfo?.name || ""}
                         onChange={(e) => handleChange("name", e.target.value)}
-                        className={errors.name ? "border-red-500" : ""}
+                        className={errors.name ? "border-rose-500" : ""}
                     />
-                    {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+                    {errors.name && <p className="text-sm text-rose-500">{errors.name}</p>}
                 </div>
                 <div className="space-y-2">
-                    <Label>Mã khóa học <span className="text-red-500">*</span></Label>
+                    <Label>Mã khóa học <span className="text-rose-500">*</span></Label>
                     <Input
                         placeholder="VD: ENG-A1-2024"
                         value={data.basicInfo?.code || ""}
                         onChange={(e) => handleChange("code", e.target.value)}
-                        className={errors.code ? "border-red-500" : ""}
+                        className={errors.code ? "border-rose-500" : ""}
                     />
-                    {errors.code && <p className="text-sm text-red-500">{errors.code}</p>}
+                    {errors.code && <p className="text-sm text-rose-500">{errors.code}</p>}
                 </div>
             </div>
 
@@ -449,7 +449,7 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label>Tổng số buổi <span className="text-red-500">*</span></Label>
+                    <Label>Tổng số buổi <span className="text-rose-500">*</span></Label>
                     <Input
                         type="number"
                         placeholder="24"
@@ -457,12 +457,12 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
                         max="200"
                         value={data.basicInfo?.numberOfSessions || ""}
                         onChange={(e) => handleChange("numberOfSessions", Number(e.target.value))}
-                        className={errors.numberOfSessions ? "border-red-500" : ""}
+                        className={errors.numberOfSessions ? "border-rose-500" : ""}
                     />
-                    {errors.numberOfSessions && <p className="text-sm text-red-500">{errors.numberOfSessions}</p>}
+                    {errors.numberOfSessions && <p className="text-sm text-rose-500">{errors.numberOfSessions}</p>}
                 </div>
                 <div className="space-y-2">
-                    <Label>Giờ/Buổi <span className="text-red-500">*</span></Label>
+                    <Label>Giờ/Buổi <span className="text-rose-500">*</span></Label>
                     <Select
                         value={data.basicInfo?.hoursPerSession?.toString() || ""}
                         onValueChange={(val) => handleChange("hoursPerSession", Number(val))}
@@ -496,10 +496,10 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
                         type="date"
                         value={data.basicInfo?.effectiveDate || ""}
                         onChange={(e) => handleChange("effectiveDate", e.target.value)}
-                        className={errors.effectiveDate ? "border-red-500" : ""}
+                        className={errors.effectiveDate ? "border-rose-500" : ""}
                         min={new Date().toISOString().split('T')[0]}
                     />
-                    {errors.effectiveDate && <p className="text-sm text-red-500">{errors.effectiveDate}</p>}
+                    {errors.effectiveDate && <p className="text-sm text-rose-500">{errors.effectiveDate}</p>}
                 </div>
             </div>
 
@@ -509,9 +509,9 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
                     placeholder="Nhập đối tượng học viên..."
                     value={data.basicInfo?.targetAudience || ""}
                     onChange={(e) => handleChange("targetAudience", e.target.value)}
-                    className={errors.targetAudience ? "border-red-500" : ""}
+                    className={errors.targetAudience ? "border-rose-500" : ""}
                 />
-                {errors.targetAudience && <p className="text-sm text-red-500">{errors.targetAudience}</p>}
+                {errors.targetAudience && <p className="text-sm text-rose-500">{errors.targetAudience}</p>}
             </div>
 
             <div className="space-y-2">
@@ -520,20 +520,20 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
                     placeholder="Nhập phương pháp giảng dạy..."
                     value={data.basicInfo?.teachingMethods || ""}
                     onChange={(e) => handleChange("teachingMethods", e.target.value)}
-                    className={errors.teachingMethods ? "border-red-500" : ""}
+                    className={errors.teachingMethods ? "border-rose-500" : ""}
                 />
-                {errors.teachingMethods && <p className="text-sm text-red-500">{errors.teachingMethods}</p>}
+                {errors.teachingMethods && <p className="text-sm text-rose-500">{errors.teachingMethods}</p>}
             </div>
 
             <div className="space-y-2">
                 <Label>Mô tả</Label>
                 <Textarea
                     placeholder="Nhập mô tả khóa học..."
-                    className={`min-h-[100px] ${errors.description ? "border-red-500" : ""}`}
+                    className={`min-h-[100px] ${errors.description ? "border-rose-500" : ""}`}
                     value={data.basicInfo?.description || ""}
                     onChange={(e) => handleChange("description", e.target.value)}
                 />
-                {errors.description && <p className="text-sm text-red-500">{errors.description}</p>}
+                {errors.description && <p className="text-sm text-rose-500">{errors.description}</p>}
             </div>
 
             <div className="space-y-2">
@@ -542,14 +542,14 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
                     placeholder="Nhập điều kiện tiên quyết..."
                     value={data.basicInfo?.prerequisites || ""}
                     onChange={(e) => handleChange("prerequisites", e.target.value)}
-                    className={errors.prerequisites ? "border-red-500" : ""}
+                    className={errors.prerequisites ? "border-rose-500" : ""}
                 />
-                {errors.prerequisites && <p className="text-sm text-red-500">{errors.prerequisites}</p>}
+                {errors.prerequisites && <p className="text-sm text-rose-500">{errors.prerequisites}</p>}
             </div>
 
             {/* Thumbnail Upload */}
             <div className="space-y-2">
-                <Label>Ảnh bìa khóa học <span className="text-red-500">*</span></Label>
+                <Label>Ảnh bìa khóa học <span className="text-rose-500">*</span></Label>
                 <div className="flex items-start gap-4">
                     {/* Thumbnail Preview */}
                     {data.basicInfo?.thumbnailUrl ? (
@@ -562,7 +562,7 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
                             <button
                                 type="button"
                                 onClick={handleRemoveThumbnail}
-                                className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="absolute -top-2 -right-2 p-1 bg-rose-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                                 title="Xóa ảnh"
                             >
                                 <X className="h-4 w-4" />

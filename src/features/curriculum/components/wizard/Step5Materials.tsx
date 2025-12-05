@@ -98,7 +98,7 @@ export function Step5Materials({ data, setData }: Step5Props) {
                         <div className="space-y-4">
                             <div className="grid grid-cols-12 gap-4">
                                 <div className="col-span-8 space-y-2">
-                                    <Label>Tên tài liệu <span className="text-red-500">*</span></Label>
+                                    <Label>Tên tài liệu <span className="text-rose-500">*</span></Label>
                                     <Input
                                         value={material.name}
                                         onChange={(e) => updateMaterial(index, "name", e.target.value)}
@@ -191,7 +191,7 @@ export function Step5Materials({ data, setData }: Step5Props) {
                                 {material.scope === "PHASE" && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
                                         <div className="space-y-2">
-                                            <Label>Chọn Giai đoạn <span className="text-red-500">*</span></Label>
+                                            <Label>Chọn Giai đoạn <span className="text-rose-500">*</span></Label>
                                             <Select
                                                 value={material.phaseId?.toString()}
                                                 onValueChange={(val) => {

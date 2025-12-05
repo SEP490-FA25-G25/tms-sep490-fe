@@ -293,7 +293,7 @@ export function CenterDetailDialog({
                                 variant="ghost"
                                 size="sm"
                                 disabled
-                                className="text-red-400 opacity-40 cursor-not-allowed"
+                                className="text-rose-400 opacity-40 cursor-not-allowed"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>

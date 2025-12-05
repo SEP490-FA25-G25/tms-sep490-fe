@@ -70,7 +70,7 @@ export function StudentDashboardContent() {
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center space-x-4">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
                   <div>
                     <p className="text-sm font-medium">Toán cao cấp 101</p>
                     <p className="text-xs text-muted-foreground">9:00 Sáng - Phòng 201</p>
@@ -108,7 +108,7 @@ export function StudentDashboardContent() {
                     <p className="text-sm font-medium">Bài tập Toán tập 5</p>
                     <p className="text-xs text-muted-foreground">Hạn trong 2 ngày</p>
                   </div>
-                  <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Sắp đến hạn</span>
+                  <span className="text-xs bg-rose-100 text-rose-800 px-2 py-1 rounded">Sắp đến hạn</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
@@ -122,7 +122,7 @@ export function StudentDashboardContent() {
                     <p className="text-sm font-medium">Bài luận Anh</p>
                     <p className="text-xs text-muted-foreground">Đã nộp</p>
                   </div>
-                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Hoàn thành</span>
+                  <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded">Hoàn thành</span>
                 </div>
               </div>
             </CardContent>

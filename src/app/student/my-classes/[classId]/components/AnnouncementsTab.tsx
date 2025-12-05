@@ -102,9 +102,9 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = () => {
       case 'HOMEWORK':
         return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'EXAM':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-rose-100 text-rose-800 border-rose-200';
       case 'RESOURCE':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -113,7 +113,7 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = () => {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'HIGH':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-rose-100 text-rose-800 border-rose-200';
       case 'MEDIUM':
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'LOW':
@@ -391,10 +391,10 @@ const AnnouncementsTab: React.FC<AnnouncementsTabProps> = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-green-500">
+        <Card className="border-l-4 border-l-emerald-500">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+              <CheckCircle className="h-5 w-5 text-emerald-500" />
               <span className="text-sm text-gray-600">Đã đọc</span>
             </div>
             <div className="text-2xl font-bold text-gray-900">

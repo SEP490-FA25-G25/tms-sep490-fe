@@ -44,7 +44,7 @@ const REQUEST_TYPE_LABELS: Record<'ABSENCE' | 'MAKEUP' | 'TRANSFER', string> = {
 
 const REQUEST_TYPE_COLORS: Record<'ABSENCE' | 'MAKEUP' | 'TRANSFER', string> = {
   ABSENCE: 'bg-amber-100 text-amber-800 ring-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:ring-amber-800',
-  MAKEUP: 'bg-green-100 text-green-800 ring-green-200 dark:bg-green-900/30 dark:text-green-400 dark:ring-green-800',
+  MAKEUP: 'bg-emerald-100 text-emerald-800 ring-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:ring-emerald-800',
   TRANSFER: 'bg-purple-100 text-purple-800 ring-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:ring-purple-800',
 }
 
@@ -288,15 +288,15 @@ export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDe
                           <p className="text-xs text-muted-foreground">Tổng số</p>
                           <p className="text-lg font-semibold">{detailPreviousRequests.totalRequests}</p>
                         </div>
-                        <div className="rounded-lg border border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20 p-2">
+                        <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/20 p-2">
                           <p className="text-xs text-muted-foreground">Đã duyệt</p>
-                          <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+                          <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
                             {detailPreviousRequests.approvedRequests}
                           </p>
                         </div>
-                        <div className="rounded-lg border border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20 p-2">
+                        <div className="rounded-lg border border-rose-200 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20 p-2">
                           <p className="text-xs text-muted-foreground">Từ chối</p>
-                          <p className="text-lg font-semibold text-red-600 dark:text-red-400">
+                          <p className="text-lg font-semibold text-rose-600 dark:text-rose-400">
                             {detailPreviousRequests.rejectedRequests}
                           </p>
                         </div>
@@ -383,7 +383,7 @@ export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDe
                         </Button>
                         <Button
                           variant="outline"
-                          className="w-full border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
+                          className="w-full border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900 dark:text-rose-400 dark:hover:bg-rose-950"
                           disabled={isRejecting || isApproving}
                           onClick={() => handleDecision('REJECT')}
                         >
@@ -504,10 +504,10 @@ function MakeupRequestContent({ request, daysUntilSession }: { request: any; day
 
       {/* Makeup Session */}
       {request.makeupSession && (
-        <div className="rounded-xl border border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20 p-4">
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/20 p-4">
           <div className="flex items-center gap-2 mb-3">
-            <CalendarIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
-            <h3 className="text-sm font-semibold text-green-700 dark:text-green-400">Buổi học bù</h3>
+            <CalendarIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <h3 className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">Buổi học bù</h3>
           </div>
           <div className="space-y-1">
             {request.makeupSession.classInfo?.classCode && (

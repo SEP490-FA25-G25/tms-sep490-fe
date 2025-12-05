@@ -342,8 +342,8 @@ export function EnrollmentImportDialog({
               <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-xl">
                 <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleDownloadTemplate('generic')}>
                   <CardContent className="p-4 flex items-center gap-3">
-                    <div className="bg-green-100 p-2 rounded-lg">
-                      <FileSpreadsheet className="h-5 w-5 text-green-700" />
+                    <div className="bg-emerald-100 p-2 rounded-lg">
+                      <FileSpreadsheet className="h-5 w-5 text-emerald-700" />
                     </div>
                     <div className="text-left">
                       <p className="font-medium text-sm">Mẫu cơ bản</p>
@@ -372,8 +372,8 @@ export function EnrollmentImportDialog({
               <div className="bg-background border-b p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-4">
-                    <div className="bg-green-100 p-3 rounded-xl">
-                      <FileSpreadsheet className="h-6 w-6 text-green-700" />
+                    <div className="bg-emerald-100 p-3 rounded-xl">
+                      <FileSpreadsheet className="h-6 w-6 text-emerald-700" />
                     </div>
                     <div>
                       <h3 className="font-medium text-lg">{file?.name}</h3>

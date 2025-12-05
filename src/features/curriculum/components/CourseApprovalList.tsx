@@ -248,7 +248,7 @@ export function CourseApprovalList({ readOnly = false }: CourseApprovalListProps
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                className="w-full justify-start gap-2 h-9 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                                className="w-full justify-start gap-2 h-9 px-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                                                                 onClick={() => openApproveDialog(course.id)}
                                                                 disabled={isApproving}
                                                             >
@@ -262,7 +262,7 @@ export function CourseApprovalList({ readOnly = false }: CourseApprovalListProps
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                className="w-full justify-start gap-2 h-9 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                                className="w-full justify-start gap-2 h-9 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
                                                                 onClick={() => openRejectDialog(course.id)}
                                                                 disabled={isRejecting}
                                                             >
@@ -333,7 +333,7 @@ export function CourseApprovalList({ readOnly = false }: CourseApprovalListProps
                             Hủy
                         </Button>
                         <Button
-                            className="bg-green-600 hover:bg-green-700"
+                            className="bg-emerald-600 hover:bg-emerald-700"
                             onClick={handleApprove}
                             disabled={isApproving}
                         >

@@ -98,9 +98,9 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
     const { statistics, feedbacks } = feedbackData
 
     const getSubmissionRateColor = (rate: number) => {
-        if (rate >= 90) return "text-green-600"
+        if (rate >= 90) return "text-emerald-600"
         if (rate >= 75) return "text-yellow-600"
-        return "text-red-600"
+        return "text-rose-600"
     }
 
     const formatDate = (dateString?: string) => {
@@ -193,7 +193,7 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
                             <CheckCircle className="h-4 w-4 text-muted-foreground" />
                             <div>
                                 <p className="text-sm text-muted-foreground">Đã phản hồi</p>
-                                <p className="text-2xl font-bold text-green-600">{statistics.submittedCount}</p>
+                                <p className="text-2xl font-bold text-emerald-600">{statistics.submittedCount}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -205,7 +205,7 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
                             <XCircle className="h-4 w-4 text-muted-foreground" />
                             <div>
                                 <p className="text-sm text-muted-foreground">Chưa phản hồi</p>
-                                <p className="text-2xl font-bold text-red-600">{statistics.notSubmittedCount}</p>
+                                <p className="text-2xl font-bold text-rose-600">{statistics.notSubmittedCount}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -230,7 +230,7 @@ export function StudentFeedbackTab({ classId }: StudentFeedbackTabProps) {
             <div className="p-6 border rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <CheckCircle className="h-4 w-4 text-emerald-600" />
                         <span className="text-sm font-medium">Tiến độ phản hồi</span>
                     </div>
                     <span className="text-sm text-muted-foreground">

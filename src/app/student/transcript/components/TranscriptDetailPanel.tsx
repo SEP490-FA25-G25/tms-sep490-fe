@@ -100,7 +100,7 @@ const TranscriptDetailPanel: React.FC<TranscriptDetailPanelProps> = ({
     if (percentage >= 80) return 'text-emerald-600';
     if (percentage >= 60) return 'text-amber-600';
     if (percentage >= 40) return 'text-orange-600';
-    return 'text-red-600';
+    return 'text-rose-600';
   };
 
   const getAssessmentStatus = (assessment: AssessmentDTO, score?: StudentAssessmentScoreDTO) => {

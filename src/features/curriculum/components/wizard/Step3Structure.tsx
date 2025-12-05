@@ -681,13 +681,13 @@ export function Step3Structure({ data, setData }: Step3Props) {
                                                             <Textarea
                                                                 value={session.topic}
                                                                 onChange={(e) => updateSession(pIndex, sIndex, "topic", e.target.value)}
-                                                                className={`min-h-10 border-transparent hover:border-input focus:border-input transition-colors bg-transparent focus:bg-white resize-none ${getSessionError(pIndex, sIndex, 'topic') ? 'border-red-500 hover:border-red-500 focus:border-red-500' : ''
+                                                                className={`min-h-10 border-transparent hover:border-input focus:border-input transition-colors bg-transparent focus:bg-white resize-none ${getSessionError(pIndex, sIndex, 'topic') ? 'border-rose-500 hover:border-rose-500 focus:border-rose-500' : ''
                                                                     }`}
                                                                 placeholder="Nhập chủ đề..."
                                                                 rows={1}
                                                             />
                                                             {getSessionError(pIndex, sIndex, 'topic') && (
-                                                                <p className="text-xs text-red-500">{getSessionError(pIndex, sIndex, 'topic')}</p>
+                                                                <p className="text-xs text-rose-500">{getSessionError(pIndex, sIndex, 'topic')}</p>
                                                             )}
                                                         </div>
                                                     </TableCell>
@@ -696,13 +696,13 @@ export function Step3Structure({ data, setData }: Step3Props) {
                                                             <Textarea
                                                                 value={session.studentTask}
                                                                 onChange={(e) => updateSession(pIndex, sIndex, "studentTask", e.target.value)}
-                                                                className={`min-h-10 border-transparent hover:border-input focus:border-input transition-colors bg-transparent focus:bg-white resize-none ${getSessionError(pIndex, sIndex, 'studentTask') ? 'border-red-500 hover:border-red-500 focus:border-red-500' : ''
+                                                                className={`min-h-10 border-transparent hover:border-input focus:border-input transition-colors bg-transparent focus:bg-white resize-none ${getSessionError(pIndex, sIndex, 'studentTask') ? 'border-rose-500 hover:border-rose-500 focus:border-rose-500' : ''
                                                                     }`}
                                                                 placeholder="Nhập nhiệm vụ..."
                                                                 rows={1}
                                                             />
                                                             {getSessionError(pIndex, sIndex, 'studentTask') && (
-                                                                <p className="text-xs text-red-500">{getSessionError(pIndex, sIndex, 'studentTask')}</p>
+                                                                <p className="text-xs text-rose-500">{getSessionError(pIndex, sIndex, 'studentTask')}</p>
                                                             )}
                                                         </div>
                                                     </TableCell>
@@ -719,10 +719,10 @@ export function Step3Structure({ data, setData }: Step3Props) {
                                                                 searchPlaceholder="Tìm Kỹ năng..."
                                                                 emptyMessage="Không tìm thấy Kỹ năng."
                                                                 badgeClassName="bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200"
-                                                                className={getSessionError(pIndex, sIndex, 'skills') ? 'border-red-500' : ''}
+                                                                className={getSessionError(pIndex, sIndex, 'skills') ? 'border-rose-500' : ''}
                                                             />
                                                             {getSessionError(pIndex, sIndex, 'skills') && (
-                                                                <p className="text-xs text-red-500">{getSessionError(pIndex, sIndex, 'skills')}</p>
+                                                                <p className="text-xs text-rose-500">{getSessionError(pIndex, sIndex, 'skills')}</p>
                                                             )}
                                                         </div>
                                                     </TableCell>
@@ -739,10 +739,10 @@ export function Step3Structure({ data, setData }: Step3Props) {
                                                                 searchPlaceholder="Tìm CLO..."
                                                                 emptyMessage="Không tìm thấy CLO."
                                                                 badgeClassName="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200"
-                                                                className={getSessionError(pIndex, sIndex, 'cloIds') ? 'border-red-500' : ''}
+                                                                className={getSessionError(pIndex, sIndex, 'cloIds') ? 'border-rose-500' : ''}
                                                             />
                                                             {getSessionError(pIndex, sIndex, 'cloIds') && (
-                                                                <p className="text-xs text-red-500">{getSessionError(pIndex, sIndex, 'cloIds')}</p>
+                                                                <p className="text-xs text-rose-500">{getSessionError(pIndex, sIndex, 'cloIds')}</p>
                                                             )}
                                                         </div>
                                                     </TableCell>
@@ -753,7 +753,7 @@ export function Step3Structure({ data, setData }: Step3Props) {
                                                                     <div className="relative">
                                                                         <FileText className="w-4 h-4 text-muted-foreground" />
                                                                         {getMaterials("SESSION", undefined, session.id).length > 0 && (
-                                                                            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
+                                                                            <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full" />
                                                                         )}
                                                                     </div>
                                                                 </Button>

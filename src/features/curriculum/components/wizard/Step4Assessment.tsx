@@ -439,10 +439,10 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                                             value={assessment.name}
                                             onChange={(e) => updateAssessment(index, "name", e.target.value)}
                                             placeholder="e.g. Bài kiểm tra giữa kỳ"
-                                            className={`h-8 ${assessmentErrors[index]?.name ? "border-red-500" : ""}`}
+                                            className={`h-8 ${assessmentErrors[index]?.name ? "border-rose-500" : ""}`}
                                         />
                                         {assessmentErrors[index]?.name && (
-                                            <p className="text-xs text-red-500">{assessmentErrors[index].name}</p>
+                                            <p className="text-xs text-rose-500">{assessmentErrors[index].name}</p>
                                         )}
                                     </div>
                                 </TableCell>
@@ -476,11 +476,11 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                                             max={maxDurationMinutes > 0 ? maxDurationMinutes : undefined}
                                             value={assessment.durationMinutes ?? ""}
                                             onChange={(e) => updateAssessment(index, "durationMinutes", e.target.value === "" ? undefined : Number(e.target.value))}
-                                            className={`h-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${assessmentErrors[index]?.durationMinutes ? "border-red-500" : ""}`}
+                                            className={`h-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${assessmentErrors[index]?.durationMinutes ? "border-rose-500" : ""}`}
                                             placeholder="Phút"
                                         />
                                         {assessmentErrors[index]?.durationMinutes && (
-                                            <p className="text-xs text-red-500">{assessmentErrors[index].durationMinutes}</p>
+                                            <p className="text-xs text-rose-500">{assessmentErrors[index].durationMinutes}</p>
                                         )}
                                     </div>
                                 </TableCell>
@@ -493,11 +493,11 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                                             step="0.01"
                                             value={assessment.maxScore ?? ""}
                                             onChange={(e) => updateAssessment(index, "maxScore", e.target.value === "" ? undefined : Number(e.target.value))}
-                                            className={`h-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${assessmentErrors[index]?.maxScore ? "border-red-500" : ""}`}
+                                            className={`h-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${assessmentErrors[index]?.maxScore ? "border-rose-500" : ""}`}
                                             placeholder="Điểm"
                                         />
                                         {assessmentErrors[index]?.maxScore && (
-                                            <p className="text-xs text-red-500">{assessmentErrors[index].maxScore}</p>
+                                            <p className="text-xs text-rose-500">{assessmentErrors[index].maxScore}</p>
                                         )}
                                     </div>
                                 </TableCell>
@@ -515,10 +515,10 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                                             searchPlaceholder="Tìm kỹ năng..."
                                             emptyMessage="Không tìm thấy kỹ năng."
                                             badgeClassName="bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200"
-                                            className={assessmentErrors[index]?.skills ? "border-red-500 rounded-md" : ""}
+                                            className={assessmentErrors[index]?.skills ? "border-rose-500 rounded-md" : ""}
                                         />
                                         {assessmentErrors[index]?.skills && (
-                                            <p className="text-xs text-red-500">{assessmentErrors[index].skills}</p>
+                                            <p className="text-xs text-rose-500">{assessmentErrors[index].skills}</p>
                                         )}
                                     </div>
                                 </TableCell>
@@ -536,10 +536,10 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                                             searchPlaceholder="Tìm CLO..."
                                             emptyMessage="Không tìm thấy CLO."
                                             badgeClassName="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200"
-                                            className={assessmentErrors[index]?.cloIds ? "border-red-500 rounded-md" : ""}
+                                            className={assessmentErrors[index]?.cloIds ? "border-rose-500 rounded-md" : ""}
                                         />
                                         {assessmentErrors[index]?.cloIds && (
-                                            <p className="text-xs text-red-500">{assessmentErrors[index].cloIds}</p>
+                                            <p className="text-xs text-rose-500">{assessmentErrors[index].cloIds}</p>
                                         )}
                                     </div>
                                 </TableCell>
@@ -549,7 +549,7 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className={`h-8 w-8 ${assessment.description ? "text-primary" : "text-muted-foreground"} ${assessmentErrors[index]?.description ? "text-red-500" : ""}`}
+                                                className={`h-8 w-8 ${assessment.description ? "text-primary" : "text-muted-foreground"} ${assessmentErrors[index]?.description ? "text-rose-500" : ""}`}
                                             >
                                                 <FileText className="w-4 h-4" />
                                             </Button>
@@ -562,11 +562,11 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                                                     value={assessment.description || ""}
                                                     onChange={(e) => updateAssessment(index, "description", e.target.value)}
                                                     placeholder="Nhập mô tả chi tiết cho bài kiểm tra... (để trống hoặc ít nhất 10 ký tự)"
-                                                    className={`min-h-24 ${assessmentErrors[index]?.description ? "border-red-500" : ""}`}
+                                                    className={`min-h-24 ${assessmentErrors[index]?.description ? "border-rose-500" : ""}`}
                                                     rows={4}
                                                 />
                                                 {assessmentErrors[index]?.description && (
-                                                    <p className="text-xs text-red-500">{assessmentErrors[index].description}</p>
+                                                    <p className="text-xs text-rose-500">{assessmentErrors[index].description}</p>
                                                 )}
                                                 <p className="text-xs text-muted-foreground">
                                                     {assessment.description?.length || 0} ký tự
@@ -581,7 +581,7 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className={`h-8 w-8 ${assessment.note ? "text-primary" : "text-muted-foreground"} ${assessmentErrors[index]?.note ? "text-red-500" : ""}`}
+                                                className={`h-8 w-8 ${assessment.note ? "text-primary" : "text-muted-foreground"} ${assessmentErrors[index]?.note ? "text-rose-500" : ""}`}
                                             >
                                                 <StickyNote className="w-4 h-4" />
                                             </Button>
@@ -594,11 +594,11 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                                                     value={assessment.note || ""}
                                                     onChange={(e) => updateAssessment(index, "note", e.target.value)}
                                                     placeholder="Nhập ghi chú... (để trống hoặc ít nhất 10 ký tự)"
-                                                    className={`min-h-24 ${assessmentErrors[index]?.note ? "border-red-500" : ""}`}
+                                                    className={`min-h-24 ${assessmentErrors[index]?.note ? "border-rose-500" : ""}`}
                                                     rows={4}
                                                 />
                                                 {assessmentErrors[index]?.note && (
-                                                    <p className="text-xs text-red-500">{assessmentErrors[index].note}</p>
+                                                    <p className="text-xs text-rose-500">{assessmentErrors[index].note}</p>
                                                 )}
                                                 <p className="text-xs text-muted-foreground">
                                                     {assessment.note?.length || 0} ký tự

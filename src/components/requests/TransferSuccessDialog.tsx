@@ -49,13 +49,13 @@ export default function TransferSuccessDialog({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-center gap-2 text-center text-xl font-semibold">
-            <CheckCircle className="h-5 w-5 text-green-500" />
+            <CheckCircle className="h-5 w-5 text-emerald-500" />
             {isAA ? 'ĐÃ CHUYỂN LỚP THÀNH CÔNG' : 'YÊU CẦU ĐÃ ĐƯỢC GỬI'}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          <div className="text-center text-base font-medium text-green-600">
+          <div className="text-center text-base font-medium text-emerald-600">
             {isAA
               ? 'Yêu cầu đã được phê duyệt và hệ thống đã chuyển học viên sang lớp mới.'
               : 'Yêu cầu chuyển lớp của bạn đã được gửi thành công.'}

@@ -80,7 +80,7 @@ export function TableOfContents({ sections, activeSection, onSectionChange }: Ta
                 <div
                   className={cn(
                     'w-2 h-2 rounded-full flex-shrink-0',
-                    isCompleted && 'bg-green-500',
+                    isCompleted && 'bg-emerald-500',
                     isCurrent && 'bg-blue-500',
                     !isCompleted && !isCurrent && 'bg-gray-300'
                   )}
@@ -88,7 +88,7 @@ export function TableOfContents({ sections, activeSection, onSectionChange }: Ta
                 <span
                   className={cn(
                     'text-xs truncate',
-                    isCompleted && 'text-green-700',
+                    isCompleted && 'text-emerald-700',
                     isCurrent && 'text-blue-700 font-medium',
                     !isCompleted && !isCurrent && 'text-gray-500'
                   )}
