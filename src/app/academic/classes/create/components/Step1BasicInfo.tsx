@@ -64,7 +64,7 @@ const DAY_OPTIONS = [
 
 interface Step1BasicInfoProps {
   classId?: number | null
-  onSuccess: (classId: number, sessionCount: number) => void
+  onSuccess: (classId: number) => void
 }
 
 export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
@@ -278,21 +278,18 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
 
     try {
       let resultClassId: number
-      let totalSessions: number
 
       if (classId) {
-        const response = await updateClass({ classId, data }).unwrap()
+        await updateClass({ classId, data }).unwrap()
         resultClassId = classId
-        totalSessions = response?.data?.sessionSummary?.totalSessions ?? 0
         toast.success('Cập nhật lớp thành công!')
       } else {
         const response = await createClass(data).unwrap()
         resultClassId = response.data.classId
-        totalSessions = response.data.sessionSummary.totalSessions
         toast.success('Tạo lớp thành công!')
       }
 
-      onSuccess(resultClassId, totalSessions)
+      onSuccess(resultClassId)
     } catch (err: unknown) {
       const error = err as {
         status?: number

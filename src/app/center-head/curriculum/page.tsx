@@ -54,9 +54,9 @@ export default function CenterHeadCurriculumPage() {
   const { data: subjectsData, isLoading: isLoadingSubjects } = useGetSubjectsWithLevelsQuery();
   const { data: levelsData, isLoading: isLoadingLevels } = useGetLevelsQuery(undefined);
 
-  const courses: CourseDTO[] = coursesData ?? [];
-  const subjects: SubjectWithLevelsDTO[] = subjectsData?.data ?? [];
-  const levels: LevelDTO[] = levelsData?.data ?? [];
+  const courses: CourseDTO[] = useMemo(() => coursesData ?? [], [coursesData]);
+  const subjects: SubjectWithLevelsDTO[] = useMemo(() => subjectsData?.data ?? [], [subjectsData?.data]);
+  const levels: LevelDTO[] = useMemo(() => levelsData?.data ?? [], [levelsData?.data]);
 
   // Filter courses
   const filteredCourses = useMemo(() => {
@@ -264,15 +264,15 @@ export default function CenterHeadCurriculumPage() {
                               course.status === "ACTIVE"
                                 ? "default"
                                 : course.status === "DRAFT"
-                                ? "secondary"
-                                : "outline"
+                                  ? "secondary"
+                                  : "outline"
                             }
                           >
                             {course.status === "ACTIVE"
                               ? "Hoạt động"
                               : course.status === "DRAFT"
-                              ? "Nháp"
-                              : "Ngưng"}
+                                ? "Nháp"
+                                : "Ngưng"}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">

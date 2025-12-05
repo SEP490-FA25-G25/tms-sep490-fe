@@ -114,7 +114,7 @@ export function CreateClassWizard({ classId: propClassId, mode: modeProp }: Crea
   }
 
   // === Step Handlers ===
-  const handleStep1Success = (newClassId: number, _sessionCount: number) => {
+  const handleStep1Success = (newClassId: number) => {
     markStepComplete(1)
     navigateToStep(2, newClassId)
   }
@@ -122,13 +122,14 @@ export function CreateClassWizard({ classId: propClassId, mode: modeProp }: Crea
   // === Dynamic Step Action Handler ===
   const handleStepAction = () => {
     switch (currentStep) {
-      case 1:
+      case 1: {
         // Trigger Step 1 form submission
         const step1SubmitBtn = document.getElementById('step1-submit-btn')
         if (step1SubmitBtn) {
           step1SubmitBtn.click()
         }
         break
+      }
       case 2:
         // Step 2 is review only - mark complete and continue
         markStepComplete(2)

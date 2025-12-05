@@ -59,7 +59,6 @@ export function Step4Resources({ classId, onContinue }: Step4ResourcesProps) {
   const [fetchResources] = useLazyGetResourcesQuery()
   const [assignResources, { isLoading: isSubmitting }] = useAssignResourcesMutation()
   const [resourcesByDay, setResourcesByDay] = useState<Record<number, ResourceOption[]>>({})
-  const [resourceLookup, setResourceLookup] = useState<Record<number, ResourceOption>>({})
   const [isLoadingResources, setIsLoadingResources] = useState(false)
 
   const [selectedResources, setSelectedResources] = useState<Record<number, number | ''>>({})
@@ -121,15 +120,10 @@ export function Step4Resources({ classId, onContinue }: Step4ResourcesProps) {
     ).then((entries) => {
       if (!isMounted) return
       const map: Record<number, ResourceOption[]> = {}
-      const lookup: Record<number, ResourceOption> = {}
       entries.forEach(([day, list]) => {
         map[day] = list
-        list.forEach((resource) => {
-          lookup[resource.id] = resource
-        })
       })
       setResourcesByDay(map)
-      setResourceLookup(lookup)
       setIsLoadingResources(false)
     })
 

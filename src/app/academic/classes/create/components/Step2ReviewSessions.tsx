@@ -148,7 +148,6 @@ export function Step2ReviewSessions({ classId }: Step2ReviewSessionsProps) {
                   <TableHead className="w-16">#</TableHead>
                   <TableHead className="w-48">Ngày</TableHead>
                   <TableHead>Nội dung</TableHead>
-                  <TableHead className="w-24">Kỹ năng</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -157,7 +156,6 @@ export function Step2ReviewSessions({ classId }: Step2ReviewSessionsProps) {
                     <TableCell className="font-medium">{session?.sequenceNumber}</TableCell>
                     <TableCell>{formatDate(session?.date || '')}</TableCell>
                     <TableCell>{session?.courseSessionName || '—'}</TableCell>
-                    <TableCell className="text-muted-foreground">{session?.skill || '—'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
