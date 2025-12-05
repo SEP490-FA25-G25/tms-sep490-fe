@@ -136,7 +136,7 @@ export default function ManagerResourcesPage() {
             onClick={() =>
               column.toggleSorting(column.getIsSorted() === "asc")
             }
-            className="-ml-4 inline-flex items-center text-sm font-medium"
+            className="h-8 px-2 inline-flex items-center text-sm font-medium"
           >
             Mã
             <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -156,7 +156,7 @@ export default function ManagerResourcesPage() {
             onClick={() =>
               column.toggleSorting(column.getIsSorted() === "asc")
             }
-            className="-ml-4 inline-flex items-center text-sm font-medium"
+            className="h-8 px-2 inline-flex items-center text-sm font-medium"
           >
             Tên tài nguyên
             <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -188,7 +188,7 @@ export default function ManagerResourcesPage() {
             onClick={() =>
               column.toggleSorting(column.getIsSorted() === "asc")
             }
-            className="-ml-4 inline-flex items-center text-sm font-medium"
+            className="h-8 px-2 inline-flex items-center text-sm font-medium"
           >
             Chi nhánh
             <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -205,7 +205,7 @@ export default function ManagerResourcesPage() {
             onClick={() =>
               column.toggleSorting(column.getIsSorted() === "asc")
             }
-            className="-ml-4 inline-flex items-center text-sm font-medium"
+            className="h-8 px-2 inline-flex items-center text-sm font-medium"
           >
             Sức chứa
             <ArrowUpDown className="ml-2 h-4 w-4" />

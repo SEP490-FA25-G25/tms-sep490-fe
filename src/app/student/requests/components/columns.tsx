@@ -150,7 +150,7 @@ export const columns: ColumnDef<StudentRequest>[] = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="-ml-4 h-8 px-2"
+          className="h-8 px-2"
         >
           Trạng thái
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -168,7 +168,7 @@ export const columns: ColumnDef<StudentRequest>[] = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="-ml-4 h-8 px-2"
+          className="h-8 px-2"
         >
           Ngày gửi
           <ArrowUpDown className="ml-2 h-4 w-4" />

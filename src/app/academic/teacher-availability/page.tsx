@@ -120,7 +120,7 @@ const AvailabilityCampaignPage = () => {
                     <Button
                         variant="ghost"
                         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                        className="-ml-4"
+                        className="h-8 px-2"
                     >
                         Giáo viên
                         <ArrowUpDown className="ml-2 h-4 w-4" />

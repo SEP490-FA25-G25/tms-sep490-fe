@@ -120,7 +120,7 @@ function SortableHeader({
     <Button
       variant="ghost"
       onClick={() => onSort(field)}
-      className="h-8 px-2 -ml-2 font-semibold hover:bg-muted/50"
+      className="h-8 px-2 font-semibold hover:bg-muted/50"
     >
       {label}
       {isActive ? (

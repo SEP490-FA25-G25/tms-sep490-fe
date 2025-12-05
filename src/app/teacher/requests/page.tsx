@@ -715,7 +715,7 @@ export default function MyRequestsPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="-ml-4 h-8 px-2 font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted/60"
+                  className="h-8 px-2 font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted/60"
                   onClick={() => {
                     if (sortField === "status") {
                       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -744,7 +744,7 @@ export default function MyRequestsPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="-ml-4 h-8 px-2 font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted/60"
+                  className="h-8 px-2 font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted/60"
                   onClick={() => {
                     if (sortField === "submittedAt") {
                       setSortOrder(sortOrder === "asc" ? "desc" : "asc");

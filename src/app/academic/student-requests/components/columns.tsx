@@ -51,7 +51,7 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="-ml-4"
+          className="h-8 px-2"
         >
           Sinh viên
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -78,7 +78,7 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="-ml-4"
+          className="h-8 px-2"
         >
           Thời gian còn lại
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -310,7 +310,7 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="-ml-4"
+          className="h-8 px-2"
         >
           Trạng thái
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -328,7 +328,7 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="-ml-4"
+          className="h-8 px-2"
         >
           Ngày gửi
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -369,7 +369,7 @@ export const historyColumns: ColumnDef<AcademicStudentRequest>[] = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="-ml-4"
+          className="h-8 px-2"
         >
           Sinh viên
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -467,7 +467,7 @@ export const historyColumns: ColumnDef<AcademicStudentRequest>[] = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="-ml-4"
+          className="h-8 px-2"
         >
           Trạng thái
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -485,7 +485,7 @@ export const historyColumns: ColumnDef<AcademicStudentRequest>[] = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="-ml-4"
+          className="h-8 px-2"
         >
           Ngày gửi
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -523,7 +523,7 @@ export const historyColumns: ColumnDef<AcademicStudentRequest>[] = [
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="-ml-4"
+          className="h-8 px-2"
         >
           Ngày duyệt
           <ArrowUpDown className="ml-2 h-4 w-4" />

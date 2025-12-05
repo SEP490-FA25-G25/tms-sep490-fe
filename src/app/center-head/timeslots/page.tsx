@@ -198,7 +198,7 @@ export default function CenterHeadTimeSlotsPage() {
                     <Button
                         variant="ghost"
                         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                        className="-ml-4"
+                        className="h-8 px-2"
                     >
                         Tên khung giờ
                         <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -214,7 +214,7 @@ export default function CenterHeadTimeSlotsPage() {
                     <Button
                         variant="ghost"
                         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                        className="-ml-4"
+                        className="h-8 px-2"
                     >
                         Chi nhánh
                         <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -230,7 +230,7 @@ export default function CenterHeadTimeSlotsPage() {
                     <Button
                         variant="ghost"
                         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                        className="-ml-4"
+                        className="h-8 px-2"
                     >
                         Bắt đầu
                         <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -246,7 +246,7 @@ export default function CenterHeadTimeSlotsPage() {
                     <Button
                         variant="ghost"
                         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                        className="-ml-4"
+                        className="h-8 px-2"
                     >
                         Kết thúc
                         <ArrowUpDown className="ml-2 h-4 w-4" />

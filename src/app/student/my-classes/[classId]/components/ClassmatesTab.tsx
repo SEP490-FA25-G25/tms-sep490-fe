@@ -85,7 +85,7 @@ const ClassmatesTab: React.FC<ClassmatesTabProps> = ({ classmates, isLoading, en
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="-ml-4 h-8 px-2"
+          className="h-8 px-2"
         >
           Học viên
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -125,7 +125,7 @@ const ClassmatesTab: React.FC<ClassmatesTabProps> = ({ classmates, isLoading, en
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="-ml-4 h-8 px-2 hidden sm:flex"
+          className="h-8 px-2 hidden sm:flex"
         >
           Trạng thái
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -145,7 +145,7 @@ const ClassmatesTab: React.FC<ClassmatesTabProps> = ({ classmates, isLoading, en
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="-ml-4 h-8 px-2 hidden md:flex"
+          className="h-8 px-2 hidden md:flex"
         >
           Ngày đăng ký
           <ArrowUpDown className="ml-2 h-4 w-4" />

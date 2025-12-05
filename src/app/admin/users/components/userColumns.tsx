@@ -62,7 +62,7 @@ export function createUserColumns({
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4"
+            className="h-8 px-2"
           >
             ID
             <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -80,7 +80,7 @@ export function createUserColumns({
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4"
+            className="h-8 px-2"
           >
             Họ tên
             <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -162,7 +162,7 @@ export function createUserColumns({
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-            className="-ml-4"
+            className="h-8 px-2"
           >
             Trạng thái
             <ArrowUpDown className="ml-2 h-4 w-4" />
