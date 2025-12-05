@@ -12,9 +12,9 @@ import {
   useDeleteSkillAssessmentMutation,
   type StudentDetailDTO,
   type UpdateStudentRequest,
+  type SkillAssessmentUpdateInput,
 } from '@/store/services/studentApi'
 import { StudentForm, type StudentFormData } from '@/components/student/StudentForm'
-import type { SkillAssessmentInput } from '@/store/services/studentApi'
 
 // ========== Types ==========
 export interface StudentEditDialogProps {
@@ -36,7 +36,7 @@ export function StudentEditDialog({
 
   const handleSubmit = async (data: {
     formData: StudentFormData
-    skillAssessments: SkillAssessmentInput[]
+    skillAssessments: SkillAssessmentUpdateInput[]
     assessmentsToDelete?: number[]
   }) => {
     if (!student) return

@@ -18,9 +18,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
-import { useCreateStudentMutation, type CreateStudentResponse } from '@/store/services/studentApi'
+import { useCreateStudentMutation, type CreateStudentResponse, type SkillAssessmentUpdateInput } from '@/store/services/studentApi'
 import { StudentForm, type StudentFormData } from './StudentForm'
-import type { SkillAssessmentInput } from '@/store/services/studentApi'
 
 // ========== Types ==========
 export interface CreateStudentDialogProps {
@@ -109,7 +108,7 @@ export function CreateStudentDialog({
 
   const handleSubmit = async (data: {
     formData: StudentFormData
-    skillAssessments: SkillAssessmentInput[]
+    skillAssessments: SkillAssessmentUpdateInput[]
   }) => {
     try {
       const result = await createStudent({

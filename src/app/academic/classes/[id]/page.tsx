@@ -19,7 +19,6 @@ import { StudentsTab } from './components/StudentsTab'
 import { SessionsTab } from './components/SessionsTab'
 import { StudentDetailDrawer } from '../../students/components/StudentDetailDrawer'
 import { StudentEditDialog } from '../../students/components/StudentEditDialog'
-import { toast } from 'sonner'
 import { useIsAcademicAffair } from '@/hooks/useRoleBasedAccess'
 
 export default function ClassDetailPage() {

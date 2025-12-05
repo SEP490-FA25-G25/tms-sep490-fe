@@ -58,7 +58,7 @@ import {
 import { useUploadFileMutation } from '@/store/services/uploadApi'
 import { useGetSubjectsWithLevelsQuery } from '@/store/services/curriculumApi'
 import { useGetAssessorsForBranchQuery } from '@/store/services/studentApi'
-import type { SkillAssessmentInput, StudentDetailDTO, SkillAssessmentDetailDTO } from '@/store/services/studentApi'
+import type { SkillAssessmentUpdateInput, StudentDetailDTO, SkillAssessmentDetailDTO } from '@/store/services/studentApi'
 
 // ========== Types ==========
 export type Gender = 'MALE' | 'FEMALE' | 'OTHER'
@@ -98,7 +98,7 @@ export interface StudentFormProps {
   initialData?: StudentDetailDTO
   onSubmit: (data: {
     formData: StudentFormData
-    skillAssessments: SkillAssessmentInput[]
+    skillAssessments: SkillAssessmentUpdateInput[]
     assessmentsToDelete?: number[]
   }) => Promise<void>
   isSubmitting?: boolean
@@ -744,17 +744,17 @@ export function StudentForm({
     if (!validateForm()) return
 
     // Transform to API format
-    const assessmentsToSubmit: SkillAssessmentInput[] = skillAssessments
+    const assessmentsToSubmit: SkillAssessmentUpdateInput[] = skillAssessments
       .filter((a) => a.levelId > 0) // Only include valid assessments
-      .map(({ subjectId: _subjectId, _levelCode: _lc, _levelName: _ln, _assessedByFullName: _af, ...rest }) => ({
-        id: rest.id,
-        skill: rest.skill as SkillAssessmentInput['skill'],
-        levelId: rest.levelId,
-        rawScore: rest.rawScore,
-        scoreScale: rest.scoreScale,
-        note: rest.note,
-        assessedByUserId: rest.assessedByUserId,
-        assessmentDate: rest.assessmentDate,
+      .map((assessment) => ({
+        id: assessment.id,
+        skill: assessment.skill as SkillAssessmentUpdateInput['skill'],
+        levelId: assessment.levelId,
+        rawScore: assessment.rawScore,
+        scoreScale: assessment.scoreScale,
+        note: assessment.note,
+        assessedByUserId: assessment.assessedByUserId,
+        assessmentDate: assessment.assessmentDate,
       }))
 
     await onSubmit({

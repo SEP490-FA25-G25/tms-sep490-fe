@@ -7,6 +7,7 @@ import {
   CalendarCheck2Icon,
   CalendarX2Icon,
   CheckCircleIcon,
+  ChevronDownIcon,
   ClockIcon,
   NotebookPenIcon,
   PlusIcon,
@@ -25,6 +26,12 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   FullScreenModal,
   FullScreenModalContent,
@@ -99,7 +106,6 @@ export default function StudentRequestsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
   const [page, setPage] = useState(0)
-  const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [activeType, setActiveType] = useState<RequestType | null>(null)
   const [detailId, setDetailId] = useState<number | null>(null)
   const [cancelingId, setCancelingId] = useState<number | null>(null)
@@ -166,7 +172,6 @@ export default function StudentRequestsPage() {
   }
 
   const handleModalClose = () => {
-    setIsCreateOpen(false)
     setActiveType(null)
   }
 
@@ -192,10 +197,29 @@ export default function StudentRequestsPage() {
                     Quản lý yêu cầu xin nghỉ, học bù, chuyển lớp
                   </p>
                 </div>
-                <Button onClick={() => setIsCreateOpen(true)} size="sm" className="w-full sm:w-auto">
-                  <PlusIcon className="h-4 w-4" />
-                  Tạo yêu cầu
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" className="w-full sm:w-auto">
+                      <PlusIcon className="h-4 w-4" />
+                      Tạo yêu cầu
+                      <ChevronDownIcon className="h-4 w-4 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => setActiveType('ABSENCE')}>
+                      <CalendarX2Icon className="h-4 w-4 mr-2" />
+                      Xin nghỉ buổi học
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setActiveType('MAKEUP')}>
+                      <CalendarCheck2Icon className="h-4 w-4 mr-2" />
+                      Xin học bù
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setActiveType('TRANSFER')}>
+                      <ArrowRightLeftIcon className="h-4 w-4 mr-2" />
+                      Chuyển lớp
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </header>
 
@@ -420,22 +444,27 @@ export default function StudentRequestsPage() {
           </main>
         </SidebarInset>
       </SidebarProvider>
-      <CreateRequestDialog
-        open={isCreateOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            handleModalClose()
-          } else {
-            setIsCreateOpen(true)
-          }
-        }}
-        activeType={activeType}
-        onSelectType={(type) => setActiveType(type)}
-        onSuccess={() => {
-          handleModalClose()
-          refetchRequests()
-        }}
-      />
+      {/* Request Flow Modal */}
+      <FullScreenModal open={activeType !== null} onOpenChange={(open) => !open && handleModalClose()}>
+        <FullScreenModalContent size="lg">
+          <FullScreenModalHeader>
+            <FullScreenModalTitle>
+              {activeType && REQUEST_TYPE_LABELS[activeType]}
+            </FullScreenModalTitle>
+          </FullScreenModalHeader>
+          <FullScreenModalBody>
+            {activeType && (
+              <UnifiedRequestFlow
+                type={activeType}
+                onSuccess={() => {
+                  handleModalClose()
+                  refetchRequests()
+                }}
+              />
+            )}
+          </FullScreenModalBody>
+        </FullScreenModalContent>
+      </FullScreenModal>
 
       <RequestDetailDialog
         requestId={detailId}
@@ -479,13 +508,9 @@ export default function StudentRequestsPage() {
                 <Button onClick={() => setSuccessRequest(null)}>Xem danh sách yêu cầu</Button>
                 <Button
                   variant="ghost"
-                  onClick={() => {
-                    setSuccessRequest(null)
-                    setActiveType(null)
-                    setIsCreateOpen(true)
-                  }}
+                  onClick={() => setSuccessRequest(null)}
                 >
-                  Tạo yêu cầu khác
+                  Đóng
                 </Button>
               </div>
             </div>
@@ -521,114 +546,6 @@ export default function StudentRequestsPage() {
     </StudentRoute>
   )
 }
-interface CreateDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  activeType: RequestType | null
-  onSelectType: (type: RequestType | null) => void
-  onSuccess: () => void
-}
-
-function CreateRequestDialog({
-  open,
-  onOpenChange,
-  activeType,
-  onSelectType,
-  onSuccess,
-}: CreateDialogProps) {
-  const handleTypeSelect = (type: RequestType) => {
-    onSelectType(type)
-  }
-
-  return (
-    <FullScreenModal open={open} onOpenChange={onOpenChange}>
-      <FullScreenModalContent size="xl">
-        <FullScreenModalHeader>
-          <FullScreenModalTitle>Tạo yêu cầu mới</FullScreenModalTitle>
-        </FullScreenModalHeader>
-        <FullScreenModalBody>
-          {activeType === null ? (
-            <TypeSelection onSelect={handleTypeSelect} />
-          ) : (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between border-b pb-2">
-                <div>
-                  <p className="text-xs text-muted-foreground">Loại yêu cầu</p>
-                  <h3 className="text-base font-semibold">{REQUEST_TYPE_LABELS[activeType]}</h3>
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => onSelectType(null)}>
-                  Chọn loại khác
-                </Button>
-              </div>
-
-              <UnifiedRequestFlow type={activeType} onSuccess={onSuccess} />
-            </div>
-          )}
-        </FullScreenModalBody>
-      </FullScreenModalContent>
-    </FullScreenModal>
-  )
-}
-
-function TypeSelection({ onSelect }: { onSelect: (type: RequestType) => void }) {
-  const types: Array<{
-    type: RequestType
-    icon: React.ReactNode
-    title: string
-    description: string
-    bullets: string[]
-  }> = [
-    {
-      type: 'ABSENCE',
-      icon: <CalendarX2Icon className="h-6 w-6" />,
-      title: 'Xin nghỉ buổi học',
-      description: 'Báo trước khi vắng mặt',
-      bullets: ['Buổi chưa diễn ra', 'Cần lý do cụ thể', 'Chờ Giáo vụ duyệt'],
-    },
-    {
-      type: 'MAKEUP',
-      icon: <CalendarCheck2Icon className="h-6 w-6" />,
-      title: 'Xin học bù',
-      description: 'Bù lại buổi đã vắng',
-      bullets: ['Buổi vắng trong 4 tuần', 'Cùng nội dung học', 'Chờ Giáo vụ duyệt'],
-    },
-    {
-      type: 'TRANSFER',
-      icon: <ArrowRightLeftIcon className="h-6 w-6" />,
-      title: 'Chuyển lớp',
-      description: 'Đổi lịch hoặc chi nhánh',
-      bullets: ['Cùng khóa học', 'Tối đa 1 lần', 'Xử lý 4-8 giờ'],
-    },
-  ]
-
-  return (
-    <div className="grid grid-cols-3 gap-4">
-      {types.map((item) => (
-        <button
-          key={item.type}
-          type="button"
-          onClick={() => onSelect(item.type)}
-          className="group flex min-h-[180px] flex-col rounded-xl border border-border/60 p-5 text-left transition hover:border-primary hover:bg-primary/5"
-        >
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
-            {item.icon}
-          </div>
-          <h3 className="text-base font-semibold text-foreground">{item.title}</h3>
-          <p className="mt-1.5 text-sm text-muted-foreground">{item.description}</p>
-          <ul className="mt-auto pt-4 space-y-1.5 text-xs text-muted-foreground">
-            {item.bullets.map((bullet) => (
-              <li key={bullet} className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary/60" />
-                <span>{bullet}</span>
-              </li>
-            ))}
-          </ul>
-        </button>
-      ))}
-    </div>
-  )
-}
-
 export function RequestDetail({ request }: { request: StudentRequest }) {
   const submittedLabel = request.submittedAt
     ? format(parseISO(request.submittedAt), 'HH:mm dd/MM/yyyy', { locale: vi })

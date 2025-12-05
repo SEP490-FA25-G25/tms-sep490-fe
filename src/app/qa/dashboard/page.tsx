@@ -91,7 +91,7 @@ export default function QADashboardPage() {
             // Fallback to default trend data class
             setSelectedClassId(dashboard.trendData.classId)
         }
-    }, [classesForSelectedCourse, dashboard?.trendData?.classId, userSelectedClass])
+    }, [classesForSelectedCourse, dashboard?.trendData?.classId, userSelectedClass, selectedClassId])
 
     // Handle course change
     const handleCourseChange = (value: string) => {
@@ -108,19 +108,6 @@ export default function QADashboardPage() {
         setSelectedClassId(newClassId)
         setUserSelectedClass(true) // Mark as manually selected
     }
-
-    // Get selected class info for display
-    const selectedClassInfo = React.useMemo(() => {
-        if (!selectedClassId) return null
-        const fromComparison = classesForSelectedCourse.find(c => c.classId === selectedClassId)
-        if (fromComparison) {
-            return { classCode: fromComparison.classCode, classId: fromComparison.classId }
-        }
-        if (combinedTrendData) {
-            return { classCode: combinedTrendData.classCode, classId: combinedTrendData.classId }
-        }
-        return null
-    }, [selectedClassId, classesForSelectedCourse, combinedTrendData])
 
     // Memoized options for comboboxes
     const courseOptions: ComboboxOption[] = React.useMemo(() => {

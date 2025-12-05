@@ -8,11 +8,16 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
   FullScreenModal,
   FullScreenModalContent,
   FullScreenModalHeader,
   FullScreenModalTitle,
-  FullScreenModalDescription,
   FullScreenModalBody,
 } from '@/components/ui/full-screen-modal'
 import {
@@ -24,7 +29,7 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination'
 import {
-  PlusCircleIcon,
+  ChevronDownIcon,
   RotateCcwIcon,
   ClockIcon,
   CalendarX2Icon,
@@ -80,7 +85,6 @@ export default function AcademicRequestsPage() {
 
   // Dialog states
   const [selectedRequestId, setSelectedRequestId] = useState<number | null>(null)
-  const [showOnBehalfDialog, setShowOnBehalfDialog] = useState(false)
   const [activeRequestType, setActiveRequestType] = useState<'ABSENCE' | 'MAKEUP' | 'TRANSFER' | null>(null)
 
   // Fetch pending requests
@@ -149,10 +153,28 @@ export default function AcademicRequestsPage() {
       title="Quản lý yêu cầu học viên"
       description="Xem xét và phê duyệt các yêu cầu xin nghỉ, học bù, chuyển lớp"
       actions={
-        <Button className="gap-2" onClick={() => setShowOnBehalfDialog(true)}>
-          <PlusCircleIcon className="h-4 w-4" />
-          Xử lý yêu cầu học viên
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="gap-2">
+              Xử lý yêu cầu học viên
+              <ChevronDownIcon className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => setActiveRequestType('ABSENCE')}>
+              <CalendarX2Icon className="h-4 w-4 mr-2" />
+              Báo nghỉ học viên
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setActiveRequestType('MAKEUP')}>
+              <CalendarCheck2Icon className="h-4 w-4 mr-2" />
+              Xếp lịch học bù
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setActiveRequestType('TRANSFER')}>
+              <ArrowRightLeftIcon className="h-4 w-4 mr-2" />
+              Đổi lớp học viên
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       }
     >
       <div className="space-y-6">
@@ -497,115 +519,43 @@ export default function AcademicRequestsPage() {
         }}
       />
 
-      {/* On-Behalf Creation Dialog */}
-      <FullScreenModal open={showOnBehalfDialog} onOpenChange={setShowOnBehalfDialog}>
+      {/* On-Behalf Creation Modal */}
+      <FullScreenModal open={activeRequestType !== null} onOpenChange={(open) => !open && setActiveRequestType(null)}>
         <FullScreenModalContent size="2xl">
           <FullScreenModalHeader>
-            <FullScreenModalTitle>Xử lý yêu cầu học viên</FullScreenModalTitle>
-            <FullScreenModalDescription>
-              Xử lý yêu cầu từ học viên qua điện thoại, tin nhắn hoặc trực tiếp. Hệ thống sẽ tự động duyệt.
-            </FullScreenModalDescription>
+            <FullScreenModalTitle>
+              {activeRequestType === 'ABSENCE' && 'Báo nghỉ học viên'}
+              {activeRequestType === 'MAKEUP' && 'Xếp lịch học bù'}
+              {activeRequestType === 'TRANSFER' && 'Đổi lớp học viên'}
+            </FullScreenModalTitle>
           </FullScreenModalHeader>
           <FullScreenModalBody>
+            {activeRequestType === 'ABSENCE' && (
+              <AAAbsenceFlow
+                onSuccess={() => {
+                  setActiveRequestType(null)
+                  toast.success('Đã xử lý yêu cầu xin nghỉ thành công')
+                }}
+              />
+            )}
 
-          {activeRequestType === null ? (
-            <div className="grid grid-cols-3 gap-4">
-              {[
-                {
-                  type: 'ABSENCE' as const,
-                  icon: <CalendarX2Icon className="h-6 w-6" />,
-                  title: 'Báo nghỉ học viên',
-                  description: 'Ghi nhận lý do vắng mặt',
-                  bullets: ['Buổi chưa diễn ra', 'Tự động duyệt', 'Ghi chú nội bộ'],
-                },
-                {
-                  type: 'MAKEUP' as const,
-                  icon: <CalendarCheck2Icon className="h-6 w-6" />,
-                  title: 'Xếp lịch học bù',
-                  description: 'Chọn buổi bù cho học viên',
-                  bullets: ['Buổi vắng trong 4 tuần', 'Gợi ý thông minh', 'Tự động duyệt'],
-                },
-                {
-                  type: 'TRANSFER' as const,
-                  icon: <ArrowRightLeftIcon className="h-6 w-6" />,
-                  title: 'Đổi lớp học viên',
-                  description: 'Chuyển sang lớp khác',
-                  bullets: ['Cùng khóa học', 'Đổi lịch/chi nhánh', 'Tự động duyệt'],
-                },
-              ].map((item) => (
-                <button
-                  key={item.type}
-                  type="button"
-                  onClick={() => setActiveRequestType(item.type)}
-                  className="group flex min-h-[180px] flex-col rounded-xl border border-border/60 p-5 text-left transition hover:border-primary hover:bg-primary/5"
-                >
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
-                    {item.icon}
-                  </div>
-                  <h3 className="text-base font-semibold text-foreground">{item.title}</h3>
-                  <p className="mt-1.5 text-sm text-muted-foreground">{item.description}</p>
-                  <ul className="mt-auto pt-4 space-y-1.5 text-xs text-muted-foreground">
-                    {item.bullets.map((bullet) => (
-                      <li key={bullet} className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-primary/60" />
-                        <span>{bullet}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between border-b pb-3">
-                <div>
-                  <p className="text-xs text-muted-foreground">Đang thực hiện</p>
-                  <h3 className="text-base font-semibold">
-                    {activeRequestType === 'ABSENCE' && 'Báo nghỉ học viên'}
-                    {activeRequestType === 'MAKEUP' && 'Xếp lịch học bù'}
-                    {activeRequestType === 'TRANSFER' && 'Đổi lớp học viên'}
-                  </h3>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setActiveRequestType(null)}
-                >
-                  Chọn loại khác
-                </Button>
-              </div>
+            {activeRequestType === 'MAKEUP' && (
+              <AAMakeupFlow
+                onSuccess={() => {
+                  setActiveRequestType(null)
+                  toast.success('Đã xử lý yêu cầu học bù thành công')
+                }}
+              />
+            )}
 
-              {activeRequestType === 'ABSENCE' && (
-                <AAAbsenceFlow
-                  onSuccess={() => {
-                    setActiveRequestType(null)
-                    setShowOnBehalfDialog(false)
-                    toast.success('Đã xử lý yêu cầu xin nghỉ thành công')
-                  }}
-                />
-              )}
-
-              {activeRequestType === 'MAKEUP' && (
-                <AAMakeupFlow
-                  onSuccess={() => {
-                    setActiveRequestType(null)
-                    setShowOnBehalfDialog(false)
-                    toast.success('Đã xử lý yêu cầu học bù thành công')
-                  }}
-                />
-              )}
-
-              {activeRequestType === 'TRANSFER' && (
-                <AATransferFlow
-                  onSuccess={() => {
-                    setActiveRequestType(null)
-                    setShowOnBehalfDialog(false)
-                    toast.success('Đã xử lý yêu cầu chuyển lớp thành công')
-                  }}
-                />
-              )}
-            </div>
-          )}
+            {activeRequestType === 'TRANSFER' && (
+              <AATransferFlow
+                onSuccess={() => {
+                  setActiveRequestType(null)
+                  toast.success('Đã xử lý yêu cầu chuyển lớp thành công')
+                }}
+              />
+            )}
           </FullScreenModalBody>
         </FullScreenModalContent>
       </FullScreenModal>

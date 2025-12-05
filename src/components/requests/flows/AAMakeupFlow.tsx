@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { skipToken } from '@reduxjs/toolkit/query'
+import { Search, Loader2, UserX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -253,6 +254,56 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
                   ))}
               </div>
             )}
+
+            {/* Empty states cho Step 1 */}
+            {!selectedStudent && (
+              <>
+                {/* Loading state */}
+                {isSearchingStudents && (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <Loader2 className="h-8 w-8 text-muted-foreground animate-spin mb-3" />
+                    <p className="text-sm text-muted-foreground">Đang tìm kiếm...</p>
+                  </div>
+                )}
+
+                {/* Initial state - chưa nhập gì */}
+                {!isSearchingStudents && studentSearch.trim().length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
+                      <Search className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm font-medium text-foreground">Tìm kiếm học viên</p>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-[240px]">
+                      Nhập tên hoặc mã học viên vào ô tìm kiếm phía trên để bắt đầu
+                    </p>
+                  </div>
+                )}
+
+                {/* Nhập chưa đủ 2 ký tự */}
+                {!isSearchingStudents && studentSearch.trim().length > 0 && studentSearch.trim().length < 2 && (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
+                      <Search className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Nhập thêm ít nhất {2 - studentSearch.trim().length} ký tự</p>
+                  </div>
+                )}
+
+                {/* Không tìm thấy kết quả */}
+                {!isSearchingStudents && studentSearch.trim().length >= 2 && studentOptions.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
+                      <UserX className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm font-medium text-foreground">Không tìm thấy học viên</p>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-[240px]">
+                      Thử tìm kiếm với tên hoặc mã học viên khác
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+
             {selectedStudent && (
               <div className="border-t pt-3 mt-3">
                 <div className="rounded-lg bg-muted/30 p-3 border">
