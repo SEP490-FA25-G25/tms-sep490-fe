@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Loader2 } from "lucide-react";
 import { useGetCourseDetailsQuery } from "@/store/services/courseApi";
-import { CourseWizard } from "../components/wizard/CourseWizard";
+import { CourseWizard } from "@/components/curriculum/CourseWizard";
 
 export default function EditCoursePage() {
     const { id } = useParams();

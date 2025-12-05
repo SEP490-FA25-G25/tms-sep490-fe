@@ -11,7 +11,7 @@ import type {
   ForgotPasswordResponse,
   ResetPasswordRequest,
   ResetPasswordResponse,
-} from '@/features/auth/types'
+} from '@/types/auth'
 
 // Types based on backend API documentation
 export interface LoginRequest {

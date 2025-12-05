@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, ArrowLeft, PlayCircle, ChevronRight, Download, FileText, ChevronDown } from "lucide-react";
-import { CustomVideoPlayer } from "../components/CustomVideoPlayer";
+import { CustomVideoPlayer } from "@/components/curriculum/CustomVideoPlayer";
 import { cn } from "@/lib/utils";
 
 interface VideoMaterial {

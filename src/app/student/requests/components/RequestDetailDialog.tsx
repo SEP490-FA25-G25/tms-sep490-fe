@@ -16,7 +16,7 @@ import {
   ArrowRightIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { REQUEST_STATUS_META } from "@/constants/absence";
+import { REQUEST_STATUS_META } from "@/utils/requestStatusMeta";
 import type { StudentRequest } from "@/store/services/studentRequestApi";
 
 const REQUEST_TYPE_LABELS: Record<"ABSENCE" | "MAKEUP" | "TRANSFER", string> = {

@@ -1,4 +1,4 @@
-import { CourseWizard } from "../components/wizard/CourseWizard";
+import { CourseWizard } from "@/components/curriculum/CourseWizard";
 import { DashboardLayout } from "@/components/DashboardLayout";
 
 export default function CreateCoursePage() {

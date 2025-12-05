@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
-import type { PasswordStrength, PasswordValidationRule } from "@/features/auth/types"
+import type { PasswordStrength, PasswordValidationRule } from "@/types/auth"
 
 const passwordRules: PasswordValidationRule[] = [
   {

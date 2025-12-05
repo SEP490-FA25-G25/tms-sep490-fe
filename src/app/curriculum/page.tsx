@@ -3,9 +3,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { SubjectList } from "../components/SubjectList";
-import { CourseList } from "../components/CourseList";
-import { LevelList } from "../components/LevelList";
+import { SubjectList } from "@/components/curriculum/SubjectList";
+import { CourseList } from "@/components/curriculum/CourseList";
+import { LevelList } from "@/components/curriculum/LevelList";
 import { DashboardLayout } from "@/components/DashboardLayout";
 
 import { useAuth } from "@/contexts/AuthContext";

@@ -71,7 +71,7 @@ import {
   type RequestStatus,
   type RequestType,
 } from '@/store/services/studentRequestApi'
-import { REQUEST_STATUS_META } from '@/constants/absence'
+import { REQUEST_STATUS_META } from '@/utils/requestStatusMeta'
 import { DataTable } from './components/DataTable'
 import { columns } from './components/columns'
 import { RequestDetailDialog } from './components/RequestDetailDialog'

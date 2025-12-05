@@ -14,7 +14,7 @@ const PageLoader = () => (
   </div>
 );
 const CourseApprovalPage = lazy(
-  () => import("./features/curriculum/pages/CourseApprovalPage")
+  () => import("./app/curriculum/approval/page")
 );
 
 // Lazy load all pages
@@ -25,10 +25,10 @@ const PublicCourseDetailPage = lazy(
 const DashboardPage = lazy(() => import("./app/dashboard/page"));
 const LoginPage = lazy(() => import("./app/login/page"));
 const ForgotPasswordPage = lazy(
-  () => import("./features/auth/pages/ForgotPasswordPage")
+  () => import("./app/forgot-password/page")
 );
 const ResetPasswordPage = lazy(
-  () => import("./features/auth/pages/ResetPasswordPage")
+  () => import("./app/reset-password/page")
 );
 const SchedulePage = lazy(() => import("./app/schedule/page"));
 const NotificationsPage = lazy(() => import("./app/notifications/page"));
@@ -170,25 +170,25 @@ const ManagerPoliciesPage = lazy(() => import("./app/manager/policies/page"));
 
 // Curriculum pages
 const CurriculumPage = lazy(
-  () => import("./features/curriculum/pages/CurriculumPage")
+  () => import("./app/curriculum/page")
 );
 const CurriculumCourseDetailPage = lazy(
-  () => import("./features/curriculum/pages/CourseDetailPage")
+  () => import("./app/curriculum/courses/[id]/page")
 );
 const SubjectDetailPage = lazy(
-  () => import("@/features/curriculum/pages/SubjectDetailPage")
+  () => import("./app/curriculum/subjects/[id]/page")
 );
 const CourseLearningPage = lazy(
-  () => import("./features/curriculum/pages/CourseLearningPage")
+  () => import("./app/curriculum/courses/learn/page")
 );
 const EditCoursePage = lazy(
-  () => import("./features/curriculum/pages/EditCoursePage")
+  () => import("./app/curriculum/courses/edit/page")
 );
 const CreateCoursePage = lazy(
-  () => import("./features/curriculum/pages/CreateCoursePage")
+  () => import("./app/curriculum/courses/create/page")
 );
 const LevelDetailPage = lazy(
-  () => import("@/features/curriculum/pages/LevelDetailPage")
+  () => import("./app/curriculum/levels/[id]/page")
 );
 
 // QA pages

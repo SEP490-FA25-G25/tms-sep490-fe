@@ -50,7 +50,7 @@ import {
   useRejectRequestMutation,
   type RequestStatus,
 } from '@/store/services/studentRequestApi'
-import { ABSENCE_STATUS_META } from '@/constants/absence'
+import { ABSENCE_STATUS_META } from '@/utils/requestStatusMeta'
 
 type HistoryFilter = RequestStatus | 'ALL'
 

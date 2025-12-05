@@ -28,7 +28,7 @@ import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
-import { REQUEST_STATUS_META } from '@/constants/absence'
+import { REQUEST_STATUS_META } from '@/utils/requestStatusMeta'
 import {
   useGetRequestDetailQuery,
   useApproveRequestMutation,
