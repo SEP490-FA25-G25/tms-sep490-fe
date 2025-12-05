@@ -419,11 +419,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <Link to={brandHref} className="flex items-center gap-2">
                 <img
                   src="/logo.jpg"
-                  alt="Anh ngữ Pinnacle Logo"
+                  alt="TMS Logo"
                   className="h-8 w-auto"
                 />
                 <span className="text-base font-semibold">
-                  Anh ngữ Pinnacle
+                  Hệ thống TMS
                 </span>
               </Link>
             </SidebarMenuButton>

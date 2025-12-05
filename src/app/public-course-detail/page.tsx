@@ -210,12 +210,12 @@ export default function PublicCourseDetailPage() {
                     <Link to="/" className="lp-logo">
                         <img
                             src="/logo.jpg"
-                            alt="Anh ngữ Pinnacle"
+                            alt="Hệ thống TMS"
                             style={{ height: "2.5rem", width: "2.5rem", borderRadius: "50%", objectFit: "cover" }}
                         />
                         <span className="lp-logo-stack">
-                            <span className="lp-logo-text-primary">PINNACLE</span>
-                            <span className="lp-logo-text-secondary">English Center</span>
+                            <span className="lp-logo-text-primary">TMS</span>
+                            <span className="lp-logo-text-secondary">Training Management System</span>
                         </span>
                     </Link>
 
@@ -321,7 +321,7 @@ export default function PublicCourseDetailPage() {
                         <div className="lp-consultation-text" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
                             <img
                                 src={consultLogo}
-                                alt="Pinnacle logo"
+                                alt="TMS logo"
                                 style={{
                                     width: "100%",
                                     height: "auto",
@@ -376,7 +376,7 @@ export default function PublicCourseDetailPage() {
             <footer className="lp-footer">
                 <div className="lp-container">
                     <div className="lp-footer-top">
-                        <h2 className="text-3xl font-bold text-[#FFFFFF] uppercase">PINNACLE ENGLISH CENTER</h2>
+                        <h2 className="text-3xl font-bold text-[#FFFFFF] uppercase">TMS - TRAINING MANAGEMENT SYSTEM</h2>
                         <div className="lp-footer-subtitle">
                             Hệ thống Anh ngữ Luyện thi IELTS, TOEIC và Cambridge Cam kết chuẩn đầu ra
                         </div>
@@ -386,7 +386,7 @@ export default function PublicCourseDetailPage() {
                         {/* Left Column: Locations */}
                         <div>
                             <div style={{ marginBottom: '2rem' }}>
-                                <div className="lp-footer-col-title">PINNACLE HÀ NỘI</div>
+                                <div className="lp-footer-col-title">TMS HÀ NỘI</div>
                                 <ul className="lp-footer-list">
                                     <li>• CS1: Số 34, Hoàng Cầu, Phường Ô Chợ Dừa, Quận Đống Đa</li>
                                     <li>• CS2: 96A, Trần Phú, Phường Mộ Lao, Quận Hà Đông</li>
@@ -405,11 +405,11 @@ export default function PublicCourseDetailPage() {
                                     <Phone size={18} /> 0977 727 721
                                 </div>
                                 <div className="lp-footer-contact-item">
-                                    <Mail size={18} /> tienganhpinnacle@gmail.com
+                                    <Mail size={18} /> support@tms.edu.vn
                                 </div>
                             </div>
                             <div className="lp-footer-socials" style={{ justifyContent: 'flex-end' }}>
-                                <a href="https://www.facebook.com/anhngupinnacle" className="lp-social-icon" aria-label="Facebook">
+                                <a href="https://www.facebook.com/tms.training" className="lp-social-icon" aria-label="Facebook">
                                     <Facebook size={20} />
                                 </a>
                                 <a href="https://www.facebook.com/messages/t/108208812194521" className="lp-social-icon" aria-label="Messenger">

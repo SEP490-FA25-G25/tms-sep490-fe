@@ -21,13 +21,13 @@ export default function LoginPage() {
           >
             <img
               src="/logo.jpg"
-              alt="Anh ngu Pinnacle Logo"
+              alt="TMS Logo"
               className="h-10 w-10 rounded-full object-cover"
             />
             <span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 1.05 }}>
-              <span style={{ fontWeight: 700, color: "#2e5a34", fontSize: "1rem" }}>PINNACLE</span>
+              <span style={{ fontWeight: 700, color: "#2e5a34", fontSize: "1rem" }}>TMS</span>
               <span style={{ fontWeight: 500, color: "#5c6a7c", fontSize: "0.8rem", marginTop: "2px" }}>
-                English Center
+                Training Management System
               </span>
             </span>
           </button>
@@ -42,7 +42,7 @@ export default function LoginPage() {
         <img
           className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
           src={loginBanner}
-          alt="Pinnacle banner"
+          alt="TMS banner"
         />
       </div>
     </div>

@@ -298,12 +298,12 @@ export const trendColors = {
  * Chart color palette using semantic colors
  */
 export const chartColors = {
-  primary: '#2E5A34',    // Pinnacle Green
+  primary: '#2E5A34',    // TMS Green
   success: '#10b981',    // Emerald-500
   error: '#f43f5e',      // Rose-500
   warning: '#f59e0b',    // Amber-500
   info: '#0ea5e9',       // Sky-500
-  accent: '#D4E157',     // Pinnacle Yellow
+  accent: '#D4E157',     // TMS Yellow
   muted: '#94a3b8',      // Slate-400
 } as const;
 

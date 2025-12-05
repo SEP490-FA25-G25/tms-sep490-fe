@@ -76,7 +76,7 @@ export function FeatureCarousel({ features }: FeatureCarouselProps) {
         <div className="py-16 bg-transparent overflow-hidden select-none font-sans">
             <div className="text-center mb-12">
                 <h2 className="text-3xl md:text-4xl font-bold text-[#1A3320] uppercase tracking-wide">
-                    PINNACLE LÀ SỰ KHÁC BIỆT
+                    TMS LÀ SỰ KHÁC BIỆT
                 </h2>
             </div>
 

@@ -38,7 +38,7 @@ export function Studywithpannacle() {
         <section className="py-16 bg-white overflow-hidden">
             <div className="mb-10 text-center">
                 <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-                    HỌC CÙNG PINNACLE
+                    HỌC CÙNG TMS
                 </h2>
             </div>
 
@@ -69,7 +69,7 @@ export function Studywithpannacle() {
                         <div className="relative w-[300px] md:w-[450px] h-[300px] md:h-[450px] flex-shrink-0 rounded-2xl overflow-hidden shadow-lg bg-[#C8E6C9] flex items-center justify-center p-6 text-center">
                             <div>
                                 <h3 className="text-3xl font-bold text-[#FFFFFF] uppercase leading-tight mb-2">
-                                    HỌC CÙNG<br />PINNACLE
+                                    HỌC CÙNG<br />TMS
                                 </h3>
 
                             </div>
@@ -93,7 +93,7 @@ export function Studywithpannacle() {
                         <div className="relative w-[300px] md:w-[450px] h-[300px] md:h-[450px] flex-shrink-0 rounded-2xl overflow-hidden shadow-lg bg-[#C8E6C9] flex items-center justify-center p-6 text-center">
                             <div>
                                 <h3 className="text-3xl font-bold text-[#FFFFFF] uppercase leading-tight mb-2">
-                                    HỌC CÙNG<br />PINNACLE
+                                    HỌC CÙNG<br />TMS
                                 </h3>
 
                             </div>
