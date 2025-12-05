@@ -357,7 +357,7 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
                           Buổi {session.courseSessionNumber}: {session.courseSessionTitle}
                         </p>
                       </div>
-                      <Badge className={cn(session.isExcusedAbsence ? 'bg-emerald-500/10 text-emerald-600' : 'bg-amber-500/10 text-amber-600')}>
+                      <Badge variant={session.isExcusedAbsence ? 'success' : 'warning'}>
                         {session.isExcusedAbsence ? 'Có phép' : 'Không phép'}
                       </Badge>
                     </div>
@@ -396,9 +396,9 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
                         </p>
                         <p className="text-xs text-primary">{getCapacityText(option.availableSlots, option.maxCapacity)}</p>
                       </div>
-                      {option.matchScore.priority === 'HIGH' && <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20">Ưu tiên cao</Badge>}
-                      {option.matchScore.priority === 'MEDIUM' && <Badge className="bg-amber-500/10 text-amber-600 hover:bg-amber-500/20">Ưu tiên TB</Badge>}
-                      {option.matchScore.priority === 'LOW' && <Badge className="bg-slate-500/10 text-slate-600 hover:bg-slate-500/20">Ưu tiên thấp</Badge>}
+                      {option.matchScore.priority === 'HIGH' && <Badge variant="success">Ưu tiên cao</Badge>}
+                      {option.matchScore.priority === 'MEDIUM' && <Badge variant="warning">Ưu tiên TB</Badge>}
+                      {option.matchScore.priority === 'LOW' && <Badge variant="secondary">Ưu tiên thấp</Badge>}
                     </div>
                   </SelectionCard>
                 ))}

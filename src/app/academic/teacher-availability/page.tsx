@@ -251,7 +251,7 @@ const AvailabilityCampaignPage = () => {
                                     <div className="flex justify-between items-start">
                                         <span className="font-medium line-clamp-1">{campaign.name}</span>
                                         {campaign.isActive ? (
-                                            <Badge className="bg-green-600 text-[10px] px-1 py-0 h-5">Mở</Badge>
+                                            <Badge variant="success" className="text-[10px] px-1 py-0 h-5">Mở</Badge>
                                         ) : (
                                             <Badge variant="secondary" className="text-[10px] px-1 py-0 h-5">Đóng</Badge>
                                         )}

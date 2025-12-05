@@ -361,7 +361,7 @@ export default function AcademicAbsenceRequestsPage() {
                         Tỉ lệ nghỉ: <span className="font-semibold text-rose-600">{absenceRate}%</span>
                       </span>
                       {isUrgent && (
-                        <Badge className="rounded-full bg-amber-600/80 text-white">Khẩn cấp</Badge>
+                        <Badge variant="warning" className="rounded-full">Khẩn cấp</Badge>
                       )}
                     </div>
 

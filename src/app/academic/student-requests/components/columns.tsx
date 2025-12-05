@@ -173,7 +173,7 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
         // For makeup requests, show urgency based on when missed session occurred
         if (daysUntilSession === null || daysUntilSession === undefined) {
           return (
-            <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200">
+            <Badge variant="secondary">
               Không xác định
             </Badge>
           )
@@ -187,13 +187,13 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
           const hoursAgo = Math.abs(hoursUntilSession)
           if (hoursAgo <= 3) {
             return (
-              <Badge variant="outline" className="bg-rose-100 text-rose-700 border-rose-200">
+              <Badge variant="destructive">
                 {hoursAgo} giờ trước
               </Badge>
             )
           }
           return (
-            <Badge variant="outline" className="bg-rose-100 text-rose-700 border-rose-200">
+            <Badge variant="destructive">
               {hoursAgo} giờ trước
             </Badge>
           )
@@ -201,19 +201,19 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
 
         if (daysSinceMissed <= 7) {
           return (
-            <Badge variant="outline" className="bg-rose-100 text-rose-700 border-rose-200">
+            <Badge variant="destructive">
               {daysSinceMissed} ngày trước
             </Badge>
           )
         } else if (daysSinceMissed <= 14) {
           return (
-            <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">
+            <Badge variant="warning">
               {daysSinceMissed} ngày trước
             </Badge>
           )
         } else {
           return (
-            <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200">
+            <Badge variant="secondary">
               {daysSinceMissed} ngày trước
             </Badge>
           )
@@ -227,31 +227,31 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
 
         if (hoursSinceSubmission < 1) {
           return (
-            <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200">
+            <Badge variant="success">
               Mới
             </Badge>
           )
         } else if (hoursSinceSubmission < 24) {
           return (
-            <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200">
+            <Badge variant="success">
               {hoursSinceSubmission} giờ
             </Badge>
           )
         } else if (daysSinceSubmission >= 3) {
           return (
-            <Badge variant="outline" className="bg-rose-100 text-rose-700 border-rose-200">
+            <Badge variant="destructive">
               {daysSinceSubmission} ngày
             </Badge>
           )
         } else if (daysSinceSubmission >= 1) {
           return (
-            <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">
+            <Badge variant="warning">
               {daysSinceSubmission} ngày
             </Badge>
           )
         } else {
           return (
-            <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200">
+            <Badge variant="success">
               Mới
             </Badge>
           )
@@ -259,7 +259,7 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
       }
 
       return (
-        <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200">
+        <Badge variant="secondary">
           Không xác định
         </Badge>
       )

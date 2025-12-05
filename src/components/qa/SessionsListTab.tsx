@@ -132,11 +132,11 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
 
         switch (status) {
             case SessionStatus.DONE:
-                return <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100/80">{displayStatus}</Badge>
+                return <Badge variant="success">{displayStatus}</Badge>
             case SessionStatus.PLANNED:
-                return <Badge variant="outline" className="bg-sky-100 text-sky-700 border-sky-200 hover:bg-sky-100/80">{displayStatus}</Badge>
+                return <Badge variant="info">{displayStatus}</Badge>
             case SessionStatus.CANCELLED:
-                return <Badge variant="outline" className="bg-rose-100 text-rose-700 border-rose-200 hover:bg-rose-100/80">{displayStatus}</Badge>
+                return <Badge variant="destructive">{displayStatus}</Badge>
             default:
                 return <Badge variant="outline">{displayStatus}</Badge>
         }

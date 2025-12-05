@@ -50,8 +50,7 @@ export function ReplacementAssessmentsPopover({
       <DropdownMenuTrigger asChild>
         <div className={cn("cursor-pointer", className)}>
           <Badge
-            variant="outline"
-            className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 transition-colors"
+            variant="info"
           >
             <Info className="h-3 w-3 mr-1" />
             {assessmentCount} bài kiểm tra
@@ -63,7 +62,7 @@ export function ReplacementAssessmentsPopover({
         align="start"
         side="right"
       >
-        <div className="border-b bg-gray-50 px-4 py-3">
+        <div className="border-b bg-slate-50 px-4 py-3">
           <h4 className="font-semibold text-sm">Chi tiết bài kiểm tra đánh giá</h4>
           <p className="text-xs text-muted-foreground mt-1">
             {assessmentCount} bài kiểm tra gần nhất
@@ -84,7 +83,7 @@ export function ReplacementAssessmentsPopover({
                 key={assessment.id}
                 className={cn(
                   "p-4 border-b last:border-b-0",
-                  index % 2 === 0 && "bg-gray-50/50"
+                  index % 2 === 0 && "bg-slate-50/50"
                 )}
               >
                 <div className="flex items-start gap-3">

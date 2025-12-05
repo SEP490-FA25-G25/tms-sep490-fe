@@ -114,7 +114,7 @@ export function LearningOutcomes({ clos, progress }: LearningOutcomesProps) {
                     </TableCell>
                     <TableCell>
                       {cloProgress?.isAchieved ? (
-                        <Badge variant="default" className="bg-success hover:bg-success/90">
+                        <Badge variant="success">
                           Đã đạt
                         </Badge>
                       ) : cloProgress ? (
@@ -149,7 +149,7 @@ export function LearningOutcomes({ clos, progress }: LearningOutcomesProps) {
 
       <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1">
-          <Badge variant="default" className="bg-success hover:bg-success/90 h-5 px-2">
+          <Badge variant="success" className="h-5 px-2">
             Đã đạt
           </Badge>
           Hoàn thành CLO

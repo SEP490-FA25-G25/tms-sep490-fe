@@ -72,26 +72,26 @@ const PAGE_SIZE = 10;
 
 type ApprovalStatus = "SUBMITTED" | "APPROVED" | "REJECTED" | "ALL";
 
-const STATUS_META: Record<string, { label: string; badgeClass: string }> = {
+const STATUS_META: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' | 'info' | 'purple' }> = {
     SUBMITTED: {
         label: "Chờ duyệt",
-        badgeClass: "bg-amber-100 text-amber-700 border-amber-200",
+        variant: "warning",
     },
     PENDING_ACTIVATION: {
         label: "Chờ kích hoạt",
-        badgeClass: "bg-blue-100 text-blue-700 border-blue-200",
+        variant: "info",
     },
     APPROVED: {
         label: "Đã duyệt",
-        badgeClass: "bg-emerald-100 text-emerald-700 border-emerald-200",
+        variant: "success",
     },
     ACTIVE: {
         label: "Hoạt động",
-        badgeClass: "bg-emerald-100 text-emerald-700 border-emerald-200",
+        variant: "success",
     },
     REJECTED: {
         label: "Đã từ chối",
-        badgeClass: "bg-rose-100 text-rose-700 border-rose-200",
+        variant: "destructive",
     },
 };
 
@@ -240,7 +240,7 @@ export default function CourseApprovalPage() {
 
         if (approvalStatus === "REJECTED") {
             return (
-                <Badge variant="outline" className={cn("border", STATUS_META.REJECTED.badgeClass)}>
+                <Badge variant={STATUS_META.REJECTED.variant}>
                     {STATUS_META.REJECTED.label}
                 </Badge>
             );
@@ -248,15 +248,15 @@ export default function CourseApprovalPage() {
 
         if (status === "PENDING_ACTIVATION") {
             return (
-                <Badge variant="outline" className={cn("border", STATUS_META.PENDING_ACTIVATION.badgeClass)}>
+                <Badge variant={STATUS_META.PENDING_ACTIVATION.variant}>
                     {STATUS_META.PENDING_ACTIVATION.label}
                 </Badge>
             );
         }
 
-        const meta = STATUS_META[status] || { label: status, badgeClass: "" };
+        const meta = STATUS_META[status] || { label: status, variant: "secondary" as const };
         return (
-            <Badge variant="outline" className={cn("border", meta.badgeClass)}>
+            <Badge variant={meta.variant}>
                 {meta.label}
             </Badge>
         );

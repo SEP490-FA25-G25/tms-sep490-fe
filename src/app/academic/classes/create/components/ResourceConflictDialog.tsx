@@ -215,7 +215,7 @@ export function ResourceConflictDialog({
                       <p className="text-xs text-muted-foreground">Tài nguyên hiện tại: {conflict.resourceName}</p>
                     )}
                   </div>
-                  {state?.status === 'success' && <Badge className="bg-emerald-600 text-white">Đã gán</Badge>}
+                  {state?.status === 'success' && <Badge variant="success">Đã gán</Badge>}
                 </div>
 
                 {state?.suggestions?.length ? (

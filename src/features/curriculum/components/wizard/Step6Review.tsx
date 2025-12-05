@@ -337,8 +337,8 @@ export function Step6Review({ data }: Step6Props) {
                                                             >
                                                                 {isLinked ? (
                                                                     <div className="flex items-center justify-center">
-                                                                        <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                                                                            <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                                                        <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                                                                            <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                                                                         </div>
                                                                     </div>
                                                                 ) : (
@@ -356,8 +356,8 @@ export function Step6Review({ data }: Step6Props) {
                             </div>
                             <div className="mt-4 flex gap-4 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-2">
-                                    <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                                        <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+                                    <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                                        <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
                                     </div>
                                     <span>Có liên kết</span>
                                 </div>

@@ -248,7 +248,7 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
                                 Buổi {session.sequenceNo}: {session.topic}
                               </h4>
                               {session.isCompleted && (
-                                <Badge variant="default" className="bg-success hover:bg-success/90">
+                                <Badge variant="success">
                                   <CheckCircle className="h-3 w-3 mr-1" />
                                   Hoàn thành
                                 </Badge>

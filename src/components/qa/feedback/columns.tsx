@@ -19,8 +19,8 @@ function StatusBadge({ isFeedback }: { isFeedback: boolean }) {
   if (isFeedback) {
     return (
       <Badge
-        variant="outline"
-        className="flex items-center gap-1 bg-emerald-100 text-emerald-700 border-emerald-200"
+        variant="success"
+        className="flex items-center gap-1"
       >
         <CheckCircle className="h-3 w-3" />
         <span>Đã nộp</span>
@@ -29,8 +29,8 @@ function StatusBadge({ isFeedback }: { isFeedback: boolean }) {
   }
   return (
     <Badge
-      variant="outline"
-      className="flex items-center gap-1 bg-amber-100 text-amber-700 border-amber-200"
+      variant="warning"
+      className="flex items-center gap-1"
     >
       <AlertTriangle className="h-3 w-3" />
       <span>Chưa nộp</span>

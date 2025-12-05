@@ -375,7 +375,7 @@ export default function TimeSlotDetailPage() {
                                                             <div className="flex items-center gap-2">
                                                                 <span className="font-semibold">{session.classCode}</span>
                                                                 {isToday && (
-                                                                    <Badge className="bg-blue-500">Hôm nay</Badge>
+                                                                    <Badge variant="info">Hôm nay</Badge>
                                                                 )}
                                                             </div>
                                                             <div className="flex items-center gap-3 text-sm text-muted-foreground">

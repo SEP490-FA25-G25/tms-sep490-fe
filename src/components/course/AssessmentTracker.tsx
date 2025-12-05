@@ -42,7 +42,7 @@ export function AssessmentTracker({ assessments, assessmentProgress }: Assessmen
 
   const getStatusBadge = (isCompleted?: boolean) => {
     if (isCompleted) {
-      return <Badge variant="default" className="bg-emerald-100 text-emerald-700">Đã nộp</Badge>
+      return <Badge variant="success">Đã nộp</Badge>
     }
     return <Badge variant="outline">Chưa nộp</Badge>
   }

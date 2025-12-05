@@ -66,13 +66,13 @@ const getMaterialTypeLabel = (type?: string) => {
     }
 };
 
-const STATUS_STYLES = {
-    DRAFT: { label: 'Nháp', className: 'bg-gray-100 text-gray-700 hover:bg-gray-100' },
-    SUBMITTED: { label: 'Chờ duyệt', className: 'bg-amber-100 text-amber-700 hover:bg-amber-100' },
-    PENDING_ACTIVATION: { label: 'Chờ kích hoạt', className: 'bg-blue-100 text-blue-700 hover:bg-blue-100' },
-    ACTIVE: { label: 'Hoạt động', className: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' },
-    INACTIVE: { label: 'Ngừng hoạt động', className: 'bg-gray-100 text-gray-600 hover:bg-gray-100' },
-    REJECTED: { label: 'Đã từ chối', className: 'bg-red-100 text-red-700 hover:bg-red-100' },
+const STATUS_STYLES: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' | 'info' | 'purple' }> = {
+    DRAFT: { label: 'Nháp', variant: 'secondary' },
+    SUBMITTED: { label: 'Chờ duyệt', variant: 'warning' },
+    PENDING_ACTIVATION: { label: 'Chờ kích hoạt', variant: 'info' },
+    ACTIVE: { label: 'Hoạt động', variant: 'success' },
+    INACTIVE: { label: 'Ngừng hoạt động', variant: 'secondary' },
+    REJECTED: { label: 'Đã từ chối', variant: 'destructive' },
 };
 
 export default function CourseDetailPage() {
@@ -225,7 +225,7 @@ export default function CourseDetailPage() {
                                             {course.levelName}
                                         </Badge>
                                     )}
-                                    <Badge className={cn('text-xs', statusInfo.className)}>
+                                    <Badge variant={statusInfo.variant} className="text-xs">
                                         {statusInfo.label}
                                     </Badge>
                                 </div>
@@ -685,7 +685,7 @@ export default function CourseDetailPage() {
                                                                         <TableCell>
                                                                             <div className="flex gap-1 flex-wrap">
                                                                                 {[...new Set(clo.mappedPLOs || [])].map((plo) => (
-                                                                                    <Badge key={plo} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
+                                                                                    <Badge key={plo} variant="info" className="text-xs">
                                                                                         {plo}
                                                                                     </Badge>
                                                                                 ))}

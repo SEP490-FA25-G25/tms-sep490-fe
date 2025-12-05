@@ -291,7 +291,7 @@ const RecommendedTeacherCard = ({
         <p className="text-lg font-semibold text-foreground">{teacher.fullName}</p>
         <p className="text-sm text-muted-foreground">{teacher.email}</p>
       </div>
-      <Badge className="bg-neutral-900 text-xs font-semibold uppercase tracking-wide text-white">
+      <Badge variant="default" className="text-xs font-semibold uppercase tracking-wide">
         Khuyến nghị
       </Badge>
     </div>

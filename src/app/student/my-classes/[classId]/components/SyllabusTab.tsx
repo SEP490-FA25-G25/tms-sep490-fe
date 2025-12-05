@@ -417,7 +417,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                                             Buổi {session.sequenceNo}: {session.topic}
                                           </h4>
                                           {session.isCompleted && (
-                                            <Badge variant="default" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/30">
+                                            <Badge variant="success">
                                               <CheckCircle className="h-3 w-3 mr-1" />
                                               Hoàn thành
                                             </Badge>

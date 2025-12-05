@@ -117,7 +117,7 @@ function DraftReportsList({ reports }: { reports: DraftReport[] | null | undefin
                 <span className="font-medium text-sm truncate">
                   {reportTypeShortLabels[report.reportType] || report.reportType}
                 </span>
-                <Badge variant="outline" className="h-5 text-[10px] px-1.5 text-amber-600 border-amber-300">
+                <Badge variant="warning" className="h-5 text-[10px] px-1.5">
                   Nháp
                 </Badge>
               </div>

@@ -10,17 +10,17 @@ interface QAReportStatusBadgeProps {
 export function QAReportStatusBadge({ status, className }: QAReportStatusBadgeProps) {
     const getStatusStyles = (status: string) => {
         if (!status) {
-            return "bg-slate-100 text-slate-700 hover:bg-slate-100/80 border-slate-200"
+            return "bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200"
         }
         // Handle both UPPERCASE and lowercase values for backward compatibility
         const normalizedStatus = status.toUpperCase()
         switch (normalizedStatus) {
             case "DRAFT":
-                return "bg-slate-100 text-slate-700 hover:bg-slate-100/80 border-slate-200"
+                return "bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200"
             case "SUBMITTED":
-                return "bg-emerald-100 text-emerald-700 hover:bg-emerald-100/80 border-emerald-200"
+                return "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200"
             default:
-                return "bg-slate-100 text-slate-700 hover:bg-slate-100/80 border-slate-200"
+                return "bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200"
         }
     }
 

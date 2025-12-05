@@ -513,7 +513,7 @@ export function Step3Structure({ data, setData }: Step3Props) {
                     <div className="flex items-center gap-4">
                         {/* Session Count Badge */}
                         <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${isSessionCountValid
-                                ? "bg-green-50 text-green-700 border border-green-200"
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                                 : "bg-amber-50 text-amber-700 border border-amber-200"
                             }`}>
                             <span>Buổi học:</span>
@@ -540,7 +540,7 @@ export function Step3Structure({ data, setData }: Step3Props) {
                                 <div className="flex items-center gap-2">
                                     <BookOpen className="w-4 h-4 text-primary" />
                                     <span>Tham chiếu CLO</span>
-                                    <Badge variant="outline" className="ml-2 bg-green-50 text-green-700 border-green-200">
+                                    <Badge variant="success" className="ml-2">
                                         {data.clos?.length || 0} CLO
                                     </Badge>
                                 </div>
@@ -555,7 +555,7 @@ export function Step3Structure({ data, setData }: Step3Props) {
                                             key={clo.code || index}
                                             className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-colors"
                                         >
-                                            <Badge className="shrink-0 bg-green-100 text-green-700 border-green-200 hover:bg-green-100">
+                                            <Badge variant="success" className="shrink-0">
                                                 {clo.code}
                                             </Badge>
                                             <p className="text-sm text-muted-foreground leading-relaxed">
@@ -718,7 +718,7 @@ export function Step3Structure({ data, setData }: Step3Props) {
                                                                 placeholder="Chọn Kỹ năng"
                                                                 searchPlaceholder="Tìm Kỹ năng..."
                                                                 emptyMessage="Không tìm thấy Kỹ năng."
-                                                                badgeClassName="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
+                                                                badgeClassName="bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200"
                                                                 className={getSessionError(pIndex, sIndex, 'skills') ? 'border-red-500' : ''}
                                                             />
                                                             {getSessionError(pIndex, sIndex, 'skills') && (
@@ -738,7 +738,7 @@ export function Step3Structure({ data, setData }: Step3Props) {
                                                                 placeholder="Chọn CLO"
                                                                 searchPlaceholder="Tìm CLO..."
                                                                 emptyMessage="Không tìm thấy CLO."
-                                                                badgeClassName="bg-green-50 text-green-700 hover:bg-green-100 border-green-200"
+                                                                badgeClassName="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200"
                                                                 className={getSessionError(pIndex, sIndex, 'cloIds') ? 'border-red-500' : ''}
                                                             />
                                                             {getSessionError(pIndex, sIndex, 'cloIds') && (

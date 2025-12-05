@@ -630,22 +630,22 @@ export function EnrollmentImportDialog({
                                   <TableCell>
                                     <div className="space-y-1">
                                       {student.status === 'FOUND' && (
-                                        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                                        <Badge variant="success">
                                           Đã có hồ sơ
                                         </Badge>
                                       )}
                                       {student.status === 'CREATE' && (
-                                        <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200">
+                                        <Badge variant="info">
                                           Tạo mới
                                         </Badge>
                                       )}
                                       {student.status === 'DUPLICATE' && (
-                                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                                        <Badge variant="warning">
                                           Đã đăng ký lớp này
                                         </Badge>
                                       )}
                                       {student.status === 'ERROR' && (
-                                        <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200">
+                                        <Badge variant="destructive">
                                           Lỗi dữ liệu
                                         </Badge>
                                       )}

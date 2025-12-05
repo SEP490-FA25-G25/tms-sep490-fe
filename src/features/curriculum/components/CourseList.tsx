@@ -281,7 +281,7 @@ export function CourseList() {
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger>
-                                    <Badge variant="info" className="bg-blue-100 text-blue-700 hover:bg-blue-200 cursor-help">
+                                    <Badge variant="info" className="cursor-help">
                                         Chờ kích hoạt
                                     </Badge>
                                 </TooltipTrigger>

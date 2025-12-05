@@ -514,7 +514,7 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                                             placeholder="Chọn Kỹ năng"
                                             searchPlaceholder="Tìm kỹ năng..."
                                             emptyMessage="Không tìm thấy kỹ năng."
-                                            badgeClassName="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
+                                            badgeClassName="bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-200"
                                             className={assessmentErrors[index]?.skills ? "border-red-500 rounded-md" : ""}
                                         />
                                         {assessmentErrors[index]?.skills && (
@@ -535,7 +535,7 @@ export function Step4Assessment({ data, setData }: Step4Props) {
                                             placeholder="Chọn CLO"
                                             searchPlaceholder="Tìm CLO..."
                                             emptyMessage="Không tìm thấy CLO."
-                                            badgeClassName="bg-green-50 text-green-700 hover:bg-green-100 border-green-200"
+                                            badgeClassName="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200"
                                             className={assessmentErrors[index]?.cloIds ? "border-red-500 rounded-md" : ""}
                                         />
                                         {assessmentErrors[index]?.cloIds && (
