@@ -1,14 +1,9 @@
-"use client"
 
-import { ClipboardList, Calendar, MessageSquare } from "lucide-react"
+import { Calendar, MessageSquare, GraduationCap, Users } from "lucide-react"
 import { AAStatsCard } from "./AAStatsCard"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export interface AAKPIData {
-    pendingRequests: {
-        total: number
-        urgent: number
-    }
     todaySessions: {
         total: number
         needsSubstitute: number
@@ -17,6 +12,8 @@ export interface AAKPIData {
         total: number
         unprocessed: number
     }
+    totalClasses: number
+    totalStudents: number
 }
 
 interface AAKPISummaryProps {
@@ -27,8 +24,8 @@ interface AAKPISummaryProps {
 export function AAKPISummary({ data, isLoading }: AAKPISummaryProps) {
     if (isLoading) {
         return (
-            <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
-                {Array.from({ length: 3 }).map((_, i) => (
+            <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+                {Array.from({ length: 4 }).map((_, i) => (
                     <Skeleton key={i} className="h-[120px] w-full rounded-xl" />
                 ))}
             </div>
@@ -36,17 +33,20 @@ export function AAKPISummary({ data, isLoading }: AAKPISummaryProps) {
     }
 
     return (
-        <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
             <AAStatsCard
-                title="Yêu cầu chờ xử lý"
-                value={data?.pendingRequests.total ?? 0}
-                subtitle={data?.pendingRequests.urgent 
-                    ? `${data.pendingRequests.urgent} yêu cầu cần xử lý gấp`
-                    : "Không có yêu cầu khẩn cấp"
-                }
-                icon={ClipboardList}
-                urgentCount={data?.pendingRequests.urgent}
+                title="Tổng số lớp học"
+                value={data?.totalClasses ?? 0}
+                subtitle="Lớp trong chi nhánh"
+                icon={GraduationCap}
                 iconClassName="bg-blue-100 dark:bg-blue-900/30"
+            />
+            <AAStatsCard
+                title="Tổng số học viên"
+                value={data?.totalStudents ?? 0}
+                subtitle="Học viên trong chi nhánh"
+                icon={Users}
+                iconClassName="bg-green-100 dark:bg-green-900/30"
             />
             <AAStatsCard
                 title="Buổi học hôm nay"
@@ -57,7 +57,7 @@ export function AAKPISummary({ data, isLoading }: AAKPISummaryProps) {
                 }
                 icon={Calendar}
                 urgentCount={data?.todaySessions.needsSubstitute}
-                iconClassName="bg-green-100 dark:bg-green-900/30"
+                iconClassName="bg-amber-100 dark:bg-amber-900/30"
             />
             <AAStatsCard
                 title="Đăng ký tư vấn mới"

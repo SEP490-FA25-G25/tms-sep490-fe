@@ -1,6 +1,5 @@
 import { AppSidebar } from '@/components/app-sidebar'
-import { SiteHeader } from '@/components/site-header'
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { DashboardLayout } from '@/components/DashboardLayout'
 import { useAuth } from '@/hooks/useAuth'
 import { ROLES } from '@/hooks/useRoleBasedAccess'
 import { AdminDashboardContent } from '@/components/dashboard/role-based/AdminDashboardContent'
@@ -37,7 +36,7 @@ export default function DashboardPage() {
 
     const highestRole = user.roles.reduce((highest, current) =>
       rolePriorities[current as keyof typeof rolePriorities] >
-      rolePriorities[highest as keyof typeof rolePriorities] ? current : highest
+        rolePriorities[highest as keyof typeof rolePriorities] ? current : highest
     )
 
     // If URL specifies a role and user actually has it, use that role
@@ -70,33 +69,11 @@ export default function DashboardPage() {
   }
 
   return (
-    <SidebarProvider
-      style={
-        {
-          '--sidebar-width': 'calc(var(--spacing) * 72)',
-          '--header-height': 'calc(var(--spacing) * 12)',
-        } as React.CSSProperties
-      }
+    <DashboardLayout
+      title={`Chào mừng trở lại, ${user?.fullName || 'Người dùng'}!`}
+      description="Đây là những gì đang diễn ra với tài khoản của bạn hôm nay."
     >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-              <header className="flex flex-col gap-2 border-b border-border px-4 lg:px-6 py-5 -mt-4 md:-mt-6 mb-4">
-                <h1 className="text-2xl font-semibold tracking-tight">
-                  Chào mừng trở lại, {user?.fullName || 'Người dùng'}!
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Đây là những gì đang diễn ra với tài khoản của bạn hôm nay.
-                </p>
-              </header>
-              {getDashboardContent()}
-            </div>
-          </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+      {getDashboardContent()}
+    </DashboardLayout>
   )
 }

@@ -25,6 +25,7 @@ import {
 
 import { NavMain } from "@/components/nav-main";
 import { StudentFeedbackNavBadge } from "@/components/student-feedback/StudentFeedbackBadge";
+import { StudentRequestsBadge, TeacherRequestsBadge } from "@/components/academic/AcademicRequestsBadge";
 import {
   Sidebar,
   SidebarContent,
@@ -330,7 +331,7 @@ const roleBasedNav = {
     navMain: [
       {
         title: "Bảng điều khiển",
-        url: "/academic_affair/dashboard",
+        url: "/academic/dashboard",
         icon: HomeIcon,
       },
       {
@@ -352,11 +353,13 @@ const roleBasedNav = {
         title: "Quản lý yêu cầu học viên",
         url: "/academic/student-requests",
         icon: ClipboardCheckIcon,
+        badge: <StudentRequestsBadge />,
       },
       {
         title: "Quản lý yêu cầu giáo viên",
         url: "/academic/teacher-requests",
         icon: ClipboardCheckIcon,
+        badge: <TeacherRequestsBadge />,
       },
       {
         title: "Quản lý đợt cập nhật lịch dạy",
