@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { FileText, ChevronRight, Plus } from "lucide-react"
+import { FileText, ChevronRight } from "lucide-react"
 import { Link } from "react-router-dom"
 import { QAReportStatusBadge } from "./QAReportStatusBadge"
 import type { RecentReport } from "@/types/qa"
@@ -27,18 +27,10 @@ export function RecentReports({ data, className }: RecentReportsProps) {
   return (
     <Card className={cn("", className)}>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-medium flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Báo Cáo Đã Submit Gần Đây
-          </CardTitle>
-          <Link to="/qa/reports/create">
-            <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
-              <Plus className="h-3 w-3" />
-              Tạo mới
-            </Button>
-          </Link>
-        </div>
+        <CardTitle className="text-base font-medium flex items-center gap-2">
+          <FileText className="h-4 w-4" />
+          Báo Cáo Đã Submit Gần Đây
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {!data || data.length === 0 ? (

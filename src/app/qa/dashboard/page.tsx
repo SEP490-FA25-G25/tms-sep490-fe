@@ -19,9 +19,7 @@ import {
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Button } from "@/components/ui/button"
-import { AlertTriangle, BarChart3, TrendingUp, FileText } from "lucide-react"
-import { Link } from "react-router-dom"
+import { AlertTriangle, BarChart3, TrendingUp } from "lucide-react"
 
 // Class status options for filter
 const CLASS_STATUS_OPTIONS: ComboboxOption[] = [
@@ -311,23 +309,7 @@ export default function QADashboardPage() {
                                     <Skeleton className="h-48 w-full" />
                                 </div>
                             ) : combinedTrendData && combinedTrendData.dataPoints && combinedTrendData.dataPoints.length > 0 ? (
-                                <div className="space-y-3">
-                                    <CombinedTrendChart data={combinedTrendData} />
-                                    {/* Quick action to create report */}
-                                    {selectedClassInfo && (
-                                        <div className="flex items-center justify-between pt-3 border-t">
-                                            <span className="text-xs text-muted-foreground">
-                                                <FileText className="h-3.5 w-3.5 inline mr-1" />
-                                                Tạo báo cáo về {selectedClassInfo.classCode}
-                                            </span>
-                                            <Link to={`/qa/reports/create?classId=${selectedClassInfo.classId}`}>
-                                                <Button variant="outline" size="sm" className="h-7 text-xs">
-                                                    Tạo báo cáo →
-                                                </Button>
-                                            </Link>
-                                        </div>
-                                    )}
-                                </div>
+                                <CombinedTrendChart data={combinedTrendData} />
                             ) : (
                                 <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">
                                     {selectedClassId

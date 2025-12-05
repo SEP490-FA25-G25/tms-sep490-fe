@@ -1,7 +1,6 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -44,23 +43,15 @@ export function QATasksPanel({ draftReports, completedPhases, className }: QATas
   return (
     <Card className={cn("flex flex-col", className)}>
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-medium flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            Việc Cần Làm
-            {totalTasks > 0 && (
-              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                {totalTasks}
-              </Badge>
-            )}
-          </CardTitle>
-          <Link to="/qa/reports/create">
-            <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
-              <Plus className="h-3 w-3" />
-              Tạo báo cáo
-            </Button>
-          </Link>
-        </div>
+        <CardTitle className="text-base font-medium flex items-center gap-2">
+          <Clock className="h-4 w-4" />
+          Việc Cần Làm
+          {totalTasks > 0 && (
+            <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+              {totalTasks}
+            </Badge>
+          )}
+        </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 pt-0">
         <Tabs defaultValue={defaultTab} className="h-full flex flex-col">
