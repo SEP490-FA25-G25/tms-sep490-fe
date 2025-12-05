@@ -1,32 +1,12 @@
 import { useSelector } from 'react-redux'
 import { selectUserRoles, selectHasRole, selectHasAnyRole, selectHasAllRoles } from '@/store'
 import type { RootState } from '@/store'
+import { ROLES, ROLE_BASED_ROUTES, getRolePriority, ROLE_PRIORITIES } from '@/types/roles'
+import type { Role } from '@/types/roles'
 
-// Available roles in the system
-export const ROLES = {
-  ADMIN: 'ADMIN',
-  MANAGER: 'MANAGER',
-  CENTER_HEAD: 'CENTER_HEAD',
-  SUBJECT_LEADER: 'SUBJECT_LEADER',
-  ACADEMIC_AFFAIR: 'ACADEMIC_AFFAIR',
-  TEACHER: 'TEACHER',
-  STUDENT: 'STUDENT',
-  QA: 'QA',
-} as const
-
-export type Role = typeof ROLES[keyof typeof ROLES]
-
-// Role-based routing configuration
-export const ROLE_BASED_ROUTES = {
-  [ROLES.ADMIN]: ['/admin', '/users', '/centers'],
-  [ROLES.MANAGER]: ['/manager', '/courses/approve'],
-  [ROLES.CENTER_HEAD]: ['/center', '/classes/approve'],
-  [ROLES.SUBJECT_LEADER]: ['/subject', '/courses/manage'],
-  [ROLES.ACADEMIC_AFFAIR]: ['/academic', '/students'],
-  [ROLES.TEACHER]: ['/teacher', '/my-classes', '/assignments'],
-  [ROLES.STUDENT]: ['/student', '/my-courses', '/grades'],
-  [ROLES.QA]: ['/qa', '/reports', '/audits'],
-} as const
+// Re-export for backward compatibility
+export { ROLES, ROLE_BASED_ROUTES, getRolePriority, ROLE_PRIORITIES }
+export type { Role }
 
 // Custom hooks for role-based access control
 export function useRoles() {
@@ -101,21 +81,6 @@ export function useAccessibleRoutes() {
 
   // Remove duplicates and return
   return [...new Set(accessibleRoutes)]
-}
-
-// Helper function to check if a role has higher priority
-export function getRolePriority(role: Role): number {
-  const roleHierarchy = {
-    [ROLES.ADMIN]: 8,
-    [ROLES.MANAGER]: 7,
-    [ROLES.CENTER_HEAD]: 6,
-    [ROLES.SUBJECT_LEADER]: 5,
-    [ROLES.ACADEMIC_AFFAIR]: 4,
-    [ROLES.QA]: 3,
-    [ROLES.TEACHER]: 2,
-    [ROLES.STUDENT]: 1,
-  }
-  return roleHierarchy[role] || 0
 }
 
 // Hook to get the highest priority role of current user

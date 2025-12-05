@@ -1,4 +1,5 @@
-import { ROLES } from '@/hooks/useRoleBasedAccess';
+import { ROLES, ROLE_PRIORITIES } from '@/types/roles';
+import type { Role } from '@/types/roles';
 
 /**
  * Default route for each role - first page on sidebar
@@ -15,27 +16,13 @@ const roleDefaultRoutes: Record<string, string> = {
 };
 
 /**
- * Role priority - higher number = higher priority
- */
-const rolePriorities: Record<string, number> = {
-  [ROLES.ADMIN]: 8,
-  [ROLES.MANAGER]: 7,
-  [ROLES.CENTER_HEAD]: 6,
-  [ROLES.SUBJECT_LEADER]: 5,
-  [ROLES.ACADEMIC_AFFAIR]: 4,
-  [ROLES.QA]: 3,
-  [ROLES.TEACHER]: 2,
-  [ROLES.STUDENT]: 1,
-};
-
-/**
  * Get the highest priority role from a list of roles
  */
 export function getHighestPriorityRole(roles: string[]): string | null {
   if (!roles || roles.length === 0) return null;
   
   return roles.reduce((highest, current) =>
-    (rolePriorities[current] ?? 0) > (rolePriorities[highest] ?? 0) ? current : highest
+    (ROLE_PRIORITIES[current as Role] ?? 0) > (ROLE_PRIORITIES[highest as Role] ?? 0) ? current : highest
   );
 }
 
