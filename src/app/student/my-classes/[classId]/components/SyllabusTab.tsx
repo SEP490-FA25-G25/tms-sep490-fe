@@ -557,29 +557,39 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
               Mục tiêu học tập (CLO)
             </h3>
 
-            <Card className="py-0 gap-0">
-              <CardContent className="p-0">
-                {courseSyllabus.clos.map((clo) => (
-                  <div key={clo.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
-                    <div className="shrink-0">
-                      <Badge variant="outline" className="font-mono text-xs">
-                        {clo.code}
-                      </Badge>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-foreground">{clo.description}</p>
-                      {clo.competencyLevel && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Trình độ: {clo.competencyLevel}
-                        </p>
-                      )}
-                    </div>
-                    {clo.isAchieved && (
-                      <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
-                    )}
-                  </div>
-                ))}
-              </CardContent>
+            <Card className="overflow-hidden py-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="w-[120px]">Mã CLO</TableHead>
+                    <TableHead>Mô tả</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {courseSyllabus.clos.map((clo) => (
+                    <TableRow key={clo.id}>
+                      <TableCell>
+                        <Badge variant="secondary" className="text-xs">
+                          {clo.code}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-foreground flex-1">{clo.description}</p>
+                          {clo.isAchieved && (
+                            <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
+                          )}
+                        </div>
+                        {clo.competencyLevel && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Trình độ: {clo.competencyLevel}
+                          </p>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </Card>
           </div>
         </>
