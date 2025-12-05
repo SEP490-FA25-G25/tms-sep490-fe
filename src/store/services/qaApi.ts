@@ -20,6 +20,7 @@ import type {
   CoursePhaseDTO,
   TrendData,
   ClassComparisonData,
+  CombinedTrendData,
 } from '@/types/qa';
 
 export const qaApi = createApi({
@@ -58,6 +59,16 @@ export const qaApi = createApi({
       }),
       transformResponse: (response: { data: TrendData }) => response.data,
       providesTags: (_result, _error, classId) => [{ type: 'QADashboard', id: `trend-${classId}` }],
+    }),
+
+    // Dashboard - Combined Trend Data (attendance + homework) for specific class
+    getClassCombinedTrendData: builder.query<CombinedTrendData, number>({
+      query: (classId) => ({
+        url: '/qa/dashboard/combined-trend',
+        params: { classId },
+      }),
+      transformResponse: (response: { data: CombinedTrendData }) => response.data,
+      providesTags: (_result, _error, classId) => [{ type: 'QADashboard', id: `combined-trend-${classId}` }],
     }),
 
     // Dashboard - Class Comparison for specific course
@@ -240,6 +251,7 @@ export const {
   useGetFeedbackDetailQuery,
   useExportQADataMutation,
   useGetClassTrendDataQuery,
+  useGetClassCombinedTrendDataQuery,
 } = qaApi;
 
 // Export types for external use
@@ -262,4 +274,5 @@ export type {
   QAExportRequest,
   CoursePhaseDTO,
   TrendData,
+  CombinedTrendData,
 } from '@/types/qa';

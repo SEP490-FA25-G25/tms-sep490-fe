@@ -1,12 +1,13 @@
 "use client"
 
 import * as React from "react"
-import { useGetQADashboardQuery, useGetClassTrendDataQuery, useGetClassComparisonQuery } from "@/store/services/qaApi"
+import { useGetQADashboardQuery, useGetClassCombinedTrendDataQuery, useGetClassComparisonQuery } from "@/store/services/qaApi"
 import { DashboardLayout } from "@/components/DashboardLayout"
 import { RecentReports } from "@/components/qa/RecentReports"
 import { QAKPISummary } from "@/components/qa/QAKPISummary"
 import { QATasksPanel } from "@/components/qa/QATasksPanel"
-import { ClassComparisonChart, TrendChart } from "@/components/qa/charts"
+import { ClassComparisonChart } from "@/components/qa/charts"
+import { CombinedTrendChart } from "@/components/qa/charts/CombinedTrendChart"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
     Select,
@@ -38,12 +39,12 @@ export default function QADashboardPage() {
 
     const { data: dashboard, isLoading, error } = useGetQADashboardQuery({})
 
-    // Fetch trend data when class is selected
+    // Fetch combined trend data (attendance + homework) when class is selected
     const { 
-        data: trendData, 
+        data: combinedTrendData, 
         isLoading: isTrendLoading,
         isFetching: isTrendFetching 
-    } = useGetClassTrendDataQuery(selectedClassId!, {
+    } = useGetClassCombinedTrendDataQuery(selectedClassId!, {
         skip: !selectedClassId,
     })
 
@@ -115,11 +116,11 @@ export default function QADashboardPage() {
         if (fromComparison) {
             return { classCode: fromComparison.classCode, classId: fromComparison.classId }
         }
-        if (trendData) {
-            return { classCode: trendData.classCode, classId: trendData.classId }
+        if (combinedTrendData) {
+            return { classCode: combinedTrendData.classCode, classId: combinedTrendData.classId }
         }
         return null
-    }, [selectedClassId, classesForSelectedCourse, trendData])
+    }, [selectedClassId, classesForSelectedCourse, combinedTrendData])
 
     // Memoized options for comboboxes
     const courseOptions: ComboboxOption[] = React.useMemo(() => {
@@ -190,9 +191,6 @@ export default function QADashboardPage() {
             </DashboardLayout>
         )
     }
-
-    // Use fetched trendData or fallback to dashboard's default trendData
-    const displayTrendData = trendData || dashboard.trendData
 
     return (
         <DashboardLayout
@@ -287,7 +285,7 @@ export default function QADashboardPage() {
                                     <div>
                                         <CardTitle className="text-base">Xu Hướng Theo Thời Gian</CardTitle>
                                         <CardDescription className="text-xs">
-                                            Theo dõi tỷ lệ điểm danh của lớp qua các tuần
+                                            Theo dõi tỷ lệ điểm danh và hoàn thành BTVN qua các tuần
                                         </CardDescription>
                                     </div>
                                 </div>
@@ -312,12 +310,9 @@ export default function QADashboardPage() {
                                     <Skeleton className="h-4 w-32" />
                                     <Skeleton className="h-48 w-full" />
                                 </div>
-                            ) : displayTrendData && displayTrendData.dataPoints && displayTrendData.dataPoints.length > 0 ? (
+                            ) : combinedTrendData && combinedTrendData.dataPoints && combinedTrendData.dataPoints.length > 0 ? (
                                 <div className="space-y-3">
-                                    <TrendChart
-                                        data={displayTrendData}
-                                        metricLabel="Điểm danh"
-                                    />
+                                    <CombinedTrendChart data={combinedTrendData} />
                                     {/* Quick action to create report */}
                                     {selectedClassInfo && (
                                         <div className="flex items-center justify-between pt-3 border-t">
@@ -336,7 +331,7 @@ export default function QADashboardPage() {
                             ) : (
                                 <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">
                                     {selectedClassId
-                                        ? "Chưa có dữ liệu điểm danh cho lớp này"
+                                        ? "Chưa có dữ liệu cho lớp này"
                                         : "Chọn lớp để xem xu hướng"}
                                 </div>
                             )}

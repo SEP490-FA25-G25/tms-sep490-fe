@@ -47,6 +47,29 @@ export interface WeeklyDataPoint {
   sessionCount: number;
 }
 
+// Combined Trend Data (dual-line chart)
+export interface CombinedTrendData {
+  classId: number;
+  classCode: string;
+  className?: string;
+  dataPoints: CombinedWeeklyDataPoint[];
+  attendanceInsight?: string;
+  homeworkInsight?: string;
+  currentAttendanceRate?: number;
+  currentHomeworkRate?: number;
+  attendanceChangePercent?: number;
+  homeworkChangePercent?: number;
+}
+
+export interface CombinedWeeklyDataPoint {
+  weekNumber: number;
+  weekStart: string;
+  weekEnd: string;
+  attendanceRate: number;
+  homeworkRate: number;
+  sessionCount: number;
+}
+
 // Recent Reports
 export interface RecentReport {
   reportId: number;
