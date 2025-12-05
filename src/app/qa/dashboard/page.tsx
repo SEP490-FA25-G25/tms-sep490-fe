@@ -19,7 +19,9 @@ import {
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Button } from "@/components/ui/button"
 import { AlertTriangle, BarChart3, TrendingUp } from "lucide-react"
+import { Link } from "react-router-dom"
 
 // Class status options for filter
 const CLASS_STATUS_OPTIONS: ComboboxOption[] = [
@@ -298,6 +300,13 @@ export default function QADashboardPage() {
                                             emptyText="Không tìm thấy lớp"
                                             className="w-[160px]"
                                         />
+                                    )}
+                                    {selectedClassId && (
+                                        <Link to={`/qa/reports/create?classId=${selectedClassId}`}>
+                                            <Button variant="outline" size="sm" className="h-9 text-xs">
+                                                Tạo báo cáo
+                                            </Button>
+                                        </Link>
                                     )}
                                 </div>
                             </div>
