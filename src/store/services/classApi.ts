@@ -309,6 +309,7 @@ export interface AvailableStudentDTO {
   avatarUrl?: string
   branchId: number
   branchName: string
+  accountStatus: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
   activeEnrollments: number
   canEnroll: boolean
   replacementSkillAssessments: SkillAssessmentDTO[]
