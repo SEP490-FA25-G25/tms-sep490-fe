@@ -1,4 +1,5 @@
 import { CreateClassWizard } from './components/CreateClassWizard'
+import { DashboardLayout } from '@/components/DashboardLayout'
 
 /**
  * Page: Create Class
@@ -6,5 +7,9 @@ import { CreateClassWizard } from './components/CreateClassWizard'
  * Role: ACADEMIC_AFFAIR
  */
 export default function CreateClassPage() {
-  return <CreateClassWizard mode="create" />
+  return (
+    <DashboardLayout>
+      <CreateClassWizard mode="create" />
+    </DashboardLayout>
+  )
 }

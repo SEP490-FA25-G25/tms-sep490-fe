@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -25,27 +25,19 @@ import { cn } from '@/lib/utils'
 import {
   useCreateClassMutation,
   useUpdateClassMutation,
-  useGetBranchesQuery,
   useGetCoursesQuery,
   usePreviewClassCodeMutation,
 } from '@/store/services/classCreationApi'
 import { useGetClassByIdQuery } from '@/store/services/classApi'
+import { useGetMyBranchesQuery } from '@/store/services/branchApi'
 
-const classCodePattern = /^[A-Z0-9]+-[A-Z0-9]+-\d{2}-\d{3}$/
-
-// Validation schema
+// Validation schema - removed HYBRID
 const createClassSchema = z.object({
   branchId: z.number().positive('Vui lòng chọn chi nhánh'),
   courseId: z.number().positive('Vui lòng chọn khóa học'),
-  code: z
-    .string()
-    .optional()
-    .refine(
-      (value) => !value || value.length === 0 || classCodePattern.test(value),
-      'Mã lớp phải theo định dạng COURSE-BRANCH-YY-XXX và chỉ chứa chữ hoa, số, dấu gạch ngang'
-    ),
+  code: z.string().optional(),
   name: z.string().min(1, 'Tên lớp không được để trống').max(255, 'Tên lớp tối đa 255 ký tự'),
-  modality: z.enum(['ONLINE', 'OFFLINE', 'HYBRID']),
+  modality: z.enum(['ONLINE', 'OFFLINE']),
   startDate: z.string().refine((date) => new Date(date) > new Date(), {
     message: 'Ngày bắt đầu phải là ngày trong tương lai',
   }),
@@ -54,28 +46,28 @@ const createClassSchema = z.object({
     .array(z.number().min(0).max(6))
     .min(1, 'Phải chọn ít nhất 1 ngày')
     .max(7, 'Tối đa 7 ngày'),
-  maxCapacity: z.number().min(1, 'Sức chứa phải ít nhất 1').max(1000, 'Sức chứa tối đa 1000'),
+  maxCapacity: z.number().min(1, 'Sức chứa phải ít nhất 1').max(99, 'Sức chứa tối đa 99'),
 })
 
 type FormData = z.infer<typeof createClassSchema>
 
+// Reordered: Mon-Sun
 const DAY_OPTIONS = [
-  { value: 0, label: 'Chủ nhật' },
   { value: 1, label: 'Thứ hai' },
   { value: 2, label: 'Thứ ba' },
   { value: 3, label: 'Thứ tư' },
   { value: 4, label: 'Thứ năm' },
   { value: 5, label: 'Thứ sáu' },
   { value: 6, label: 'Thứ bảy' },
+  { value: 0, label: 'Chủ nhật' },
 ]
 
 interface Step1BasicInfoProps {
   classId?: number | null
   onSuccess: (classId: number, sessionCount: number) => void
-  onCancel: () => void
 }
 
-export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoProps) {
+export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
   const {
     register,
     handleSubmit,
@@ -92,11 +84,16 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
     },
   })
 
+  // Real-time validation error states
+  const [branchError, setBranchError] = useState<string | null>(null)
+  const [courseError, setCourseError] = useState<string | null>(null)
+  const [startDateError, setStartDateError] = useState<string | null>(null)
+  const [capacityError, setCapacityError] = useState<string | null>(null)
+  const [nameError, setNameError] = useState<string | null>(null)
+  const [scheduleDaysError, setScheduleDaysError] = useState<string | null>(null)
 
-
-  const [createClass, { isLoading: isCreating }] = useCreateClassMutation()
-  const [updateClass, { isLoading: isUpdating }] = useUpdateClassMutation()
-  const isLoading = isCreating || isUpdating
+  const [createClass] = useCreateClassMutation()
+  const [updateClass] = useUpdateClassMutation()
 
   // Fetch existing class data if editing
   const { data: existingClassData } = useGetClassByIdQuery(classId!, {
@@ -119,41 +116,29 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
   })()
 
   // Populate form when data loads
-  React.useEffect(() => {
+  useEffect(() => {
     if (existingClassData?.data) {
       const data = existingClassData.data
       setValue('branchId', data.branch.id)
       setValue('courseId', data.course.id)
       setValue('code', data.code)
       setValue('name', data.name)
-      setValue('modality', data.modality)
+      // Handle legacy HYBRID data - default to OFFLINE
+      setValue('modality', data.modality === 'HYBRID' ? 'OFFLINE' : data.modality)
       setValue('startDate', data.startDate)
       setValue('plannedEndDate', data.plannedEndDate)
       setValue('scheduleDays', data.scheduleDays)
       setValue('maxCapacity', data.maxCapacity)
-
-      // If code matches pattern, assume auto-generated, else manual
-      setIsManualCode(!classCodePattern.test(data.code))
     }
   }, [existingClassData, setValue])
-  const { data: branchesData } = useGetBranchesQuery()
+
+  // Use getMyBranches for current user's assigned branches
+  const { data: branchesData } = useGetMyBranchesQuery()
   const { data: coursesData } = useGetCoursesQuery()
-  const [previewClassCode, { isLoading: isPreviewLoading }] = usePreviewClassCodeMutation()
-  const [isManualCode, setIsManualCode] = React.useState(false)
-  const [previewWarning, setPreviewWarning] = React.useState<string | null>(null)
+  const [previewClassCode] = usePreviewClassCodeMutation()
 
-  // Mock data for testing (remove when backend is ready)
-  const branches = branchesData?.data || [
-    { id: 1, name: 'TMS Ha Noi Branch', code: 'HN' },
-    { id: 2, name: 'TMS Ho Chi Minh Branch', code: 'HCM' },
-    { id: 3, name: 'TMS Da Nang Branch', code: 'DN' },
-  ]
-
-  const courses = coursesData?.data || [
-    { id: 1, name: 'IELTS Foundation 2025', code: 'IELTS-FOUND' },
-    { id: 2, name: 'TOEIC Basic 2025', code: 'TOEIC-BASIC' },
-    { id: 3, name: 'Japanese N5 2025', code: 'JP-N5' },
-  ]
+  const branches = branchesData?.data || []
+  const courses = coursesData?.data || []
 
   const selectedBranchId = watch('branchId')
   const selectedCourseId = watch('courseId')
@@ -161,10 +146,8 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
   const selectedDate = watch('startDate')
   const modality = watch('modality')
 
-  const canPreviewCode =
-    !isManualCode && Boolean(selectedBranchId && selectedCourseId && selectedDate)
-
-  const handlePreviewFetch = React.useCallback(async () => {
+  // Auto-generate class code when all required fields are filled
+  const handlePreviewFetch = useCallback(async () => {
     if (!selectedBranchId || !selectedCourseId || !selectedDate) {
       return
     }
@@ -178,76 +161,135 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
       if (response?.data?.previewCode) {
         setValue('code', response.data.previewCode, { shouldValidate: true })
       }
-      setPreviewWarning(response?.data?.warning || null)
     } catch {
-      setPreviewWarning(null)
       toast.error('Không thể sinh mã lớp tự động. Vui lòng thử lại.')
     }
   }, [previewClassCode, selectedBranchId, selectedCourseId, selectedDate, setValue])
 
-  React.useEffect(() => {
-    if (!canPreviewCode) {
-      if (!isManualCode) {
-        setPreviewWarning(null)
-      }
-      return
+  // Auto-fetch preview when all conditions met
+  useEffect(() => {
+    const canPreviewCode = Boolean(selectedBranchId && selectedCourseId && selectedDate)
+    if (canPreviewCode) {
+      void handlePreviewFetch()
     }
-    void handlePreviewFetch()
-  }, [canPreviewCode, handlePreviewFetch, isManualCode])
+  }, [selectedBranchId, selectedCourseId, selectedDate, handlePreviewFetch])
 
-  const handleManualToggle = (checked: boolean | 'indeterminate') => {
-    const nextValue = checked === true
-    setIsManualCode(nextValue)
-    if (!nextValue) {
-      setPreviewWarning(null)
-      if (selectedBranchId && selectedCourseId && selectedDate) {
-        void handlePreviewFetch()
-      } else {
-        setValue('code', '', { shouldValidate: true })
-      }
+  // Real-time validation functions
+  const validateBranch = (value: number | undefined): string | null => {
+    if (!value || value <= 0) return 'Vui lòng chọn chi nhánh'
+    return null
+  }
+
+  const validateCourse = (value: number | undefined): string | null => {
+    if (!value || value <= 0) return 'Vui lòng chọn khóa học'
+    return null
+  }
+
+  const validateStartDate = (value: string | undefined): string | null => {
+    if (!value) return 'Vui lòng chọn ngày bắt đầu'
+    if (new Date(value) <= new Date()) return 'Ngày bắt đầu phải là ngày trong tương lai'
+    return null
+  }
+
+  const validateCapacity = (value: number | undefined): string | null => {
+    if (!value || value < 1) return 'Sức chứa phải ít nhất 1'
+    if (value > 99) return 'Sức chứa tối đa 99'
+    return null
+  }
+
+  const validateName = (value: string): string | null => {
+    if (!value.trim()) return 'Tên lớp không được để trống'
+    if (value.length > 255) return 'Tên lớp tối đa 255 ký tự'
+    return null
+  }
+
+  const validateScheduleDays = (value: number[]): string | null => {
+    if (!value || value.length === 0) return 'Phải chọn ít nhất 1 ngày'
+    if (value.length > 7) return 'Tối đa 7 ngày'
+    return null
+  }
+
+  // Handle field changes with real-time validation
+  const handleBranchChange = (val: string) => {
+    const value = parseInt(val)
+    setValue('branchId', value, { shouldValidate: true })
+    setBranchError(validateBranch(value))
+  }
+
+  const handleCourseChange = (val: string) => {
+    const value = parseInt(val)
+    setValue('courseId', value, { shouldValidate: true })
+    setCourseError(validateCourse(value))
+  }
+
+  const handleStartDateChange = (date: Date | undefined) => {
+    if (date) {
+      // Use format to preserve local date (avoid toISOString which converts to UTC)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const dateStr = `${year}-${month}-${day}`
+      setValue('startDate', dateStr, { shouldValidate: true })
+      setStartDateError(validateStartDate(dateStr))
     }
   }
 
-  const onSubmit = async (data: FormData) => {
-    try {
-      if (isEditLocked) {
-        toast.error(editLockMessage)
-        return
-      }
+  const handleCapacityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value) || 0
+    setValue('maxCapacity', value, { shouldValidate: true })
+    setCapacityError(validateCapacity(value))
+  }
 
-      let response
-      const shouldRegenerate =
-        classId &&
-        existingClassData?.data && (
-          data.branchId !== existingClassData.data.branch.id ||
-          data.courseId !== existingClassData.data.course.id ||
-          data.modality !== existingClassData.data.modality ||
-          data.startDate !== existingClassData.data.startDate ||
-          JSON.stringify(data.scheduleDays) !== JSON.stringify(existingClassData.data.scheduleDays)
-        )
-      const plannedEndDate = data.plannedEndDate || existingClassData?.data?.plannedEndDate || data.startDate
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setValue('name', value, { shouldValidate: true })
+    setNameError(validateName(value))
+  }
+
+  const toggleDay = (dayValue: number) => {
+    const currentDays = selectedDays || []
+    const newDays = currentDays.includes(dayValue)
+      ? currentDays.filter((d: number) => d !== dayValue)
+      : [...currentDays, dayValue].sort()
+
+    setValue('scheduleDays', newDays, { shouldValidate: true })
+    setScheduleDaysError(validateScheduleDays(newDays))
+  }
+
+  const onSubmit = async (data: FormData) => {
+    // Final validation before submit
+    const branchErr = validateBranch(data.branchId)
+    const courseErr = validateCourse(data.courseId)
+    const dateErr = validateStartDate(data.startDate)
+    const capErr = validateCapacity(data.maxCapacity)
+    const nameErr = validateName(data.name)
+    const daysErr = validateScheduleDays(data.scheduleDays)
+
+    if (branchErr || courseErr || dateErr || capErr || nameErr || daysErr) {
+      setBranchError(branchErr)
+      setCourseError(courseErr)
+      setStartDateError(dateErr)
+      setCapacityError(capErr)
+      setNameError(nameErr)
+      setScheduleDaysError(daysErr)
+      toast.error('Vui lòng điền đầy đủ thông tin hợp lệ')
+      return
+    }
+
+    try {
+      let resultClassId: number
+      let totalSessions: number
 
       if (classId) {
-        response = await updateClass({
-          classId,
-          data: {
-            ...data,
-            plannedEndDate,
-            regenerateSessions: shouldRegenerate || false,
-          },
-        }).unwrap()
-        toast.success(`Cập nhật lớp ${data.code} thành công`)
+        const response = await updateClass({ classId, data }).unwrap()
+        resultClassId = classId
+        totalSessions = response?.data?.sessionSummary?.totalSessions ?? 0
+        toast.success('Cập nhật lớp thành công!')
       } else {
-        response = await createClass(data).unwrap()
-        toast.success(`Lớp ${response?.data?.code || data.code} đã được tạo`)
-      }
-
-      const resultClassId = response?.data?.classId
-      const totalSessions = response?.data?.sessionSummary?.totalSessions ?? 0
-
-      if (!resultClassId) {
-        toast.error('Không nhận được thông tin lớp học. Vui lòng thử lại.')
-        return
+        const response = await createClass(data).unwrap()
+        resultClassId = response.data.classId
+        totalSessions = response.data.sessionSummary.totalSessions
+        toast.success('Tạo lớp thành công!')
       }
 
       onSuccess(resultClassId, totalSessions)
@@ -261,7 +303,6 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
 
       if (error.status === 400) {
         if (error.data?.data && typeof error.data.data === 'object') {
-          // Field-level errors
           toast.error(message || 'Dữ liệu không hợp lệ')
         } else {
           toast.error(message || 'Có lỗi xảy ra')
@@ -274,15 +315,6 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
         toast.error('Lỗi kết nối. Vui lòng thử lại.')
       }
     }
-  }
-
-  const toggleDay = (dayValue: number) => {
-    const currentDays = selectedDays || []
-    const newDays = currentDays.includes(dayValue)
-      ? currentDays.filter((d: number) => d !== dayValue)
-      : [...currentDays, dayValue].sort()
-
-    setValue('scheduleDays', newDays, { shouldValidate: true })
   }
 
   return (
@@ -302,7 +334,7 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
         )}
       </div>
 
-      {/* Two-column layout */}
+      {/* Row 1: Chi nhánh + Khóa học */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Chi nhánh */}
         <div className="space-y-2">
@@ -311,22 +343,29 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
           </Label>
           <Select
             value={selectedBranchId?.toString() ?? ''}
-            onValueChange={(val) => {
-              if (val) setValue('branchId', parseInt(val), { shouldValidate: true })
-            }}
+            onValueChange={handleBranchChange}
+            disabled={isEditLocked}
           >
-            <SelectTrigger id="branchId">
+            <SelectTrigger id="branchId" className={cn(branchError && 'border-destructive')}>
               <SelectValue placeholder="Chọn chi nhánh" />
             </SelectTrigger>
             <SelectContent>
-              {branches.map((branch) => (
-                <SelectItem key={branch.id} value={branch.id.toString()}>
-                  {branch.name}
+              {branches.length === 0 ? (
+                <SelectItem value="no-branch" disabled>
+                  Bạn chưa được phân công chi nhánh nào
                 </SelectItem>
-              ))}
+              ) : (
+                branches.map((branch) => (
+                  <SelectItem key={branch.id} value={branch.id.toString()}>
+                    {branch.name}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
-          {errors.branchId && <p className="text-sm text-destructive">{errors.branchId.message}</p>}
+          {(branchError || errors.branchId) && (
+            <p className="text-sm text-destructive">{branchError || errors.branchId?.message}</p>
+          )}
         </div>
 
         {/* Khóa học */}
@@ -336,11 +375,10 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
           </Label>
           <Select
             value={selectedCourseId?.toString() ?? ''}
-            onValueChange={(val) => {
-              if (val) setValue('courseId', parseInt(val), { shouldValidate: true })
-            }}
+            onValueChange={handleCourseChange}
+            disabled={isEditLocked}
           >
-            <SelectTrigger id="courseId">
+            <SelectTrigger id="courseId" className={cn(courseError && 'border-destructive')}>
               <SelectValue placeholder="Chọn khóa học" />
             </SelectTrigger>
             <SelectContent>
@@ -351,75 +389,15 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
               ))}
             </SelectContent>
           </Select>
-          {errors.courseId && <p className="text-sm text-destructive">{errors.courseId.message}</p>}
-        </div>
-
-        {/* Mã lớp */}
-        <div className="space-y-2">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <Label htmlFor="code">
-              Mã lớp <span className="text-destructive">*</span>
-            </Label>
-            <label className="flex items-center gap-2 text-xs sm:text-sm font-medium text-muted-foreground">
-              <Checkbox
-                id="manual-code"
-                checked={isManualCode}
-                onCheckedChange={handleManualToggle}
-              />
-              Nhập mã thủ công
-            </label>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Input
-              id="code"
-              placeholder="Ví dụ: IELTSFOUND-HN01-25-001"
-              {...register('code')}
-              readOnly={!isManualCode}
-              className={cn(!isManualCode && 'bg-muted/50', errors.code && 'border-destructive')}
-            />
-            {!isManualCode && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => void handlePreviewFetch()}
-                disabled={!canPreviewCode || isPreviewLoading}
-              >
-                {isPreviewLoading ? 'Đang sinh...' : 'Sinh mã mới'}
-              </Button>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {isManualCode
-              ? 'Nhập theo định dạng COURSE-BRANCH-YY-XXX (ví dụ: IELTSFOUND-HN01-25-005).'
-              : 'Hệ thống tự sinh từ mã khóa + chi nhánh + năm bắt đầu. Bạn có thể bật chế độ nhập thủ công nếu cần.'}
-          </p>
-          {previewWarning && (
-            <Alert className="border-amber-300 bg-amber-50 text-amber-900">
-              <AlertDescription className="flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-                <span>{previewWarning}</span>
-              </AlertDescription>
-            </Alert>
+          {(courseError || errors.courseId) && (
+            <p className="text-sm text-destructive">{courseError || errors.courseId?.message}</p>
           )}
-          {errors.code && <p className="text-sm text-destructive">{errors.code.message}</p>}
         </div>
+      </div>
 
-        {/* Tên lớp */}
-        <div className="space-y-2">
-          <Label htmlFor="name">
-            Tên lớp <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            id="name"
-            placeholder="Ví dụ: Lớp IELTS Cơ Bản A"
-            {...register('name')}
-            className={cn(errors.name && 'border-destructive')}
-          />
-          {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-        </div>
-
-        {/* Ngày bắt đầu */}
+      {/* Row 2: Ngày bắt đầu + Sức chứa */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Ngày bắt đầu - moved up before Mã lớp */}
         <div className="space-y-2">
           <Label>
             Ngày bắt đầu <span className="text-destructive">*</span>
@@ -428,10 +406,11 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
+                disabled={isEditLocked}
                 className={cn(
                   'w-full justify-start text-left font-normal',
                   !selectedDate && 'text-muted-foreground',
-                  errors.startDate && 'border-destructive'
+                  (startDateError || errors.startDate) && 'border-destructive'
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
@@ -442,17 +421,15 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
               <Calendar
                 mode="single"
                 selected={selectedDate ? new Date(selectedDate) : undefined}
-                onSelect={(date: Date | undefined) => {
-                  if (date) {
-                    setValue('startDate', date.toISOString().split('T')[0], { shouldValidate: true })
-                  }
-                }}
+                onSelect={handleStartDateChange}
                 disabled={(date: Date) => date < new Date()}
                 initialFocus
               />
             </PopoverContent>
           </Popover>
-          {errors.startDate && <p className="text-sm text-destructive">{errors.startDate.message}</p>}
+          {(startDateError || errors.startDate) && (
+            <p className="text-sm text-destructive">{startDateError || errors.startDate?.message}</p>
+          )}
         </div>
 
         {/* Sức chứa */}
@@ -466,19 +443,66 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
             min="1"
             max="1000"
             placeholder="Ví dụ: 30"
+            disabled={isEditLocked}
             {...register('maxCapacity', { valueAsNumber: true })}
-            className={cn(errors.maxCapacity && 'border-destructive')}
+            onChange={handleCapacityChange}
+            className={cn((capacityError || errors.maxCapacity) && 'border-destructive')}
           />
-          {errors.maxCapacity && <p className="text-sm text-destructive">{errors.maxCapacity.message}</p>}
+          {(capacityError || errors.maxCapacity) && (
+            <p className="text-sm text-destructive">{capacityError || errors.maxCapacity?.message}</p>
+          )}
         </div>
       </div>
 
-      {/* Hình thức học */}
+      {/* Row 3: Mã lớp + Tên lớp */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Mã lớp - auto-generated only, no manual toggle */}
+        <div className="space-y-2">
+          <Label htmlFor="code">
+            Mã lớp <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="code"
+            placeholder="Tự động sinh khi chọn đủ thông tin"
+            {...register('code')}
+            readOnly
+            className="bg-muted/50"
+          />
+          <p className="text-xs text-muted-foreground">
+            Hệ thống tự sinh từ mã khóa + chi nhánh + năm bắt đầu.
+          </p>
+          {errors.code && <p className="text-sm text-destructive">{errors.code.message}</p>}
+        </div>
+
+        {/* Tên lớp */}
+        <div className="space-y-2">
+          <Label htmlFor="name">
+            Tên lớp <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="name"
+            placeholder="Ví dụ: Lớp IELTS Cơ Bản A"
+            disabled={isEditLocked}
+            {...register('name')}
+            onChange={handleNameChange}
+            className={cn((nameError || errors.name) && 'border-destructive')}
+          />
+          {(nameError || errors.name) && (
+            <p className="text-sm text-destructive">{nameError || errors.name?.message}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Hình thức học - removed HYBRID */}
       <div className="space-y-2">
         <Label>
           Hình thức học <span className="text-destructive">*</span>
         </Label>
-        <RadioGroup value={modality} onValueChange={(val: string) => setValue('modality', val as 'ONLINE' | 'OFFLINE' | 'HYBRID', { shouldValidate: true })}>
+        <RadioGroup
+          value={modality}
+          onValueChange={(val: string) => setValue('modality', val as 'ONLINE' | 'OFFLINE', { shouldValidate: true })}
+          disabled={isEditLocked}
+        >
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="OFFLINE" id="offline" />
@@ -492,18 +516,12 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
                 Online (Trực tuyến)
               </Label>
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="HYBRID" id="hybrid" />
-              <Label htmlFor="hybrid" className="font-normal cursor-pointer">
-                Hybrid (Kết hợp)
-              </Label>
-            </div>
           </div>
         </RadioGroup>
         {errors.modality && <p className="text-sm text-destructive">{errors.modality.message}</p>}
       </div>
 
-      {/* Ngày học trong tuần */}
+      {/* Ngày học trong tuần - reordered Mon-Sun */}
       <div className="space-y-2">
         <Label>
           Ngày học trong tuần <span className="text-destructive">*</span>
@@ -515,6 +533,7 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
                 id={`day-${day.value}`}
                 checked={selectedDays.includes(day.value)}
                 onCheckedChange={() => toggleDay(day.value)}
+                disabled={isEditLocked}
               />
               <Label htmlFor={`day-${day.value}`} className="font-normal cursor-pointer">
                 {day.label}
@@ -523,38 +542,13 @@ export function Step1BasicInfo({ classId, onSuccess, onCancel }: Step1BasicInfoP
           ))}
         </div>
         <p className="text-xs text-muted-foreground">Chọn ít nhất 1 ngày, tối đa 7 ngày</p>
-        {errors.scheduleDays && <p className="text-sm text-destructive">{errors.scheduleDays.message}</p>}
+        {(scheduleDaysError || errors.scheduleDays) && (
+          <p className="text-sm text-destructive">{scheduleDaysError || errors.scheduleDays?.message}</p>
+        )}
       </div>
 
-      {/* Submit Button */}
-      <div className="flex flex-wrap items-center justify-between pt-4 gap-3">
-        <Button type="button" variant="ghost" disabled={isLoading} onClick={onCancel}>
-          Hủy &amp; về danh sách
-        </Button>
-        {classId && (
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isLoading || isEditLocked}
-            onClick={() => {
-              const totalSessions = 0
-              onSuccess(classId, totalSessions)
-            }}
-          >
-            Tiếp tục
-          </Button>
-        )}
-        <Button type="submit" disabled={isLoading || isEditLocked} className="min-w-[150px]">
-          {isLoading ? (
-            <>
-              <span className="animate-spin mr-2">⏳</span>
-              {classId ? 'Đang cập nhật...' : 'Đang tạo...'}
-            </>
-          ) : (
-            classId ? 'Cập nhật lớp học' : 'Tạo lớp học'
-          )}
-        </Button>
-      </div>
+      {/* Submit button for form - hidden but needed for form submission */}
+      <button type="submit" className="hidden" id="step1-submit-btn" />
     </form>
   )
 }

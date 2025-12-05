@@ -135,14 +135,35 @@ const ConsultationRegistrationsPage = lazy(
 );
 
 // Center Head pages
+const CenterHeadDashboardPage = lazy(
+  () => import("./app/center-head/dashboard/page")
+);
+const CenterHeadClassesPage = lazy(
+  () => import("./app/center-head/classes/page")
+);
 const CenterHeadApprovalsPage = lazy(
   () => import("./app/center-head/approvals/page")
+);
+const CenterHeadTeacherSchedulesPage = lazy(
+  () => import("./app/center-head/teacher-schedules/page")
+);
+const CenterHeadTeacherScheduleDetailPage = lazy(
+  () => import("./app/center-head/teacher-schedules/[id]/page")
 );
 const CenterHeadResourcesPage = lazy(
   () => import("./app/center-head/resources/page")
 );
 const CenterHeadTimeSlotsPage = lazy(
   () => import("./app/center-head/timeslots/page")
+);
+const CenterHeadCurriculumPage = lazy(
+  () => import("./app/center-head/curriculum/page")
+);
+const CenterHeadFeedbacksPage = lazy(
+  () => import("./app/center-head/feedbacks/page")
+);
+const CenterHeadQAReportsPage = lazy(
+  () => import("./app/center-head/qa-reports/page")
 );
 const ResourceDetailPage = lazy(
   () => import("./app/center-head/resources/[id]/page")
@@ -948,10 +969,42 @@ function App() {
 
                 {/* Center Head */}
                 <Route
+                  path="/center-head/dashboard"
+                  element={
+                    <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
+                      <CenterHeadDashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/center-head/classes"
+                  element={
+                    <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
+                      <CenterHeadClassesPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/center-head/approvals"
                   element={
                     <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
                       <CenterHeadApprovalsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/center-head/teacher-schedules"
+                  element={
+                    <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
+                      <CenterHeadTeacherSchedulesPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/center-head/teacher-schedules/:id"
+                  element={
+                    <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
+                      <CenterHeadTeacherScheduleDetailPage />
                     </ProtectedRoute>
                   }
                 />
@@ -984,6 +1037,30 @@ function App() {
                   element={
                     <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
                       <TimeSlotDetailPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/center-head/curriculum"
+                  element={
+                    <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
+                      <CenterHeadCurriculumPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/center-head/feedbacks"
+                  element={
+                    <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
+                      <CenterHeadFeedbacksPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/center-head/qa-reports"
+                  element={
+                    <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
+                      <CenterHeadQAReportsPage />
                     </ProtectedRoute>
                   }
                 />

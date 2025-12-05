@@ -1,21 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAssignTimeSlotsMutation, useGetTimeSlotsQuery, useGetClassSessionsQuery } from '@/store/services/classCreationApi'
 import { useGetClassByIdQuery } from '@/store/services/classApi'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
-import { WizardFooter } from './WizardFooter'
+import { Button } from '@/components/ui/button'
+import { AlertCircle, Check } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface Step3TimeSlotsProps {
   classId: number | null
-  onBack: () => void
   onContinue: () => void
-  onSaveSelections: (selections: Record<number, number>) => void
-  onCancelKeepDraft: () => void
-  onCancelDelete: () => Promise<void> | void
 }
 
 const DAY_LABELS: Record<number, string> = {
@@ -30,24 +25,13 @@ const DAY_LABELS: Record<number, string> = {
 
 const DEFAULT_DAYS = [1, 3, 5]
 
-export function Step3TimeSlots({
-  classId,
-  onBack,
-  onContinue,
-  onSaveSelections,
-  onCancelKeepDraft,
-  onCancelDelete,
-}: Step3TimeSlotsProps) {
-  const { data: classDetail } = useGetClassByIdQuery(classId ?? 0, {
-    skip: !classId,
-  })
-  const { data: sessionsData } = useGetClassSessionsQuery(classId ?? 0, { skip: !classId })
+export function Step3TimeSlots({ classId, onContinue }: Step3TimeSlotsProps) {
+  const { data: classDetail } = useGetClassByIdQuery(classId ?? 0, { skip: !classId })
+  const { data: sessionsData, isLoading: isSessionsLoading, refetch: refetchSessions } = useGetClassSessionsQuery(classId ?? 0, { skip: !classId })
   const branchId = classDetail?.data?.branch?.id
   const { data: timeSlotResponse, isLoading: isTimeSlotLoading } = useGetTimeSlotsQuery(
     branchId ? { branchId } : { branchId: 0 },
-    {
-      skip: !branchId,
-    }
+    { skip: !branchId }
   )
   const [assignTimeSlots, { isLoading: isSubmitting }] = useAssignTimeSlotsMutation()
 
@@ -56,11 +40,12 @@ export function Step3TimeSlots({
 
   const [selectedSlots, setSelectedSlots] = useState<Record<number, number | ''>>({})
 
+  // Prefill from existing sessions
   useEffect(() => {
     const initial: Record<number, number | ''> = {}
-    // Prefill từ session hiện có: lấy timeSlotTemplateId phổ biến nhất theo từng day
     const sessions = sessionsData?.data?.sessions ?? []
     const dayToSlots: Record<number, Record<number, number>> = {}
+
     sessions.forEach((session) => {
       if (!session.date) return
       const day = new Date(session.date).getDay()
@@ -69,6 +54,7 @@ export function Step3TimeSlots({
       if (!dayToSlots[day]) dayToSlots[day] = {}
       dayToSlots[day][slotId] = (dayToSlots[day][slotId] || 0) + 1
     })
+
     sortedDays.forEach((day) => {
       const slotCounts = dayToSlots[day]
       if (slotCounts) {
@@ -82,6 +68,9 @@ export function Step3TimeSlots({
   }, [sortedDays, sessionsData])
 
   const timeSlotOptions = timeSlotResponse?.data ?? []
+  const totalSessions = sessionsData?.data?.totalSessions ?? 0
+  const assignedCount = sortedDays.filter(day => selectedSlots[day]).length
+  const allAssigned = assignedCount === sortedDays.length
 
   const handleChange = (day: number, value: string) => {
     setSelectedSlots((prev) => ({
@@ -92,7 +81,7 @@ export function Step3TimeSlots({
 
   const handleSubmit = async () => {
     if (!classId) {
-      toast.error('Không tìm thấy lớp học. Vui lòng quay lại bước 1.')
+      toast.error('Không tìm thấy lớp học.')
       return
     }
 
@@ -104,92 +93,107 @@ export function Step3TimeSlots({
       }))
 
     if (assignments.length === 0) {
-      toast.error('Vui lòng chọn khung giờ cho ít nhất 1 ngày học.')
+      toast.error('Vui lòng chọn khung giờ cho ít nhất 1 ngày.')
       return
     }
 
     try {
       const response = await assignTimeSlots({ classId, data: { assignments } }).unwrap()
-      const savedSelections = assignments.reduce<Record<number, number>>((acc, current) => {
-        acc[current.dayOfWeek] = current.timeSlotTemplateId
-        return acc
-      }, {})
-      onSaveSelections(savedSelections)
-      toast.success(response.message || 'Đã gán khung giờ thành công')
+      toast.success(response.message || 'Đã lưu khung giờ')
+      refetchSessions()
       onContinue()
     } catch (error: unknown) {
-      const message = (error as { data?: { message?: string } })?.data?.message || 'Không thể gán khung giờ. Vui lòng thử lại.'
+      const message = (error as { data?: { message?: string } })?.data?.message || 'Không thể lưu khung giờ.'
       toast.error(message)
     }
   }
 
   if (!classId) {
     return (
-      <div className="space-y-4">
+      <div className="max-w-3xl mx-auto">
         <Alert>
-          <AlertDescription>Vui lòng tạo lớp (Bước 1) trước khi gán khung giờ.</AlertDescription>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>Vui lòng hoàn thành Bước 1 trước.</AlertDescription>
         </Alert>
-        <WizardFooter
-          currentStep={3}
-          isFirstStep={false}
-          isLastStep={false}
-          onBack={onBack}
-          onNext={onContinue}
-          onCancelKeepDraft={onCancelKeepDraft}
-          onCancelDelete={onCancelDelete}
-          isNextDisabled
-        />
+      </div>
+    )
+  }
+
+  if (isTimeSlotLoading || isSessionsLoading) {
+    return (
+      <div className="max-w-3xl mx-auto space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-32 w-full" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Chọn khung giờ cho từng ngày học</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Hệ thống sẽ áp dụng khung giờ theo ngày trong tuần cho toàn bộ buổi học tương ứng.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {isTimeSlotLoading ? (
-            <Skeleton className="h-40 rounded-xl" />
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {sortedDays.map((day) => (
-                <div key={day} className="space-y-2">
-                  <Label className="text-sm font-medium">{DAY_LABELS[day] || `Ngày ${day}`}</Label>
-                  <Select value={selectedSlots[day]?.toString() || ''} onValueChange={(value) => handleChange(day, value)}>
-                    <SelectTrigger className="h-11">
-                      <SelectValue placeholder="Chọn khung giờ" />
+    <div className="max-w-3xl mx-auto space-y-8">
+      {/* Header */}
+      <div>
+        <h2 className="text-xl font-semibold">Gán khung giờ</h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Chọn khung giờ cho {sortedDays.length} ngày học • {totalSessions} buổi
+        </p>
+      </div>
+
+      {/* Time Slot Selection */}
+      <div className="rounded-lg border">
+        <div className="px-4 py-3 border-b bg-muted/30">
+          <span className="font-medium">Chọn khung giờ theo ngày</span>
+        </div>
+
+        <div className="divide-y">
+          {sortedDays.map((day) => {
+            const isSelected = Boolean(selectedSlots[day])
+
+            return (
+              <div key={day} className="flex items-center gap-4 px-4 py-3">
+                <div className="w-24 font-medium">{DAY_LABELS[day]}</div>
+
+                <div className="flex-1">
+                  <Select
+                    value={selectedSlots[day]?.toString() || ''}
+                    onValueChange={(value) => handleChange(day, value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Chọn khung giờ..." />
                     </SelectTrigger>
                     <SelectContent>
                       {timeSlotOptions.map((slot) => (
                         <SelectItem key={slot.id} value={slot.id.toString()}>
-                          {slot.name} ({slot.startTime} - {slot.endTime})
+                          {slot.startTime} - {slot.endTime} ({slot.name})
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
-      <WizardFooter
-        currentStep={3}
-        isFirstStep={false}
-        isLastStep={false}
-        onBack={onBack}
-        onNext={handleSubmit}
-        onCancelKeepDraft={onCancelKeepDraft}
-        onCancelDelete={onCancelDelete}
-        isSubmitting={isSubmitting}
-        nextButtonText="Lưu khung giờ"
-      />
+                <div className="w-20 text-right">
+                  {isSelected ? (
+                    <span className="text-sm text-green-600 flex items-center justify-end gap-1">
+                      <Check className="h-4 w-4" /> Đã chọn
+                    </span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Chưa chọn</span>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Đã chọn {assignedCount}/{sortedDays.length} ngày
+        </p>
+        <Button onClick={handleSubmit} disabled={isSubmitting || !allAssigned}>
+          {isSubmitting ? 'Đang lưu...' : 'Lưu khung giờ'}
+        </Button>
+      </div>
     </div>
   )
 }

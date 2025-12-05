@@ -171,6 +171,7 @@ export interface ResourceConflict {
 
 export interface AssignResourcesRequest {
   pattern: ResourceAssignment[]
+  skipConflictCheck?: boolean
 }
 
 export interface AssignResourcesResponse {
@@ -258,6 +259,7 @@ export interface TeacherAvailability {
   fullName: string
   email: string
   skills: string[]
+  specializations?: string[] // e.g., ["IELTS", "TOEIC"]
   hasGeneralSkill: boolean
   totalSessions: number
   availableSessions: number

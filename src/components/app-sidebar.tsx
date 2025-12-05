@@ -2,6 +2,7 @@ import * as React from "react";
 import {
   BarChartIcon,
   BookOpenIcon,
+  BookIcon,
   CalendarIcon,
   CheckCircleIcon,
   FileTextIcon,
@@ -16,6 +17,7 @@ import {
   SlidersHorizontalIcon,
   PlusIcon,
   MessageCircleIcon,
+  MessageSquareIcon,
   LogOutIcon,
   Clock,
   BellIcon,
@@ -162,18 +164,23 @@ const roleBasedNav = {
     navMain: [
       {
         title: "Bảng điều khiển",
-        url: "/center_head/dashboard",
+        url: "/center-head/dashboard",
         icon: HomeIcon,
       },
       {
-        title: "Quản lý lớp học",
-        url: "/center/classes",
+        title: "Danh sách lớp học",
+        url: "/center-head/classes",
         icon: CalendarIcon,
       },
       {
         title: "Phê duyệt lớp học",
         url: "/center-head/approvals",
         icon: ClipboardCheckIcon,
+      },
+      {
+        title: "Lịch dạy giáo viên",
+        url: "/center-head/teacher-schedules",
+        icon: CalendarIcon,
       },
       {
         title: "Quản lý tài nguyên",
@@ -186,18 +193,18 @@ const roleBasedNav = {
         icon: Clock,
       },
       {
-        title: "Quản lý học sinh",
-        url: "/center/students",
-        icon: UsersIcon,
+        title: "Chương trình đào tạo",
+        url: "/center-head/curriculum",
+        icon: BookIcon,
       },
       {
-        title: "Báo Cáo Chất Lượng",
+        title: "Phản hồi học viên",
+        url: "/center-head/feedbacks",
+        icon: MessageSquareIcon,
+      },
+      {
+        title: "Báo cáo QA",
         url: "/center-head/qa-reports",
-        icon: ClipboardCheckIcon,
-      },
-      {
-        title: "Báo cáo trung tâm",
-        url: "/center/reports",
         icon: FileTextIcon,
       },
     ],

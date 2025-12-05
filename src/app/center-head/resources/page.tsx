@@ -500,7 +500,7 @@ export default function CenterHeadResourcesPage() {
                             setResourceTypeFilter(value as ResourceType | "ALL")
                         }
                     >
-                        <SelectTrigger className="w-[160px]">
+                        <SelectTrigger className="w-40">
                             <SelectValue placeholder="Loại tài nguyên" />
                         </SelectTrigger>
                         <SelectContent>

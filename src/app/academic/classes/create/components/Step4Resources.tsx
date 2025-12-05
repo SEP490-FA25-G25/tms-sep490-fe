@@ -1,23 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAssignResourcesMutation, useLazyGetResourcesQuery, useGetClassSessionsQuery } from '@/store/services/classCreationApi'
 import { useGetClassByIdQuery } from '@/store/services/classApi'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
-import { WizardFooter } from './WizardFooter'
+import { Button } from '@/components/ui/button'
 import { ResourceConflictDialog } from './ResourceConflictDialog'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
+import { AlertCircle, Check } from 'lucide-react'
 import type { AssignResourcesRequest, ResourceConflict, ResourceOption } from '@/types/classCreation'
 
 interface Step4ResourcesProps {
   classId: number | null
-  timeSlotSelections: Record<number, number>
-  onBack: () => void
   onContinue: () => void
-  onCancelKeepDraft: () => void
-  onCancelDelete: () => Promise<void> | void
 }
 
 const DAY_LABELS: Record<number, string> = {
@@ -32,62 +27,34 @@ const DAY_LABELS: Record<number, string> = {
 
 const DEFAULT_DAYS = [1, 3, 5]
 
-function ResourceMeta({ resource, muted = false }: { resource: ResourceOption; muted?: boolean }) {
-  return (
-    <div className={cn('flex flex-col text-xs text-muted-foreground', muted && 'opacity-80')}>
-      <span className="flex flex-wrap items-center gap-2">
-        {resource.resourceType === 'ROOM' ? 'Phòng học' : 'Tài khoản online'}
-        {typeof resource.availabilityRate === 'number' && (
-          <span
-            className={cn(
-              'rounded-full px-2 py-0.5 text-[10px] font-semibold',
-              resource.availabilityRate >= 90
-                ? 'bg-emerald-50 text-emerald-600'
-                : resource.availabilityRate >= 70
-                  ? 'bg-amber-50 text-amber-600'
-                  : 'bg-rose-50 text-rose-600'
-            )}
-          >
-            {resource.availabilityRate.toFixed(0)}% khả dụng
-          </span>
-        )}
-        {resource.isRecommended && (
-          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-            Khuyến nghị
-          </span>
-        )}
-      </span>
-      {resource.conflictCount !== undefined && resource.totalSessions !== undefined && (
-        <span className="text-[11px] text-muted-foreground">
-          {resource.conflictCount} xung đột / {resource.totalSessions} buổi
-        </span>
-      )}
-    </div>
-  )
-}
-
-function SelectedResourceSummary({ resource }: { resource: ResourceOption }) {
-  return (
-    <div className="mt-2 rounded-xl border border-border/70 bg-muted/40 px-3 py-3">
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Đã chọn</span>
-      <p className="text-sm font-semibold text-foreground">{resource.displayName || resource.name}</p>
-      <ResourceMeta resource={resource} muted />
-    </div>
-  )
-}
-
-export function Step4Resources({
-  classId,
-  timeSlotSelections,
-  onBack,
-  onContinue,
-  onCancelKeepDraft,
-  onCancelDelete,
-}: Step4ResourcesProps) {
+export function Step4Resources({ classId, onContinue }: Step4ResourcesProps) {
   const { data: classDetail } = useGetClassByIdQuery(classId ?? 0, { skip: !classId })
-  const { data: sessionsData } = useGetClassSessionsQuery(classId ?? 0, { skip: !classId })
+  const { data: sessionsData, refetch: refetchSessions } = useGetClassSessionsQuery(classId ?? 0, { skip: !classId })
   const scheduleDays = classDetail?.data?.scheduleDays ?? DEFAULT_DAYS
   const sortedDays = useMemo(() => Array.from(new Set(scheduleDays)).sort(), [scheduleDays])
+
+  // Derive timeSlotSelections from sessions
+  const timeSlotSelections = useMemo(() => {
+    const sessions = sessionsData?.data?.sessions ?? []
+    const dayToSlots: Record<number, Record<number, number>> = {}
+    sessions.forEach((session) => {
+      if (!session.date) return
+      const day = new Date(session.date).getDay()
+      const slotId = session.timeSlotTemplateId
+      if (!slotId) return
+      if (!dayToSlots[day]) dayToSlots[day] = {}
+      dayToSlots[day][slotId] = (dayToSlots[day][slotId] || 0) + 1
+    })
+    const result: Record<number, number> = {}
+    sortedDays.forEach((day) => {
+      const slotCounts = dayToSlots[day]
+      if (slotCounts) {
+        const best = Object.entries(slotCounts).sort((a, b) => b[1] - a[1])[0]
+        if (best) result[day] = Number(best[0])
+      }
+    })
+    return result
+  }, [sortedDays, sessionsData])
 
   const [fetchResources] = useLazyGetResourcesQuery()
   const [assignResources, { isLoading: isSubmitting }] = useAssignResourcesMutation()
@@ -100,6 +67,12 @@ export function Step4Resources({
   const [initialConflictCount, setInitialConflictCount] = useState(0)
   const [lastPattern, setLastPattern] = useState<AssignResourcesRequest['pattern']>([])
 
+  const totalSessions = sessionsData?.data?.totalSessions ?? 0
+  const assignedCount = sortedDays.filter(day => selectedResources[day]).length
+  const allAssigned = assignedCount === sortedDays.length
+  const hasTimeSlots = Object.keys(timeSlotSelections).length > 0
+
+  // Prefill from existing sessions
   useEffect(() => {
     const initial: Record<number, number | ''> = {}
     const sessions = sessionsData?.data?.sessions ?? []
@@ -108,7 +81,7 @@ export function Step4Resources({
       if (!session.date) return
       const day = new Date(session.date).getDay()
       const resourceId = session.resourceId
-      if (day === undefined || day === null || !resourceId) return
+      if (!resourceId) return
       if (!dayToResource[day]) dayToResource[day] = {}
       dayToResource[day][resourceId] = (dayToResource[day][resourceId] || 0) + 1
     })
@@ -124,6 +97,7 @@ export function Step4Resources({
     setSelectedResources(initial)
   }, [sortedDays, sessionsData])
 
+  // Fetch resources
   useEffect(() => {
     if (!classId) return
     const daysToFetch = sortedDays.filter((day) => timeSlotSelections[day])
@@ -159,9 +133,7 @@ export function Step4Resources({
       setIsLoadingResources(false)
     })
 
-    return () => {
-      isMounted = false
-    }
+    return () => { isMounted = false }
   }, [classId, fetchResources, sortedDays, timeSlotSelections])
 
   const handleChange = (day: number, value: string) => {
@@ -171,199 +143,182 @@ export function Step4Resources({
     }))
   }
 
+  const buildPatternFromState = () => {
+    return Object.entries(selectedResources)
+      .filter(([, value]) => value)
+      .map(([day, resourceId]) => ({
+        dayOfWeek: Number(day),
+        resourceId: Number(resourceId),
+      }))
+  }
+
   const handleSubmit = async () => {
     if (!classId) {
-      toast.error('Không tìm thấy lớp học. Vui lòng quay lại bước 1.')
+      toast.error('Không tìm thấy lớp học.')
       return
     }
 
-    const pattern = Object.entries(selectedResources)
-      .filter(([, value]) => value)
-      .map(([day, value]) => ({
-        dayOfWeek: Number(day),
-        resourceId: Number(value),
-      }))
-
+    const pattern = buildPatternFromState()
     if (pattern.length === 0) {
-      toast.error('Vui lòng chọn tài nguyên cho ít nhất 1 ngày học.')
+      toast.error('Vui lòng chọn tài nguyên cho ít nhất 1 ngày.')
       return
     }
-
     setLastPattern(pattern)
 
     try {
-      const response = await assignResources({ classId, data: { pattern } }).unwrap()
-      if (response.data.conflictCount > 0) {
-        const conflictList = response.data.conflicts ?? []
-        setConflicts(conflictList)
-        setInitialConflictCount(conflictList.length)
-        toast.warning('Một số buổi học bị xung đột tài nguyên')
+      const response = await assignResources({
+        classId,
+        data: { pattern, skipConflictCheck: false },
+      }).unwrap()
+
+      if (response.data?.conflicts && response.data.conflicts.length > 0) {
+        setConflicts(response.data.conflicts)
+        setInitialConflictCount(response.data.conflicts.length)
+        toast.info(`Phát hiện ${response.data.conflicts.length} xung đột.`)
       } else {
-        setConflicts([])
-        setInitialConflictCount(0)
-        toast.success(response.message || 'Đã gán tài nguyên thành công')
+        toast.success('Đã lưu tài nguyên thành công')
+        refetchSessions()
         onContinue()
       }
     } catch (error: unknown) {
-      const message = (error as { data?: { message?: string } })?.data?.message || 'Không thể gán tài nguyên. Vui lòng thử lại.'
+      const message = (error as { data?: { message?: string } })?.data?.message || 'Không thể lưu tài nguyên.'
       toast.error(message)
     }
   }
 
-  const buildPatternFromState = () =>
-    Object.entries(selectedResources)
-      .filter(([, value]) => value)
-      .map(([day, value]) => ({
-        dayOfWeek: Number(day),
-        resourceId: Number(value),
-      }))
-
   const handleRetryConflicts = async () => {
-    if (!classId) {
-      setConflicts([])
-      return
-    }
-    const pattern =
-      lastPattern.length > 0
-        ? lastPattern
-        : buildPatternFromState()
-    if (pattern.length === 0) {
-      setConflicts([])
-      return
-    }
-    if (lastPattern.length === 0) {
-      setLastPattern(pattern)
-    }
+    if (!classId || lastPattern.length === 0) return
     try {
-      const response = await assignResources({ classId, data: { pattern } }).unwrap()
-      if (response.data.conflictCount > 0) {
-        const conflictList = response.data.conflicts ?? []
-        setConflicts(conflictList)
-        setInitialConflictCount((prev) => (prev === 0 ? conflictList.length : prev))
-        toast.warning('Vẫn còn buổi chưa gán tài nguyên. Vui lòng tiếp tục xử lý.')
+      const response = await assignResources({
+        classId,
+        data: { pattern: lastPattern, skipConflictCheck: true },
+      }).unwrap()
+
+      if (response.data?.conflicts && response.data.conflicts.length > 0) {
+        setConflicts(response.data.conflicts)
+        setInitialConflictCount(response.data.conflicts.length)
       } else {
+        toast.success('Đã lưu tài nguyên thành công')
         setConflicts([])
         setInitialConflictCount(0)
-        toast.success(response.message || 'Đã gán tài nguyên thành công')
+        refetchSessions()
         onContinue()
       }
     } catch (error: unknown) {
-      const message = (error as { data?: { message?: string } })?.data?.message || 'Không thể gán tài nguyên. Vui lòng thử lại.'
+      const message = (error as { data?: { message?: string } })?.data?.message || 'Không thể lưu tài nguyên.'
       toast.error(message)
     }
   }
 
   if (!classId) {
     return (
-      <div className="space-y-4">
+      <div className="max-w-3xl mx-auto">
         <Alert>
-          <AlertDescription>Vui lòng tạo lớp (Bước 1) trước khi gán tài nguyên.</AlertDescription>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>Vui lòng hoàn thành Bước 1 trước.</AlertDescription>
         </Alert>
-        <WizardFooter
-          currentStep={4}
-          isFirstStep={false}
-          isLastStep={false}
-          onBack={onBack}
-          onNext={onContinue}
-          onCancelKeepDraft={onCancelKeepDraft}
-          onCancelDelete={onCancelDelete}
-          isNextDisabled
-        />
+      </div>
+    )
+  }
+
+  if (!hasTimeSlots) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>Vui lòng hoàn thành Bước 3 (gán khung giờ) trước.</AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
+  if (isLoadingResources) {
+    return (
+      <div className="max-w-3xl mx-auto space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-32 w-full" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Gán phòng học / tài khoản online theo ngày</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Hệ thống sử dụng phương pháp HYBRID: gán theo pattern ngày. Bạn có thể điều chỉnh từng buổi sau nếu cần.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {Object.keys(timeSlotSelections).length === 0 ? (
-            <Alert>
-              <AlertDescription>
-                Chưa có dữ liệu khung giờ từ bước trước. Vui lòng quay lại Bước 3 và gán khung giờ cho từng ngày.
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <div className="space-y-4">
-              {sortedDays.map((day) => {
-                const slotId = timeSlotSelections[day]
-                const options = resourcesByDay[day]
-                const selectedResource = selectedResources[day]
-                  ? resourceLookup[selectedResources[day] as number]
-                  : null
-                return (
-                  <div key={day} className="rounded-2xl border border-border/70 bg-card/30 p-4">
-                    {!slotId ? (
-                      <Alert>
-                        <AlertDescription>Ngày này chưa được chọn khung giờ ở Bước 3.</AlertDescription>
-                      </Alert>
-                    ) : isLoadingResources && !options ? (
-                      <Skeleton className="h-14 rounded-xl" />
-                    ) : options && options.length > 0 ? (
-                      <div className="space-y-4">
-                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                          <div className="flex flex-col">
-                            <span className="text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">Ngày học</span>
-                            <p className="text-base font-semibold text-foreground">{DAY_LABELS[day] || `Ngày ${day}`}</p>
-                          </div>
-                          <Select value={selectedResources[day]?.toString() || ''} onValueChange={(value) => handleChange(day, value)}>
-                            <SelectTrigger
-                              className="h-11 w-full justify-between rounded-xl border-border/70 bg-background px-4 text-sm font-medium text-foreground md:w-80"
-                              aria-label={`Chọn tài nguyên cho ${DAY_LABELS[day] || `Ngày ${day}`}`}
-                            >
-                              {selectedResource ? (
-                                <span className="truncate">{selectedResource.displayName || selectedResource.name}</span>
-                              ) : (
-                                <span className="text-muted-foreground">Chọn tài nguyên</span>
-                              )}
-                            </SelectTrigger>
-                            <SelectContent>
-                              {options.map((resource) => (
-                                <SelectItem key={resource.id} value={resource.id.toString()} className="py-3">
-                                  <div className="flex flex-col gap-1">
-                                    <span className="font-medium">{resource.displayName || resource.name}</span>
-                                    <ResourceMeta resource={resource} />
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        {selectedResource && <SelectedResourceSummary resource={selectedResource} />}
-                      </div>
-                    ) : (
-                      <Alert>
-                        <AlertDescription>
-                          Không tìm thấy tài nguyên phù hợp cho ngày này. Hãy thử khung giờ khác hoặc thêm tài nguyên mới.
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+    <div className="max-w-3xl mx-auto space-y-8">
+      {/* Header */}
+      <div>
+        <h2 className="text-xl font-semibold">Gán phòng học / tài khoản online</h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Chọn tài nguyên cho {sortedDays.length} ngày học • {totalSessions} buổi
+        </p>
+      </div>
 
-      <WizardFooter
-        currentStep={4}
-        isFirstStep={false}
-        isLastStep={false}
-        onBack={onBack}
-        onNext={handleSubmit}
-        onCancelKeepDraft={onCancelKeepDraft}
-        onCancelDelete={onCancelDelete}
-        isSubmitting={isSubmitting}
-        nextButtonText="Lưu tài nguyên"
-      />
+      {/* Resource Selection */}
+      <div className="rounded-lg border">
+        <div className="px-4 py-3 border-b bg-muted/30">
+          <span className="font-medium">Chọn tài nguyên theo ngày</span>
+        </div>
 
+        <div className="divide-y">
+          {sortedDays.map((day) => {
+            const options = resourcesByDay[day] || []
+            const isSelected = Boolean(selectedResources[day])
+
+            return (
+              <div key={day} className="flex items-center gap-4 px-4 py-3">
+                <div className="w-24 font-medium">{DAY_LABELS[day]}</div>
+
+                <div className="flex-1">
+                  {options.length > 0 ? (
+                    <Select
+                      value={selectedResources[day]?.toString() || ''}
+                      onValueChange={(value) => handleChange(day, value)}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Chọn phòng / tài khoản..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {options.map((resource) => (
+                          <SelectItem key={resource.id} value={resource.id.toString()}>
+                            {resource.displayName || resource.name}
+                            {resource.availabilityRate !== undefined && (
+                              <span className="text-muted-foreground ml-2">
+                                ({resource.availabilityRate.toFixed(0)}%)
+                              </span>
+                            )}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Không có tài nguyên khả dụng</span>
+                  )}
+                </div>
+
+                <div className="w-20 text-right">
+                  {isSelected ? (
+                    <span className="text-sm text-green-600 flex items-center justify-end gap-1">
+                      <Check className="h-4 w-4" /> Đã chọn
+                    </span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Chưa chọn</span>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Đã chọn {assignedCount}/{sortedDays.length} ngày
+        </p>
+        <Button onClick={handleSubmit} disabled={isSubmitting || !allAssigned}>
+          {isSubmitting ? 'Đang lưu...' : 'Lưu tài nguyên'}
+        </Button>
+      </div>
+
+      {/* Conflict Dialog */}
       {classId && conflicts.length > 0 && (
         <ResourceConflictDialog
           open={conflicts.length > 0}
