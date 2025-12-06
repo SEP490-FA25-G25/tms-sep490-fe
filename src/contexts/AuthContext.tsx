@@ -2,9 +2,9 @@ import { createContext, useContext } from 'react'
 import type { ReactNode } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useLoginMutation, useLogoutMutation } from '@/store/services/authApi'
-import { setCredentials, logout as logoutAction, selectAuth } from '@/store'
+import { setCredentials, logout as logoutAction, selectAuth, selectBranch as selectBranchAction, selectSelectedBranchId, selectNeedsBranchOnboarding } from '@/store'
 import { useAuthVerification } from '@/hooks/useAuthVerification'
-import type { User } from '@/store/slices/authSlice'
+import type { User, BranchInfo } from '@/store/slices/authSlice'
 import type { RootState } from '@/store'
 
 interface AuthContextType {
@@ -12,6 +12,10 @@ interface AuthContextType {
   isAuthenticated: boolean
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string; user?: User }>
   logout: () => void
+  selectBranch: (branchId: number) => void
+  selectedBranchId: number | null
+  needsBranchOnboarding: boolean
+  branches: BranchInfo[]
   isLoading: boolean
   error: string | null
   clearError: () => void
@@ -23,9 +27,15 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const dispatch = useDispatch()
   const auth = useSelector((state: RootState) => selectAuth(state))
+  const selectedBranchId = useSelector((state: RootState) => selectSelectedBranchId(state))
+  const needsBranchOnboarding = useSelector((state: RootState) => selectNeedsBranchOnboarding(state))
   const { isLoading: isVerifying } = useAuthVerification()
   const [loginMutation, { isLoading: isLoginLoading }] = useLoginMutation()
   const [logoutMutation] = useLogoutMutation()
+
+  const selectBranch = (branchId: number) => {
+    dispatch(selectBranchAction(branchId))
+  }
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string; user?: User }> => {
     try {
@@ -40,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           avatarUrl: result.data.avatarUrl,
           roles: result.data.roles,
           branchId: result.data.branchId,
+          branches: result.data.branches || [],
         }
         dispatch(setCredentials({
           accessToken: result.data.accessToken,
@@ -82,6 +93,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: auth.isAuthenticated,
     login,
     logout,
+    selectBranch,
+    selectedBranchId,
+    needsBranchOnboarding,
+    branches: auth.user?.branches || [],
     isLoading: isLoginLoading || auth.isLoading || isVerifying,
     error: auth.error,
     clearError,

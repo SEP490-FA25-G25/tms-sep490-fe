@@ -144,8 +144,8 @@ export default function StudentListPage() {
   // State cho dialog import
   const [importDialogOpen, setImportDialogOpen] = useState(false)
 
-  // Lấy branchId từ user đang đăng nhập
-  const { user } = useAuth()
+  // Lấy selectedBranchId từ user đang đăng nhập
+  const { user, selectedBranchId } = useAuth()
 
   // RTK Query - Lấy danh sách học viên
   const {
@@ -154,6 +154,7 @@ export default function StudentListPage() {
     isFetching: isFetchingList,
     error: listError,
   } = useGetStudentsQuery({
+    branchIds: selectedBranchId ? [selectedBranchId] : undefined,
     search: debouncedSearch || undefined,
     status: filters.status,
     gender: filters.gender,

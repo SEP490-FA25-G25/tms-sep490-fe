@@ -1,5 +1,10 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 
+export interface BranchInfo {
+  id: number
+  name: string
+}
+
 export interface User {
   id: number
   email: string
@@ -7,12 +12,14 @@ export interface User {
   avatarUrl?: string
   roles: string[]
   branchId: number | null
+  branches: BranchInfo[]
 }
 
 export interface AuthState {
   user: User | null
   accessToken: string | null
   refreshToken: string | null
+  selectedBranchId: number | null
   isAuthenticated: boolean
   isLoading: boolean
   error: string | null
@@ -22,6 +29,7 @@ const initialState: AuthState = {
   user: null,
   accessToken: null,
   refreshToken: null,
+  selectedBranchId: null,
   isAuthenticated: false,
   isLoading: false,
   error: null,
@@ -33,6 +41,7 @@ const getInitialState = (): AuthState => {
     const storedToken = localStorage.getItem('accessToken')
     const storedRefreshToken = localStorage.getItem('refreshToken')
     const storedUser = localStorage.getItem('user')
+    const storedBranchId = localStorage.getItem('selectedBranchId')
 
     if (storedToken && storedUser) {
       // Parse user data
@@ -45,6 +54,7 @@ const getInitialState = (): AuthState => {
           accessToken: storedToken,
           refreshToken: storedRefreshToken,
           user: user,
+          selectedBranchId: storedBranchId ? Number(storedBranchId) : null,
           isAuthenticated: true,
         }
       } else {
@@ -91,6 +101,7 @@ const authSlice = createSlice({
       state.user = null
       state.accessToken = null
       state.refreshToken = null
+      state.selectedBranchId = null
       state.isAuthenticated = false
       state.error = null
 
@@ -98,6 +109,12 @@ const authSlice = createSlice({
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('user')
+      localStorage.removeItem('selectedBranchId')
+    },
+
+    selectBranch: (state, action: PayloadAction<number>) => {
+      state.selectedBranchId = action.payload
+      localStorage.setItem('selectedBranchId', String(action.payload))
     },
 
     setLoading: (state, action: PayloadAction<boolean>) => {
@@ -117,6 +134,7 @@ const authSlice = createSlice({
 export const {
   setCredentials,
   logout,
+  selectBranch,
   setLoading,
   setError,
   clearError,
@@ -131,6 +149,16 @@ export const selectIsAuthenticated = (state: { auth: AuthState }) => state.auth.
 export const selectUserRoles = (state: { auth: AuthState }) => state.auth.user?.roles || []
 export const selectAuthError = (state: { auth: AuthState }) => state.auth.error
 export const selectIsLoading = (state: { auth: AuthState }) => state.auth.isLoading
+export const selectSelectedBranchId = (state: { auth: AuthState }) => state.auth.selectedBranchId
+export const selectUserBranches = (state: { auth: AuthState }) => state.auth.user?.branches || []
+
+// Check if user needs branch onboarding (has multiple branches and hasn't selected one)
+export const selectNeedsBranchOnboarding = (state: { auth: AuthState }) => {
+  const branches = state.auth.user?.branches || []
+  const selectedBranchId = state.auth.selectedBranchId
+  // Cần onboarding nếu user có nhiều hơn 1 branch VÀ chưa chọn branch
+  return branches.length > 1 && !selectedBranchId
+}
 
 // Role-based utility selectors
 export const selectHasRole = (state: { auth: AuthState }, requiredRole: string) => {

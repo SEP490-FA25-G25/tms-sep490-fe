@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react'
 import { getDefaultRouteForUser } from '@/utils/role-routes'
 
 export function AuthRedirect() {
-  const { isAuthenticated, isLoading, user } = useAuth()
+  const { isAuthenticated, isLoading, user, needsBranchOnboarding } = useAuth()
 
   if (isLoading) {
     return (
@@ -18,6 +18,10 @@ export function AuthRedirect() {
   }
 
   if (isAuthenticated && user?.roles) {
+    // Nếu user cần chọn branch, redirect đến onboarding
+    if (needsBranchOnboarding) {
+      return <Navigate to="/onboarding" replace />
+    }
     const defaultRoute = getDefaultRouteForUser(user.roles)
     return <Navigate to={defaultRoute} replace />
   }

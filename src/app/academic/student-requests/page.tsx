@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useGetPendingRequestsQuery, useGetAcademicRequestsQuery, useGetAAStaffQuery } from '@/store/services/studentRequestApi'
 import type { RequestStatus } from '@/store/services/studentRequestApi'
 import { DashboardLayout } from '@/components/DashboardLayout'
+import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -64,6 +65,8 @@ const STATUS_OPTIONS: { value: RequestStatus | 'ALL'; label: string }[] = [
 const PAGE_SIZE = 20
 
 export default function AcademicRequestsPage() {
+  const { selectedBranchId } = useAuth()
+
   // Tab state
   const [activeTab, setActiveTab] = useState<'pending' | 'history'>('pending')
 
@@ -92,6 +95,7 @@ export default function AcademicRequestsPage() {
     data: pendingResponse,
     isFetching: isLoadingPending,
   } = useGetPendingRequestsQuery({
+    branchId: selectedBranchId ?? undefined,
     requestType: requestTypeFilter === 'ALL' ? undefined : requestTypeFilter,
     keyword: keyword || undefined,
     page,

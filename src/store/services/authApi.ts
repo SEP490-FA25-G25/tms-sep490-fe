@@ -19,6 +19,11 @@ export interface LoginRequest {
   password: string
 }
 
+export interface BranchInfo {
+  id: number
+  name: string
+}
+
 export interface LoginData {
   accessToken: string
   refreshToken: string
@@ -29,6 +34,7 @@ export interface LoginData {
   avatarUrl?: string
   roles: string[]
   branchId: number | null
+  branches: BranchInfo[]
 }
 
 export interface LoginResponse {
@@ -71,7 +77,6 @@ export const baseQueryWithReauth: BaseQueryFn<
 
   // Handle 401 Unauthorized - try to refresh token
   if (result.error && result.error.status === 401) {
-
     const refreshResult = await baseQuery(
       {
         url: '/auth/refresh',
@@ -91,9 +96,8 @@ export const baseQueryWithReauth: BaseQueryFn<
       return result
     }
 
-    // Refresh thành công -> cập nhật token rồi retry request gốc với token mới
+    // Refresh thành công -> cập nhật store với token mới
     const nextAccessToken = refreshData.data.accessToken
-
     api.dispatch({
       type: 'auth/setCredentials',
       payload: {
@@ -106,6 +110,7 @@ export const baseQueryWithReauth: BaseQueryFn<
           avatarUrl: refreshData.data.avatarUrl,
           roles: refreshData.data.roles,
           branchId: refreshData.data.branchId,
+          branches: refreshData.data.branches || [],
         },
       },
     })
@@ -144,7 +149,6 @@ export const baseQueryWithReauth: BaseQueryFn<
 }
 
 // Export baseQueryWithReauth for use in other API services
-
 
 export const authApi = createApi({
   reducerPath: 'authApi',

@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,13 +50,29 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AvailabilityMatrix } from "@/app/teacher/availability/components/AvailabilityMatrix";
 
 const AvailabilityCampaignPage = () => {
+    const { selectedBranchId: authBranchId, branches: userBranches } = useAuth();
     const { data: campaigns = [] } = useGetAvailabilityCampaignsQuery();
     const { data: branchesResponse } = useGetAllBranchesQuery();
-    const branches = branchesResponse?.data || [];
+    const branches = useMemo(() => branchesResponse?.data || [], [branchesResponse?.data]);
     const { data: timeSlots = [] } = useGetTimeSlotsQuery({});
 
     const [selectedCampaignId, setSelectedCampaignId] = useState<number | undefined>(undefined);
-    const [selectedBranchId, setSelectedBranchId] = useState<number | undefined>(undefined);
+    // Initialize from auth context's selected branch
+    const [selectedBranchId, setSelectedBranchId] = useState<number | undefined>(authBranchId || undefined);
+
+    // Sync with auth context when it changes (e.g., user switches branch)
+    useEffect(() => {
+        if (authBranchId) {
+            setSelectedBranchId(authBranchId);
+        }
+    }, [authBranchId]);
+
+    // Filter branches dropdown to only show user's accessible branches
+    const availableBranches = useMemo(() => {
+        if (!userBranches || userBranches.length === 0) return branches;
+        const userBranchIds = new Set(userBranches.map(b => b.id));
+        return branches.filter(b => userBranchIds.has(b.id));
+    }, [branches, userBranches]);
     const [searchTerm, setSearchTerm] = useState("");
     const [viewingTeacherId, setViewingTeacherId] = useState<number | null>(null);
 
@@ -363,22 +380,25 @@ const AvailabilityCampaignPage = () => {
                                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                                         <h3 className="text-lg font-semibold">Danh sách giáo viên</h3>
                                         <div className="flex flex-col gap-2 md:flex-row md:items-center">
-                                            <Select
-                                                value={selectedBranchId?.toString() || "all"}
-                                                onValueChange={(value) => setSelectedBranchId(value === "all" ? undefined : Number(value))}
-                                            >
-                                                <SelectTrigger className="w-[180px]">
-                                                    <SelectValue placeholder="Tất cả chi nhánh" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="all">Tất cả chi nhánh</SelectItem>
-                                                    {branches.map((branch) => (
-                                                        <SelectItem key={branch.id} value={branch.id.toString()}>
-                                                            {branch.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                            {/* Only show branch filter if user has multiple branches */}
+                                            {availableBranches.length > 1 && (
+                                                <Select
+                                                    value={selectedBranchId?.toString() || "all"}
+                                                    onValueChange={(value) => setSelectedBranchId(value === "all" ? undefined : Number(value))}
+                                                >
+                                                    <SelectTrigger className="w-[180px]">
+                                                        <SelectValue placeholder="Tất cả chi nhánh" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="all">Tất cả chi nhánh</SelectItem>
+                                                        {availableBranches.map((branch) => (
+                                                            <SelectItem key={branch.id} value={branch.id.toString()}>
+                                                                {branch.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            )}
 
                                             <Select
                                                 value={(table.getColumn("status")?.getFilterValue() as string) ?? "all"}

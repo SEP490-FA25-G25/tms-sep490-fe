@@ -51,6 +51,7 @@ import {
   type RequestStatus,
 } from '@/store/services/studentRequestApi'
 import { ABSENCE_STATUS_META } from '@/utils/requestStatusMeta'
+import { useAuth } from '@/hooks/useAuth'
 
 type HistoryFilter = RequestStatus | 'ALL'
 
@@ -58,6 +59,7 @@ const PENDING_PAGE_SIZE = 6
 const HISTORY_PAGE_SIZE = 8
 
 export default function AcademicAbsenceRequestsPage() {
+  const { selectedBranchId } = useAuth()
   const [searchKeyword, setSearchKeyword] = useState('')
   const [classCode, setClassCode] = useState('')
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
@@ -75,6 +77,7 @@ export default function AcademicAbsenceRequestsPage() {
     data: pendingResponse,
     isFetching: isLoadingPending,
   } = useGetPendingRequestsQuery({
+    branchId: selectedBranchId ?? undefined,
     requestType: 'ABSENCE',
     keyword: searchKeyword || classCode || undefined,
     sessionDateFrom: dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined,
