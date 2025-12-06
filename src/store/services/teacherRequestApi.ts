@@ -253,6 +253,30 @@ export interface CreateRequestRequest {
   reason: string;
 }
 
+export interface TeacherListDTO {
+  teacherId: number;
+  fullName: string;
+  email: string;
+  employeeCode?: string;
+}
+
+export interface TeachersListResponse {
+  success: boolean;
+  message: string;
+  data: TeacherListDTO[];
+}
+
+export interface CreateRequestForTeacherRequest {
+  teacherId: number;
+  sessionId: number;
+  requestType: RequestType;
+  newResourceId?: number;
+  newDate?: string;
+  newTimeSlotId?: number;
+  replacementTeacherId?: number;
+  reason: string;
+}
+
 export interface ApproveRequestRequest {
   newResourceId?: number;
   note?: string;
@@ -432,11 +456,12 @@ export const teacherRequestApi = createApi({
 
     // Get available resources for modality change
     // Supports both requestId (for existing requests) and sessionId (for new requests)
+    // For academic staff creating new request: need teacherId
     getModalityResources: builder.query<
       ResourcesResponse,
-      { requestId?: number; sessionId?: number }
+      { requestId?: number; sessionId?: number; teacherId?: number }
     >({
-      query: ({ requestId, sessionId }) => {
+      query: ({ requestId, sessionId, teacherId }) => {
         if (requestId) {
           return {
             url: `/teacher-requests/${requestId}/modality/resources`,
@@ -447,28 +472,31 @@ export const teacherRequestApi = createApi({
           return {
             url: `/teacher-requests/${sessionId}/modality/resources`,
             method: "GET",
+            params: teacherId ? { teacherId } : {},
           };
         }
         throw new Error("Either requestId or sessionId must be provided");
       },
     }),
 
-    // Get available slots for reschedule (for teachers only)
-    // Note: API for staff (requestId) has been removed from backend
+    // Get available slots for reschedule
+    // For teachers: uses sessionId
+    // For academic staff: uses sessionId + teacherId
     getRescheduleSlots: builder.query<
       RescheduleSlotsResponse,
-      { sessionId: number; date: string }
+      { sessionId: number; date: string; teacherId?: number }
     >({
-      query: ({ sessionId, date }) => ({
+      query: ({ sessionId, date, teacherId }) => ({
         url: `/teacher-requests/${sessionId}/reschedule/slots`,
         method: "GET",
-        params: { date },
+        params: { date, ...(teacherId ? { teacherId } : {}) },
       }),
     }),
 
     // Get resource suggestions for reschedule
     // For requestId: backend will use newDate and newTimeSlot from the request
     // For sessionId: need to provide date and timeSlotId
+    // For academic staff creating new request: need teacherId
     getRescheduleResources: builder.query<
       RescheduleResourcesResponse,
       {
@@ -476,9 +504,10 @@ export const teacherRequestApi = createApi({
         sessionId?: number;
         date?: string;
         timeSlotId?: number;
+        teacherId?: number;
       }
     >({
-      query: ({ requestId, sessionId, date, timeSlotId }) => {
+      query: ({ requestId, sessionId, date, timeSlotId, teacherId }) => {
         if (requestId) {
           // For existing requests, backend uses newDate and newTimeSlot from request
           return {
@@ -499,6 +528,7 @@ export const teacherRequestApi = createApi({
             params: {
               date,
               timeSlotId,
+              ...(teacherId ? { teacherId } : {}),
             },
           };
         }
@@ -508,11 +538,12 @@ export const teacherRequestApi = createApi({
 
     // Get replacement candidates for substitute request
     // Supports both requestId (for existing requests) and sessionId (for new requests)
+    // For academic staff creating new request: need teacherId
     getReplacementCandidates: builder.query<
       ReplacementCandidatesResponse,
-      { requestId?: number; sessionId?: number }
+      { requestId?: number; sessionId?: number; teacherId?: number }
     >({
-      query: ({ requestId, sessionId }) => {
+      query: ({ requestId, sessionId, teacherId }) => {
         if (requestId) {
           return {
             url: `/teacher-requests/${requestId}/replacement/candidates`,
@@ -523,6 +554,7 @@ export const teacherRequestApi = createApi({
           return {
             url: `/teacher-requests/${sessionId}/replacement/candidates`,
             method: "GET",
+            params: teacherId ? { teacherId } : {},
           };
         }
         throw new Error("Either requestId or sessionId must be provided");
@@ -627,6 +659,44 @@ export const teacherRequestApi = createApi({
         "TeacherRequest",
       ],
     }),
+
+    // Academic Staff: Get list of teachers
+    getTeachersForStaff: builder.query<TeachersListResponse, void>({
+      query: () => ({
+        url: "/teacher-requests/staff/teachers",
+        method: "GET",
+      }),
+    }),
+
+    // Academic Staff: Get teacher's sessions
+    getTeacherSessionsForStaff: builder.query<
+      MySessionsResponse,
+      { teacherId: number; date?: string; classId?: number }
+    >({
+      query: ({ teacherId, date, classId }) => {
+        const params: Record<string, string | number> = {};
+        if (date) params.date = date;
+        if (classId) params.classId = classId;
+        return {
+          url: `/teacher-requests/staff/teachers/${teacherId}/sessions`,
+          method: "GET",
+          params: Object.keys(params).length > 0 ? params : undefined,
+        };
+      },
+    }),
+
+    // Academic Staff: Create request for teacher
+    createRequestForTeacher: builder.mutation<
+      TeacherRequestDetailResponse,
+      CreateRequestForTeacherRequest
+    >({
+      query: (body) => ({
+        url: "/teacher-requests/staff/create",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["TeacherRequest"],
+    }),
   }),
 });
 
@@ -646,4 +716,7 @@ export const {
   useRejectRequestMutation,
   useConfirmReplacementRequestMutation,
   useRejectReplacementRequestMutation,
+  useGetTeachersForStaffQuery,
+  useGetTeacherSessionsForStaffQuery,
+  useCreateRequestForTeacherMutation,
 } = teacherRequestApi;
