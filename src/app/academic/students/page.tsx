@@ -703,18 +703,18 @@ export default function StudentListPage() {
       />
 
       {/* Create Student Dialog */}
-      {user?.branchId && (
+      {selectedBranchId && (
         <CreateStudentDialog
-          branchId={user.branchId}
+          branchId={selectedBranchId}
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}
         />
       )}
 
       {/* Import Student Dialog */}
-      {user?.branchId && (
+      {selectedBranchId && (
         <StudentImportDialog
-          branchId={user.branchId}
+          branchId={selectedBranchId}
           open={importDialogOpen}
           onOpenChange={setImportDialogOpen}
           onSuccess={() => {
