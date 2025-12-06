@@ -30,9 +30,6 @@ const ForgotPasswordPage = lazy(
 const ResetPasswordPage = lazy(
   () => import("./app/reset-password/page")
 );
-const BranchOnboardingPage = lazy(
-  () => import("./app/onboarding/page")
-);
 const SchedulePage = lazy(() => import("./app/schedule/page"));
 const NotificationsPage = lazy(() => import("./app/notifications/page"));
 
@@ -249,16 +246,6 @@ function App() {
                   element={<ForgotPasswordPage />}
                 />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
-
-                {/* Branch Onboarding */}
-                <Route
-                  path="/onboarding"
-                  element={
-                    <ProtectedRoute>
-                      <BranchOnboardingPage />
-                    </ProtectedRoute>
-                  }
-                />
 
                 {/* Per-role dashboard */}
                 <Route

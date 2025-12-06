@@ -152,14 +152,6 @@ export const selectIsLoading = (state: { auth: AuthState }) => state.auth.isLoad
 export const selectSelectedBranchId = (state: { auth: AuthState }) => state.auth.selectedBranchId
 export const selectUserBranches = (state: { auth: AuthState }) => state.auth.user?.branches || []
 
-// Check if user needs branch onboarding (has multiple branches and hasn't selected one)
-export const selectNeedsBranchOnboarding = (state: { auth: AuthState }) => {
-  const branches = state.auth.user?.branches || []
-  const selectedBranchId = state.auth.selectedBranchId
-  // Cần onboarding nếu user có nhiều hơn 1 branch VÀ chưa chọn branch
-  return branches.length > 1 && !selectedBranchId
-}
-
 // Role-based utility selectors
 export const selectHasRole = (state: { auth: AuthState }, requiredRole: string) => {
   const userRoles = selectUserRoles(state)

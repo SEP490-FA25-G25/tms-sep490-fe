@@ -47,7 +47,6 @@ import authSlice, {
   selectHasAllRoles,
   selectSelectedBranchId,
   selectUserBranches,
-  selectNeedsBranchOnboarding,
 } from "./slices/authSlice";
 
 import { teacherAvailabilityApi } from "./services/teacherAvailabilityApi";
@@ -156,5 +155,4 @@ export {
   selectHasAllRoles,
   selectSelectedBranchId,
   selectUserBranches,
-  selectNeedsBranchOnboarding,
 };

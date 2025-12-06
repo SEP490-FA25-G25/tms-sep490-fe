@@ -2,7 +2,7 @@ import { createContext, useContext } from 'react'
 import type { ReactNode } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useLoginMutation, useLogoutMutation } from '@/store/services/authApi'
-import { setCredentials, logout as logoutAction, selectAuth, selectBranch as selectBranchAction, selectSelectedBranchId, selectNeedsBranchOnboarding } from '@/store'
+import { setCredentials, logout as logoutAction, selectAuth, selectBranch as selectBranchAction, selectSelectedBranchId } from '@/store'
 import { useAuthVerification } from '@/hooks/useAuthVerification'
 import type { User, BranchInfo } from '@/store/slices/authSlice'
 import type { RootState } from '@/store'
@@ -14,7 +14,6 @@ interface AuthContextType {
   logout: () => void
   selectBranch: (branchId: number) => void
   selectedBranchId: number | null
-  needsBranchOnboarding: boolean
   branches: BranchInfo[]
   isLoading: boolean
   error: string | null
@@ -28,7 +27,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const dispatch = useDispatch()
   const auth = useSelector((state: RootState) => selectAuth(state))
   const selectedBranchId = useSelector((state: RootState) => selectSelectedBranchId(state))
-  const needsBranchOnboarding = useSelector((state: RootState) => selectNeedsBranchOnboarding(state))
   const { isLoading: isVerifying } = useAuthVerification()
   const [loginMutation, { isLoading: isLoginLoading }] = useLoginMutation()
   const [logoutMutation] = useLogoutMutation()
@@ -57,6 +55,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           refreshToken: result.data.refreshToken,
           user,
         }))
+        
+        // Auto-select first branch if user has branches
+        if (user.branches && user.branches.length > 0) {
+          dispatch(selectBranchAction(user.branches[0].id))
+        }
+        
         return { success: true, user }
       }
 
@@ -95,7 +99,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     selectBranch,
     selectedBranchId,
-    needsBranchOnboarding,
     branches: auth.user?.branches || [],
     isLoading: isLoginLoading || auth.isLoading || isVerifying,
     error: auth.error,

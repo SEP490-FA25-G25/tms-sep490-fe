@@ -51,14 +51,8 @@ export function LoginForm({
       const result = await login(email, password)
 
       if (result.success && result.user?.roles) {
-        // Nếu user có nhiều branches, redirect đến onboarding để chọn branch
-        const branches = result.user.branches || []
-        if (branches.length > 1) {
-          navigate('/onboarding')
-        } else {
-          const defaultRoute = getDefaultRouteForUser(result.user.roles)
-          navigate(defaultRoute)
-        }
+        const defaultRoute = getDefaultRouteForUser(result.user.roles)
+        navigate(defaultRoute)
       } else {
         setErrors({ email: result.error })
       }

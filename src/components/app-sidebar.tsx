@@ -1,4 +1,5 @@
 import * as React from "react";
+import { BranchSelector } from "@/components/BranchSelector";
 import {
   BarChartIcon,
   BookOpenIcon,
@@ -371,8 +372,12 @@ const roleBasedNav = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user, logout } = useAuth();
+  const { user, logout, branches, selectedBranchId, selectBranch } = useAuth();
   const navigate = useNavigate();
+
+  // Kiểm tra xem user có phải là Academic Affair và có nhiều branch không
+  const isAcademicAffair = user?.roles?.includes(ROLES.ACADEMIC_AFFAIR) ?? false;
+  const showBranchSelector = isAcademicAffair && branches.length > 1;
 
   const rolePriorities = {
     [ROLES.ADMIN]: 8,
@@ -431,6 +436,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent className="flex flex-col gap-4">
+        {showBranchSelector && (
+          <BranchSelector
+            branches={branches}
+            selectedBranchId={selectedBranchId}
+            onSelectBranch={selectBranch}
+          />
+        )}
         {navSections.length > 1 ? (
           <Accordion
             type="multiple"
