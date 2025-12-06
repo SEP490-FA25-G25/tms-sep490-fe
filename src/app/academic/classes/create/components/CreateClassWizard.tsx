@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Check, ChevronRight, Save, Loader2, LogOut } from "lucide-react";
+import { ChevronRight, Save, Loader2, LogOut } from "lucide-react";
 import { useDeleteClassMutation } from "@/store/services/classApi";
 import { useGetClassByIdQuery } from "@/store/services/classApi";
 import { useWizardNavigation } from "./hooks/useWizardNavigation";
@@ -90,7 +90,7 @@ export function CreateClassWizard({
   // === Navigation Handlers ===
   const handleBack = () => {
     if (currentStep > 1) {
-      navigateToStep((currentStep - 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7);
+      navigateToStep((currentStep - 1) as 1 | 2 | 3 | 4 | 5 | 6);
     } else {
       setShowLeaveConfirm(true);
     }
@@ -163,6 +163,7 @@ export function CreateClassWizard({
   };
 
   // === Delete Handler ===
+  // @ts-expect-error - intentionally unused, kept for future use
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _handleDeleteClass = async () => {
     if (!classId) {
@@ -242,22 +243,6 @@ export function CreateClassWizard({
                 </Button>
               )}
 
-              {/* Submit Button (only on last step) */}
-              {currentStep === 7 && (
-                <Button
-                  size="sm"
-                  onClick={handleSubmitForApproval}
-                  disabled={isLoading || isSubmitting}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Check className="mr-2 h-4 w-4" />
-                  )}
-                  Gửi phê duyệt
-                </Button>
-              )}
             </div>
           </div>
         </div>

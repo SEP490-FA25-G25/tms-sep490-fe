@@ -110,6 +110,7 @@ const dayLabelFull: Record<number, string> = {
 };
 
 // Skill display names and colors
+// @ts-expect-error - intentionally unused, kept for future use
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _skillDisplayNames: Record<string, string> = {
   GENERAL: "General",
@@ -122,6 +123,7 @@ const _skillDisplayNames: Record<string, string> = {
   KANJI: "Kanji",
 };
 
+// @ts-expect-error - intentionally unused, kept for future use
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _skillColors: Record<string, string> = {
   GENERAL: "bg-purple-100 text-purple-700 border-purple-200",
@@ -135,6 +137,7 @@ const _skillColors: Record<string, string> = {
 };
 
 // Level color based on proficiency
+// @ts-expect-error - intentionally unused, kept for future use
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _getLevelColor = (level: number) => {
   if (level >= 9) return "text-emerald-600 font-semibold";
@@ -339,7 +342,7 @@ export function Step5AssignTeacher({
     isOpen: boolean;
     teacherId: number | null;
     teacherName: string;
-    currentTeacherName: string;
+    currentTeacherName: string | undefined;
     sessionIds: number[] | null;
     dayLabel?: string;
     specializationMismatch?: {
@@ -562,7 +565,7 @@ export function Step5AssignTeacher({
             currentTeacherName:
               assignedTeachers.length > 0
                 ? assignedTeachers.map((t) => t.fullName).join(", ")
-                : undefined,
+                : "",
             sessionIds,
             dayLabel,
             specializationMismatch: hasSpecMismatch
@@ -590,7 +593,7 @@ export function Step5AssignTeacher({
           teacherName,
           currentTeacherName: hasExistingAssignment
             ? uniqueNames.join(", ") || "Giáo viên hiện tại"
-            : undefined,
+            : "",
           sessionIds: null,
           specializationMismatch: hasSpecMismatch
             ? {
