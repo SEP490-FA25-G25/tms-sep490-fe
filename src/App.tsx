@@ -120,6 +120,18 @@ const AcademicStudentRequestsPage = lazy(
 const AcademicTeacherRequestsPage = lazy(
   () => import("./app/academic/teacher-requests/page")
 );
+const AcademicSelectTeacherPage = lazy(
+  () => import("./app/academic/teacher-requests/create/select-teacher/page")
+);
+const AcademicSelectRequestTypePage = lazy(
+  () => import("./app/academic/teacher-requests/create/select-type/page")
+);
+const AcademicSelectSessionPage = lazy(
+  () => import("./app/academic/teacher-requests/create/select-session/page")
+);
+const AcademicCreateRequestFormPage = lazy(
+  () => import("./app/academic/teacher-requests/create/form/page")
+);
 const AcademicStudentsPage = lazy(() => import("./app/academic/students/page"));
 const CreateClassPage = lazy(
   () => import("./app/academic/classes/create/page")
@@ -845,6 +857,66 @@ function App() {
                       ]}
                     >
                       <AcademicTeacherRequestsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/academic/teacher-requests/create/select-teacher"
+                  element={
+                    <ProtectedRoute
+                      requiredRoles={[
+                        "ACADEMIC_AFFAIR",
+                        "ADMIN",
+                        "MANAGER",
+                        "CENTER_HEAD",
+                      ]}
+                    >
+                      <AcademicSelectTeacherPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/academic/teacher-requests/create/select-type"
+                  element={
+                    <ProtectedRoute
+                      requiredRoles={[
+                        "ACADEMIC_AFFAIR",
+                        "ADMIN",
+                        "MANAGER",
+                        "CENTER_HEAD",
+                      ]}
+                    >
+                      <AcademicSelectRequestTypePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/academic/teacher-requests/create/select-session"
+                  element={
+                    <ProtectedRoute
+                      requiredRoles={[
+                        "ACADEMIC_AFFAIR",
+                        "ADMIN",
+                        "MANAGER",
+                        "CENTER_HEAD",
+                      ]}
+                    >
+                      <AcademicSelectSessionPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/academic/teacher-requests/create/form"
+                  element={
+                    <ProtectedRoute
+                      requiredRoles={[
+                        "ACADEMIC_AFFAIR",
+                        "ADMIN",
+                        "MANAGER",
+                        "CENTER_HEAD",
+                      ]}
+                    >
+                      <AcademicCreateRequestFormPage />
                     </ProtectedRoute>
                   }
                 />

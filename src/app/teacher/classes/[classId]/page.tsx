@@ -10,14 +10,15 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useGetClassByIdQuery } from '@/store/services/classApi';
+import { useGetClassByIdQuery, useGetClassStudentsQuery } from '@/store/services/classApi';
 import type { ClassDetailDTO as StudentClassDetailDTO } from '@/types/studentClass';
 import SyllabusTab from '@/app/student/my-classes/[classId]/components/SyllabusTab';
 import AttendanceMatrixTab from './components/AttendanceMatrixTab';
 import GradesTab from './components/GradesTab';
 import SessionsTab from './components/SessionsTab';
+import StudentsTab from './components/StudentsTab';
 
-const VALID_TABS = ['syllabus', 'sessions', 'attendance', 'grades'] as const;
+const VALID_TABS = ['syllabus', 'sessions', 'attendance', 'grades', 'students'] as const;
 type TabValue = typeof VALID_TABS[number];
 
 const TeacherClassDetailPage = () => {
@@ -58,6 +59,18 @@ const TeacherClassDetailPage = () => {
     isLoading: isDetailLoading,
     error: detailError,
   } = useGetClassByIdQuery(classIdNumber, { skip: !isValidClassId });
+
+  // Get class students
+  const {
+    data: studentsResponse,
+    isLoading: isLoadingStudents,
+  } = useGetClassStudentsQuery(
+    { classId: classIdNumber, page: 0, size: 100 },
+    { skip: !isValidClassId }
+  );
+
+  const students = studentsResponse?.data?.content || [];
+  const totalStudents = studentsResponse?.data?.page?.totalElements || students.length;
 
   // Map ClassDetailDTO from classApi to StudentClassDetailDTO format
   const classDetail: StudentClassDetailDTO | undefined = classDetailResponse?.data ? (() => {
@@ -211,7 +224,7 @@ const TeacherClassDetailPage = () => {
                   {!isDetailLoading && classDetail && (
                     <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full space-y-6">
                       <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-40 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2 -mt-6 pt-6">
-                        <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted/50">
+                        <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-muted/50">
                           <TabsTrigger
                             value="syllabus"
                             className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
@@ -236,6 +249,12 @@ const TeacherClassDetailPage = () => {
                           >
                             Xem điểm
                           </TabsTrigger>
+                          <TabsTrigger
+                            value="students"
+                            className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
+                          >
+                            Danh sách học viên
+                          </TabsTrigger>
                         </TabsList>
                       </div>
 
@@ -256,6 +275,14 @@ const TeacherClassDetailPage = () => {
 
                       <TabsContent value="grades" className="space-y-4">
                         <GradesTab classId={classIdNumber} />
+                      </TabsContent>
+
+                      <TabsContent value="students" className="space-y-4">
+                        <StudentsTab
+                          students={students}
+                          isLoading={isLoadingStudents}
+                          totalStudents={totalStudents}
+                        />
                       </TabsContent>
                     </Tabs>
                   )}

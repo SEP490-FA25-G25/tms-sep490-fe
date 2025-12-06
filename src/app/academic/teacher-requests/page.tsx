@@ -8,6 +8,7 @@ import {
   CalendarClock,
   UserRoundCheck,
   ArrowUpDown,
+  Plus,
 } from "lucide-react";
 import { skipToken } from "@reduxjs/toolkit/query";
 
@@ -64,6 +65,7 @@ import {
   type ReplacementCandidateDTO,
 } from "@/store/services/teacherRequestApi";
 import { TeacherRequestDetailContent } from "@/app/teacher/requests/page";
+import { CreateRequestDialog } from "./components/CreateRequestDialog";
 
 const TEACHER_REQUEST_TYPE_LABELS: Record<TeacherRequestType, string> = {
   MODALITY_CHANGE: "Thay đổi phương thức",
@@ -332,6 +334,8 @@ const getTimeDisplayMeta = (
 };
 
 export default function AcademicTeacherRequestsPage() {
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  
   // Teacher request filter states
   const [teacherTypeFilter, setTeacherTypeFilter] = useState<
     "ALL" | TeacherRequestType
@@ -756,6 +760,14 @@ export default function AcademicTeacherRequestsPage() {
     <DashboardLayout
       title="Quản lý yêu cầu giáo viên"
       description="Xem xét và phê duyệt các yêu cầu xin đổi lịch, dạy thay, đổi phương thức dạy của giáo viên"
+      actions={
+        <Button
+          onClick={() => setIsCreateDialogOpen(true)}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Tạo yêu cầu cho giáo viên
+        </Button>
+      }
     >
       <div className="space-y-6">
         {/* Summary cards for teacher requests */}
@@ -1683,6 +1695,18 @@ export default function AcademicTeacherRequestsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Create Request Dialog */}
+      <CreateRequestDialog
+        open={isCreateDialogOpen}
+        onOpenChange={(open) => {
+          setIsCreateDialogOpen(open);
+          if (!open) {
+            // Refetch requests when dialog closes after successful creation
+            refetchTeacherRequests();
+          }
+        }}
+      />
     </DashboardLayout>
   );
 }
