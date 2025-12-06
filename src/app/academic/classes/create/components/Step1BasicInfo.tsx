@@ -27,6 +27,7 @@ import {
   useUpdateClassMutation,
   useGetCoursesQuery,
   usePreviewClassCodeMutation,
+  useLazyCheckClassNameQuery,
 } from '@/store/services/classCreationApi'
 import { useGetClassByIdQuery } from '@/store/services/classApi'
 import { useGetMyBranchesQuery } from '@/store/services/branchApi'
@@ -91,13 +92,17 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
   const [capacityError, setCapacityError] = useState<string | null>(null)
   const [nameError, setNameError] = useState<string | null>(null)
   const [scheduleDaysError, setScheduleDaysError] = useState<string | null>(null)
+  const [isCheckingName, setIsCheckingName] = useState(false)
+  const [nameDuplicateError, setNameDuplicateError] = useState<string | null>(null)
 
   const [createClass] = useCreateClassMutation()
   const [updateClass] = useUpdateClassMutation()
+  const [checkClassName] = useLazyCheckClassNameQuery()
 
-  // Fetch existing class data if editing
-  const { data: existingClassData } = useGetClassByIdQuery(classId!, {
+  // Fetch existing class data if editing - refetch when returning to this step
+  const { data: existingClassData, refetch: refetchClassData } = useGetClassByIdQuery(classId!, {
     skip: !classId,
+    refetchOnMountOrArgChange: true,
   })
   const classStatus = existingClassData?.data?.status
   const approvalStatus = existingClassData?.data?.approvalStatus
@@ -129,12 +134,10 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
   const selectedDate = watch('startDate')
   const modality = watch('modality')
 
-  // Track if form has been populated from existing class data
-  const [isFormPopulated, setIsFormPopulated] = React.useState(false)
-
   // Populate form when data loads - wait for branches and courses to be available
+  // Use classId as dependency to re-populate when returning to this step
   useEffect(() => {
-    if (existingClassData?.data && branches.length > 0 && courses.length > 0 && !isFormPopulated) {
+    if (existingClassData?.data && branches.length > 0 && courses.length > 0) {
       const data = existingClassData.data
       
       // Verify branch exists in available branches
@@ -156,10 +159,8 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
       setValue('plannedEndDate', data.plannedEndDate)
       setValue('scheduleDays', data.scheduleDays)
       setValue('maxCapacity', data.maxCapacity)
-      
-      setIsFormPopulated(true)
     }
-  }, [existingClassData, setValue, branches, courses, isFormPopulated])
+  }, [existingClassData, setValue, branches, courses])
 
   // Auto-generate class code when all required fields are filled
   const handlePreviewFetch = useCallback(async () => {
@@ -229,6 +230,8 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
     const value = parseInt(val)
     setValue('branchId', value, { shouldValidate: true })
     setBranchError(validateBranch(value))
+    // Clear name duplicate error when branch changes - need to re-check
+    setNameDuplicateError(null)
   }
 
   const handleCourseChange = (val: string) => {
@@ -259,6 +262,38 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
     const value = e.target.value
     setValue('name', value, { shouldValidate: true })
     setNameError(validateName(value))
+    // Clear duplicate error when user changes name
+    setNameDuplicateError(null)
+  }
+
+  // Check duplicate class name with debounce
+  const handleNameBlur = async () => {
+    const currentName = watch('name')?.trim()
+    const currentBranchId = watch('branchId')
+    
+    if (!currentName || !currentBranchId) return
+    
+    // Only check if name is valid
+    if (validateName(currentName)) return
+    
+    setIsCheckingName(true)
+    try {
+      const result = await checkClassName({ 
+        branchId: currentBranchId, 
+        name: currentName,
+        excludeId: classId ?? undefined 
+      }).unwrap()
+      
+      if (result?.data?.exists) {
+        setNameDuplicateError('Tên lớp đã tồn tại trong chi nhánh này')
+      } else {
+        setNameDuplicateError(null)
+      }
+    } catch {
+      // Silently ignore check errors - don't block the user
+    } finally {
+      setIsCheckingName(false)
+    }
   }
 
   const toggleDay = (dayValue: number) => {
@@ -289,6 +324,29 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
       setScheduleDaysError(daysErr)
       toast.error('Vui lòng điền đầy đủ thông tin hợp lệ')
       return
+    }
+
+    // Check for duplicate name before submit
+    if (nameDuplicateError) {
+      toast.error('Tên lớp đã tồn tại trong chi nhánh này')
+      return
+    }
+
+    // Double-check name uniqueness before submit
+    try {
+      const checkResult = await checkClassName({ 
+        branchId: data.branchId, 
+        name: data.name.trim(),
+        excludeId: classId ?? undefined 
+      }).unwrap()
+      
+      if (checkResult?.data?.exists) {
+        setNameDuplicateError('Tên lớp đã tồn tại trong chi nhánh này')
+        toast.error('Tên lớp đã tồn tại trong chi nhánh này')
+        return
+      }
+    } catch {
+      // Continue if check fails - let server handle it
     }
 
     try {
@@ -354,7 +412,8 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
             Chi nhánh <span className="text-destructive">*</span>
           </Label>
           <Select
-            value={selectedBranchId ? selectedBranchId.toString() : undefined}
+            key={`branch-${selectedBranchId || 'empty'}`}
+            value={selectedBranchId ? selectedBranchId.toString() : ''}
             onValueChange={handleBranchChange}
             disabled={isEditLocked || isBranchesLoading}
           >
@@ -386,7 +445,8 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
             Khóa học <span className="text-destructive">*</span>
           </Label>
           <Select
-            value={selectedCourseId ? selectedCourseId.toString() : undefined}
+            key={`course-${selectedCourseId || 'empty'}`}
+            value={selectedCourseId ? selectedCourseId.toString() : ''}
             onValueChange={handleCourseChange}
             disabled={isEditLocked || isCoursesLoading}
           >
@@ -491,16 +551,28 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
           <Label htmlFor="name">
             Tên lớp <span className="text-destructive">*</span>
           </Label>
-          <Input
-            id="name"
-            placeholder="Ví dụ: Lớp IELTS Cơ Bản A"
-            disabled={isEditLocked}
-            {...register('name')}
-            onChange={handleNameChange}
-            className={cn((nameError || errors.name) && 'border-destructive')}
-          />
-          {(nameError || errors.name) && (
-            <p className="text-sm text-destructive">{nameError || errors.name?.message}</p>
+          <div className="relative">
+            <Input
+              id="name"
+              placeholder="Ví dụ: Lớp IELTS Cơ Bản A"
+              disabled={isEditLocked}
+              {...register('name')}
+              onChange={handleNameChange}
+              onBlur={handleNameBlur}
+              className={cn((nameError || nameDuplicateError || errors.name) && 'border-destructive')}
+            />
+            {isCheckingName && (
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                Đang kiểm tra...
+              </span>
+            )}
+          </div>
+          {nameError && <p className="text-sm text-destructive">{nameError}</p>}
+          {!nameError && nameDuplicateError && (
+            <p className="text-sm text-destructive">{nameDuplicateError}</p>
+          )}
+          {!nameError && !nameDuplicateError && errors.name && (
+            <p className="text-sm text-destructive">{errors.name.message}</p>
           )}
         </div>
       </div>

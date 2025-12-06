@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { AlertCircle, Check } from 'lucide-react'
+import { AlertCircle, Check, Info } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface Step3TimeSlotsProps {
@@ -25,10 +25,25 @@ const DAY_LABELS: Record<number, string> = {
 
 const DEFAULT_DAYS = [1, 3, 5]
 
+/**
+ * Calculate duration in hours from startTime and endTime (HH:mm format)
+ */
+function calculateDurationHours(startTime: string, endTime: string): number {
+  const [startHour, startMin] = startTime.split(':').map(Number)
+  const [endHour, endMin] = endTime.split(':').map(Number)
+  
+  const startMinutes = startHour * 60 + startMin
+  const endMinutes = endHour * 60 + endMin
+  
+  return (endMinutes - startMinutes) / 60
+}
+
 export function Step3TimeSlots({ classId, onContinue }: Step3TimeSlotsProps) {
   const { data: classDetail } = useGetClassByIdQuery(classId ?? 0, { skip: !classId })
   const { data: sessionsData, isLoading: isSessionsLoading, refetch: refetchSessions } = useGetClassSessionsQuery(classId ?? 0, { skip: !classId })
   const branchId = classDetail?.data?.branch?.id
+  const hoursPerSession = classDetail?.data?.course?.hoursPerSession
+  
   const { data: timeSlotResponse, isLoading: isTimeSlotLoading } = useGetTimeSlotsQuery(
     branchId ? { branchId } : { branchId: 0 },
     { skip: !branchId }
@@ -39,6 +54,21 @@ export function Step3TimeSlots({ classId, onContinue }: Step3TimeSlotsProps) {
   const sortedDays = useMemo(() => Array.from(new Set(scheduleDays)).sort(), [scheduleDays])
 
   const [selectedSlots, setSelectedSlots] = useState<Record<number, number | ''>>({})
+
+  // Filter time slots by duration matching hoursPerSession
+  const filteredTimeSlots = useMemo(() => {
+    const allSlots = timeSlotResponse?.data ?? []
+    
+    if (!hoursPerSession) {
+      return allSlots
+    }
+    
+    return allSlots.filter(slot => {
+      const duration = calculateDurationHours(slot.startTime, slot.endTime)
+      // Allow small tolerance for floating point comparison (0.01 hours = ~36 seconds)
+      return Math.abs(duration - hoursPerSession) < 0.01
+    })
+  }, [timeSlotResponse, hoursPerSession])
 
   // Prefill from existing sessions
   useEffect(() => {
@@ -67,7 +97,6 @@ export function Step3TimeSlots({ classId, onContinue }: Step3TimeSlotsProps) {
     setSelectedSlots(initial)
   }, [sortedDays, sessionsData])
 
-  const timeSlotOptions = timeSlotResponse?.data ?? []
   const totalSessions = sessionsData?.data?.totalSessions ?? 0
   const assignedCount = sortedDays.filter(day => selectedSlots[day]).length
   const allAssigned = assignedCount === sortedDays.length
@@ -138,6 +167,21 @@ export function Step3TimeSlots({ classId, onContinue }: Step3TimeSlotsProps) {
         </p>
       </div>
 
+      {/* Info about filtered time slots */}
+      {hoursPerSession && (
+        <Alert className="bg-blue-50 border-blue-200">
+          <Info className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800">
+            Hiển thị các khung giờ có thời lượng <strong>{hoursPerSession}h</strong> phù hợp với khóa học.
+            {filteredTimeSlots.length === 0 && (
+              <span className="block mt-1 text-amber-700">
+                ⚠️ Không có khung giờ nào phù hợp. Vui lòng liên hệ quản trị viên để tạo khung giờ mới.
+              </span>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Time Slot Selection */}
       <div className="rounded-lg border">
         <div className="px-4 py-3 border-b bg-muted/30">
@@ -156,12 +200,13 @@ export function Step3TimeSlots({ classId, onContinue }: Step3TimeSlotsProps) {
                   <Select
                     value={selectedSlots[day]?.toString() || ''}
                     onValueChange={(value) => handleChange(day, value)}
+                    disabled={filteredTimeSlots.length === 0}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Chọn khung giờ..." />
+                      <SelectValue placeholder={filteredTimeSlots.length === 0 ? "Không có khung giờ phù hợp" : "Chọn khung giờ..."} />
                     </SelectTrigger>
                     <SelectContent>
-                      {timeSlotOptions.map((slot) => (
+                      {filteredTimeSlots.map((slot) => (
                         <SelectItem key={slot.id} value={slot.id.toString()}>
                           {slot.startTime} - {slot.endTime} ({slot.name})
                         </SelectItem>

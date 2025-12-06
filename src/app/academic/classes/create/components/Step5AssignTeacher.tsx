@@ -15,6 +15,16 @@ import { cn } from '@/lib/utils'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { ChevronDown, ChevronUp, Check, User } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 interface Step5AssignTeacherProps {
   classId: number | null
@@ -224,6 +234,43 @@ export function Step5AssignTeacher({ classId, onContinue }: Step5AssignTeacherPr
   const [assignmentMode, setAssignmentMode] = useState<'single' | 'multi'>('single')
   const [isUnavailableExpanded, setIsUnavailableExpanded] = useState(false)
   const [pendingTeacherId, setPendingTeacherId] = useState<number | null>(null)
+  
+  // Get course subject code (IELTS, TOEIC, JLPT, etc.)
+  const courseSubject = useMemo(() => {
+    const course = classDetail?.data?.course
+    // Priority: subject.code > course code prefix
+    return course?.subject?.code?.toUpperCase() || course?.code?.split('-')[0]?.toUpperCase() || null
+  }, [classDetail])
+
+  // Helper to check if teacher's specialization matches course subject
+  const checkSpecializationMatch = (teacherData?: { specializations?: string[] }) => {
+    if (!courseSubject) return { matches: true, teacherSpec: null, courseSubject: null }
+    
+    // Get teacher's specializations 
+    const teacherSpecs = teacherData?.specializations?.map(s => s?.toUpperCase()).filter(Boolean) ?? []
+    
+    if (teacherSpecs.length === 0) return { matches: true, teacherSpec: null, courseSubject }
+    
+    // Check if any of teacher's specializations match the course subject
+    const hasMatch = teacherSpecs.some(spec => spec === courseSubject)
+    
+    return { 
+      matches: hasMatch, 
+      teacherSpec: teacherSpecs.join(', '),
+      courseSubject 
+    }
+  }
+  
+  // Confirmation dialog state - added specializationMismatch
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean
+    teacherId: number | null
+    teacherName: string
+    currentTeacherName: string
+    sessionIds: number[] | null
+    dayLabel?: string
+    specializationMismatch?: { teacherSpec: string | null; courseSubject: string | null }
+  }>({ isOpen: false, teacherId: null, teacherName: '', currentTeacherName: '', sessionIds: null })
 
   // Fetch teachers - refetchOnMountOrArgChange to ensure fresh data
   const { data, isLoading: isSingleLoading, isError: isSingleError, refetch: refetchSingle } =
@@ -299,14 +346,44 @@ export function Step5AssignTeacher({ classId, onContinue }: Step5AssignTeacherPr
     [teachersByDay, sessionsByDay]
   )
 
+  // Track assigned teachers per day
+  const assignedTeachersByDay = useMemo(() => {
+    const sessions = sessionsData?.data?.sessions ?? []
+    const result: Record<number, { teacherId: number; fullName: string }[]> = {}
+    
+    sessions.forEach(s => {
+      const day = resolveSessionDay(s)
+      if (day === undefined) return
+      
+      // Get teacher info from session
+      const teachers = s.teachers ?? s.teacherAssignments ?? s.teacherInfo ?? s.assignedTeachers ?? []
+      if (teachers.length > 0) {
+        if (!result[day]) result[day] = []
+        teachers.forEach(t => {
+          const teacherId = t.teacherId
+          const fullName = t.fullName || t.name || ''
+          if (teacherId && !result[day].some(existing => existing.teacherId === teacherId)) {
+            result[day].push({ teacherId, fullName })
+          }
+        })
+      }
+    })
+    
+    return result
+  }, [sessionsData])
+
   // Stats
   const totalSessions = sessionsData?.data?.totalSessions ?? 0
   const assignedSessions = sessionsData?.data?.sessions?.filter(s => s.hasTeacher)?.length ?? 0
+
+  // Check if any sessions already have teacher assigned
+  const hasExistingAssignment = assignedSessions > 0
 
   // Handlers
   const handleAssign = async (teacherId: number, sessionIds: number[] | null = null) => {
     if (!classId) return
     setPendingTeacherId(teacherId)
+    setConfirmDialog(prev => ({ ...prev, isOpen: false }))
     try {
       const response = await assignTeacher({ classId, data: { teacherId, sessionIds } }).unwrap()
       await refetchSessions?.()
@@ -319,13 +396,74 @@ export function Step5AssignTeacher({ classId, onContinue }: Step5AssignTeacherPr
     }
   }
 
-  const handleAssignForDay = (teacherId: number, dayValue: number) => {
+  // Request assign with confirmation check
+  const requestAssign = (teacherId: number, teacherName: string, sessionIds: number[] | null = null, dayLabel?: string, skillDetails?: { specializations?: string[] }) => {
+    // Check for specialization mismatch
+    const specCheck = skillDetails ? checkSpecializationMatch(skillDetails) : null
+    const hasSpecMismatch = specCheck && !specCheck.matches
+    
+    // Check if there are existing assignments
+    if (sessionIds) {
+      // Multi-teacher mode: check if specific day has assignment
+      const dayValue = Object.entries(sessionsByDay).find(([, ids]) => 
+        ids.length === sessionIds.length && ids.every(id => sessionIds.includes(id))
+      )?.[0]
+      
+      if (dayValue) {
+        const assignedTeachers = assignedTeachersByDay[Number(dayValue)] ?? []
+        if (assignedTeachers.length > 0 || hasSpecMismatch) {
+          setConfirmDialog({
+            isOpen: true,
+            teacherId,
+            teacherName,
+            currentTeacherName: assignedTeachers.length > 0 
+              ? assignedTeachers.map(t => t.fullName).join(', ') 
+              : undefined,
+            sessionIds,
+            dayLabel,
+            specializationMismatch: hasSpecMismatch ? {
+              teacherSpec: specCheck.teacherSpec,
+              courseSubject: specCheck.courseSubject,
+            } : undefined,
+          })
+          return
+        }
+      }
+    } else {
+      // Single teacher mode: check if any session has assignment
+      if (hasExistingAssignment || hasSpecMismatch) {
+        // Get current assigned teachers
+        const allAssigned = Object.values(assignedTeachersByDay).flat()
+        const uniqueNames = [...new Set(allAssigned.map(t => t.fullName))].filter(Boolean)
+        
+        setConfirmDialog({
+          isOpen: true,
+          teacherId,
+          teacherName,
+          currentTeacherName: hasExistingAssignment 
+            ? (uniqueNames.join(', ') || 'Giáo viên hiện tại')
+            : undefined,
+          sessionIds: null,
+          specializationMismatch: hasSpecMismatch ? {
+            teacherSpec: specCheck.teacherSpec,
+            courseSubject: specCheck.courseSubject,
+          } : undefined,
+        })
+        return
+      }
+    }
+    
+    // No existing assignment and no specialization mismatch, proceed directly
+    handleAssign(teacherId, sessionIds)
+  }
+
+  const handleAssignForDay = (teacherId: number, teacherName: string, dayValue: number, skillDetails?: { specializations?: string[] }) => {
     const ids = sessionsByDay[dayValue] ?? []
     if (ids.length === 0) {
       toast.error('Không có buổi học cho ngày này')
       return
     }
-    handleAssign(teacherId, ids)
+    requestAssign(teacherId, teacherName, ids, dayLabelFull[dayValue], skillDetails)
   }
 
   if (!classId) {
@@ -405,14 +543,19 @@ export function Step5AssignTeacher({ classId, onContinue }: Step5AssignTeacherPr
                 {recommended.length} giáo viên sẵn sàng
               </p>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {recommended.map(t => (
-                  <TeacherCard
-                    key={t.teacherId}
-                    teacher={t}
-                    onAssign={() => handleAssign(t.teacherId)}
-                    isAssigning={isSubmitting && pendingTeacherId === t.teacherId}
-                  />
-                ))}
+                {recommended.map(t => {
+                  // Extract specializations from skillDetails or use specializations field
+                  const specs = t.skillDetails?.map(s => s.specialization).filter(Boolean) ?? t.specializations ?? []
+                  const uniqueSpecs = [...new Set(specs)]
+                  return (
+                    <TeacherCard
+                      key={t.teacherId}
+                      teacher={t}
+                      onAssign={() => requestAssign(t.teacherId, t.fullName, null, undefined, { specializations: uniqueSpecs })}
+                      isAssigning={isSubmitting && pendingTeacherId === t.teacherId}
+                    />
+                  )
+                })}
               </div>
             </div>
           ) : (
@@ -451,17 +594,42 @@ export function Step5AssignTeacher({ classId, onContinue }: Step5AssignTeacherPr
             const group = teachersByDay[dayValue]
             if (!group) return null
             const sessionCount = sessionsByDay[dayValue]?.length ?? 0
+            const assignedTeachers = assignedTeachersByDay[dayValue] ?? []
+            const isAssigned = assignedTeachers.length > 0
 
             return (
-              <div key={dayValue} className="rounded-xl border p-4">
+              <div key={dayValue} className={cn(
+                "rounded-xl border p-4",
+                isAssigned && "border-green-300 bg-green-50/50"
+              )}>
                 <div className="mb-3 flex items-center justify-between">
                   <div>
                     <p className="font-medium">{dayLabelFull[dayValue]}</p>
                     <p className="text-xs text-muted-foreground">{sessionCount} buổi</p>
                   </div>
+                  {isAssigned && (
+                    <div className="flex items-center gap-1.5 text-green-700">
+                      <Check className="h-4 w-4" />
+                      <span className="text-xs font-medium">Đã gán</span>
+                    </div>
+                  )}
                 </div>
+                
+                {/* Show assigned teacher */}
+                {isAssigned && (
+                  <div className="mb-3 p-2 rounded-lg bg-green-100/70 border border-green-200">
+                    <p className="text-xs text-green-600 mb-1">Giáo viên đã gán:</p>
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-green-700" />
+                      <span className="text-sm font-medium text-green-800">
+                        {assignedTeachers.map(t => t.fullName).join(', ')}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="space-y-2">
-                  {group.teachers.slice(0, 3).map(t => {
+                  {group.teachers.map(t => {
                     // Get General score from teacher's skillDetails
                     const generalSkill = t.skillDetails?.find(s => s.skill === 'GENERAL')
                     const generalScore = generalSkill 
@@ -472,19 +640,37 @@ export function Step5AssignTeacher({ classId, onContinue }: Step5AssignTeacherPr
                     const fallbackSpec = !generalScore && t.skills?.length > 0 
                       ? t.skills.find(s => s !== 'GENERAL') || t.skills[0]
                       : null
+                    
+                    // Check if this teacher is already assigned for this day
+                    const isThisTeacherAssigned = assignedTeachers.some(at => at.teacherId === t.teacherId)
 
                     return (
                       <button
                         key={t.teacherId}
-                        className="flex w-full items-center justify-between rounded-lg border px-3 py-2.5 text-sm hover:bg-muted/50 hover:border-primary/50 transition-colors group"
-                        onClick={() => handleAssignForDay(t.teacherId, dayValue)}
-                        disabled={isSubmitting && pendingTeacherId === t.teacherId}
+                        className={cn(
+                          "flex w-full items-center justify-between rounded-lg border px-3 py-2.5 text-sm transition-colors group",
+                          isThisTeacherAssigned 
+                            ? "border-green-400 bg-green-100 cursor-default" 
+                            : "hover:bg-muted/50 hover:border-primary/50"
+                        )}
+                        onClick={() => {
+                          if (isThisTeacherAssigned) return
+                          // Extract specializations from skillDetails
+                          const specs = t.skillDetails?.map(s => s.specialization).filter(Boolean) ?? []
+                          const uniqueSpecs = [...new Set(specs)]
+                          handleAssignForDay(t.teacherId, t.fullName, dayValue, { specializations: uniqueSpecs })
+                        }}
+                        disabled={(isSubmitting && pendingTeacherId === t.teacherId) || isThisTeacherAssigned}
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className="font-medium truncate">{t.fullName}</span>
+                          <span className={cn(
+                            "font-medium truncate",
+                            isThisTeacherAssigned && "text-green-800"
+                          )}>{t.fullName}</span>
                           {generalScore ? (
                             <span className={cn(
                               'inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold shrink-0',
+                              isThisTeacherAssigned ? 'bg-green-200 text-green-800' :
                               generalScore.level >= 8 ? 'bg-emerald-100 text-emerald-700' :
                               generalScore.level >= 6 ? 'bg-blue-100 text-blue-700' :
                               'bg-amber-100 text-amber-700'
@@ -492,28 +678,116 @@ export function Step5AssignTeacher({ classId, onContinue }: Step5AssignTeacherPr
                               {generalScore.spec} {generalScore.level.toFixed(1)}
                             </span>
                           ) : fallbackSpec && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 shrink-0">
+                            <span className={cn(
+                              "inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium shrink-0",
+                              isThisTeacherAssigned ? "bg-green-200 text-green-800" : "bg-gray-100 text-gray-600"
+                            )}>
                               {fallbackSpec}
                             </span>
                           )}
                         </div>
-                        <span className="text-xs text-primary font-medium ml-2 opacity-70 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                          {isSubmitting && pendingTeacherId === t.teacherId ? 'Đang gán...' : 'Gán →'}
+                        <span className={cn(
+                          "text-xs font-medium ml-2 whitespace-nowrap",
+                          isThisTeacherAssigned 
+                            ? "text-green-700 flex items-center gap-1" 
+                            : "text-primary opacity-70 group-hover:opacity-100 transition-opacity"
+                        )}>
+                          {isThisTeacherAssigned ? (
+                            <><Check className="h-3.5 w-3.5" /> Đã chọn</>
+                          ) : isSubmitting && pendingTeacherId === t.teacherId ? (
+                            'Đang gán...'
+                          ) : (
+                            'Gán →'
+                          )}
                         </span>
                       </button>
                     )
                   })}
-                  {group.teachers.length > 3 && (
-                    <p className="text-xs text-muted-foreground text-center pt-1">
-                      +{group.teachers.length - 3} giáo viên khác
-                    </p>
-                  )}
                 </div>
               </div>
             )
           })}
         </div>
       )}
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={confirmDialog.isOpen} onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, isOpen: open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmDialog.specializationMismatch && !confirmDialog.currentTeacherName
+                ? 'Cảnh báo chuyên môn không phù hợp'
+                : 'Xác nhận thay đổi giáo viên'
+              }
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                {confirmDialog.dayLabel 
+                  ? confirmDialog.currentTeacherName
+                    ? `Bạn có muốn thay đổi giáo viên cho ${confirmDialog.dayLabel}?`
+                    : `Bạn có muốn gán giáo viên cho ${confirmDialog.dayLabel}?`
+                  : confirmDialog.currentTeacherName
+                    ? 'Bạn có muốn thay đổi giáo viên cho lớp học này?'
+                    : 'Bạn có muốn gán giáo viên cho lớp học này?'
+                }
+              </p>
+              
+              {/* Specialization mismatch warning */}
+              {confirmDialog.specializationMismatch && (
+                <div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200 space-y-1">
+                  <p className="text-sm font-medium text-amber-800">⚠️ Chuyên môn không khớp</p>
+                  <p className="text-sm text-amber-700">
+                    Giáo viên <span className="font-semibold">{confirmDialog.teacherName}</span> có chuyên môn{' '}
+                    <span className="font-semibold">{confirmDialog.specializationMismatch.teacherSpec || 'Chung'}</span>,{' '}
+                    nhưng khóa học này yêu cầu <span className="font-semibold">{confirmDialog.specializationMismatch.courseSubject}</span>.
+                  </p>
+                </div>
+              )}
+              
+              {/* Teacher change info */}
+              {confirmDialog.currentTeacherName && (
+                <>
+                  <div className="mt-3 p-3 rounded-lg bg-muted/50 space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground">Giáo viên hiện tại:</span>
+                      <span className="font-medium text-foreground">{confirmDialog.currentTeacherName}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground">Giáo viên mới:</span>
+                      <span className="font-medium text-primary">{confirmDialog.teacherName}</span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-amber-600 mt-2">
+                    Giáo viên hiện tại sẽ bị gỡ khỏi các buổi học này.
+                  </p>
+                </>
+              )}
+              
+              {/* Only show new teacher info when there's no current teacher */}
+              {!confirmDialog.currentTeacherName && (
+                <div className="mt-3 p-3 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">Giáo viên:</span>
+                    <span className="font-medium text-primary">{confirmDialog.teacherName}</span>
+                  </div>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                if (confirmDialog.teacherId !== null) {
+                  handleAssign(confirmDialog.teacherId, confirmDialog.sessionIds)
+                }
+              }}
+            >
+              {confirmDialog.currentTeacherName ? 'Xác nhận thay đổi' : 'Xác nhận gán'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -113,6 +113,19 @@ export const classCreationApi = createApi({
       }),
     }),
 
+    /**
+     * Check if class name already exists in a branch
+     */
+    checkClassName: builder.query<
+      { success: boolean; message: string; data: { exists: boolean; branchId: number; name: string } },
+      { branchId: number; name: string; excludeId?: number }
+    >({
+      query: ({ branchId, name, excludeId }) => ({
+        url: '/classes/check-name',
+        params: { branchId, name, ...(excludeId && { excludeId }) },
+      }),
+    }),
+
     // ============ STEP 2: Review Sessions (Optional) ============
 
     /**
@@ -279,6 +292,8 @@ export const {
   useCreateClassMutation,
   useUpdateClassMutation,
   usePreviewClassCodeMutation,
+  useCheckClassNameQuery,
+  useLazyCheckClassNameQuery,
   useGetClassSessionsQuery,
   useAssignTimeSlotsMutation,
   useAssignResourcesMutation,

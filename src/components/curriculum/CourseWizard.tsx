@@ -49,13 +49,13 @@ interface CourseWizardProps {
 const transformCourseDetailToFormData = (courseDetail: CourseDetail): CourseData => {
     // Get phases from response
     const phases = (courseDetail as any).structure?.phases || courseDetail.phases || [];
-    
+
     // Collect ALL materials from all sources:
     // 1. COURSE level materials from courseDetail.materials
     // 2. PHASE level materials from phases[].materials
     // 3. SESSION level materials from phases[].sessions[].materials
     const allMaterials: any[] = [];
-    
+
     // 1. Add COURSE level materials
     (courseDetail.materials || []).forEach((material: any) => {
         allMaterials.push({
@@ -68,11 +68,11 @@ const transformCourseDetailToFormData = (courseDetail: CourseDetail): CourseData
             sessionId: material.sessionId?.toString(),
         });
     });
-    
+
     // 2. Add PHASE and SESSION level materials from phases structure
     phases.forEach((phase: any) => {
         const phaseIdStr = phase.id?.toString();
-        
+
         // Add PHASE level materials
         (phase.materials || []).forEach((material: any) => {
             // Check if this material is already added (avoid duplicates)
@@ -89,7 +89,7 @@ const transformCourseDetailToFormData = (courseDetail: CourseDetail): CourseData
                 });
             }
         });
-        
+
         // Add SESSION level materials
         (phase.sessions || []).forEach((session: any) => {
             const sessionIdStr = session.id?.toString();
@@ -110,7 +110,7 @@ const transformCourseDetailToFormData = (courseDetail: CourseDetail): CourseData
             });
         });
     });
-    
+
     return {
         id: courseDetail.id,
         basicInfo: {
@@ -289,7 +289,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                 // Use initialData?.id for edit mode, or createdCourseId after first save
                 const courseIdToExclude = initialData?.id || createdCourseId || undefined;
                 const step1Validation = validateStep1(formData, coursesForValidation, courseIdToExclude);
-                
+
                 if (!step1Validation.isValid) {
                     step1Validation.errors.forEach(error => toast.error(error));
                     return;
@@ -299,7 +299,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
             // Validate Step 2: CLO validation
             if (currentStep === 2) {
                 const step2Validation = validateStep2(formData);
-                
+
                 if (!step2Validation.isValid) {
                     step2Validation.errors.forEach(error => toast.error(error));
                     return;
@@ -309,7 +309,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
             // Validate Step 3: Complete validation
             if (currentStep === 3) {
                 const step3Validation = validateStep3(formData);
-                
+
                 if (!step3Validation.isValid) {
                     step3Validation.errors.forEach(error => toast.error(error));
                     return;
@@ -319,7 +319,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
             // Validate Step 4: Assessment validation
             if (currentStep === 4) {
                 const step4Validation = validateStep4(formData);
-                
+
                 if (!step4Validation.isValid) {
                     step4Validation.errors.forEach(error => toast.error(error));
                     return;
@@ -402,13 +402,15 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
             };
 
             try {
-                let courseId = initialData?.id;
-                if (isEditMode && initialData?.id) {
-                    await updateCourse({ id: initialData.id, data: requestData }).unwrap();
-                    courseId = initialData.id;
+                let courseId = initialData?.id || createdCourseId;
+                if (courseId) {
+                    // Update existing course (either edit mode or previously saved draft)
+                    await updateCourse({ id: courseId, data: requestData }).unwrap();
                 } else {
+                    // Create new course (first time save)
                     const newCourse = await createCourse(requestData).unwrap();
                     courseId = newCourse.id;
+                    setCreatedCourseId(courseId); // Track for potential subsequent operations
                 }
 
                 // If course is valid, submit for approval immediately
@@ -527,7 +529,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                 setCreatedCourseId(savedCourse.id); // Track for subsequent saves
                 toast.success("Đã lưu nháp khóa học thành công!");
             }
-            
+
             // Sync formData with response to get new IDs from database
             if (savedCourse) {
                 console.log('=== DEBUG: savedCourse from API ===', savedCourse);
@@ -624,8 +626,8 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                 <div className="w-full px-6">
                     <div className="flex items-center justify-between h-16">
                         <div className="flex items-center gap-4">
-                            <Button 
-                                variant="ghost" 
+                            <Button
+                                variant="ghost"
                                 size="sm"
                                 onClick={handleBack}
                                 className="text-muted-foreground hover:text-foreground"
@@ -660,10 +662,10 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                         <div className="flex items-center gap-2">
                             {/* Save Draft Split Button */}
                             <div className="flex">
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     size="sm"
-                                    onClick={handleSaveAndContinue} 
+                                    onClick={handleSaveAndContinue}
                                     disabled={isLoading || isSubmitting}
                                     className="rounded-r-none border-r-0"
                                 >
@@ -676,8 +678,8 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                                 </Button>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button 
-                                            variant="outline" 
+                                        <Button
+                                            variant="outline"
                                             size="sm"
                                             disabled={isLoading || isSubmitting}
                                             className="rounded-l-none px-2"
@@ -724,11 +726,11 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                     <div className="relative">
                         {/* Progress Line */}
                         <div className="absolute top-5 left-0 right-0 h-0.5 bg-muted" />
-                        <div 
+                        <div
                             className="absolute top-5 left-0 h-0.5 bg-primary transition-all duration-500"
                             style={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 100}%` }}
                         />
-                        
+
                         {/* Steps */}
                         <div className="relative flex justify-between">
                             {STEPS.map((step) => {
@@ -736,8 +738,8 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                                 const isCompleted = step.id < currentStep;
 
                                 return (
-                                    <div 
-                                        key={step.id} 
+                                    <div
+                                        key={step.id}
                                         className="flex flex-col items-center"
                                         onClick={() => {
                                             // Allow navigation to completed steps
@@ -747,13 +749,12 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                                         }}
                                     >
                                         <div
-                                            className={`w-10 h-10 rounded-full flex items-center justify-center border-2 bg-background transition-all duration-300 ${
-                                                isActive
+                                            className={`w-10 h-10 rounded-full flex items-center justify-center border-2 bg-background transition-all duration-300 ${isActive
                                                     ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-110"
                                                     : isCompleted
                                                         ? "border-primary bg-primary text-primary-foreground cursor-pointer hover:scale-105"
                                                         : "border-muted text-muted-foreground"
-                                            }`}
+                                                }`}
                                         >
                                             {isCompleted ? (
                                                 <Check className="w-5 h-5" />
@@ -763,13 +764,12 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                                         </div>
                                         <div className="mt-3 text-center">
                                             <span
-                                                className={`text-sm font-medium block ${
-                                                    isActive 
-                                                        ? "text-primary" 
-                                                        : isCompleted 
-                                                            ? "text-foreground cursor-pointer" 
+                                                className={`text-sm font-medium block ${isActive
+                                                        ? "text-primary"
+                                                        : isCompleted
+                                                            ? "text-foreground cursor-pointer"
                                                             : "text-muted-foreground"
-                                                }`}
+                                                    }`}
                                             >
                                                 {step.title}
                                             </span>
@@ -802,7 +802,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                     <div className="text-sm text-muted-foreground">
                         Bước {currentStep} / {STEPS.length}
                     </div>
-                    
+
                     <div className="flex gap-3">
                         {currentStep > 1 && (
                             <Button variant="outline" onClick={handleBack}>
@@ -810,7 +810,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                                 Quay lại
                             </Button>
                         )}
-                        
+
                         {currentStep < STEPS.length && (
                             <Button onClick={handleNext} disabled={isLoading}>
                                 Tiếp theo
