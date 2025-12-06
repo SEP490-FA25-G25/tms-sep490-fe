@@ -120,7 +120,6 @@ export type HomeworkStatus = keyof typeof HOMEWORK_STATUS_STYLES;
 export const MODALITY_STYLES = {
   OFFLINE: 'bg-slate-50 text-slate-700 border-slate-200',
   ONLINE: 'bg-sky-50 text-sky-700 border-sky-200',
-  HYBRID: 'bg-purple-50 text-purple-700 border-purple-200',
 } as const;
 
 export type Modality = keyof typeof MODALITY_STYLES;

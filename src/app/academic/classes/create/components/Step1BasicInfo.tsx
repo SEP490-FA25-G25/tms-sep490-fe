@@ -151,8 +151,7 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
       
       setValue('code', data.code)
       setValue('name', data.name)
-      // Handle legacy HYBRID data - default to OFFLINE
-      setValue('modality', data.modality === 'HYBRID' ? 'OFFLINE' : data.modality)
+      setValue('modality', data.modality)
       setValue('startDate', data.startDate)
       setValue('plannedEndDate', data.plannedEndDate)
       setValue('scheduleDays', data.scheduleDays)

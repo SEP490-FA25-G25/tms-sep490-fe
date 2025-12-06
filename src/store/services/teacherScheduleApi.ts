@@ -12,7 +12,7 @@ export type DayOfWeek =
 
 export type SessionStatus = "PLANNED" | "DONE" | "CANCELLED";
 export type SessionType = "CLASS" | "MAKEUP" | "ASSESSMENT" | "WORKSHOP" | "EVENT";
-export type ClassModality = "OFFLINE" | "ONLINE" | "HYBRID";
+export type ClassModality = "OFFLINE" | "ONLINE";
 
 export interface ApiResponse<T = unknown> {
   success: boolean;

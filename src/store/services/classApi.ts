@@ -117,7 +117,7 @@ export interface ClassListRequest {
   courseId?: number // Backend uses courseId instead of subjectId
   status?: 'DRAFT' | 'SUBMITTED' | 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED' // NEW: Filter by class status
   approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' // NEW: Filter by approval status
-  modality?: 'ONLINE' | 'OFFLINE' | 'HYBRID'
+  modality?: 'ONLINE' | 'OFFLINE'
   search?: string
   sort?: string // Sort field
   sortDir?: 'asc' | 'desc'
@@ -210,7 +210,7 @@ export interface ClassDetailDTO {
   name: string
   course: CourseDTO
   branch: BranchDTO
-  modality: 'ONLINE' | 'OFFLINE' | 'HYBRID'
+  modality: 'ONLINE' | 'OFFLINE'
   startDate: string // LocalDate from backend
   plannedEndDate: string // LocalDate from backend
   actualEndDate?: string // LocalDate from backend

@@ -43,7 +43,6 @@ const STATUS_LABELS: Record<string, string> = {
 const MODALITY_LABELS: Record<string, string> = {
   ONLINE: "Trực tuyến",
   OFFLINE: "Trực tiếp",
-  HYBRID: "Kết hợp",
 };
 
 function ClassCard({

@@ -21,7 +21,7 @@ export interface PaginatedResponse<T> {
 export type ClassStatus = "DRAFT" | "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED";
 
 // Modality options
-export type Modality = "ONLINE" | "OFFLINE" | "HYBRID";
+export type Modality = "ONLINE" | "OFFLINE";
 
 // Enrollment status options
 export type EnrollmentStatus = "ENROLLED" | "TRANSFERRED" | "DROPPED" | "COMPLETED";
@@ -246,9 +246,8 @@ export const CLASS_STATUSES: Record<ClassStatus, string> = {
 };
 
 export const MODALITIES: Record<Modality, string> = {
-  ONLINE: 'Online',
-  OFFLINE: 'Offline',
-  HYBRID: 'Hybrid'
+  ONLINE: 'Trực tuyến',
+  OFFLINE: 'Trực tiếp'
 };
 
 export const ENROLLMENT_STATUSES: Record<EnrollmentStatus, string> = {

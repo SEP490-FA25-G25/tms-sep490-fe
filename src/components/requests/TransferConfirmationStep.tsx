@@ -67,7 +67,6 @@ export default function TransferConfirmationStep({
     switch (modality) {
       case 'OFFLINE': return 'Tại lớp'
       case 'ONLINE': return 'Online'
-      case 'HYBRID': return 'Hybrid'
       default: return modality
     }
   }

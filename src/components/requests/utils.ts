@@ -20,7 +20,6 @@ export function getModalityLabel(modality?: SessionModality) {
   switch (modality) {
     case 'ONLINE': return 'Trực tuyến'
     case 'OFFLINE': return 'Tại trung tâm'
-    case 'HYBRID': return 'Kết hợp'
     default: return modality || 'Tại trung tâm'
   }
 }

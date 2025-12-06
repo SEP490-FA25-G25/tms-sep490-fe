@@ -13,7 +13,7 @@ export interface StudentClassDTO {
   branchName: string
 
   // Class details
-  modality: 'ONLINE' | 'OFFLINE' | 'HYBRID'
+  modality: 'ONLINE' | 'OFFLINE'
   status: string // ONGOING, SCHEDULED, etc.
   startDate: string
   endDate: string
@@ -80,8 +80,8 @@ export interface TransferEligibility {
   courseName: string
   branchId: number
   branchName: string
-  modality: 'ONLINE' | 'OFFLINE' | 'HYBRID'
-  learningMode?: 'ONLINE' | 'OFFLINE' | 'HYBRID'
+  modality: 'ONLINE' | 'OFFLINE'
+  learningMode?: 'ONLINE' | 'OFFLINE'
   enrollmentStatus: string
   transferQuota: TransferQuota
   hasPendingTransfer: boolean
@@ -112,7 +112,7 @@ export interface TransferOption {
   className: string
   branchId: number
   branchName: string
-  modality: 'ONLINE' | 'OFFLINE' | 'HYBRID'
+  modality: 'ONLINE' | 'OFFLINE'
   scheduleDays: string
   scheduleTime: string
   scheduleInfo?: string

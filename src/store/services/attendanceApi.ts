@@ -109,7 +109,7 @@ export interface AttendanceClassDTO {
   courseCode: string;
   branchName: string;
   branchCode: string;
-  modality: "ONLINE" | "OFFLINE" | "HYBRID";
+  modality: "ONLINE" | "OFFLINE";
   startDate: string;
   plannedEndDate: string;
   status: string;
