@@ -76,7 +76,7 @@ export function CreateClassWizard({ classId: propClassId, mode: modeProp }: Crea
   // === Navigation Handlers ===
   const handleBack = () => {
     if (currentStep > 1) {
-      navigateToStep((currentStep - 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7)
+      navigateToStep((currentStep - 1) as 1 | 2 | 3 | 4 | 5 | 6)
     } else {
       setShowLeaveConfirm(true)
     }
