@@ -260,7 +260,7 @@ export function SubjectList() {
             <SubjectDialog
                 open={isDialogOpen}
                 onOpenChange={setIsDialogOpen}
-                subject={selectedSubject ? { ...selectedSubject, plos: selectedSubject.plos || [], language: selectedSubject.language || '' } : null}
+                subject={selectedSubject ? { ...selectedSubject, plos: selectedSubject.plos || [], language: (selectedSubject as any).language || '' } : null}
             />
 
             <AlertDialog open={!!subjectToDelete} onOpenChange={(open) => !open && setSubjectToDelete(null)}>
