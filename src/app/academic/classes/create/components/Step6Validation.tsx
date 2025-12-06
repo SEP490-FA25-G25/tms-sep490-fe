@@ -1,21 +1,58 @@
 import { useMemo, useState, useCallback } from 'react'
-import { useGetClassByIdQuery } from '@/store/services/classApi'
-import { useValidateClassMutation, useGetClassSessionsQuery } from '@/store/services/classCreationApi'
+import { useDispatch } from 'react-redux'
+import { useGetClassByIdQuery, classApi } from '@/store/services/classApi'
+import { useValidateClassMutation, useGetClassSessionsQuery, useSubmitClassMutation } from '@/store/services/classCreationApi'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ValidateClassData, ValidationChecks } from '@/types/classCreation'
 import { AlertCircle, Check } from 'lucide-react'
+import { toast } from 'sonner'
+
+const DAY_SHORT_LABELS: Record<number, string> = {
+  0: 'CN',
+  1: 'T2',
+  2: 'T3',
+  3: 'T4',
+  4: 'T5',
+  5: 'T6',
+  6: 'T7',
+}
+
+const formatScheduleDays = (days?: number[], fallback?: string): string => {
+  if (days && days.length > 0) {
+    const normalized = Array.from(new Set(days))
+      .map((day) => {
+        if (typeof day !== 'number' || Number.isNaN(day)) return undefined
+        return ((day % 7) + 7) % 7
+      })
+      .filter((day): day is number => typeof day === 'number')
+      .sort((a, b) => a - b)
+
+    if (normalized.length > 0) {
+      return normalized.map((day) => DAY_SHORT_LABELS[day] ?? `Thứ ${day}`).join(' / ')
+    }
+  }
+
+  if (fallback && fallback.trim().length > 0) {
+    return fallback
+  }
+
+  return '--'
+}
 
 interface Step6ValidationProps {
   classId: number | null
-  onContinue: () => void
+  onFinish?: () => void
 }
 
-export function Step6Validation({ classId, onContinue }: Step6ValidationProps) {
-  const { data: classDetail } = useGetClassByIdQuery(classId ?? 0, { skip: !classId })
+export function Step6Validation({ classId, onFinish }: Step6ValidationProps) {
+  const dispatch = useDispatch()
+  const { data: classDetail, isLoading: isClassLoading } = useGetClassByIdQuery(classId ?? 0, { skip: !classId })
   const [validateClass, { isLoading: isValidating }] = useValidateClassMutation()
+  const [submitClass, { isLoading: isSubmitting }] = useSubmitClassMutation()
   const [result, setResult] = useState<ValidateClassData | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [selectedWeek, setSelectedWeek] = useState<number | 'all'>('all')
@@ -26,6 +63,7 @@ export function Step6Validation({ classId, onContinue }: Step6ValidationProps) {
     isLoading: isSessionsLoading,
   } = useGetClassSessionsQuery(classId ?? 0, { skip: !classId })
 
+  const classOverview = classDetail?.data
   const overview = sessionsData?.data
 
   const handleValidate = async () => {
@@ -44,6 +82,19 @@ export function Step6Validation({ classId, onContinue }: Step6ValidationProps) {
     }
   }
 
+  const handleSubmit = async () => {
+    if (!classId) return
+    try {
+      const response = await submitClass(classId).unwrap()
+      toast.success(response.message || 'Lớp đã được gửi duyệt.')
+      dispatch(classApi.util.invalidateTags(['Classes']))
+      onFinish?.()
+    } catch (error: unknown) {
+      const message = (error as { data?: { message?: string } })?.data?.message || 'Không thể gửi duyệt. Vui lòng thử lại.'
+      toast.error(message)
+    }
+  }
+
   const defaultTotal = overview?.totalSessions ?? classDetail?.data?.upcomingSessions?.length ?? 0
   const summaryChecks: ValidationChecks = result?.checks || {
     totalSessions: defaultTotal,
@@ -59,7 +110,24 @@ export function Step6Validation({ classId, onContinue }: Step6ValidationProps) {
     allSessionsHaveTeachers: false,
   }
 
-  const canContinue = Boolean(result?.canSubmit && result.valid && result.errors.length === 0)
+  const canSubmit = Boolean(result?.canSubmit && result.valid && result.errors.length === 0)
+
+  // Class info rows for display
+  const infoRows = useMemo(() => {
+    if (!classOverview) return []
+    return [
+      { label: 'Mã lớp', value: classOverview.code },
+      { label: 'Khóa học', value: classOverview.course?.name },
+      { label: 'Chi nhánh', value: classOverview.branch?.name },
+      { label: 'Ngày bắt đầu', value: classOverview.startDate },
+      { label: 'Ngày kết thúc dự kiến', value: classOverview.plannedEndDate },
+      {
+        label: 'Ngày học',
+        value: formatScheduleDays(classOverview.scheduleDays, classOverview.scheduleSummary),
+      },
+      { label: 'Sức chứa tối đa', value: classOverview.maxCapacity?.toString() },
+    ]
+  }, [classOverview])
 
   // Helper functions
   const readDisplayText = useCallback((value: unknown): string | undefined => {
@@ -310,13 +378,38 @@ export function Step6Validation({ classId, onContinue }: Step6ValidationProps) {
         )}
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {canContinue ? 'Lớp học đủ điều kiện gửi duyệt' : 'Hoàn thành kiểm tra để tiếp tục'}
-        </p>
-        <Button onClick={onContinue} disabled={!canContinue}>
-          Tiếp tục →
+      {/* Class Info Summary */}
+      <Card className="border border-border/70">
+        <CardHeader>
+          <CardTitle>Thông tin lớp học</CardTitle>
+          <p className="text-sm text-muted-foreground">Kiểm tra lại các thông tin chính trước khi gửi duyệt.</p>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2">
+          {isClassLoading ? (
+            <p className="text-sm text-muted-foreground">Đang tải thông tin lớp…</p>
+          ) : (
+            infoRows.map((row) => (
+              <div key={row.label} className="rounded-xl border border-border/50 bg-card/60 p-3 text-sm">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">{row.label}</p>
+                <p className="text-base font-semibold text-foreground">{row.value || '--'}</p>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Submit Action */}
+      <div className="flex items-center justify-between p-4 rounded-lg border bg-primary/5">
+        <div>
+          <p className="font-medium">
+            {canSubmit ? 'Lớp học đủ điều kiện gửi duyệt' : 'Hoàn thành kiểm tra để gửi duyệt'}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {canSubmit ? 'Nhấn nút để gửi lớp đi phê duyệt' : 'Vui lòng kiểm tra và đảm bảo tất cả thông tin đã đầy đủ'}
+          </p>
+        </div>
+        <Button onClick={handleSubmit} disabled={!canSubmit || isSubmitting} size="lg">
+          {isSubmitting ? 'Đang gửi duyệt...' : 'Gửi duyệt lớp học'}
         </Button>
       </div>
     </div>

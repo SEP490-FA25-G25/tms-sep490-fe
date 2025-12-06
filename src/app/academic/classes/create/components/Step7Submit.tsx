@@ -56,36 +56,12 @@ interface Step7SubmitProps {
   classId: number | null
   onBack: () => void
   onFinish?: () => void
-  onCancelKeepDraft: () => void
-  onCancelDelete: () => Promise<void> | void
 }
-
-const ChecklistLabel = ({
-  label,
-  description,
-  checked,
-  onCheckedChange,
-}: {
-  label: string
-  description: string
-  checked: boolean
-  onCheckedChange: (value: boolean) => void
-}) => (
-  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border/60 bg-background/70 p-3 transition hover:border-foreground/40">
-    <Checkbox checked={checked} onCheckedChange={(value) => onCheckedChange(Boolean(value))} />
-    <span>
-      <p className="font-semibold text-foreground">{label}</p>
-      <p className="text-xs text-muted-foreground">{description}</p>
-    </span>
-  </label>
-)
 
 export function Step7Submit({
   classId,
   onBack,
   onFinish,
-  onCancelKeepDraft,
-  onCancelDelete,
 }: Step7SubmitProps) {
   const dispatch = useDispatch()
   const { data: classDetail, isLoading: isClassLoading } = useGetClassByIdQuery(classId ?? 0, {
@@ -95,12 +71,6 @@ export function Step7Submit({
   const [submitClass, { isLoading: isSubmitting }] = useSubmitClassMutation()
   const [validationResult, setValidationResult] = useState<ValidateClassData | null>(null)
   const [validationError, setValidationError] = useState<string | null>(null)
-  const [checklist, setChecklist] = useState({
-    accuracy: false,
-    notify: false,
-    attachments: false,
-  })
-  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false)
 
   useEffect(() => {
     if (!classId) return
@@ -125,8 +95,7 @@ export function Step7Submit({
   }
 
   const canSubmitValidation = Boolean(validationResult?.canSubmit && validationResult.valid && validationResult.errors.length === 0)
-  const checklistComplete = Object.values(checklist).every(Boolean)
-  const submitDisabled = !classId || !canSubmitValidation || !checklistComplete || isSubmitting
+  const submitDisabled = !classId || !canSubmitValidation || isSubmitting
 
   const handleValidate = async () => {
     if (!classId) return

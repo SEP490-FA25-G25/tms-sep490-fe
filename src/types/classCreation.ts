@@ -254,12 +254,19 @@ export interface ScheduleInfo {
   location: string
 }
 
+export interface TeacherSkillDetail {
+  skill: string
+  specialization: string
+  level: number
+}
+
 export interface TeacherAvailability {
   teacherId: number
   fullName: string
   email: string
   skills: string[]
   specializations?: string[] // e.g., ["IELTS", "TOEIC"]
+  skillDetails?: TeacherSkillDetail[] // Detailed skills with levels
   hasGeneralSkill: boolean
   totalSessions: number
   availableSessions: number
@@ -295,6 +302,7 @@ export interface TeacherAvailableByDay {
   email: string
   avatarUrl?: string | null
   skills: string[]
+  skillDetails?: { skill: string; specialization: string; level: number }[]
   totalClassSessions: number
   availableDays: TeacherDayAvailabilityInfo[]
 }

@@ -26,6 +26,7 @@ interface DayTeacherEntry {
   fullName: string
   email: string
   skills: string[]
+  skillDetails?: { skill: string; specialization: string; level: number }[]
   dayInfo: TeacherDayAvailabilityInfo
 }
 
@@ -72,6 +73,44 @@ const dayLabelFull: Record<number, string> = {
   0: 'Chủ nhật', 1: 'Thứ Hai', 2: 'Thứ Ba', 3: 'Thứ Tư', 4: 'Thứ Năm', 5: 'Thứ Sáu', 6: 'Thứ Bảy',
 }
 
+// Skill display names and colors
+const skillDisplayNames: Record<string, string> = {
+  GENERAL: 'General',
+  LISTENING: 'Listening',
+  READING: 'Reading',
+  WRITING: 'Writing',
+  SPEAKING: 'Speaking',
+  VOCABULARY: 'Vocabulary',
+  GRAMMAR: 'Grammar',
+  KANJI: 'Kanji',
+}
+
+const skillColors: Record<string, string> = {
+  GENERAL: 'bg-purple-100 text-purple-700 border-purple-200',
+  LISTENING: 'bg-blue-100 text-blue-700 border-blue-200',
+  READING: 'bg-green-100 text-green-700 border-green-200',
+  WRITING: 'bg-orange-100 text-orange-700 border-orange-200',
+  SPEAKING: 'bg-pink-100 text-pink-700 border-pink-200',
+  VOCABULARY: 'bg-cyan-100 text-cyan-700 border-cyan-200',
+  GRAMMAR: 'bg-amber-100 text-amber-700 border-amber-200',
+  KANJI: 'bg-red-100 text-red-700 border-red-200',
+}
+
+// Level color based on proficiency
+const getLevelColor = (level: number) => {
+  if (level >= 9) return 'text-emerald-600 font-semibold'
+  if (level >= 7) return 'text-blue-600'
+  if (level >= 5) return 'text-amber-600'
+  return 'text-gray-500'
+}
+
+// Helper to get General score from skillDetails
+const getGeneralScore = (skillDetails?: { skill: string; specialization: string; level: number }[]) => {
+  if (!skillDetails?.length) return null
+  const general = skillDetails.find(s => s.skill === 'GENERAL')
+  return general ? { specialization: general.specialization, level: general.level } : null
+}
+
 // Simplified Teacher Card Component
 const TeacherCard = ({
   teacher,
@@ -86,6 +125,9 @@ const TeacherCard = ({
 }) => {
   const percent = Math.round(teacher.availabilityPercentage)
   const isFullyAvailable = teacher.availabilityStatus === 'FULLY_AVAILABLE'
+  
+  // Get General score (the overall exam score)
+  const generalScore = useMemo(() => getGeneralScore(teacher.skillDetails), [teacher.skillDetails])
 
   return (
     <div
@@ -108,10 +150,22 @@ const TeacherCard = ({
         <div className="flex-1 min-w-0">
           <p className="font-medium text-foreground truncate">{teacher.fullName}</p>
           <p className="text-xs text-muted-foreground truncate">
-            {teacher.specializations?.length ? teacher.specializations.join(' • ') :
-              teacher.skills.filter(s => s !== 'GENERAL').slice(0, 3).join(' • ') || 'General'}
+            {teacher.specializations?.length ? teacher.specializations.join(' • ') : teacher.email}
           </p>
         </div>
+        {/* General Score Badge */}
+        {generalScore && (
+          <div className="shrink-0">
+            <span className={cn(
+              'inline-flex items-center gap-1 px-2 py-1 rounded-lg text-sm font-semibold',
+              generalScore.level >= 8 ? 'bg-emerald-100 text-emerald-700' :
+              generalScore.level >= 6 ? 'bg-blue-100 text-blue-700' :
+              'bg-amber-100 text-amber-700'
+            )}>
+              {generalScore.specialization} {generalScore.level.toFixed(1)}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Session count */}
@@ -171,12 +225,18 @@ export function Step5AssignTeacher({ classId, onContinue }: Step5AssignTeacherPr
   const [isUnavailableExpanded, setIsUnavailableExpanded] = useState(false)
   const [pendingTeacherId, setPendingTeacherId] = useState<number | null>(null)
 
-  // Fetch teachers
+  // Fetch teachers - refetchOnMountOrArgChange to ensure fresh data
   const { data, isLoading: isSingleLoading, isError: isSingleError, refetch: refetchSingle } =
-    useGetTeacherAvailabilityQuery({ classId: classId ?? 0 }, { skip: !classId || assignmentMode !== 'single' })
+    useGetTeacherAvailabilityQuery(
+      { classId: classId ?? 0 }, 
+      { skip: !classId || assignmentMode !== 'single', refetchOnMountOrArgChange: true }
+    )
 
   const { data: dayData, isLoading: isDayLoading, isError: isDayError, refetch: refetchDay } =
-    useGetTeachersAvailableByDayQuery({ classId: classId ?? 0 }, { skip: !classId || assignmentMode !== 'multi' })
+    useGetTeachersAvailableByDayQuery(
+      { classId: classId ?? 0 }, 
+      { skip: !classId || assignmentMode !== 'multi', refetchOnMountOrArgChange: true }
+    )
 
   const { data: sessionsData, refetch: refetchSessions } = useGetClassSessionsQuery(classId ?? 0, { skip: !classId })
 
@@ -214,6 +274,7 @@ export function Step5AssignTeacher({ classId, onContinue }: Step5AssignTeacherPr
             fullName: teacher.fullName,
             email: teacher.email,
             skills: teacher.skills,
+            skillDetails: teacher.skillDetails,
             dayInfo: day,
           })
         })
@@ -400,21 +461,50 @@ export function Step5AssignTeacher({ classId, onContinue }: Step5AssignTeacherPr
                   </div>
                 </div>
                 <div className="space-y-2">
-                  {group.teachers.slice(0, 3).map(t => (
-                    <button
-                      key={t.teacherId}
-                      className="flex w-full items-center justify-between rounded-lg border px-3 py-2 text-sm hover:bg-muted/50 transition-colors"
-                      onClick={() => handleAssignForDay(t.teacherId, dayValue)}
-                      disabled={isSubmitting && pendingTeacherId === t.teacherId}
-                    >
-                      <span>{t.fullName}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {isSubmitting && pendingTeacherId === t.teacherId ? 'Đang gán...' : 'Gán →'}
-                      </span>
-                    </button>
-                  ))}
+                  {group.teachers.slice(0, 3).map(t => {
+                    // Get General score from teacher's skillDetails
+                    const generalSkill = t.skillDetails?.find(s => s.skill === 'GENERAL')
+                    const generalScore = generalSkill 
+                      ? { spec: generalSkill.specialization, level: generalSkill.level }
+                      : null
+                    
+                    // Fallback: get specialization from skills array if no skillDetails
+                    const fallbackSpec = !generalScore && t.skills?.length > 0 
+                      ? t.skills.find(s => s !== 'GENERAL') || t.skills[0]
+                      : null
+
+                    return (
+                      <button
+                        key={t.teacherId}
+                        className="flex w-full items-center justify-between rounded-lg border px-3 py-2.5 text-sm hover:bg-muted/50 hover:border-primary/50 transition-colors group"
+                        onClick={() => handleAssignForDay(t.teacherId, dayValue)}
+                        disabled={isSubmitting && pendingTeacherId === t.teacherId}
+                      >
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="font-medium truncate">{t.fullName}</span>
+                          {generalScore ? (
+                            <span className={cn(
+                              'inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold shrink-0',
+                              generalScore.level >= 8 ? 'bg-emerald-100 text-emerald-700' :
+                              generalScore.level >= 6 ? 'bg-blue-100 text-blue-700' :
+                              'bg-amber-100 text-amber-700'
+                            )}>
+                              {generalScore.spec} {generalScore.level.toFixed(1)}
+                            </span>
+                          ) : fallbackSpec && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 shrink-0">
+                              {fallbackSpec}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs text-primary font-medium ml-2 opacity-70 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                          {isSubmitting && pendingTeacherId === t.teacherId ? 'Đang gán...' : 'Gán →'}
+                        </span>
+                      </button>
+                    )
+                  })}
                   {group.teachers.length > 3 && (
-                    <p className="text-xs text-muted-foreground text-center">
+                    <p className="text-xs text-muted-foreground text-center pt-1">
                       +{group.teachers.length - 3} giáo viên khác
                     </p>
                   )}

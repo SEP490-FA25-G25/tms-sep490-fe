@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -115,12 +115,40 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
     return 'Lớp không được chỉnh sửa trong trạng thái này.'
   })()
 
-  // Populate form when data loads
+  // Use getMyBranches for current user's assigned branches
+  const { data: branchesData, isLoading: isBranchesLoading } = useGetMyBranchesQuery()
+  const { data: coursesData, isLoading: isCoursesLoading } = useGetCoursesQuery()
+  const [previewClassCode] = usePreviewClassCodeMutation()
+
+  const branches = useMemo(() => branchesData?.data || [], [branchesData])
+  const courses = useMemo(() => coursesData?.data || [], [coursesData])
+
+  const selectedBranchId = watch('branchId')
+  const selectedCourseId = watch('courseId')
+  const selectedDays = watch('scheduleDays') || []
+  const selectedDate = watch('startDate')
+  const modality = watch('modality')
+
+  // Track if form has been populated from existing class data
+  const [isFormPopulated, setIsFormPopulated] = React.useState(false)
+
+  // Populate form when data loads - wait for branches and courses to be available
   useEffect(() => {
-    if (existingClassData?.data) {
+    if (existingClassData?.data && branches.length > 0 && courses.length > 0 && !isFormPopulated) {
       const data = existingClassData.data
-      setValue('branchId', data.branch.id)
-      setValue('courseId', data.course.id)
+      
+      // Verify branch exists in available branches
+      const branchExists = branches.some(b => b.id === data.branch.id)
+      if (branchExists) {
+        setValue('branchId', data.branch.id)
+      }
+      
+      // Verify course exists in available courses
+      const courseExists = courses.some(c => c.id === data.course.id)
+      if (courseExists) {
+        setValue('courseId', data.course.id)
+      }
+      
       setValue('code', data.code)
       setValue('name', data.name)
       // Handle legacy HYBRID data - default to OFFLINE
@@ -129,22 +157,10 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
       setValue('plannedEndDate', data.plannedEndDate)
       setValue('scheduleDays', data.scheduleDays)
       setValue('maxCapacity', data.maxCapacity)
+      
+      setIsFormPopulated(true)
     }
-  }, [existingClassData, setValue])
-
-  // Use getMyBranches for current user's assigned branches
-  const { data: branchesData } = useGetMyBranchesQuery()
-  const { data: coursesData } = useGetCoursesQuery()
-  const [previewClassCode] = usePreviewClassCodeMutation()
-
-  const branches = branchesData?.data || []
-  const courses = coursesData?.data || []
-
-  const selectedBranchId = watch('branchId')
-  const selectedCourseId = watch('courseId')
-  const selectedDays = watch('scheduleDays') || []
-  const selectedDate = watch('startDate')
-  const modality = watch('modality')
+  }, [existingClassData, setValue, branches, courses, isFormPopulated])
 
   // Auto-generate class code when all required fields are filled
   const handlePreviewFetch = useCallback(async () => {
@@ -321,10 +337,10 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
         <p className="text-muted-foreground">
           Nhập thông tin cơ bản về lớp học. Tất cả các trường đều bắt buộc.
         </p>
-        {isEditLocked && (
+{isEditLocked && (
           <Alert className="mt-4 border-amber-300 bg-amber-50 text-amber-900">
             <AlertDescription className="flex items-start gap-2">
-              <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+              <AlertTriangle className="h-4 w-4 shrink-0" />
               <span>{editLockMessage}</span>
             </AlertDescription>
           </Alert>
@@ -333,15 +349,15 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
 
       {/* Row 1: Chi nhánh + Khóa học */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Chi nhánh */}
+{/* Chi nhánh */}
         <div className="space-y-2">
           <Label htmlFor="branchId">
             Chi nhánh <span className="text-destructive">*</span>
           </Label>
           <Select
-            value={selectedBranchId?.toString() ?? ''}
+            value={selectedBranchId ? selectedBranchId.toString() : undefined}
             onValueChange={handleBranchChange}
-            disabled={isEditLocked}
+            disabled={isEditLocked || isBranchesLoading}
           >
             <SelectTrigger id="branchId" className={cn(branchError && 'border-destructive')}>
               <SelectValue placeholder="Chọn chi nhánh" />
@@ -371,9 +387,9 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
             Khóa học <span className="text-destructive">*</span>
           </Label>
           <Select
-            value={selectedCourseId?.toString() ?? ''}
+            value={selectedCourseId ? selectedCourseId.toString() : undefined}
             onValueChange={handleCourseChange}
-            disabled={isEditLocked}
+            disabled={isEditLocked || isCoursesLoading}
           >
             <SelectTrigger id="courseId" className={cn(courseError && 'border-destructive')}>
               <SelectValue placeholder="Chọn khóa học" />
