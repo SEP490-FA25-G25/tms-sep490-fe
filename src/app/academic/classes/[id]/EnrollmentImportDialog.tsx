@@ -35,7 +35,6 @@ import {
 import {
   usePreviewClassEnrollmentImportMutation,
   useExecuteClassEnrollmentImportMutation,
-  useDownloadEnrollmentTemplateQuery,
   useDownloadClassEnrollmentTemplateQuery,
   type ClassEnrollmentImportPreview,
   type EnrollmentStrategy,
@@ -75,7 +74,6 @@ export function EnrollmentImportDialog({
   const [previewMutation, { isLoading: isPreviewing }] = usePreviewClassEnrollmentImportMutation()
   const [executeMutation, { isLoading: isExecuting }] = useExecuteClassEnrollmentImportMutation()
 
-  const genericTemplateQuery = useDownloadEnrollmentTemplateQuery()
   const classTemplateQuery = useDownloadClassEnrollmentTemplateQuery({ classId }, { skip: !open })
 
   // Compute derived values - all students sorted: valid first, then errors
@@ -161,15 +159,15 @@ export function EnrollmentImportDialog({
     e.stopPropagation()
   }
 
-  const handleDownloadTemplate = (type: 'generic' | 'class') => {
+  const handleDownloadTemplate = () => {
     try {
-      const result = type === 'generic' ? genericTemplateQuery.data : classTemplateQuery.data
+      const result = classTemplateQuery.data
       if (!result) return
 
       const url = window.URL.createObjectURL(result)
       const a = document.createElement('a')
       a.href = url
-      a.download = type === 'generic' ? 'mau-danh-sach-sinh-vien.xlsx' : `lop-${classId}-mau-danh-sach.xlsx`
+      a.download = `lop-${classId}-mau-danh-sach.xlsx`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
@@ -339,31 +337,22 @@ export function EnrollmentImportDialog({
                 </Button>
               </div>
 
-              <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-xl">
-                <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleDownloadTemplate('generic')}>
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <div className="bg-emerald-100 p-2 rounded-lg">
-                      <FileSpreadsheet className="h-5 w-5 text-emerald-700" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-medium text-sm">Mẫu cơ bản</p>
-                      <p className="text-xs text-muted-foreground">Tải xuống mẫu Excel chuẩn</p>
-                    </div>
-                    <Download className="h-4 w-4 ml-auto text-muted-foreground" />
-                  </CardContent>
-                </Card>
-                <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => handleDownloadTemplate('class')}>
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <div className="bg-blue-100 p-2 rounded-lg">
-                      <FileSpreadsheet className="h-5 w-5 text-blue-700" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-medium text-sm">Mẫu theo lớp</p>
-                      <p className="text-xs text-muted-foreground">Bao gồm thông tin lớp học</p>
-                    </div>
-                    <Download className="h-4 w-4 ml-auto text-muted-foreground" />
-                  </CardContent>
-                </Card>
+              <div className="mt-6 w-full max-w-xl">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start gap-3 h-auto py-3"
+                  onClick={handleDownloadTemplate}
+                  disabled={!classTemplateQuery.data}
+                >
+                  <div className="bg-blue-100 p-2 rounded-lg">
+                    <FileSpreadsheet className="h-5 w-5 text-blue-700" />
+                  </div>
+                  <div className="text-left flex-1">
+                    <p className="font-medium text-sm">Tải xuống mẫu Excel</p>
+                    <p className="text-xs text-muted-foreground">File mẫu đã bao gồm thông tin lớp học</p>
+                  </div>
+                  <Download className="h-4 w-4 text-muted-foreground" />
+                </Button>
               </div>
             </div>
           ) : (

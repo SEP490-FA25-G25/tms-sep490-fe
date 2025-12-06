@@ -49,7 +49,6 @@ import { CalendarView } from './components/CalendarView'
 const MODALITY_LABELS: Record<string, string> = {
   OFFLINE: 'Học tại trung tâm',
   ONLINE: 'Học trực tuyến',
-  HYBRID: 'Kết hợp',
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8080' : '')

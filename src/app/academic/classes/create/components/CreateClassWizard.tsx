@@ -15,7 +15,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Check, ChevronRight, Save, Loader2, LogOut } from 'lucide-react'
-import { useDeleteClassMutation } from '@/store/services/classApi'
 import { useGetClassByIdQuery } from '@/store/services/classApi'
 import { useWizardNavigation } from './hooks/useWizardNavigation'
 import { useNavigationGuard } from '@/contexts/NavigationGuardContext'
@@ -25,7 +24,6 @@ import { Step3TimeSlots } from './Step3TimeSlots'
 import { Step4Resources } from './Step4Resources'
 import { Step5AssignTeacher } from './Step5AssignTeacher'
 import { Step6Validation } from './Step6Validation'
-import { Step7Submit } from './Step7Submit'
 
 const STEPS = [
   { id: 1, title: 'Thông tin cơ bản' },
@@ -33,8 +31,7 @@ const STEPS = [
   { id: 3, title: 'Lịch học' },
   { id: 4, title: 'Tài nguyên' },
   { id: 5, title: 'Giáo viên' },
-  { id: 6, title: 'Kiểm tra' },
-  { id: 7, title: 'Xác nhận' },
+  { id: 6, title: 'Kiểm tra & Gửi duyệt' },
 ]
 
 // Dynamic action button config per step
@@ -44,8 +41,7 @@ const STEP_ACTIONS: Record<number, { label: string; description: string }> = {
   3: { label: 'Gán khung giờ', description: 'Gán khung giờ cho các buổi học' },
   4: { label: 'Gán tài nguyên', description: 'Gán phòng/tài khoản cho các buổi' },
   5: { label: 'Gán giáo viên', description: 'Gán giáo viên cho lớp học' },
-  6: { label: 'Kiểm tra lớp', description: 'Kiểm tra và xác nhận thông tin' },
-  7: { label: 'Gửi phê duyệt', description: 'Gửi lớp đi phê duyệt' },
+  6: { label: 'Kiểm tra & Gửi', description: 'Kiểm tra và gửi lớp đi phê duyệt' },
 }
 
 interface CreateClassWizardProps {
@@ -58,7 +54,6 @@ export function CreateClassWizard({ classId: propClassId, mode: modeProp }: Crea
   const navigate = useNavigate()
   const { setIsBlocking } = useNavigationGuard()
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
-  const [deleteClass] = useDeleteClassMutation()
 
   const {
     currentStep,
@@ -101,9 +96,9 @@ export function CreateClassWizard({ classId: propClassId, mode: modeProp }: Crea
       return
     }
 
-    if (currentStep < 7) {
+    if (currentStep < 6) {
       markStepComplete(currentStep)
-      navigateToStep((currentStep + 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7)
+      navigateToStep((currentStep + 1) as 1 | 2 | 3 | 4 | 5 | 6)
     }
   }
 
@@ -144,32 +139,8 @@ export function CreateClassWizard({ classId: propClassId, mode: modeProp }: Crea
       case 5:
         toast.info('Gán giáo viên - Chức năng sẽ được triển khai sau')
         break
-      case 6:
-        toast.info('Kiểm tra lớp - Chức năng sẽ được triển khai sau')
-        break
       default:
         break
-    }
-  }
-
-  const handleSubmitForApproval = () => {
-    toast.info('Gửi phê duyệt - Chức năng sẽ được triển khai sau')
-  }
-
-  // === Delete Handler ===
-  const handleDeleteClass = async () => {
-    if (!classId) {
-      toast.error('Không tìm thấy lớp nháp để xóa.')
-      return
-    }
-    try {
-      await deleteClass(classId).unwrap()
-      toast.success('Lớp nháp đã được xóa.')
-      setIsBlocking(false)
-      navigate('/academic/classes')
-    } catch (error: unknown) {
-      const message = (error as { data?: { message?: string } })?.data?.message || 'Không thể xóa lớp. Vui lòng thử lại.'
-      toast.error(message)
     }
   }
 
@@ -358,21 +329,8 @@ export function CreateClassWizard({ classId: propClassId, mode: modeProp }: Crea
             {currentStep === 6 && (
               <Step6Validation
                 classId={classId}
-                onContinue={() => {
-                  markStepComplete(6)
-                  navigateToStep(7)
-                }}
-              />
-            )}
-
-            {currentStep === 7 && (
-              <Step7Submit
-                classId={classId}
-                onBack={() => navigateToStep(6)}
-                onCancelKeepDraft={() => navigate('/academic/classes')}
-                onCancelDelete={handleDeleteClass}
                 onFinish={() => {
-                  markStepComplete(7)
+                  markStepComplete(6)
                   setIsBlocking(false)
                   navigate('/academic/classes')
                 }}

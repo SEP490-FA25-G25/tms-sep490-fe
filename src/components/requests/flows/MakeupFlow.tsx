@@ -85,7 +85,6 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
   const formatModality = (modality?: SessionModality) => {
     switch (modality) {
       case 'ONLINE': return 'Trực tuyến'
-      case 'HYBRID': return 'Kết hợp'
       default: return 'Tại trung tâm'
     }
   }

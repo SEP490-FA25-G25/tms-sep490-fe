@@ -32,6 +32,13 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 interface SubjectDialogProps {
     open: boolean;
@@ -41,6 +48,7 @@ interface SubjectDialogProps {
         code: string;
         name: string;
         description: string;
+        language: string;
         plos: { code: string; description: string }[];
     } | null;
 }
@@ -56,6 +64,7 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
         code: "",
         name: "",
         description: "",
+        language: "English",
         plos: [] as { code: string; description: string }[],
     });
 
@@ -73,6 +82,7 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
                 code: subject.code,
                 name: subject.name,
                 description: subject.description || "",
+                language: subject.language || "English",
                 plos: subject.plos || [],
             });
         } else {
@@ -80,6 +90,7 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
                 code: "",
                 name: "",
                 description: "",
+                language: "English",
                 plos: [],
             });
         }
@@ -133,11 +144,11 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
         return null;
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { id, value } = e.target;
         setFormData((prev) => ({ ...prev, [id]: value }));
         setIsDirty(true);
-        
+
         // Validate on change
         if (id === "code") {
             setCodeError(validateCode(value));
@@ -165,7 +176,7 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
             ),
         }));
         setIsDirty(true);
-        
+
         // Clear PLO description error when user starts typing
         if (field === "description" && value.trim().length > 0) {
             setPloErrors((prev) => {
@@ -196,23 +207,23 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         // Validate code and name for duplicates
         const codeErr = validateCode(formData.code);
         const nameErr = validateName(formData.name);
-        
+
         if (codeErr) {
             setCodeError(codeErr);
             toast.error(codeErr);
             return;
         }
-        
+
         if (nameErr) {
             setNameError(nameErr);
             toast.error(nameErr);
             return;
         }
-        
+
         // Validate description
         const descError = validateDescription(formData.description);
         if (descError) {
@@ -220,13 +231,13 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
             toast.error(descError);
             return;
         }
-        
+
         // Validate at least 1 PLO required
         if (formData.plos.length === 0) {
             toast.error("Môn học phải có ít nhất 1 PLO");
             return;;
         }
-        
+
         // Validate PLO descriptions
         const ploValidationErrors: { [key: number]: string } = {};
         formData.plos.forEach((plo, index) => {
@@ -234,13 +245,13 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
                 ploValidationErrors[index] = "Mô tả PLO không được để trống";
             }
         });
-        
+
         if (Object.keys(ploValidationErrors).length > 0) {
             setPloErrors(ploValidationErrors);
             toast.error("Vui lòng nhập mô tả cho tất cả PLO");
             return;
         }
-        
+
         try {
             if (subject) {
                 await updateSubject({ id: subject.id, data: formData }).unwrap();
@@ -310,6 +321,28 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
                         {descriptionError && (
                             <p className="text-sm text-rose-500">{descriptionError}</p>
                         )}
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="language">Ngôn ngữ giảng dạy <span className="text-rose-500">*</span></Label>
+                        <Select
+                            value={formData.language}
+                            onValueChange={(value) => {
+                                setFormData((prev) => ({ ...prev, language: value }));
+                                setIsDirty(true);
+                            }}
+                        >
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Chọn ngôn ngữ" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="English">English</SelectItem>
+                                <SelectItem value="Vietnamese">Vietnamese</SelectItem>
+                                <SelectItem value="Japanese">Japanese</SelectItem>
+                                <SelectItem value="Chinese">Chinese</SelectItem>
+                                <SelectItem value="Korean">Korean</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     <div className="space-y-4">

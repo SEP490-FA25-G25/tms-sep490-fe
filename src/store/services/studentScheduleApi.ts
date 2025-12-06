@@ -18,7 +18,7 @@ export type DayOfWeek =
 
 export type SessionStatus = 'PLANNED' | 'DONE' | 'CANCELLED'
 export type SessionType = 'CLASS' | 'MAKEUP' | 'ASSESSMENT' | 'WORKSHOP' | 'EVENT'
-export type ClassModality = 'OFFLINE' | 'ONLINE' | 'HYBRID'
+export type ClassModality = 'OFFLINE' | 'ONLINE'
 export type AttendanceStatus = 'PLANNED' | 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED' | 'MAKEUP'
 export type HomeworkStatus = 'COMPLETED' | 'INCOMPLETE' | 'NO_HOMEWORK'
 export type ResourceType = 'ROOM' | 'VIRTUAL' | string

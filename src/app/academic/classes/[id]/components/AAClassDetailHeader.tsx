@@ -83,8 +83,6 @@ const getModalityLabel = (modality: string) => {
       return 'Trực tuyến'
     case 'OFFLINE':
       return 'Trực tiếp'
-    case 'HYBRID':
-      return 'Kết hợp'
     default:
       return modality
   }

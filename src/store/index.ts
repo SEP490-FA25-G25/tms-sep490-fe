@@ -37,6 +37,7 @@ import { centerHeadApi } from "./services/centerHeadApi";
 import authSlice, {
   setCredentials,
   logout,
+  selectBranch,
   selectAuth,
   selectIsLoading,
   selectUser,
@@ -44,6 +45,8 @@ import authSlice, {
   selectHasRole,
   selectHasAnyRole,
   selectHasAllRoles,
+  selectSelectedBranchId,
+  selectUserBranches,
 } from "./slices/authSlice";
 
 import { teacherAvailabilityApi } from "./services/teacherAvailabilityApi";
@@ -142,6 +145,7 @@ export type AppDispatch = typeof store.dispatch;
 export {
   setCredentials,
   logout,
+  selectBranch,
   selectAuth,
   selectIsLoading,
   selectUser,
@@ -149,4 +153,6 @@ export {
   selectHasRole,
   selectHasAnyRole,
   selectHasAllRoles,
+  selectSelectedBranchId,
+  selectUserBranches,
 };

@@ -73,6 +73,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { useNavigate } from "react-router-dom";
 import { useDebounce } from "@/hooks/useDebounce";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 // ========== Types ==========
 type SortField = "startDate" | "name" | "code" | "currentEnrolled" | "status";
@@ -131,6 +132,7 @@ export default function AcademicClassesPage({
   disableManageActions = false,
 }: AcademicClassesPageProps) {
   const navigate = useNavigate();
+  const { selectedBranchId } = useAuth();
 
   // State cho filters
   const [filters, setFilters] = useState<FilterState>({
@@ -195,6 +197,7 @@ export default function AcademicClassesPage({
 
   const queryParams = useMemo(
     () => ({
+      branchIds: selectedBranchId ? [selectedBranchId] : undefined,
       search: debouncedSearch || undefined,
       courseId: filters.courseId || undefined,
       status: apiStatus,
@@ -205,6 +208,7 @@ export default function AcademicClassesPage({
       ...pagination,
     }),
     [
+      selectedBranchId,
       debouncedSearch,
       filters.courseId,
       apiStatus,

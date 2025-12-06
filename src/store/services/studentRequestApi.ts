@@ -30,7 +30,7 @@ interface StudentSearchParams {
 
 export type RequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
 export type RequestType = 'ABSENCE' | 'MAKEUP' | 'TRANSFER'
-export type SessionModality = 'ONLINE' | 'OFFLINE' | 'HYBRID'
+export type SessionModality = 'ONLINE' | 'OFFLINE'
 
 export interface BranchOption {
   id: number

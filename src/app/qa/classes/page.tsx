@@ -168,7 +168,6 @@ export default function QAClassesListPage() {
         switch (modality) {
             case 'ONLINE': return 'Trực tuyến'
             case 'OFFLINE': return 'Trực tiếp'
-            case 'HYBRID': return 'Kết hợp'
             default: return modality
         }
     }

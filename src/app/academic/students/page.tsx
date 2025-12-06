@@ -34,6 +34,7 @@ import {
   Users,
   Loader2,
   Download,
+  Upload,
   UserCheck,
   GraduationCap,
   UserX,
@@ -46,6 +47,7 @@ import { DashboardLayout } from '@/components/DashboardLayout'
 import { StudentStatusBadge } from './components/StudentStatusBadge'
 import { StudentDetailDrawer } from './components/StudentDetailDrawer'
 import { StudentEditDialog } from './components/StudentEditDialog'
+import { StudentImportDialog } from './components/StudentImportDialog'
 import {
   useGetStudentsQuery,
   useGetStudentDetailQuery,
@@ -139,8 +141,11 @@ export default function StudentListPage() {
   // State cho dialog tạo mới
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
 
-  // Lấy branchId từ user đang đăng nhập
-  const { user } = useAuth()
+  // State cho dialog import
+  const [importDialogOpen, setImportDialogOpen] = useState(false)
+
+  // Lấy selectedBranchId từ user đang đăng nhập
+  const { user, selectedBranchId } = useAuth()
 
   // RTK Query - Lấy danh sách học viên
   const {
@@ -149,6 +154,7 @@ export default function StudentListPage() {
     isFetching: isFetchingList,
     error: listError,
   } = useGetStudentsQuery({
+    branchIds: selectedBranchId ? [selectedBranchId] : undefined,
     search: debouncedSearch || undefined,
     status: filters.status,
     gender: filters.gender,
@@ -309,6 +315,10 @@ export default function StudentListPage() {
               <Download className="mr-2 h-4 w-4" />
             )}
             Xuất Excel
+          </Button>
+          <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+            <Upload className="mr-2 h-4 w-4" />
+            Nhập từ Excel
           </Button>
           <Button onClick={() => setCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
@@ -698,6 +708,18 @@ export default function StudentListPage() {
           branchId={user.branchId}
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}
+        />
+      )}
+
+      {/* Import Student Dialog */}
+      {user?.branchId && (
+        <StudentImportDialog
+          branchId={user.branchId}
+          open={importDialogOpen}
+          onOpenChange={setImportDialogOpen}
+          onSuccess={() => {
+            // RTK Query sẽ tự động invalidate và refetch
+          }}
         />
       )}
     </DashboardLayout>

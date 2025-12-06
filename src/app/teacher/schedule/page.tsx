@@ -53,7 +53,6 @@ const SESSION_STATUS_STYLES: Record<
 const MODALITY_LABELS: Record<string, string> = {
   OFFLINE: "Học tại trung tâm",
   ONLINE: "Học trực tuyến",
-  HYBRID: "Kết hợp",
 };
 
 const API_BASE_URL =
