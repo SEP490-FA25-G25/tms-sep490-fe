@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { addMonths, addWeeks, format, parseISO, startOfToday } from 'date-fns'
+import { addDays, addMonths, addWeeks, format, parseISO, startOfToday } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { MapPinIcon } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -277,7 +277,7 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
             <TabsContent value="upcoming" className="mt-0">
               <div className="flex items-center justify-between pb-2 border-b">
                 <p className="text-xs text-muted-foreground">
-                  Tuần {weekStartCursor ? format(parseISO(weekStartCursor), 'dd/MM') : '...'}
+                  Tuần {weekStartCursor ? `${format(parseISO(weekStartCursor), 'dd/MM')} - ${format(addDays(parseISO(weekStartCursor), 6), 'dd/MM')}` : '...'}
                 </p>
                 <div className="flex items-center gap-1">
                   <Button variant="ghost" size="sm" className="h-7 px-2" onClick={handlePrevWeek} disabled={isPrevWeekDisabled}>
