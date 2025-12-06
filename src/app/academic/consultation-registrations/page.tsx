@@ -210,6 +210,12 @@ function UpdateStatusDialog({
                   Quan tâm: {registration.courseName}
                 </div>
               )}
+              {registration.message && (
+                <div className="pt-2 border-t border-border">
+                  <div className="text-xs text-muted-foreground mb-1">Ghi chú từ khách hàng:</div>
+                  <div className="text-foreground whitespace-pre-wrap">{registration.message}</div>
+                </div>
+              )}
             </div>
 
             {/* Status Selection */}
