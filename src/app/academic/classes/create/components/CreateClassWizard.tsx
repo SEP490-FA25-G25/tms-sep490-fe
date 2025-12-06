@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,158 +13,177 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { Check, ChevronRight, Save, Loader2, LogOut } from 'lucide-react'
-import { useDeleteClassMutation } from '@/store/services/classApi'
-import { useGetClassByIdQuery } from '@/store/services/classApi'
-import { useWizardNavigation } from './hooks/useWizardNavigation'
-import { useNavigationGuard } from '@/contexts/NavigationGuardContext'
-import { Step1BasicInfo } from './Step1BasicInfo'
-import { Step2ReviewSessions } from './Step2ReviewSessions'
-import { Step3TimeSlots } from './Step3TimeSlots'
-import { Step4Resources } from './Step4Resources'
-import { Step5AssignTeacher } from './Step5AssignTeacher'
-import { Step6Validation } from './Step6Validation'
+} from "@/components/ui/alert-dialog";
+import { Check, ChevronRight, Save, Loader2, LogOut } from "lucide-react";
+import { useDeleteClassMutation } from "@/store/services/classApi";
+import { useGetClassByIdQuery } from "@/store/services/classApi";
+import { useWizardNavigation } from "./hooks/useWizardNavigation";
+import { useNavigationGuard } from "@/contexts/NavigationGuardContext";
+import { Step1BasicInfo } from "./Step1BasicInfo";
+import { Step2ReviewSessions } from "./Step2ReviewSessions";
+import { Step3TimeSlots } from "./Step3TimeSlots";
+import { Step4Resources } from "./Step4Resources";
+import { Step5AssignTeacher } from "./Step5AssignTeacher";
+import { Step6Validation } from "./Step6Validation";
 
 const STEPS = [
-  { id: 1, title: 'Thông tin cơ bản' },
-  { id: 2, title: 'Xem lại buổi học' },
-  { id: 3, title: 'Lịch học' },
-  { id: 4, title: 'Tài nguyên' },
-  { id: 5, title: 'Giáo viên' },
-  { id: 6, title: 'Kiểm tra & Gửi duyệt' },
-]
+  { id: 1, title: "Thông tin cơ bản" },
+  { id: 2, title: "Xem lại buổi học" },
+  { id: 3, title: "Lịch học" },
+  { id: 4, title: "Tài nguyên" },
+  { id: 5, title: "Giáo viên" },
+  { id: 6, title: "Kiểm tra & Gửi duyệt" },
+];
 
 // Dynamic action button config per step
 const STEP_ACTIONS: Record<number, { label: string; description: string }> = {
-  1: { label: 'Tạo lớp', description: 'Tạo lớp mới với thông tin cơ bản' },
-  2: { label: 'Xác nhận buổi học', description: 'Xác nhận các buổi học đã tạo' },
-  3: { label: 'Gán khung giờ', description: 'Gán khung giờ cho các buổi học' },
-  4: { label: 'Gán tài nguyên', description: 'Gán phòng/tài khoản cho các buổi' },
-  5: { label: 'Gán giáo viên', description: 'Gán giáo viên cho lớp học' },
-  6: { label: 'Kiểm tra & Gửi', description: 'Kiểm tra và gửi lớp đi phê duyệt' },
-}
+  1: { label: "Tạo lớp", description: "Tạo lớp mới với thông tin cơ bản" },
+  2: {
+    label: "Xác nhận buổi học",
+    description: "Xác nhận các buổi học đã tạo",
+  },
+  3: { label: "Gán khung giờ", description: "Gán khung giờ cho các buổi học" },
+  4: {
+    label: "Gán tài nguyên",
+    description: "Gán phòng/tài khoản cho các buổi",
+  },
+  5: { label: "Gán giáo viên", description: "Gán giáo viên cho lớp học" },
+  6: {
+    label: "Kiểm tra & Gửi",
+    description: "Kiểm tra và gửi lớp đi phê duyệt",
+  },
+};
 
 interface CreateClassWizardProps {
-  classId?: number
-  mode?: 'create' | 'edit'
+  classId?: number;
+  mode?: "create" | "edit";
 }
 
-export function CreateClassWizard({ classId: propClassId, mode: modeProp }: CreateClassWizardProps = {}) {
-  const [mode] = useState<'create' | 'edit'>(() => modeProp ?? (propClassId ? 'edit' : 'create'))
-  const navigate = useNavigate()
-  const { setIsBlocking } = useNavigationGuard()
-  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
-  const [deleteClass] = useDeleteClassMutation()
+export function CreateClassWizard({
+  classId: propClassId,
+  mode: modeProp,
+}: CreateClassWizardProps = {}) {
+  const [mode] = useState<"create" | "edit">(
+    () => modeProp ?? (propClassId ? "edit" : "create")
+  );
+  const navigate = useNavigate();
+  const { setIsBlocking } = useNavigationGuard();
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [_deleteClass] = useDeleteClassMutation();
 
-  const {
-    currentStep,
-    classId,
-    navigateToStep,
-    markStepComplete,
-  } = useWizardNavigation(propClassId)
+  const { currentStep, classId, navigateToStep, markStepComplete } =
+    useWizardNavigation(propClassId);
 
   // Fetch class data for header display
-  const { data: classData } = useGetClassByIdQuery(classId ?? 0, { skip: !classId })
-  const className = classData?.data?.name || 'Chưa đặt tên'
-  const classCode = classData?.data?.code || ''
+  const { data: classData } = useGetClassByIdQuery(classId ?? 0, {
+    skip: !classId,
+  });
+  const className = classData?.data?.name || "Chưa đặt tên";
+  const classCode = classData?.data?.code || "";
 
   // Enable navigation blocking when component mounts
   useEffect(() => {
-    setIsBlocking(true)
-    return () => setIsBlocking(false)
-  }, [setIsBlocking])
+    setIsBlocking(true);
+    return () => setIsBlocking(false);
+  }, [setIsBlocking]);
 
   // === Navigation Handlers ===
   const handleBack = () => {
     if (currentStep > 1) {
-      navigateToStep((currentStep - 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7)
+      navigateToStep((currentStep - 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7);
     } else {
-      setShowLeaveConfirm(true)
+      setShowLeaveConfirm(true);
     }
-  }
+  };
 
   const handleNext = () => {
     // Validate before proceeding to next step
     if (currentStep === 1) {
       // Step 1: Class must be created first (classId must exist)
       if (!classId) {
-        toast.error('Vui lòng nhấn nút "Tạo lớp" để tạo lớp trước khi chuyển sang bước tiếp theo.')
-        return
+        toast.error(
+          'Vui lòng nhấn nút "Tạo lớp" để tạo lớp trước khi chuyển sang bước tiếp theo.'
+        );
+        return;
       }
     } else if (!classId) {
       // For all other steps, classId is required
-      toast.error('Không tìm thấy lớp học. Vui lòng quay lại bước 1 và tạo lớp.')
-      return
+      toast.error(
+        "Không tìm thấy lớp học. Vui lòng quay lại bước 1 và tạo lớp."
+      );
+      return;
     }
 
     if (currentStep < 6) {
-      markStepComplete(currentStep)
-      navigateToStep((currentStep + 1) as 1 | 2 | 3 | 4 | 5 | 6)
+      markStepComplete(currentStep);
+      navigateToStep((currentStep + 1) as 1 | 2 | 3 | 4 | 5 | 6);
     }
-  }
+  };
 
   const handleConfirmLeave = () => {
-    setShowLeaveConfirm(false)
-    setIsBlocking(false)
-    navigate('/academic/classes')
-  }
+    setShowLeaveConfirm(false);
+    setIsBlocking(false);
+    navigate("/academic/classes");
+  };
 
   // === Step Handlers ===
   const handleStep1Success = (newClassId: number) => {
-    markStepComplete(1)
-    navigateToStep(2, newClassId)
-  }
+    markStepComplete(1);
+    navigateToStep(2, newClassId);
+  };
 
   // === Dynamic Step Action Handler ===
   const handleStepAction = () => {
     switch (currentStep) {
       case 1: {
         // Trigger Step 1 form submission
-        const step1SubmitBtn = document.getElementById('step1-submit-btn')
+        const step1SubmitBtn = document.getElementById("step1-submit-btn");
         if (step1SubmitBtn) {
-          step1SubmitBtn.click()
+          step1SubmitBtn.click();
         }
-        break
+        break;
       }
       case 2:
         // Step 2 is review only - mark complete and continue
-        markStepComplete(2)
-        handleNext()
-        break
+        markStepComplete(2);
+        handleNext();
+        break;
       case 3:
-        toast.info('Gán khung giờ - Chức năng sẽ được triển khai sau')
-        break
+        toast.info("Gán khung giờ - Chức năng sẽ được triển khai sau");
+        break;
       case 4:
-        toast.info('Gán tài nguyên - Chức năng sẽ được triển khai sau')
-        break
+        toast.info("Gán tài nguyên - Chức năng sẽ được triển khai sau");
+        break;
       case 5:
-        toast.info('Gán giáo viên - Chức năng sẽ được triển khai sau')
-        break
+        toast.info("Gán giáo viên - Chức năng sẽ được triển khai sau");
+        break;
       default:
-        break
+        break;
     }
-  }
+  };
 
   // === Delete Handler ===
-  const handleDeleteClass = async () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _handleDeleteClass = async () => {
     if (!classId) {
-      toast.error('Không tìm thấy lớp nháp để xóa.')
-      return
+      toast.error("Không tìm thấy lớp nháp để xóa.");
+      return;
     }
     try {
-      await deleteClass(classId).unwrap()
-      toast.success('Lớp nháp đã được xóa.')
-      setIsBlocking(false)
-      navigate('/academic/classes')
+      await _deleteClass(classId).unwrap();
+      toast.success("Lớp nháp đã được xóa.");
+      setIsBlocking(false);
+      navigate("/academic/classes");
     } catch (error: unknown) {
-      const message = (error as { data?: { message?: string } })?.data?.message || 'Không thể xóa lớp. Vui lòng thử lại.'
-      toast.error(message)
+      const message =
+        (error as { data?: { message?: string } })?.data?.message ||
+        "Không thể xóa lớp. Vui lòng thử lại.";
+      toast.error(message);
     }
-  }
+  };
 
-  const isLoading = false // Placeholder
-  const isSubmitting = false // Placeholder
+  const isLoading = false; // Placeholder
+  const isSubmitting = false; // Placeholder
 
   return (
     <div className="bg-muted/30">
@@ -195,7 +214,7 @@ export function CreateClassWizard({ classId: propClassId, mode: modeProp }: Crea
               <Separator orientation="vertical" className="h-6" />
               <div>
                 <h1 className="text-lg font-semibold">
-                  {mode === 'edit' ? 'Chỉnh sửa Lớp Học' : 'Tạo Lớp Học Mới'}
+                  {mode === "edit" ? "Chỉnh sửa Lớp Học" : "Tạo Lớp Học Mới"}
                 </h1>
                 <p className="text-xs text-muted-foreground">
                   {className}
@@ -219,7 +238,7 @@ export function CreateClassWizard({ classId: propClassId, mode: modeProp }: Crea
                   ) : (
                     <Save className="mr-2 h-4 w-4" />
                   )}
-                  {STEP_ACTIONS[currentStep]?.label || 'Lưu'}
+                  {STEP_ACTIONS[currentStep]?.label || "Lưu"}
                 </Button>
               )}
 
@@ -253,38 +272,39 @@ export function CreateClassWizard({ classId: propClassId, mode: modeProp }: Crea
             {/* Progress Line Active */}
             <div
               className="absolute top-5 left-0 h-0.5 bg-primary transition-all duration-500"
-              style={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 100}%` }}
+              style={{
+                width: `${((currentStep - 1) / (STEPS.length - 1)) * 100}%`,
+              }}
             />
 
             {/* Steps */}
             <div className="relative flex justify-between">
               {STEPS.map((step) => {
-                const isActive = step.id === currentStep
-                const isCompleted = step.id < currentStep
+                const isActive = step.id === currentStep;
+                const isCompleted = step.id < currentStep;
 
                 return (
-                  <div
-                    key={step.id}
-                    className="flex flex-col items-center"
-                  >
+                  <div key={step.id} className="flex flex-col items-center">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center border-2 bg-background transition-all duration-300 ${isActive
-                        ? 'border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-110'
-                        : isCompleted
-                          ? 'border-primary bg-primary text-primary-foreground'
-                          : 'border-muted text-muted-foreground'
-                        }`}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center border-2 bg-background transition-all duration-300 ${
+                        isActive
+                          ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-110"
+                          : isCompleted
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-muted text-muted-foreground"
+                      }`}
                     >
                       <span className="font-semibold">{step.id}</span>
                     </div>
                     <div className="mt-3 text-center">
                       <span
-                        className={`text-sm font-medium block ${isActive
-                          ? 'text-primary'
-                          : isCompleted
-                            ? 'text-foreground'
-                            : 'text-muted-foreground'
-                          }`}
+                        className={`text-sm font-medium block ${
+                          isActive
+                            ? "text-primary"
+                            : isCompleted
+                            ? "text-foreground"
+                            : "text-muted-foreground"
+                        }`}
                       >
                         {step.title}
                       </span>
@@ -295,7 +315,7 @@ export function CreateClassWizard({ classId: propClassId, mode: modeProp }: Crea
                       )}
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           </div>
@@ -311,16 +331,14 @@ export function CreateClassWizard({ classId: propClassId, mode: modeProp }: Crea
               />
             )}
 
-            {currentStep === 2 && (
-              <Step2ReviewSessions classId={classId} />
-            )}
+            {currentStep === 2 && <Step2ReviewSessions classId={classId} />}
 
             {currentStep === 3 && (
               <Step3TimeSlots
                 classId={classId}
                 onContinue={() => {
-                  markStepComplete(3)
-                  navigateToStep(4)
+                  markStepComplete(3);
+                  navigateToStep(4);
                 }}
               />
             )}
@@ -329,8 +347,8 @@ export function CreateClassWizard({ classId: propClassId, mode: modeProp }: Crea
               <Step4Resources
                 classId={classId}
                 onContinue={() => {
-                  markStepComplete(4)
-                  navigateToStep(5)
+                  markStepComplete(4);
+                  navigateToStep(5);
                 }}
               />
             )}
@@ -339,8 +357,8 @@ export function CreateClassWizard({ classId: propClassId, mode: modeProp }: Crea
               <Step5AssignTeacher
                 classId={classId}
                 onContinue={() => {
-                  markStepComplete(5)
-                  navigateToStep(6)
+                  markStepComplete(5);
+                  navigateToStep(6);
                 }}
               />
             )}
@@ -349,9 +367,9 @@ export function CreateClassWizard({ classId: propClassId, mode: modeProp }: Crea
               <Step6Validation
                 classId={classId}
                 onFinish={() => {
-                  markStepComplete(6)
-                  setIsBlocking(false)
-                  navigate('/academic/classes')
+                  markStepComplete(6);
+                  setIsBlocking(false);
+                  navigate("/academic/classes");
                 }}
               />
             )}
@@ -388,17 +406,23 @@ export function CreateClassWizard({ classId: propClassId, mode: modeProp }: Crea
           <AlertDialogHeader>
             <AlertDialogTitle>Thay đổi chưa được lưu</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có thay đổi chưa được lưu. Vui lòng sử dụng nút <strong>&quot;Lưu &amp; Thoát&quot;</strong> để lưu trước khi rời khỏi trang, hoặc nhấn &quot;Hủy thay đổi&quot; để bỏ qua các thay đổi.
+              Bạn có thay đổi chưa được lưu. Vui lòng sử dụng nút{" "}
+              <strong>&quot;Lưu &amp; Thoát&quot;</strong> để lưu trước khi rời
+              khỏi trang, hoặc nhấn &quot;Hủy thay đổi&quot; để bỏ qua các thay
+              đổi.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Quay lại chỉnh sửa</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmLeave} className="bg-destructive hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleConfirmLeave}
+              className="bg-destructive hover:bg-destructive/90"
+            >
               Hủy thay đổi
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div >
-  )
+    </div>
+  );
 }
