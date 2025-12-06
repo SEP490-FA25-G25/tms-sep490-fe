@@ -236,7 +236,7 @@ export function Step5AssignTeacher({ classId, onContinue }: Step5AssignTeacherPr
     isOpen: boolean
     teacherId: number | null
     teacherName: string
-    currentTeacherName: string
+    currentTeacherName: string | undefined
     sessionIds: number[] | null
     dayLabel?: string
     specializationMismatch?: { teacherSpec: string | null; courseSubject: string | null }
@@ -388,7 +388,7 @@ export function Step5AssignTeacher({ classId, onContinue }: Step5AssignTeacherPr
             teacherName,
             currentTeacherName: assignedTeachers.length > 0 
               ? assignedTeachers.map(t => t.fullName).join(', ') 
-              : undefined,
+              : '',
             sessionIds,
             dayLabel,
             specializationMismatch: hasSpecMismatch ? {
@@ -412,7 +412,7 @@ export function Step5AssignTeacher({ classId, onContinue }: Step5AssignTeacherPr
           teacherName,
           currentTeacherName: hasExistingAssignment 
             ? (uniqueNames.join(', ') || 'Giáo viên hiện tại')
-            : undefined,
+            : '',
           sessionIds: null,
           specializationMismatch: hasSpecMismatch ? {
             teacherSpec: specCheck.teacherSpec,

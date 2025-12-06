@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Check, ChevronRight, Save, Loader2, LogOut } from 'lucide-react'
+import { ChevronRight, Save, Loader2, LogOut } from 'lucide-react'
 import { useGetClassByIdQuery } from '@/store/services/classApi'
 import { useWizardNavigation } from './hooks/useWizardNavigation'
 import { useNavigationGuard } from '@/contexts/NavigationGuardContext'
@@ -204,22 +204,6 @@ export function CreateClassWizard({ classId: propClassId, mode: modeProp }: Crea
                 </Button>
               )}
 
-              {/* Submit Button (only on last step) */}
-              {currentStep === 7 && (
-                <Button
-                  size="sm"
-                  onClick={handleSubmitForApproval}
-                  disabled={isLoading || isSubmitting}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Check className="mr-2 h-4 w-4" />
-                  )}
-                  Gửi phê duyệt
-                </Button>
-              )}
             </div>
           </div>
         </div>
