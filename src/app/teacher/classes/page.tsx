@@ -18,8 +18,7 @@ import {
   Calendar,
   MapPin,
   GraduationCap,
-  ArrowUp,
-  ArrowDown,
+  RefreshCw,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
@@ -87,6 +86,7 @@ export default function TeacherClassesPage() {
     data: classesResponse,
     isFetching: isLoadingClasses,
     error: classesError,
+    refetch: refetchClasses,
   } = useGetAttendanceClassesQuery(undefined, {
     refetchOnMountOrArgChange: true,
     refetchOnFocus: true,
@@ -251,6 +251,10 @@ export default function TeacherClassesPage() {
       searchTerm: "",
     });
     setActiveStatusTab("all");
+    setSortField("name");
+    setSortOrder("asc");
+    setCurrentPage(1);
+    refetchClasses();
   };
 
   const handleSearch = (value: string) => {
@@ -339,10 +343,7 @@ export default function TeacherClassesPage() {
                   onValueChange={(value) =>
                     setFilters((prev) => ({
                       ...prev,
-                      modality: value as
-                        | "ALL"
-                        | "ONLINE"
-                        | "OFFLINE",
+                      modality: value as "ALL" | "ONLINE" | "OFFLINE",
                     }))
                   }
                 >
@@ -413,22 +414,12 @@ export default function TeacherClassesPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    setSortOrder(sortOrder === "asc" ? "desc" : "asc")
-                  }
+                  onClick={resetFilters}
                   className="gap-2"
+                  title="Làm mới và đặt lại tất cả bộ lọc"
                 >
-                  {sortOrder === "asc" ? (
-                    <>
-                      <ArrowUp className="h-4 w-4" />
-                      Tăng dần
-                    </>
-                  ) : (
-                    <>
-                      <ArrowDown className="h-4 w-4" />
-                      Giảm dần
-                    </>
-                  )}
+                  <RefreshCw className="h-4 w-4" />
+                  Làm mới
                 </Button>
               </div>
             </div>
@@ -708,11 +699,18 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
     <button
       type="button"
       onClick={handleNavigateDetail}
-      className="w-full rounded-lg border p-3 transition-all duration-200 hover:border-primary/60 hover:bg-primary/5 hover:-translate-y-1 hover:shadow-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+      className="w-full rounded-lg border p-3 transition-all duration-200 hover:border-primary/60 hover:bg-primary/5 hover:-translate-y-1 hover:shadow-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 relative"
     >
       <div>
+        {/* Modality Badge - Top Right Corner */}
+        <div className="absolute top-3 right-3">
+          <Badge variant="outline" className="text-xs">
+            {MODALITY_LABELS[classItem.modality]}
+          </Badge>
+        </div>
+
         {/* Header: Class Name and Status */}
-        <div className="space-y-1.5 mb-2">
+        <div className="space-y-1.5 mb-2 pr-16">
           <div className="flex items-center gap-1.5 flex-wrap">
             <h3 className="text-base font-semibold text-foreground">
               {classItem.name}
@@ -722,9 +720,6 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
               className="text-xs"
             >
               {STATUS_LABELS[classItem.status] || classItem.status}
-            </Badge>
-            <Badge variant="outline" className="text-xs">
-              {MODALITY_LABELS[classItem.modality]}
             </Badge>
           </div>
           {classItem.code && (

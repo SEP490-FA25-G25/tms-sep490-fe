@@ -3,7 +3,6 @@ import { useAuth } from '@/hooks/useAuth'
 import { ROLES } from '@/hooks/useRoleBasedAccess'
 import { AdminDashboardContent } from '@/components/dashboard/role-based/AdminDashboardContent'
 import { ManagerDashboardContent } from '@/components/dashboard/role-based/ManagerDashboardContent'
-import { TeacherDashboardContent } from '@/components/dashboard/role-based/TeacherDashboardContent'
 import { StudentDashboardContent } from '@/components/dashboard/role-based/StudentDashboardContent'
 import { CenterHeadDashboardContent } from '@/components/dashboard/role-based/CenterHeadDashboardContent'
 import { SubjectLeaderDashboardContent } from '@/components/dashboard/role-based/SubjectLeaderDashboardContent'
@@ -54,8 +53,6 @@ export default function DashboardPage() {
         return <CenterHeadDashboardContent />
       case ROLES.SUBJECT_LEADER:
         return <SubjectLeaderDashboardContent />
-      case ROLES.TEACHER:
-        return <TeacherDashboardContent />
       case ROLES.STUDENT:
         return <StudentDashboardContent />
       case ROLES.QA:

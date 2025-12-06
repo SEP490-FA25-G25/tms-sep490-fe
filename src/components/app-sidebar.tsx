@@ -26,7 +26,10 @@ import {
 
 import { NavMain } from "@/components/nav-main";
 import { StudentFeedbackNavBadge } from "@/components/student-feedback/StudentFeedbackBadge";
-import { StudentRequestsBadge, TeacherRequestsBadge } from "@/components/academic/AcademicRequestsBadge";
+import {
+  StudentRequestsBadge,
+  TeacherRequestsBadge,
+} from "@/components/academic/AcademicRequestsBadge";
 import {
   Sidebar,
   SidebarContent,
@@ -228,11 +231,6 @@ const roleBasedNav = {
   [ROLES.TEACHER]: {
     navMain: [
       {
-        title: "Bảng điều khiển",
-        url: "/teacher/dashboard",
-        icon: HomeIcon,
-      },
-      {
         title: "Lịch dạy của tôi",
         url: "/teacher/schedule",
         icon: CalendarIcon,
@@ -376,7 +374,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navigate = useNavigate();
 
   // Kiểm tra xem user có phải là Academic Affair và có nhiều branch không
-  const isAcademicAffair = user?.roles?.includes(ROLES.ACADEMIC_AFFAIR) ?? false;
+  const isAcademicAffair =
+    user?.roles?.includes(ROLES.ACADEMIC_AFFAIR) ?? false;
   const showBranchSelector = isAcademicAffair && branches.length > 1;
 
   const rolePriorities = {
@@ -422,14 +421,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1 data-[slot=sidebar-menu-button]:!justify-start"
             >
               <Link to={brandHref} className="flex items-center gap-2">
-                <img
-                  src="/logo.jpg"
-                  alt="TMS Logo"
-                  className="h-8 w-auto"
-                />
-                <span className="text-base font-semibold">
-                  Hệ thống TMS
-                </span>
+                <img src="/logo.jpg" alt="TMS Logo" className="h-8 w-auto" />
+                <span className="text-base font-semibold">Hệ thống TMS</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
