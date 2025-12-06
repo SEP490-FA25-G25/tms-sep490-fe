@@ -1,34 +1,66 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { getDefaultRouteForUser } from '@/utils/role-routes'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Building2, Check, MapPin } from 'lucide-react'
+import { Building2, Check, MapPin, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export default function BranchOnboardingPage() {
   const navigate = useNavigate()
-  const { user, branches, selectBranch, selectedBranchId, needsBranchOnboarding } = useAuth()
+  const { user, branches, selectBranch, selectedBranchId, needsBranchOnboarding, isLoading } = useAuth()
   const [selected, setSelected] = useState<number | null>(selectedBranchId)
+  const [shouldRender, setShouldRender] = useState(false)
 
-  // Nếu không cần onboarding, redirect về trang mặc định
-  if (!needsBranchOnboarding && user?.roles) {
-    const defaultRoute = getDefaultRouteForUser(user.roles)
-    navigate(defaultRoute, { replace: true })
-    return null
-  }
-
-  // Nếu chỉ có 1 branch hoặc không có branch, tự động chọn và redirect
-  if (branches.length <= 1) {
-    if (branches.length === 1) {
-      selectBranch(branches[0].id)
+  useEffect(() => {
+    // Wait for auth to be ready
+    if (isLoading) {
+      return
     }
-    if (user?.roles) {
+
+    // Not logged in
+    if (!user) {
+      navigate('/login', { replace: true })
+      return
+    }
+
+    // User already selected a branch
+    if (!needsBranchOnboarding) {
       const defaultRoute = getDefaultRouteForUser(user.roles)
       navigate(defaultRoute, { replace: true })
+      return
     }
-    return null
+
+    // Single branch - auto select
+    if (branches.length === 1) {
+      selectBranch(branches[0].id)
+      const defaultRoute = getDefaultRouteForUser(user.roles)
+      navigate(defaultRoute, { replace: true })
+      return
+    }
+
+    // No branches
+    if (branches.length === 0) {
+      const defaultRoute = getDefaultRouteForUser(user.roles)
+      navigate(defaultRoute, { replace: true })
+      return
+    }
+
+    // Multi-branch user needs to select
+    setShouldRender(true)
+  }, [isLoading, user, branches, needsBranchOnboarding, selectBranch, navigate])
+
+  // Show loading while checking auth state
+  if (isLoading || !shouldRender) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Đang tải...</p>
+        </div>
+      </div>
+    )
   }
 
   const handleSelect = (branchId: number) => {
