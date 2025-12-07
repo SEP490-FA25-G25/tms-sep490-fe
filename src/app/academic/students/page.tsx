@@ -154,7 +154,6 @@ export default function StudentListPage() {
   // Lấy selectedBranchId từ user đang đăng nhập
   const auth = useAuth();
   const { selectedBranchId } = auth;
-  const user = auth.user;
 
   // RTK Query - Lấy danh sách học viên
   const {

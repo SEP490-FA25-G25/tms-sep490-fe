@@ -74,7 +74,7 @@ export function OverviewTab({ classData }: OverviewTabProps) {
                 <p className="font-medium">{classData.subject.level.curriculum.name}</p>
               </div>
             )}
-            {classData.subject.level && ((
+            {classData.subject.level && (
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Trình độ</p>
                 <Badge variant="secondary">{classData.subject.level.name}</Badge>

@@ -489,7 +489,7 @@ export default function AcademicClassesPage({
         {/* Search & Filters */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Search - chiếm toàn bộ không gian còn lại bên trái */}
-          <div className="relative flex-1 min-w-[240px]">
+          <div className="relative flex-1 min-w-60">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Tìm mã, tên lớp, khóa học..."
@@ -578,7 +578,7 @@ export default function AcademicClassesPage({
                 )
               }
             >
-              <SelectTrigger className="h-9 w-auto min-w-[160px]">
+              <SelectTrigger className="h-9 w-auto min-w-40">
                 <SelectValue placeholder="Giai đoạn lớp" />
               </SelectTrigger>
               <SelectContent>

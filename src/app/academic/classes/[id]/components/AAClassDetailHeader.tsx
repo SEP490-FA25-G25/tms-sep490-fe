@@ -149,7 +149,7 @@ export function AAClassDetailHeader({
                     <span>{classData.subject.level.curriculum.name}</span>
                   </div>
                 )}
-                {classData.subject.level && ((
+                {classData.subject.level && (
                   <div className="flex items-center gap-2">
                     <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
                       {classData.subject.level.name}

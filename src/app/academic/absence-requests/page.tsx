@@ -156,7 +156,7 @@ export default function AcademicAbsenceRequestsPage() {
       } else {
         await rejectRequest({
           id: detailRequest.id,
-          rejectionReason: decisionRejectReason.trim(),
+          note: decisionRejectReason.trim(),
         }).unwrap()
         toast.success('Đã từ chối yêu cầu vắng mặt')
       }
@@ -253,7 +253,7 @@ export default function AcademicAbsenceRequestsPage() {
           </header>
 
           <div className="mt-4 flex flex-wrap gap-3">
-            <div className="relative flex-1 min-w-[240px]">
+            <div className="relative flex-1 min-w-60">
               <Input
                 placeholder="Tìm theo tên học viên / email"
                 value={searchKeyword}
@@ -328,7 +328,7 @@ export default function AcademicAbsenceRequestsPage() {
             ) : (
               displayedPending.map((request) => {
                 const isUrgent = (request.daysUntilSession ?? Number.MAX_SAFE_INTEGER) <= 2
-                const absenceRate = request.studentAbsenceRate ?? 0
+                const stats = request.attendanceStats
                 return (
                   <div
                     key={request.id}
@@ -359,10 +359,17 @@ export default function AcademicAbsenceRequestsPage() {
                         <Clock4Icon className="h-3.5 w-3.5" />
                         Còn {request.daysUntilSession ?? '-'} ngày
                       </span>
-                      <span className="inline-flex items-center gap-1">
-                        <AlertCircleIcon className="h-3.5 w-3.5" />
-                        Tỉ lệ nghỉ: <span className="font-semibold text-rose-600">{absenceRate}%</span>
-                      </span>
+                      {stats && (
+                        <span className="inline-flex items-center gap-1">
+                          <AlertCircleIcon className="h-3.5 w-3.5" />
+                          Điểm danh: {stats.presentCount}/{stats.totalSessions} buổi
+                          {stats.absentCount > 0 && (
+                            <span className="text-rose-600 font-semibold ml-1">
+                              (vắng {stats.absentCount})
+                            </span>
+                          )}
+                        </span>
+                      )}
                       {isUrgent && (
                         <Badge variant="warning" className="rounded-full">Khẩn cấp</Badge>
                       )}
@@ -600,19 +607,29 @@ export default function AcademicAbsenceRequestsPage() {
                   </div>
                 </div>
                 <div className="mt-4">
-                  <p className="text-xs text-muted-foreground">Tỉ lệ nghỉ</p>
-                  <div className="mt-1 h-2 w-full rounded-full bg-muted/40">
-                    <div
-                      className={cn(
-                        'h-full rounded-full',
-                        (detailRequest.studentAbsenceRate ?? 0) > 20 ? 'bg-rose-500' : 'bg-primary'
-                      )}
-                      style={{ width: `${Math.min(detailRequest.studentAbsenceRate ?? 0, 100)}%` }}
-                    ></div>
-                  </div>
-                  <p className="mt-1 text-sm font-semibold">
-                    {detailRequest.studentAbsenceRate ?? 0}% tổng số buổi bị nghỉ
-                  </p>
+                  <p className="text-xs text-muted-foreground">Thống kê điểm danh</p>
+                  {detailRequest.attendanceStats ? (
+                    <div className="mt-2 grid grid-cols-4 gap-2 text-center text-sm">
+                      <div className="rounded-lg border border-border/60 p-2">
+                        <p className="text-xs text-muted-foreground">Tổng buổi</p>
+                        <p className="text-lg font-semibold">{detailRequest.attendanceStats.totalSessions}</p>
+                      </div>
+                      <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-2">
+                        <p className="text-xs text-muted-foreground">Có mặt</p>
+                        <p className="text-lg font-semibold text-emerald-600">{detailRequest.attendanceStats.presentCount}</p>
+                      </div>
+                      <div className="rounded-lg border border-rose-200 bg-rose-50/50 p-2">
+                        <p className="text-xs text-muted-foreground">Vắng</p>
+                        <p className="text-lg font-semibold text-rose-600">{detailRequest.attendanceStats.absentCount}</p>
+                      </div>
+                      <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-2">
+                        <p className="text-xs text-muted-foreground">Có phép</p>
+                        <p className="text-lg font-semibold text-amber-600">{detailRequest.attendanceStats.excusedCount}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-sm text-muted-foreground">Chưa có dữ liệu</p>
+                  )}
                 </div>
               </div>
 

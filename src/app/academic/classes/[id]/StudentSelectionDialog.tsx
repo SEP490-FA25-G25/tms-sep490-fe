@@ -255,7 +255,7 @@ export function StudentSelectionDialog({
                         <TableCell>
                           <div className="space-y-0.5 text-sm">
                             {student.email && (
-                              <p className="text-xs text-muted-foreground truncate max-w-[160px]" title={student.email}>
+                              <p className="text-xs text-muted-foreground truncate max-w-40" title={student.email}>
                                 {student.email}
                               </p>
                             )}

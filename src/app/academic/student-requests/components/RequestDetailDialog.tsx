@@ -68,13 +68,10 @@ export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDe
   })
 
   const detailRequest = detailResponse?.data
-  const detailAbsenceStats = detailRequest?.additionalInfo?.studentAbsenceStats
   const detailPreviousRequests = detailRequest?.additionalInfo?.previousRequests
   const detailDaysUntilSession =
     detailRequest?.additionalInfo?.daysUntilSession ?? detailRequest?.daysUntilSession ?? null
-  const detailAbsenceRate =
-    detailAbsenceStats?.absenceRate ?? detailRequest?.studentAbsenceRate ?? 0
-  const detailAbsenceRateDisplay = Number(detailAbsenceRate.toFixed(1))
+  const detailAttendanceStats = detailRequest?.attendanceStats
   const detailStatusMeta =
     detailRequest && REQUEST_STATUS_META[detailRequest.status as keyof typeof REQUEST_STATUS_META]
   const detailClassTeacherName =
@@ -254,28 +251,30 @@ export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDe
                     </div>
                   )}
 
-                  {/* Absence Rate */}
+                  {/* Attendance Stats */}
                   <div className="rounded-xl border border-border/60 bg-muted/10 p-4">
-                    <h3 className="text-sm font-semibold text-foreground mb-3">Tỉ lệ vắng mặt</h3>
-                    <div className="h-2 w-full rounded-full bg-muted/40">
-                      <div
-                        className={cn(
-                          'h-full rounded-full transition-all',
-                          detailAbsenceRate >= 20 ? 'bg-rose-500' : 'bg-primary'
-                        )}
-                        style={{ width: `${Math.min(detailAbsenceRate, 100)}%` }}
-                      ></div>
-                    </div>
-                    <p className="mt-2 text-sm font-semibold">
-                      {detailAbsenceRateDisplay}%
-                      {detailAbsenceStats
-                        ? ` (${detailAbsenceStats.totalAbsences}/${detailAbsenceStats.totalSessions} buổi)`
-                        : ''}
-                    </p>
-                    {detailAbsenceStats && (
-                      <p className="text-xs text-muted-foreground">
-                        Có phép: {detailAbsenceStats.excusedAbsences} · Không phép: {detailAbsenceStats.unexcusedAbsences}
-                      </p>
+                    <h3 className="text-sm font-semibold text-foreground mb-3">Thống kê điểm danh</h3>
+                    {detailAttendanceStats ? (
+                      <div className="grid grid-cols-4 gap-2 text-center text-sm">
+                        <div className="rounded-lg border border-border/60 p-2">
+                          <p className="text-xs text-muted-foreground">Tổng buổi</p>
+                          <p className="text-lg font-semibold">{detailAttendanceStats.totalSessions}</p>
+                        </div>
+                        <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/20 p-2">
+                          <p className="text-xs text-muted-foreground">Có mặt</p>
+                          <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">{detailAttendanceStats.presentCount}</p>
+                        </div>
+                        <div className="rounded-lg border border-rose-200 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20 p-2">
+                          <p className="text-xs text-muted-foreground">Vắng</p>
+                          <p className="text-lg font-semibold text-rose-600 dark:text-rose-400">{detailAttendanceStats.absentCount}</p>
+                        </div>
+                        <div className="rounded-lg border border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20 p-2">
+                          <p className="text-xs text-muted-foreground">Có phép</p>
+                          <p className="text-lg font-semibold text-amber-600 dark:text-amber-400">{detailAttendanceStats.excusedCount}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Chưa có dữ liệu điểm danh</p>
                     )}
                   </div>
 
@@ -347,7 +346,7 @@ export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDe
                           value={decisionNote}
                           onChange={(event) => setDecisionNote(event.target.value)}
                           placeholder="Nhập ghi chú khi chấp thuận yêu cầu..."
-                          className="min-h-[80px] resize-none"
+                          className="min-h-20 resize-none"
                         />
                       </div>
 
