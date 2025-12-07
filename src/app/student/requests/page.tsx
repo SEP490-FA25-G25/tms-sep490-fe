@@ -650,18 +650,15 @@ export function RequestDetail({ request }: { request: StudentRequest }) {
         <>
           <Separator />
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Ghi chú</p>
-            <p className="mt-1 text-sm text-muted-foreground">{request.note}</p>
-          </div>
-        </>
-      )}
-
-      {request.rejectionReason && (
-        <>
-          <Separator />
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Lý do từ chối</p>
-            <p className="mt-1 text-sm text-muted-foreground">{request.rejectionReason}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Ghi chú của giáo vụ</p>
+            <p className={cn(
+              "mt-1 text-sm",
+              request.status === 'REJECTED' ? "text-rose-600" : 
+              request.status === 'APPROVED' ? "text-emerald-600" : 
+              "text-muted-foreground"
+            )}>
+              {request.note}
+            </p>
           </div>
         </>
       )}

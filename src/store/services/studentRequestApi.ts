@@ -192,13 +192,12 @@ export interface StudentRequest {
   targetSession: SessionSummary
   makeupSession?: (SessionSummary & { classInfo?: ClassMeta }) | null
   effectiveDate?: string | null // For TRANSFER requests - date when transfer takes effect
-  requestReason: string
-  note: string | null
+  requestReason: string // Student's reason for the request
+  note: string | null // AA's decision note (approve/reject reason)
   submittedAt: string
   submittedBy: UserSummary
   decidedAt: string | null
   decidedBy: UserSummary | null
-  rejectionReason: string | null
 }
 
 export interface StudentPaginatedRequests {
@@ -387,7 +386,7 @@ export interface ApproveRequestPayload {
 
 export interface RejectRequestPayload {
   id: number
-  rejectionReason: string
+  note: string // Rejection reason stored in note field
 }
 
 // Transfer Request Types
@@ -798,10 +797,10 @@ export const studentRequestApi = createApi({
       ],
     }),
     rejectRequest: builder.mutation<ApiResponse<AcademicStudentRequest>, RejectRequestPayload>({
-      query: ({ id, rejectionReason }) => ({
+      query: ({ id, note }) => ({
         url: `/academic-requests/${id}/reject`,
         method: 'PUT',
-        body: { rejectionReason },
+        body: { note },
       }),
       invalidatesTags: (_result, _error, { id }) => [
         'PendingRequests',

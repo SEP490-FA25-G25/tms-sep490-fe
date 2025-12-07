@@ -116,7 +116,7 @@ export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDe
       } else if (confirmAction === 'REJECT') {
         await rejectRequest({
           id: detailRequest.id,
-          rejectionReason: decisionRejectReason.trim(),
+          note: decisionRejectReason.trim(),
         }).unwrap()
         toast.success('Đã từ chối yêu cầu')
       }
@@ -324,12 +324,6 @@ export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDe
                           value={format(parseISO(detailRequest.decidedAt), 'HH:mm dd/MM/yyyy', { locale: vi })} 
                         />
                       </div>
-                      {detailRequest.rejectionReason && (
-                        <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20 p-3">
-                          <p className="text-xs font-semibold text-rose-600 dark:text-rose-400 mb-1">Lý do từ chối</p>
-                          <p className="text-sm text-rose-600 dark:text-rose-400">{detailRequest.rejectionReason}</p>
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>

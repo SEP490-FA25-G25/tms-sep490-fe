@@ -170,24 +170,27 @@ function RequestDetailContent({ request }: { request: StudentRequest }) {
 
       {/* Note from AA (if any) */}
       {request.note && (
-        <div className="rounded-xl border border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20 p-4">
-          <h3 className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-2">
+        <div className={cn(
+          "rounded-xl border p-4",
+          request.status === 'REJECTED' 
+            ? "border-rose-200 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20"
+            : "border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20"
+        )}>
+          <h3 className={cn(
+            "text-sm font-semibold mb-2",
+            request.status === 'REJECTED'
+              ? "text-rose-600 dark:text-rose-400"
+              : "text-blue-700 dark:text-blue-400"
+          )}>
             Ghi chú từ giáo vụ
           </h3>
-          <p className="text-sm text-blue-600 dark:text-blue-300 whitespace-pre-wrap">
+          <p className={cn(
+            "text-sm whitespace-pre-wrap",
+            request.status === 'REJECTED'
+              ? "text-rose-600 dark:text-rose-300"
+              : "text-blue-600 dark:text-blue-300"
+          )}>
             {request.note}
-          </p>
-        </div>
-      )}
-
-      {/* Rejection Reason (if rejected) */}
-      {request.rejectionReason && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20 p-4">
-          <h3 className="text-sm font-semibold text-rose-600 dark:text-rose-400 mb-2">
-            Lý do từ chối
-          </h3>
-          <p className="text-sm text-rose-600 dark:text-rose-400 whitespace-pre-wrap">
-            {request.rejectionReason}
           </p>
         </div>
       )}
