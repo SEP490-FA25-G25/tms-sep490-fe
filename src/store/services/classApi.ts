@@ -1,351 +1,369 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import type { RootState } from '../index'
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import type { RootState } from "../index";
 import type {
   BaseQueryFn,
   FetchArgs,
   FetchBaseQueryError,
   FetchBaseQueryMeta,
-} from '@reduxjs/toolkit/query'
+} from "@reduxjs/toolkit/query";
 
 // Teacher summary DTO for classes
 export interface TeacherSummaryDTO {
-  id: number // User account ID
-  teacherId: number // Teacher entity ID
-  fullName: string
-  email: string
-  phone: string
-  employeeCode: string
-  sessionCount: number // Number of sessions this teacher teaches
+  id: number; // User account ID
+  teacherId: number; // Teacher entity ID
+  fullName: string;
+  email: string;
+  phone: string;
+  employeeCode: string;
+  sessionCount: number; // Number of sessions this teacher teaches
 }
 
 // Types based on backend ClassListItemDTO
 export interface ClassListItemDTO {
-  id: number
-  code: string
-  name: string
-  courseName: string
-  courseCode: string
-  branchName: string
-  branchCode: string
-  modality: 'ONLINE' | 'OFFLINE' | 'HYBRID'
-  startDate: string // LocalDate from backend
-  plannedEndDate: string // LocalDate from backend
-  status: 'DRAFT' | 'SUBMITTED' | 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
-  approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | null
-  maxCapacity: number
-  currentEnrolled: number
-  availableSlots: number
-  utilizationRate: number
-  teachers: TeacherSummaryDTO[] // Changed from teacherName to teachers array
-  scheduleSummary?: string
+  id: number;
+  code: string;
+  name: string;
+  courseName: string;
+  courseCode: string;
+  branchName: string;
+  branchCode: string;
+  modality: "ONLINE" | "OFFLINE" | "HYBRID";
+  startDate: string; // LocalDate from backend
+  plannedEndDate: string; // LocalDate from backend
+  status:
+    | "DRAFT"
+    | "SUBMITTED"
+    | "SCHEDULED"
+    | "ONGOING"
+    | "COMPLETED"
+    | "CANCELLED";
+  approvalStatus?: "PENDING" | "APPROVED" | "REJECTED" | null;
+  maxCapacity: number;
+  currentEnrolled: number;
+  availableSlots: number;
+  utilizationRate: number;
+  teachers: TeacherSummaryDTO[]; // Changed from teacherName to teachers array
+  scheduleSummary?: string;
   // Session progress
-  completedSessions?: number
-  totalSessions?: number
-  canEnrollStudents: boolean
-  enrollmentRestrictionReason?: string
+  completedSessions?: number;
+  totalSessions?: number;
+  canEnrollStudents: boolean;
+  enrollmentRestrictionReason?: string;
 }
 
 export interface Branch {
-  id: number
-  name: string
-  address: string
-  phone: string
-  email: string
-  status: 'ACTIVE' | 'INACTIVE'
+  id: number;
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  status: "ACTIVE" | "INACTIVE";
 }
 
 export interface Subject {
-  id: number
-  name: string
-  code: string
-  description: string
-  status: 'ACTIVE' | 'INACTIVE'
+  id: number;
+  name: string;
+  code: string;
+  description: string;
+  status: "ACTIVE" | "INACTIVE";
 }
 
 export interface Teacher {
-  id: number
-  fullName: string
-  email: string
-  phone: string
-  specializations: string[]
-  status: 'ACTIVE' | 'INACTIVE'
+  id: number;
+  fullName: string;
+  email: string;
+  phone: string;
+  specializations: string[];
+  status: "ACTIVE" | "INACTIVE";
 }
 
 export interface ClassSession {
-  id: number
-  date: string
-  startTime: string
-  endTime: string
-  room: string
-  topic: string
-  status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED'
+  id: number;
+  date: string;
+  startTime: string;
+  endTime: string;
+  room: string;
+  topic: string;
+  status: "SCHEDULED" | "COMPLETED" | "CANCELLED";
 }
 
 export interface Student {
-  id: number
-  fullName: string
-  email: string
-  phone: string
-  status: 'ACTIVE' | 'INACTIVE' | 'GRADUATED' | 'DROPPED'
-  enrollDate: string
+  id: number;
+  fullName: string;
+  email: string;
+  phone: string;
+  status: "ACTIVE" | "INACTIVE" | "GRADUATED" | "DROPPED";
+  enrollDate: string;
 }
 
 export interface Class {
-  id: number
-  name: string
-  code: string
-  subject: Subject
-  teacher: Teacher
-  branch: Branch
-  room: string
-  schedule: string
-  startDate: string
-  endDate: string
-  maxStudents: number
-  currentStudents: number
-  status: 'SCHEDULED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED'
-  sessions: ClassSession[]
-  students: Student[]
-  createdAt: string
-  updatedAt: string
+  id: number;
+  name: string;
+  code: string;
+  subject: Subject;
+  teacher: Teacher;
+  branch: Branch;
+  room: string;
+  schedule: string;
+  startDate: string;
+  endDate: string;
+  maxStudents: number;
+  currentStudents: number;
+  status: "SCHEDULED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+  sessions: ClassSession[];
+  students: Student[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ClassListRequest {
-  page?: number
-  size?: number // Backend uses 'size' instead of 'limit'
-  branchIds?: number[] // Backend expects list of branch IDs
-  courseId?: number // Backend uses courseId instead of subjectId
-  status?: 'DRAFT' | 'SUBMITTED' | 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED' // NEW: Filter by class status
-  approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' // NEW: Filter by approval status
-  modality?: 'ONLINE' | 'OFFLINE'
-  search?: string
-  sort?: string // Sort field
-  sortDir?: 'asc' | 'desc'
+  page?: number;
+  size?: number; // Backend uses 'size' instead of 'limit'
+  branchIds?: number[]; // Backend expects list of branch IDs
+  courseId?: number; // Backend uses courseId instead of subjectId
+  status?:
+    | "DRAFT"
+    | "SUBMITTED"
+    | "SCHEDULED"
+    | "ONGOING"
+    | "COMPLETED"
+    | "CANCELLED"; // NEW: Filter by class status
+  approvalStatus?: "PENDING" | "APPROVED" | "REJECTED"; // NEW: Filter by approval status
+  modality?: "ONLINE" | "OFFLINE";
+  search?: string;
+  sort?: string; // Sort field
+  sortDir?: "asc" | "desc";
 }
 
 export interface PaginationInfo {
-  size: number
-  number: number // Current page number (0-indexed)
-  totalElements: number
-  totalPages: number
+  size: number;
+  number: number; // Current page number (0-indexed)
+  totalElements: number;
+  totalPages: number;
 }
 
 export interface PagedResponse<T> {
-  content: T[]
-  page: PaginationInfo
+  content: T[];
+  page: PaginationInfo;
 }
 
 export interface ClassListResponse {
-  success: boolean
-  message: string
-  data: PagedResponse<ClassListItemDTO>
+  success: boolean;
+  message: string;
+  data: PagedResponse<ClassListItemDTO>;
 }
 
 export interface ClassDetailResponse {
-  success: boolean
-  message: string
-  data: ClassDetailDTO
+  success: boolean;
+  message: string;
+  data: ClassDetailDTO;
 }
 
 // Nested interfaces for ClassDetailDTO
 export interface SubjectDTO {
-  id: number
-  code: string
-  name: string
+  id: number;
+  code: string;
+  name: string;
 }
 
 export interface LevelDTO {
-  id: number
-  code: string
-  name: string
+  id: number;
+  code: string;
+  name: string;
 }
 
 export interface CourseDTO {
-  id: number
-  code: string
-  name: string
-  description: string
-  totalHours: number
-  numberOfSessions: number
-  hoursPerSession: number
-  prerequisites?: string
-  targetAudience?: string
-  teachingMethods?: string
-  subject?: SubjectDTO
-  level?: LevelDTO
+  id: number;
+  code: string;
+  name: string;
+  description: string;
+  totalHours: number;
+  numberOfSessions: number;
+  hoursPerSession: number;
+  prerequisites?: string;
+  targetAudience?: string;
+  teachingMethods?: string;
+  subject?: SubjectDTO;
+  level?: LevelDTO;
 }
 
 export interface BranchDTO {
-  id: number
-  code: string
-  name: string
-  address: string
-  phone: string
-  email: string
+  id: number;
+  code: string;
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
 }
 
 export interface EnrollmentSummary {
-  currentEnrolled: number
-  maxCapacity: number
-  availableSlots: number
-  utilizationRate: number
-  canEnrollStudents: boolean
-  enrollmentRestrictionReason?: string
+  currentEnrolled: number;
+  maxCapacity: number;
+  availableSlots: number;
+  utilizationRate: number;
+  canEnrollStudents: boolean;
+  enrollmentRestrictionReason?: string;
 }
 
 export interface SessionDTO {
-  id: number
-  date: string // LocalDate from backend
-  startTime: string
-  endTime: string
-  teachers: TeacherSummaryDTO[] // List of teachers for this session
-  room: string
-  status: string
-  type: string
+  id: number;
+  date: string; // LocalDate from backend
+  startTime: string;
+  endTime: string;
+  teachers: TeacherSummaryDTO[]; // List of teachers for this session
+  room: string;
+  status: string;
+  type: string;
 }
 
 export interface ClassDetailDTO {
-  id: number
-  code: string
-  name: string
-  course: CourseDTO
-  branch: BranchDTO
-  modality: 'ONLINE' | 'OFFLINE'
-  startDate: string // LocalDate from backend
-  plannedEndDate: string // LocalDate from backend
-  actualEndDate?: string // LocalDate from backend
-  scheduleDays: number[] // Short[] from backend
-  maxCapacity: number
-  status: 'DRAFT' | 'SUBMITTED' | 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
-  approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | null
-  rejectionReason?: string
-  submittedAt?: string | null // LocalDate from backend
-  decidedAt?: string | null // LocalDate from backend
-  decidedByName?: string
+  id: number;
+  code: string;
+  name: string;
+  course: CourseDTO;
+  branch: BranchDTO;
+  modality: "ONLINE" | "OFFLINE";
+  startDate: string; // LocalDate from backend
+  plannedEndDate: string; // LocalDate from backend
+  actualEndDate?: string; // LocalDate from backend
+  scheduleDays: number[]; // Short[] from backend
+  maxCapacity: number;
+  status:
+    | "DRAFT"
+    | "SUBMITTED"
+    | "SCHEDULED"
+    | "ONGOING"
+    | "COMPLETED"
+    | "CANCELLED";
+  approvalStatus?: "PENDING" | "APPROVED" | "REJECTED" | null;
+  rejectionReason?: string;
+  submittedAt?: string | null; // LocalDate from backend
+  decidedAt?: string | null; // LocalDate from backend
+  decidedByName?: string;
   // Audit information
-  createdByName?: string
-  createdAt?: string // OffsetDateTime from backend
-  updatedAt?: string // OffsetDateTime from backend
-  teachers: TeacherSummaryDTO[] // List of all teachers teaching this class
-  scheduleSummary: string
-  enrollmentSummary: EnrollmentSummary
-  upcomingSessions: SessionDTO[]
+  createdByName?: string;
+  createdAt?: string; // OffsetDateTime from backend
+  updatedAt?: string; // OffsetDateTime from backend
+  teachers: TeacherSummaryDTO[]; // List of all teachers teaching this class
+  scheduleSummary: string;
+  enrollmentSummary: EnrollmentSummary;
+  upcomingSessions: SessionDTO[];
 }
 
 export interface ClassStudentDTO {
-  id: number
-  studentId: number
-  studentCode: string
-  fullName: string
-  email: string
-  phone: string
-  avatarUrl?: string
-  branchName: string
-  enrolledAt: string // OffsetDateTime from backend
-  enrolledBy: string
-  enrolledById: number
-  status: string // EnrollmentStatus enum
-  joinSessionId?: number
-  joinSessionDate?: string
-  capacityOverride?: boolean
-  overrideReason?: string
+  id: number;
+  studentId: number;
+  studentCode: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  avatarUrl?: string;
+  branchName: string;
+  enrolledAt: string; // OffsetDateTime from backend
+  enrolledBy: string;
+  enrolledById: number;
+  status: string; // EnrollmentStatus enum
+  joinSessionId?: number;
+  joinSessionDate?: string;
+  capacityOverride?: boolean;
+  overrideReason?: string;
 }
 
 export interface ClassStudentsResponse {
-  success: boolean
-  message: string
-  data: PagedResponse<ClassStudentDTO>
+  success: boolean;
+  message: string;
+  data: PagedResponse<ClassStudentDTO>;
 }
 
 // New nested DTOs for enhanced assessment data
 export interface SkillAssessmentDTO {
-  id: number
-  skill: 'READING' | 'WRITING' | 'SPEAKING' | 'LISTENING' | 'GENERAL'
-  level: LevelInfoDTO
-  score?: string // Format: "35/40" hoặc "650/990"
-  assessmentDate: string
-  assessmentType: string
-  note?: string
-  assessedBy: AssessorDTO
+  id: number;
+  skill: "READING" | "WRITING" | "SPEAKING" | "LISTENING" | "GENERAL";
+  level: LevelInfoDTO;
+  score?: string; // Format: "35/40" hoặc "650/990"
+  assessmentDate: string;
+  assessmentType: string;
+  note?: string;
+  assessedBy: AssessorDTO;
 }
 
 export interface LevelInfoDTO {
-  id: number
-  code: string
-  name: string
-  subject: SubjectInfoDTO
-  expectedDurationHours: number
-  description: string
+  id: number;
+  code: string;
+  name: string;
+  subject: SubjectInfoDTO;
+  expectedDurationHours: number;
+  description: string;
 }
 
 export interface SubjectInfoDTO {
-  id: number
-  name: string
+  id: number;
+  name: string;
 }
 
 export interface AssessorDTO {
-  id: number
-  fullName: string
+  id: number;
+  fullName: string;
 }
 
 export interface ClassMatchInfoDTO {
-  matchPriority: number
-  matchingSkill: string
+  matchPriority: number;
+  matchingSkill: string;
   matchingLevel: {
-    id: number
-    code: string
-    name: string
-  }
-  matchReason: string
+    id: number;
+    code: string;
+    name: string;
+  };
+  matchReason: string;
 }
 
 // Available student for enrollment
 export interface AvailableStudentDTO {
-  id: number
-  studentCode: string
-  fullName: string
-  email: string
-  phone: string
-  avatarUrl?: string
-  branchId: number
-  branchName: string
-  accountStatus: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
-  activeEnrollments: number
-  canEnroll: boolean
-  replacementSkillAssessments: SkillAssessmentDTO[]
-  classMatchInfo: ClassMatchInfoDTO
+  id: number;
+  studentCode: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  avatarUrl?: string;
+  branchId: number;
+  branchName: string;
+  accountStatus: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+  activeEnrollments: number;
+  canEnroll: boolean;
+  replacementSkillAssessments: SkillAssessmentDTO[];
+  classMatchInfo: ClassMatchInfoDTO;
 
   // Legacy fields for backward compatibility
-  lastAssessmentDate?: string
-  lastAssessmentSubject?: string
-  lastAssessmentLevel?: string
-  matchPriority: number // 1=Perfect, 2=Partial, 3=None
-  matchReason: string
+  lastAssessmentDate?: string;
+  lastAssessmentSubject?: string;
+  lastAssessmentLevel?: string;
+  matchPriority: number; // 1=Perfect, 2=Partial, 3=None
+  matchReason: string;
 }
 
 export interface AvailableStudentsResponse {
-  success: boolean
-  message: string
-  data: PagedResponse<AvailableStudentDTO>
+  success: boolean;
+  message: string;
+  data: PagedResponse<AvailableStudentDTO>;
 }
 
 export interface ApiResponse<T = unknown> {
-  success: boolean
-  message: string
-  data: T
+  success: boolean;
+  message: string;
+  data: T;
 }
 
 // Reuse the same base query with token injection and refresh logic from authApi
 const baseQuery = fetchBaseQuery({
-  baseUrl: '/api/v1',
+  baseUrl: "/api/v1",
   prepareHeaders: (headers, { getState }) => {
-    const token = (getState() as RootState).auth.accessToken
+    const token = (getState() as RootState).auth.accessToken;
     if (token) {
-      headers.set('authorization', `Bearer ${token}`)
+      headers.set("authorization", `Bearer ${token}`);
     }
-    return headers
+    return headers;
   },
-})
+});
 
 // Base query with token refresh logic (same as authApi)
 const baseQueryWithReauth: BaseQueryFn<
@@ -355,28 +373,37 @@ const baseQueryWithReauth: BaseQueryFn<
   object,
   FetchBaseQueryMeta
 > = async (args, api, extraOptions) => {
-  let result = await baseQuery(args, api, extraOptions)
+  let result = await baseQuery(args, api, extraOptions);
 
   // Handle 401 Unauthorized - try to refresh token
   if (result.error && result.error.status === 401) {
     const refreshResult = await baseQuery(
       {
-        url: '/auth/refresh',
-        method: 'POST',
+        url: "/auth/refresh",
+        method: "POST",
         body: {
           refreshToken: (api.getState() as RootState).auth.refreshToken,
         },
       },
       api,
       extraOptions
-    )
+    );
 
     if (refreshResult.data) {
       // Update auth state with new tokens
-      const authData = refreshResult.data as { data?: { accessToken: string; refreshToken: string; userId: number; email: string; fullName: string; roles: string[] } }
+      const authData = refreshResult.data as {
+        data?: {
+          accessToken: string;
+          refreshToken: string;
+          userId: number;
+          email: string;
+          fullName: string;
+          roles: string[];
+        };
+      };
       if (authData?.data) {
         api.dispatch({
-          type: 'auth/setCredentials',
+          type: "auth/setCredentials",
           payload: {
             accessToken: authData.data.accessToken,
             refreshToken: authData.data.refreshToken,
@@ -387,50 +414,50 @@ const baseQueryWithReauth: BaseQueryFn<
               roles: authData.data.roles,
             },
           },
-        })
+        });
       }
 
       // Retry the original request with new token
-      result = await baseQuery(args, api, extraOptions)
+      result = await baseQuery(args, api, extraOptions);
     } else {
       // Refresh failed, logout user
-      api.dispatch({ type: 'auth/logout' })
+      api.dispatch({ type: "auth/logout" });
     }
   }
 
-  return result
-}
+  return result;
+};
 
 export interface ApproveClassResponse {
-  success: boolean
-  message: string
-  data: string
+  success: boolean;
+  message: string;
+  data: string;
 }
 
 export interface RejectClassResponse {
-  success: boolean
-  message: string
+  success: boolean;
+  message: string;
   data: {
-    classId: number
-    classCode: string
-    rejectedAt: string
-    rejectedBy: string
-    reason: string
-    status: 'DRAFT'
-    approvalStatus: 'REJECTED'
-  }
+    classId: number;
+    classCode: string;
+    rejectedAt: string;
+    rejectedBy: string;
+    reason: string;
+    status: "DRAFT";
+    approvalStatus: "REJECTED";
+  };
 }
 
 export const classApi = createApi({
-  reducerPath: 'classApi',
+  reducerPath: "classApi",
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Classes', 'ClassStudents', 'AvailableStudents'],
+  tagTypes: ["Classes", "ClassStudents", "AvailableStudents"],
   endpoints: (builder) => ({
     // Get classes with filtering and pagination
     getClasses: builder.query<ClassListResponse, ClassListRequest>({
       query: (params) => ({
-        url: '/classes',
-        method: 'GET',
+        url: "/classes",
+        method: "GET",
         params: {
           page: params.page || 0,
           size: params.size || 20,
@@ -440,80 +467,120 @@ export const classApi = createApi({
           approvalStatus: params.approvalStatus, // NEW: Approval status filter
           modality: params.modality,
           search: params.search,
-          sort: params.sort || 'startDate',
-          sortDir: params.sortDir || 'asc',
+          sort: params.sort || "startDate",
+          sortDir: params.sortDir || "asc",
         },
       }),
-      providesTags: ['Classes'],
+      providesTags: ["Classes"],
     }),
 
     // Get class details by ID
     getClassById: builder.query<ClassDetailResponse, number>({
       query: (id) => ({
         url: `/classes/${id}`,
-        method: 'GET',
+        method: "GET",
       }),
-      providesTags: ['ClassStudents'],
+      providesTags: ["ClassStudents"],
     }),
 
-    // Get students in a class
-    getClassStudents: builder.query<ClassStudentsResponse, { classId: number; search?: string; page?: number; size?: number; sort?: string; sortDir?: string }>({
-      query: ({ classId, search, page = 0, size = 20, sort = 'enrolledAt', sortDir = 'desc' }) => ({
-        url: `/classes/${classId}/students`,
-        method: 'GET',
+    // Get all students in a class (for teacher)
+    getClassStudents: builder.query<
+      ClassStudentsResponse,
+      {
+        classId: number;
+        search?: string;
+        page?: number;
+        size?: number;
+        sort?: string;
+        sortDir?: string;
+      }
+    >({
+      query: ({
+        classId,
+        search,
+        page = 0,
+        size = 20,
+        sort = "enrolledAt",
+        sortDir = "desc",
+      }) => ({
+        url: `/teacher/classes/${classId}/students`,
+        method: "GET",
         params: { search, page, size, sort, sortDir },
       }),
-      providesTags: ['ClassStudents'],
+      providesTags: ["ClassStudents"],
     }),
 
     // Get available students for enrollment in a class
-    getAvailableStudents: builder.query<AvailableStudentsResponse, { classId: number; search?: string; page?: number; size?: number; sort?: string; sortDir?: string }>({
-      query: ({ classId, search, page = 0, size = 20, sort = 'matchPriority', sortDir = 'asc' }) => ({
+    getAvailableStudents: builder.query<
+      AvailableStudentsResponse,
+      {
+        classId: number;
+        search?: string;
+        page?: number;
+        size?: number;
+        sort?: string;
+        sortDir?: string;
+      }
+    >({
+      query: ({
+        classId,
+        search,
+        page = 0,
+        size = 20,
+        sort = "matchPriority",
+        sortDir = "asc",
+      }) => ({
         url: `/classes/${classId}/available-students`,
-        method: 'GET',
+        method: "GET",
         params: { search, page, size, sort, sortDir },
       }),
-      providesTags: ['AvailableStudents'],
+      providesTags: ["AvailableStudents"],
     }),
 
     approveClass: builder.mutation<ApproveClassResponse, number>({
       query: (classId) => ({
         url: `/classes/${classId}/approve`,
-        method: 'POST',
+        method: "POST",
       }),
-      invalidatesTags: ['Classes'],
+      invalidatesTags: ["Classes"],
     }),
 
-    rejectClass: builder.mutation<RejectClassResponse, { classId: number; reason: string }>({
+    rejectClass: builder.mutation<
+      RejectClassResponse,
+      { classId: number; reason: string }
+    >({
       query: ({ classId, reason }) => ({
         url: `/classes/${classId}/reject`,
-        method: 'POST',
+        method: "POST",
         body: { reason },
       }),
-      invalidatesTags: ['Classes'],
+      invalidatesTags: ["Classes"],
     }),
 
-    deleteClass: builder.mutation<{ success: boolean; message: string }, number>({
+    deleteClass: builder.mutation<
+      { success: boolean; message: string },
+      number
+    >({
       query: (classId) => ({
         url: `/classes/${classId}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['Classes'],
+      invalidatesTags: ["Classes"],
     }),
 
     // Get sessions with attendance and homework metrics
     getClassSessionsWithMetrics: builder.query<
-      ApiResponse<import('@/types/qa').QASessionListResponse>,
+      ApiResponse<import("@/types/qa").QASessionListResponse>,
       number
     >({
       query: (classId) => ({
         url: `/classes/${classId}/sessions/metrics`,
-        method: 'GET',
+        method: "GET",
       }),
-      providesTags: ['Classes'],
+      providesTags: ["Classes"],
     }),
   }),
-})
+});
 
 // Export hooks for usage in components
 export const {
@@ -526,4 +593,4 @@ export const {
   useDeleteClassMutation,
   useGetClassSessionsWithMetricsQuery,
   util: { invalidateTags: invalidateClassApiTags },
-} = classApi
+} = classApi;
