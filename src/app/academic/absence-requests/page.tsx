@@ -184,18 +184,18 @@ export default function AcademicAbsenceRequestsPage() {
       accent: 'text-primary',
     },
     {
-      label: 'Cần xử lý sớm',
-      value: pendingData?.summary?.needsUrgentReview ?? 0,
-      accent: 'text-amber-600',
-    },
-    {
       label: 'Đơn xin nghỉ',
       value: pendingData?.summary?.absenceRequests ?? 0,
       accent: 'text-slate-600',
     },
     {
-      label: 'Đơn chuyển/bù',
-      value: (pendingData?.summary?.makeupRequests ?? 0) + (pendingData?.summary?.transferRequests ?? 0),
+      label: 'Đơn học bù',
+      value: pendingData?.summary?.makeupRequests ?? 0,
+      accent: 'text-slate-600',
+    },
+    {
+      label: 'Đơn chuyển lớp',
+      value: pendingData?.summary?.transferRequests ?? 0,
       accent: 'text-slate-600',
     },
   ]

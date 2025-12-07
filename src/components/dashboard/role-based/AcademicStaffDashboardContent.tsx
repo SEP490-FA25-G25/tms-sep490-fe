@@ -95,7 +95,7 @@ export function AcademicStaffDashboardContent() {
         'TRANSFER': 'TRANSFER',
       }
       
-      const daysUntil = request.daysUntilSession ?? request.additionalInfo?.daysUntilSession
+      const daysUntil = request.daysUntilSession
       const isUrgent = daysUntil !== undefined && daysUntil !== null && daysUntil <= 2 && daysUntil >= 0
       
       return {

@@ -228,14 +228,6 @@ export interface AcademicStudentInfo {
   phone: string
 }
 
-export interface StudentAbsenceStats {
-  totalAbsences: number
-  totalSessions: number
-  absenceRate: number
-  excusedAbsences: number
-  unexcusedAbsences: number
-}
-
 export interface AttendanceStats {
   totalSessions: number
   presentCount: number
@@ -243,29 +235,14 @@ export interface AttendanceStats {
   excusedCount: number
 }
 
-export interface PreviousRequestStats {
-  totalRequests: number
-  approvedRequests: number
-  rejectedRequests: number
-  cancelledRequests: number
-}
-
-export interface AcademicRequestAdditionalInfo {
-  daysUntilSession?: number
-  studentAbsenceStats?: StudentAbsenceStats
-  previousRequests?: PreviousRequestStats
-}
-
 export interface AcademicStudentRequest extends StudentRequest {
   student: AcademicStudentInfo
   daysUntilSession?: number
   attendanceStats?: AttendanceStats
-  additionalInfo?: AcademicRequestAdditionalInfo
 }
 
 export interface PendingRequestsSummary {
   totalPending: number
-  needsUrgentReview: number
   absenceRequests: number
   makeupRequests: number
   transferRequests: number

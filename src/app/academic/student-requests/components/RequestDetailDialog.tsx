@@ -68,9 +68,7 @@ export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDe
   })
 
   const detailRequest = detailResponse?.data
-  const detailPreviousRequests = detailRequest?.additionalInfo?.previousRequests
-  const detailDaysUntilSession =
-    detailRequest?.additionalInfo?.daysUntilSession ?? detailRequest?.daysUntilSession ?? null
+  const detailDaysUntilSession = detailRequest?.daysUntilSession ?? null
   const detailAttendanceStats = detailRequest?.attendanceStats
   const detailStatusMeta =
     detailRequest && REQUEST_STATUS_META[detailRequest.status as keyof typeof REQUEST_STATUS_META]
@@ -277,37 +275,6 @@ export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDe
                       <p className="text-sm text-muted-foreground">Chưa có dữ liệu điểm danh</p>
                     )}
                   </div>
-
-                  {/* Previous Requests History */}
-                  {detailPreviousRequests && (
-                    <div className="rounded-xl border border-border/60 bg-muted/10 p-4">
-                      <h3 className="text-sm font-semibold text-foreground mb-3">Lịch sử yêu cầu</h3>
-                      <div className="grid grid-cols-4 gap-2 text-center text-sm">
-                        <div className="rounded-lg border border-border/60 p-2">
-                          <p className="text-xs text-muted-foreground">Tổng số</p>
-                          <p className="text-lg font-semibold">{detailPreviousRequests.totalRequests}</p>
-                        </div>
-                        <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/20 p-2">
-                          <p className="text-xs text-muted-foreground">Đã duyệt</p>
-                          <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
-                            {detailPreviousRequests.approvedRequests}
-                          </p>
-                        </div>
-                        <div className="rounded-lg border border-rose-200 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20 p-2">
-                          <p className="text-xs text-muted-foreground">Từ chối</p>
-                          <p className="text-lg font-semibold text-rose-600 dark:text-rose-400">
-                            {detailPreviousRequests.rejectedRequests}
-                          </p>
-                        </div>
-                        <div className="rounded-lg border border-border/60 p-2">
-                          <p className="text-xs text-muted-foreground">Đã hủy</p>
-                          <p className="text-lg font-semibold text-muted-foreground">
-                            {detailPreviousRequests.cancelledRequests}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Decision Info (for non-PENDING requests) */}
                   {!isPending && detailRequest.decidedAt && (
