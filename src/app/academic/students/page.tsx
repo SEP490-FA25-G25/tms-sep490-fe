@@ -1,17 +1,17 @@
-import { useState, useMemo } from 'react'
-import { useAuth } from '@/hooks/useAuth'
-import { CreateStudentDialog } from '@/components/student'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useState, useMemo } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { CreateStudentDialog } from "@/components/student";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -19,7 +19,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
+} from "@/components/ui/table";
 import {
   Pagination,
   PaginationContent,
@@ -27,7 +27,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from '@/components/ui/pagination'
+} from "@/components/ui/pagination";
 import {
   Search,
   Plus,
@@ -42,32 +42,37 @@ import {
   ArrowUp,
   ArrowDown,
   RotateCcw,
-} from 'lucide-react'
-import { DashboardLayout } from '@/components/DashboardLayout'
-import { StudentStatusBadge } from './components/StudentStatusBadge'
-import { StudentDetailDrawer } from './components/StudentDetailDrawer'
-import { StudentEditDialog } from './components/StudentEditDialog'
-import { StudentImportDialog } from './components/StudentImportDialog'
+} from "lucide-react";
+import { DashboardLayout } from "@/components/DashboardLayout";
+import { StudentStatusBadge } from "./components/StudentStatusBadge";
+import { StudentDetailDrawer } from "./components/StudentDetailDrawer";
+import { StudentEditDialog } from "./components/StudentEditDialog";
+import { StudentImportDialog } from "./components/StudentImportDialog";
 import {
   useGetStudentsQuery,
   useGetStudentDetailQuery,
   useExportStudentsMutation,
   type StudentListItemDTO,
-} from '@/store/services/studentApi'
-import { useDebounce } from '@/hooks/useDebounce'
-import { toast } from 'sonner'
+} from "@/store/services/studentApi";
+import { useDebounce } from "@/hooks/useDebounce";
+import { toast } from "sonner";
 
 // ========== Types ==========
-type EnrollmentFilter = 'all' | 'enrolled' | 'not_enrolled'
-type SortField = 'studentCode' | 'fullName' | 'lastEnrollmentDate' | 'activeEnrollments' | 'status'
-type SortDirection = 'asc' | 'desc'
+type EnrollmentFilter = "all" | "enrolled" | "not_enrolled";
+type SortField =
+  | "studentCode"
+  | "fullName"
+  | "lastEnrollmentDate"
+  | "activeEnrollments"
+  | "status";
+type SortDirection = "asc" | "desc";
 
 type FilterState = {
-  search: string
-  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | undefined
-  gender: 'MALE' | 'FEMALE' | 'OTHER' | undefined
-  enrollmentStatus: EnrollmentFilter
-}
+  search: string;
+  status: "ACTIVE" | "INACTIVE" | "SUSPENDED" | undefined;
+  gender: "MALE" | "FEMALE" | "OTHER" | undefined;
+  enrollmentStatus: EnrollmentFilter;
+};
 
 // ========== Sortable Column Header Component ==========
 function SortableHeader({
@@ -76,16 +81,16 @@ function SortableHeader({
   currentSort,
   currentDir,
   onSort,
-  className = '',
+  className = "",
 }: {
-  label: string
-  field: SortField
-  currentSort: string
-  currentDir: SortDirection
-  onSort: (field: SortField) => void
-  className?: string
+  label: string;
+  field: SortField;
+  currentSort: string;
+  currentDir: SortDirection;
+  onSort: (field: SortField) => void;
+  className?: string;
 }) {
-  const isActive = currentSort === field
+  const isActive = currentSort === field;
 
   return (
     <Button
@@ -95,7 +100,7 @@ function SortableHeader({
     >
       {label}
       {isActive ? (
-        currentDir === 'asc' ? (
+        currentDir === "asc" ? (
           <ArrowUp className="ml-2 h-4 w-4" />
         ) : (
           <ArrowDown className="ml-2 h-4 w-4" />
@@ -104,7 +109,7 @@ function SortableHeader({
         <ArrowUpDown className="ml-2 h-4 w-4" />
       )}
     </Button>
-  )
+  );
 }
 
 // ========== Component ==========
@@ -112,40 +117,44 @@ function SortableHeader({
 export default function StudentListPage() {
   // State cho filters
   const [filters, setFilters] = useState<FilterState>({
-    search: '',
+    search: "",
     status: undefined,
     gender: undefined,
-    enrollmentStatus: 'all',
-  })
+    enrollmentStatus: "all",
+  });
 
   // State cho sort - server-side sorting via column headers
-  const [sortField, setSortField] = useState<SortField>('studentCode')
-  const [sortDir, setSortDir] = useState<SortDirection>('asc')
+  const [sortField, setSortField] = useState<SortField>("studentCode");
+  const [sortDir, setSortDir] = useState<SortDirection>("asc");
 
   // Debounce search để tránh gọi API liên tục khi user đang gõ
-  const debouncedSearch = useDebounce(filters.search, 300)
+  const debouncedSearch = useDebounce(filters.search, 300);
 
   // State cho pagination
   const [pagination, setPagination] = useState({
     page: 0,
     size: 20,
-  })
+  });
 
   // State cho drawer chi tiết
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(
+    null
+  );
 
   // State cho dialog chỉnh sửa
-  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   // State cho dialog tạo mới
-  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   // State cho dialog import
-  const [importDialogOpen, setImportDialogOpen] = useState(false)
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   // Lấy selectedBranchId từ user đang đăng nhập
-  const { user, selectedBranchId } = useAuth()
+  const auth = useAuth();
+  const { selectedBranchId } = auth;
+  const user = auth.user;
 
   // RTK Query - Lấy danh sách học viên
   const {
@@ -162,117 +171,127 @@ export default function StudentListPage() {
     size: pagination.size,
     sort: sortField,
     sortDir: sortDir,
-  })
+  });
 
   // RTK Query - Lấy chi tiết học viên (chỉ fetch khi có selectedStudentId)
   const { data: studentDetailResponse, isLoading: isLoadingDetail } =
     useGetStudentDetailQuery(selectedStudentId!, {
       skip: !selectedStudentId,
-    })
+    });
 
   // RTK Query - Export students
-  const [exportStudents, { isLoading: isExporting }] = useExportStudentsMutation()
+  const [exportStudents, { isLoading: isExporting }] =
+    useExportStudentsMutation();
 
   // Extract data from API response
   // Spring Boot Page response has nested "page" object for pagination info
-  const rawStudents = useMemo(() => studentsResponse?.data?.content || [], [studentsResponse?.data?.content])
-  const pageInfo = studentsResponse?.data?.page
-  const studentDetail = studentDetailResponse?.data
+  const rawStudents = useMemo(
+    () => studentsResponse?.data?.content || [],
+    [studentsResponse?.data?.content]
+  );
+  const pageInfo = studentsResponse?.data?.page;
+  const studentDetail = studentDetailResponse?.data;
 
   // Filter students by enrollment status (frontend filter)
   const students = useMemo(() => {
-    if (filters.enrollmentStatus === 'all') return rawStudents
+    if (filters.enrollmentStatus === "all") return rawStudents;
     return rawStudents.filter((student) => {
-      if (filters.enrollmentStatus === 'enrolled') {
-        return student.activeEnrollments > 0
+      if (filters.enrollmentStatus === "enrolled") {
+        return student.activeEnrollments > 0;
       }
-      return student.activeEnrollments === 0
-    })
-  }, [rawStudents, filters.enrollmentStatus])
+      return student.activeEnrollments === 0;
+    });
+  }, [rawStudents, filters.enrollmentStatus]);
 
   const totalElements =
-    filters.enrollmentStatus === 'all'
+    filters.enrollmentStatus === "all"
       ? pageInfo?.totalElements || 0
-      : students.length
+      : students.length;
   const totalPages =
-    filters.enrollmentStatus === 'all'
+    filters.enrollmentStatus === "all"
       ? pageInfo?.totalPages || 1
-      : Math.ceil(students.length / pagination.size) || 1
+      : Math.ceil(students.length / pagination.size) || 1;
 
   // Statistics computed from current page data
   const statistics = useMemo(() => {
-    const activeCount = rawStudents.filter((s) => s.status === 'ACTIVE').length
-    const enrolledCount = rawStudents.filter((s) => s.activeEnrollments > 0).length
-    const notEnrolledCount = rawStudents.filter((s) => s.activeEnrollments === 0).length
+    const activeCount = rawStudents.filter((s) => s.status === "ACTIVE").length;
+    const enrolledCount = rawStudents.filter(
+      (s) => s.activeEnrollments > 0
+    ).length;
+    const notEnrolledCount = rawStudents.filter(
+      (s) => s.activeEnrollments === 0
+    ).length;
     return {
       total: pageInfo?.totalElements || rawStudents.length,
       active: activeCount,
       enrolled: enrolledCount,
       notEnrolled: notEnrolledCount,
-    }
-  }, [rawStudents, pageInfo?.totalElements])
+    };
+  }, [rawStudents, pageInfo?.totalElements]);
 
   // Check if any filter is active
   const hasActiveFilters = useMemo(() => {
     return (
-      filters.search.trim() !== '' ||
+      filters.search.trim() !== "" ||
       filters.status !== undefined ||
       filters.gender !== undefined ||
-      filters.enrollmentStatus !== 'all'
-    )
-  }, [filters])
+      filters.enrollmentStatus !== "all"
+    );
+  }, [filters]);
 
   // Reset all filters
   const resetFilters = () => {
     setFilters({
-      search: '',
+      search: "",
       status: undefined,
       gender: undefined,
-      enrollmentStatus: 'all',
-    })
-    setPagination((prev) => ({ ...prev, page: 0 }))
-  }
+      enrollmentStatus: "all",
+    });
+    setPagination((prev) => ({ ...prev, page: 0 }));
+  };
 
   // Handlers
   const handleFilterChange = <K extends keyof FilterState>(
     key: K,
     value: FilterState[K]
   ) => {
-    setFilters((prev) => ({ ...prev, [key]: value }))
-    setPagination((prev) => ({ ...prev, page: 0 })) // Reset về trang đầu khi filter
-  }
+    setFilters((prev) => ({ ...prev, [key]: value }));
+    setPagination((prev) => ({ ...prev, page: 0 })); // Reset về trang đầu khi filter
+  };
 
   // Handle column header sort - toggle direction if same field, else set new field
   const handleSort = (field: SortField) => {
     if (field === sortField) {
       // Toggle direction
-      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+      setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
       // New field, default to asc for code/name, desc for dates/counts
-      setSortField(field)
-      setSortDir(field === 'studentCode' || field === 'fullName' ? 'asc' : 'desc')
+      setSortField(field);
+      setSortDir(
+        field === "studentCode" || field === "fullName" ? "asc" : "desc"
+      );
     }
-    setPagination((prev) => ({ ...prev, page: 0 }))
-  }
+    setPagination((prev) => ({ ...prev, page: 0 }));
+  };
 
   const handleRowClick = (student: StudentListItemDTO) => {
-    setSelectedStudentId(student.id)
-    setDrawerOpen(true)
-  }
+    setSelectedStudentId(student.id);
+    setDrawerOpen(true);
+  };
 
   const handleEdit = () => {
-    setEditDialogOpen(true)
-  }
+    setEditDialogOpen(true);
+  };
 
   const handleEditSuccess = () => {
     // Refetch student detail sau khi edit thành công
     // RTK Query sẽ tự động invalidate và refetch
-  }
+  };
 
   const handleEnroll = () => {
     // TODO: Mở modal phân lớp
-    console.log('Enroll student:', selectedStudentId)
-  }
+    console.log("Enroll student:", selectedStudentId);
+  };
 
   const handleExport = async () => {
     try {
@@ -280,27 +299,29 @@ export default function StudentListPage() {
         search: debouncedSearch || undefined,
         status: filters.status,
         gender: filters.gender,
-      }).unwrap()
+      }).unwrap();
 
       // Create download link
-      const url = window.URL.createObjectURL(result)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `danh-sach-hoc-vien-${new Date().toISOString().split('T')[0]}.xlsx`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
+      const url = window.URL.createObjectURL(result);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `danh-sach-hoc-vien-${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
 
-      toast.success('Xuất danh sách học viên thành công!')
+      toast.success("Xuất danh sách học viên thành công!");
     } catch (error) {
-      console.error('Export error:', error)
-      toast.error('Có lỗi xảy ra khi xuất file. Vui lòng thử lại.')
+      console.error("Export error:", error);
+      toast.error("Có lỗi xảy ra khi xuất file. Vui lòng thử lại.");
     }
-  }
+  };
 
   // Loading state
-  const isLoading = isLoadingList && !studentsResponse
+  const isLoading = isLoadingList && !studentsResponse;
 
   return (
     <DashboardLayout
@@ -308,7 +329,11 @@ export default function StudentListPage() {
       description="Quản lý thông tin học viên và phân lớp"
       actions={
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport} disabled={isExporting}>
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={isExporting}
+          >
             {isExporting ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -332,7 +357,9 @@ export default function StudentListPage() {
         <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tổng học viên</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Tổng học viên
+              </CardTitle>
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-50 dark:bg-slate-950/30">
                 <Users className="h-4 w-4 text-slate-600 dark:text-slate-400" />
               </div>
@@ -344,14 +371,18 @@ export default function StudentListPage() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Đang hoạt động</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Đang hoạt động
+              </CardTitle>
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950/30">
                 <UserCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{statistics.active}</div>
-              <p className="text-xs text-muted-foreground">Học viên hoạt động</p>
+              <p className="text-xs text-muted-foreground">
+                Học viên hoạt động
+              </p>
             </CardContent>
           </Card>
           <Card>
@@ -368,7 +399,9 @@ export default function StudentListPage() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Chưa ghi danh</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Chưa ghi danh
+              </CardTitle>
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-50 dark:bg-orange-950/30">
                 <UserX className="h-4 w-4 text-orange-600 dark:text-orange-400" />
               </div>
@@ -388,7 +421,7 @@ export default function StudentListPage() {
             <Input
               placeholder="Tìm mã, tên, SĐT, email..."
               value={filters.search}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
+              onChange={(e) => handleFilterChange("search", e.target.value)}
               className="pl-8 h-9"
             />
           </div>
@@ -396,9 +429,14 @@ export default function StudentListPage() {
           {/* Filters - bên phải */}
           <div className="flex items-center gap-2 ml-auto">
             <Select
-              value={filters.status || 'all'}
+              value={filters.status || "all"}
               onValueChange={(value) =>
-                handleFilterChange('status', value === 'all' ? undefined : value as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED')
+                handleFilterChange(
+                  "status",
+                  value === "all"
+                    ? undefined
+                    : (value as "ACTIVE" | "INACTIVE" | "SUSPENDED")
+                )
               }
             >
               <SelectTrigger className="h-9 w-auto min-w-[140px]">
@@ -413,9 +451,14 @@ export default function StudentListPage() {
             </Select>
 
             <Select
-              value={filters.gender || 'all'}
+              value={filters.gender || "all"}
               onValueChange={(value) =>
-                handleFilterChange('gender', value === 'all' ? undefined : value as 'MALE' | 'FEMALE' | 'OTHER')
+                handleFilterChange(
+                  "gender",
+                  value === "all"
+                    ? undefined
+                    : (value as "MALE" | "FEMALE" | "OTHER")
+                )
               }
             >
               <SelectTrigger className="h-9 w-auto min-w-[120px]">
@@ -432,7 +475,10 @@ export default function StudentListPage() {
             <Select
               value={filters.enrollmentStatus}
               onValueChange={(value) =>
-                handleFilterChange('enrollmentStatus', value as EnrollmentFilter)
+                handleFilterChange(
+                  "enrollmentStatus",
+                  value as EnrollmentFilter
+                )
               }
             >
               <SelectTrigger className="h-9 w-auto min-w-[130px]">
@@ -465,13 +511,25 @@ export default function StudentListPage() {
             <Table className="min-w-[900px]">
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead className="min-w-[100px] font-semibold">Mã HV</TableHead>
+                  <TableHead className="min-w-[100px] font-semibold">
+                    Mã HV
+                  </TableHead>
                   <TableHead className="font-semibold">Họ và tên</TableHead>
-                  <TableHead className="min-w-[120px] font-semibold">Điện thoại</TableHead>
-                  <TableHead className="min-w-[180px] font-semibold">Email</TableHead>
-                  <TableHead className="min-w-[80px] font-semibold text-center">Đang học</TableHead>
-                  <TableHead className="min-w-[120px] font-semibold">GD gần nhất</TableHead>
-                  <TableHead className="min-w-[100px] font-semibold">Trạng thái</TableHead>
+                  <TableHead className="min-w-[120px] font-semibold">
+                    Điện thoại
+                  </TableHead>
+                  <TableHead className="min-w-[180px] font-semibold">
+                    Email
+                  </TableHead>
+                  <TableHead className="min-w-[80px] font-semibold text-center">
+                    Đang học
+                  </TableHead>
+                  <TableHead className="min-w-[120px] font-semibold">
+                    GD gần nhất
+                  </TableHead>
+                  <TableHead className="min-w-[100px] font-semibold">
+                    Trạng thái
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -536,8 +594,12 @@ export default function StudentListPage() {
                       onSort={handleSort}
                     />
                   </TableHead>
-                  <TableHead className="min-w-[120px] font-semibold">Điện thoại</TableHead>
-                  <TableHead className="min-w-[180px] font-semibold">Email</TableHead>
+                  <TableHead className="min-w-[120px] font-semibold">
+                    Điện thoại
+                  </TableHead>
+                  <TableHead className="min-w-[180px] font-semibold">
+                    Email
+                  </TableHead>
                   <TableHead className="min-w-[80px]">
                     <SortableHeader
                       label="Đang học"
@@ -578,19 +640,21 @@ export default function StudentListPage() {
                     <TableCell className="font-mono font-medium">
                       {student.studentCode}
                     </TableCell>
-                    <TableCell className="font-medium">{student.fullName}</TableCell>
+                    <TableCell className="font-medium">
+                      {student.fullName}
+                    </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {student.phone || '—'}
+                      {student.phone || "—"}
                     </TableCell>
                     <TableCell className="text-muted-foreground truncate max-w-[180px]">
-                      {student.email || '—'}
+                      {student.email || "—"}
                     </TableCell>
                     <TableCell className="text-center">
                       <span
                         className={
                           student.activeEnrollments > 0
-                            ? 'text-blue-600 font-medium'
-                            : 'text-muted-foreground'
+                            ? "text-blue-600 font-medium"
+                            : "text-muted-foreground"
                         }
                       >
                         {student.activeEnrollments || 0}
@@ -598,11 +662,13 @@ export default function StudentListPage() {
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {student.lastEnrollmentDate
-                        ? new Date(student.lastEnrollmentDate).toLocaleDateString('vi-VN')
-                        : '—'}
+                        ? new Date(
+                            student.lastEnrollmentDate
+                          ).toLocaleDateString("vi-VN")
+                        : "—"}
                     </TableCell>
                     <TableCell>
-                      <StudentStatusBadge status={student.status || 'ACTIVE'} />
+                      <StudentStatusBadge status={student.status || "ACTIVE"} />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -614,7 +680,8 @@ export default function StudentListPage() {
         {/* Pagination - luôn hiển thị */}
         <div className="flex items-center justify-between pt-4 border-t">
           <div className="text-sm text-muted-foreground">
-            Trang {pagination.page + 1} / {totalPages || 1} · {totalElements} học viên
+            Trang {pagination.page + 1} / {totalPages || 1} · {totalElements}{" "}
+            học viên
           </div>
           <Pagination>
             <PaginationContent>
@@ -622,27 +689,31 @@ export default function StudentListPage() {
                 <PaginationPrevious
                   href="#"
                   onClick={(e) => {
-                    e.preventDefault()
+                    e.preventDefault();
                     setPagination((prev) => ({
                       ...prev,
                       page: Math.max(0, prev.page - 1),
-                    }))
+                    }));
                   }}
                   aria-disabled={pagination.page === 0}
-                  className={pagination.page === 0 ? 'pointer-events-none opacity-50' : ''}
+                  className={
+                    pagination.page === 0
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
                 />
               </PaginationItem>
 
               {Array.from({ length: Math.min(5, totalPages || 1) }, (_, i) => {
                 // Show pages around current page
-                let pageNum = i
+                let pageNum = i;
                 if ((totalPages || 1) > 5) {
                   if (pagination.page < 3) {
-                    pageNum = i
+                    pageNum = i;
                   } else if (pagination.page > (totalPages || 1) - 4) {
-                    pageNum = (totalPages || 1) - 5 + i
+                    pageNum = (totalPages || 1) - 5 + i;
                   } else {
-                    pageNum = pagination.page - 2 + i
+                    pageNum = pagination.page - 2 + i;
                   }
                 }
                 return (
@@ -650,32 +721,32 @@ export default function StudentListPage() {
                     <PaginationLink
                       href="#"
                       onClick={(e) => {
-                        e.preventDefault()
-                        setPagination((prev) => ({ ...prev, page: pageNum }))
+                        e.preventDefault();
+                        setPagination((prev) => ({ ...prev, page: pageNum }));
                       }}
                       isActive={pageNum === pagination.page}
                     >
                       {pageNum + 1}
                     </PaginationLink>
                   </PaginationItem>
-                )
+                );
               })}
 
               <PaginationItem>
                 <PaginationNext
                   href="#"
                   onClick={(e) => {
-                    e.preventDefault()
+                    e.preventDefault();
                     setPagination((prev) => ({
                       ...prev,
                       page: Math.min((totalPages || 1) - 1, prev.page + 1),
-                    }))
+                    }));
                   }}
                   aria-disabled={pagination.page >= (totalPages || 1) - 1}
                   className={
                     pagination.page >= (totalPages || 1) - 1
-                      ? 'pointer-events-none opacity-50'
-                      : ''
+                      ? "pointer-events-none opacity-50"
+                      : ""
                   }
                 />
               </PaginationItem>
@@ -723,5 +794,5 @@ export default function StudentListPage() {
         />
       )}
     </DashboardLayout>
-  )
+  );
 }
