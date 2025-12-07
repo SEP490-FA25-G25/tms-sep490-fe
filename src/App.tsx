@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { NavigationGuardProvider } from "@/contexts/NavigationGuardContext";
@@ -13,9 +13,7 @@ const PageLoader = () => (
     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
   </div>
 );
-const CourseApprovalPage = lazy(
-  () => import("./app/curriculum/approval/page")
-);
+const CourseApprovalPage = lazy(() => import("./app/curriculum/approval/page"));
 
 // Lazy load all pages
 const LandingPage = lazy(() => import("./app/page"));
@@ -24,12 +22,8 @@ const PublicCourseDetailPage = lazy(
 );
 const DashboardPage = lazy(() => import("./app/dashboard/page"));
 const LoginPage = lazy(() => import("./app/login/page"));
-const ForgotPasswordPage = lazy(
-  () => import("./app/forgot-password/page")
-);
-const ResetPasswordPage = lazy(
-  () => import("./app/reset-password/page")
-);
+const ForgotPasswordPage = lazy(() => import("./app/forgot-password/page"));
+const ResetPasswordPage = lazy(() => import("./app/reset-password/page"));
 const SchedulePage = lazy(() => import("./app/schedule/page"));
 const NotificationsPage = lazy(() => import("./app/notifications/page"));
 
@@ -44,6 +38,13 @@ const TeacherClassesPage = lazy(() => import("./app/teacher/classes/page"));
 const TeacherClassDetailPage = lazy(
   () => import("./app/teacher/classes/[classId]/page")
 );
+
+// Redirect component for /teacher/classes/:classId/students
+const TeacherClassStudentsRedirect = () => {
+  const { classId } = useParams<{ classId: string }>();
+  return <Navigate to={`/teacher/classes/${classId}`} replace />;
+};
+
 const TeacherSchedulePage = lazy(() => import("./app/teacher/schedule/page"));
 const TeacherAttendancePage = lazy(
   () => import("./app/teacher/attendance/page")
@@ -202,9 +203,7 @@ const ManagerStudentFeedbackPage = lazy(
 const ManagerPoliciesPage = lazy(() => import("./app/manager/policies/page"));
 
 // Curriculum pages
-const CurriculumPage = lazy(
-  () => import("./app/curriculum/page")
-);
+const CurriculumPage = lazy(() => import("./app/curriculum/page"));
 const CurriculumCourseDetailPage = lazy(
   () => import("./app/curriculum/courses/[id]/page")
 );
@@ -214,15 +213,11 @@ const SubjectDetailPage = lazy(
 const CourseLearningPage = lazy(
   () => import("./app/curriculum/courses/learn/page")
 );
-const EditCoursePage = lazy(
-  () => import("./app/curriculum/courses/edit/page")
-);
+const EditCoursePage = lazy(() => import("./app/curriculum/courses/edit/page"));
 const CreateCoursePage = lazy(
   () => import("./app/curriculum/courses/create/page")
 );
-const LevelDetailPage = lazy(
-  () => import("./app/curriculum/levels/[id]/page")
-);
+const LevelDetailPage = lazy(() => import("./app/curriculum/levels/[id]/page"));
 
 // QA pages
 const QARootPage = lazy(() => import("./app/qa/page"));
@@ -401,6 +396,22 @@ function App() {
                       ]}
                     >
                       <TeacherGradesListPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/teacher/classes/:classId/students"
+                  element={
+                    <ProtectedRoute
+                      requiredRoles={[
+                        "TEACHER",
+                        "ADMIN",
+                        "MANAGER",
+                        "CENTER_HEAD",
+                        "SUBJECT_LEADER",
+                      ]}
+                    >
+                      <TeacherClassStudentsRedirect />
                     </ProtectedRoute>
                   }
                 />
