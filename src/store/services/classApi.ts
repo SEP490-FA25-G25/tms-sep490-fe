@@ -23,8 +23,6 @@ export interface ClassListItemDTO {
   id: number;
   code: string;
   name: string;
-  courseName: string;
-  courseCode: string;
   branchName: string;
   branchCode: string;
   modality: "ONLINE" | "OFFLINE" | "HYBRID";
@@ -49,6 +47,9 @@ export interface ClassListItemDTO {
   totalSessions?: number;
   canEnrollStudents: boolean;
   enrollmentRestrictionReason?: string;
+  // Subject info (previously called "course")
+  subjectName: string;
+  subjectCode: string;
 }
 
 export interface Branch {
@@ -120,7 +121,7 @@ export interface ClassListRequest {
   page?: number;
   size?: number; // Backend uses 'size' instead of 'limit'
   branchIds?: number[]; // Backend expects list of branch IDs
-  courseId?: number; // Backend uses courseId instead of subjectId
+  subjectId?: number; // Filter by subject (previously called courseId)
   status?:
     | "DRAFT"
     | "SUBMITTED"
@@ -160,7 +161,7 @@ export interface ClassDetailResponse {
 }
 
 // Nested interfaces for ClassDetailDTO
-export interface SubjectDTO {
+export interface CurriculumDTO {
   id: number;
   code: string;
   name: string;
@@ -170,9 +171,10 @@ export interface LevelDTO {
   id: number;
   code: string;
   name: string;
+  curriculum?: CurriculumDTO;
 }
 
-export interface CourseDTO {
+export interface SubjectDTO {
   id: number;
   code: string;
   name: string;
@@ -183,7 +185,6 @@ export interface CourseDTO {
   prerequisites?: string;
   targetAudience?: string;
   teachingMethods?: string;
-  subject?: SubjectDTO;
   level?: LevelDTO;
 }
 
@@ -220,7 +221,7 @@ export interface ClassDetailDTO {
   id: number;
   code: string;
   name: string;
-  course: CourseDTO;
+  subject: SubjectDTO;
   branch: BranchDTO;
   modality: "ONLINE" | "OFFLINE";
   startDate: string; // LocalDate from backend
@@ -462,7 +463,7 @@ export const classApi = createApi({
           page: params.page || 0,
           size: params.size || 20,
           branchIds: params.branchIds,
-          courseId: params.courseId,
+          subjectId: params.subjectId,
           status: params.status, // NEW: Class status filter
           approvalStatus: params.approvalStatus, // NEW: Approval status filter
           modality: params.modality,

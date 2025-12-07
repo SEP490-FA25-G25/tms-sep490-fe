@@ -137,7 +137,7 @@ export default function AcademicClassesPage({
   // State cho filters
   const [filters, setFilters] = useState<FilterState>({
     search: "",
-    courseId: undefined,
+    subjectId: undefined,
     unifiedStatus: undefined,
     modality: undefined,
   });
@@ -199,7 +199,7 @@ export default function AcademicClassesPage({
     () => ({
       branchIds: selectedBranchId ? [selectedBranchId] : undefined,
       search: debouncedSearch || undefined,
-      courseId: filters.courseId || undefined,
+      subjectId: filters.subjectId || undefined,
       status: apiStatus,
       approvalStatus: apiApprovalStatus,
       modality: filters.modality || undefined,
@@ -210,7 +210,7 @@ export default function AcademicClassesPage({
     [
       selectedBranchId,
       debouncedSearch,
-      filters.courseId,
+      filters.subjectId,
       apiStatus,
       apiApprovalStatus,
       filters.modality,
@@ -224,7 +224,7 @@ export default function AcademicClassesPage({
   const hasActiveFilters = useMemo(() => {
     return (
       (filters.search?.trim() ?? "") !== "" ||
-      filters.courseId !== undefined ||
+      filters.subjectId !== undefined ||
       filters.unifiedStatus !== undefined ||
       filters.modality !== undefined
     );
@@ -234,7 +234,7 @@ export default function AcademicClassesPage({
   const resetFilters = () => {
     setFilters({
       search: "",
-      courseId: undefined,
+      subjectId: undefined,
       unifiedStatus: undefined,
       modality: undefined,
     });
@@ -501,7 +501,7 @@ export default function AcademicClassesPage({
 
           {/* Filters - bên phải */}
           <div className="ml-auto flex items-center gap-2">
-            {/* Course Combobox Filter */}
+            {/* Subject (Course) Combobox Filter */}
             <Popover open={courseOpen} onOpenChange={setCourseOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -511,47 +511,47 @@ export default function AcademicClassesPage({
                   className="h-9 w-auto min-w-[180px] justify-between"
                 >
                   <BookOpen className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                  {filters.courseId
-                    ? courses.find((course) => course.id === filters.courseId)
-                        ?.name || "Chọn khóa học"
-                    : "Khóa học: Tất cả"}
+                  {filters.subjectId
+                    ? courses.find((course) => course.id === filters.subjectId)
+                        ?.name || "Chọn môn học"
+                    : "Môn học: Tất cả"}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[300px] p-0" align="start">
                 <Command>
-                  <CommandInput placeholder="Tìm khóa học..." />
+                  <CommandInput placeholder="Tìm môn học..." />
                   <CommandList>
-                    <CommandEmpty>Không tìm thấy khóa học.</CommandEmpty>
+                    <CommandEmpty>Không tìm thấy môn học.</CommandEmpty>
                     <CommandGroup>
                       <CommandItem
                         value="all"
                         onSelect={() => {
-                          handleFilterChange("courseId", undefined);
+                          handleFilterChange("subjectId", undefined);
                           setCourseOpen(false);
                         }}
                       >
                         <Check
                           className={cn(
                             "mr-2 h-4 w-4",
-                            !filters.courseId ? "opacity-100" : "opacity-0"
+                            !filters.subjectId ? "opacity-100" : "opacity-0"
                           )}
                         />
-                        Tất cả khóa học
+                        Tất cả môn học
                       </CommandItem>
                       {courses.map((course) => (
                         <CommandItem
                           key={course.id}
                           value={`${course.code} ${course.name}`}
                           onSelect={() => {
-                            handleFilterChange("courseId", course.id);
+                            handleFilterChange("subjectId", course.id);
                             setCourseOpen(false);
                           }}
                         >
                           <Check
                             className={cn(
                               "mr-2 h-4 w-4",
-                              filters.courseId === course.id
+                              filters.subjectId === course.id
                                 ? "opacity-100"
                                 : "opacity-0"
                             )}
@@ -642,7 +642,7 @@ export default function AcademicClassesPage({
                       />
                     </TableHead>
                     <TableHead className="w-[22%] font-semibold">
-                      Khóa học
+                      Môn học
                     </TableHead>
                     <TableHead className="w-[10%] font-semibold">
                       Tiến trình
@@ -711,10 +711,10 @@ export default function AcademicClassesPage({
                         <TableCell>
                           <div>
                             <div className="font-medium">
-                              {classItem.courseName}
+                              {classItem.subjectName}
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              {classItem.courseCode}
+                              {classItem.subjectCode}
                             </div>
                           </div>
                         </TableCell>

@@ -143,16 +143,16 @@ export function AAClassDetailHeader({
                 <p className="text-lg text-muted-foreground">{classData.code}</p>
               </div>
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                {classData.course.subject && (
+                {classData.subject.level?.curriculum && (
                   <div className="flex items-center gap-2">
                     <BookOpen className="h-4 w-4" />
-                    <span>{classData.course.subject.name}</span>
+                    <span>{classData.subject.level.curriculum.name}</span>
                   </div>
                 )}
-                {classData.course.level && (
+                {classData.subject.level && ((
                   <div className="flex items-center gap-2">
                     <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-                      {classData.course.level.name}
+                      {classData.subject.level.name}
                     </span>
                   </div>
                 )}

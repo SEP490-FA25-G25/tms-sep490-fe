@@ -39,7 +39,7 @@ import { useGetMyBranchesQuery } from "@/store/services/branchApi";
 // Validation schema - removed HYBRID
 const createClassSchema = z.object({
   branchId: z.number().positive("Vui lòng chọn chi nhánh"),
-  courseId: z.number().positive("Vui lòng chọn khóa học"),
+  courseId: z.number().positive("Vui lòng chọn môn học"), // API still uses courseId for subjectId
   code: z.string().optional(),
   name: z
     .string()
@@ -97,7 +97,7 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
 
   // Real-time validation error states
   const [branchError, setBranchError] = useState<string | null>(null);
-  const [courseError, setCourseError] = useState<string | null>(null);
+  const [subjectError, setSubjectError] = useState<string | null>(null); // Changed from courseError
   const [startDateError, setStartDateError] = useState<string | null>(null);
   const [capacityError, setCapacityError] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
@@ -223,8 +223,8 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
     return null;
   };
 
-  const validateCourse = (value: number | undefined): string | null => {
-    if (!value || value <= 0) return "Vui lòng chọn khóa học";
+  const validateSubject = (value: number | undefined): string | null => {
+    if (!value || value <= 0) return "Vui lòng chọn môn học";
     return null;
   };
 
@@ -262,10 +262,10 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
     setNameDuplicateError(null);
   };
 
-  const handleCourseChange = (val: string) => {
+  const handleSubjectChange = (val: string) => {
     const value = parseInt(val);
     setValue("courseId", value, { shouldValidate: true });
-    setCourseError(validateCourse(value));
+    setSubjectError(validateSubject(value));
   };
 
   const handleStartDateChange = (date: Date | undefined) => {
@@ -337,15 +337,15 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
   const onSubmit = async (data: FormData) => {
     // Final validation before submit
     const branchErr = validateBranch(data.branchId);
-    const courseErr = validateCourse(data.courseId);
+    const subjectErr = validateSubject(data.courseId);
     const dateErr = validateStartDate(data.startDate);
     const capErr = validateCapacity(data.maxCapacity);
     const nameErr = validateName(data.name);
     const daysErr = validateScheduleDays(data.scheduleDays);
 
-    if (branchErr || courseErr || dateErr || capErr || nameErr || daysErr) {
+    if (branchErr || subjectErr || dateErr || capErr || nameErr || daysErr) {
       setBranchError(branchErr);
-      setCourseError(courseErr);
+      setSubjectError(subjectErr);
       setStartDateError(dateErr);
       setCapacityError(capErr);
       setNameError(nameErr);
@@ -480,22 +480,22 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
           )}
         </div>
 
-        {/* Khóa học */}
+        {/* Subject (Course in API) */}
         <div className="space-y-2">
           <Label htmlFor="courseId">
-            Khóa học <span className="text-destructive">*</span>
+            Môn học <span className="text-destructive">*</span>
           </Label>
           <Select
-            key={`course-${selectedCourseId || "empty"}`}
-            value={selectedCourseId ? selectedCourseId.toString() : ""}
-            onValueChange={handleCourseChange}
+            key={`course-${selectedSubjectId || "empty"}`}
+            value={selectedSubjectId ? selectedSubjectId.toString() : ""}
+            onValueChange={handleSubjectChange}
             disabled={isEditLocked || isCoursesLoading}
           >
             <SelectTrigger
               id="courseId"
-              className={cn(courseError && "border-destructive")}
+              className={cn(subjectError && "border-destructive")}
             >
-              <SelectValue placeholder="Chọn khóa học" />
+              <SelectValue placeholder="Chọn môn học" />
             </SelectTrigger>
             <SelectContent>
               {courses.map((course) => (
@@ -505,9 +505,9 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
               ))}
             </SelectContent>
           </Select>
-          {(courseError || errors.courseId) && (
+          {(subjectError || errors.courseId) && (
             <p className="text-sm text-destructive">
-              {courseError || errors.courseId?.message}
+              {subjectError || errors.courseId?.message}
             </p>
           )}
         </div>

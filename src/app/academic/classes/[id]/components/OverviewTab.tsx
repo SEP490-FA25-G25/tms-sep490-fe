@@ -54,30 +54,30 @@ export function OverviewTab({ classData }: OverviewTabProps) {
       )}
 
 
-      {/* Course Info Section */}
+      {/* Subject Info Section (previously Course) */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">Thông tin khóa học</h3>
+        <h3 className="text-lg font-semibold mb-4">Thông tin môn học</h3>
         <div className="rounded-lg border bg-card p-4 space-y-4">
-          {/* Basic course info */}
+          {/* Basic subject info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Tên khóa học</p>
-              <p className="font-medium">{classData.course.name}</p>
+              <p className="text-sm text-muted-foreground mb-1">Tên môn học</p>
+              <p className="font-medium">{classData.subject.name}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Mã khóa học</p>
-              <p className="font-medium">{classData.course.code}</p>
+              <p className="text-sm text-muted-foreground mb-1">Mã môn học</p>
+              <p className="font-medium">{classData.subject.code}</p>
             </div>
-            {classData.course.subject && (
+            {classData.subject.level?.curriculum && (
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Môn học</p>
-                <p className="font-medium">{classData.course.subject.name}</p>
+                <p className="text-sm text-muted-foreground mb-1">Chương trình</p>
+                <p className="font-medium">{classData.subject.level.curriculum.name}</p>
               </div>
             )}
-            {classData.course.level && (
+            {classData.subject.level && ((
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Trình độ</p>
-                <Badge variant="secondary">{classData.course.level.name}</Badge>
+                <Badge variant="secondary">{classData.subject.level.name}</Badge>
               </div>
             )}
           </div>
@@ -86,47 +86,47 @@ export function OverviewTab({ classData }: OverviewTabProps) {
           <div className="pt-4 border-t grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Tổng số giờ</p>
-              <p className="font-medium">{classData.course.totalHours || '—'} giờ</p>
+              <p className="font-medium">{classData.subject.totalHours || '—'} giờ</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground mb-1">Số buổi học</p>
-              <p className="font-medium">{classData.course.numberOfSessions || '—'} buổi</p>
+              <p className="font-medium">{classData.subject.numberOfSessions || '—'} buổi</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground mb-1">Số giờ/buổi</p>
-              <p className="font-medium">{classData.course.hoursPerSession || '—'} giờ</p>
+              <p className="font-medium">{classData.subject.hoursPerSession || '—'} giờ</p>
             </div>
           </div>
 
           {/* Description */}
-          {classData.course.description && (
+          {classData.subject.description && (
             <div className="pt-4 border-t">
-              <p className="text-sm text-muted-foreground mb-1">Mô tả khóa học</p>
-              <p className="text-sm whitespace-pre-wrap">{classData.course.description}</p>
+              <p className="text-sm text-muted-foreground mb-1">Mô tả môn học</p>
+              <p className="text-sm whitespace-pre-wrap">{classData.subject.description}</p>
             </div>
           )}
 
           {/* Target Audience */}
-          {classData.course.targetAudience && (
+          {classData.subject.targetAudience && (
             <div className="pt-4 border-t">
               <p className="text-sm text-muted-foreground mb-1">Đối tượng học viên</p>
-              <p className="text-sm whitespace-pre-wrap">{classData.course.targetAudience}</p>
+              <p className="text-sm whitespace-pre-wrap">{classData.subject.targetAudience}</p>
             </div>
           )}
 
           {/* Prerequisites */}
-          {classData.course.prerequisites && (
+          {classData.subject.prerequisites && (
             <div className="pt-4 border-t">
               <p className="text-sm text-muted-foreground mb-1">Điều kiện tiên quyết</p>
-              <p className="text-sm whitespace-pre-wrap">{classData.course.prerequisites}</p>
+              <p className="text-sm whitespace-pre-wrap">{classData.subject.prerequisites}</p>
             </div>
           )}
 
           {/* Teaching Methods */}
-          {classData.course.teachingMethods && (
+          {classData.subject.teachingMethods && (
             <div className="pt-4 border-t">
               <p className="text-sm text-muted-foreground mb-1">Phương pháp giảng dạy</p>
-              <p className="text-sm whitespace-pre-wrap">{classData.course.teachingMethods}</p>
+              <p className="text-sm whitespace-pre-wrap">{classData.subject.teachingMethods}</p>
             </div>
           )}
         </div>
