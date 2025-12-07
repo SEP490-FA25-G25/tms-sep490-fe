@@ -149,9 +149,6 @@ const EditClassPage = lazy(
 const AvailabilityCampaignPage = lazy(
   () => import("./app/academic/teacher-availability/page")
 );
-const ConsultationRegistrationsPage = lazy(
-  () => import("./app/academic/consultation-registrations/page")
-);
 
 // Center Head pages
 const CenterHeadDashboardPage = lazy(
@@ -965,14 +962,6 @@ function App() {
                       ]}
                     >
                       <AvailabilityCampaignPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/academic/consultation-registrations"
-                  element={
-                    <ProtectedRoute requiredRoles={["ACADEMIC_AFFAIR"]}>
-                      <ConsultationRegistrationsPage />
                     </ProtectedRoute>
                   }
                 />

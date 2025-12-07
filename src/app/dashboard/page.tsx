@@ -7,7 +7,6 @@ import { StudentDashboardContent } from '@/components/dashboard/role-based/Stude
 import { CenterHeadDashboardContent } from '@/components/dashboard/role-based/CenterHeadDashboardContent'
 import { SubjectLeaderDashboardContent } from '@/components/dashboard/role-based/SubjectLeaderDashboardContent'
 import { QADashboardContent } from '@/components/dashboard/role-based/QADashboardContent'
-import { AcademicStaffDashboardContent } from '@/components/dashboard/role-based/AcademicStaffDashboardContent'
 import { useParams } from 'react-router-dom'
 
 export default function DashboardPage() {
@@ -57,8 +56,6 @@ export default function DashboardPage() {
         return <StudentDashboardContent />
       case ROLES.QA:
         return <QADashboardContent />
-      case ROLES.ACADEMIC_AFFAIR:
-        return <AcademicStaffDashboardContent />
       default:
         return <div className="p-6">Không có nội dung dashboard cho vai trò của bạn.</div>
     }

@@ -29,7 +29,6 @@ import { studentFeedbackApi } from "./services/studentFeedbackApi";
 import { resourceApi } from "./services/resourceApi";
 import { timeSlotApi } from "./services/timeSlotApi";
 import { publicApi } from "./services/publicApi";
-import { consultationApi } from "./services/consultationApi";
 import { teacherApi } from "./services/teacherApi";
 import { managerStaffApi } from "./services/managerStaffApi";
 import { centerHeadApi } from "./services/centerHeadApi";
@@ -85,7 +84,6 @@ export const store = configureStore({
     [resourceApi.reducerPath]: resourceApi.reducer,
     [timeSlotApi.reducerPath]: timeSlotApi.reducer,
     [publicApi.reducerPath]: publicApi.reducer,
-    [consultationApi.reducerPath]: consultationApi.reducer,
     [teacherApi.reducerPath]: teacherApi.reducer,
     [managerStaffApi.reducerPath]: managerStaffApi.reducer,
     [centerHeadApi.reducerPath]: centerHeadApi.reducer,
@@ -132,7 +130,6 @@ export const store = configureStore({
       .concat(resourceApi.middleware)
       .concat(timeSlotApi.middleware)
       .concat(publicApi.middleware)
-      .concat(consultationApi.middleware)
       .concat(teacherApi.middleware)
       .concat(managerStaffApi.middleware)
       .concat(centerHeadApi.middleware),
