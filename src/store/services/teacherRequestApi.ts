@@ -546,8 +546,12 @@ export const teacherRequestApi = createApi({
     >({
       query: ({ requestId, sessionId, teacherId }) => {
         if (requestId) {
+          // For academic staff: use staff endpoint
+          // For teacher: use sessionId endpoint
+          // Check if this is called by academic staff or teacher
+          // Since we can't determine role here, we'll use the staff endpoint for requestId
           return {
-            url: `/teacher-requests/${requestId}/replacement/candidates`,
+            url: `/teacher-requests/staff/${requestId}/replacement/candidates`,
             method: "GET",
           };
         }

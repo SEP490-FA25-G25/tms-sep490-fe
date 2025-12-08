@@ -34,7 +34,7 @@ export default function ClassDetailPage() {
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null)
   const [studentEditDialogOpen, setStudentEditDialogOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(0)
-  const [pageSize, setPageSize] = useState(20)
+  const [pageSize] = useState(20)
   const [searchQuery, setSearchQuery] = useState('')
   const isAcademicAffair = useIsAcademicAffair()
 
