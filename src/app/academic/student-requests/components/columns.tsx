@@ -432,20 +432,20 @@ export const historyColumns: ColumnDef<AcademicStudentRequest>[] = [
     enableSorting: false,
   },
   {
-    accessorKey: 'rejectionReason',
+    accessorKey: 'note',
     header: 'Lý do từ chối',
     cell: ({ row }) => {
-      const rejectionReason = row.original.rejectionReason
+      const note = row.original.note
       const status = row.original.status
 
       // Only show rejection reason for rejected requests
-      if (status !== 'REJECTED' || !rejectionReason) {
+      if (status !== 'REJECTED' || !note) {
         return <span className="text-sm text-muted-foreground">-</span>
       }
 
-      const truncated = rejectionReason.length > 30 ? `${rejectionReason.substring(0, 30)}...` : rejectionReason
+      const truncated = note.length > 30 ? `${note.substring(0, 30)}...` : note
       return (
-        <span className="text-sm text-rose-600 dark:text-rose-400" title={rejectionReason}>
+        <span className="text-sm text-rose-600 dark:text-rose-400" title={note}>
           {truncated}
         </span>
       )

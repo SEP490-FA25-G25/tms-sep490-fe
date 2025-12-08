@@ -166,9 +166,9 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
       }
 
       // Verify course exists in available courses
-      const courseExists = courses.some((c) => c.id === data.course.id);
+      const courseExists = courses.some((c) => c.id === data.subject.id);
       if (courseExists) {
-        setValue("courseId", data.course.id);
+        setValue("courseId", data.subject.id);
       }
 
       setValue("code", data.code);
@@ -486,8 +486,8 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
             Môn học <span className="text-destructive">*</span>
           </Label>
           <Select
-            key={`course-${selectedSubjectId || "empty"}`}
-            value={selectedSubjectId ? selectedSubjectId.toString() : ""}
+            key={`course-${selectedCourseId || "empty"}`}
+            value={selectedCourseId ? selectedCourseId.toString() : ""}
             onValueChange={handleSubjectChange}
             disabled={isEditLocked || isCoursesLoading}
           >

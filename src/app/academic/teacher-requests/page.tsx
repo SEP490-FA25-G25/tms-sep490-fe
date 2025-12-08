@@ -9,6 +9,7 @@ import {
   UserRoundCheck,
   ArrowUpDown,
   Plus,
+  RotateCcwIcon,
 } from "lucide-react";
 import { skipToken } from "@reduxjs/toolkit/query";
 
@@ -335,7 +336,7 @@ const getTimeDisplayMeta = (
 
 export default function AcademicTeacherRequestsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  
+
   // Teacher request filter states
   const [teacherTypeFilter, setTeacherTypeFilter] = useState<
     "ALL" | TeacherRequestType
@@ -650,6 +651,26 @@ export default function AcademicTeacherRequestsPage() {
     });
   };
 
+  const handleClearFilters = () => {
+    setTeacherTypeFilter("ALL");
+    setTeacherSearchKeyword("");
+    setPendingPage(0);
+  };
+
+  const handleClearHistoryFilters = () => {
+    setTeacherTypeFilter("ALL");
+    setTeacherStatusFilter("ALL");
+    setTeacherSearchKeyword("");
+    setHistoryPage(0);
+  };
+
+  const hasActiveFilters =
+    teacherTypeFilter !== "ALL" || teacherSearchKeyword !== "";
+  const hasActiveHistoryFilters =
+    teacherTypeFilter !== "ALL" ||
+    teacherStatusFilter !== "ALL" ||
+    teacherSearchKeyword !== "";
+
   const renderSortIcon = () => (
     <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
   );
@@ -761,9 +782,7 @@ export default function AcademicTeacherRequestsPage() {
       title="Quản lý yêu cầu giáo viên"
       description="Xem xét và phê duyệt các yêu cầu xin đổi lịch, dạy thay, đổi phương thức dạy của giáo viên"
       actions={
-        <Button
-          onClick={() => setIsCreateDialogOpen(true)}
-        >
+        <Button onClick={() => setIsCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Tạo yêu cầu cho giáo viên
         </Button>
@@ -843,6 +862,7 @@ export default function AcademicTeacherRequestsPage() {
         >
           {/* Tabs + filters in one row */}
           <div className="flex flex-wrap items-center gap-2">
+            {/* Tabs first */}
             <TabsList className="h-9">
               <TabsTrigger value="pending" className="h-7">
                 Chờ duyệt
@@ -852,74 +872,143 @@ export default function AcademicTeacherRequestsPage() {
               </TabsTrigger>
             </TabsList>
 
-            {/* Search - phía giữa, chiếm phần còn lại */}
-            <div className="relative flex-1 min-w-[240px]">
-              <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Tìm giáo viên, lớp, khóa học..."
-                value={teacherSearchKeyword}
-                onChange={(event) =>
-                  setTeacherSearchKeyword(event.target.value)
-                }
-                className="pl-8 h-9"
-              />
-            </div>
+            {/* Search - bên trái */}
+            {activeTab === "pending" ? (
+              <>
+                <div className="relative w-64">
+                  <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Tìm giáo viên, lớp, khóa học..."
+                    value={teacherSearchKeyword}
+                    onChange={(event) => {
+                      setTeacherSearchKeyword(event.target.value);
+                      setPendingPage(0);
+                    }}
+                    className="pl-8 h-9"
+                  />
+                </div>
 
-            {/* Filters - bên phải */}
-            <div className="flex items-center gap-2">
-              <Select
-                value={teacherTypeFilter}
-                onValueChange={(value) =>
-                  setTeacherTypeFilter(value as "ALL" | TeacherRequestType)
-                }
-              >
-                <SelectTrigger className="h-9 w-auto min-w-[150px]">
-                  <SelectValue placeholder="Tất cả loại" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Tất cả loại</SelectItem>
-                  <SelectItem value="MODALITY_CHANGE">
-                    {TEACHER_REQUEST_TYPE_LABELS.MODALITY_CHANGE}
-                  </SelectItem>
-                  <SelectItem value="RESCHEDULE">
-                    {TEACHER_REQUEST_TYPE_LABELS.RESCHEDULE}
-                  </SelectItem>
-                  <SelectItem value="REPLACEMENT">
-                    {TEACHER_REQUEST_TYPE_LABELS.REPLACEMENT}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                {/* Filters - bên phải */}
+                <div className="flex items-center gap-2 ml-auto">
+                  <Select
+                    value={teacherTypeFilter}
+                    onValueChange={(value) => {
+                      setTeacherTypeFilter(value as "ALL" | TeacherRequestType);
+                      setPendingPage(0);
+                    }}
+                  >
+                    <SelectTrigger className="h-9 w-auto min-w-[150px]">
+                      <SelectValue placeholder="Loại yêu cầu" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">Tất cả yêu cầu</SelectItem>
+                      <SelectItem value="MODALITY_CHANGE">
+                        {TEACHER_REQUEST_TYPE_LABELS.MODALITY_CHANGE}
+                      </SelectItem>
+                      <SelectItem value="RESCHEDULE">
+                        {TEACHER_REQUEST_TYPE_LABELS.RESCHEDULE}
+                      </SelectItem>
+                      <SelectItem value="REPLACEMENT">
+                        {TEACHER_REQUEST_TYPE_LABELS.REPLACEMENT}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
 
-              {activeTab === "history" && (
-                <Select
-                  value={teacherStatusFilter}
-                  onValueChange={(value) =>
-                    setTeacherStatusFilter(
-                      value as "ALL" | TeacherRequestStatus
-                    )
-                  }
-                >
-                  <SelectTrigger className="h-9 w-auto min-w-[150px]">
-                    <SelectValue placeholder="Tất cả trạng thái" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">Tất cả trạng thái</SelectItem>
-                    <SelectItem value="PENDING">
-                      {TEACHER_REQUEST_STATUS_META.PENDING.label}
-                    </SelectItem>
-                    <SelectItem value="WAITING_CONFIRM">
-                      {TEACHER_REQUEST_STATUS_META.WAITING_CONFIRM.label}
-                    </SelectItem>
-                    <SelectItem value="APPROVED">
-                      {TEACHER_REQUEST_STATUS_META.APPROVED.label}
-                    </SelectItem>
-                    <SelectItem value="REJECTED">
-                      {TEACHER_REQUEST_STATUS_META.REJECTED.label}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    onClick={handleClearFilters}
+                    disabled={!hasActiveFilters}
+                    title="Xóa bộ lọc"
+                  >
+                    <RotateCcwIcon className="h-4 w-4" />
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="relative w-64">
+                  <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Tìm giáo viên, lớp, khóa học..."
+                    value={teacherSearchKeyword}
+                    onChange={(event) => {
+                      setTeacherSearchKeyword(event.target.value);
+                      setHistoryPage(0);
+                    }}
+                    className="pl-8 h-9"
+                  />
+                </div>
+
+                {/* Filters - bên phải */}
+                <div className="flex items-center gap-2 ml-auto">
+                  <Select
+                    value={teacherTypeFilter}
+                    onValueChange={(value) => {
+                      setTeacherTypeFilter(value as "ALL" | TeacherRequestType);
+                      setHistoryPage(0);
+                    }}
+                  >
+                    <SelectTrigger className="h-9 w-auto min-w-[150px]">
+                      <SelectValue placeholder="Loại yêu cầu" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">Tất cả loại</SelectItem>
+                      <SelectItem value="MODALITY_CHANGE">
+                        {TEACHER_REQUEST_TYPE_LABELS.MODALITY_CHANGE}
+                      </SelectItem>
+                      <SelectItem value="RESCHEDULE">
+                        {TEACHER_REQUEST_TYPE_LABELS.RESCHEDULE}
+                      </SelectItem>
+                      <SelectItem value="REPLACEMENT">
+                        {TEACHER_REQUEST_TYPE_LABELS.REPLACEMENT}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={teacherStatusFilter}
+                    onValueChange={(value) => {
+                      setTeacherStatusFilter(
+                        value as "ALL" | TeacherRequestStatus
+                      );
+                      setHistoryPage(0);
+                    }}
+                  >
+                    <SelectTrigger className="h-9 w-auto min-w-[150px]">
+                      <SelectValue placeholder="Trạng thái" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">Tất cả trạng thái</SelectItem>
+                      <SelectItem value="PENDING">
+                        {TEACHER_REQUEST_STATUS_META.PENDING.label}
+                      </SelectItem>
+                      <SelectItem value="WAITING_CONFIRM">
+                        {TEACHER_REQUEST_STATUS_META.WAITING_CONFIRM.label}
+                      </SelectItem>
+                      <SelectItem value="APPROVED">
+                        {TEACHER_REQUEST_STATUS_META.APPROVED.label}
+                      </SelectItem>
+                      <SelectItem value="REJECTED">
+                        {TEACHER_REQUEST_STATUS_META.REJECTED.label}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    onClick={handleClearHistoryFilters}
+                    disabled={!hasActiveHistoryFilters}
+                    title="Xóa bộ lọc"
+                  >
+                    <RotateCcwIcon className="h-4 w-4" />
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Teacher Pending Requests Tab */}

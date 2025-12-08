@@ -42,7 +42,7 @@ export function Step3TimeSlots({ classId, onContinue }: Step3TimeSlotsProps) {
   const { data: classDetail } = useGetClassByIdQuery(classId ?? 0, { skip: !classId })
   const { data: sessionsData, isLoading: isSessionsLoading, refetch: refetchSessions } = useGetClassSessionsQuery(classId ?? 0, { skip: !classId })
   const branchId = classDetail?.data?.branch?.id
-  const hoursPerSession = classDetail?.data?.course?.hoursPerSession
+  const hoursPerSession = classDetail?.data?.subject?.hoursPerSession
   
   const { data: timeSlotResponse, isLoading: isTimeSlotLoading } = useGetTimeSlotsQuery(
     branchId ? { branchId } : { branchId: 0 },
