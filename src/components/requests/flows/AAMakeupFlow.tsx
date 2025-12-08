@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { skipToken } from '@reduxjs/toolkit/query'
-import { AlertTriangle, Check, Loader2, Search, UserX } from 'lucide-react'
+import { AlertTriangle, Check, Loader2, Search, UserX, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -67,9 +67,9 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
 
   const studentQueryResult = useSearchStudentsQuery(
     shouldSearchStudents
-      ? { search: trimmedSearch, size: 5, page: 0 }
+      ? { search: trimmedSearch, size: 10, page: 0 }
       : skipToken,
-    { skip: !shouldSearchStudents }
+    { skip: !shouldSearchStudents, refetchOnMountOrArgChange: true }
   )
   const studentOptions = studentQueryResult.data?.data?.content ?? []
   const isSearchingStudents = shouldSearchStudents && studentQueryResult.isFetching
@@ -139,7 +139,13 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
 
   const handleSelectStudent = (student: StudentSearchResult) => {
     setSelectedStudent(student)
-    setStudentSearch(student.fullName)
+    setStudentSearch('') // Clear search để hiển thị selected card
+    handleReset()
+  }
+
+  const handleClearSelection = () => {
+    setSelectedStudent(null)
+    setStudentSearch('')
     handleReset()
   }
 
@@ -248,33 +254,71 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
       {currentStep === 1 && (
         <Section>
           <div className="min-h-[280px] space-y-3">
-            <Input
-              placeholder="Nhập tên hoặc mã học viên (tối thiểu 2 ký tự)"
-              value={studentSearch}
-              onChange={(event) => setStudentSearch(event.target.value)}
-            />
-
-            {studentSearch.trim().length > 0 && studentOptions.length > 0 && !isSearchingStudents && (
-              <div className="space-y-2">
-                {studentOptions.map((student) => (
-                  <button
-                    key={student.id}
-                    type="button"
-                    onClick={() => handleSelectStudent(student)}
-                    className="w-full rounded-lg border px-3 py-2.5 text-left transition hover:border-primary/50 hover:bg-muted/30"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium text-sm truncate">{student.fullName}</span>
-                      <span className="text-xs text-muted-foreground shrink-0">{student.studentCode}</span>
+            {selectedStudent ? (
+              /* Hiển thị selected student card với button Chọn lại */
+              <div className="rounded-lg bg-primary/5 border-2 border-primary p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
+                      <span className="font-semibold text-base">{selectedStudent.fullName}</span>
+                      <span className="text-sm text-muted-foreground">{selectedStudent.studentCode}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 truncate">{student.email}</p>
-                  </button>
-                ))}
+                    <p className="text-sm text-muted-foreground pl-7">
+                      {selectedStudent.email}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1 pl-7">
+                      {selectedStudent.branchName} · {selectedStudent.activeEnrollments} lớp đang học
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleClearSelection}
+                  >
+                    Chọn lại
+                  </Button>
+                </div>
               </div>
-            )}
-
-            {!selectedStudent && (
+            ) : (
+              /* Search input và dropdown */
               <>
+                <Input
+                  placeholder="Nhập tên hoặc mã học viên (tối thiểu 2 ký tự)"
+                  value={studentSearch}
+                  onChange={(event) => setStudentSearch(event.target.value)}
+                  autoFocus
+                />
+
+                {/* Dropdown search results */}
+                {shouldSearchStudents && !isSearchingStudents && studentOptions.length > 0 && (
+                  <div className="rounded-lg border bg-card shadow-sm">
+                    <div className="px-3 py-2 border-b bg-muted/30">
+                      <p className="text-xs text-muted-foreground">
+                        Tìm thấy {studentOptions.length} học viên
+                      </p>
+                    </div>
+                    <div className="divide-y">
+                      {studentOptions.map((student) => (
+                        <button
+                          key={student.id}
+                          type="button"
+                          onClick={() => handleSelectStudent(student)}
+                          className="w-full px-3 py-2.5 text-left transition hover:bg-muted/50"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-sm truncate">{student.fullName}</span>
+                            <span className="text-xs text-muted-foreground shrink-0">{student.studentCode}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5 truncate">{student.email}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Loading state */}
                 {isSearchingStudents && (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <Loader2 className="h-8 w-8 text-muted-foreground animate-spin mb-3" />
@@ -282,18 +326,20 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
                   </div>
                 )}
 
+                {/* Initial state - chưa nhập gì */}
                 {!isSearchingStudents && studentSearch.trim().length === 0 && (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
                       <Search className="h-6 w-6 text-muted-foreground" />
                     </div>
                     <p className="text-sm font-medium text-foreground">Tìm kiếm học viên</p>
-                    <p className="text-xs text-muted-foreground mt-1 max-w-[240px]">
+                    <p className="text-xs text-muted-foreground mt-1 max-w-60">
                       Nhập tên hoặc mã học viên vào ô tìm kiếm phía trên để bắt đầu
                     </p>
                   </div>
                 )}
 
+                {/* Nhập chưa đủ 2 ký tự */}
                 {!isSearchingStudents && studentSearch.trim().length > 0 && studentSearch.trim().length < 2 && (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
@@ -303,29 +349,19 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
                   </div>
                 )}
 
-                {!isSearchingStudents && studentSearch.trim().length >= 2 && studentOptions.length === 0 && (
+                {/* Không tìm thấy kết quả */}
+                {shouldSearchStudents && !isSearchingStudents && studentOptions.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
                       <UserX className="h-6 w-6 text-muted-foreground" />
                     </div>
                     <p className="text-sm font-medium text-foreground">Không tìm thấy học viên</p>
-                    <p className="text-xs text-muted-foreground mt-1 max-w-[240px]">
+                    <p className="text-xs text-muted-foreground mt-1 max-w-60">
                       Thử tìm kiếm với tên hoặc mã học viên khác
                     </p>
                   </div>
                 )}
               </>
-            )}
-
-            {selectedStudent && (
-              <div className="border-t pt-3 mt-3">
-                <div className="rounded-lg bg-muted/30 p-3 border">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm">{selectedStudent.fullName}</span>
-                    <span className="text-xs text-muted-foreground">{selectedStudent.studentCode}</span>
-                  </div>
-                </div>
-              </div>
             )}
           </div>
         </Section>
@@ -381,7 +417,7 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
 
       {currentStep === 3 && selectedStudent && selectedMissedSession && (
         <Section>
-          <div className="min-h-[320px] space-y-4">
+          <div className="min-h-80 space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">{makeupOptions.length} buổi học bù phù hợp</p>
               {isLoadingStudentOptions && (
