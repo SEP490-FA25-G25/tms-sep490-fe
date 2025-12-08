@@ -1693,7 +1693,6 @@ export default function AcademicTeacherRequestsPage() {
                             "Chưa có tên";
                           const teacherLevel = candidate.level || "";
                           const teacherSkills = getCandidateSkills(candidate);
-                          const matchScore = candidate.matchScore;
 
                           return (
                             <SelectItem
@@ -1710,11 +1709,6 @@ export default function AcademicTeacherRequestsPage() {
                                       </span>
                                     )}
                                   </span>
-                                  {matchScore !== undefined && (
-                                    <span className="text-xs text-muted-foreground">
-                                      {matchScore.toFixed(0)}%
-                                    </span>
-                                  )}
                                 </div>
                                 {teacherSkills && (
                                   <span className="text-xs text-muted-foreground">

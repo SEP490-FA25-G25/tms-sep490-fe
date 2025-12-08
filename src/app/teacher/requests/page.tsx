@@ -5,28 +5,18 @@ import {
   useMemo,
   useState,
 } from "react";
-import { format, parseISO, startOfToday, differenceInDays } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
   useGetMyRequestsQuery,
   useGetRequestByIdQuery,
-  useGetMySessionsQuery,
-  useGetModalityResourcesQuery,
-  useGetRescheduleSlotsQuery,
-  useGetRescheduleResourcesQuery,
-  useGetReplacementCandidatesQuery,
-  useCreateRequestMutation,
   useConfirmReplacementRequestMutation,
   useRejectReplacementRequestMutation,
   useGetTeacherRequestConfigQuery,
   type RequestType,
   type RequestStatus,
-  type ResourceDTO,
   type TeacherRequestDTO,
-  type RescheduleSlotDTO,
-  type ReplacementCandidateDTO,
 } from "@/store/services/teacherRequestApi";
-import { useGetAttendanceClassesQuery } from "@/store/services/attendanceApi";
 import { TeacherRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/hooks/useAuth";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
@@ -37,12 +27,20 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Calendar } from "@/components/ui/calendar";
+  FullScreenModal,
+  FullScreenModalContent,
+  FullScreenModalHeader,
+  FullScreenModalTitle,
+  FullScreenModalBody,
+} from "@/components/ui/full-screen-modal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import UnifiedTeacherRequestFlow from "@/components/teacher-requests/UnifiedTeacherRequestFlow";
+import { RequestDetailDialog } from "./components/RequestDetailDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -53,20 +51,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { toast } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateTime } from "@/utils/dateFormat";
 import {
   Plus,
-  ArrowRight,
   NotebookPen,
   RefreshCcw,
-  ChevronsUpDown,
   Search,
   X,
   Clock3,
@@ -74,6 +65,10 @@ import {
   XCircle,
   UserCheck,
   MoreVertical,
+  ChevronDownIcon,
+  ArrowLeftRight,
+  CalendarClock,
+  UserRoundCheck,
 } from "lucide-react";
 import {
   Table,
@@ -91,7 +86,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { skipToken } from "@reduxjs/toolkit/query";
 
 const REQUEST_TYPE_LABELS: Record<RequestType, string> = {
   MODALITY_CHANGE: "Thay đổi phương thức",
@@ -156,35 +150,6 @@ const TYPE_FILTERS: Array<{ label: string; value: "ALL" | RequestType }> = [
 ];
 
 const PAGE_SIZE = 8;
-
-const formatDateShort = (dateString: string) => {
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  return `${day}/${month}`;
-};
-
-const requestTypes: Array<{
-  value: RequestType;
-  label: string;
-  description: string;
-}> = [
-  {
-    value: "MODALITY_CHANGE",
-    label: "Thay đổi phương thức",
-    description: "Chuyển đổi giữa classroom và online",
-  },
-  {
-    value: "RESCHEDULE",
-    label: "Đổi lịch",
-    description: "Thay đổi thời gian của 1 buổi học",
-  },
-  {
-    value: "REPLACEMENT",
-    label: "Nhờ dạy thay",
-    description: "Yêu cầu giáo viên khác dạy thay 1 buổi học",
-  },
-];
 
 // Helper function to format error messages from backend to user-friendly Vietnamese
 const formatBackendError = (
@@ -308,7 +273,6 @@ export default function MyRequestsPage() {
   // Load teacher request config for policy values
   const { data: teacherConfig } = useGetTeacherRequestConfigQuery();
   const reasonMinLength = teacherConfig?.data?.reasonMinLength ?? 15;
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [activeType, setActiveType] = useState<RequestType | null>(null);
   const [typeFilter, setTypeFilter] = useState<"ALL" | RequestType>("ALL");
   const [statusFilter, setStatusFilter] = useState<"ALL" | RequestStatus>(
@@ -429,13 +393,10 @@ export default function MyRequestsPage() {
     return displayedRequests.slice(start, start + PAGE_SIZE);
   }, [displayedRequests, page]);
 
-  const {
-    data: detailData,
-    isFetching: isLoadingDetail,
-    error: detailError,
-  } = useGetRequestByIdQuery(detailId ?? 0, {
-    skip: detailId === null,
-  });
+  const { data: detailData, isFetching: isLoadingDetail } =
+    useGetRequestByIdQuery(detailId ?? 0, {
+      skip: detailId === null,
+    });
 
   // Fallback: Lấy dữ liệu từ danh sách requests nếu detail không có
   const requestFromList = detailId
@@ -455,7 +416,6 @@ export default function MyRequestsPage() {
   const isActionLoading = isConfirming || isRejecting;
 
   const handleModalClose = () => {
-    setIsCreateOpen(false);
     setActiveType(null);
   };
 
@@ -871,11 +831,6 @@ export default function MyRequestsPage() {
                             </Badge>
                           )}
                       </div>
-                      {request.status === "WAITING_CONFIRM" && (
-                        <span className="text-xs text-muted-foreground">
-                          Chờ xác nhận
-                        </span>
-                      )}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -950,10 +905,31 @@ export default function MyRequestsPage() {
               Theo dõi và tạo yêu cầu đổi phương thức, đổi lịch, dạy thay.
             </p>
           </div>
-          <Button onClick={() => setIsCreateOpen(true)} size="sm">
-            <Plus className="mr-2 h-4 w-4" />
-            Tạo yêu cầu
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" className="w-full sm:w-auto">
+                <Plus className="h-4 w-4" />
+                Tạo yêu cầu
+                <ChevronDownIcon className="h-4 w-4 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                onClick={() => setActiveType("MODALITY_CHANGE")}
+              >
+                <ArrowLeftRight className="h-4 w-4 mr-2" />
+                Thay đổi phương thức
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveType("RESCHEDULE")}>
+                <CalendarClock className="h-4 w-4 mr-2" />
+                Đổi lịch
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setActiveType("REPLACEMENT")}>
+                <UserRoundCheck className="h-4 w-4 mr-2" />
+                Nhờ dạy thay
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
@@ -1031,74 +1007,47 @@ export default function MyRequestsPage() {
         </SidebarInset>
       </SidebarProvider>
 
-      <CreateRequestDialog
-        open={isCreateOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            handleModalClose();
-          } else {
-            setIsCreateOpen(true);
-          }
-        }}
-        activeType={activeType}
-        onSelectType={(type) => setActiveType(type)}
-        onSuccess={() => {
-          handleModalClose();
-          refetch();
-        }}
-      />
+      {/* Request Flow Modal */}
+      <FullScreenModal
+        open={activeType !== null}
+        onOpenChange={(open) => !open && handleModalClose()}
+      >
+        <FullScreenModalContent size="lg">
+          <FullScreenModalHeader>
+            <FullScreenModalTitle>
+              {activeType && REQUEST_TYPE_LABELS[activeType]}
+            </FullScreenModalTitle>
+          </FullScreenModalHeader>
+          <FullScreenModalBody>
+            {activeType && (
+              <UnifiedTeacherRequestFlow
+                type={activeType}
+                onSuccess={() => {
+                  handleModalClose();
+                  refetch();
+                }}
+              />
+            )}
+          </FullScreenModalBody>
+        </FullScreenModalContent>
+      </FullScreenModal>
 
-      <Dialog
+      <RequestDetailDialog
+        requestId={detailId}
         open={detailId !== null}
         onOpenChange={(open) => {
-          if (!open) {
-            handleDetailClose();
-          }
+          if (!open) handleDetailClose();
         }}
-      >
-        <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-5xl rounded-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Chi tiết yêu cầu</DialogTitle>
-          </DialogHeader>
-          {isLoadingDetail ? (
-            <div className="space-y-3">
-              <Skeleton className="h-4 w-2/3" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-32 w-full" />
-            </div>
-          ) : detailError || !detailData?.data ? (
-            requestFromList ? (
-              <TeacherRequestDetailContent
-                request={requestFromList}
-                fallbackRequest={undefined}
-                onConfirmReplacement={handleReplacementDecision}
-                onRejectReplacement={handleReplacementDecision}
-                decisionNote={decisionNote}
-                onDecisionNoteChange={setDecisionNote}
-                isActionLoading={isActionLoading}
-                pendingAction={pendingAction}
-                reasonMinLength={reasonMinLength}
-              />
-            ) : (
-              <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-center text-sm text-destructive">
-                <p>Không thể tải chi tiết yêu cầu. Vui lòng thử lại sau.</p>
-              </div>
-            )
-          ) : (
-            <TeacherRequestDetailContent
-              request={detailData.data}
-              fallbackRequest={requestFromList ?? undefined}
-              onConfirmReplacement={handleReplacementDecision}
-              onRejectReplacement={handleReplacementDecision}
-              decisionNote={decisionNote}
-              onDecisionNoteChange={setDecisionNote}
-              isActionLoading={isActionLoading}
-              pendingAction={pendingAction}
-              reasonMinLength={reasonMinLength}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+        isLoading={isLoadingDetail}
+        request={detailData?.data ?? requestFromList ?? null}
+        onConfirmReplacement={handleReplacementDecision}
+        onRejectReplacement={handleReplacementDecision}
+        decisionNote={decisionNote}
+        onDecisionNoteChange={setDecisionNote}
+        isActionLoading={isActionLoading}
+        pendingAction={pendingAction}
+        reasonMinLength={reasonMinLength}
+      />
     </TeacherRoute>
   );
 
@@ -1107,2339 +1056,6 @@ export default function MyRequestsPage() {
   }
 
   return pageShell(mainView);
-}
-
-interface CreateDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  activeType: RequestType | null;
-  onSelectType: (type: RequestType | null) => void;
-  onSuccess: () => void;
-}
-
-function CreateRequestDialog({
-  open,
-  onOpenChange,
-  activeType,
-  onSelectType,
-  onSuccess,
-}: CreateDialogProps) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-5xl rounded-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Tạo yêu cầu mới</DialogTitle>
-        </DialogHeader>
-        {activeType === null ? (
-          <TypeSelection onSelect={onSelectType} />
-        ) : (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between border-b pb-2">
-              <div>
-                <p className="text-xs text-muted-foreground">Loại yêu cầu</p>
-                <h3 className="text-base font-semibold">
-                  {REQUEST_TYPE_LABELS[activeType]}
-                </h3>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onSelectType(null)}
-              >
-                Chọn loại khác
-              </Button>
-            </div>
-
-            {activeType === "MODALITY_CHANGE" && (
-              <ModalityChangeFlow onSuccess={onSuccess} />
-            )}
-            {activeType === "RESCHEDULE" && (
-              <RescheduleFlow onSuccess={onSuccess} />
-            )}
-            {activeType === "REPLACEMENT" && (
-              <ReplacementFlow onSuccess={onSuccess} />
-            )}
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function TypeSelection({
-  onSelect,
-}: {
-  onSelect: (type: RequestType) => void;
-}) {
-  return (
-    <div className="space-y-3">
-      {requestTypes.map((item) => (
-        <button
-          key={item.value}
-          type="button"
-          onClick={() => onSelect(item.value)}
-          className="w-full rounded-lg border border-border/60 p-3 text-left transition hover:border-primary/60 hover:bg-primary/5"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1">
-              <h3 className="text-base font-semibold text-foreground">
-                {item.label}
-              </h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {item.description}
-              </p>
-            </div>
-            <ArrowRight className="mt-1 h-5 w-5 shrink-0 text-muted-foreground" />
-          </div>
-        </button>
-      ))}
-    </div>
-  );
-}
-
-interface FlowProps {
-  onSuccess: () => void;
-}
-
-function ModalityChangeFlow({ onSuccess }: FlowProps) {
-  const today = startOfToday();
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedClassId, setSelectedClassId] = useState<number | undefined>(
-    undefined
-  );
-  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
-    null
-  );
-  const [selectedResourceId, setSelectedResourceId] = useState<
-    number | undefined
-  >(undefined);
-  const [reason, setReason] = useState("");
-  const [step, setStep] = useState<"session" | "resource" | "form">("session");
-
-  // Load config from policy for modality change
-  const { data: teacherConfig, refetch: refetchTeacherConfig } =
-    useGetTeacherRequestConfigQuery();
-
-  // Get policy values from teacher config
-  const minDaysBeforeSession = teacherConfig?.data?.minDaysBeforeSession ?? 1;
-  const reasonMinLength = teacherConfig?.data?.reasonMinLength ?? 15;
-  const timeWindowDays = teacherConfig?.data?.timeWindowDays ?? 14;
-
-  // Load teacher classes
-  const { data: classesData } = useGetAttendanceClassesQuery();
-
-  // Khi mở flow MODALITY_CHANGE, luôn refetch config mới nhất
-  useEffect(() => {
-    refetchTeacherConfig();
-  }, [refetchTeacherConfig]);
-  const requireResourceAtModalityChangeCreate =
-    teacherConfig?.data?.requireResourceAtModalityChangeCreate ?? true;
-
-  const formattedDate = selectedDate
-    ? format(selectedDate, "yyyy-MM-dd")
-    : undefined;
-
-  // Always query sessions - if no filter, query will return sessions in default time window
-  const sessionsQueryArg = useMemo(() => {
-    const arg: { date?: string; classId?: number } = {};
-    if (formattedDate) arg.date = formattedDate;
-    if (selectedClassId) arg.classId = selectedClassId;
-    return arg;
-  }, [formattedDate, selectedClassId]);
-
-  // Debug log
-  useEffect(() => {
-    console.log("ModalityChangeFlow - Sessions Query:", {
-      sessionsQueryArg,
-      timeWindowDays,
-      teacherConfig: teacherConfig?.data,
-    });
-  }, [sessionsQueryArg, timeWindowDays, teacherConfig]);
-
-  const {
-    data: sessionsData,
-    isLoading: isLoadingSessions,
-    isFetching: isFetchingSessions,
-    refetch: refetchSessions,
-  } = useGetMySessionsQuery(sessionsQueryArg, {
-    refetchOnMountOrArgChange: true,
-    refetchOnReconnect: true,
-  });
-
-  // Force refetch when component mounts to ensure we get latest sessions
-  useEffect(() => {
-    if (teacherConfig?.data) {
-      refetchSessions();
-    }
-  }, [teacherConfig?.data, refetchSessions]);
-
-  // Debug log response
-  useEffect(() => {
-    console.log("ModalityChangeFlow - Sessions Response:", {
-      sessionsData,
-      isLoadingSessions,
-      isFetchingSessions,
-      sessionCount: sessionsData?.data?.length ?? 0,
-    });
-  }, [sessionsData, isLoadingSessions, isFetchingSessions]);
-  // Get modality resources using sessionId when creating new request
-  const resourceQueryArg = selectedSessionId
-    ? { sessionId: selectedSessionId }
-    : skipToken;
-  const { data: resourcesData, isLoading: isLoadingResources } =
-    useGetModalityResourcesQuery(resourceQueryArg);
-
-  const resolveResourceId = (resource?: ResourceDTO) =>
-    resource?.id ?? resource?.resourceId ?? null;
-  const resourceList = Array.isArray(resourcesData?.data)
-    ? (resourcesData?.data as ResourceDTO[])
-    : [];
-  const availableResources = resourceList.filter(
-    (resource) => resolveResourceId(resource) !== null
-  );
-  const selectedResource = availableResources.find(
-    (resource) => resolveResourceId(resource) === selectedResourceId
-  );
-  const [createRequest, { isLoading: isSubmitting }] =
-    useCreateRequestMutation();
-
-  const selectedSession = sessionsData?.data?.find(
-    (s) => (s.sessionId || s.id) === selectedSessionId
-  );
-
-  const handleDateSelect = (date: Date | undefined) => {
-    if (!date || date < today) return;
-    setSelectedDate(date);
-    setShowDatePicker(false);
-    setSelectedSessionId(null);
-    setSelectedClassId(undefined);
-    setStep("session");
-  };
-
-  const handleClearDate = () => {
-    setSelectedDate(undefined);
-    setSelectedSessionId(null);
-    setSelectedClassId(undefined);
-    setStep("session");
-  };
-
-  const handleSessionSelect = (sessionId: number) => {
-    const session = sessionsData?.data?.find(
-      (s) => (s.sessionId || s.id) === sessionId
-    );
-
-    if (session?.date) {
-      const sessionDate = parseISO(session.date);
-      const daysUntilSession = differenceInDays(sessionDate, today);
-
-      // Debug log
-      console.log("Validation Debug:", {
-        sessionDate: session.date,
-        today: format(today, "yyyy-MM-dd"),
-        daysUntilSession,
-        minDaysBeforeSession,
-        teacherConfig: teacherConfig?.data,
-      });
-
-      // Validate: session must be in the future and meet minimum days requirement
-      if (daysUntilSession < 0) {
-        toast.error("Không thể chọn session trong quá khứ.");
-        return;
-      }
-
-      if (daysUntilSession < minDaysBeforeSession) {
-        toast.error(
-          `Bạn phải gửi yêu cầu trước ít nhất ${minDaysBeforeSession} ngày so với ngày diễn ra session. Session này còn ${daysUntilSession} ngày nữa.`
-        );
-        return;
-      }
-    }
-
-    setSelectedSessionId(sessionId);
-    setSelectedResourceId(undefined);
-    setStep("resource");
-  };
-
-  const handleResourceSelect = (resourceId: number | undefined) => {
-    setSelectedResourceId(resourceId);
-    setStep("form");
-  };
-
-  const handleSubmit = async () => {
-    if (!reason.trim() || !selectedSessionId) {
-      toast.error("Vui lòng điền đầy đủ thông tin");
-      return;
-    }
-
-    try {
-      const requestBody: {
-        sessionId: number;
-        requestType: "MODALITY_CHANGE";
-        newResourceId?: number;
-        reason: string;
-      } = {
-        sessionId: selectedSessionId,
-        requestType: "MODALITY_CHANGE",
-        reason: reason.trim(),
-      };
-      // Only include newResourceId if it has a value
-      if (selectedResourceId !== undefined && selectedResourceId !== null) {
-        requestBody.newResourceId = selectedResourceId;
-      }
-      await createRequest(requestBody).unwrap();
-
-      toast.success("Yêu cầu đã được gửi thành công");
-      setSelectedDate(undefined);
-      setSelectedSessionId(null);
-      setSelectedResourceId(undefined);
-      setReason("");
-      setStep("session");
-      onSuccess();
-    } catch (error: unknown) {
-      const apiError = error as {
-        data?: { message?: string; error?: string; [key: string]: unknown };
-        status?: number;
-        error?: string;
-        [key: string]: unknown;
-      };
-      const errorMessage =
-        apiError?.data?.message ||
-        apiError?.data?.error ||
-        (typeof apiError?.data === "string" ? apiError.data : undefined) ||
-        apiError?.error ||
-        undefined;
-      toast.error(
-        formatBackendError(errorMessage, "Có lỗi xảy ra khi gửi yêu cầu")
-      );
-    }
-  };
-
-  const step1Complete = !!selectedSessionId;
-  const step2Complete =
-    step === "form" ||
-    (!!selectedResourceId && step === "resource") ||
-    (!requireResourceAtModalityChangeCreate && step === "resource");
-  const step3Complete =
-    step === "form" &&
-    (requireResourceAtModalityChangeCreate ? !!selectedResourceId : true) &&
-    reason.trim().length >= reasonMinLength;
-
-  return (
-    <div className="space-y-4">
-      {/* Step 1: Chọn session */}
-      <div className="space-y-2">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-2">
-            <div
-              className={cn(
-                "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                step1Complete
-                  ? "bg-primary text-primary-foreground"
-                  : "border-2 border-primary text-primary"
-              )}
-            >
-              {step1Complete ? "✓" : "1"}
-            </div>
-            <h3 className="text-sm font-semibold">
-              Chọn buổi học muốn thay đổi
-            </h3>
-          </div>
-          <div className="flex items-center gap-2 md:justify-end">
-            {selectedDate && (
-              <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-2 py-1 text-xs">
-                {format(selectedDate, "dd/MM/yyyy", { locale: vi })}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleClearDate}
-                  className="h-5 w-5 p-0"
-                >
-                  ×
-                </Button>
-              </div>
-            )}
-            {selectedClassId && classesData?.data && (
-              <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-2 py-1 text-xs">
-                {classesData.data.find((c) => c.id === selectedClassId)?.name ||
-                  classesData.data.find((c) => c.id === selectedClassId)
-                    ?.code ||
-                  "Lớp đã chọn"}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedClassId(undefined)}
-                  className="h-5 w-5 p-0"
-                >
-                  ×
-                </Button>
-              </div>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDatePicker((prev) => !prev)}
-            >
-              {selectedDate ? "Đổi ngày" : "Chọn ngày"}
-            </Button>
-            <Select
-              value={selectedClassId ? selectedClassId.toString() : "ALL"}
-              onValueChange={(value) =>
-                setSelectedClassId(value === "ALL" ? undefined : Number(value))
-              }
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Chọn lớp" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Tất cả lớp</SelectItem>
-                {classesData?.data?.map((cls) => (
-                  <SelectItem key={cls.id} value={cls.id.toString()}>
-                    {cls.name || cls.code}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {showDatePicker && (
-          <div className="pl-8">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={handleDateSelect}
-              disabled={(date) => date < today}
-              locale={vi}
-              className="rounded-lg border"
-            />
-          </div>
-        )}
-
-        {step === "session" && (
-          <div className="pl-8">
-            {isLoadingSessions || isFetchingSessions ? (
-              <div className="space-y-2">
-                {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-14 w-full rounded-lg" />
-                ))}
-              </div>
-            ) : sessionsData?.data && sessionsData.data.length > 0 ? (
-              <ul className="space-y-2">
-                {sessionsData.data.map((session, index) => {
-                  const sessionId = session?.sessionId || session?.id;
-                  if (!sessionId) {
-                    return null;
-                  }
-                  return (
-                    <li key={sessionId || index}>
-                      <button
-                        type="button"
-                        onClick={() => handleSessionSelect(sessionId)}
-                        className={cn(
-                          "w-full rounded-lg border border-border/60 px-3 py-2 text-left transition hover:border-primary/60 hover:bg-primary/5",
-                          selectedSessionId === sessionId &&
-                            "border-primary bg-primary/5"
-                        )}
-                      >
-                        <p className="text-sm font-medium">
-                          {formatDateShort(session.date)} {session.startTime} -{" "}
-                          {session.endTime}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {session.className} · {session.subjectName}
-                        </p>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <div className="rounded-lg border border-dashed py-4 text-center text-sm text-muted-foreground">
-                {selectedDate
-                  ? "Không có session nào trong ngày đã chọn"
-                  : `Không có session nào trong ${timeWindowDays} ngày tới`}
-              </div>
-            )}
-          </div>
-        )}
-
-        {step1Complete && step !== "session" && selectedSession && (
-          <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
-            <div>
-              <p className="text-sm font-medium">
-                {formatDateShort(selectedSession.date)}{" "}
-                {selectedSession.startTime} - {selectedSession.endTime}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {selectedSession.className} · {selectedSession.subjectName}
-              </p>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setSelectedSessionId(null);
-                setStep("session");
-              }}
-            >
-              Thay đổi
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Step 2: Chọn resource */}
-      {step1Complete && (
-        <div className={cn("space-y-2", step === "session" && "opacity-50")}>
-          <div className="flex items-center gap-2">
-            <div
-              className={cn(
-                "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                step2Complete
-                  ? "bg-primary text-primary-foreground"
-                  : step1Complete
-                  ? "border-2 border-primary text-primary"
-                  : "border-2 border-muted-foreground/30 text-muted-foreground"
-              )}
-            >
-              {step2Complete ? "✓" : "2"}
-            </div>
-            <h3 className="text-sm font-semibold">
-              {requireResourceAtModalityChangeCreate
-                ? "Chọn resource"
-                : "Chọn resource (Tùy chọn)"}
-            </h3>
-          </div>
-
-          {step === "resource" && (
-            <div className="pl-8">
-              {isLoadingResources ? (
-                <div className="space-y-2">
-                  {[...Array(2)].map((_, i) => (
-                    <Skeleton key={i} className="h-14 w-full rounded-lg" />
-                  ))}
-                </div>
-              ) : availableResources.length > 0 ? (
-                <>
-                  <Select
-                    value={selectedResourceId?.toString() || ""}
-                    onValueChange={(value) =>
-                      handleResourceSelect(value ? parseInt(value) : undefined)
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue
-                        placeholder={
-                          requireResourceAtModalityChangeCreate
-                            ? "Chọn resource mới"
-                            : "Chọn resource (tùy chọn)"
-                        }
-                      >
-                        {selectedResource?.name || ""}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableResources.map((resource) => {
-                        const resourceId = resolveResourceId(resource);
-                        if (resourceId === null) return null;
-                        return (
-                          <SelectItem
-                            key={resourceId}
-                            value={resourceId.toString()}
-                          >
-                            <div className="flex flex-col items-start py-1">
-                              <span className="font-medium text-sm">
-                                {resource.name || "Unknown"}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {resource.type || "N/A"} · Capacity:{" "}
-                                {resource.capacity ?? "N/A"}
-                              </span>
-                              {resource.currentResource && (
-                                <span className="text-xs text-primary">
-                                  Resource hiện tại
-                                </span>
-                              )}
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                  {!requireResourceAtModalityChangeCreate && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleResourceSelect(undefined)}
-                      className="mt-2"
-                    >
-                      Bỏ qua - Để staff quyết định
-                    </Button>
-                  )}
-                </>
-              ) : (
-                <div className="space-y-2">
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 py-4 text-center text-sm text-amber-700">
-                    Không có resource nào khả dụng tại thời điểm này. Staff sẽ
-                    chọn resource phù hợp cho bạn.
-                  </div>
-                  {!requireResourceAtModalityChangeCreate && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleResourceSelect(undefined)}
-                      className="w-full"
-                    >
-                      Tiếp tục - Để staff quyết định resource
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {step === "form" && (
-            <div className="pl-8">
-              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
-                <p className="text-sm">
-                  {selectedResource?.name || "Để staff quyết định"}
-                </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedResourceId(undefined);
-                    setStep("resource");
-                  }}
-                >
-                  Thay đổi
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Step 3: Điền lý do */}
-      {step === "form" && (
-        <div className={cn("space-y-2", step !== "form" && "opacity-50")}>
-          <div className="flex items-center gap-2">
-            <div
-              className={cn(
-                "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                step3Complete
-                  ? "bg-primary text-primary-foreground"
-                  : step2Complete
-                  ? "border-2 border-primary text-primary"
-                  : "border-2 border-muted-foreground/30 text-muted-foreground"
-              )}
-            >
-              {step3Complete ? "✓" : "3"}
-            </div>
-            <h3 className="text-sm font-semibold">Điền lý do</h3>
-          </div>
-
-          {step === "form" && (
-            <div className="space-y-3 pl-8">
-              <div className="space-y-1.5">
-                <Textarea
-                  placeholder="Nhập lý do yêu cầu thay đổi phương thức..."
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  rows={3}
-                  className="resize-none text-sm"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Tối thiểu {reasonMinLength} ký tự · {reason.trim().length}/
-                  {reasonMinLength}
-                </p>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!step3Complete || isSubmitting}
-                  size="sm"
-                >
-                  {isSubmitting ? "Đang gửi..." : "Gửi yêu cầu"}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setReason("");
-                    setSelectedDate(undefined);
-                    setSelectedSessionId(null);
-                    setSelectedResourceId(undefined);
-                    setStep("session");
-                  }}
-                >
-                  Làm lại
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function RescheduleFlow({ onSuccess }: FlowProps) {
-  const today = startOfToday();
-  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
-    null
-  );
-  const [sessionFilterDate, setSessionFilterDate] = useState<
-    Date | undefined
-  >();
-  const [showSessionFilterPicker, setShowSessionFilterPicker] = useState(false);
-  const [selectedClassId, setSelectedClassId] = useState<number | undefined>(
-    undefined
-  );
-  const [selectedNewDate, setSelectedNewDate] = useState<Date | undefined>();
-  const [showNewDatePicker, setShowNewDatePicker] = useState(false);
-  const [selectedSlotId, setSelectedSlotId] = useState<number | null>(null);
-  const [selectedResourceId, setSelectedResourceId] = useState<
-    number | undefined
-  >();
-  const [reason, setReason] = useState("");
-  const [step, setStep] = useState<
-    "session" | "date" | "slot" | "resource" | "form"
-  >("session");
-
-  // Load teacher classes
-  const { data: classesData } = useGetAttendanceClassesQuery();
-
-  const newDateFormatted = selectedNewDate
-    ? format(selectedNewDate, "yyyy-MM-dd")
-    : undefined;
-  const sessionFilterFormatted = sessionFilterDate
-    ? format(sessionFilterDate, "yyyy-MM-dd")
-    : undefined;
-
-  const sessionsQueryArg: { date?: string; classId?: number } = {};
-  if (sessionFilterFormatted) sessionsQueryArg.date = sessionFilterFormatted;
-  if (selectedClassId) sessionsQueryArg.classId = selectedClassId;
-
-  const {
-    data: sessionsData,
-    isLoading: isLoadingSessions,
-    isFetching: isFetchingSessions,
-  } = useGetMySessionsQuery(
-    Object.keys(sessionsQueryArg).length > 0 ? sessionsQueryArg : {},
-    {
-      refetchOnMountOrArgChange: true,
-      refetchOnReconnect: true,
-    }
-  );
-
-  const selectedSession = sessionsData?.data?.find(
-    (session) => (session.sessionId || session.id) === selectedSessionId
-  );
-
-  const slotQueryArg =
-    selectedSessionId && newDateFormatted
-      ? { sessionId: selectedSessionId, date: newDateFormatted }
-      : skipToken;
-  const { data: slotsData, isFetching: isLoadingSlots } =
-    useGetRescheduleSlotsQuery(slotQueryArg);
-
-  const availableSlots = slotsData?.data ?? [];
-
-  const pickStringValue = (...values: Array<string | null | undefined>) => {
-    for (const value of values) {
-      if (typeof value === "string" && value.trim().length > 0) {
-        return value.trim();
-      }
-    }
-    return undefined;
-  };
-
-  const pickFromRecord = (
-    record: Record<string, unknown> | undefined,
-    keys: string[]
-  ) => {
-    if (!record) return undefined;
-    for (const key of keys) {
-      const candidate = record[key];
-      if (typeof candidate === "string" && candidate.trim().length > 0) {
-        return candidate.trim();
-      }
-    }
-    return undefined;
-  };
-
-  const getSlotTimeRange = (slot: RescheduleSlotDTO) => {
-    const slotRecord = slot as unknown as Record<string, unknown>;
-    const timeSlotRecord =
-      typeof slot.timeSlot === "object" && slot.timeSlot !== null
-        ? (slot.timeSlot as Record<string, unknown>)
-        : undefined;
-
-    const start = pickStringValue(
-      slot.startTime,
-      slot.startAt,
-      pickFromRecord(timeSlotRecord, ["startTime", "startAt", "start"]),
-      pickFromRecord(slotRecord, [
-        "start",
-        "start_time",
-        "startHour",
-        "beginTime",
-        "begin_time",
-      ])
-    );
-
-    const end = pickStringValue(
-      slot.endTime,
-      slot.endAt,
-      pickFromRecord(timeSlotRecord, ["endTime", "endAt", "end"]),
-      pickFromRecord(slotRecord, [
-        "end",
-        "end_time",
-        "endHour",
-        "finishTime",
-        "finish_time",
-      ])
-    );
-
-    return { start, end };
-  };
-
-  const getSlotLabel = (slot: RescheduleSlotDTO) => {
-    const slotRecord = slot as unknown as Record<string, unknown>;
-    const timeSlotRecord =
-      typeof slot.timeSlot === "object" && slot.timeSlot !== null
-        ? (slot.timeSlot as Record<string, unknown>)
-        : undefined;
-
-    return pickStringValue(
-      slot.displayLabel,
-      slot.label,
-      slot.timeSlotLabel,
-      slot.timeSlotName,
-      slot.timeRange,
-      slot.name,
-      slot.title,
-      slot.description,
-      pickFromRecord(timeSlotRecord, [
-        "label",
-        "displayLabel",
-        "timeRange",
-        "name",
-        "title",
-        "displayName",
-      ]),
-      pickFromRecord(slotRecord, [
-        "label",
-        "displayLabel",
-        "timeRange",
-        "name",
-        "title",
-        "displayName",
-      ])
-    );
-  };
-
-  const resolveSlotLabel = (slot: RescheduleSlotDTO) => {
-    const { start, end } = getSlotTimeRange(slot);
-    const label = getSlotLabel(slot);
-
-    if (start || end) {
-      if (start && end) {
-        return `${start} - ${end}`;
-      }
-      return start ?? end ?? label ?? "Khung giờ chưa xác định";
-    }
-
-    return label ?? "Khung giờ chưa xác định";
-  };
-
-  const selectedSlot =
-    availableSlots.find(
-      (slot) => (slot.timeSlotId ?? slot.id) === selectedSlotId
-    ) ?? null;
-  const selectedSlotLabel = selectedSlot ? resolveSlotLabel(selectedSlot) : "";
-
-  // Load teacher request config controlled by policy
-  const { data: teacherConfig, refetch: refetchTeacherConfig } =
-    useGetTeacherRequestConfigQuery();
-
-  // Mỗi lần flow RESCHEDULE mount, luôn refetch config mới nhất
-  useEffect(() => {
-    refetchTeacherConfig();
-  }, [refetchTeacherConfig]);
-  const requireResourceAtRescheduleCreate =
-    teacherConfig?.data?.requireResourceAtRescheduleCreate ?? true;
-  const minDaysBeforeSession = teacherConfig?.data?.minDaysBeforeSession ?? 1;
-  const reasonMinLength = teacherConfig?.data?.reasonMinLength ?? 15;
-  const timeWindowDays = teacherConfig?.data?.timeWindowDays ?? 14;
-
-  const resourceQueryArg =
-    selectedSessionId && newDateFormatted && selectedSlot
-      ? {
-          sessionId: selectedSessionId,
-          date: newDateFormatted,
-          timeSlotId: selectedSlot.timeSlotId ?? selectedSlot.id ?? 0,
-        }
-      : skipToken;
-  const {
-    data: rescheduleResourcesData,
-    isFetching: isLoadingRescheduleResources,
-  } = useGetRescheduleResourcesQuery(resourceQueryArg);
-
-  const rescheduleResources = (rescheduleResourcesData?.data ?? []).filter(
-    (resource) => (resource.id ?? resource.resourceId) != null
-  );
-  const selectedRescheduleResource = selectedResourceId
-    ? rescheduleResources.find(
-        (resource) =>
-          (resource.id ?? resource.resourceId) === selectedResourceId
-      ) ?? null
-    : null;
-
-  const [createRequest, { isLoading: isSubmitting }] =
-    useCreateRequestMutation();
-
-  const resetToSessionStep = () => {
-    setSelectedSessionId(null);
-    setSelectedNewDate(undefined);
-    setSelectedSlotId(null);
-    setSelectedResourceId(undefined);
-    setSelectedClassId(undefined);
-    setReason("");
-    setStep("session");
-  };
-
-  const handleSessionFilter = (date: Date | undefined) => {
-    if (!date) {
-      setSessionFilterDate(undefined);
-      setShowSessionFilterPicker(false);
-      return;
-    }
-    if (date < today) return;
-    setSessionFilterDate(date);
-    setSelectedSessionId(null);
-    setSelectedNewDate(undefined);
-    setSelectedSlotId(null);
-    setSelectedResourceId(undefined);
-    setSelectedClassId(undefined);
-    setShowSessionFilterPicker(false);
-  };
-
-  const handleSessionSelect = (sessionId: number) => {
-    const session = sessionsData?.data?.find(
-      (s) => (s.sessionId || s.id) === sessionId
-    );
-
-    if (session?.date) {
-      const sessionDate = parseISO(session.date);
-      const daysUntilSession = differenceInDays(sessionDate, today);
-
-      // Debug log
-      console.log("Validation Debug (Reschedule):", {
-        sessionDate: session.date,
-        today: format(today, "yyyy-MM-dd"),
-        daysUntilSession,
-        minDaysBeforeSession,
-        teacherConfig: teacherConfig?.data,
-      });
-
-      // Validate: session must be in the future and meet minimum days requirement
-      if (daysUntilSession < 0) {
-        toast.error("Không thể chọn session trong quá khứ.");
-        return;
-      }
-
-      if (daysUntilSession < minDaysBeforeSession) {
-        toast.error(
-          `Bạn phải gửi yêu cầu trước ít nhất ${minDaysBeforeSession} ngày so với ngày diễn ra session. Session này còn ${daysUntilSession} ngày nữa.`
-        );
-        return;
-      }
-    }
-
-    setSelectedSessionId(sessionId);
-    setSelectedNewDate(undefined);
-    setSelectedSlotId(null);
-    setSelectedResourceId(undefined);
-    setStep("date");
-  };
-
-  const handleNewDateSelect = (date: Date | undefined) => {
-    if (!date || date < today) return;
-    setSelectedNewDate(date);
-    setShowNewDatePicker(false);
-    setSelectedSlotId(null);
-    setSelectedResourceId(undefined);
-    setStep("slot");
-  };
-
-  const handleSlotSelect = (slotId: number) => {
-    setSelectedSlotId(slotId);
-    setSelectedResourceId(undefined);
-    setStep("resource");
-  };
-
-  const handleResourceSelect = (resourceId: number | undefined) => {
-    setSelectedResourceId(resourceId);
-    setStep("form");
-  };
-
-  const handleSubmit = async () => {
-    if (!selectedSessionId || !selectedNewDate || !selectedSlot) {
-      toast.error("Vui lòng hoàn thành các bước trước khi gửi");
-      return;
-    }
-
-    if (reason.trim().length < reasonMinLength) {
-      toast.error(`Lý do phải có tối thiểu ${reasonMinLength} ký tự`);
-      return;
-    }
-
-    try {
-      const requestBody: {
-        sessionId: number;
-        requestType: "RESCHEDULE";
-        newDate: string;
-        newTimeSlotId?: number;
-        newResourceId?: number;
-        reason: string;
-      } = {
-        sessionId: selectedSessionId,
-        requestType: "RESCHEDULE",
-        newDate: format(selectedNewDate, "yyyy-MM-dd"),
-        reason: reason.trim(),
-      };
-      // Only include optional fields if they have values
-      const timeSlotId = selectedSlot.timeSlotId ?? selectedSlot.id;
-      if (timeSlotId !== undefined && timeSlotId !== null) {
-        requestBody.newTimeSlotId = timeSlotId;
-      }
-      if (selectedResourceId !== undefined && selectedResourceId !== null) {
-        requestBody.newResourceId = selectedResourceId;
-      }
-      await createRequest(requestBody).unwrap();
-
-      toast.success("Yêu cầu đã được gửi thành công");
-      resetToSessionStep();
-      onSuccess();
-    } catch (error: unknown) {
-      const apiError = error as {
-        data?: { message?: string; error?: string; [key: string]: unknown };
-        status?: number;
-        error?: string;
-        [key: string]: unknown;
-      };
-      const errorMessage =
-        apiError?.data?.message ||
-        apiError?.data?.error ||
-        (typeof apiError?.data === "string" ? apiError.data : undefined) ||
-        apiError?.error ||
-        undefined;
-      toast.error(
-        formatBackendError(errorMessage, "Có lỗi xảy ra khi gửi yêu cầu")
-      );
-    }
-  };
-
-  const sessionStepComplete = !!selectedSessionId;
-  const dateStepComplete = sessionStepComplete && !!selectedNewDate;
-  const slotStepComplete = dateStepComplete && !!selectedSlotId;
-  // Với RESCHEDULE: nếu policy không bắt buộc resource, coi bước resource là hoàn thành dù không chọn
-  const resourceStepComplete =
-    slotStepComplete &&
-    (requireResourceAtRescheduleCreate ? !!selectedResourceId : true);
-  // Bước lý do hiển thị khi đã tới step "form" và các bước trước đã OK
-  const formStepReady = step === "form" && resourceStepComplete;
-  const reasonValid = reason.trim().length >= reasonMinLength;
-
-  return (
-    <div className="space-y-4">
-      {/* Step 1: Chọn session */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div
-              className={cn(
-                "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                sessionStepComplete
-                  ? "bg-primary text-primary-foreground"
-                  : "border-2 border-primary text-primary"
-              )}
-            >
-              {sessionStepComplete ? "✓" : "1"}
-            </div>
-            <h3 className="text-sm font-semibold">Chọn session cần đổi lịch</h3>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            {sessionFilterDate && (
-              <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-2 py-1 text-xs">
-                {format(sessionFilterDate, "dd/MM/yyyy", { locale: vi })}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleSessionFilter(undefined)}
-                  className="h-5 w-5 p-0"
-                >
-                  ×
-                </Button>
-              </div>
-            )}
-            {selectedClassId && classesData?.data && (
-              <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-2 py-1 text-xs">
-                {classesData.data.find((c) => c.id === selectedClassId)?.name ||
-                  classesData.data.find((c) => c.id === selectedClassId)
-                    ?.code ||
-                  "Lớp đã chọn"}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedClassId(undefined)}
-                  className="h-5 w-5 p-0"
-                >
-                  ×
-                </Button>
-              </div>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowSessionFilterPicker((prev) => !prev)}
-            >
-              {sessionFilterDate ? "Đổi ngày" : "Chọn ngày"}
-            </Button>
-            <Select
-              value={selectedClassId ? selectedClassId.toString() : "ALL"}
-              onValueChange={(value) =>
-                setSelectedClassId(value === "ALL" ? undefined : Number(value))
-              }
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Chọn lớp" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Tất cả lớp</SelectItem>
-                {classesData?.data?.map((cls) => (
-                  <SelectItem key={cls.id} value={cls.id.toString()}>
-                    {cls.name || cls.code}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="pl-8 space-y-3">
-          {showSessionFilterPicker && (
-            <Calendar
-              mode="single"
-              selected={sessionFilterDate}
-              onSelect={handleSessionFilter}
-              disabled={(date) => !!date && date < today}
-              locale={vi}
-              className="rounded-lg border"
-            />
-          )}
-
-          {step === "session" && (
-            <div>
-              {isLoadingSessions || isFetchingSessions ? (
-                <div className="space-y-2">
-                  {[...Array(3)].map((_, index) => (
-                    <Skeleton key={index} className="h-14 w-full rounded-lg" />
-                  ))}
-                </div>
-              ) : sessionsData?.data && sessionsData.data.length > 0 ? (
-                <ul className="space-y-2">
-                  {sessionsData.data.map((session) => {
-                    const sessionId = session.sessionId || session.id;
-                    if (!sessionId) return null;
-                    return (
-                      <li key={sessionId}>
-                        <button
-                          type="button"
-                          onClick={() => handleSessionSelect(sessionId)}
-                          className="w-full rounded-lg border border-border/60 px-3 py-2 text-left transition hover:border-primary/60 hover:bg-primary/5"
-                        >
-                          <p className="text-sm font-medium">
-                            {formatDateShort(session.date)} {session.startTime}{" "}
-                            - {session.endTime}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {session.className} · {session.subjectName}
-                          </p>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <div className="rounded-lg border border-dashed py-4 text-center text-sm text-muted-foreground">
-                  Không có session nào trong {timeWindowDays} ngày tới
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {sessionStepComplete && step !== "session" && selectedSession && (
-          <div className="pl-8">
-            <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
-              <div>
-                <p className="text-sm font-semibold">
-                  {formatDateShort(selectedSession.date)}{" "}
-                  {selectedSession.startTime} - {selectedSession.endTime}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {selectedSession.className} · {selectedSession.subjectName}
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  resetToSessionStep();
-                }}
-              >
-                Thay đổi
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Step 2: Chọn ngày mới */}
-      {sessionStepComplete && (
-        <div className={cn("space-y-2", step === "session" && "opacity-50")}>
-          <div className="flex items-center gap-2">
-            <div
-              className={cn(
-                "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                dateStepComplete
-                  ? "bg-primary text-primary-foreground"
-                  : sessionStepComplete
-                  ? "border-2 border-primary text-primary"
-                  : "border-2 border-muted-foreground/30 text-muted-foreground"
-              )}
-            >
-              {dateStepComplete ? "✓" : "2"}
-            </div>
-            <h3 className="text-sm font-semibold">
-              Chọn ngày mới (trong {timeWindowDays} ngày tới)
-            </h3>
-          </div>
-
-          {step === "date" && (
-            <div className="pl-8 space-y-3">
-              <div className="flex items-center gap-2">
-                {selectedNewDate && (
-                  <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-2 py-1">
-                    <p className="text-xs">
-                      {format(selectedNewDate, "EEEE, dd/MM/yyyy", {
-                        locale: vi,
-                      })}
-                    </p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSelectedNewDate(undefined)}
-                      className="h-5 w-5 p-0"
-                    >
-                      ×
-                    </Button>
-                  </div>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowNewDatePicker((prev) => !prev)}
-                >
-                  {selectedNewDate ? "Đổi ngày" : "Chọn ngày"}
-                </Button>
-              </div>
-
-              {(showNewDatePicker || !selectedNewDate) && (
-                <Calendar
-                  mode="single"
-                  selected={selectedNewDate}
-                  onSelect={handleNewDateSelect}
-                  disabled={(date) => date < today}
-                  locale={vi}
-                  className="rounded-lg border"
-                />
-              )}
-
-              {selectedNewDate && (
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => setStep("slot")}
-                >
-                  Tiếp tục
-                </Button>
-              )}
-            </div>
-          )}
-
-          {dateStepComplete && step !== "date" && selectedNewDate && (
-            <div className="pl-8">
-              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
-                <p className="text-sm">
-                  {format(selectedNewDate, "EEEE, dd/MM/yyyy", { locale: vi })}
-                </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setStep("date")}
-                >
-                  Thay đổi
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Step 3: Chọn khung giờ phù hợp */}
-      {dateStepComplete && (
-        <div
-          className={cn(
-            "space-y-2",
-            (step === "session" || step === "date") && "opacity-50"
-          )}
-        >
-          <div className="flex items-center gap-2">
-            <div
-              className={cn(
-                "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                slotStepComplete
-                  ? "bg-primary text-primary-foreground"
-                  : dateStepComplete
-                  ? "border-2 border-primary text-primary"
-                  : "border-2 border-muted-foreground/30 text-muted-foreground"
-              )}
-            >
-              {slotStepComplete ? "✓" : "3"}
-            </div>
-            <h3 className="text-sm font-semibold">
-              Chọn khung giờ không trùng lịch
-            </h3>
-          </div>
-
-          {step === "slot" && (
-            <div className="pl-8">
-              {isLoadingSlots ? (
-                <div className="space-y-2">
-                  {[...Array(3)].map((_, index) => (
-                    <Skeleton key={index} className="h-14 w-full rounded-lg" />
-                  ))}
-                </div>
-              ) : availableSlots.length > 0 ? (
-                <ul className="space-y-2">
-                  {availableSlots.map((slot, idx) => {
-                    const slotId = slot.timeSlotId ?? slot.id;
-                    if (!slotId) return null;
-                    const isAvailable =
-                      slot.available !== false && !slot.conflictReason;
-                    const { start, end } = getSlotTimeRange(slot);
-                    const label = getSlotLabel(slot);
-                    return (
-                      <li key={slotId ?? idx}>
-                        <button
-                          type="button"
-                          disabled={!isAvailable}
-                          onClick={() => handleSlotSelect(slotId)}
-                          className={cn(
-                            "w-full rounded-lg border border-border/60 px-3 py-2 text-left transition",
-                            isAvailable
-                              ? "hover:border-primary/60 hover:bg-primary/5"
-                              : "cursor-not-allowed opacity-60",
-                            selectedSlotId === slotId &&
-                              "border-primary bg-primary/5"
-                          )}
-                        >
-                          {label && (
-                            <p className="text-sm font-medium">{label}</p>
-                          )}
-                          {(start || end) && (
-                            <p
-                              className={cn(
-                                "text-xs",
-                                label
-                                  ? "text-muted-foreground"
-                                  : "text-sm font-medium"
-                              )}
-                            >
-                              {start && end
-                                ? `${start} - ${end}`
-                                : start ?? end}
-                            </p>
-                          )}
-                          {!label && !start && !end && (
-                            <p className="text-sm font-medium">
-                              Khung giờ chưa xác định
-                            </p>
-                          )}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <div className="rounded-lg border border-dashed py-4 text-center text-sm text-muted-foreground">
-                  Không có khung giờ phù hợp trong ngày đã chọn
-                </div>
-              )}
-            </div>
-          )}
-
-          {slotStepComplete && step !== "slot" && selectedSlot && (
-            <div className="pl-8">
-              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
-                <p className="text-sm">{selectedSlotLabel}</p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setStep("slot")}
-                >
-                  Thay đổi
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Step 4: Chọn resource mới */}
-      {slotStepComplete && (
-        <div
-          className={cn(
-            "space-y-2",
-            step !== "resource" && step !== "form" && "opacity-50"
-          )}
-        >
-          <div className="flex items-center gap-2">
-            <div
-              className={cn(
-                "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                resourceStepComplete
-                  ? "bg-primary text-primary-foreground"
-                  : slotStepComplete
-                  ? "border-2 border-primary text-primary"
-                  : "border-2 border-muted-foreground/30 text-muted-foreground"
-              )}
-            >
-              {resourceStepComplete ? "✓" : "4"}
-            </div>
-            <h3 className="text-sm font-semibold">
-              {requireResourceAtRescheduleCreate
-                ? "Chọn resource mới"
-                : "Chọn resource mới (tùy chọn)"}
-            </h3>
-          </div>
-
-          {step === "resource" && (
-            <div className="pl-8">
-              {isLoadingRescheduleResources ? (
-                <div className="space-y-2">
-                  {[...Array(2)].map((_, index) => (
-                    <Skeleton key={index} className="h-14 w-full rounded-lg" />
-                  ))}
-                </div>
-              ) : rescheduleResources.length > 0 ? (
-                <>
-                  <Select
-                    value={selectedResourceId?.toString() || ""}
-                    onValueChange={(value) =>
-                      handleResourceSelect(
-                        value ? parseInt(value, 10) : undefined
-                      )
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue
-                        placeholder={
-                          requireResourceAtRescheduleCreate
-                            ? "Chọn resource mới"
-                            : "Chọn resource mới (tùy chọn)"
-                        }
-                      >
-                        {selectedRescheduleResource?.name || ""}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {rescheduleResources.map((resource) => {
-                        const resourceId = resource.id ?? resource.resourceId;
-                        if (!resourceId) return null;
-                        return (
-                          <SelectItem
-                            key={resourceId}
-                            value={resourceId.toString()}
-                          >
-                            <div className="flex flex-col items-start py-1">
-                              <span className="font-medium text-sm">
-                                {resource.name}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {resource.type} · Sức chứa {resource.capacity}
-                              </span>
-                              {resource.status && (
-                                <span className="text-xs text-primary">
-                                  {resource.status}
-                                </span>
-                              )}
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                  {!requireResourceAtRescheduleCreate && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleResourceSelect(undefined)}
-                      className="mt-2"
-                    >
-                      Bỏ qua - Để staff quyết định
-                    </Button>
-                  )}
-                </>
-              ) : (
-                <div className="space-y-2">
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 py-4 text-center text-sm text-amber-700">
-                    Không có resource nào khả dụng cho thời gian này. Vui lòng
-                    chọn ngày hoặc khung giờ khác.
-                  </div>
-                  {!requireResourceAtRescheduleCreate && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleResourceSelect(undefined)}
-                      className="w-full"
-                    >
-                      Tiếp tục - Để staff quyết định resource
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {step === "form" && (
-            <div className="pl-8">
-              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
-                <p className="text-sm">
-                  {selectedRescheduleResource?.name || "Chưa chọn resource"}
-                </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setStep("resource");
-                  }}
-                >
-                  Thay đổi
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Step 5: Điền lý do */}
-      {formStepReady && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <div
-              className={cn(
-                "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                reasonValid
-                  ? "bg-primary text-primary-foreground"
-                  : "border-2 border-primary text-primary"
-              )}
-            >
-              {reasonValid ? "✓" : "5"}
-            </div>
-            <h3 className="text-sm font-semibold">Điền lý do đổi lịch</h3>
-          </div>
-
-          <div className="space-y-3 pl-8">
-            <div className="space-y-1.5 text-xs text-muted-foreground">
-              <p className="text-sm font-semibold text-foreground">Tóm tắt</p>
-              <p>
-                <span className="font-medium text-foreground">
-                  Session gốc:
-                </span>{" "}
-                {selectedSession?.className} · {selectedSession?.subjectName}
-              </p>
-              <p>
-                <span className="font-medium text-foreground">
-                  Thời gian mới:
-                </span>{" "}
-                {format(selectedNewDate!, "dd/MM/yyyy", { locale: vi })} ·{" "}
-                {selectedSlotLabel}
-              </p>
-              <p>
-                <span className="font-medium text-foreground">Resource:</span>{" "}
-                {selectedRescheduleResource?.name ??
-                  (requireResourceAtRescheduleCreate
-                    ? "Chưa chọn"
-                    : "Để staff quyết định")}
-              </p>
-            </div>
-
-            <div className="space-y-1.5">
-              <Textarea
-                placeholder={`Mô tả lý do đổi lịch (tối thiểu ${reasonMinLength} ký tự)`}
-                value={reason}
-                onChange={(event) => setReason(event.target.value)}
-                rows={3}
-                className="resize-none text-sm"
-              />
-              <p className="text-xs text-muted-foreground">
-                Tối thiểu 10 ký tự · {reason.trim().length}/10
-              </p>
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                onClick={handleSubmit}
-                disabled={!reasonValid || isSubmitting}
-                size="sm"
-              >
-                {isSubmitting ? "Đang gửi..." : "Gửi yêu cầu"}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => resetToSessionStep()}
-              >
-                Làm lại
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ReplacementFlow({ onSuccess }: FlowProps) {
-  const today = startOfToday();
-  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
-    null
-  );
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedClassId, setSelectedClassId] = useState<number | undefined>(
-    undefined
-  );
-  const [selectedCandidateId, setSelectedCandidateId] = useState<number | null>(
-    null
-  );
-  const [isCandidateDropdownOpen, setIsCandidateDropdownOpen] = useState(false);
-  const [candidateSearch, setCandidateSearch] = useState("");
-  const [reason, setReason] = useState("");
-  const [step, setStep] = useState<"session" | "candidate" | "form">("session");
-
-  // Load teacher request config (includes minDaysBeforeSession from policy)
-  const { data: teacherConfig } = useGetTeacherRequestConfigQuery();
-  const minDaysBeforeSession = teacherConfig?.data?.minDaysBeforeSession ?? 1;
-  const reasonMinLength = teacherConfig?.data?.reasonMinLength ?? 15;
-  const timeWindowDays = teacherConfig?.data?.timeWindowDays ?? 14;
-
-  // Load teacher classes
-  const { data: classesData } = useGetAttendanceClassesQuery();
-
-  const formattedDate = selectedDate
-    ? format(selectedDate, "yyyy-MM-dd")
-    : undefined;
-
-  const sessionsQueryArg: { date?: string; classId?: number } = {};
-  if (formattedDate) sessionsQueryArg.date = formattedDate;
-  if (selectedClassId) sessionsQueryArg.classId = selectedClassId;
-
-  const {
-    data: sessionsData,
-    isLoading: isLoadingSessions,
-    isFetching: isFetchingSessions,
-  } = useGetMySessionsQuery(
-    Object.keys(sessionsQueryArg).length > 0 ? sessionsQueryArg : {},
-    {
-      refetchOnMountOrArgChange: true,
-      refetchOnReconnect: true,
-    }
-  );
-
-  const selectedSession = sessionsData?.data?.find(
-    (session) => (session.sessionId || session.id) === selectedSessionId
-  );
-
-  // Get replacement candidates using sessionId when creating new request
-  const candidateQueryArg = selectedSessionId
-    ? { sessionId: selectedSessionId }
-    : skipToken;
-  const { data: candidatesData, isFetching: isLoadingCandidates } =
-    useGetReplacementCandidatesQuery(candidateQueryArg);
-
-  const replacementCandidates = candidatesData?.data ?? [];
-
-  const computeCandidateMeta = (candidate: ReplacementCandidateDTO) => {
-    const name =
-      candidate.teacherName ||
-      candidate.fullName ||
-      candidate.displayName ||
-      (candidate.email ? candidate.email.split("@")[0] : undefined) ||
-      (candidate.teacherId
-        ? `Giáo viên #${candidate.teacherId}`
-        : "Giáo viên chưa xác định");
-
-    const availability =
-      candidate.availabilityStatus || candidate.availability || "";
-
-    const resolvedSkills = [
-      ...(candidate.skills ?? []),
-      ...(candidate.teacherSkills ?? []),
-    ];
-
-    const skillTokens = resolvedSkills
-      .map((raw) => {
-        if (typeof raw === "string") {
-          return raw.trim();
-        }
-
-        if (!raw) {
-          return null;
-        }
-
-        const skillObject =
-          typeof raw.skill === "object" && raw.skill !== null
-            ? raw.skill
-            : undefined;
-
-        const skillName =
-          raw.name ||
-          raw.skillName ||
-          (typeof raw.skill === "string" ? raw.skill : undefined) ||
-          skillObject?.name ||
-          (typeof raw.skill === "object" && "code" in raw.skill
-            ? String(raw.skill.code)
-            : undefined);
-
-        const level =
-          raw.level ||
-          raw.skillLevel ||
-          raw.proficiency ||
-          (typeof raw.description === "string" ? raw.description : undefined);
-
-        if (skillName && level) {
-          return `${skillName} (${level})`;
-        }
-
-        return skillName || level || null;
-      })
-      .filter(
-        (value, index, array): value is string =>
-          value != null &&
-          typeof value === "string" &&
-          value.trim().length > 0 &&
-          array.indexOf(value) === index
-      );
-
-    const combinedSkillList = skillTokens.join(", ");
-    const fallbackSkill =
-      candidate.skillSummary || candidate.skillsDescription || "";
-    const skillSummary = (combinedSkillList || fallbackSkill).trim();
-
-    const specializationRaw =
-      candidate.specialization ||
-      (candidate.tags && candidate.tags.length > 0
-        ? candidate.tags.join(", ")
-        : "");
-    const specializationLine = specializationRaw.trim();
-
-    return {
-      name,
-      email: candidate.email || "",
-      matchScore: candidate.matchScore,
-      availability,
-      skillSummary,
-      specializationLine,
-    };
-  };
-
-  const selectedCandidate =
-    selectedCandidateId !== null
-      ? replacementCandidates.find(
-          (candidate) => (candidate.teacherId ?? null) === selectedCandidateId
-        )
-      : undefined;
-
-  const normalizedCandidateQuery = candidateSearch.trim().toLowerCase();
-  const filteredCandidates =
-    normalizedCandidateQuery.length > 0
-      ? replacementCandidates.filter((candidate) => {
-          const meta = computeCandidateMeta(candidate);
-          const searchableText = [
-            meta.name,
-            meta.email,
-            candidate.phone ?? "",
-            meta.skillSummary,
-            meta.specializationLine,
-            candidate.note ?? "",
-          ]
-            .filter(Boolean)
-            .join(" ")
-            .toLowerCase();
-          return searchableText.includes(normalizedCandidateQuery);
-        })
-      : replacementCandidates;
-
-  const [createRequest, { isLoading: isSubmitting }] =
-    useCreateRequestMutation();
-
-  const resetToSessionStep = () => {
-    setSelectedSessionId(null);
-    setSelectedDate(undefined);
-    setSelectedClassId(undefined);
-    setSelectedCandidateId(null);
-    setCandidateSearch("");
-    setIsCandidateDropdownOpen(false);
-    setReason("");
-    setStep("session");
-  };
-
-  const handleSessionSelect = (sessionId: number) => {
-    const session = sessionsData?.data?.find(
-      (s) => (s.sessionId || s.id) === sessionId
-    );
-
-    if (session?.date) {
-      const sessionDate = parseISO(session.date);
-      const daysUntilSession = differenceInDays(sessionDate, today);
-
-      // Debug log
-      console.log("Validation Debug (Replacement):", {
-        sessionDate: session.date,
-        today: format(today, "yyyy-MM-dd"),
-        daysUntilSession,
-        minDaysBeforeSession,
-        teacherConfig: teacherConfig?.data,
-      });
-
-      // Validate: session must be in the future and meet minimum days requirement
-      if (daysUntilSession < 0) {
-        toast.error("Không thể chọn session trong quá khứ.");
-        return;
-      }
-
-      if (daysUntilSession < minDaysBeforeSession) {
-        toast.error(
-          `Bạn phải gửi yêu cầu trước ít nhất ${minDaysBeforeSession} ngày so với ngày diễn ra session. Session này còn ${daysUntilSession} ngày nữa.`
-        );
-        return;
-      }
-    }
-
-    setSelectedSessionId(sessionId);
-    setSelectedCandidateId(null);
-    setCandidateSearch("");
-    setIsCandidateDropdownOpen(false);
-    setStep("candidate");
-  };
-
-  const handleDateSelect = (date: Date | undefined) => {
-    if (!date || date < today) return;
-    setSelectedDate(date);
-    setShowDatePicker(false);
-    setSelectedSessionId(null);
-    setSelectedClassId(undefined);
-    setSelectedCandidateId(null);
-    setCandidateSearch("");
-    setIsCandidateDropdownOpen(false);
-    setStep("session");
-  };
-
-  const handleCandidateSelect = (candidateId: number | null) => {
-    setSelectedCandidateId(candidateId);
-    setCandidateSearch("");
-    setIsCandidateDropdownOpen(false);
-    setStep("form");
-  };
-
-  const handleSubmit = async () => {
-    if (!selectedSessionId) {
-      toast.error("Vui lòng chọn session cần nhờ dạy thay");
-      return;
-    }
-
-    if (reason.trim().length < reasonMinLength) {
-      toast.error(`Lý do phải có tối thiểu ${reasonMinLength} ký tự`);
-      return;
-    }
-
-    try {
-      const requestBody: {
-        sessionId: number;
-        requestType: RequestType;
-        replacementTeacherId?: number;
-        reason: string;
-      } = {
-        sessionId: selectedSessionId,
-        requestType: "REPLACEMENT" as RequestType,
-        reason: reason.trim(),
-      };
-      // Only include replacementTeacherId if it has a value
-      if (selectedCandidateId !== undefined && selectedCandidateId !== null) {
-        requestBody.replacementTeacherId = selectedCandidateId;
-      }
-      await createRequest(requestBody).unwrap();
-
-      toast.success("Yêu cầu đã được gửi thành công");
-      resetToSessionStep();
-      onSuccess();
-    } catch (error: unknown) {
-      const apiError = error as {
-        data?: { message?: string; error?: string; [key: string]: unknown };
-        status?: number;
-        error?: string;
-        [key: string]: unknown;
-      };
-      const errorMessage =
-        apiError?.data?.message ||
-        apiError?.data?.error ||
-        (typeof apiError?.data === "string" ? apiError.data : undefined) ||
-        apiError?.error ||
-        undefined;
-      toast.error(
-        formatBackendError(errorMessage, "Có lỗi xảy ra khi gửi yêu cầu")
-      );
-    }
-  };
-
-  const sessionStepComplete = !!selectedSessionId;
-  const candidateStepComplete = step === "form" || selectedCandidateId !== null;
-  const reasonValid = reason.trim().length >= reasonMinLength;
-
-  return (
-    <div className="space-y-4">
-      {/* Step 1: Chọn session */}
-      <div className="space-y-2">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-2">
-            <div
-              className={cn(
-                "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                sessionStepComplete
-                  ? "bg-primary text-primary-foreground"
-                  : "border-2 border-primary text-primary"
-              )}
-            >
-              {sessionStepComplete ? "✓" : "1"}
-            </div>
-            <h3 className="text-sm font-semibold">
-              Chọn session cần nhờ dạy thay
-            </h3>
-          </div>
-          <div className="flex items-center gap-2 md:justify-end">
-            {selectedDate && (
-              <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-2 py-1 text-xs">
-                {format(selectedDate, "dd/MM/yyyy", { locale: vi })}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedDate(undefined);
-                    setSelectedClassId(undefined);
-                    setSelectedSessionId(null);
-                    setSelectedCandidateId(null);
-                    setStep("session");
-                  }}
-                  className="h-5 w-5 p-0"
-                >
-                  ×
-                </Button>
-              </div>
-            )}
-            {selectedClassId && classesData?.data && (
-              <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-2 py-1 text-xs">
-                {classesData.data.find((c) => c.id === selectedClassId)?.name ||
-                  classesData.data.find((c) => c.id === selectedClassId)
-                    ?.code ||
-                  "Lớp đã chọn"}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedClassId(undefined)}
-                  className="h-5 w-5 p-0"
-                >
-                  ×
-                </Button>
-              </div>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDatePicker((prev) => !prev)}
-            >
-              {selectedDate ? "Đổi ngày" : "Chọn ngày"}
-            </Button>
-            <Select
-              value={selectedClassId ? selectedClassId.toString() : "ALL"}
-              onValueChange={(value) =>
-                setSelectedClassId(value === "ALL" ? undefined : Number(value))
-              }
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Chọn lớp" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Tất cả lớp</SelectItem>
-                {classesData?.data?.map((cls) => (
-                  <SelectItem key={cls.id} value={cls.id.toString()}>
-                    {cls.name || cls.code}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="pl-8 space-y-3">
-          {showDatePicker && (
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={handleDateSelect}
-              disabled={(date) => date < today}
-              locale={vi}
-              className="rounded-lg border"
-            />
-          )}
-
-          {step === "session" && (
-            <div>
-              {isLoadingSessions || isFetchingSessions ? (
-                <div className="space-y-2">
-                  {[...Array(3)].map((_, index) => (
-                    <Skeleton key={index} className="h-14 w-full rounded-lg" />
-                  ))}
-                </div>
-              ) : sessionsData?.data && sessionsData.data.length > 0 ? (
-                <ul className="space-y-2">
-                  {sessionsData.data.map((session) => {
-                    const sessionId = session.sessionId || session.id;
-                    if (!sessionId) return null;
-                    return (
-                      <li key={sessionId}>
-                        <button
-                          type="button"
-                          onClick={() => handleSessionSelect(sessionId)}
-                          className="w-full rounded-lg border border-border/60 px-3 py-2 text-left transition hover:border-primary/60 hover:bg-primary/5"
-                        >
-                          <p className="text-sm font-medium">
-                            {formatDateShort(session.date)} {session.startTime}{" "}
-                            - {session.endTime}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {session.className} · {session.subjectName}
-                          </p>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <div className="rounded-lg border border-dashed py-4 text-center text-sm text-muted-foreground">
-                  {selectedDate
-                    ? "Không có session nào trong ngày đã chọn"
-                    : `Không có session nào trong ${timeWindowDays} ngày tới`}
-                </div>
-              )}
-            </div>
-          )}
-
-          {sessionStepComplete && step !== "session" && selectedSession && (
-            <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
-              <div>
-                <p className="text-sm font-semibold">
-                  {formatDateShort(selectedSession.date)}{" "}
-                  {selectedSession.startTime} - {selectedSession.endTime}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {selectedSession.className} · {selectedSession.subjectName}
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => resetToSessionStep()}
-              >
-                Thay đổi
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Step 2: Chọn giáo viên đề xuất (tùy chọn) */}
-      {sessionStepComplete && (
-        <div className={cn("space-y-2", step === "session" && "opacity-50")}>
-          <div className="flex items-center gap-2">
-            <div
-              className={cn(
-                "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                candidateStepComplete
-                  ? "bg-primary text-primary-foreground"
-                  : "border-2 border-primary text-primary"
-              )}
-            >
-              {candidateStepComplete ? "✓" : "2"}
-            </div>
-            <h3 className="text-sm font-semibold">
-              Gợi ý giáo viên dạy thay (tùy chọn)
-            </h3>
-          </div>
-
-          {step === "candidate" && (
-            <div className="pl-8">
-              {isLoadingCandidates ? (
-                <div className="space-y-2">
-                  {[...Array(3)].map((_, index) => (
-                    <Skeleton key={index} className="h-16 w-full rounded-lg" />
-                  ))}
-                </div>
-              ) : replacementCandidates.length > 0 ? (
-                <div className="space-y-2">
-                  <Popover
-                    open={isCandidateDropdownOpen}
-                    onOpenChange={setIsCandidateDropdownOpen}
-                  >
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className="w-full justify-between"
-                      >
-                        <span className="truncate">
-                          {selectedCandidate
-                            ? computeCandidateMeta(selectedCandidate).name
-                            : "Chọn giáo viên dạy thay..."}
-                        </span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-(--radix-popover-trigger-width) p-0"
-                      align="start"
-                      onWheelCapture={(event) => event.stopPropagation()}
-                    >
-                      <div className="p-2 border-b">
-                        <Input
-                          placeholder="Tìm kiếm giáo viên..."
-                          value={candidateSearch}
-                          onChange={(e) => setCandidateSearch(e.target.value)}
-                          className="h-9"
-                        />
-                      </div>
-                      <div className="max-h-[300px] overflow-y-auto">
-                        {filteredCandidates.length > 0 ? (
-                          <ul className="p-1">
-                            {filteredCandidates.map((candidate) => {
-                              const meta = computeCandidateMeta(candidate);
-                              const isSelected =
-                                (candidate.teacherId ?? null) ===
-                                selectedCandidateId;
-
-                              return (
-                                <li key={candidate.teacherId ?? meta.name}>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      handleCandidateSelect(
-                                        candidate.teacherId ?? null
-                                      );
-                                    }}
-                                    className={cn(
-                                      "w-full rounded-md px-3 py-2 text-left transition-colors",
-                                      isSelected
-                                        ? "bg-primary/10 text-primary"
-                                        : "hover:bg-muted"
-                                    )}
-                                  >
-                                    <div className="flex items-center justify-between gap-3">
-                                      <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-                                        <p className="text-sm font-semibold text-foreground truncate">
-                                          {meta.name}
-                                        </p>
-                                        {meta.email && (
-                                          <span className="text-xs text-muted-foreground truncate">
-                                            {meta.email}
-                                          </span>
-                                        )}
-                                      </div>
-                                      {candidate.matchScore != null && (
-                                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary shrink-0">
-                                          {candidate.matchScore}%
-                                        </span>
-                                      )}
-                                    </div>
-                                    {meta.skillSummary && (
-                                      <p className="text-xs text-muted-foreground mt-1 truncate">
-                                        Kỹ năng: {meta.skillSummary}
-                                      </p>
-                                    )}
-                                    {meta.specializationLine && (
-                                      <p className="text-xs text-muted-foreground truncate">
-                                        Chuyên môn: {meta.specializationLine}
-                                      </p>
-                                    )}
-                                    {meta.availability && (
-                                      <p className="text-xs text-sky-600 mt-1">
-                                        Trạng thái: {meta.availability}
-                                      </p>
-                                    )}
-                                  </button>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        ) : (
-                          <div className="p-4 text-center text-sm text-muted-foreground">
-                            Không tìm thấy giáo viên phù hợp
-                          </div>
-                        )}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleCandidateSelect(null)}
-                  >
-                    Bỏ qua bước này
-                  </Button>
-                </div>
-              ) : (
-                <div className="rounded-lg border border-dashed py-4 text-center text-sm text-muted-foreground">
-                  Chưa có gợi ý phù hợp
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleCandidateSelect(null)}
-                    className="mt-2"
-                  >
-                    Bỏ qua bước này
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {candidateStepComplete && step === "form" && (
-            <div className="pl-8">
-              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
-                <p className="text-sm">
-                  {selectedCandidate
-                    ? computeCandidateMeta(selectedCandidate).name
-                    : "Để staff đề xuất"}
-                </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setStep("candidate");
-                    setIsCandidateDropdownOpen(true);
-                  }}
-                >
-                  Thay đổi
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Step 3: Điền lý do */}
-      {candidateStepComplete && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <div
-              className={cn(
-                "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                reasonValid
-                  ? "bg-primary text-primary-foreground"
-                  : "border-2 border-primary text-primary"
-              )}
-            >
-              {reasonValid ? "✓" : "3"}
-            </div>
-            <h3 className="text-sm font-semibold">Điền lý do nhờ dạy thay</h3>
-          </div>
-
-          <div className="space-y-3 pl-8">
-            {selectedSession && (
-              <div className="space-y-1 text-xs text-muted-foreground">
-                <p className="text-sm font-semibold text-foreground">Tóm tắt</p>
-                <p>
-                  <span className="font-medium text-foreground">Session:</span>{" "}
-                  {selectedSession.className} · {selectedSession.subjectName}
-                </p>
-                <p>
-                  <span className="font-medium text-foreground">
-                    Thời gian:
-                  </span>{" "}
-                  {formatDate(selectedSession.date)} ·{" "}
-                  {selectedSession.startTime} - {selectedSession.endTime}
-                </p>
-                <p>
-                  <span className="font-medium text-foreground">
-                    Giáo viên đề xuất:
-                  </span>{" "}
-                  {selectedCandidate
-                    ? computeCandidateMeta(selectedCandidate).name
-                    : "Để staff quyết định"}
-                </p>
-              </div>
-            )}
-
-            <div className="space-y-1.5">
-              <Textarea
-                placeholder="Mô tả lý do nhờ giáo viên khác dạy thay..."
-                value={reason}
-                onChange={(event) => setReason(event.target.value)}
-                rows={3}
-                className="resize-none text-sm"
-              />
-              <p className="text-xs text-muted-foreground">
-                Tối thiểu 10 ký tự · {reason.trim().length}/10
-              </p>
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                onClick={handleSubmit}
-                disabled={!reasonValid || isSubmitting}
-                size="sm"
-              >
-                {isSubmitting ? "Đang gửi..." : "Gửi yêu cầu"}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => resetToSessionStep()}
-              >
-                Làm lại
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
 }
 
 export function TeacherRequestDetailContent({
@@ -3951,14 +1567,6 @@ export function TeacherRequestDetailContent({
                   </span>
                 </p>
               )}
-              {replacementTeacherMatchScore !== undefined && (
-                <p>
-                  Điểm phù hợp:{" "}
-                  <span className="font-medium text-foreground">
-                    {replacementTeacherMatchScore.toFixed(0)}%
-                  </span>
-                </p>
-              )}
               {formattedReplacementSkills &&
                 formattedReplacementSkills.length > 0 && (
                   <div>
@@ -3994,19 +1602,97 @@ export function TeacherRequestDetailContent({
         </p>
       </div>
 
-      {request.note && (
-        <>
-          <div className="h-px bg-border" />
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Ghi chú từ bộ phận Học vụ
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
-              {request.note}
-            </p>
-          </div>
-        </>
-      )}
+      {request.note &&
+        (() => {
+          // Parse note để loại bỏ phần DECLINED_BY_TEACHER_ID
+          // Format: DECLINED_BY_TEACHER_ID:{teacherId}:{reason}
+          // Hoặc có thể có nhiều dòng với format này
+          const noteLines = request.note.split("\n");
+          const academicNotes: string[] = [];
+          const declinedInfo: Array<{
+            teacherId: string;
+            teacherName: string;
+            reason: string;
+          }> = [];
+
+          for (const line of noteLines) {
+            if (line.startsWith("DECLINED_BY_TEACHER:")) {
+              // Parse declined info
+              // Format: DECLINED_BY_TEACHER:{teacherId}:{teacherName}:{reason}
+              const parts = line.split(":");
+              if (parts.length >= 4) {
+                declinedInfo.push({
+                  teacherId: parts[1],
+                  teacherName: parts[2],
+                  reason: parts.slice(3).join(":"),
+                });
+              } else if (parts.length >= 3) {
+                // Fallback cho format cũ: DECLINED_BY_TEACHER_ID:{teacherId}:{reason}
+                declinedInfo.push({
+                  teacherId: parts[1],
+                  teacherName: `Giáo viên ID ${parts[1]}`,
+                  reason: parts.slice(2).join(":"),
+                });
+              }
+            } else if (line.startsWith("DECLINED_BY_TEACHER_ID:")) {
+              // Parse format cũ để backward compatibility
+              const parts = line.split(":");
+              if (parts.length >= 3) {
+                declinedInfo.push({
+                  teacherId: parts[1],
+                  teacherName: `Giáo viên ID ${parts[1]}`,
+                  reason: parts.slice(2).join(":"),
+                });
+              }
+            } else if (line.trim()) {
+              // Đây là note từ academic staff
+              academicNotes.push(line);
+            }
+          }
+
+          const academicNote = academicNotes.join("\n").trim();
+
+          return (
+            <>
+              {academicNote && (
+                <>
+                  <div className="h-px bg-border" />
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Ghi chú từ bộ phận Học vụ
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
+                      {academicNote}
+                    </p>
+                  </div>
+                </>
+              )}
+              {declinedInfo.length > 0 && (
+                <>
+                  <div className="h-px bg-border" />
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Giáo viên đã từ chối
+                    </p>
+                    <div className="mt-1 space-y-2">
+                      {declinedInfo.map((info, index) => (
+                        <div
+                          key={index}
+                          className="text-sm text-amber-700 dark:text-amber-400"
+                        >
+                          <span className="font-medium">
+                            {info.teacherName}:
+                          </span>{" "}
+                          {info.reason}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </>
+          );
+        })()}
 
       <div className="h-px bg-border" />
 
