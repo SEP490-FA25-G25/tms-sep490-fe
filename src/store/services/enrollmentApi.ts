@@ -61,14 +61,11 @@ export interface ClassEnrollmentImportExecuteRequest {
 }
 
 export interface EnrollmentResult {
-  classId: number
-  className: string
-  totalAttempted: number
-  successfulEnrollments: number
-  failedEnrollments: number
-  capacityOverride: boolean
-  enrolledBy: number
-  enrolledAt: string
+  enrolledCount: number
+  studentsCreated: number
+  sessionsGeneratedPerStudent: number
+  totalStudentSessionsCreated: number
+  warnings: string[]
 }
 
 // Enroll existing students request

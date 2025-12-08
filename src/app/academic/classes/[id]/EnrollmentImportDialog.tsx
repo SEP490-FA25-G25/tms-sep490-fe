@@ -213,7 +213,8 @@ export function EnrollmentImportDialog({
       const studentsToEnroll = baseStrategy === 'PARTIAL'
         ? preview.students.filter((student, idx) => {
           if (student.status === 'ERROR' || student.status === 'DUPLICATE') return false
-          const studentId = student.status === 'FOUND' ? student.resolvedStudentId : -idx - 1
+          // Use positive index for CREATE students to match backend zero-based index
+          const studentId = student.status === 'FOUND' ? student.resolvedStudentId : idx
           return selectedStudents.has(studentId!)
         })
         : preview.students.filter(student => student.status !== 'ERROR' && student.status !== 'DUPLICATE')
@@ -224,12 +225,12 @@ export function EnrollmentImportDialog({
         selectedStudentIds: baseStrategy === 'PARTIAL' ? Array.from(selectedStudents) : undefined,
         overrideReason: overrideCapacity ? overrideReason : undefined,
         students: studentsToEnroll,
-      }).unwrap()
+      }).unwrap();
 
       toast.success(
-        `Đã đăng ký thành công ${result.data.successfulEnrollments} sinh viên`
-      )
-      onSuccess()
+        `Đã đăng ký thành công ${result.data.enrolledCount} sinh viên`
+      );
+      onSuccess();
       handleClose()
     } catch (error: unknown) {
       toast.error((error as { data?: { message?: string } })?.data?.message || 'Thực hiện đăng ký thất bại')
@@ -251,7 +252,8 @@ export function EnrollmentImportDialog({
     if (!isStudentValid(student)) return
 
     const newSet = new Set(selectedStudents)
-    const studentId = student.status === 'FOUND' ? student.resolvedStudentId : -idx - 1
+    // Use positive index for CREATE students to match backend zero-based index
+    const studentId = student.status === 'FOUND' ? student.resolvedStudentId : idx
 
     if (newSet.has(studentId!)) {
       newSet.delete(studentId!)
@@ -265,14 +267,16 @@ export function EnrollmentImportDialog({
     if (!preview) return
     const allSelected = validStudentsList.every((s) => {
       const realIdx = preview.students.indexOf(s)
-      const id = s.status === 'FOUND' ? s.resolvedStudentId : -realIdx - 1
+      // Use positive index for CREATE students to match backend zero-based index
+      const id = s.status === 'FOUND' ? s.resolvedStudentId : realIdx
       return selectedStudents.has(id!)
     })
 
     const newSet = new Set(selectedStudents)
     validStudentsList.forEach((s) => {
       const realIdx = preview.students.indexOf(s)
-      const id = s.status === 'FOUND' ? s.resolvedStudentId : -realIdx - 1
+      // Use positive index for CREATE students to match backend zero-based index
+      const id = s.status === 'FOUND' ? s.resolvedStudentId : realIdx
       if (allSelected) {
         newSet.delete(id!)
       } else {
@@ -589,7 +593,8 @@ export function EnrollmentImportDialog({
                             allStudentsSorted.map((student) => {
                               const realIdx = preview.students.indexOf(student)
                               const isValid = isStudentValid(student)
-                              const studentId = student.status === 'FOUND' ? student.resolvedStudentId : -realIdx - 1
+                              // Use positive index for CREATE students to match backend zero-based index
+                              const studentId = student.status === 'FOUND' ? student.resolvedStudentId : realIdx
                               const isSelected = selectedStudents.has(studentId!)
                               
                               return (

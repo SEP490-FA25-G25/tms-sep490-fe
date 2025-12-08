@@ -123,7 +123,7 @@ export function StudentSelectionDialog({
       }).unwrap();
 
       toast.success(
-        `Đã ghi danh thành công ${result.data.successfulEnrollments} học sinh`
+        `Đã ghi danh thành công ${result.data.enrolledCount} học sinh`
       );
 
       handleClose();
