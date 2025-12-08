@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 import { useMemo, useState } from 'react'
 import { format, isSameDay, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'

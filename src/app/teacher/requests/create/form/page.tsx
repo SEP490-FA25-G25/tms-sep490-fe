@@ -228,7 +228,7 @@ export default function RequestFormPage() {
             {session.startTime} - {session.endTime}
           </span>
           <span>·</span>
-          <span>{session.courseName}</span>
+          <span>{session.subjectName}</span>
         </div>
         {session.topic && (
           <p className="text-sm text-muted-foreground">

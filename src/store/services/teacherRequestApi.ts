@@ -24,7 +24,7 @@ export interface TeacherRequestDTO {
   sessionStartTime: string;
   sessionEndTime: string;
   className: string;
-  courseName: string;
+  subjectName: string;
   classCode?: string;
   sessionTopic?: string;
   teacherId?: number;
@@ -34,7 +34,7 @@ export interface TeacherRequestDTO {
     id?: number;
     classCode?: string;
     name?: string;
-    courseName?: string;
+    subjectName?: string;
     branchName?: string;
     [key: string]: unknown;
   };
@@ -44,7 +44,7 @@ export interface TeacherRequestDTO {
     startTime?: string;
     endTime?: string;
     className?: string;
-    courseName?: string;
+    subjectName?: string;
     [key: string]: unknown;
   };
   currentModality?: string;
@@ -142,7 +142,7 @@ export interface MySessionDTO {
   startTime: string;
   endTime: string;
   className: string;
-  courseName: string;
+  subjectName: string;
   topic?: string;
   requestStatus?: RequestStatus;
   hasPendingRequest: boolean;
@@ -464,7 +464,8 @@ export const teacherRequestApi = createApi({
       query: ({ requestId, sessionId, teacherId }) => {
         if (requestId) {
           return {
-            url: `/teacher-requests/${requestId}/modality/resources`,
+            // Academic staff use requestId -> staff endpoint
+            url: `/teacher-requests/${requestId}/modality/resources/staff`,
             method: "GET",
           };
         }
