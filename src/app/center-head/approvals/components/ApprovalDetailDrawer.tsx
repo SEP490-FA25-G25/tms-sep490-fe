@@ -339,7 +339,7 @@ export function ApprovalDetailDrawer({ classId, open, onClose, onActionComplete 
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Khóa học</p>
-                        <p className="font-semibold">{overview.course?.name}</p>
+                        <p className="font-semibold">{overview.subject?.name}</p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Chi nhánh</p>

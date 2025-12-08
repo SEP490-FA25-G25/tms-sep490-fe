@@ -77,9 +77,9 @@ const TeacherClassDetailPage = () => {
   // Get class students
   const { data: studentsResponse, isLoading: isLoadingStudents } =
     useGetClassStudentsQuery(
-      { classId: classIdNumber, page: 0, size: 100 },
-      { skip: !isValidClassId }
-    );
+    { classId: classIdNumber, page: 0, size: 100 },
+    { skip: !isValidClassId }
+  );
 
   const students = studentsResponse?.data?.content || [];
   const totalStudents =
@@ -92,27 +92,27 @@ const TeacherClassDetailPage = () => {
   const classDetail: StudentClassDetailDTO | undefined =
     classDetailResponse?.data
       ? (() => {
-          const apiData = classDetailResponse.data;
-          return {
-            id: apiData.id,
-            code: apiData.code,
-            name: apiData.name,
-            course: {
-              id: apiData.course.id,
-              name: apiData.course.name,
-              code: apiData.course.code,
-            },
-            branch: {
-              id: apiData.branch.id,
-              name: apiData.branch.name,
-              address: apiData.branch.address,
-            },
-            modality: apiData.modality,
-            startDate: apiData.startDate,
-            plannedEndDate: apiData.plannedEndDate,
-            actualEndDate: apiData.actualEndDate,
-            scheduleDays: apiData.scheduleDays,
-            maxCapacity: apiData.maxCapacity,
+    const apiData = classDetailResponse.data;
+    return {
+      id: apiData.id,
+      code: apiData.code,
+      name: apiData.name,
+      course: {
+        id: apiData.subject.id,
+        name: apiData.subject.name,
+        code: apiData.subject.code,
+      },
+      branch: {
+        id: apiData.branch.id,
+        name: apiData.branch.name,
+        address: apiData.branch.address,
+      },
+      modality: apiData.modality,
+      startDate: apiData.startDate,
+      plannedEndDate: apiData.plannedEndDate,
+      actualEndDate: apiData.actualEndDate,
+      scheduleDays: apiData.scheduleDays,
+      maxCapacity: apiData.maxCapacity,
             status:
               apiData.status === "ONGOING"
                 ? "ONGOING"
@@ -124,9 +124,9 @@ const TeacherClassDetailPage = () => {
             teachers:
               apiData.teachers.length > 0
                 ? apiData.teachers.map((t, index) => ({
-                    teacherId: t.teacherId,
-                    teacherName: t.fullName,
-                    teacherEmail: t.email,
+        teacherId: t.teacherId,
+        teacherName: t.fullName,
+        teacherEmail: t.email,
                     isPrimaryInstructor:
                       index === 0 ||
                       t.sessionCount ===
@@ -135,16 +135,16 @@ const TeacherClassDetailPage = () => {
                         ), // First teacher or one with highest session count is primary
                   }))
                 : [],
-            scheduleSummary: apiData.scheduleSummary,
-            enrollmentSummary: {
+      scheduleSummary: apiData.scheduleSummary,
+      enrollmentSummary: {
               totalEnrolled: actualEnrolledCount, // Use actual count from students API
-              maxCapacity: apiData.enrollmentSummary.maxCapacity,
-            },
+        maxCapacity: apiData.enrollmentSummary.maxCapacity,
+      },
             nextSession: apiData.upcomingSessions?.[0]
               ? {
-                  id: apiData.upcomingSessions[0].id,
-                  classId: apiData.id,
-                  date: apiData.upcomingSessions[0].date,
+        id: apiData.upcomingSessions[0].id,
+        classId: apiData.id,
+        date: apiData.upcomingSessions[0].date,
                   type: apiData.upcomingSessions[0].type as
                     | "CLASS"
                     | "TEACHER_RESCHEDULE",
@@ -152,16 +152,16 @@ const TeacherClassDetailPage = () => {
                     | "PLANNED"
                     | "CANCELLED"
                     | "DONE",
-                  room: apiData.upcomingSessions[0].room,
-                  teacherNote: undefined,
-                  startTime: apiData.upcomingSessions[0].startTime,
-                  endTime: apiData.upcomingSessions[0].endTime,
+        room: apiData.upcomingSessions[0].room,
+        teacherNote: undefined,
+        startTime: apiData.upcomingSessions[0].startTime,
+        endTime: apiData.upcomingSessions[0].endTime,
                   teachers: apiData.upcomingSessions[0].teachers.map(
                     (t) => t.fullName
                   ),
                 }
               : undefined,
-          };
+    };
         })()
       : undefined;
 

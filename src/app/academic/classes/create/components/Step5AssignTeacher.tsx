@@ -302,11 +302,10 @@ export function Step5AssignTeacher({
 
   // Get course subject code (IELTS, TOEIC, JLPT, etc.)
   const courseSubject = useMemo(() => {
-    const course = classDetail?.data?.course;
-    // Priority: subject.code > course code prefix
+    const subject = classDetail?.data?.subject;
+    // Priority: subject.code > subject code prefix
     return (
-      course?.subject?.code?.toUpperCase() ||
-      course?.code?.split("-")[0]?.toUpperCase() ||
+      subject?.code?.toUpperCase() ||
       null
     );
   }, [classDetail]);
@@ -658,16 +657,16 @@ export function Step5AssignTeacher({
         <div className="flex-1">
           <p className="text-sm font-medium text-blue-900">
             Khóa học:{" "}
-            {classDetail?.data?.course?.name ||
+            {classDetail?.data?.subject?.name ||
               classDetail?.data?.name ||
               "Chưa xác định"}
           </p>
           <p className="text-xs text-blue-700">
-            Mã khóa: {classDetail?.data?.course?.code || "N/A"}
+            Mã khóa: {classDetail?.data?.subject?.code || "N/A"}
           </p>
         </div>
         <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-          {classDetail?.data?.course?.code?.split("-")[0] || "?"}
+          {classDetail?.data?.subject?.code?.split("-")[0] || "?"}
         </Badge>
       </div>
 

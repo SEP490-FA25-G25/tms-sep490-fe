@@ -349,7 +349,7 @@ function ApprovalClassCard({ item, onOpenDetail }: { item: ClassListItemDTO; onO
           <div>
             <p className="text-xs text-muted-foreground">Mã lớp</p>
             <p className="text-lg font-semibold">{item.code}</p>
-            <p className="text-sm text-muted-foreground">{item.courseName}</p>
+            <p className="text-sm text-muted-foreground">{item.subjectName}</p>
           </div>
           <div className="flex flex-col items-end gap-2">
             <Badge variant="outline">{classStatusLabel(item.status ?? undefined)}</Badge>
