@@ -230,15 +230,27 @@ export interface AcademicStudentInfo {
 
 export interface AttendanceStats {
   totalSessions: number
-  presentCount: number
-  absentCount: number
-  excusedCount: number
+  totalAbsences: number
+  excusedAbsences: number
+  unexcusedAbsences: number
+}
+
+export interface AdditionalInfo {
+  daysUntilSession?: number
+  studentAbsenceStats?: AttendanceStats
+  previousRequests?: {
+    totalRequests: number
+    approvedRequests: number
+    rejectedRequests: number
+    cancelledRequests: number
+  }
 }
 
 export interface AcademicStudentRequest extends StudentRequest {
   student: AcademicStudentInfo
   daysUntilSession?: number
   attendanceStats?: AttendanceStats
+  additionalInfo?: AdditionalInfo
 }
 
 export interface PendingRequestsSummary {

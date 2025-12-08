@@ -55,8 +55,7 @@ interface RequestDetailDialogProps {
 }
 
 export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDetailDialogProps) {
-  const [decisionNote, setDecisionNote] = useState('')
-  const [decisionRejectReason, setDecisionRejectReason] = useState('')
+  const [note, setNote] = useState('')
   const [confirmAction, setConfirmAction] = useState<'APPROVE' | 'REJECT' | null>(null)
 
   // Fetch request detail
@@ -68,8 +67,8 @@ export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDe
   })
 
   const detailRequest = detailResponse?.data
-  const detailDaysUntilSession = detailRequest?.daysUntilSession ?? null
-  const detailAttendanceStats = detailRequest?.attendanceStats
+  const detailDaysUntilSession = detailRequest?.additionalInfo?.daysUntilSession ?? detailRequest?.daysUntilSession ?? null
+  const detailAttendanceStats = detailRequest?.additionalInfo?.studentAbsenceStats ?? detailRequest?.attendanceStats
   const detailStatusMeta =
     detailRequest && REQUEST_STATUS_META[detailRequest.status as keyof typeof REQUEST_STATUS_META]
   const detailClassTeacherName =
@@ -84,15 +83,15 @@ export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDe
   const handleDecision = async (type: 'APPROVE' | 'REJECT') => {
     if (!detailRequest) return
 
-    // For approve, show confirmation dialog
+    // For approve, note is optional - show confirmation dialog
     if (type === 'APPROVE') {
       setConfirmAction('APPROVE')
       return
     }
 
-    // For reject, validate reason and show confirmation dialog
-    if (decisionRejectReason.trim().length < 10) {
-      toast.error('Lý do từ chối cần tối thiểu 10 ký tự')
+    // For reject, note is required with min 10 chars
+    if (note.trim().length < 10) {
+      toast.error('Ghi chú cần tối thiểu 10 ký tự khi từ chối')
       return
     }
     setConfirmAction('REJECT')
@@ -105,19 +104,18 @@ export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDe
       if (confirmAction === 'APPROVE') {
         await approveRequest({
           id: detailRequest.id,
-          note: decisionNote.trim() || undefined,
+          note: note.trim() || undefined,
         }).unwrap()
         toast.success('Đã duyệt yêu cầu')
       } else if (confirmAction === 'REJECT') {
         await rejectRequest({
           id: detailRequest.id,
-          note: decisionRejectReason.trim(),
+          note: note.trim(),
         }).unwrap()
         toast.success('Đã từ chối yêu cầu')
       }
 
-      setDecisionNote('')
-      setDecisionRejectReason('')
+      setNote('')
       setConfirmAction(null)
       onOpenChange(false)
     } catch (error: unknown) {
@@ -133,8 +131,7 @@ export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDe
   }
 
   const handleClose = () => {
-    setDecisionNote('')
-    setDecisionRejectReason('')
+    setNote('')
     setConfirmAction(null)
     onOpenChange(false)
   }
@@ -258,17 +255,17 @@ export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDe
                           <p className="text-xs text-muted-foreground">Tổng buổi</p>
                           <p className="text-lg font-semibold">{detailAttendanceStats.totalSessions}</p>
                         </div>
-                        <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/20 p-2">
-                          <p className="text-xs text-muted-foreground">Có mặt</p>
-                          <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">{detailAttendanceStats.presentCount}</p>
-                        </div>
                         <div className="rounded-lg border border-rose-200 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20 p-2">
-                          <p className="text-xs text-muted-foreground">Vắng</p>
-                          <p className="text-lg font-semibold text-rose-600 dark:text-rose-400">{detailAttendanceStats.absentCount}</p>
+                          <p className="text-xs text-muted-foreground">Tổng vắng</p>
+                          <p className="text-lg font-semibold text-rose-600 dark:text-rose-400">{detailAttendanceStats.totalAbsences}</p>
                         </div>
                         <div className="rounded-lg border border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20 p-2">
-                          <p className="text-xs text-muted-foreground">Có phép</p>
-                          <p className="text-lg font-semibold text-amber-600 dark:text-amber-400">{detailAttendanceStats.excusedCount}</p>
+                          <p className="text-xs text-muted-foreground">Vắng có phép</p>
+                          <p className="text-lg font-semibold text-amber-600 dark:text-amber-400">{detailAttendanceStats.excusedAbsences}</p>
+                        </div>
+                        <div className="rounded-lg border border-orange-200 bg-orange-50/50 dark:border-orange-900 dark:bg-orange-950/20 p-2">
+                          <p className="text-xs text-muted-foreground">Vắng không phép</p>
+                          <p className="text-lg font-semibold text-orange-600 dark:text-orange-400">{detailAttendanceStats.unexcusedAbsences}</p>
                         </div>
                       </div>
                     ) : (
@@ -303,31 +300,19 @@ export function RequestDetailDialog({ requestId, open, onOpenChange }: RequestDe
                         Xử lý yêu cầu
                       </h3>
 
-                      {/* Note for approval */}
+                      {/* Note for both approve and reject */}
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-foreground">
-                          Ghi chú khi duyệt
-                          <span className="text-xs font-normal text-muted-foreground ml-1">(tùy chọn)</span>
+                          Ghi chú
+                          <span className="text-xs font-normal text-muted-foreground ml-1">
+                            (bắt buộc khi từ chối, tối thiểu 10 ký tự)
+                          </span>
                         </label>
                         <Textarea
-                          value={decisionNote}
-                          onChange={(event) => setDecisionNote(event.target.value)}
-                          placeholder="Nhập ghi chú khi chấp thuận yêu cầu..."
-                          className="min-h-20 resize-none"
-                        />
-                      </div>
-
-                      {/* Rejection reason */}
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground">
-                          Lý do từ chối
-                          <span className="text-xs font-normal text-muted-foreground ml-1">(bắt buộc nếu từ chối)</span>
-                        </label>
-                        <Textarea
-                          value={decisionRejectReason}
-                          onChange={(event) => setDecisionRejectReason(event.target.value)}
-                          placeholder="Nhập lý do từ chối (tối thiểu 10 ký tự)"
-                          className="min-h-[100px] resize-none"
+                          value={note}
+                          onChange={(event) => setNote(event.target.value)}
+                          placeholder="Nhập ghi chú cho quyết định của bạn...&#10;• Chấp thuận: Ghi chú tùy chọn&#10;• Từ chối: Ghi chú bắt buộc (≥10 ký tự)"
+                          className="min-h-[120px] resize-none"
                         />
                       </div>
 
