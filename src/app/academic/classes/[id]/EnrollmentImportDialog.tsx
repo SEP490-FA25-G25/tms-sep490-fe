@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   FullScreenModal,
@@ -85,9 +85,20 @@ export function EnrollmentImportDialog({
   const validStudentsList = preview?.students.filter(s => s.status !== 'ERROR' && s.status !== 'DUPLICATE') || []
   const errorStudentsList = preview?.students.filter(s => s.status === 'ERROR' || s.status === 'DUPLICATE') || []
   
-  // Check if capacity will be exceeded
+  // Check if capacity will be exceeded based on actual selection
   const studentsToEnrollCount = baseStrategy === 'PARTIAL' ? selectedStudents.size : validStudentsList.length
-  const willExceedCapacity = preview ? (preview.currentEnrolled + studentsToEnrollCount) > preview.maxCapacity : false
+  
+  // Calculate based on available slots, not absolute capacity
+  const availableSlots = preview ? preview.maxCapacity - preview.currentEnrolled : 0
+  const willExceedCapacity = studentsToEnrollCount > availableSlots
+
+  // Auto uncheck override when capacity is no longer exceeded
+  useEffect(() => {
+    if (!willExceedCapacity && overrideCapacity) {
+      setOverrideCapacity(false)
+      setOverrideReason('')
+    }
+  }, [willExceedCapacity, overrideCapacity])
 
   // Helper to check if a student is valid (can be enrolled)
   const isStudentValid = (student: StudentEnrollmentData) => {

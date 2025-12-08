@@ -47,7 +47,6 @@ export interface ClassListItemDTO {
   totalSessions?: number;
   canEnrollStudents: boolean;
   enrollmentRestrictionReason?: string;
-  // Subject info (previously called "course")
   subjectName: string;
   subjectCode: string;
 }
@@ -136,22 +135,20 @@ export interface ClassListRequest {
   sortDir?: "asc" | "desc";
 }
 
-export interface PaginationInfo {
+// Spring Data Page response structure (flat, not nested)
+export interface SpringPage<T> {
+  content: T[];
   size: number;
   number: number; // Current page number (0-indexed)
   totalElements: number;
   totalPages: number;
-}
-
-export interface PagedResponse<T> {
-  content: T[];
-  page: PaginationInfo;
+  // Spring Page has more fields, but we only need these
 }
 
 export interface ClassListResponse {
   success: boolean;
   message: string;
-  data: PagedResponse<ClassListItemDTO>;
+  data: SpringPage<ClassListItemDTO>;
 }
 
 export interface ClassDetailResponse {
@@ -273,7 +270,7 @@ export interface ClassStudentDTO {
 export interface ClassStudentsResponse {
   success: boolean;
   message: string;
-  data: PagedResponse<ClassStudentDTO>;
+  data: SpringPage<ClassStudentDTO>;
 }
 
 // New nested DTOs for enhanced assessment data
@@ -504,7 +501,7 @@ export const classApi = createApi({
         sort = "enrolledAt",
         sortDir = "desc",
       }) => ({
-        url: `/teacher/classes/${classId}/students`,
+        url: `/classes/${classId}/students`,
         method: "GET",
         params: { search, page, size, sort, sortDir },
       }),

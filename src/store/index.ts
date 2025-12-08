@@ -10,6 +10,7 @@ import { studentRequestApi } from "./services/studentRequestApi";
 import { teacherRequestApi } from "./services/teacherRequestApi";
 import { attendanceApi } from "./services/attendanceApi";
 import { courseApi } from "./services/courseApi";
+import { subjectApi } from "./services/subjectApi";
 import { studentClassApi } from "./services/studentClassApi";
 import { studentProfileApi } from "./services/studentProfileApi";
 import { teacherScheduleApi } from "./services/teacherScheduleApi";
@@ -64,6 +65,7 @@ export const store = configureStore({
     [teacherRequestApi.reducerPath]: teacherRequestApi.reducer,
     [attendanceApi.reducerPath]: attendanceApi.reducer,
     [courseApi.reducerPath]: courseApi.reducer,
+    [subjectApi.reducerPath]: subjectApi.reducer,
     [studentClassApi.reducerPath]: studentClassApi.reducer,
     [studentProfileApi.reducerPath]: studentProfileApi.reducer,
     [teacherScheduleApi.reducerPath]: teacherScheduleApi.reducer,
@@ -110,6 +112,7 @@ export const store = configureStore({
       .concat(teacherRequestApi.middleware)
       .concat(attendanceApi.middleware)
       .concat(courseApi.middleware)
+      .concat(subjectApi.middleware)
       .concat(studentClassApi.middleware)
       .concat(studentProfileApi.middleware)
       .concat(teacherScheduleApi.middleware)

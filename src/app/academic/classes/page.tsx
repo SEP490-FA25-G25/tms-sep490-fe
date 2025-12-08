@@ -68,7 +68,7 @@ import type {
   ClassListRequest,
   TeacherSummaryDTO,
 } from "@/store/services/classApi";
-import { useGetAllCoursesQuery } from "@/store/services/courseApi";
+import { useGetAllSubjectsQuery } from "@/store/services/subjectApi";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useNavigate } from "react-router-dom";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -157,8 +157,8 @@ export default function AcademicClassesPage({
   // State cho course combobox
   const [courseOpen, setCourseOpen] = useState(false);
 
-  // Fetch courses for filter
-  const { data: courses = [] } = useGetAllCoursesQuery();
+  // Fetch subjects for filter
+  const { data: courses = [] } = useGetAllSubjectsQuery();
 
   // Chuyển đổi unifiedStatus thành status/approvalStatus cho API
   const { apiStatus, apiApprovalStatus } = useMemo(() => {
@@ -258,7 +258,7 @@ export default function AcademicClassesPage({
       (c) => c.status === "COMPLETED"
     ).length;
     return {
-      total: response?.data?.page?.totalElements || classes.length,
+      total: response?.data?.totalElements || classes.length,
       ongoing: ongoingCount,
       pending: pendingCount,
       completed: completedCount,
@@ -713,7 +713,7 @@ export default function AcademicClassesPage({
                             <div className="font-medium">
                               {classItem.subjectName}
                             </div>
-                            <div className="text-sm text-muted-foreground">
+                            <div className="text-xs text-muted-foreground">
                               {classItem.subjectCode}
                             </div>
                           </div>
@@ -791,12 +791,11 @@ export default function AcademicClassesPage({
         </div>
 
         {/* Pagination */}
-        {response?.data?.page && (
+        {response?.data && response.data.totalPages > 0 && (
           <div className="flex items-center justify-between pt-4 border-t">
             <div className="text-sm text-muted-foreground">
-              Trang {response.data.page.number + 1} /{" "}
-              {response.data.page.totalPages} ·{" "}
-              {response.data.page.totalElements} lớp học
+              Trang {response.data.number + 1} / {response.data.totalPages} ·{" "}
+              {response.data.totalElements} lớp học
             </div>
             <Pagination>
               <PaginationContent>
@@ -810,21 +809,21 @@ export default function AcademicClassesPage({
                         page: prev.page - 1,
                       }));
                     }}
-                    aria-disabled={response.data.page.number === 0}
+                    aria-disabled={response.data.number === 0}
                     className={
-                      response.data.page.number === 0
+                      response.data.number === 0
                         ? "pointer-events-none opacity-50"
                         : ""
                     }
                   />
                 </PaginationItem>
                 {Array.from(
-                  { length: Math.min(5, response.data.page.totalPages) },
+                  { length: Math.min(5, response.data.totalPages) },
                   (_, i) => {
                     // Show pages around current page
                     let pageNum = i;
-                    const totalPages = response.data.page.totalPages;
-                    const currentPage = response.data.page.number;
+                    const totalPages = response.data.totalPages;
+                    const currentPage = response.data.number;
                     if (totalPages > 5) {
                       if (currentPage < 3) {
                         pageNum = i;
@@ -845,7 +844,7 @@ export default function AcademicClassesPage({
                               page: pageNum,
                             }));
                           }}
-                          isActive={pageNum === response.data.page.number}
+                          isActive={pageNum === response.data.number}
                         >
                           {pageNum + 1}
                         </PaginationLink>
@@ -864,12 +863,10 @@ export default function AcademicClassesPage({
                       }));
                     }}
                     aria-disabled={
-                      response.data.page.number >=
-                      response.data.page.totalPages - 1
+                      response.data.number >= response.data.totalPages - 1
                     }
                     className={
-                      response.data.page.number >=
-                      response.data.page.totalPages - 1
+                      response.data.number >= response.data.totalPages - 1
                         ? "pointer-events-none opacity-50"
                         : ""
                     }
