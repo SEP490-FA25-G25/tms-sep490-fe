@@ -5,8 +5,7 @@ import { skipToken } from '@reduxjs/toolkit/query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-import { cn } from '@/lib/utils'
-import { ArrowRightIcon, Search, Loader2, UserX } from 'lucide-react'
+import { ArrowRightIcon, Search, Loader2, UserX, CheckCircle2 } from 'lucide-react'
 import {
   useSearchStudentsQuery,
   useGetAcademicTransferEligibilityQuery,

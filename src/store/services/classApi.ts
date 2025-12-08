@@ -142,8 +142,12 @@ export interface SpringPage<T> {
   number: number; // Current page number (0-indexed)
   totalElements: number;
   totalPages: number;
+  page?: number; // Optional legacy field
   // Spring Page has more fields, but we only need these
 }
+
+// Alias for compatibility with older code expecting PagedResponse
+export type PagedResponse<T> = SpringPage<T>;
 
 export interface ClassListResponse {
   success: boolean;

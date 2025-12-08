@@ -85,9 +85,11 @@ export function LevelList() {
                 await deleteLevel(levelToDeletePermanently).unwrap();
                 toast.success("Đã xóa cấp độ thành công");
                 setLevelToDeletePermanently(null);
-            } catch (error: any) {
+            } catch (error: unknown) {
                 console.error("Failed to delete level:", error);
-                const errorMessage = error?.data?.message || "Xóa thất bại. Vui lòng thử lại.";
+                const errorMessage =
+                    (error as { data?: { message?: string } })?.data?.message ||
+                    "Xóa thất bại. Vui lòng thử lại.";
                 toast.error(errorMessage);
             }
         }

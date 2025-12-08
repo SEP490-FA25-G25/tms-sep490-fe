@@ -114,9 +114,11 @@ export function CourseList() {
                 await deleteCourse(courseToDeletePermanently).unwrap();
                 toast.success("Đã xóa khóa học thành công");
                 setCourseToDeletePermanently(null);
-            } catch (error: any) {
+            } catch (error: unknown) {
                 console.error("Failed to delete course:", error);
-                const errorMessage = error?.data?.message || "Xóa thất bại. Vui lòng thử lại.";
+                const errorMessage =
+                    (error as { data?: { message?: string } })?.data?.message ||
+                    "Xóa thất bại. Vui lòng thử lại.";
                 toast.error(errorMessage);
             }
         }

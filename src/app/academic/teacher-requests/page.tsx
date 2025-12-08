@@ -414,9 +414,9 @@ export default function AcademicTeacherRequestsPage() {
       classInfo:
         selectedRequestFromList.classInfo ||
         selectedRequestFromDetail.classInfo,
-      courseName:
-        selectedRequestFromList.courseName ||
-        selectedRequestFromDetail.courseName,
+      subjectName:
+        selectedRequestFromList.subjectName ||
+        selectedRequestFromDetail.subjectName,
     };
   }, [selectedRequestFromDetail, selectedRequestFromList]);
 
@@ -507,7 +507,7 @@ export default function AcademicTeacherRequestsPage() {
         request.className
           .toLowerCase()
           .includes(teacherSearchKeyword.toLowerCase()) ||
-        request.courseName
+        request.subjectName
           .toLowerCase()
           .includes(teacherSearchKeyword.toLowerCase());
       return matchType && matchStatus && matchSearch;
@@ -954,7 +954,7 @@ export default function AcademicTeacherRequestsPage() {
                       <SelectValue placeholder="Loại yêu cầu" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ALL">Tất cả loại</SelectItem>
+                      <SelectItem value="ALL">Tất cả yêu cầu</SelectItem>
                       <SelectItem value="MODALITY_CHANGE">
                         {TEACHER_REQUEST_TYPE_LABELS.MODALITY_CHANGE}
                       </SelectItem>

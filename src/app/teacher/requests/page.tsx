@@ -363,7 +363,7 @@ export default function MyRequestsPage() {
       result = result.filter((request) => {
         const candidates = [
           request.className,
-          request.courseName,
+          request.subjectName,
           request.reason,
           request.sessionTopic,
           request.session?.topic,
@@ -801,7 +801,7 @@ export default function MyRequestsPage() {
               const classLabel =
                 pickString(
                   request.className,
-                  request.courseName,
+                  request.subjectName,
                   request.session?.className,
                   request.session?.classCode
                 ) ?? "Không rõ lớp";
@@ -812,7 +812,7 @@ export default function MyRequestsPage() {
                   request.sessionTopic,
                   request.session?.courseSessionTitle,
                   request.session?.name,
-                  request.session?.courseName
+                  request.session?.subjectName
                 ) ?? "Chưa có thông tin buổi";
 
               const reason = request.reason || "Không có lý do";
@@ -883,9 +883,9 @@ export default function MyRequestsPage() {
                       <p className="font-semibold leading-tight">
                         {classLabel}
                       </p>
-                      {request.courseName && (
+                      {request.subjectName && (
                         <p className="text-xs text-muted-foreground line-clamp-1">
-                          {request.courseName}
+                          {request.subjectName}
                         </p>
                       )}
                     </div>
@@ -1547,7 +1547,7 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
                           {session.endTime}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {session.className} · {session.courseName}
+                          {session.className} · {session.subjectName}
                         </p>
                       </button>
                     </li>
@@ -1572,7 +1572,7 @@ function ModalityChangeFlow({ onSuccess }: FlowProps) {
                 {selectedSession.startTime} - {selectedSession.endTime}
               </p>
               <p className="text-xs text-muted-foreground">
-                {selectedSession.className} · {selectedSession.courseName}
+                {selectedSession.className} · {selectedSession.subjectName}
               </p>
             </div>
             <Button
@@ -2268,7 +2268,7 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
                             - {session.endTime}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {session.className} · {session.courseName}
+                            {session.className} · {session.subjectName}
                           </p>
                         </button>
                       </li>
@@ -2293,7 +2293,7 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
                   {selectedSession.startTime} - {selectedSession.endTime}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {selectedSession.className} · {selectedSession.courseName}
+                  {selectedSession.className} · {selectedSession.subjectName}
                 </p>
               </div>
               <Button
@@ -2673,7 +2673,7 @@ function RescheduleFlow({ onSuccess }: FlowProps) {
                 <span className="font-medium text-foreground">
                   Session gốc:
                 </span>{" "}
-                {selectedSession?.className} · {selectedSession?.courseName}
+                {selectedSession?.className} · {selectedSession?.subjectName}
               </p>
               <p>
                 <span className="font-medium text-foreground">
@@ -3145,7 +3145,7 @@ function ReplacementFlow({ onSuccess }: FlowProps) {
                             - {session.endTime}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {session.className} · {session.courseName}
+                            {session.className} · {session.subjectName}
                           </p>
                         </button>
                       </li>
@@ -3170,7 +3170,7 @@ function ReplacementFlow({ onSuccess }: FlowProps) {
                   {selectedSession.startTime} - {selectedSession.endTime}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {selectedSession.className} · {selectedSession.courseName}
+                  {selectedSession.className} · {selectedSession.subjectName}
                 </p>
               </div>
               <Button
@@ -3386,7 +3386,7 @@ function ReplacementFlow({ onSuccess }: FlowProps) {
                 <p className="text-sm font-semibold text-foreground">Tóm tắt</p>
                 <p>
                   <span className="font-medium text-foreground">Session:</span>{" "}
-                  {selectedSession.className} · {selectedSession.courseName}
+                  {selectedSession.className} · {selectedSession.subjectName}
                 </p>
                 <p>
                   <span className="font-medium text-foreground">

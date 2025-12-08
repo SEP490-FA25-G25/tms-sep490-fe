@@ -235,6 +235,9 @@ export interface AttendanceStats {
   totalAbsences: number
   excusedAbsences: number
   unexcusedAbsences: number
+  presentCount?: number
+  absentCount?: number
+  excusedCount?: number
 }
 
 export interface AdditionalInfo {
@@ -302,6 +305,7 @@ export interface AcademicRequestsResponse {
   first: boolean
   numberOfElements: number
   empty: boolean
+  page?: number
 }
 
 export interface StudentSessionQuery {

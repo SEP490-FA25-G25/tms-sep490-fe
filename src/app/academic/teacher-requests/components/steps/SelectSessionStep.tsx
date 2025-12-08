@@ -185,7 +185,7 @@ export function SelectSessionStep({
                     {session.className}
                   </TableCell>
                   <TableCell className="text-sm">
-                    {session.courseName}
+                    {session.subjectName}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {session.topic || "Chưa cập nhật"}
