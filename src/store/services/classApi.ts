@@ -256,6 +256,7 @@ export interface ClassStudentDTO {
   email: string;
   phone: string;
   avatarUrl?: string;
+  address?: string;
   branchName: string;
   enrolledAt: string; // OffsetDateTime from backend
   enrolledBy: string;

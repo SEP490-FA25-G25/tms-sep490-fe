@@ -31,6 +31,9 @@ export default function ClassDetailPage() {
   const [studentDrawerOpen, setStudentDrawerOpen] = useState(false)
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null)
   const [studentEditDialogOpen, setStudentEditDialogOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(0)
+  const [pageSize, setPageSize] = useState(20)
+  const [searchQuery, setSearchQuery] = useState('')
   const isAcademicAffair = useIsAcademicAffair()
 
   const {
@@ -49,12 +52,13 @@ export default function ClassDetailPage() {
     data: studentsResponse,
     isLoading: isLoadingStudents
   } = useGetClassStudentsQuery(
-    { classId, page: 0, size: 10 },
+    { classId, page: currentPage, size: pageSize, search: searchQuery || undefined },
     { skip: !classData || classData.status === 'DRAFT' }
   )
 
   const students = studentsResponse?.data?.content || []
   const totalStudents = studentsResponse?.data?.page?.totalElements || students.length
+  const totalPages = studentsResponse?.data?.page?.totalPages || 0
 
   // Query student detail for drawer
   const { data: studentDetailResponse, isLoading: isLoadingStudentDetail } =
@@ -178,6 +182,17 @@ export default function ClassDetailPage() {
                         isLoading={isLoadingStudents}
                         totalStudents={totalStudents}
                         onStudentClick={handleStudentClick}
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        pageSize={pageSize}
+                        onPageChange={(page) => {
+                          setCurrentPage(page)
+                        }}
+                        searchQuery={searchQuery}
+                        onSearchChange={(query) => {
+                          setSearchQuery(query)
+                          setCurrentPage(0) // Reset to first page when searching
+                        }}
                       />
                     </TabsContent>
 
