@@ -35,6 +35,7 @@ export function Step2ReviewSessions({ classId }: Step2ReviewSessionsProps) {
     refetch,
   } = useGetClassSessionsQuery(classId ?? 0, {
     skip: !classId,
+    refetchOnMountOrArgChange: true, // Refetch when returning to this step after schedule changes
   })
 
   const overview = data?.data

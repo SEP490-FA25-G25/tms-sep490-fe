@@ -82,19 +82,19 @@ export default function CenterHeadResourcesPage() {
     const [search, setSearch] = useState("");
     const [resourceTypeFilter, setResourceTypeFilter] = useState<ResourceType | "ALL">("ALL");
     const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
-    const { user } = useAuth();
+    const { user, selectedBranchId } = useAuth();
 
-    // Initialize branch filter from user's branch if available
+    // Initialize branch filter from selected branch in header
     const [branchFilter, setBranchFilter] = useState<number | "ALL">(() => {
-        return user?.branchId ? user.branchId : "ALL";
+        return selectedBranchId ?? "ALL";
     });
 
-    // Update branch filter if user data loads later
+    // Update branch filter if selected branch changes
     useEffect(() => {
-        if (user?.branchId) {
-            setBranchFilter(user.branchId);
+        if (selectedBranchId) {
+            setBranchFilter(selectedBranchId);
         }
-    }, [user]);
+    }, [selectedBranchId]);
 
     // Sorting states
     const [resourceSorting, setResourceSorting] = useState<SortingState>([]);
@@ -173,26 +173,26 @@ export default function CenterHeadResourcesPage() {
     // Lọc local để tránh giật khi search
     const filteredResources = useMemo(() => {
         let result = resources ?? [];
-        
+
         // Filter by search
         if (search.trim()) {
             const searchLower = search.toLowerCase().trim();
-            result = result.filter(r => 
+            result = result.filter(r =>
                 r.name.toLowerCase().includes(searchLower) ||
                 r.code.toLowerCase().includes(searchLower)
             );
         }
-        
+
         // Filter by resource type
         if (resourceTypeFilter !== "ALL") {
             result = result.filter(r => r.resourceType === resourceTypeFilter);
         }
-        
+
         // Filter by status
         if (statusFilter !== "ALL") {
             result = result.filter(r => r.status === statusFilter);
         }
-        
+
         return result;
     }, [resources, search, resourceTypeFilter, statusFilter]);
 
@@ -346,12 +346,12 @@ export default function CenterHeadResourcesPage() {
                 const canDeactivate = !resource.hasFutureSessions;
                 // Can only delete if: INACTIVE + no sessions
                 const canDelete = !isActive && !resource.hasAnySessions;
-                
+
                 // Build reason for disabled delete
                 let deleteDisabledReason = "";
                 if (isActive) deleteDisabledReason = "cần ngưng HĐ";
                 else if (resource.hasAnySessions) deleteDisabledReason = "đang sử dụng";
-                
+
                 return (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -377,8 +377,8 @@ export default function CenterHeadResourcesPage() {
                                 <DropdownMenuItem
                                     onClick={() => canDeactivate && setResourceToToggleStatus(resource)}
                                     disabled={!canDeactivate}
-                                    className={canDeactivate 
-                                        ? "text-orange-600 hover:text-orange-600 hover:bg-orange-50" 
+                                    className={canDeactivate
+                                        ? "text-orange-600 hover:text-orange-600 hover:bg-orange-50"
                                         : "text-muted-foreground cursor-not-allowed opacity-50"
                                     }
                                 >
@@ -398,8 +398,8 @@ export default function CenterHeadResourcesPage() {
                             <DropdownMenuItem
                                 onClick={() => canDelete && setResourceToDelete(resource.id)}
                                 disabled={!canDelete}
-                                className={canDelete 
-                                    ? "text-destructive hover:text-destructive hover:bg-destructive/10" 
+                                className={canDelete
+                                    ? "text-destructive hover:text-destructive hover:bg-destructive/10"
                                     : "text-muted-foreground cursor-not-allowed opacity-50"
                                 }
                             >
@@ -636,9 +636,9 @@ export default function CenterHeadResourcesPage() {
                                 Trước
                             </Button>
                             {Array.from({ length: resourceTable.getPageCount() }, (_, i) => i + 1)
-                                .filter(page => 
-                                    page === 1 || 
-                                    page === resourceTable.getPageCount() || 
+                                .filter(page =>
+                                    page === 1 ||
+                                    page === resourceTable.getPageCount() ||
                                     Math.abs(page - (resourceTable.getState().pagination.pageIndex + 1)) <= 1
                                 )
                                 .map((page, idx, arr) => (
@@ -674,7 +674,7 @@ export default function CenterHeadResourcesPage() {
                     open={resourceDialogOpen}
                     onOpenChange={setResourceDialogOpen}
                     resource={selectedResource}
-                    branchId={typeof branchFilter === "number" ? branchFilter : (user?.branchId || 0)}
+                    branchId={typeof branchFilter === "number" ? branchFilter : (selectedBranchId ?? 0)}
                     branches={branches?.data || []}
                 />
 
@@ -704,12 +704,12 @@ export default function CenterHeadResourcesPage() {
                     <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>
-                                {resourceToToggleStatus?.status === "ACTIVE" 
-                                    ? "Ngưng hoạt động tài nguyên?" 
+                                {resourceToToggleStatus?.status === "ACTIVE"
+                                    ? "Ngưng hoạt động tài nguyên?"
                                     : "Kích hoạt lại tài nguyên?"}
                             </AlertDialogTitle>
                             <AlertDialogDescription>
-                                {resourceToToggleStatus?.status === "ACTIVE" 
+                                {resourceToToggleStatus?.status === "ACTIVE"
                                     ? "Tài nguyên sẽ không thể được sử dụng cho các buổi học mới sau khi ngưng hoạt động."
                                     : "Tài nguyên sẽ có thể được sử dụng cho các buổi học mới sau khi kích hoạt."}
                             </AlertDialogDescription>
@@ -718,13 +718,13 @@ export default function CenterHeadResourcesPage() {
                             <AlertDialogCancel>Hủy</AlertDialogCancel>
                             <AlertDialogAction
                                 onClick={confirmToggleResourceStatus}
-                                className={resourceToToggleStatus?.status === "ACTIVE" 
-                                    ? "bg-orange-600 hover:bg-orange-700" 
+                                className={resourceToToggleStatus?.status === "ACTIVE"
+                                    ? "bg-orange-600 hover:bg-orange-700"
                                     : "bg-emerald-600 hover:bg-emerald-700"}
                                 disabled={isUpdatingStatus}
                             >
-                                {isUpdatingStatus 
-                                    ? "Đang xử lý..." 
+                                {isUpdatingStatus
+                                    ? "Đang xử lý..."
                                     : (resourceToToggleStatus?.status === "ACTIVE" ? "Ngưng hoạt động" : "Kích hoạt")}
                             </AlertDialogAction>
                         </AlertDialogFooter>

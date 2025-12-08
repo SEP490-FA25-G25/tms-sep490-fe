@@ -363,10 +363,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, logout, branches, selectedBranchId, selectBranch } = useAuth();
   const navigate = useNavigate();
 
+<<<<<<< HEAD
   // Kiểm tra xem user có phải là Academic Affair và có nhiều branch không
   const isAcademicAffair =
     user?.roles?.includes(ROLES.ACADEMIC_AFFAIR) ?? false;
   const showBranchSelector = isAcademicAffair && branches.length > 1;
+=======
+  // Kiểm tra xem user có phải là Academic Affair hoặc Center Head và có nhiều branch không
+  const isAcademicAffair = user?.roles?.includes(ROLES.ACADEMIC_AFFAIR) ?? false;
+  const isCenterHead = user?.roles?.includes(ROLES.CENTER_HEAD) ?? false;
+  const showBranchSelector = (isAcademicAffair || isCenterHead) && branches.length > 1;
+>>>>>>> 3598de3 (Update workflow create class)
 
   const rolePriorities = {
     [ROLES.ADMIN]: 8,

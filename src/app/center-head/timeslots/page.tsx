@@ -66,19 +66,19 @@ export default function CenterHeadTimeSlotsPage() {
     const navigate = useNavigate();
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
-    const { user } = useAuth();
+    const { user, selectedBranchId } = useAuth();
 
-    // Initialize branch filter from user's branch if available
+    // Initialize branch filter from selected branch in header
     const [branchFilter, setBranchFilter] = useState<number | "ALL">(() => {
-        return user?.branchId ? user.branchId : "ALL";
+        return selectedBranchId ?? "ALL";
     });
 
-    // Update branch filter if user data loads later
+    // Update branch filter if selected branch changes
     useEffect(() => {
-        if (user?.branchId) {
-            setBranchFilter(user.branchId);
+        if (selectedBranchId) {
+            setBranchFilter(selectedBranchId);
         }
-    }, [user]);
+    }, [selectedBranchId]);
 
     // Sorting states
     const [timeSlotSorting, setTimeSlotSorting] = useState<SortingState>([]);
@@ -156,20 +156,20 @@ export default function CenterHeadTimeSlotsPage() {
     // Lọc local để tránh giật khi search
     const filteredTimeSlots = useMemo(() => {
         let result = timeSlots ?? [];
-        
+
         // Filter by search
         if (search.trim()) {
             const searchLower = search.toLowerCase().trim();
-            result = result.filter(ts => 
+            result = result.filter(ts =>
                 ts.name.toLowerCase().includes(searchLower)
             );
         }
-        
+
         // Filter by status
         if (statusFilter !== "ALL") {
             result = result.filter(ts => ts.status === statusFilter);
         }
-        
+
         return result;
     }, [timeSlots, search, statusFilter]);
 
@@ -276,13 +276,13 @@ export default function CenterHeadTimeSlotsPage() {
                 const canDeactivate = !timeSlot.hasFutureSessions;
                 // Can only delete if: INACTIVE + no sessions + no teacher availability
                 const canDelete = !isActive && !timeSlot.hasAnySessions && !timeSlot.hasTeacherAvailability;
-                
+
                 // Build reason for disabled delete
                 let deleteDisabledReason = "";
                 if (isActive) deleteDisabledReason = "cần ngưng HĐ";
                 else if (timeSlot.hasAnySessions) deleteDisabledReason = "đang sử dụng";
                 else if (timeSlot.hasTeacherAvailability) deleteDisabledReason = "có lịch GV";
-                
+
                 return (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -308,8 +308,8 @@ export default function CenterHeadTimeSlotsPage() {
                                 <DropdownMenuItem
                                     onClick={() => canDeactivate && setTimeSlotToToggleStatus(timeSlot)}
                                     disabled={!canDeactivate}
-                                    className={canDeactivate 
-                                        ? "text-orange-600 hover:text-orange-600 hover:bg-orange-50" 
+                                    className={canDeactivate
+                                        ? "text-orange-600 hover:text-orange-600 hover:bg-orange-50"
                                         : "text-muted-foreground cursor-not-allowed opacity-50"
                                     }
                                 >
@@ -329,8 +329,8 @@ export default function CenterHeadTimeSlotsPage() {
                             <DropdownMenuItem
                                 onClick={() => canDelete && setTimeSlotToDelete(timeSlot.id)}
                                 disabled={!canDelete}
-                                className={canDelete 
-                                    ? "text-destructive hover:text-destructive hover:bg-destructive/10" 
+                                className={canDelete
+                                    ? "text-destructive hover:text-destructive hover:bg-destructive/10"
                                     : "text-muted-foreground cursor-not-allowed opacity-50"
                                 }
                             >
@@ -529,9 +529,9 @@ export default function CenterHeadTimeSlotsPage() {
                                 Trước
                             </Button>
                             {Array.from({ length: timeSlotTable.getPageCount() }, (_, i) => i + 1)
-                                .filter(page => 
-                                    page === 1 || 
-                                    page === timeSlotTable.getPageCount() || 
+                                .filter(page =>
+                                    page === 1 ||
+                                    page === timeSlotTable.getPageCount() ||
                                     Math.abs(page - (timeSlotTable.getState().pagination.pageIndex + 1)) <= 1
                                 )
                                 .map((page, idx, arr) => (
@@ -567,7 +567,7 @@ export default function CenterHeadTimeSlotsPage() {
                     open={timeSlotDialogOpen}
                     onOpenChange={setTimeSlotDialogOpen}
                     timeSlot={selectedTimeSlot}
-                    branchId={typeof branchFilter === "number" ? branchFilter : (user?.branchId || 0)}
+                    branchId={typeof branchFilter === "number" ? branchFilter : (selectedBranchId ?? 0)}
                     branches={branches?.data || []}
                 />
 
@@ -597,12 +597,12 @@ export default function CenterHeadTimeSlotsPage() {
                     <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>
-                                {timeSlotToToggleStatus?.status === "ACTIVE" 
-                                    ? "Ngưng hoạt động khung giờ?" 
+                                {timeSlotToToggleStatus?.status === "ACTIVE"
+                                    ? "Ngưng hoạt động khung giờ?"
                                     : "Kích hoạt lại khung giờ?"}
                             </AlertDialogTitle>
                             <AlertDialogDescription>
-                                {timeSlotToToggleStatus?.status === "ACTIVE" 
+                                {timeSlotToToggleStatus?.status === "ACTIVE"
                                     ? "Khung giờ sẽ không thể được sử dụng cho các buổi học mới sau khi ngưng hoạt động."
                                     : "Khung giờ sẽ có thể được sử dụng cho các buổi học mới sau khi kích hoạt."}
                             </AlertDialogDescription>
@@ -611,13 +611,13 @@ export default function CenterHeadTimeSlotsPage() {
                             <AlertDialogCancel>Hủy</AlertDialogCancel>
                             <AlertDialogAction
                                 onClick={confirmToggleTimeSlotStatus}
-                                className={timeSlotToToggleStatus?.status === "ACTIVE" 
-                                    ? "bg-orange-600 hover:bg-orange-700" 
+                                className={timeSlotToToggleStatus?.status === "ACTIVE"
+                                    ? "bg-orange-600 hover:bg-orange-700"
                                     : "bg-emerald-600 hover:bg-emerald-700"}
                                 disabled={isUpdatingStatus}
                             >
-                                {isUpdatingStatus 
-                                    ? "Đang xử lý..." 
+                                {isUpdatingStatus
+                                    ? "Đang xử lý..."
                                     : (timeSlotToToggleStatus?.status === "ACTIVE" ? "Ngưng hoạt động" : "Kích hoạt")}
                             </AlertDialogAction>
                         </AlertDialogFooter>
