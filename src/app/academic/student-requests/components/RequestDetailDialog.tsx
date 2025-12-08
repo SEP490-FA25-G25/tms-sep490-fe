@@ -419,6 +419,11 @@ function AbsenceRequestContent({ request, daysUntilSession }: { request: any; da
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function MakeupRequestContent({ request, daysUntilSession }: { request: any; daysUntilSession: number | null }) {
+  // Check if makeup session is over capacity
+  const makeupEnrolled = request.makeupSession?.enrolledCount ?? 0
+  const makeupCapacity = request.makeupSession?.maxCapacity ?? 0
+  const isOverCapacity = makeupEnrolled >= makeupCapacity && makeupCapacity > 0
+  
   return (
     <div className="grid gap-3 md:grid-cols-2">
       {/* Absent Session */}
@@ -449,10 +454,41 @@ function MakeupRequestContent({ request, daysUntilSession }: { request: any; day
 
       {/* Makeup Session */}
       {request.makeupSession && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/20 p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <CalendarIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-            <h3 className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">Buổi học bù</h3>
+        <div className={cn(
+          "rounded-xl border p-4",
+          isOverCapacity 
+            ? "border-rose-200 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20"
+            : "border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/20"
+        )}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <CalendarIcon className={cn(
+                "h-4 w-4",
+                isOverCapacity 
+                  ? "text-rose-600 dark:text-rose-400"
+                  : "text-emerald-600 dark:text-emerald-400"
+              )} />
+              <h3 className={cn(
+                "text-sm font-semibold",
+                isOverCapacity
+                  ? "text-rose-700 dark:text-rose-400"
+                  : "text-emerald-700 dark:text-emerald-400"
+              )}>
+                Buổi học bù
+              </h3>
+            </div>
+            {/* Capacity Badge */}
+            {makeupCapacity > 0 && (
+              <Badge 
+                variant={isOverCapacity ? "destructive" : "secondary"}
+                className={cn(
+                  "text-xs font-bold",
+                  isOverCapacity && "bg-rose-600 hover:bg-rose-700 text-white"
+                )}
+              >
+                {makeupEnrolled}/{makeupCapacity}
+              </Badge>
+            )}
           </div>
           <div className="space-y-1">
             {request.makeupSession.classInfo?.classCode && (
@@ -471,6 +507,15 @@ function MakeupRequestContent({ request, daysUntilSession }: { request: any; day
               <p className="text-xs text-muted-foreground">
                 Chi nhánh: {request.makeupSession.classInfo.branchName}
               </p>
+            )}
+            {/* Capacity Warning */}
+            {isOverCapacity && (
+              <div className="mt-2 pt-2 border-t border-rose-200 dark:border-rose-800">
+                <p className="text-xs font-semibold text-rose-700 dark:text-rose-400 flex items-center gap-1">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-rose-600 dark:bg-rose-400"></span>
+                  Cảnh báo: Lớp đã vượt quá sĩ số
+                </p>
+              </div>
             )}
           </div>
         </div>

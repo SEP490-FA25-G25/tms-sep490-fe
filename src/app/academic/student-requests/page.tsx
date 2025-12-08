@@ -129,7 +129,8 @@ export default function AcademicRequestsPage() {
 
   const historyData = historyResponse?.data
   const historyRequests = historyData?.content ?? []
-  const historyTotalPages = historyData?.page?.totalPages ?? 0
+  const historyTotalPages = historyData?.totalPages ?? 0
+  const historyTotalElements = historyData?.totalElements ?? 0
 
   const handleViewDetail = (id: number) => {
     setSelectedRequestId(id)
@@ -459,7 +460,7 @@ export default function AcademicRequestsPage() {
               {/* History Pagination */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
                 <p className="text-muted-foreground">
-                  Trang {historyPage + 1} / {historyTotalPages} · {historyData?.page?.totalElements ?? 0} yêu cầu
+                  Trang {historyPage + 1} / {historyTotalPages} · {historyTotalElements} yêu cầu
                 </p>
                 <Pagination>
                   <PaginationContent>

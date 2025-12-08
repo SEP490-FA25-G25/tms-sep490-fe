@@ -107,6 +107,8 @@ export interface SessionSummary {
   status?: string
   type?: string
   teacher?: string | null
+  enrolledCount?: number
+  maxCapacity?: number
 }
 
 export interface ClassMeta {
@@ -275,12 +277,31 @@ export interface PendingRequestsResponse {
 
 export interface AcademicRequestsResponse {
   content: AcademicStudentRequest[]
-  page: {
-    size: number
-    number: number
-    totalElements: number
-    totalPages: number
+  pageable: {
+    pageNumber: number
+    pageSize: number
+    sort: {
+      empty: boolean
+      sorted: boolean
+      unsorted: boolean
+    }
+    offset: number
+    paged: boolean
+    unpaged: boolean
   }
+  last: boolean
+  totalElements: number
+  totalPages: number
+  size: number
+  number: number
+  sort: {
+    empty: boolean
+    sorted: boolean
+    unsorted: boolean
+  }
+  first: boolean
+  numberOfElements: number
+  empty: boolean
 }
 
 export interface StudentSessionQuery {
