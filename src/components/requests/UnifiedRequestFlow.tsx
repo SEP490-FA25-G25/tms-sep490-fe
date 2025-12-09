@@ -303,7 +303,6 @@ export function Section({
 // Import individual flow components
 import AbsenceFlow from './flows/AbsenceFlow'
 import MakeupFlow from './flows/MakeupFlow'
-import TransferFlow from './flows/TransferFlow'
 
 // Main Unified Request Flow Component
 export default function UnifiedRequestFlow({ type, onSuccess }: UnifiedRequestFlowProps) {
@@ -313,7 +312,7 @@ export default function UnifiedRequestFlow({ type, onSuccess }: UnifiedRequestFl
     case 'MAKEUP':
       return <MakeupFlow onSuccess={onSuccess} />
     case 'TRANSFER':
-      return <TransferFlow onSuccess={onSuccess} />
+      return <div>Transfer flow không khả dụng. Vui lòng liên hệ Phòng Học vụ.</div>
     default:
       return <div>Unknown flow type</div>
   }

@@ -26,6 +26,7 @@ interface StudentSearchParams {
   status?: string
   page?: number
   size?: number
+  branchIds?: number[]
 }
 
 export type RequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
@@ -423,13 +424,25 @@ export interface TransferQuota {
   remaining: number
 }
 
+export interface SessionInfo {
+  sessionId: number
+  date: string
+  subjectSessionNumber: number
+  subjectSessionTitle: string
+  timeSlot: string
+  status: string
+  isPast: boolean
+  isUpcoming: boolean
+  isLastAttended?: boolean
+}
+
 export interface TransferEligibility {
   enrollmentId: number
   classId: number
   classCode: string
   className: string
-  courseId: number
-  courseName: string
+  subjectId: number
+  subjectName: string
   branchId?: number
   branchName: string
   modality?: SessionModality
@@ -440,6 +453,9 @@ export interface TransferEligibility {
   hasPendingTransfer: boolean
   canTransfer: boolean
   scheduleInfo?: string
+  allSessions?: SessionInfo[]
+  lastAttendedSessionId?: number
+  upcomingSessionId?: number
 }
 
 export interface PolicyInfo {
@@ -488,6 +504,8 @@ export interface TransferOption {
   classId: number
   classCode: string
   className: string
+  subjectId: number
+  subjectName: string
   branchId: number
   branchName: string
   modality: SessionModality
@@ -508,10 +526,11 @@ export interface TransferOption {
   upcomingSessions?: Array<{
     sessionId: number
     date: string
-    courseSessionNumber: number
-    courseSessionTitle: string
+    subjectSessionNumber: number
+    subjectSessionTitle: string
     timeSlot: string
   }>
+  allSessions?: SessionInfo[]
   changes?: {
     branch?: string
     modality?: string
@@ -728,24 +747,6 @@ export const studentRequestApi = createApi({
       }),
       invalidatesTags: ['StudentRequests'],
     }),
-    // Transfer Request Endpoints (Student)
-    getTransferEligibility: builder.query<ApiResponse<TransferEligibilityResponse>, void>({
-      query: () => '/students-request/transfer-eligibility',
-    }),
-    getTransferOptions: builder.query<ApiResponse<TransferOptionsResponse>, { currentClassId: number }>({
-      query: ({ currentClassId }) => ({
-        url: '/students-request/transfer-options',
-        params: { currentClassId },
-      }),
-    }),
-    submitTransferRequest: builder.mutation<ApiResponse<TransferRequestResponse>, TransferRequestPayload>({
-      query: (body) => ({
-        url: '/students-request/transfer-requests',
-        method: 'POST',
-        body,
-      }),
-      invalidatesTags: ['StudentRequests'],
-    }),
 
     // Academic Affairs endpoints - /api/v1/academic-requests
     getPendingRequests: builder.query<ApiResponse<PendingRequestsResponse>, PendingRequestsQuery | void>({
@@ -941,10 +942,6 @@ export const {
   useRejectRequestMutation,
   useCreateOnBehalfRequestMutation,
   useSubmitAbsenceOnBehalfMutation,
-  // Transfer Request Hooks
-  useGetTransferEligibilityQuery,
-  useGetTransferOptionsQuery,
-  useSubmitTransferRequestMutation,
   // Academic Affairs Transfer Hooks
   useGetAcademicTransferEligibilityQuery,
   useGetAcademicTransferOptionsQuery,

@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import {
-  ArrowRightLeftIcon,
   CalendarCheck2Icon,
   CalendarX2Icon,
   CheckCircleIcon,
@@ -93,7 +92,6 @@ const TYPE_FILTERS: Array<{ label: string; value: 'ALL' | RequestType }> = [
   { label: 'Tất cả loại yêu cầu', value: 'ALL' },
   { label: 'Xin nghỉ', value: 'ABSENCE' },
   { label: 'Học bù', value: 'MAKEUP' },
-  { label: 'Chuyển lớp', value: 'TRANSFER' },
 ]
 
 const REQUEST_PAGE_SIZE = 8
@@ -194,7 +192,7 @@ export default function StudentRequestsPage() {
                 <div className="flex flex-col gap-1">
                   <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Yêu cầu của tôi</h1>
                   <p className="text-sm text-muted-foreground">
-                    Quản lý yêu cầu xin nghỉ, học bù, chuyển lớp
+                    Quản lý yêu cầu xin nghỉ và học bù
                   </p>
                 </div>
                 <DropdownMenu>
@@ -213,10 +211,6 @@ export default function StudentRequestsPage() {
                     <DropdownMenuItem onClick={() => setActiveType('MAKEUP')}>
                       <CalendarCheck2Icon className="h-4 w-4 mr-2" />
                       Xin học bù
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setActiveType('TRANSFER')}>
-                      <ArrowRightLeftIcon className="h-4 w-4 mr-2" />
-                      Chuyển lớp
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -365,7 +359,7 @@ export default function StudentRequestsPage() {
                     </EmptyMedia>
                     <EmptyTitle>Chưa có yêu cầu nào</EmptyTitle>
                     <EmptyDescription>
-                      Tạo yêu cầu mới để xin nghỉ, học bù hoặc chuyển lớp.
+                      Tạo yêu cầu mới để xin nghỉ hoặc học bù.
                     </EmptyDescription>
                   </EmptyHeader>
                 </Empty>
