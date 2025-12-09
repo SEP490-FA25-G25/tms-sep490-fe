@@ -207,6 +207,9 @@ const ManagerPoliciesPage = lazy(() => import("./app/manager/policies/page"));
 
 // Curriculum pages
 const CurriculumPage = lazy(() => import("./app/curriculum/page"));
+const CurriculumsPage = lazy(() => import("./app/curriculum/curriculums/page"));
+const CurriculumLevelsPage = lazy(() => import("./app/curriculum/levels/page"));
+const CurriculumSubjectsPage = lazy(() => import("./app/curriculum/subjects/page"));
 const CurriculumCourseDetailPage = lazy(
   () => import("./app/curriculum/courses/[id]/page")
 );
@@ -969,11 +972,35 @@ function App() {
                 {/* Curriculum routes */}
                 <Route
                   path="/curriculum"
+                  element={<Navigate to="/curriculum/curriculums" replace />}
+                />
+                <Route
+                  path="/curriculum/curriculums"
                   element={
                     <ProtectedRoute
                       requiredRoles={["SUBJECT_LEADER", "MANAGER", "ADMIN"]}
                     >
-                      <CurriculumPage />
+                      <CurriculumsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/curriculum/levels"
+                  element={
+                    <ProtectedRoute
+                      requiredRoles={["SUBJECT_LEADER", "MANAGER", "ADMIN"]}
+                    >
+                      <CurriculumLevelsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/curriculum/subjects"
+                  element={
+                    <ProtectedRoute
+                      requiredRoles={["SUBJECT_LEADER", "MANAGER", "ADMIN"]}
+                    >
+                      <CurriculumSubjectsPage />
                     </ProtectedRoute>
                   }
                 />

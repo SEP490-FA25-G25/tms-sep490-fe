@@ -22,6 +22,7 @@ import {
   LogOutIcon,
   Clock,
   BellIcon,
+  LayersIcon,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -124,9 +125,19 @@ const roleBasedNav = {
         icon: ClipboardCheckIcon,
       },
       {
-        title: "Quản lý chương trình đào tạo",
-        url: "/curriculum",
+        title: "Khung chương trình",
+        url: "/curriculum/curriculums",
         icon: BookOpenIcon,
+      },
+      {
+        title: "Cấp độ",
+        url: "/curriculum/levels",
+        icon: LayersIcon,
+      },
+      {
+        title: "Môn học",
+        url: "/curriculum/subjects",
+        icon: FileTextIcon,
       },
       {
         title: "Quản lý giáo viên",
@@ -222,9 +233,19 @@ const roleBasedNav = {
         icon: HomeIcon,
       },
       {
-        title: "Quản lý chương trình đào tạo",
-        url: "/curriculum",
+        title: "Khung chương trình",
+        url: "/curriculum/curriculums",
         icon: BookOpenIcon,
+      },
+      {
+        title: "Cấp độ",
+        url: "/curriculum/levels",
+        icon: LayersIcon,
+      },
+      {
+        title: "Môn học",
+        url: "/curriculum/subjects",
+        icon: FileTextIcon,
       },
     ],
   },

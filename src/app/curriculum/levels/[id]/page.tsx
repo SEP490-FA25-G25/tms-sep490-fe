@@ -85,7 +85,7 @@ export default function LevelDetailPage() {
                     </Card>
                     <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Môn học</CardTitle>
+                            <CardTitle className="text-sm font-medium">Khung chương trình</CardTitle>
                             <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", "bg-blue-50 dark:bg-blue-950/30")}>
                                 <BookOpen className={cn("h-4 w-4", "text-blue-600 dark:text-blue-400")} />
                             </div>
@@ -159,7 +159,7 @@ export default function LevelDetailPage() {
                                     <span className="font-medium">{level.name}</span>
                                 </div>
                                 <div className="flex justify-between border-b pb-2">
-                                    <span className="text-muted-foreground">Môn học</span>
+                                    <span className="text-muted-foreground">Khung chương trình</span>
                                     <span className="font-medium">{level.subjectName} ({level.subjectCode})</span>
                                 </div>
                                 <div className="flex justify-between border-b pb-2">

@@ -7,7 +7,7 @@ import {
     Award, Video, Music, Image, AlertCircle, Users, Grid3X3, Check
 } from 'lucide-react';
 import { useGetCourseDetailsQuery, useApproveCourseMutation, useRejectCourseMutation, useGetCoursePLOsQuery } from '@/store/services/courseApi';
-import { useGetSubjectQuery } from '@/store/services/curriculumApi';
+import { useGetCurriculumQuery } from '@/store/services/curriculumApi';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -99,7 +99,7 @@ export default function CourseDetailPage() {
     const plos = plosData || [];
 
     // Fetch ALL PLOs from the subject for the matrix
-    const { data: subjectData } = useGetSubjectQuery(course?.subjectId ?? 0, {
+    const { data: subjectData } = useGetCurriculumQuery(course?.subjectId ?? 0, {
         skip: !course?.subjectId
     });
     const allSubjectPlos = subjectData?.data?.plos || [];

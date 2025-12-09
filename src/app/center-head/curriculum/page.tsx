@@ -34,7 +34,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Eye, BookOpen, GraduationCap, Layers } from "lucide-react";
 import { useGetAllCoursesQuery, type CourseDTO } from "@/store/services/courseApi";
-import { useGetSubjectsWithLevelsQuery, useGetLevelsQuery, type SubjectWithLevelsDTO, type LevelDTO } from "@/store/services/curriculumApi";
+import { useGetCurriculumsWithLevelsQuery, useGetLevelsQuery, type SubjectWithLevelsDTO, type LevelDTO } from "@/store/services/curriculumApi";
 
 const PAGE_SIZE = 10;
 
@@ -51,7 +51,7 @@ export default function CenterHeadCurriculumPage() {
 
   // Fetch data
   const { data: coursesData, isLoading: isLoadingCourses } = useGetAllCoursesQuery();
-  const { data: subjectsData, isLoading: isLoadingSubjects } = useGetSubjectsWithLevelsQuery();
+  const { data: subjectsData, isLoading: isLoadingSubjects } = useGetCurriculumsWithLevelsQuery();
   const { data: levelsData, isLoading: isLoadingLevels } = useGetLevelsQuery(undefined);
 
   const courses: CourseDTO[] = useMemo(() => coursesData ?? [], [coursesData]);
@@ -145,7 +145,7 @@ export default function CenterHeadCurriculumPage() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Môn học</CardTitle>
+              <CardTitle className="text-sm font-medium">Khung chương trình</CardTitle>
               <GraduationCap className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -182,7 +182,7 @@ export default function CenterHeadCurriculumPage() {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <TabsList>
               <TabsTrigger value="courses">Khóa học</TabsTrigger>
-              <TabsTrigger value="subjects">Môn học</TabsTrigger>
+              <TabsTrigger value="subjects">Khung chương trình</TabsTrigger>
               <TabsTrigger value="levels">Cấp độ</TabsTrigger>
             </TabsList>
             <div className="flex items-center gap-2">
@@ -228,7 +228,7 @@ export default function CenterHeadCurriculumPage() {
                   <TableRow>
                     <TableHead>Mã khóa học</TableHead>
                     <TableHead>Tên khóa học</TableHead>
-                    <TableHead>Môn học</TableHead>
+                    <TableHead>Khung chương trình</TableHead>
                     <TableHead>Cấp độ</TableHead>
                     <TableHead>Trạng thái</TableHead>
                     <TableHead className="text-right">Thao tác</TableHead>

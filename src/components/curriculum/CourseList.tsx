@@ -21,7 +21,7 @@ import {
     useCloneCourseMutation
 } from "@/store/services/courseApi";
 import type { CourseDTO } from "@/store/services/courseApi";
-import { useGetSubjectsWithLevelsQuery } from "@/store/services/curriculumApi";
+import { useGetCurriculumsWithLevelsQuery } from "@/store/services/curriculumApi";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -59,7 +59,7 @@ export function CourseList() {
     const [courseToClone, setCourseToClone] = useState<number | null>(null);
 
     // Fetch filters data
-    const { data: subjectsData } = useGetSubjectsWithLevelsQuery();
+    const { data: subjectsData } = useGetCurriculumsWithLevelsQuery();
 
     // Fetch courses with filters
     const { data: courses } = useGetAllCoursesQuery({
@@ -213,10 +213,10 @@ export function CourseList() {
                 const updatedAt = course.updatedAt ? new Date(course.updatedAt) : null;
                 const submittedAt = course.submittedAt ? new Date(course.submittedAt) : null;
                 const decidedAt = course.decidedAt ? new Date(course.decidedAt) : null;
-                
+
                 // Determine the most recent significant date to show
                 const latestDate = decidedAt || submittedAt || createdAt;
-                
+
                 return (
                     <Popover>
                         <PopoverTrigger asChild>
@@ -274,7 +274,7 @@ export function CourseList() {
             cell: ({ row }) => {
                 const status = row.getValue("status") as string;
                 const approvalStatus = row.original.approvalStatus;
-                
+
                 // Special case: PENDING_ACTIVATION = Approved but waiting for effective date
                 if (status === "PENDING_ACTIVATION") {
                     return (
@@ -292,7 +292,7 @@ export function CourseList() {
                         </TooltipProvider>
                     );
                 }
-                
+
                 // Rejected case
                 if (approvalStatus === "REJECTED") {
                     return (
@@ -310,7 +310,7 @@ export function CourseList() {
                         </TooltipProvider>
                     );
                 }
-                
+
                 // Normal status display
                 return (
                     <Badge variant={getStatusColor(status)}>
@@ -466,16 +466,14 @@ export function CourseList() {
             </div>
 
             {/* Table Section */}
-            <div className="rounded-md border">
-                <DataTable
-                    columns={columns}
-                    data={[...(courses || [])].sort((a, b) => 
-                        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-                    )}
-                    searchKey="name"
-                    searchPlaceholder="Tìm kiếm theo tên khóa học..."
-                />
-            </div>
+            <DataTable
+                columns={columns}
+                data={[...(courses || [])].sort((a, b) =>
+                    new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+                )}
+                searchKey="name"
+                searchPlaceholder="Tìm kiếm theo tên khóa học..."
+            />
 
             <AlertDialog open={!!courseToDelete} onOpenChange={(open) => !open && setCourseToDelete(null)}>
                 <AlertDialogContent>

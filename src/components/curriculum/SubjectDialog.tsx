@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useCreateSubjectMutation, useUpdateSubjectMutation, useGetSubjectsWithLevelsQuery } from "@/store/services/curriculumApi";
+import { useCreateCurriculumMutation, useUpdateCurriculumMutation, useGetCurriculumsWithLevelsQuery } from "@/store/services/curriculumApi";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -54,9 +54,9 @@ interface SubjectDialogProps {
 }
 
 export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProps) {
-    const [createSubject, { isLoading: isCreating }] = useCreateSubjectMutation();
-    const [updateSubject, { isLoading: isUpdating }] = useUpdateSubjectMutation();
-    const { data: subjectsResponse } = useGetSubjectsWithLevelsQuery();
+    const [createSubject, { isLoading: isCreating }] = useCreateCurriculumMutation();
+    const [updateSubject, { isLoading: isUpdating }] = useUpdateCurriculumMutation();
+    const { data: subjectsResponse } = useGetCurriculumsWithLevelsQuery();
     const existingSubjects = subjectsResponse?.data || [];
     const isLoading = isCreating || isUpdating;
 
@@ -128,7 +128,7 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
             (s) => s.code.toLowerCase() === trimmedValue && s.id !== subject?.id
         );
         if (isDuplicate) {
-            return "Mã môn học đã tồn tại";
+            return "Mã chương trình đã tồn tại";
         }
         return null;
     };
@@ -139,7 +139,7 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
             (s) => s.name.toLowerCase() === trimmedValue && s.id !== subject?.id
         );
         if (isDuplicate) {
-            return "Tên môn học đã tồn tại";
+            return "Tên chương trình đã tồn tại";
         }
         return null;
     };
@@ -234,7 +234,7 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
 
         // Validate at least 1 PLO required
         if (formData.plos.length === 0) {
-            toast.error("Môn học phải có ít nhất 1 PLO");
+            toast.error("Khung chương trình phải có ít nhất 1 PLO");
             return;;
         }
 
@@ -255,10 +255,10 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
         try {
             if (subject) {
                 await updateSubject({ id: subject.id, data: formData }).unwrap();
-                toast.success("Cập nhật môn học thành công");
+                toast.success("Cập nhật khung chương trình thành công");
             } else {
                 await createSubject(formData).unwrap();
-                toast.success("Tạo môn học thành công");
+                toast.success("Tạo khung chương trình thành công");
             }
             onOpenChange(false);
         } catch (error) {
@@ -271,15 +271,15 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
         <Dialog open={open} onOpenChange={handleOpenChangeWrapper}>
             <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>{subject ? "Chỉnh sửa Môn học" : "Tạo Môn học Mới"}</DialogTitle>
+                    <DialogTitle>{subject ? "Chỉnh sửa Khung chương trình" : "Tạo Khung chương trình Mới"}</DialogTitle>
                     <DialogDescription>
-                        {subject ? "Cập nhật thông tin môn học." : "Thêm môn học mới vào hệ thống."}
+                        {subject ? "Cập nhật thông tin khung chương trình." : "Thêm khung chương trình mới vào hệ thống."}
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label htmlFor="code">Mã môn học <span className="text-rose-500">*</span></Label>
+                            <Label htmlFor="code">Mã chương trình <span className="text-rose-500">*</span></Label>
                             <Input
                                 id="code"
                                 placeholder="VD: ENG"
@@ -294,7 +294,7 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="name">Tên môn học <span className="text-rose-500">*</span></Label>
+                            <Label htmlFor="name">Tên chương trình <span className="text-rose-500">*</span></Label>
                             <Input
                                 id="name"
                                 placeholder="VD: Tiếng Anh Giao tiếp"
@@ -313,7 +313,7 @@ export function SubjectDialog({ open, onOpenChange, subject }: SubjectDialogProp
                         <Label htmlFor="description">Mô tả</Label>
                         <Textarea
                             id="description"
-                            placeholder="Nhập mô tả về môn học (để trống hoặc ít nhất 10 ký tự)..."
+                            placeholder="Nhập mô tả về chương trình (để trống hoặc ít nhất 10 ký tự)..."
                             className={`min-h-[100px] ${descriptionError ? "border-rose-500" : ""}`}
                             value={formData.description}
                             onChange={handleChange}

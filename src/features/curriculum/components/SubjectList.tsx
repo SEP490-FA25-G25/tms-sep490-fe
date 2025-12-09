@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, Eye, Trash2, Loader2, RotateCcw, ArrowUpDown, MoreVertical } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useGetSubjectsWithLevelsQuery, useDeactivateSubjectMutation, useReactivateSubjectMutation, useDeleteSubjectMutation } from "@/store/services/curriculumApi";
+import { useGetCurriculumsWithLevelsQuery, useDeactivateCurriculumMutation, useReactivateCurriculumMutation, useDeleteCurriculumMutation } from "@/store/services/curriculumApi";
 import type { SubjectWithLevelsDTO } from "@/store/services/curriculumApi";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -27,10 +27,10 @@ export function SubjectList() {
     const navigate = useNavigate();
     const { user } = useAuth();
     const isSubjectLeader = user?.roles?.includes("SUBJECT_LEADER");
-    const { data: subjectsData, isLoading } = useGetSubjectsWithLevelsQuery();
-    const [deactivateSubject, { isLoading: isDeactivating }] = useDeactivateSubjectMutation();
-    const [reactivateSubject, { isLoading: isReactivating }] = useReactivateSubjectMutation();
-    const [deleteSubject, { isLoading: isDeleting }] = useDeleteSubjectMutation();
+    const { data: subjectsData, isLoading } = useGetCurriculumsWithLevelsQuery();
+    const [deactivateSubject, { isLoading: isDeactivating }] = useDeactivateCurriculumMutation();
+    const [reactivateSubject, { isLoading: isReactivating }] = useReactivateCurriculumMutation();
+    const [deleteSubject, { isLoading: isDeleting }] = useDeleteCurriculumMutation();
     const [subjectToDelete, setSubjectToDelete] = useState<number | null>(null);
     const [subjectToReactivate, setSubjectToReactivate] = useState<number | null>(null);
     const [subjectToDeletePermanently, setSubjectToDeletePermanently] = useState<number | null>(null);
@@ -43,7 +43,7 @@ export function SubjectList() {
         if (subjectToDelete) {
             try {
                 await deactivateSubject(subjectToDelete).unwrap();
-                toast.success("Đã hủy kích hoạt môn học thành công");
+                toast.success("Đã hủy kích hoạt khung chương trình thành công");
                 setSubjectToDelete(null);
             } catch (error) {
                 console.error("Failed to deactivate subject:", error);
@@ -56,7 +56,7 @@ export function SubjectList() {
         if (subjectToReactivate) {
             try {
                 await reactivateSubject(subjectToReactivate).unwrap();
-                toast.success("Đã kích hoạt lại môn học thành công");
+                toast.success("Đã kích hoạt lại khung chương trình thành công");
                 setSubjectToReactivate(null);
             } catch (error) {
                 console.error("Failed to reactivate subject:", error);
@@ -69,7 +69,7 @@ export function SubjectList() {
         if (subjectToDeletePermanently) {
             try {
                 await deleteSubject(subjectToDeletePermanently).unwrap();
-                toast.success("Đã xóa môn học thành công");
+                toast.success("Đã xóa khung chương trình thành công");
                 setSubjectToDeletePermanently(null);
             } catch (error: unknown) {
                 console.error("Failed to delete subject:", error);
@@ -91,7 +91,7 @@ export function SubjectList() {
                         variant="ghost"
                         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
                     >
-                        Mã môn
+                        Mã chương trình
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 )
@@ -106,7 +106,7 @@ export function SubjectList() {
                         variant="ghost"
                         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
                     >
-                        Tên môn học
+                        Tên chương trình
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 )
@@ -234,7 +234,7 @@ export function SubjectList() {
                 columns={columns}
                 data={subjectsData?.data || []}
                 searchKey="name"
-                searchPlaceholder="Tìm kiếm theo tên môn học..."
+                searchPlaceholder="Tìm kiếm theo tên khung chương trình..."
             />
 
             <AlertDialog open={!!subjectToDelete} onOpenChange={(open) => !open && setSubjectToDelete(null)}>
@@ -242,7 +242,7 @@ export function SubjectList() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Bạn có chắc chắn muốn hủy kích hoạt?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Hành động này sẽ chuyển trạng thái môn học sang Ngừng hoạt động. Bạn có thể kích hoạt lại sau này.
+                            Hành động này sẽ chuyển trạng thái khung chương trình sang Ngừng hoạt động. Bạn có thể kích hoạt lại sau này.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -257,9 +257,9 @@ export function SubjectList() {
             <AlertDialog open={!!subjectToReactivate} onOpenChange={(open) => !open && setSubjectToReactivate(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Kích hoạt lại môn học?</AlertDialogTitle>
+                        <AlertDialogTitle>Kích hoạt lại khung chương trình?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Hành động này sẽ chuyển trạng thái môn học sang Hoạt động (hoặc Nháp nếu chưa có PLO).
+                            Hành động này sẽ chuyển trạng thái khung chương trình sang Hoạt động (hoặc Nháp nếu chưa có PLO).
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -276,9 +276,9 @@ export function SubjectList() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Hành động này sẽ xóa vĩnh viễn môn học. Không thể hoàn tác.
+                            Hành động này sẽ xóa vĩnh viễn khung chương trình. Không thể hoàn tác.
                             <br />
-                            Lưu ý: Chỉ có thể xóa môn học nếu chưa có cấp độ nào.
+                            Lưu ý: Chỉ có thể xóa khung chương trình nếu chưa có cấp độ nào.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

@@ -24,7 +24,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useCreateLevelMutation, useGetSubjectsWithLevelsQuery, useUpdateLevelMutation } from "@/store/services/curriculumApi";
+import { useCreateLevelMutation, useGetCurriculumsWithLevelsQuery, useUpdateLevelMutation } from "@/store/services/curriculumApi";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Save } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -68,7 +68,7 @@ interface LevelDialogProps {
 }
 
 export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialogProps) {
-    const { data: subjectsData, isLoading: isLoadingSubjects } = useGetSubjectsWithLevelsQuery();
+    const { data: subjectsData, isLoading: isLoadingSubjects } = useGetCurriculumsWithLevelsQuery();
     const [createLevel, { isLoading: isCreating }] = useCreateLevelMutation();
     const [updateLevel, { isLoading: isUpdating }] = useUpdateLevelMutation();
     const isLoading = isCreating || isUpdating;
@@ -211,7 +211,7 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
                                     name="subjectId"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Môn học <span className="text-rose-500">*</span></FormLabel>
+                                            <FormLabel>Khung chương trình <span className="text-rose-500">*</span></FormLabel>
                                             {level ? (
                                                 // When editing, show subject name as readonly input
                                                 <FormControl>

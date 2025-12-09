@@ -49,7 +49,7 @@ export default function CurriculumPage() {
             <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-4">
                 <div className="flex items-center justify-between">
                     <TabsList>
-                        <TabsTrigger value="subjects">Môn học</TabsTrigger>
+                        <TabsTrigger value="subjects">Khung chương trình</TabsTrigger>
                         <TabsTrigger value="levels">Cấp độ</TabsTrigger>
                         <TabsTrigger value="courses">Khóa học</TabsTrigger>
                     </TabsList>

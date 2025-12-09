@@ -12,7 +12,7 @@ import {
 import { Edit, Trash2, Loader2, Eye, RotateCcw, MoreVertical } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-import { useGetSubjectsWithLevelsQuery, useGetLevelsQuery, useDeactivateLevelMutation, useReactivateLevelMutation, useDeleteLevelMutation, type LevelDTO } from "@/store/services/curriculumApi";
+import { useGetCurriculumsWithLevelsQuery, useGetLevelsQuery, useDeactivateLevelMutation, useReactivateLevelMutation, useDeleteLevelMutation, type LevelDTO } from "@/store/services/curriculumApi";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import {
@@ -43,7 +43,7 @@ export function LevelList() {
     const [levelToDeletePermanently, setLevelToDeletePermanently] = useState<number | null>(null);
 
     // Fetch subjects for filter dropdown
-    const { data: subjectsData } = useGetSubjectsWithLevelsQuery();
+    const { data: subjectsData } = useGetCurriculumsWithLevelsQuery();
 
     // Fetch levels filtered by selected subject
     const { data: levelsData } = useGetLevelsQuery(selectedSubjectId);
@@ -128,7 +128,7 @@ export function LevelList() {
         },
         {
             accessorKey: "subjectName",
-            header: "Môn học",
+            header: "Khung chương trình",
             cell: ({ row }) => (
                 <div>
                     {row.original.subjectName} <span className="text-muted-foreground text-xs">({row.original.subjectCode})</span>

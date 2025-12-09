@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Loader2, GripVertical, BookOpen, Layers, Target, CheckCircle2 } from "lucide-react";
 import {
-    useGetSubjectQuery,
+    useGetCurriculumQuery,
     useUpdateLevelSortOrderMutation,
     type LevelDTO
 } from "@/store/services/curriculumApi";
@@ -102,7 +102,7 @@ function SortableRow({ level, onViewDetail }: SortableRowProps) {
 export default function SubjectDetailPage() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { data: subjectData, isLoading, refetch } = useGetSubjectQuery(Number(id), {
+    const { data: subjectData, isLoading, refetch } = useGetCurriculumQuery(Number(id), {
         skip: !id || isNaN(Number(id))
     });
     const [updateSortOrder] = useUpdateLevelSortOrderMutation();
@@ -150,8 +150,8 @@ export default function SubjectDetailPage() {
     if (isLoading) {
         return (
             <DashboardLayout
-                title="Chi tiết Môn học"
-                description="Đang tải thông tin môn học..."
+                title="Chi tiết Khung chương trình"
+                description="Đang tải thông tin khung chương trình..."
             >
                 <div className="flex justify-center items-center h-64">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -163,11 +163,11 @@ export default function SubjectDetailPage() {
     if (!subject) {
         return (
             <DashboardLayout
-                title="Chi tiết Môn học"
-                description="Không tìm thấy thông tin môn học"
+                title="Chi tiết Khung chương trình"
+                description="Không tìm thấy thông tin khung chương trình"
             >
                 <div className="text-center py-8">
-                    <p className="text-muted-foreground mb-4">Môn học không tồn tại hoặc đã bị xóa.</p>
+                    <p className="text-muted-foreground mb-4">Khung chương trình không tồn tại hoặc đã bị xóa.</p>
                     <Button onClick={() => navigate("/curriculum")}>Quay lại danh sách</Button>
                 </div>
             </DashboardLayout>
@@ -183,21 +183,21 @@ export default function SubjectDetailPage() {
     return (
         <DashboardLayout
             title={subject.name}
-            description={`Mã môn học: ${subject.code}`}
+            description={`Mã chương trình: ${subject.code}`}
         >
             <div className="space-y-6">
                 {/* Header Stats */}
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                     <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Mã môn học</CardTitle>
+                            <CardTitle className="text-sm font-medium">Mã chương trình</CardTitle>
                             <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", "bg-slate-100 dark:bg-slate-800/50")}>
                                 <BookOpen className={cn("h-4 w-4", "text-slate-600 dark:text-slate-400")} />
                             </div>
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{subject.code}</div>
-                            <p className="text-xs text-muted-foreground">Mã định danh môn học</p>
+                            <p className="text-xs text-muted-foreground">Mã định danh khung chương trình</p>
                         </CardContent>
                     </Card>
                     <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
@@ -209,7 +209,7 @@ export default function SubjectDetailPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{levels.length}</div>
-                            <p className="text-xs text-muted-foreground">Cấp độ thuộc môn học</p>
+                            <p className="text-xs text-muted-foreground">Cấp độ thuộc chương trình</p>
                         </CardContent>
                     </Card>
                     <Card className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
@@ -254,11 +254,11 @@ export default function SubjectDetailPage() {
                     <TabsContent value="overview" className="mt-6 space-y-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Mô tả môn học</CardTitle>
+                                <CardTitle>Mô tả chương trình</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <p className="text-muted-foreground leading-relaxed">
-                                    {subject.description || "Chưa có mô tả cho môn học này."}
+                                    {subject.description || "Chưa có mô tả cho khung chương trình này."}
                                 </p>
                             </CardContent>
                         </Card>
@@ -269,11 +269,11 @@ export default function SubjectDetailPage() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="flex justify-between border-b pb-2">
-                                    <span className="text-muted-foreground">Mã môn học</span>
+                                    <span className="text-muted-foreground">Mã chương trình</span>
                                     <span className="font-medium">{subject.code}</span>
                                 </div>
                                 <div className="flex justify-between border-b pb-2">
-                                    <span className="text-muted-foreground">Tên môn học</span>
+                                    <span className="text-muted-foreground">Tên chương trình</span>
                                     <span className="font-medium">{subject.name}</span>
                                 </div>
                                 <div className="flex justify-between border-b pb-2">
@@ -304,7 +304,7 @@ export default function SubjectDetailPage() {
                             <CardHeader>
                                 <CardTitle>Chuẩn đầu ra chương trình (PLOs)</CardTitle>
                                 <CardDescription>
-                                    Các mục tiêu học tập mà sinh viên cần đạt được sau khi hoàn thành môn học.
+                                    Các mục tiêu học tập mà sinh viên cần đạt được sau khi hoàn thành khung chương trình.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
@@ -381,7 +381,7 @@ export default function SubjectDetailPage() {
                                                 ) : (
                                                     <TableRow>
                                                         <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                                                            Chưa có cấp độ nào thuộc môn học này.
+                                                            Chưa có cấp độ nào thuộc chương trình này.
                                                         </TableCell>
                                                     </TableRow>
                                                 )}

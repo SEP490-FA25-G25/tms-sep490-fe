@@ -16,7 +16,7 @@ import {
 import { Plus, Trash2 } from "lucide-react";
 import { useState, useMemo, useCallback } from "react";
 import type { CourseData, CLO } from "@/types/course";
-import { useGetSubjectQuery } from "@/store/services/curriculumApi";
+import { useGetCurriculumQuery } from "@/store/services/curriculumApi";
 
 interface Step2Props {
     data: CourseData;
@@ -73,7 +73,7 @@ export function Step2CLO({ data, setData }: Step2Props) {
 
     // Fetch Subject Details to get PLOs
     const subjectId = data.basicInfo.subjectId ? parseInt(data.basicInfo.subjectId) : undefined;
-    const { data: subjectResponse, isLoading: isLoadingSubject } = useGetSubjectQuery(subjectId!, {
+    const { data: subjectResponse, isLoading: isLoadingSubject } = useGetCurriculumQuery(subjectId!, {
         skip: !subjectId
     });
 

@@ -12,7 +12,7 @@ import {
 import { Edit, Trash2, Loader2, Eye, RotateCcw, MoreHorizontal } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-import { useGetSubjectsWithLevelsQuery, useGetLevelsQuery, useDeactivateLevelMutation, useReactivateLevelMutation, useDeleteLevelMutation, type LevelDTO } from "@/store/services/curriculumApi";
+import { useGetCurriculumsWithLevelsQuery, useGetLevelsQuery, useDeactivateLevelMutation, useReactivateLevelMutation, useDeleteLevelMutation, type LevelDTO } from "@/store/services/curriculumApi";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import {
@@ -57,7 +57,7 @@ export function LevelList() {
     };
 
     // Fetch subjects for filter dropdown
-    const { data: subjectsData } = useGetSubjectsWithLevelsQuery();
+    const { data: subjectsData } = useGetCurriculumsWithLevelsQuery();
 
     // Fetch levels filtered by selected subject
     const { data: levelsData } = useGetLevelsQuery(selectedSubjectId);
@@ -141,7 +141,7 @@ export function LevelList() {
         },
         {
             accessorKey: "subjectName",
-            header: "Môn học",
+            header: "Khung chương trình",
             cell: ({ row }) => (
                 <div>
                     {row.original.subjectName} <span className="text-muted-foreground text-xs">({row.original.subjectCode})</span>
@@ -296,16 +296,14 @@ export function LevelList() {
             </div>
 
             {/* Table Section */}
-            <div className="rounded-md border">
-                <DataTable
-                    columns={columns}
-                    data={[...(levels || [])].sort((a, b) => 
-                        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-                    )}
-                    searchKey="name"
-                    searchPlaceholder="Tìm kiếm theo tên cấp độ..."
-                />
-            </div>
+            <DataTable
+                columns={columns}
+                data={[...(levels || [])].sort((a, b) =>
+                    new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+                )}
+                searchKey="name"
+                searchPlaceholder="Tìm kiếm theo tên cấp độ..."
+            />
 
             <LevelDialog
                 open={isDialogOpen}

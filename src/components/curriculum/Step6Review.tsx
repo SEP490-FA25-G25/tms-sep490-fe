@@ -39,7 +39,7 @@ import {
     ExternalLink
 } from "lucide-react";
 import type { CourseData } from "@/types/course";
-import { useGetSubjectsWithLevelsQuery, useGetSubjectQuery } from "@/store/services/curriculumApi";
+import { useGetCurriculumsWithLevelsQuery, useGetCurriculumQuery } from "@/store/services/curriculumApi";
 
 interface Step6Props {
     data: CourseData;
@@ -61,10 +61,10 @@ const assessmentTypeLabels: Record<string, string> = {
 
 export function Step6Review({ data }: Step6Props) {
     const [showPLOMatrix, setShowPLOMatrix] = useState(false);
-    const { data: subjectsData } = useGetSubjectsWithLevelsQuery();
+    const { data: subjectsData } = useGetCurriculumsWithLevelsQuery();
 
     // Get subject for PLO data
-    const { data: subjectDetail } = useGetSubjectQuery(
+    const { data: subjectDetail } = useGetCurriculumQuery(
         data.basicInfo?.subjectId ? parseInt(data.basicInfo.subjectId) : 0,
         { skip: !data.basicInfo?.subjectId }
     );

@@ -122,52 +122,52 @@ export const curriculumApi = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: ['Curriculum'],
   endpoints: (builder) => ({
-    // Get subjects with their levels
-    getSubjectsWithLevels: builder.query<ApiResponse<SubjectWithLevelsDTO[]>, void>({
+    // Get curriculums with their levels
+    getCurriculumsWithLevels: builder.query<ApiResponse<SubjectWithLevelsDTO[]>, void>({
       query: () => ({
-        url: '/curriculum/subjects-with-levels',
+        url: '/curriculum/curriculums-with-levels',
         method: 'GET',
       }),
       providesTags: ['Curriculum'],
     }),
-    // Create new subject
-    createSubject: builder.mutation<ApiResponse<SubjectWithLevelsDTO>, CreateSubjectRequest>({
+    // Create new curriculum
+    createCurriculum: builder.mutation<ApiResponse<SubjectWithLevelsDTO>, CreateSubjectRequest>({
       query: (body) => ({
-        url: '/curriculum/subjects',
+        url: '/curriculum/curriculums',
         method: 'POST',
         body,
       }),
       invalidatesTags: ['Curriculum'],
     }),
-    // Get subject details
-    getSubject: builder.query<ApiResponse<SubjectWithLevelsDTO>, number>({
+    // Get curriculum details
+    getCurriculum: builder.query<ApiResponse<SubjectWithLevelsDTO>, number>({
       query: (id) => ({
-        url: `/curriculum/subjects/${id}`,
+        url: `/curriculum/curriculums/${id}`,
         method: 'GET',
       }),
       providesTags: (_result, _error, id) => [{ type: 'Curriculum', id }],
     }),
-    // Update subject
-    updateSubject: builder.mutation<ApiResponse<SubjectWithLevelsDTO>, { id: number; data: CreateSubjectRequest }>({
+    // Update curriculum
+    updateCurriculum: builder.mutation<ApiResponse<SubjectWithLevelsDTO>, { id: number; data: CreateSubjectRequest }>({
       query: ({ id, data }) => ({
-        url: `/curriculum/subjects/${id}`,
+        url: `/curriculum/curriculums/${id}`,
         method: 'PUT',
         body: data,
       }),
       invalidatesTags: ['Curriculum'],
     }),
-    // Deactivate subject
-    deactivateSubject: builder.mutation<ApiResponse<void>, number>({
+    // Deactivate curriculum
+    deactivateCurriculum: builder.mutation<ApiResponse<void>, number>({
       query: (id) => ({
-        url: `/curriculum/subjects/${id}/deactivate`,
+        url: `/curriculum/curriculums/${id}/deactivate`,
         method: 'PATCH',
       }),
       invalidatesTags: ['Curriculum'],
     }),
-    // Reactivate subject
-    reactivateSubject: builder.mutation<ApiResponse<void>, number>({
+    // Reactivate curriculum
+    reactivateCurriculum: builder.mutation<ApiResponse<void>, number>({
       query: (id) => ({
-        url: `/curriculum/subjects/${id}/reactivate`,
+        url: `/curriculum/curriculums/${id}/reactivate`,
         method: 'PATCH',
       }),
       invalidatesTags: ['Curriculum'],
@@ -224,9 +224,9 @@ export const curriculumApi = createApi({
       invalidatesTags: ['Curriculum'],
     }),
     // Update level sort order
-    updateLevelSortOrder: builder.mutation<ApiResponse<void>, { subjectId: number; levelIds: number[] }>({
-      query: ({ subjectId, levelIds }) => ({
-        url: `/curriculum/subjects/${subjectId}/levels/sort-order`,
+    updateLevelSortOrder: builder.mutation<ApiResponse<void>, { curriculumId: number; levelIds: number[] }>({
+      query: ({ curriculumId, levelIds }) => ({
+        url: `/curriculum/curriculums/${curriculumId}/levels/sort-order`,
         method: 'PUT',
         body: levelIds,
       }),
@@ -246,10 +246,10 @@ export const curriculumApi = createApi({
         method: 'GET',
       }),
     }),
-    // Delete subject
-    deleteSubject: builder.mutation<ApiResponse<void>, number>({
+    // Delete curriculum
+    deleteCurriculum: builder.mutation<ApiResponse<void>, number>({
       query: (id) => ({
-        url: `/curriculum/subjects/${id}`,
+        url: `/curriculum/curriculums/${id}`,
         method: 'DELETE',
       }),
       invalidatesTags: ['Curriculum'],
@@ -266,13 +266,13 @@ export const curriculumApi = createApi({
 })
 
 export const {
-  useGetSubjectsWithLevelsQuery,
-  useCreateSubjectMutation,
-  useGetSubjectQuery,
-  useUpdateSubjectMutation,
-  useDeactivateSubjectMutation,
-  useReactivateSubjectMutation,
-  useDeleteSubjectMutation,
+  useGetCurriculumsWithLevelsQuery,
+  useCreateCurriculumMutation,
+  useGetCurriculumQuery,
+  useUpdateCurriculumMutation,
+  useDeactivateCurriculumMutation,
+  useReactivateCurriculumMutation,
+  useDeleteCurriculumMutation,
   useCreateLevelMutation,
   useGetLevelsQuery,
   useGetLevelQuery,

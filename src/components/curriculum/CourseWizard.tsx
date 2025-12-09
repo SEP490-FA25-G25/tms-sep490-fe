@@ -510,7 +510,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
     const handleSaveAndContinue = async () => {
         // Validate minimum required fields
         if (!formData.basicInfo?.subjectId || !formData.basicInfo?.name || !formData.basicInfo?.code) {
-            toast.error("Vui lòng nhập Môn học, Tên khóa học và Mã khóa học để lưu nháp.");
+            toast.error("Vui lòng nhập Khung chương trình, Tên khóa học và Mã khóa học để lưu nháp.");
             return;
         }
 
@@ -548,7 +548,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
     const handleSaveAndExit = async () => {
         // Validate minimum required fields
         if (!formData.basicInfo?.subjectId || !formData.basicInfo?.name || !formData.basicInfo?.code) {
-            toast.error("Vui lòng nhập Môn học, Tên khóa học và Mã khóa học để lưu nháp.");
+            toast.error("Vui lòng nhập Khung chương trình, Tên khóa học và Mã khóa học để lưu nháp.");
             return;
         }
 

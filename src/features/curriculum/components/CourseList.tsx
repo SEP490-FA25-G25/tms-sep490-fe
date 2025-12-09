@@ -19,7 +19,7 @@ import {
     useDeleteCourseMutation
 } from "@/store/services/courseApi";
 import type { CourseDTO } from "@/store/services/courseApi";
-import { useGetSubjectsWithLevelsQuery } from "@/store/services/curriculumApi";
+import { useGetCurriculumsWithLevelsQuery } from "@/store/services/curriculumApi";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -56,7 +56,7 @@ export function CourseList() {
     const [courseToDeletePermanently, setCourseToDeletePermanently] = useState<number | null>(null);
 
     // Fetch filters data
-    const { data: subjectsData } = useGetSubjectsWithLevelsQuery();
+    const { data: subjectsData } = useGetCurriculumsWithLevelsQuery();
 
     // Fetch courses with filters
     const { data: courses } = useGetAllCoursesQuery({

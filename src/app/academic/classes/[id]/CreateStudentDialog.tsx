@@ -39,7 +39,7 @@ import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { useCreateStudentMutation } from '@/store/services/studentApi'
-import { useGetSubjectsWithLevelsQuery } from '@/store/services/curriculumApi'
+import { useGetCurriculumsWithLevelsQuery } from '@/store/services/curriculumApi'
 import type { SkillAssessmentInput, CreateStudentResponse } from '@/store/services/studentApi'
 import { cn } from '@/lib/utils'
 import {
@@ -103,7 +103,7 @@ export function CreateStudentDialog({
   const [removeIndex, setRemoveIndex] = useState<number | null>(null)
 
   const [createStudent, { isLoading: isSubmitting }] = useCreateStudentMutation()
-  const { data: subjectsResponse } = useGetSubjectsWithLevelsQuery()
+  const { data: subjectsResponse } = useGetCurriculumsWithLevelsQuery()
 
   const subjects = subjectsResponse?.data || []
 

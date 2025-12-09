@@ -187,7 +187,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {courseSyllabus?.subjectName && (
                 <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Môn học</h4>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Khung chương trình</h4>
                   <p className="text-base text-foreground">{courseSyllabus.subjectName}</p>
                 </div>
               )}

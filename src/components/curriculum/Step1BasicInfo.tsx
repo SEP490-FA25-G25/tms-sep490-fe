@@ -8,7 +8,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useGetSubjectsWithLevelsQuery, useGetTimeslotDurationsQuery } from "@/store/services/curriculumApi";
+import { useGetCurriculumsWithLevelsQuery, useGetTimeslotDurationsQuery } from "@/store/services/curriculumApi";
 import { useGetAllCoursesQuery, useLazyGetNextVersionQuery } from "@/store/services/courseApi";
 import { useUploadFileMutation, useDeleteFileMutation } from "@/store/services/uploadApi";
 import { useMemo, useEffect, useRef, useCallback, useState } from "react";
@@ -38,7 +38,7 @@ interface ValidationErrors {
 }
 
 export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1Props) {
-    const { data: subjectsData, isLoading } = useGetSubjectsWithLevelsQuery();
+    const { data: subjectsData, isLoading } = useGetCurriculumsWithLevelsQuery();
     const { data: durationsData } = useGetTimeslotDurationsQuery();
     const { data: existingCourses } = useGetAllCoursesQuery();
     const [getNextVersion] = useLazyGetNextVersionQuery();
@@ -372,7 +372,7 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    <Label>Môn học <span className="text-rose-500">*</span></Label>
+                    <Label>Khung chương trình <span className="text-rose-500">*</span></Label>
                     <Select
                         onValueChange={handleSubjectChange}
                         value={data.basicInfo?.subjectId}

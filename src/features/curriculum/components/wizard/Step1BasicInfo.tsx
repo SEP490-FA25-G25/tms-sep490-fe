@@ -8,7 +8,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useGetSubjectsWithLevelsQuery, useGetTimeslotDurationQuery } from "@/store/services/curriculumApi";
+import { useGetCurriculumsWithLevelsQuery, useGetTimeslotDurationQuery } from "@/store/services/curriculumApi";
 import { useMemo, useEffect, useRef, useCallback } from "react";
 import type { CourseData } from "@/types/course";
 
@@ -19,7 +19,7 @@ interface Step1Props {
 }
 
 export function Step1BasicInfo({ data, setData, courseStatus }: Step1Props) {
-    const { data: subjectsData, isLoading } = useGetSubjectsWithLevelsQuery();
+    const { data: subjectsData, isLoading } = useGetCurriculumsWithLevelsQuery();
     const { data: durationData } = useGetTimeslotDurationQuery();
 
     // Refs to track previous values for change detection
@@ -114,7 +114,7 @@ export function Step1BasicInfo({ data, setData, courseStatus }: Step1Props) {
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    <Label>Môn học <span className="text-red-500">*</span></Label>
+                    <Label>Khung chương trình <span className="text-red-500">*</span></Label>
                     <Select
                         onValueChange={handleSubjectChange}
                         value={data.basicInfo?.subjectId}

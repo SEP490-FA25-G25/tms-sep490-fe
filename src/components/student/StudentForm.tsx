@@ -56,7 +56,7 @@ import {
 } from '@/lib/validations'
 
 import { useUploadFileMutation } from '@/store/services/uploadApi'
-import { useGetSubjectsWithLevelsQuery } from '@/store/services/curriculumApi'
+import { useGetCurriculumsWithLevelsQuery } from '@/store/services/curriculumApi'
 import { useGetAssessorsForBranchQuery } from '@/store/services/studentApi'
 import type { SkillAssessmentUpdateInput, StudentDetailDTO, SkillAssessmentDetailDTO } from '@/store/services/studentApi'
 
@@ -481,7 +481,7 @@ export function StudentForm({
 
   // API hooks
   const [uploadFile, { isLoading: isUploading }] = useUploadFileMutation()
-  const { data: subjectsResponse } = useGetSubjectsWithLevelsQuery()
+  const { data: subjectsResponse } = useGetCurriculumsWithLevelsQuery()
   const { data: assessorsResponse } = useGetAssessorsForBranchQuery(branchId, {
     skip: !branchId,
   })
