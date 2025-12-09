@@ -33,7 +33,6 @@ import {
 } from '../UnifiedRequestFlow'
 import {
   Validation,
-  getCapacityText,
   getModalityLabel,
   useDebouncedValue,
   useErrorHandler,

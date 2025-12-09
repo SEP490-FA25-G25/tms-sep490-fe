@@ -303,6 +303,7 @@ export function Section({
 // Import individual flow components
 import ModalityChangeFlow from './flows/ModalityChangeFlow'
 import ReplacementFlow from './flows/ReplacementFlow'
+import RescheduleFlow from './flows/RescheduleFlow'
 
 // Main Unified Request Flow Component
 export default function UnifiedTeacherRequestFlow({ type, onSuccess }: UnifiedTeacherRequestFlowProps) {
@@ -311,6 +312,8 @@ export default function UnifiedTeacherRequestFlow({ type, onSuccess }: UnifiedTe
       return <ModalityChangeFlow onSuccess={onSuccess} />
     case 'REPLACEMENT':
       return <ReplacementFlow onSuccess={onSuccess} />
+    case 'RESCHEDULE':
+      return <RescheduleFlow onSuccess={onSuccess} />
     default:
       return <div>Unknown flow type</div>
   }

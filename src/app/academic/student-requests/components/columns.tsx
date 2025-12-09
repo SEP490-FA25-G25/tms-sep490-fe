@@ -254,7 +254,7 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
               Không xác định
             </Badge>
           )
-        } catch (error) {
+        } catch {
           return (
             <Badge variant="secondary">
               Lỗi ngày
