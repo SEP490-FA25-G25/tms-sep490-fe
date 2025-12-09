@@ -5,8 +5,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
 import { SelectTeacherStep } from "./steps/SelectTeacherStep";
 import { SelectTypeStep } from "./steps/SelectTypeStep";
 import { SelectSessionStep } from "./steps/SelectSessionStep";
@@ -91,14 +89,6 @@ export function CreateRequestDialog({
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle>{getStepTitle()}</DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleClose}
-              className="h-6 w-6"
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
         </DialogHeader>
 

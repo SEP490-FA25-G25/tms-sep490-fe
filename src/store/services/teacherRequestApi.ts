@@ -473,10 +473,18 @@ export const teacherRequestApi = createApi({
           };
         }
         if (sessionId) {
+          // If teacherId is provided (academic staff), use staff endpoint
+          if (teacherId) {
+            return {
+              url: `/teacher-requests/sessions/${sessionId}/modality/resources/staff`,
+              method: "GET",
+              params: { teacherId },
+            };
+          }
+          // Otherwise (teacher creating own request), use teacher endpoint
           return {
             url: `/teacher-requests/${sessionId}/modality/resources`,
             method: "GET",
-            params: teacherId ? { teacherId } : {},
           };
         }
         throw new Error("Either requestId or sessionId must be provided");

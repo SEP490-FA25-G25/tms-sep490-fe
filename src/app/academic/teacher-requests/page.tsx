@@ -72,7 +72,6 @@ import {
   type RequestType as TeacherRequestType,
   type RequestStatus as TeacherRequestStatus,
   type TeacherRequestDTO,
-  type ReplacementCandidateDTO,
 } from "@/store/services/teacherRequestApi";
 import { TeacherRequestDetailContent } from "@/app/teacher/requests/page";
 import { CreateRequestDialog } from "./components/CreateRequestDialog";
@@ -149,108 +148,6 @@ const TEACHER_REQUEST_STATUS_META: Record<
     label: "Đã từ chối",
     badgeClass: "bg-rose-100 text-rose-700 border-rose-200",
   },
-};
-
-const getCandidateSkills = (
-  candidate: ReplacementCandidateDTO
-): string | undefined => {
-  // Helper to format skill with level
-  const formatSkillWithLevel = (skill: unknown): string | null => {
-    if (typeof skill === "string") {
-      return skill.trim();
-    }
-
-    if (skill && typeof skill === "object") {
-      // Extract skill name - can be direct string in "skill" field or nested
-      const skillName =
-        (typeof (skill as { skill?: unknown }).skill === "string"
-          ? (skill as { skill: string }).skill
-          : null) ||
-        (skill as { name?: string }).name ||
-        (skill as { skillName?: string }).skillName ||
-        (typeof (skill as { skill?: unknown }).skill === "object" &&
-          (skill as { skill?: { name?: string } }).skill?.name);
-
-      // Extract level - can be number (1-5) or string
-      const skillLevelRaw =
-        (skill as { level?: string | number }).level !== undefined
-          ? (skill as { level?: string | number }).level
-          : (skill as { skillLevel?: string | number }).skillLevel !== undefined
-          ? (skill as { skillLevel?: string | number }).skillLevel
-          : (skill as { proficiency?: string | number }).proficiency;
-
-      // Format level: if number, convert to string; if string, use as is
-      let skillLevel: string | null = null;
-      if (skillLevelRaw !== undefined && skillLevelRaw !== null) {
-        if (typeof skillLevelRaw === "number") {
-          skillLevel = String(skillLevelRaw);
-        } else if (
-          typeof skillLevelRaw === "string" &&
-          skillLevelRaw.trim().length > 0
-        ) {
-          skillLevel = skillLevelRaw.trim();
-        }
-      }
-
-      if (
-        skillName &&
-        typeof skillName === "string" &&
-        skillName.trim().length > 0
-      ) {
-        if (skillLevel) {
-          return `${skillName.trim()} (${skillLevel})`;
-        }
-        return skillName.trim();
-      }
-    }
-
-    return null;
-  };
-
-  // Try to extract from skills array (prioritize this as it has structured data)
-  if (
-    candidate.skills &&
-    Array.isArray(candidate.skills) &&
-    candidate.skills.length > 0
-  ) {
-    const formattedSkills = candidate.skills
-      .map(formatSkillWithLevel)
-      .filter((skill): skill is string => skill !== null);
-
-    if (formattedSkills.length > 0) {
-      return formattedSkills.join(", ");
-    }
-  }
-
-  // Try to extract from teacherSkills array
-  if (
-    candidate.teacherSkills &&
-    Array.isArray(candidate.teacherSkills) &&
-    candidate.teacherSkills.length > 0
-  ) {
-    const formattedSkills = candidate.teacherSkills
-      .map(formatSkillWithLevel)
-      .filter((skill): skill is string => skill !== null);
-
-    if (formattedSkills.length > 0) {
-      return formattedSkills.join(", ");
-    }
-  }
-
-  // Try skillSummary as fallback
-  if (candidate.skillSummary && typeof candidate.skillSummary === "string") {
-    return candidate.skillSummary.trim();
-  }
-
-  // Try skillsDescription as fallback
-  if (
-    candidate.skillsDescription &&
-    typeof candidate.skillsDescription === "string"
-  ) {
-    return candidate.skillsDescription.trim();
-  }
-
-  return undefined;
 };
 
 const getRequestTopic = (request: TeacherRequestDTO): string | undefined => {
@@ -544,8 +441,8 @@ export default function AcademicTeacherRequestsPage() {
             teacherId: selectedRequest.teacherId,
           }
         : {
-            requestId: selectedRequestId,
-          }
+          requestId: selectedRequestId,
+        }
       : skipToken
   );
 
@@ -1661,7 +1558,9 @@ export default function AcademicTeacherRequestsPage() {
                   ) : (
                     <Select
                       value={
-                        selectedResourceId ? String(selectedResourceId) : ""
+                        selectedResourceId !== null && selectedResourceId !== undefined
+                          ? String(selectedResourceId)
+                          : undefined
                       }
                       onValueChange={(value) =>
                         setSelectedResourceId(Number(value))
@@ -1683,17 +1582,22 @@ export default function AcademicTeacherRequestsPage() {
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        {modalityResources.map((resource) => {
-                          const resourceId = resource.id ?? resource.resourceId;
-                          const resourceName = resource.name || "Chưa có tên";
-                          const resourceType =
-                            resource.type || resource.resourceType || "";
-                          const resourceCapacity = resource.capacity;
+                        {modalityResources
+                          .filter((resource) => {
+                            const resourceId = resource.id ?? resource.resourceId;
+                            return resourceId !== null && resourceId !== undefined && resourceId !== 0;
+                          })
+                          .map((resource) => {
+                            const resourceId = resource.id ?? resource.resourceId;
+                            const resourceName = resource.name || "Chưa có tên";
+                            const resourceType =
+                              resource.type || resource.resourceType || "";
+                            const resourceCapacity = resource.capacity;
 
                           return (
                             <SelectItem
                               key={resourceId || resourceName}
-                              value={String(resourceId || "")}
+                              value={String(resourceId)}
                             >
                               <div className="flex flex-col gap-1">
                                 <div className="flex items-center justify-between gap-2">
@@ -1712,7 +1616,7 @@ export default function AcademicTeacherRequestsPage() {
                               </div>
                             </SelectItem>
                           );
-                        })}
+                          })}
                       </SelectContent>
                     </Select>
                   )}
@@ -1802,9 +1706,10 @@ export default function AcademicTeacherRequestsPage() {
                       ) : (
                         <Select
                           value={
-                            selectedRescheduleTimeSlotId
+                            selectedRescheduleTimeSlotId !== null &&
+                            selectedRescheduleTimeSlotId !== undefined
                               ? String(selectedRescheduleTimeSlotId)
-                              : ""
+                              : undefined
                           }
                           onValueChange={(value) =>
                             setSelectedRescheduleTimeSlotId(Number(value))
@@ -1846,7 +1751,7 @@ export default function AcademicTeacherRequestsPage() {
                                   slot.timeSlotTemplateId ??
                                   slot.timeSlotId ??
                                   slot.id;
-                                return slotId != null && slotId !== 0;
+                                return slotId !== null && slotId !== undefined && slotId !== 0;
                               })
                               .map((slot) => {
                                 const slotId =
@@ -1894,80 +1799,88 @@ export default function AcademicTeacherRequestsPage() {
                       ) : rescheduleResourcesError ? (
                         <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
                           {formatBackendError(
-                            (
-                              rescheduleResourcesError as {
-                                data?: { message?: string };
-                              }
-                            )?.data?.message,
-                            "Có lỗi khi tải danh sách phòng học/phương tiện. Vui lòng thử lại sau."
-                          )}
-                        </div>
+                          (
+                            rescheduleResourcesError as {
+                              data?: { message?: string };
+                            }
+                          )?.data?.message,
+                        "Có lỗi khi tải danh sách phòng học/phương tiện. Vui lòng thử lại sau."
+                      )}
+                    </div>
                       ) : rescheduleResources.length === 0 ? (
-                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
-                          Không tìm thấy phòng học/phương tiện phù hợp.
-                        </div>
-                      ) : (
-                        <Select
-                          value={
-                            selectedResourceId ? String(selectedResourceId) : ""
-                          }
-                          onValueChange={(value) =>
-                            setSelectedResourceId(Number(value))
-                          }
-                          disabled={isActionLoading}
-                        >
-                          <SelectTrigger>
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+                      Không tìm thấy phòng học/phương tiện phù hợp.
+                    </div>
+                  ) : (
+                    <Select
+                      value={
+                        selectedResourceId !== null && selectedResourceId !== undefined
+                          ? String(selectedResourceId)
+                          : undefined
+                      }
+                      onValueChange={(value) =>
+                        setSelectedResourceId(Number(value))
+                      }
+                      disabled={isActionLoading}
+                    >
+                      <SelectTrigger>
                             <SelectValue placeholder="Chọn phòng học/phương tiện (tùy chọn)...">
-                              {selectedResourceId
-                                ? (() => {
-                                    const selectedResource =
+                          {selectedResourceId
+                            ? (() => {
+                                const selectedResource =
                                       rescheduleResources.find(
-                                        (r) =>
-                                          (r.id ?? r.resourceId) ===
-                                          selectedResourceId
-                                      );
+                                    (r) =>
+                                      (r.id ?? r.resourceId) ===
+                                      selectedResourceId
+                                  );
                                     return (
                                       selectedResource?.name || "Chưa có tên"
                                     );
-                                  })()
-                                : null}
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {rescheduleResources.map((resource) => {
-                              const resourceId =
-                                resource.id ?? resource.resourceId;
-                              const resourceName =
-                                resource.name || "Chưa có tên";
-                              const resourceType =
-                                resource.type || resource.resourceType || "";
-                              const resourceCapacity = resource.capacity;
+                              })()
+                            : null}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {rescheduleResources
+                          .filter((resource) => {
+                            const resourceId =
+                              resource.id ?? resource.resourceId;
+                            return resourceId !== null && resourceId !== undefined && resourceId !== 0;
+                          })
+                          .map((resource) => {
+                            const resourceId =
+                              resource.id ?? resource.resourceId;
+                            const resourceName =
+                              resource.name || "Chưa có tên";
+                          const resourceType =
+                            resource.type || resource.resourceType || "";
+                          const resourceCapacity = resource.capacity;
 
-                              return (
-                                <SelectItem
-                                  key={resourceId || resourceName}
-                                  value={String(resourceId || "")}
-                                >
-                                  <div className="flex flex-col gap-1">
-                                    <div className="flex items-center justify-between gap-2">
-                                      <span>{resourceName}</span>
-                                      {resourceType && (
-                                        <span className="text-xs text-muted-foreground">
-                                          {resourceType}
-                                        </span>
-                                      )}
-                                    </div>
-                                    {resourceCapacity !== undefined && (
-                                      <span className="text-xs text-muted-foreground">
-                                        Sức chứa: {resourceCapacity}
-                                      </span>
-                                    )}
-                                  </div>
-                                </SelectItem>
-                              );
-                            })}
-                          </SelectContent>
-                        </Select>
+                            return (
+                              <SelectItem
+                                key={resourceId || resourceName}
+                                value={String(resourceId)}
+                              >
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span>{resourceName}</span>
+                                  {resourceType && (
+                                    <span className="text-xs text-muted-foreground">
+                                      {resourceType}
+                                    </span>
+                                  )}
+                                </div>
+                                {resourceCapacity !== undefined && (
+                                  <span className="text-xs text-muted-foreground">
+                                    Sức chứa: {resourceCapacity}
+                                  </span>
+                                )}
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
                       )}
                     </div>
                   ) : (
@@ -2010,9 +1923,10 @@ export default function AcademicTeacherRequestsPage() {
                   ) : (
                     <Select
                       value={
-                        selectedReplacementTeacherId
+                        selectedReplacementTeacherId !== null &&
+                        selectedReplacementTeacherId !== undefined
                           ? String(selectedReplacementTeacherId)
-                          : ""
+                          : undefined
                       }
                       onValueChange={(value) =>
                         setSelectedReplacementTeacherId(Number(value))
@@ -2045,7 +1959,14 @@ export default function AcademicTeacherRequestsPage() {
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        {replacementCandidates.map((candidate) => {
+                        {replacementCandidates
+                          .filter((candidate) => {
+                            const teacherId =
+                              candidate.teacherId ??
+                              (candidate as { id?: number }).id;
+                            return teacherId !== null && teacherId !== undefined && teacherId !== 0;
+                          })
+                          .map((candidate) => {
                           const teacherId =
                             candidate.teacherId ??
                             (candidate as { id?: number }).id;
@@ -2055,12 +1976,14 @@ export default function AcademicTeacherRequestsPage() {
                             candidate.teacherName ||
                             "Chưa có tên";
                           const teacherLevel = candidate.level || "";
-                          const teacherSkills = getCandidateSkills(candidate);
-
                           return (
                             <SelectItem
                               key={teacherId || teacherName}
-                              value={String(teacherId || "")}
+                              value={
+                                teacherId !== null && teacherId !== undefined
+                                  ? String(teacherId)
+                                  : ""
+                              }
                             >
                               <div className="flex flex-col gap-1">
                                 <div className="flex items-center justify-between gap-2">
@@ -2073,11 +1996,6 @@ export default function AcademicTeacherRequestsPage() {
                                     )}
                                   </span>
                                 </div>
-                                {teacherSkills && (
-                                  <span className="text-xs text-muted-foreground">
-                                    {teacherSkills}
-                                  </span>
-                                )}
                               </div>
                             </SelectItem>
                           );
