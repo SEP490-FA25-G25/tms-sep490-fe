@@ -124,6 +124,7 @@ function getCandidateSkills(candidate: ReplacementCandidateDTO): string {
 }
 
 export default function ReplacementFlow({ onSuccess }: ReplacementFlowProps) {
+  const REASON_MIN_LENGTH = 15
   const [currentStep, setCurrentStep] = useState(1)
   const [selectedSession, setSelectedSession] = useState<MySessionDTO | null>(null)
   const [selectedCandidate, setSelectedCandidate] = useState<ReplacementCandidateDTO | null>(null)
@@ -165,8 +166,8 @@ export default function ReplacementFlow({ onSuccess }: ReplacementFlowProps) {
     if (!selectedSession || !selectedCandidate) return
 
     const trimmedReason = reason.trim()
-    if (trimmedReason.length < 10) {
-      setReasonError('Lý do phải có tối thiểu 10 ký tự')
+    if (trimmedReason.length < REASON_MIN_LENGTH) {
+      setReasonError(`Lý do phải có tối thiểu ${REASON_MIN_LENGTH} ký tự`)
       return
     }
 
@@ -351,7 +352,7 @@ export default function ReplacementFlow({ onSuccess }: ReplacementFlowProps) {
             }}
             placeholder="Ví dụ: Tôi có việc đột xuất nên cần nhờ giáo viên khác dạy thay..."
             error={reasonError}
-            minLength={10}
+            minLength={REASON_MIN_LENGTH}
           />
         </div>
 
@@ -399,7 +400,7 @@ export default function ReplacementFlow({ onSuccess }: ReplacementFlowProps) {
         (currentStep === 1 && !selectedSession) ||
         (currentStep === 2 && !selectedCandidate)
       }
-      isSubmitDisabled={reason.trim().length < 10}
+      isSubmitDisabled={reason.trim().length < REASON_MIN_LENGTH}
       isSubmitting={isSubmitting}
     >
       {currentStep === 1 && renderStep1()}

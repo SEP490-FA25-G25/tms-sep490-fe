@@ -135,7 +135,7 @@ export default function SubjectDetailPage() {
 
             try {
                 await updateSortOrder({
-                    subjectId: Number(id),
+                    curriculumId: subject?.curriculumId ?? Number(id),
                     levelIds: newLevels.map(l => l.id)
                 }).unwrap();
                 toast.success("Đã cập nhật thứ tự cấp độ");
