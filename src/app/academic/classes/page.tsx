@@ -489,7 +489,7 @@ export default function AcademicClassesPage({
         {/* Search & Filters */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Search - chiếm toàn bộ không gian còn lại bên trái */}
-          <div className="relative flex-1 min-w-60">
+          <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Tìm mã, tên lớp, khóa học..."

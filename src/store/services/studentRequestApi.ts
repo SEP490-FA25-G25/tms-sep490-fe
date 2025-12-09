@@ -120,6 +120,7 @@ export interface ClassMeta {
   name?: string
   branchId?: number
   branchName?: string
+  branchAddress?: string
   modality?: SessionModality
   availableSlots?: number
   maxCapacity?: number
@@ -134,9 +135,9 @@ export interface MissedSession {
   sessionId: number
   date: string
   daysAgo: number
-  courseSessionNumber: number
-  courseSessionTitle: string
-  courseSessionId: number
+  subjectSessionNumber: number
+  subjectSessionTitle: string
+  subjectSessionId: number
   classInfo: ClassMeta
   timeSlotInfo: TimeSlotInfo
   attendanceStatus: string
@@ -168,6 +169,9 @@ export interface MakeupOption {
   sessionId: number
   date: string
   dayOfWeek?: string
+  subjectSessionNumber: number
+  subjectSessionTitle: string
+  subjectSessionId: number
   classInfo: ClassMeta
   timeSlotInfo: TimeSlotInfo
   availableSlots: number
@@ -358,9 +362,11 @@ export interface AAStaffDTO {
 }
 
 export interface StudentRequestConfig {
-  makeupWeeksLimit: number
   makeupLookbackWeeks: number
+  makeupWeeksLimit: number
   maxTransfersPerCourse: number
+  absenceLeadTimeDays: number
+  reasonMinLength: number
 }
 
 export interface MissedSessionsQuery {

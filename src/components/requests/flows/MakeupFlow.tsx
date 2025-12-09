@@ -40,6 +40,8 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
   // Fetch config from backend policy
   const { data: configResponse } = useGetStudentRequestConfigQuery()
   const makeupLookbackWeeks = configResponse?.data?.makeupLookbackWeeks ?? DEFAULT_MAKEUP_LOOKBACK_WEEKS
+  const makeupWeeksLimit = configResponse?.data?.makeupWeeksLimit ?? 4
+  const reasonMinLength = configResponse?.data?.reasonMinLength ?? 10
 
   // 1. Fetch Missed Sessions
   const { data: missedResponse, isFetching: isLoadingMissed } = useGetMissedSessionsQuery({
@@ -158,7 +160,7 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
       id: 3,
       title: 'Điền lý do học bù',
       description: 'Giải thích lý do cần học bù buổi đã vắng',
-      isComplete: reason.trim().length >= 10,
+      isComplete: reason.trim().length >= reasonMinLength,
       isAvailable: !!selectedMakeupOption
     }
   ]
@@ -174,12 +176,30 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
         (currentStep === 1 && !selectedMissedSession) ||
         (currentStep === 2 && !selectedMakeupOption)
       }
-      isSubmitDisabled={reason.trim().length < 10}
+      isSubmitDisabled={reason.trim().length < reasonMinLength}
       isSubmitting={isLoading}
     >
       {/* Step 1: Chọn buổi đã vắng */}
       {currentStep === 1 && (
         <Section>
+          {/* Policy Info */}
+          <div className="rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 p-3 mb-3">
+            <div className="flex gap-2">
+              <div className="text-blue-600 dark:text-blue-400 mt-0.5">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-medium text-blue-900 dark:text-blue-100">Chính sách học bù</p>
+                <ul className="text-xs text-blue-700 dark:text-blue-300 mt-1 space-y-0.5">
+                  <li>• Hiển thị buổi vắng trong <strong>{makeupLookbackWeeks} tuần</strong> gần nhất</li>
+                  <li>• Phải nộp yêu cầu trong vòng <strong>{makeupWeeksLimit} tuần</strong> sau khi vắng</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
           <div className="min-h-[280px]">
             {!isLoadingMissed && missedSessions.length === 0 ? (
               <div className="flex min-h-[200px] flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center">
@@ -187,7 +207,7 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
                   Không có buổi vắng hợp lệ trong {makeupLookbackWeeks} tuần gần nhất
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Bạn chỉ có thể xin học bù cho buổi đã vắng trong vòng 4 tuần.
+                  Bạn chỉ có thể xin học bù cho buổi đã vắng trong vòng {makeupWeeksLimit} tuần.
                 </p>
               </div>
             ) : (
@@ -213,7 +233,7 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
                         </span>
                       </div>
                       <p className="font-medium text-sm mt-1 truncate">
-                        Buổi {session.courseSessionNumber}: {session.courseSessionTitle}
+                        Buổi {session.subjectSessionNumber}: {session.subjectSessionTitle}
                       </p>
                     </div>
                     {session.isExcusedAbsence && (
@@ -240,7 +260,9 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
                 {format(parseISO(selectedMissedSession.date), 'EEE, dd/MM', { locale: vi })}
               </span>
               <span className="text-xs text-muted-foreground">·</span>
-              <span className="text-xs font-medium truncate">{selectedMissedSession.courseSessionTitle}</span>
+              <span className="text-xs font-medium truncate">
+                Buổi {selectedMissedSession.subjectSessionNumber}: {selectedMissedSession.subjectSessionTitle}
+              </span>
             </div>
           </div>
 
@@ -261,7 +283,7 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
               {makeupOptions.map((option) => {
                 const availableSlots = option.availableSlots ?? option.classInfo?.availableSlots ?? null
                 const maxCapacity = option.maxCapacity ?? option.classInfo?.maxCapacity ?? null
-                const branchLabel = option.classInfo.branchName ?? 'Chi nhánh đang cập nhật'
+                const branchAddress = option.classInfo.branchAddress ?? option.classInfo.branchName ?? 'Địa chỉ đang cập nhật'
                 const modalityLabel = formatModality(option.classInfo.modality)
 
                 return (
@@ -281,8 +303,11 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
                             {format(parseISO(option.date), 'EEE, dd/MM', { locale: vi })} · {option.timeSlotInfo.startTime}-{option.timeSlotInfo.endTime}
                           </span>
                         </div>
+                        <p className="font-medium text-sm mt-1 truncate">
+                          Buổi {option.subjectSessionNumber}: {option.subjectSessionTitle}
+                        </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {branchLabel} · {modalityLabel} · {getCapacityText(availableSlots, maxCapacity)}
+                          {branchAddress} · {modalityLabel} · {getCapacityText(availableSlots, maxCapacity)}
                         </p>
                       </div>
                     </div>
@@ -299,19 +324,47 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
       {currentStep === 3 && selectedMakeupOption && (
         <Section>
           <div className="rounded-lg bg-muted/30 p-3 border mb-3">
-            <div className="flex items-center gap-3 text-sm">
-              <div className="flex-1">
-                <p className="text-xs text-muted-foreground">Buổi vắng</p>
-                <p className="font-medium text-sm">
-                  {format(parseISO(selectedMissedSession!.date), 'dd/MM')} · {selectedMissedSession!.classInfo.classCode || selectedMissedSession!.classInfo.code}
-                </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Buổi vắng */}
+              <div>
+                <p className="text-xs text-muted-foreground mb-1.5">Buổi vắng:</p>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">
+                      {selectedMissedSession!.classInfo.classCode || selectedMissedSession!.classInfo.code}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {format(parseISO(selectedMissedSession!.date), 'EEE, dd/MM', { locale: vi })}
+                    </span>
+                  </div>
+                  <p className="text-sm font-medium">
+                    Buổi {selectedMissedSession!.subjectSessionNumber}: {selectedMissedSession!.subjectSessionTitle}
+                  </p>
+                </div>
               </div>
-              <div className="text-muted-foreground">→</div>
-              <div className="flex-1">
-                <p className="text-xs text-muted-foreground">Học bù tại</p>
-                <p className="font-medium text-sm">
-                  {format(parseISO(selectedMakeupOption.date), 'dd/MM')} · {selectedMakeupOption.classInfo.classCode || selectedMakeupOption.classInfo.code}
-                </p>
+
+              {/* Buổi học bù */}
+              <div>
+                <p className="text-xs text-muted-foreground mb-1.5">Học bù tại:</p>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">
+                      {selectedMakeupOption.classInfo.classCode || selectedMakeupOption.classInfo.code}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {format(parseISO(selectedMakeupOption.date), 'EEE, dd/MM', { locale: vi })}
+                    </span>
+                  </div>
+                  <p className="text-sm font-medium">
+                    Buổi {selectedMakeupOption.subjectSessionNumber}: {selectedMakeupOption.subjectSessionTitle}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedMakeupOption.timeSlotInfo.startTime}-{selectedMakeupOption.timeSlotInfo.endTime} · {formatModality(selectedMakeupOption.classInfo.modality)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedMakeupOption.classInfo.branchAddress ?? selectedMakeupOption.classInfo.branchName ?? 'Địa chỉ đang cập nhật'}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

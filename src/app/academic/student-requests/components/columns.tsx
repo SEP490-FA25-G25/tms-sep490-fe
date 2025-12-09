@@ -170,8 +170,10 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
           </Badge>
         )
       } else if (requestType === 'MAKEUP') {
-        // For makeup requests, show urgency based on when missed session occurred
-        if (daysUntilSession === null || daysUntilSession === undefined) {
+        // For makeup requests, show time until makeup session (not missed session)
+        const makeupSession = row.original.makeupSession
+        
+        if (!makeupSession?.date) {
           return (
             <Badge variant="secondary">
               Không xác định
@@ -179,42 +181,83 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
           )
         }
 
-        // For makeup, daysUntilSession is negative (days since missed session)
-        const daysSinceMissed = Math.abs(daysUntilSession)
+        try {
+          // Calculate days until makeup session
+          const makeupDate = parseISO(makeupSession.date)
+          const now = new Date()
+          const daysUntilMakeup = differenceInDays(makeupDate, now)
+          
+          // Calculate hours for more precision on upcoming sessions
+          let hoursUntilMakeup: number | null = null
+          if (makeupSession.timeSlot?.startTime) {
+            const makeupDateTime = parseISO(`${makeupSession.date}T${makeupSession.timeSlot.startTime}:00`)
+            hoursUntilMakeup = differenceInHours(makeupDateTime, now)
+          }
 
-        // For recent missed sessions, show hours if we can calculate them
-        if (hoursUntilSession !== null && Math.abs(hoursUntilSession) < 24) {
-          const hoursAgo = Math.abs(hoursUntilSession)
-          if (hoursAgo <= 3) {
+          // Past makeup session
+          if (hoursUntilMakeup !== null && hoursUntilMakeup < 0) {
             return (
-              <Badge variant="destructive">
-                {hoursAgo} giờ trước
+              <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200">
+                Đã qua
               </Badge>
             )
           }
-          return (
-            <Badge variant="destructive">
-              {hoursAgo} giờ trước
-            </Badge>
-          )
-        }
 
-        if (daysSinceMissed <= 7) {
-          return (
-            <Badge variant="destructive">
-              {daysSinceMissed} ngày trước
-            </Badge>
-          )
-        } else if (daysSinceMissed <= 14) {
-          return (
-            <Badge variant="warning">
-              {daysSinceMissed} ngày trước
-            </Badge>
-          )
-        } else {
+          // Very urgent (less than 3 hours)
+          if (hoursUntilMakeup !== null && hoursUntilMakeup < 3) {
+            return (
+              <Badge variant="outline" className="bg-rose-100 text-rose-700 border-rose-200">
+                {hoursUntilMakeup} giờ
+              </Badge>
+            )
+          }
+
+          // Urgent (less than 24 hours)
+          if (hoursUntilMakeup !== null && hoursUntilMakeup < 24) {
+            return (
+              <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">
+                {hoursUntilMakeup} giờ
+              </Badge>
+            )
+          }
+
+          // Today
+          if (daysUntilMakeup === 0) {
+            return (
+              <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">
+                Hôm nay
+              </Badge>
+            )
+          }
+
+          // Within 2 days
+          if (daysUntilMakeup > 0 && daysUntilMakeup <= 2) {
+            return (
+              <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-200">
+                {daysUntilMakeup} ngày
+              </Badge>
+            )
+          }
+
+          // More than 2 days
+          if (daysUntilMakeup > 2) {
+            return (
+              <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200">
+                {daysUntilMakeup} ngày
+              </Badge>
+            )
+          }
+
+          // Negative days (shouldn't happen, but fallback)
           return (
             <Badge variant="secondary">
-              {daysSinceMissed} ngày trước
+              Không xác định
+            </Badge>
+          )
+        } catch (error) {
+          return (
+            <Badge variant="secondary">
+              Lỗi ngày
             </Badge>
           )
         }

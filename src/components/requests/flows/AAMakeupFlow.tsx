@@ -60,6 +60,8 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
 
   const { data: configResponse } = useGetStudentRequestConfigQuery()
   const makeupLookbackWeeks = configResponse?.data?.makeupLookbackWeeks ?? DEFAULT_MAKEUP_LOOKBACK_WEEKS
+  const makeupWeeksLimit = configResponse?.data?.makeupWeeksLimit ?? 4
+  const reasonMinLength = configResponse?.data?.reasonMinLength ?? 10
 
   const debouncedStudentSearch = useDebouncedValue(studentSearch)
   const trimmedSearch = debouncedStudentSearch.trim()
@@ -210,7 +212,7 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
 
   const step1Complete = !!selectedStudent
   const step2Complete = !!(selectedStudent && selectedMissedSession)
-  const step3Complete = !!(selectedStudent && selectedMissedSession && selectedMakeupOption && reason.trim().length >= 10)
+  const step3Complete = !!(selectedStudent && selectedMissedSession && selectedMakeupOption && reason.trim().length >= reasonMinLength)
 
   const steps = [
     {
@@ -369,6 +371,24 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
 
       {currentStep === 2 && selectedStudent && (
         <Section>
+          {/* Policy Info */}
+          <div className="rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 p-3 mb-3">
+            <div className="flex gap-2">
+              <div className="text-blue-600 dark:text-blue-400 mt-0.5">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-medium text-blue-900 dark:text-blue-100">Chính sách học bù</p>
+                <ul className="text-xs text-blue-700 dark:text-blue-300 mt-1 space-y-0.5">
+                  <li>• Hiển thị buổi vắng trong <strong>{makeupLookbackWeeks} tuần</strong> gần nhất</li>
+                  <li>• Phải nộp yêu cầu trong vòng <strong>{makeupWeeksLimit} tuần</strong> sau khi vắng</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
           <div className="min-h-[280px] space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">{missedSessions.length} buổi vắng tìm thấy</p>
@@ -383,7 +403,7 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
 
             {!isLoadingMissed && missedSessions.length === 0 ? (
               <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
-                Không có buổi vắng hợp lệ trong {makeupLookbackWeeks} tuần gần nhất
+                Không có buổi vắng hợp lệ trong {makeupLookbackWeeks} tuần gần nhất (chỉ chấp nhận request trong vòng {makeupWeeksLimit} tuần)
               </div>
             ) : (
               <div className="space-y-2">
@@ -400,7 +420,7 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
                           {format(parseISO(session.date), 'EEEE, dd/MM', { locale: vi })} · {session.classInfo.classCode || session.classInfo.code}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Buổi {session.courseSessionNumber}: {session.courseSessionTitle}
+                          Buổi {session.subjectSessionNumber}: {session.subjectSessionTitle}
                         </p>
                       </div>
                       <Badge variant={session.isExcusedAbsence ? 'success' : 'warning'}>
@@ -418,6 +438,23 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
       {currentStep === 3 && selectedStudent && selectedMissedSession && (
         <Section>
           <div className="min-h-80 space-y-4">
+            {/* Hiển thị buổi đã vắng */}
+            <div className="rounded-lg bg-muted/30 p-3 border">
+              <p className="text-xs text-muted-foreground mb-1">Buổi đã vắng:</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge variant="outline" className="text-xs">
+                  {selectedMissedSession.classInfo.classCode || selectedMissedSession.classInfo.code}
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                  {format(parseISO(selectedMissedSession.date), 'EEE, dd/MM', { locale: vi })}
+                </span>
+                <span className="text-xs text-muted-foreground">·</span>
+                <span className="text-xs font-medium">
+                  Buổi {selectedMissedSession.subjectSessionNumber}: {selectedMissedSession.subjectSessionTitle}
+                </span>
+              </div>
+            </div>
+
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">{makeupOptions.length} buổi học bù phù hợp</p>
               {isLoadingStudentOptions && (
@@ -436,6 +473,7 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
               <div className="space-y-2">
                 {makeupOptions.map((option) => {
                   const isOverCapacity = !option.matchScore?.capacityOk
+                  const branchAddress = option.classInfo.branchAddress ?? option.classInfo.branchName ?? 'Địa chỉ đang cập nhật'
                   return (
                     <SelectionCard
                       key={option.sessionId}
@@ -449,9 +487,12 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
                             {format(parseISO(option.date), 'EEEE, dd/MM', { locale: vi })} · {option.classInfo.classCode || option.classInfo.code}
                           </p>
                           <p className="text-sm text-muted-foreground">
+                            Buổi {option.subjectSessionNumber}: {option.subjectSessionTitle}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
                             {option.timeSlotInfo.startTime} - {option.timeSlotInfo.endTime} · {getModalityLabel(option.classInfo.modality)}
                           </p>
-                          <p className="text-xs text-primary">{getCapacityText(option.availableSlots, option.maxCapacity)}</p>
+                          <p className="text-xs text-muted-foreground">{branchAddress}</p>
                           <div className="flex items-center gap-2">
                             {isOverCapacity ? (
                               <Badge variant="destructive" className="gap-1">
@@ -465,11 +506,6 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
                             )}
                           </div>
                         </div>
-                        <div className="flex flex-col gap-1">
-                          {option.matchScore.priority === 'HIGH' && <Badge variant="success">Ưu tiên cao</Badge>}
-                          {option.matchScore.priority === 'MEDIUM' && <Badge variant="warning">Ưu tiên TB</Badge>}
-                          {option.matchScore.priority === 'LOW' && <Badge variant="secondary">Ưu tiên thấp</Badge>}
-                        </div>
                       </div>
                     </SelectionCard>
                   )
@@ -479,12 +515,42 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
 
             {selectedMakeupOption && (
               <div className="border-t pt-3 mt-3 space-y-3">
-                <div className="rounded-lg bg-muted/30 p-3 border">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-sm">{selectedMakeupOption.classInfo.classCode || selectedMakeupOption.classInfo.code}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {format(parseISO(selectedMakeupOption.date), 'EEE dd/MM', { locale: vi })} · {selectedMakeupOption.timeSlotInfo.startTime}-{selectedMakeupOption.timeSlotInfo.endTime}
-                    </span>
+                {/* Thông tin buổi vắng và buổi học bù */}
+                <div className="rounded-lg bg-muted/30 p-3 border space-y-3">
+                  {/* Buổi vắng */}
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Buổi đã vắng:</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline" className="text-xs">
+                        {selectedMissedSession.classInfo.classCode || selectedMissedSession.classInfo.code}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {format(parseISO(selectedMissedSession.date), 'EEE, dd/MM', { locale: vi })}
+                      </span>
+                      <span className="text-xs text-muted-foreground">·</span>
+                      <span className="text-xs font-medium">
+                        Buổi {selectedMissedSession.subjectSessionNumber}: {selectedMissedSession.subjectSessionTitle}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Buổi học bù */}
+                  <div className="border-t pt-3">
+                    <p className="text-xs text-muted-foreground mb-1">Buổi học bù đã chọn:</p>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm">{selectedMakeupOption.classInfo.classCode || selectedMakeupOption.classInfo.code}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {format(parseISO(selectedMakeupOption.date), 'EEE dd/MM', { locale: vi })} · {selectedMakeupOption.timeSlotInfo.startTime}-{selectedMakeupOption.timeSlotInfo.endTime}
+                        </span>
+                      </div>
+                      <p className="text-xs font-medium">
+                        Buổi {selectedMakeupOption.subjectSessionNumber}: {selectedMakeupOption.subjectSessionTitle}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {getModalityLabel(selectedMakeupOption.classInfo.modality)} · {selectedMakeupOption.classInfo.branchAddress ?? selectedMakeupOption.classInfo.branchName ?? 'Địa chỉ đang cập nhật'}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
