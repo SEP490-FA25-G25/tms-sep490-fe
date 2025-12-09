@@ -58,8 +58,8 @@ export interface SessionSummaryDTO {
   endTime: string
   classCode: string
   className: string
-  courseId: number
-  courseName: string
+  subjectId: number
+  subjectName: string
   topic: string
   sessionType: SessionType
   sessionStatus: SessionStatus
@@ -69,6 +69,9 @@ export interface SessionSummaryDTO {
   attendanceStatus: AttendanceStatus
   isMakeup: boolean
   makeupInfo: MakeupInfoDTO | null
+  resourceName: string | null
+  resourceType: 'ROOM' | 'VIRTUAL' | 'EQUIPMENT' | null
+  onlineLink: string | null
 }
 
 export interface WeeklyScheduleData {
@@ -84,12 +87,13 @@ export interface ClassInfoDTO {
   classId: number
   classCode: string
   className: string
-  courseId: number
-  courseName: string
+  subjectId: number
+  subjectName: string
   teacherId: number
   teacherName: string
   branchId: number
   branchName: string
+  branchAddress: string
   modality: ClassModality
 }
 

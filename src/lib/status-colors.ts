@@ -135,9 +135,7 @@ export const USER_STATUS_STYLES = {
 
 export type UserStatus = keyof typeof USER_STATUS_STYLES;
 
-// ============================================
-// CALENDAR SESSION VARIANTS (for CalendarView)
-// ============================================
+
 export const CALENDAR_SESSION_VARIANTS = {
   PLANNED: {
     bg: 'bg-sky-50',
@@ -164,6 +162,59 @@ export const CALENDAR_SESSION_VARIANTS = {
     text: 'text-slate-700',
   },
 } as const;
+
+export const ATTENDANCE_CALENDAR_VARIANTS = {
+  PRESENT: {
+    bg: 'bg-emerald-50',
+    border: 'border-emerald-200',
+    borderLeft: 'border-l-emerald-600',
+    text: 'text-emerald-700',
+  },
+  ABSENT: {
+    bg: 'bg-rose-50',
+    border: 'border-rose-200',
+    borderLeft: 'border-l-rose-600',
+    text: 'text-rose-700',
+  },
+  EXCUSED: {
+    bg: 'bg-purple-50',
+    border: 'border-purple-200',
+    borderLeft: 'border-l-purple-600',
+    text: 'text-purple-700',
+  },
+  LATE: {
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
+    borderLeft: 'border-l-amber-600',
+    text: 'text-amber-700',
+  },
+} as const;
+
+/**
+ * Get calendar variant based on session and attendance status
+ * Logic: If session is DONE, prioritize attendance status colors
+ */
+export function getCalendarVariant(
+  sessionStatus: string,
+  attendanceStatus?: string
+): { bg: string; border: string; borderLeft: string; text: string } {
+  // Priority 1: CANCELLED sessions always red
+  if (sessionStatus === 'CANCELLED') {
+    return CALENDAR_SESSION_VARIANTS.CANCELLED;
+  }
+
+  // Priority 2: If DONE, use attendance status color
+  if (sessionStatus === 'DONE' && attendanceStatus) {
+    const attendanceVariant = ATTENDANCE_CALENDAR_VARIANTS[attendanceStatus as keyof typeof ATTENDANCE_CALENDAR_VARIANTS];
+    if (attendanceVariant) {
+      return attendanceVariant;
+    }
+  }
+
+  // Priority 3: Use session status color (PLANNED, DONE without attendance)
+  const sessionVariant = CALENDAR_SESSION_VARIANTS[sessionStatus as keyof typeof CALENDAR_SESSION_VARIANTS];
+  return sessionVariant || CALENDAR_SESSION_VARIANTS.DEFAULT;
+}
 
 // ============================================
 // MATERIAL TYPE STYLES (for file downloads)

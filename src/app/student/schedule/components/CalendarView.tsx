@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { format, addDays, parseISO, isToday } from 'date-fns'
 import { cn } from '@/lib/utils'
-import { CALENDAR_SESSION_VARIANTS } from '@/lib/status-colors'
+import { getCalendarVariant } from '@/lib/status-colors'
 import {
   type DayOfWeek,
   type SessionSummaryDTO,
@@ -40,7 +40,6 @@ const parseTimeToMinutes = (timeStr?: string) => {
 
 export function CalendarView({ scheduleData, onSessionClick, className }: CalendarViewProps) {
   const startDate = useMemo(() => parseISO(scheduleData.weekStart), [scheduleData.weekStart])
-
   // Current time indicator
   const [currentTime, setCurrentTime] = useState(new Date())
 
@@ -213,8 +212,28 @@ export function CalendarView({ scheduleData, onSessionClick, className }: Calend
               )}
 
               {/* Events */}
-              {scheduleData.schedule[day]?.map((session) => {
-                const variant = CALENDAR_SESSION_VARIANTS[session.sessionStatus as keyof typeof CALENDAR_SESSION_VARIANTS] || CALENDAR_SESSION_VARIANTS.DEFAULT
+              {scheduleData.schedule?.[day]?.map((session) => {
+                const variant = getCalendarVariant(session.sessionStatus, session.attendanceStatus)
+                
+                // Get attendance badge info (only show for DONE sessions with specific attendance)
+                const getAttendanceBadge = () => {
+                  if (session.sessionStatus !== 'DONE') return null
+                  
+                  switch (session.attendanceStatus) {
+                    case 'PRESENT':
+                      return { label: 'Có mặt', className: 'bg-emerald-600 text-white' }
+                    case 'ABSENT':
+                      return { label: 'Vắng', className: 'bg-rose-600 text-white' }
+                    case 'EXCUSED':
+                      return { label: 'Xin nghỉ', className: 'bg-purple-600 text-white' }
+                    case 'LATE':
+                      return { label: 'Đi muộn', className: 'bg-amber-600 text-white' }
+                    default:
+                      return null
+                  }
+                }
+                
+                const attendanceBadge = getAttendanceBadge()
 
                 return (
                   <button
@@ -229,11 +248,38 @@ export function CalendarView({ scheduleData, onSessionClick, className }: Calend
                     )}
                     style={getEventStyle(session)}
                   >
-                    <div className="font-semibold truncate">{session.courseName}</div>
+                    {/* Attendance Badge - Top Right */}
+                    {attendanceBadge && (
+                      <Badge 
+                        className={cn(
+                          "absolute top-1 right-1 h-4 px-1.5 text-[9px] font-medium",
+                          attendanceBadge.className
+                        )}
+                      >
+                        {attendanceBadge.label}
+                      </Badge>
+                    )}
+                    
+                    <div className="font-semibold truncate">{session.subjectName}</div>
                     <div className="truncate opacity-90">{session.classCode}</div>
                     <div className="mt-1 flex items-center gap-1 truncate opacity-75">
                       <span>{session.startTime.slice(0, 5)} - {session.endTime.slice(0, 5)}</span>
                     </div>
+                    {session.resourceName && (
+                      <div className="mt-1 flex items-center gap-1 text-[10px] opacity-80">
+                        {session.resourceType === 'VIRTUAL' ? (
+                          <>
+                            <span>🔗</span>
+                            <span className="truncate">Zoom</span>
+                          </>
+                        ) : session.resourceType === 'ROOM' ? (
+                          <>
+                            <span>📍</span>
+                            <span className="truncate">{session.resourceName}</span>
+                          </>
+                        ) : null}
+                      </div>
+                    )}
                     {session.isMakeup && (
                       <Badge variant="secondary" className="mt-1 h-4 px-1 text-[10px]">Buổi bù</Badge>
                     )}

@@ -497,12 +497,11 @@ function SessionDetailDialog({ sessionId, onClose }: SessionDetailDialogProps) {
         };
       })()
     : null
+  
   const locationDisplay = detail
-    ? classroomResource?.resourceType === 'VIRTUAL'
-      ? classroomResource?.onlineLink || classroomResource?.location || detail.sessionInfo.location || detail.sessionInfo.onlineLink || ''
-      : classroomResource?.location || detail.sessionInfo.location || detail.sessionInfo.onlineLink ||
-      (detail.classInfo.modality === 'ONLINE' ? 'Học trực tuyến' : detail.classInfo.branchName || '')
+    ? detail.classInfo.branchAddress || 'Chưa cập nhật'
     : 'Chưa cập nhật'
+    
   const resourceTypeLabel = classroomResource
     ? RESOURCE_TYPE_LABELS[classroomResource.resourceType] ?? classroomResource.resourceType
     : null
@@ -608,13 +607,8 @@ function SessionDetailDialog({ sessionId, onClose }: SessionDetailDialogProps) {
                 icon={<CalendarIcon className="h-4 w-4 text-muted-foreground" />}
               />
               <InfoRow
-                title="Địa điểm / link"
+                title="Địa chỉ chi nhánh"
                 value={locationDisplay}
-                icon={<MapPinIcon className="h-4 w-4 text-muted-foreground" />}
-              />
-              <InfoRow
-                title="Chi nhánh"
-                value={detail.classInfo.branchName}
                 icon={<MapPinIcon className="h-4 w-4 text-muted-foreground" />}
               />
             </div>
