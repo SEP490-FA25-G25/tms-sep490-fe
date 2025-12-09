@@ -162,6 +162,7 @@ export interface ResourceDTO {
 export interface RescheduleSlotDTO {
   id?: number;
   timeSlotId?: number;
+  timeSlotTemplateId?: number;
   startTime?: string;
   endTime?: string;
   startAt?: string;
@@ -279,6 +280,8 @@ export interface CreateRequestForTeacherRequest {
 
 export interface ApproveRequestRequest {
   newResourceId?: number;
+  newDate?: string;
+  newTimeSlotId?: number;
   note?: string;
   replacementTeacherId?: number;
 }
@@ -481,17 +484,43 @@ export const teacherRequestApi = createApi({
     }),
 
     // Get available slots for reschedule
-    // For teachers: uses sessionId
+    // For teachers: uses sessionId (teacherId from auth token)
     // For academic staff: uses sessionId + teacherId
     getRescheduleSlots: builder.query<
       RescheduleSlotsResponse,
-      { sessionId: number; date: string; teacherId?: number }
+      {
+        sessionId?: number;
+        date?: string;
+        teacherId?: number;
+        requestId?: number;
+      }
     >({
-      query: ({ sessionId, date, teacherId }) => ({
-        url: `/teacher-requests/${sessionId}/reschedule/slots`,
-        method: "GET",
-        params: { date, ...(teacherId ? { teacherId } : {}) },
-      }),
+      query: ({ sessionId, date, teacherId, requestId }) => {
+        // If requestId is provided (academic staff viewing existing request), use requestId endpoint
+        if (requestId && teacherId) {
+          return {
+            url: `/teacher-requests/${requestId}/reschedule/slots/staff`,
+            method: "GET",
+          };
+        }
+        // If teacherId is provided (academic staff), use staff endpoint
+        // If not provided (teacher creating own request), use teacher endpoint
+        if (teacherId && sessionId && date) {
+          return {
+            url: `/teacher-requests/sessions/${sessionId}/reschedule/slots/staff`,
+            method: "GET",
+            params: { date, teacherId },
+          };
+        }
+        if (sessionId && date) {
+          return {
+            url: `/teacher-requests/sessions/${sessionId}/reschedule/slots`,
+            method: "GET",
+            params: { date },
+          };
+        }
+        throw new Error("Invalid parameters for getRescheduleSlots");
+      },
     }),
 
     // Get resource suggestions for reschedule
@@ -511,8 +540,16 @@ export const teacherRequestApi = createApi({
       query: ({ requestId, sessionId, date, timeSlotId, teacherId }) => {
         if (requestId) {
           // For existing requests, backend uses newDate and newTimeSlot from request
+          // If teacherId is provided (academic staff), use staff endpoint
+          if (teacherId) {
+            return {
+              url: `/teacher-requests/${requestId}/reschedule/suggestions/staff`,
+              method: "GET",
+            };
+          }
+          // For teacher, use regular endpoint (if exists) or staff endpoint
           return {
-            url: `/teacher-requests/${requestId}/reschedule/suggestions`,
+            url: `/teacher-requests/${requestId}/reschedule/suggestions/staff`,
             method: "GET",
           };
         }
@@ -523,14 +560,19 @@ export const teacherRequestApi = createApi({
               "date and timeSlotId are required when using sessionId"
             );
           }
+          // If teacherId is provided (academic staff), use staff endpoint
+          // If not provided (teacher creating own request), use teacher endpoint
+          if (teacherId) {
+            return {
+              url: `/teacher-requests/sessions/${sessionId}/reschedule/suggestions/staff`,
+              method: "GET",
+              params: { date, timeSlotId, teacherId },
+            };
+          }
           return {
-            url: `/teacher-requests/${sessionId}/reschedule/suggestions`,
+            url: `/teacher-requests/sessions/${sessionId}/reschedule/suggestions`,
             method: "GET",
-            params: {
-              date,
-              timeSlotId,
-              ...(teacherId ? { teacherId } : {}),
-            },
+            params: { date, timeSlotId },
           };
         }
         throw new Error("Either requestId or sessionId must be provided");

@@ -10,6 +10,7 @@ import {
   ArrowUpDown,
   Plus,
   RotateCcwIcon,
+  CalendarIcon,
 } from "lucide-react";
 import { skipToken } from "@reduxjs/toolkit/query";
 
@@ -50,6 +51,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { toast } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -60,6 +68,7 @@ import {
   useGetReplacementCandidatesQuery,
   useGetModalityResourcesQuery,
   useGetRescheduleResourcesQuery,
+  useGetRescheduleSlotsQuery,
   type RequestType as TeacherRequestType,
   type RequestStatus as TeacherRequestStatus,
   type TeacherRequestDTO,
@@ -357,6 +366,12 @@ export default function AcademicTeacherRequestsPage() {
   const [selectedResourceId, setSelectedResourceId] = useState<number | null>(
     null
   );
+  // RESCHEDULE states for academic staff to override
+  const [selectedRescheduleDate, setSelectedRescheduleDate] = useState<
+    Date | undefined
+  >(undefined);
+  const [selectedRescheduleTimeSlotId, setSelectedRescheduleTimeSlotId] =
+    useState<number | null>(null);
   const [pendingPage, setPendingPage] = useState(0);
   const [historyPage, setHistoryPage] = useState(0);
   const [activeTab, setActiveTab] = useState<"pending" | "history">("pending");
@@ -454,33 +469,90 @@ export default function AcademicTeacherRequestsPage() {
       : skipToken
   );
 
-  // Get resources for RESCHEDULE
-  // Extract reschedule info from request
+  // Extract sessionId from request for RESCHEDULE
+  const rescheduleSessionId = useMemo(() => {
+    if (!selectedRequest || !isRescheduleRequest) return undefined;
+    return (
+      (selectedRequest as { sessionId?: number }).sessionId ??
+      (typeof selectedRequest.session === "object" &&
+      selectedRequest.session &&
+      "id" in selectedRequest.session
+        ? (selectedRequest.session as { id?: number }).id
+        : undefined) ??
+      (typeof selectedRequest.session === "object" &&
+      selectedRequest.session &&
+      "sessionId" in selectedRequest.session
+        ? (selectedRequest.session as { sessionId?: number }).sessionId
+        : undefined)
+    );
+  }, [selectedRequest, isRescheduleRequest]);
 
+  // Get slots for RESCHEDULE (when academic staff selects a new date)
+  const selectedRescheduleDateString = selectedRescheduleDate
+    ? format(selectedRescheduleDate, "yyyy-MM-dd")
+    : undefined;
+  const shouldFetchRescheduleSlots =
+    isRescheduleRequest &&
+    !!selectedRequestId &&
+    !!selectedRequest?.teacherId &&
+    (!!selectedRescheduleDate || !selectedRescheduleDate); // Always fetch if request exists
+  const {
+    data: rescheduleSlotsResponse,
+    isFetching: isLoadingRescheduleSlots,
+    error: rescheduleSlotsError,
+  } = useGetRescheduleSlotsQuery(
+    shouldFetchRescheduleSlots &&
+      selectedRequestId &&
+      selectedRequest?.teacherId
+      ? selectedRescheduleDate && rescheduleSessionId
+        ? {
+            sessionId: rescheduleSessionId,
+            date: selectedRescheduleDateString!,
+            teacherId: selectedRequest.teacherId,
+          }
+        : {
+            requestId: selectedRequestId,
+            teacherId: selectedRequest.teacherId,
+          }
+      : skipToken
+  );
+
+  // Get resources for RESCHEDULE
+  // If academic staff has selected new date and timeslot, use those; otherwise use requestId
   const shouldFetchRescheduleResources =
-    isRescheduleRequest && !!selectedRequestId;
+    isRescheduleRequest &&
+    !!selectedRequestId &&
+    ((selectedRescheduleDate &&
+      selectedRescheduleTimeSlotId &&
+      rescheduleSessionId &&
+      selectedRequest?.teacherId) ||
+      (!selectedRescheduleDate && !selectedRescheduleTimeSlotId));
   const {
     data: rescheduleResourcesResponse,
     isFetching: isLoadingRescheduleResources,
     error: rescheduleResourcesError,
   } = useGetRescheduleResourcesQuery(
     shouldFetchRescheduleResources && selectedRequestId
-      ? {
-          requestId: selectedRequestId,
-        }
+      ? selectedRescheduleDate &&
+        selectedRescheduleTimeSlotId &&
+        rescheduleSessionId &&
+        selectedRequest?.teacherId
+        ? {
+            sessionId: rescheduleSessionId,
+            date: selectedRescheduleDateString!,
+            timeSlotId: selectedRescheduleTimeSlotId,
+            teacherId: selectedRequest.teacherId,
+          }
+        : {
+            requestId: selectedRequestId,
+          }
       : skipToken
   );
 
   const replacementCandidates = replacementCandidatesResponse?.data ?? [];
   const modalityResources = modalityResourcesResponse?.data ?? [];
   const rescheduleResources = rescheduleResourcesResponse?.data ?? [];
-
-  // Combine resources for display
-  const availableResources = isModalityChangeRequest
-    ? modalityResources
-    : isRescheduleRequest
-    ? rescheduleResources
-    : [];
+  const rescheduleSlots = rescheduleSlotsResponse?.data ?? [];
 
   const [approveRequest, { isLoading: isApproving }] =
     useApproveRequestMutation();
@@ -689,12 +761,38 @@ export default function AcademicTeacherRequestsPage() {
     }
   }, [selectedRequest]);
 
+  // Reset reschedule fields when switching to non-RESCHEDULE request
+  useEffect(() => {
+    if (selectedRequest?.requestType !== "RESCHEDULE") {
+      setSelectedRescheduleDate(undefined);
+      setSelectedRescheduleTimeSlotId(null);
+      setSelectedResourceId(null);
+    }
+  }, [selectedRequest]);
+
+  // Reset timeslot and resource when date changes
+  useEffect(() => {
+    if (isRescheduleRequest) {
+      setSelectedRescheduleTimeSlotId(null);
+      setSelectedResourceId(null);
+    }
+  }, [selectedRescheduleDate, isRescheduleRequest]);
+
+  // Reset resource when timeslot changes
+  useEffect(() => {
+    if (isRescheduleRequest) {
+      setSelectedResourceId(null);
+    }
+  }, [selectedRescheduleTimeSlotId, isRescheduleRequest]);
+
   const handleOpenRequestDetail = (requestId: number) => {
     setSelectedRequestId(requestId);
     setDecisionNote("");
     setPendingAction(null);
     setSelectedReplacementTeacherId(null);
     setSelectedResourceId(null);
+    setSelectedRescheduleDate(undefined);
+    setSelectedRescheduleTimeSlotId(null);
   };
 
   const handleCloseRequestDetail = (shouldRefetch = false) => {
@@ -703,6 +801,8 @@ export default function AcademicTeacherRequestsPage() {
     setPendingAction(null);
     setSelectedReplacementTeacherId(null);
     setSelectedResourceId(null);
+    setSelectedRescheduleDate(undefined);
+    setSelectedRescheduleTimeSlotId(null);
     if (shouldRefetch) {
       refetchTeacherRequests();
     }
@@ -745,10 +845,24 @@ export default function AcademicTeacherRequestsPage() {
                   undefined
                 : undefined,
             newResourceId:
-              (selectedRequest.requestType === "MODALITY_CHANGE" ||
-                selectedRequest.requestType === "RESCHEDULE") &&
-              selectedResourceId
-                ? selectedResourceId
+              selectedRequest.requestType === "MODALITY_CHANGE"
+                ? selectedResourceId ?? undefined
+                : selectedRequest.requestType === "RESCHEDULE"
+                ? ((selectedResourceId ??
+                    selectedRequest.newResource?.id ??
+                    selectedRequest.newResource?.resourceId) as
+                    | number
+                    | undefined)
+                : undefined,
+            newDate:
+              selectedRequest.requestType === "RESCHEDULE" &&
+              selectedRescheduleDate
+                ? format(selectedRescheduleDate, "yyyy-MM-dd")
+                : undefined,
+            newTimeSlotId:
+              selectedRequest.requestType === "RESCHEDULE" &&
+              selectedRescheduleTimeSlotId
+                ? selectedRescheduleTimeSlotId
                 : undefined,
           },
         }).unwrap();
@@ -1520,37 +1634,27 @@ export default function AcademicTeacherRequestsPage() {
                 hideRequestType={true}
               />
 
-              {(isModalityChangeRequest || isRescheduleRequest) && (
+              {isModalityChangeRequest && (
                 <div className="space-y-2">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Chọn phòng học / phương tiện
                   </p>
-                  {isRescheduleRequest && !selectedRequestId ? (
-                    <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-                      Không tìm thấy thông tin request. Vui lòng thử lại sau.
-                    </div>
-                  ) : isLoadingModalityResources ||
-                    isLoadingRescheduleResources ? (
+                  {isLoadingModalityResources ? (
                     <div className="rounded-lg border p-4 text-center text-sm text-muted-foreground">
                       Đang tải danh sách phòng học/phương tiện...
                     </div>
-                  ) : modalityResourcesError || rescheduleResourcesError ? (
+                  ) : modalityResourcesError ? (
                     <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
                       {formatBackendError(
                         (
                           modalityResourcesError as {
                             data?: { message?: string };
                           }
-                        )?.data?.message ||
-                          (
-                            rescheduleResourcesError as {
-                              data?: { message?: string };
-                            }
-                          )?.data?.message,
+                        )?.data?.message,
                         "Có lỗi khi tải danh sách phòng học/phương tiện. Vui lòng thử lại sau."
                       )}
                     </div>
-                  ) : availableResources.length === 0 ? (
+                  ) : modalityResources.length === 0 ? (
                     <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
                       Không tìm thấy phòng học/phương tiện phù hợp.
                     </div>
@@ -1568,19 +1672,18 @@ export default function AcademicTeacherRequestsPage() {
                         <SelectValue placeholder="Chọn phòng học/phương tiện...">
                           {selectedResourceId
                             ? (() => {
-                                const selectedResource =
-                                  availableResources.find(
-                                    (r) =>
-                                      (r.id ?? r.resourceId) ===
-                                      selectedResourceId
-                                  );
+                                const selectedResource = modalityResources.find(
+                                  (r) =>
+                                    (r.id ?? r.resourceId) ===
+                                    selectedResourceId
+                                );
                                 return selectedResource?.name || "Chưa có tên";
                               })()
                             : null}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        {availableResources.map((resource) => {
+                        {modalityResources.map((resource) => {
                           const resourceId = resource.id ?? resource.resourceId;
                           const resourceName = resource.name || "Chưa có tên";
                           const resourceType =
@@ -1612,6 +1715,266 @@ export default function AcademicTeacherRequestsPage() {
                         })}
                       </SelectContent>
                     </Select>
+                  )}
+                </div>
+              )}
+
+              {isRescheduleRequest && (
+                <div className="space-y-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Chọn lại thông tin lịch mới (nếu cần)
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Bạn có thể chọn lại ngày, khung giờ và phòng học/phương tiện
+                    nếu cần thay đổi so với đề xuất của giáo viên.
+                  </p>
+
+                  {/* Date Selection */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                      Ngày mới{" "}
+                      {selectedRescheduleDate && (
+                        <span className="text-xs text-muted-foreground font-normal">
+                          (đã chọn)
+                        </span>
+                      )}
+                    </Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !selectedRescheduleDate && "text-muted-foreground"
+                          )}
+                          disabled={isActionLoading}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {selectedRescheduleDate ? (
+                            format(selectedRescheduleDate, "EEEE, dd/MM/yyyy", {
+                              locale: vi,
+                            })
+                          ) : (
+                            <span>Chọn ngày mới (tùy chọn)</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={selectedRescheduleDate}
+                          onSelect={setSelectedRescheduleDate}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {/* Time Slot Selection */}
+                  {selectedRescheduleDate && (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">
+                        Khung giờ mới{" "}
+                        {selectedRescheduleTimeSlotId && (
+                          <span className="text-xs text-muted-foreground font-normal">
+                            (đã chọn)
+                          </span>
+                        )}
+                      </Label>
+                      {isLoadingRescheduleSlots ? (
+                        <Skeleton className="h-10 w-full" />
+                      ) : rescheduleSlotsError ? (
+                        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                          {formatBackendError(
+                            (
+                              rescheduleSlotsError as {
+                                data?: { message?: string };
+                              }
+                            )?.data?.message,
+                            "Không thể tải danh sách khung giờ"
+                          )}
+                        </div>
+                      ) : rescheduleSlots.length === 0 ? (
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+                          Không có khung giờ phù hợp cho ngày đã chọn.
+                        </div>
+                      ) : (
+                        <Select
+                          value={
+                            selectedRescheduleTimeSlotId
+                              ? String(selectedRescheduleTimeSlotId)
+                              : ""
+                          }
+                          onValueChange={(value) =>
+                            setSelectedRescheduleTimeSlotId(Number(value))
+                          }
+                          disabled={isActionLoading}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn khung giờ mới (tùy chọn)...">
+                              {selectedRescheduleTimeSlotId
+                                ? (() => {
+                                    const selectedSlot = rescheduleSlots.find(
+                                      (s) =>
+                                        (s.timeSlotTemplateId ??
+                                          s.timeSlotId ??
+                                          s.id) === selectedRescheduleTimeSlotId
+                                    );
+                                    return (
+                                      selectedSlot?.label ||
+                                      selectedSlot?.name ||
+                                      selectedSlot?.displayLabel ||
+                                      selectedSlot?.timeSlotLabel ||
+                                      `${
+                                        selectedSlot?.startTime ||
+                                        selectedSlot?.startAt
+                                      } - ${
+                                        selectedSlot?.endTime ||
+                                        selectedSlot?.endAt
+                                      }` ||
+                                      "Chưa có tên"
+                                    );
+                                  })()
+                                : null}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {rescheduleSlots
+                              .filter((slot) => {
+                                const slotId =
+                                  slot.timeSlotTemplateId ??
+                                  slot.timeSlotId ??
+                                  slot.id;
+                                return slotId != null && slotId !== 0;
+                              })
+                              .map((slot) => {
+                                const slotId =
+                                  slot.timeSlotTemplateId ??
+                                  slot.timeSlotId ??
+                                  slot.id;
+                                const label =
+                                  slot.label ||
+                                  slot.name ||
+                                  slot.displayLabel ||
+                                  slot.timeSlotLabel ||
+                                  `${slot.startTime || slot.startAt} - ${
+                                    slot.endTime || slot.endAt
+                                  }`;
+
+                                return (
+                                  <SelectItem
+                                    key={slotId}
+                                    value={String(slotId)}
+                                  >
+                                    {label}
+                                  </SelectItem>
+                                );
+                              })}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Resource Selection */}
+                  {(selectedRescheduleDate && selectedRescheduleTimeSlotId) ||
+                  (!selectedRescheduleDate && !selectedRescheduleTimeSlotId) ? (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">
+                        Phòng học/phương tiện{" "}
+                        {selectedResourceId && (
+                          <span className="text-xs text-muted-foreground font-normal">
+                            (đã chọn)
+                          </span>
+                        )}
+                      </Label>
+                      {isLoadingRescheduleResources ? (
+                        <Skeleton className="h-10 w-full" />
+                      ) : rescheduleResourcesError ? (
+                        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                          {formatBackendError(
+                            (
+                              rescheduleResourcesError as {
+                                data?: { message?: string };
+                              }
+                            )?.data?.message,
+                            "Có lỗi khi tải danh sách phòng học/phương tiện. Vui lòng thử lại sau."
+                          )}
+                        </div>
+                      ) : rescheduleResources.length === 0 ? (
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+                          Không tìm thấy phòng học/phương tiện phù hợp.
+                        </div>
+                      ) : (
+                        <Select
+                          value={
+                            selectedResourceId ? String(selectedResourceId) : ""
+                          }
+                          onValueChange={(value) =>
+                            setSelectedResourceId(Number(value))
+                          }
+                          disabled={isActionLoading}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn phòng học/phương tiện (tùy chọn)...">
+                              {selectedResourceId
+                                ? (() => {
+                                    const selectedResource =
+                                      rescheduleResources.find(
+                                        (r) =>
+                                          (r.id ?? r.resourceId) ===
+                                          selectedResourceId
+                                      );
+                                    return (
+                                      selectedResource?.name || "Chưa có tên"
+                                    );
+                                  })()
+                                : null}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {rescheduleResources.map((resource) => {
+                              const resourceId =
+                                resource.id ?? resource.resourceId;
+                              const resourceName =
+                                resource.name || "Chưa có tên";
+                              const resourceType =
+                                resource.type || resource.resourceType || "";
+                              const resourceCapacity = resource.capacity;
+
+                              return (
+                                <SelectItem
+                                  key={resourceId || resourceName}
+                                  value={String(resourceId || "")}
+                                >
+                                  <div className="flex flex-col gap-1">
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span>{resourceName}</span>
+                                      {resourceType && (
+                                        <span className="text-xs text-muted-foreground">
+                                          {resourceType}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {resourceCapacity !== undefined && (
+                                      <span className="text-xs text-muted-foreground">
+                                        Sức chứa: {resourceCapacity}
+                                      </span>
+                                    )}
+                                  </div>
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+                      Vui lòng chọn ngày và khung giờ trước khi chọn phòng
+                      học/phương tiện.
+                    </div>
                   )}
                 </div>
               )}
