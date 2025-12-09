@@ -206,7 +206,7 @@ const ManagerStudentFeedbackPage = lazy(
 const ManagerPoliciesPage = lazy(() => import("./app/manager/policies/page"));
 
 // Curriculum pages
-const CurriculumPage = lazy(() => import("./app/curriculum/page"));
+// const CurriculumPage = lazy(() => import("./app/curriculum/page"));
 const CurriculumsPage = lazy(() => import("./app/curriculum/curriculums/page"));
 const CurriculumLevelsPage = lazy(() => import("./app/curriculum/levels/page"));
 const CurriculumSubjectsPage = lazy(() => import("./app/curriculum/subjects/page"));

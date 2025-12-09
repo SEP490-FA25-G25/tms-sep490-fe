@@ -98,7 +98,7 @@ export function ReasonInput({
   placeholder,
   error,
   disabled = false,
-  minLength = 10
+  minLength = 15
 }: ReasonInputProps) {
   return (
     <div className="space-y-2">

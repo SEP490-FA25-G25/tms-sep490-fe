@@ -1,5 +1,5 @@
-import { useMemo, useState, useEffect, useCallback } from "react";
-import { format, parseISO, differenceInCalendarDays } from "date-fns";
+import { useMemo, useState, useEffect } from "react";
+import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
   SearchIcon,
@@ -7,7 +7,6 @@ import {
   ArrowLeftRight,
   CalendarClock,
   UserRoundCheck,
-  ArrowUpDown,
   Plus,
   RotateCcwIcon,
   CalendarIcon,
@@ -22,19 +21,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  FullScreenModal,
+  FullScreenModalBody,
+  FullScreenModalContent,
+  FullScreenModalHeader,
+  FullScreenModalTitle,
+  FullScreenModalDescription,
+  FullScreenModalFooter,
+} from "@/components/ui/full-screen-modal";
 import {
   Pagination,
   PaginationContent,
@@ -71,16 +65,16 @@ import {
   useGetRescheduleSlotsQuery,
   type RequestType as TeacherRequestType,
   type RequestStatus as TeacherRequestStatus,
-  type TeacherRequestDTO,
 } from "@/store/services/teacherRequestApi";
 import { TeacherRequestDetailContent } from "@/app/teacher/requests/page";
 import { CreateRequestDialog } from "./components/CreateRequestDialog";
-
-const TEACHER_REQUEST_TYPE_LABELS: Record<TeacherRequestType, string> = {
-  MODALITY_CHANGE: "Thay đổi phương thức",
-  RESCHEDULE: "Đổi lịch",
-  REPLACEMENT: "Nhờ dạy thay",
-};
+import { DataTable } from "./components/DataTable";
+import { historyColumns, pendingColumns } from "./components/columns";
+import {
+  TEACHER_REQUEST_STATUS_META,
+  TEACHER_REQUEST_TYPE_LABELS,
+  TEACHER_REQUEST_TYPE_BADGES,
+} from "./components/meta";
 
 // Helper function to format error messages from backend to user-friendly Vietnamese
 const formatBackendError = (
@@ -128,118 +122,6 @@ const formatBackendError = (
   return errorMessage;
 };
 
-const TEACHER_REQUEST_STATUS_META: Record<
-  TeacherRequestStatus,
-  { label: string; badgeClass: string }
-> = {
-  PENDING: {
-    label: "Chờ duyệt",
-    badgeClass: "bg-amber-100 text-amber-700 border-amber-200",
-  },
-  WAITING_CONFIRM: {
-    label: "Chờ xác nhận",
-    badgeClass: "bg-sky-100 text-sky-700 border-sky-200",
-  },
-  APPROVED: {
-    label: "Đã duyệt",
-    badgeClass: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  },
-  REJECTED: {
-    label: "Đã từ chối",
-    badgeClass: "bg-rose-100 text-rose-700 border-rose-200",
-  },
-};
-
-const getRequestTopic = (request: TeacherRequestDTO): string | undefined => {
-  const directCandidates = [
-    (request.session as { topic?: string })?.topic,
-    (request as { topic?: string }).topic,
-  ];
-
-  for (const candidate of directCandidates) {
-    if (typeof candidate === "string" && candidate.trim().length > 0) {
-      return candidate.trim();
-    }
-  }
-
-  const paths = [
-    ["session", "topic"],
-    ["sessionInfo", "topic"],
-    ["session", "sessionTopic"],
-    ["sessionTopic"],
-    ["topic"],
-    ["session", "name"],
-    ["sessionInfo", "name"],
-  ];
-
-  for (const path of paths) {
-    let value: unknown = request;
-    for (const key of path) {
-      if (value && typeof value === "object" && key in value) {
-        value = (value as Record<string, unknown>)[key];
-      } else {
-        value = undefined;
-        break;
-      }
-    }
-    if (typeof value === "string" && value.trim().length > 0) {
-      return value.trim();
-    }
-  }
-
-  return undefined;
-};
-
-const getDaysUntilSession = (request: TeacherRequestDTO): number | null => {
-  const sessionDate =
-    request.sessionDate ||
-    (typeof request.session === "object"
-      ? (request.session as { date?: string })?.date
-      : undefined) ||
-    (request as { sessionInfo?: { date?: string } }).sessionInfo?.date;
-  if (!sessionDate) return null;
-
-  try {
-    const targetDate = parseISO(sessionDate);
-    return differenceInCalendarDays(targetDate, new Date());
-  } catch {
-    return null;
-  }
-};
-
-const getTimeDisplayMeta = (
-  daysUntilSession: number | null
-): { label: string; className: string } => {
-  if (daysUntilSession === null) {
-    return {
-      label: "Không rõ",
-      className: "border bg-muted/50 text-muted-foreground",
-    };
-  }
-  if (daysUntilSession < 0) {
-    return {
-      label: `Đã qua ${Math.abs(daysUntilSession)} ngày`,
-      className: "border border-rose-100 bg-rose-50 text-rose-600",
-    };
-  }
-  if (daysUntilSession === 0) {
-    return {
-      label: "Diễn ra hôm nay",
-      className: "border border-amber-100 bg-amber-50 text-amber-600",
-    };
-  }
-  if (daysUntilSession <= 2) {
-    return {
-      label: `Còn ${daysUntilSession} ngày`,
-      className: "border border-amber-100 bg-amber-50 text-amber-600",
-    };
-  }
-  return {
-    label: `Còn ${daysUntilSession} ngày`,
-    className: "border border-emerald-100 bg-emerald-50 text-emerald-600",
-  };
-};
-
 export default function AcademicTeacherRequestsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
@@ -272,10 +154,6 @@ export default function AcademicTeacherRequestsPage() {
   const [pendingPage, setPendingPage] = useState(0);
   const [historyPage, setHistoryPage] = useState(0);
   const [activeTab, setActiveTab] = useState<"pending" | "history">("pending");
-  const [sortField, setSortField] = useState<
-    "teacher" | "time" | "status" | "submittedAt"
-  >("submittedAt");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const PAGE_SIZE = 10;
 
   // Teacher requests queries
@@ -489,86 +367,13 @@ export default function AcademicTeacherRequestsPage() {
     activeTab,
   ]);
 
-  const applySorting = useCallback(
-    (requests: TeacherRequestDTO[]) => {
-      const sorted = [...requests];
-      sorted.sort((a, b) => {
-        const directionMultiplier = sortDirection === "asc" ? 1 : -1;
-        const getSubmitted = (r: TeacherRequestDTO) =>
-          r.submittedAt ? parseISO(r.submittedAt).getTime() : 0;
-        const getStatusOrder = (status: TeacherRequestStatus) => {
-          const order: TeacherRequestStatus[] = [
-            "PENDING",
-            "WAITING_CONFIRM",
-            "APPROVED",
-            "REJECTED",
-          ];
-          const idx = order.indexOf(status);
-          return idx === -1 ? order.length : idx;
-        };
-        switch (sortField) {
-          case "teacher": {
-            const nameA = (a.teacherName || "").toLowerCase();
-            const nameB = (b.teacherName || "").toLowerCase();
-            if (nameA < nameB) return -1 * directionMultiplier;
-            if (nameA > nameB) return 1 * directionMultiplier;
-            return (getSubmitted(b) - getSubmitted(a)) * directionMultiplier;
-          }
-          case "time": {
-            const timeA = getDaysUntilSession(a);
-            const timeB = getDaysUntilSession(b);
-            const normalizedA =
-              timeA === null || timeA === undefined
-                ? Number.MAX_SAFE_INTEGER
-                : timeA;
-            const normalizedB =
-              timeB === null || timeB === undefined
-                ? Number.MAX_SAFE_INTEGER
-                : timeB;
-            if (normalizedA === normalizedB) {
-              return (getSubmitted(b) - getSubmitted(a)) * directionMultiplier;
-            }
-            return normalizedA < normalizedB
-              ? -1 * directionMultiplier
-              : 1 * directionMultiplier;
-          }
-          case "status": {
-            const statusDiff =
-              getStatusOrder(a.status) - getStatusOrder(b.status);
-            if (statusDiff !== 0) {
-              return statusDiff * directionMultiplier;
-            }
-            return (getSubmitted(b) - getSubmitted(a)) * directionMultiplier;
-          }
-          case "submittedAt":
-          default: {
-            const diff = getSubmitted(a) - getSubmitted(b);
-            return diff === 0
-              ? 0
-              : diff > 0
-              ? directionMultiplier
-              : -directionMultiplier;
-          }
-        }
-      });
-      return sorted;
-    },
-    [sortDirection, sortField]
-  );
-
   const teacherPendingRequests = useMemo(() => {
-    const pending = filteredTeacherRequests.filter(
-      (r) => r.status === "PENDING"
-    );
-    return applySorting(pending);
-  }, [filteredTeacherRequests, applySorting]);
+    return filteredTeacherRequests.filter((r) => r.status === "PENDING");
+  }, [filteredTeacherRequests]);
 
   const teacherHistoryRequests = useMemo(() => {
-    const history = filteredTeacherRequests.filter(
-      (r) => r.status !== "PENDING"
-    );
-    return applySorting(history);
-  }, [filteredTeacherRequests, applySorting]);
+    return filteredTeacherRequests.filter((r) => r.status !== "PENDING");
+  }, [filteredTeacherRequests]);
 
   // Summary for teacher pending requests
   const totalPending = teacherPendingRequests.length;
@@ -609,17 +414,6 @@ export default function AcademicTeacherRequestsPage() {
     return teacherHistoryRequests.slice(start, start + PAGE_SIZE);
   }, [teacherHistoryRequests, historyPage, historyTotalPages]);
 
-  const handleSort = (field: "teacher" | "time" | "status" | "submittedAt") => {
-    setSortField((prevField) => {
-      if (prevField === field) {
-        setSortDirection((prevDir) => (prevDir === "asc" ? "desc" : "asc"));
-        return prevField;
-      }
-      setSortDirection("asc");
-      return field;
-    });
-  };
-
   const handleClearFilters = () => {
     setTeacherTypeFilter("ALL");
     setTeacherSearchKeyword("");
@@ -639,10 +433,6 @@ export default function AcademicTeacherRequestsPage() {
     teacherTypeFilter !== "ALL" ||
     teacherStatusFilter !== "ALL" ||
     teacherSearchKeyword !== "";
-
-  const renderSortIcon = () => (
-    <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
-  );
 
   // Refetch detail when opening dialog to ensure we have the latest data
   useEffect(() => {
@@ -1024,170 +814,23 @@ export default function AcademicTeacherRequestsPage() {
 
           {/* Teacher Pending Requests Tab */}
           <TabsContent value="pending" className="space-y-4">
-            <div className="rounded-lg border overflow-hidden bg-card">
-              {teacherRequestsError ? (
-                <div className="rounded-lg border border-dashed border-rose-200 bg-rose-50 p-8 text-center text-sm text-rose-700">
-                  {formatBackendError(
-                    (teacherRequestsError as { data?: { message?: string } })
-                      ?.data?.message,
-                    "Có lỗi xảy ra khi tải danh sách yêu cầu. Vui lòng thử lại."
-                  )}
-                </div>
-              ) : paginatedPendingRequests.length === 0 ||
-                isLoadingTeacherRequests ? (
-                <div className="p-8 text-center text-sm text-muted-foreground">
-                  Không có yêu cầu nào đang chờ duyệt.
-                </div>
-              ) : (
-                <Table className="min-w-[900px]">
-                  <TableHeader>
-                    <TableRow className="bg-muted/50 hover:bg-muted/50">
-                      <TableHead className="min-w-[160px]">
-                        <Button
-                          variant="ghost"
-                          className="h-8 px-2 text-left font-medium"
-                          onClick={() => handleSort("teacher")}
-                        >
-                          <span>Giáo viên</span>
-                          <span className="ml-1">{renderSortIcon()}</span>
-                        </Button>
-                      </TableHead>
-                      <TableHead className="min-w-[150px]">
-                        <Button
-                          variant="ghost"
-                          className="h-8 px-2 text-left font-medium"
-                          onClick={() => handleSort("time")}
-                        >
-                          <span>Thời gian còn lại</span>
-                          <span className="ml-1">{renderSortIcon()}</span>
-                        </Button>
-                      </TableHead>
-                      <TableHead className="min-w-[220px]">
-                        Lớp học / Buổi
-                      </TableHead>
-                      <TableHead className="min-w-[200px]">Lý do</TableHead>
-                      <TableHead className="min-w-[130px]">Loại</TableHead>
-                      <TableHead className="min-w-[120px]">
-                        <Button
-                          variant="ghost"
-                          className="h-8 px-2 text-left font-medium"
-                          onClick={() => handleSort("status")}
-                        >
-                          <span>Trạng thái</span>
-                          <span className="ml-1">{renderSortIcon()}</span>
-                        </Button>
-                      </TableHead>
-                      <TableHead className="min-w-[130px]">
-                        <Button
-                          variant="ghost"
-                          className="h-8 px-2 text-left font-medium"
-                          onClick={() => handleSort("submittedAt")}
-                        >
-                          <span>Ngày gửi</span>
-                          <span className="ml-1">{renderSortIcon()}</span>
-                        </Button>
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedPendingRequests.map((request) => {
-                      const topic = getRequestTopic(request);
-                      const reason =
-                        (request as { reason?: string }).reason ??
-                        (request as { requestReason?: string }).requestReason ??
-                        "";
-                      const truncatedReason =
-                        reason.length > 80
-                          ? `${reason.slice(0, 80)}...`
-                          : reason;
-
-                      return (
-                        <TableRow
-                          key={request.id}
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => handleOpenRequestDetail(request.id)}
-                        >
-                          <TableCell>
-                            <span className="font-medium">
-                              {request.teacherName ?? "—"}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            {(() => {
-                              const daysUntilSession =
-                                getDaysUntilSession(request);
-                              const { label, className } =
-                                getTimeDisplayMeta(daysUntilSession);
-                              return (
-                                <span
-                                  className={cn(
-                                    "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium",
-                                    className
-                                  )}
-                                >
-                                  {label}
-                                </span>
-                              );
-                            })()}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-col">
-                              <span className="font-medium text-sm">
-                                {request.className} ·{" "}
-                                {format(
-                                  parseISO(request.sessionDate),
-                                  "dd/MM/yyyy",
-                                  { locale: vi }
-                                )}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {request.sessionStartTime} -{" "}
-                                {request.sessionEndTime}
-                                {topic && ` · ${topic}`}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell
-                            className="text-sm text-muted-foreground"
-                            title={reason}
-                          >
-                            {truncatedReason || "Không có lý do"}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {TEACHER_REQUEST_TYPE_LABELS[request.requestType]}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant="outline"
-                              className={
-                                TEACHER_REQUEST_STATUS_META[request.status]
-                                  .badgeClass
-                              }
-                            >
-                              {
-                                TEACHER_REQUEST_STATUS_META[request.status]
-                                  .label
-                              }
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {request.submittedAt
-                              ? format(
-                                  parseISO(request.submittedAt),
-                                  "HH:mm dd/MM",
-                                  { locale: vi }
-                                )
-                              : "—"}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              )}
-            </div>
+            {teacherRequestsError ? (
+              <div className="rounded-lg border border-dashed border-rose-200 bg-rose-50 p-8 text-center text-sm text-rose-700">
+                {formatBackendError(
+                  (teacherRequestsError as { data?: { message?: string } })
+                    ?.data?.message,
+                  "Có lỗi xảy ra khi tải danh sách yêu cầu. Vui lòng thử lại."
+                )}
+              </div>
+            ) : (
+              <DataTable
+                columns={pendingColumns}
+                data={paginatedPendingRequests}
+                onViewDetail={handleOpenRequestDetail}
+                isLoading={isLoadingTeacherRequests}
+                defaultSorting={[{ id: "submittedAt", desc: true }]}
+              />
+            )}
 
             {/* Pending pagination */}
             <div className="flex items-center justify-between text-sm">
@@ -1246,154 +889,23 @@ export default function AcademicTeacherRequestsPage() {
 
           {/* Teacher History Tab */}
           <TabsContent value="history" className="space-y-4">
-            <div className="rounded-lg border overflow-hidden bg-card">
-              {paginatedHistoryRequests.length && !isLoadingTeacherRequests ? (
-                <Table className="min-w-[900px]">
-                  <TableHeader>
-                    <TableRow className="bg-muted/50 hover:bg-muted/50">
-                      <TableHead className="min-w-[160px]">
-                        <Button
-                          variant="ghost"
-                          className="h-8 px-2 text-left font-medium"
-                          onClick={() => handleSort("teacher")}
-                        >
-                          <span>Giáo viên</span>
-                          <span className="ml-1">{renderSortIcon()}</span>
-                        </Button>
-                      </TableHead>
-                      <TableHead className="min-w-[150px]">
-                        <Button
-                          variant="ghost"
-                          className="h-8 px-2 text-left font-medium"
-                          onClick={() => handleSort("time")}
-                        >
-                          <span>Thời gian còn lại</span>
-                          <span className="ml-1">{renderSortIcon()}</span>
-                        </Button>
-                      </TableHead>
-                      <TableHead className="min-w-[220px]">
-                        Lớp học / Buổi
-                      </TableHead>
-                      <TableHead className="min-w-[140px]">
-                        Người xử lý
-                      </TableHead>
-                      <TableHead className="min-w-[130px]">Loại</TableHead>
-                      <TableHead className="min-w-[120px]">
-                        <Button
-                          variant="ghost"
-                          className="h-8 px-2 text-left font-medium"
-                          onClick={() => handleSort("status")}
-                        >
-                          <span>Trạng thái</span>
-                          <span className="ml-1">{renderSortIcon()}</span>
-                        </Button>
-                      </TableHead>
-                      <TableHead className="min-w-[130px]">
-                        <Button
-                          variant="ghost"
-                          className="h-8 px-2 text-left font-medium"
-                          onClick={() => handleSort("submittedAt")}
-                        >
-                          <span>Ngày gửi</span>
-                          <span className="ml-1">{renderSortIcon()}</span>
-                        </Button>
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedHistoryRequests.map((request) => {
-                      const topic = getRequestTopic(request);
-
-                      return (
-                        <TableRow
-                          key={request.id}
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => handleOpenRequestDetail(request.id)}
-                        >
-                          <TableCell>
-                            <span className="font-medium">
-                              {request.teacherName ?? "—"}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            {(() => {
-                              const daysUntilSession =
-                                getDaysUntilSession(request);
-                              const { label, className } =
-                                getTimeDisplayMeta(daysUntilSession);
-                              return (
-                                <span
-                                  className={cn(
-                                    "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium",
-                                    className
-                                  )}
-                                >
-                                  {label}
-                                </span>
-                              );
-                            })()}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-col">
-                              <span className="font-medium text-sm">
-                                {request.className} ·{" "}
-                                {format(
-                                  parseISO(request.sessionDate),
-                                  "dd/MM/yyyy",
-                                  { locale: vi }
-                                )}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {request.sessionStartTime} -{" "}
-                                {request.sessionEndTime}
-                                {topic && ` · ${topic}`}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <span className="font-medium text-sm">
-                              {request.decidedByName ?? "—"}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {TEACHER_REQUEST_TYPE_LABELS[request.requestType]}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant="outline"
-                              className={
-                                TEACHER_REQUEST_STATUS_META[request.status]
-                                  .badgeClass
-                              }
-                            >
-                              {
-                                TEACHER_REQUEST_STATUS_META[request.status]
-                                  .label
-                              }
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {request.decidedAt
-                              ? format(
-                                  parseISO(request.decidedAt),
-                                  "HH:mm dd/MM",
-                                  { locale: vi }
-                                )
-                              : "—"}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="p-8 text-center text-sm text-muted-foreground">
-                  Không có lịch sử phù hợp với bộ lọc.
-                </div>
-              )}
-            </div>
+            {teacherRequestsError ? (
+              <div className="rounded-lg border border-dashed border-rose-200 bg-rose-50 p-8 text-center text-sm text-rose-700">
+                {formatBackendError(
+                  (teacherRequestsError as { data?: { message?: string } })
+                    ?.data?.message,
+                  "Có lỗi xảy ra khi tải danh sách yêu cầu. Vui lòng thử lại."
+                )}
+              </div>
+            ) : (
+              <DataTable
+                columns={historyColumns}
+                data={paginatedHistoryRequests}
+                onViewDetail={handleOpenRequestDetail}
+                isLoading={isLoadingTeacherRequests}
+                defaultSorting={[{ id: "decidedAt", desc: true }]}
+              />
+            )}
 
             {/* History pagination */}
             <div className="flex items-center justify-between text-sm">
@@ -1452,7 +964,7 @@ export default function AcademicTeacherRequestsPage() {
         </Tabs>
       </div>
 
-      <Dialog
+      <FullScreenModal
         open={selectedRequestId !== null}
         onOpenChange={(open) => {
           if (!open) {
@@ -1460,26 +972,18 @@ export default function AcademicTeacherRequestsPage() {
           }
         }}
       >
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Chi tiết yêu cầu</DialogTitle>
-          </DialogHeader>
-
-          {isLoadingDetail ? (
-            <div className="space-y-3">
-              <Skeleton className="h-5 w-40" />
-              <Skeleton className="h-60 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-          ) : selectedRequest ? (
-            <div className="space-y-5">
-              {/* Request Type Section - from TeacherRequestDetailContent */}
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Loại yêu cầu
-                </p>
-                <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary" className="font-medium">
+        <FullScreenModalContent size="2xl">
+          <FullScreenModalHeader>
+            <div className="flex items-center gap-2">
+              {selectedRequest && (
+                <>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "font-medium",
+                      TEACHER_REQUEST_TYPE_BADGES[selectedRequest.requestType].className
+                    )}
+                  >
                     {TEACHER_REQUEST_TYPE_LABELS[selectedRequest.requestType]}
                   </Badge>
                   <Badge
@@ -1491,288 +995,154 @@ export default function AcademicTeacherRequestsPage() {
                   >
                     {TEACHER_REQUEST_STATUS_META[selectedRequest.status].label}
                   </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    Gửi lúc{" "}
-                    {format(
-                      parseISO(selectedRequest.submittedAt),
-                      "dd/MM/yyyy HH:mm",
-                      {
-                        locale: vi,
-                      }
-                    )}
-                  </span>
-                </div>
+                </>
+              )}
+            </div>
+            <FullScreenModalTitle className="text-xl font-semibold text-foreground">
+              Chi tiết yêu cầu {selectedRequest ? `#${selectedRequest.id}` : ""}
+            </FullScreenModalTitle>
+            <FullScreenModalDescription>
+              {selectedRequest?.submittedAt
+                ? `Gửi lúc ${format(
+                    parseISO(selectedRequest.submittedAt),
+                    "HH:mm, EEEE dd/MM/yyyy",
+                    { locale: vi }
+                  )}`
+                : "Đang tải thông tin"}
+            </FullScreenModalDescription>
+          </FullScreenModalHeader>
+
+          <FullScreenModalBody>
+            {isLoadingDetail ? (
+              <div className="space-y-3">
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-60 w-full" />
+                <Skeleton className="h-10 w-full" />
               </div>
-
-              <div className="h-px bg-border" />
-
-              {/* Teacher who submitted request */}
-              {(selectedRequest.teacherName || selectedRequest.submittedBy) && (
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Giáo viên gửi yêu cầu
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-foreground">
-                    {selectedRequest.teacherName || selectedRequest.submittedBy}
-                    {selectedRequest.teacherEmail && (
-                      <span className="ml-2 text-xs font-normal text-muted-foreground">
-                        ({selectedRequest.teacherEmail})
-                      </span>
-                    )}
-                  </p>
-                </div>
-              )}
-
-              <div className="h-px bg-border" />
-
-              {/* Rest of TeacherRequestDetailContent without the request type section */}
-              <TeacherRequestDetailContent
-                request={selectedRequest}
-                hideRequestType={true}
-              />
-
-              {isModalityChangeRequest && (
-                <div className="space-y-2">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Chọn phòng học / phương tiện
-                  </p>
-                  {isLoadingModalityResources ? (
-                    <div className="rounded-lg border p-4 text-center text-sm text-muted-foreground">
-                      Đang tải danh sách phòng học/phương tiện...
-                    </div>
-                  ) : modalityResourcesError ? (
-                    <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-                      {formatBackendError(
-                        (
-                          modalityResourcesError as {
-                            data?: { message?: string };
-                          }
-                        )?.data?.message,
-                        "Có lỗi khi tải danh sách phòng học/phương tiện. Vui lòng thử lại sau."
-                      )}
-                    </div>
-                  ) : modalityResources.length === 0 ? (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
-                      Không tìm thấy phòng học/phương tiện phù hợp.
-                    </div>
-                  ) : (
-                    <Select
-                      value={
-                        selectedResourceId !== null && selectedResourceId !== undefined
-                          ? String(selectedResourceId)
-                          : undefined
-                      }
-                      onValueChange={(value) =>
-                        setSelectedResourceId(Number(value))
-                      }
-                      disabled={isActionLoading}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn phòng học/phương tiện...">
-                          {selectedResourceId
-                            ? (() => {
-                                const selectedResource = modalityResources.find(
-                                  (r) =>
-                                    (r.id ?? r.resourceId) ===
-                                    selectedResourceId
-                                );
-                                return selectedResource?.name || "Chưa có tên";
-                              })()
-                            : null}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {modalityResources
-                          .filter((resource) => {
-                            const resourceId = resource.id ?? resource.resourceId;
-                            return resourceId !== null && resourceId !== undefined && resourceId !== 0;
-                          })
-                          .map((resource) => {
-                            const resourceId = resource.id ?? resource.resourceId;
-                            const resourceName = resource.name || "Chưa có tên";
-                            const resourceType =
-                              resource.type || resource.resourceType || "";
-                            const resourceCapacity = resource.capacity;
-
-                          return (
-                            <SelectItem
-                              key={resourceId || resourceName}
-                              value={String(resourceId)}
-                            >
-                              <div className="flex flex-col gap-1">
-                                <div className="flex items-center justify-between gap-2">
-                                  <span>{resourceName}</span>
-                                  {resourceType && (
-                                    <span className="text-xs text-muted-foreground">
-                                      {resourceType}
-                                    </span>
-                                  )}
-                                </div>
-                                {resourceCapacity !== undefined && (
-                                  <span className="text-xs text-muted-foreground">
-                                    Sức chứa: {resourceCapacity}
-                                  </span>
-                                )}
-                              </div>
-                            </SelectItem>
-                          );
-                          })}
-                      </SelectContent>
-                    </Select>
+            ) : selectedRequest ? (
+              <div
+                className={cn(
+                  "grid gap-6",
+                  canDecide ? "lg:grid-cols-5" : "lg:grid-cols-4"
+                )}
+              >
+                <div
+                  className={cn(
+                    "space-y-5",
+                    canDecide ? "lg:col-span-3" : "lg:col-span-4"
                   )}
-                </div>
-              )}
-
-              {isRescheduleRequest && (
-                <div className="space-y-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Chọn lại thông tin lịch mới (nếu cần)
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Bạn có thể chọn lại ngày, khung giờ và phòng học/phương tiện
-                    nếu cần thay đổi so với đề xuất của giáo viên.
-                  </p>
-
-                  {/* Date Selection */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">
-                      Ngày mới{" "}
-                      {selectedRescheduleDate && (
-                        <span className="text-xs text-muted-foreground font-normal">
-                          (đã chọn)
-                        </span>
-                      )}
-                    </Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !selectedRescheduleDate && "text-muted-foreground"
-                          )}
-                          disabled={isActionLoading}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {selectedRescheduleDate ? (
-                            format(selectedRescheduleDate, "EEEE, dd/MM/yyyy", {
-                              locale: vi,
-                            })
-                          ) : (
-                            <span>Chọn ngày mới (tùy chọn)</span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={selectedRescheduleDate}
-                          onSelect={setSelectedRescheduleDate}
-                          disabled={(date) => date < new Date()}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  {/* Time Slot Selection */}
-                  {selectedRescheduleDate && (
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">
-                        Khung giờ mới{" "}
-                        {selectedRescheduleTimeSlotId && (
-                          <span className="text-xs text-muted-foreground font-normal">
-                            (đã chọn)
+                >
+                  {(selectedRequest.teacherName || selectedRequest.submittedBy) && (
+                    <div className="rounded-xl border border-border/60 bg-muted/10 p-4">
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Giáo viên gửi yêu cầu
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-foreground">
+                        {selectedRequest.teacherName || selectedRequest.submittedBy}
+                        {selectedRequest.teacherEmail && (
+                          <span className="ml-2 text-xs font-normal text-muted-foreground">
+                            ({selectedRequest.teacherEmail})
                           </span>
                         )}
-                      </Label>
-                      {isLoadingRescheduleSlots ? (
-                        <Skeleton className="h-10 w-full" />
-                      ) : rescheduleSlotsError ? (
+                      </p>
+                    </div>
+                  )}
+
+                  <TeacherRequestDetailContent
+                    request={selectedRequest}
+                    hideRequestType={true}
+                  />
+
+                  {isModalityChangeRequest && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Chọn phòng học / phương tiện
+                      </p>
+                      {isLoadingModalityResources ? (
+                        <div className="rounded-lg border p-4 text-center text-sm text-muted-foreground">
+                          Đang tải danh sách phòng học/phương tiện...
+                        </div>
+                      ) : modalityResourcesError ? (
                         <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
                           {formatBackendError(
                             (
-                              rescheduleSlotsError as {
+                              modalityResourcesError as {
                                 data?: { message?: string };
                               }
                             )?.data?.message,
-                            "Không thể tải danh sách khung giờ"
+                            "Có lỗi khi tải danh sách phòng học/phương tiện. Vui lòng thử lại sau."
                           )}
                         </div>
-                      ) : rescheduleSlots.length === 0 ? (
+                      ) : modalityResources.length === 0 ? (
                         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
-                          Không có khung giờ phù hợp cho ngày đã chọn.
+                          Không tìm thấy phòng học/phương tiện phù hợp.
                         </div>
                       ) : (
                         <Select
                           value={
-                            selectedRescheduleTimeSlotId !== null &&
-                            selectedRescheduleTimeSlotId !== undefined
-                              ? String(selectedRescheduleTimeSlotId)
+                            selectedResourceId !== null &&
+                            selectedResourceId !== undefined
+                              ? String(selectedResourceId)
                               : undefined
                           }
                           onValueChange={(value) =>
-                            setSelectedRescheduleTimeSlotId(Number(value))
+                            setSelectedResourceId(Number(value))
                           }
                           disabled={isActionLoading}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Chọn khung giờ mới (tùy chọn)...">
-                              {selectedRescheduleTimeSlotId
+                            <SelectValue placeholder="Chọn phòng học/phương tiện...">
+                              {selectedResourceId
                                 ? (() => {
-                                    const selectedSlot = rescheduleSlots.find(
-                                      (s) =>
-                                        (s.timeSlotTemplateId ??
-                                          s.timeSlotId ??
-                                          s.id) === selectedRescheduleTimeSlotId
-                                    );
-                                    return (
-                                      selectedSlot?.label ||
-                                      selectedSlot?.name ||
-                                      selectedSlot?.displayLabel ||
-                                      selectedSlot?.timeSlotLabel ||
-                                      `${
-                                        selectedSlot?.startTime ||
-                                        selectedSlot?.startAt
-                                      } - ${
-                                        selectedSlot?.endTime ||
-                                        selectedSlot?.endAt
-                                      }` ||
-                                      "Chưa có tên"
-                                    );
+                                    const selectedResource =
+                                      modalityResources.find(
+                                        (r) =>
+                                          (r.id ?? r.resourceId) ===
+                                          selectedResourceId
+                                      );
+                                    return selectedResource?.name || "Chưa có tên";
                                   })()
                                 : null}
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
-                            {rescheduleSlots
-                              .filter((slot) => {
-                                const slotId =
-                                  slot.timeSlotTemplateId ??
-                                  slot.timeSlotId ??
-                                  slot.id;
-                                return slotId !== null && slotId !== undefined && slotId !== 0;
+                            {modalityResources
+                              .filter((resource) => {
+                                const resourceId = resource.id ?? resource.resourceId;
+                                return (
+                                  resourceId !== null &&
+                                  resourceId !== undefined &&
+                                  resourceId !== 0
+                                );
                               })
-                              .map((slot) => {
-                                const slotId =
-                                  slot.timeSlotTemplateId ??
-                                  slot.timeSlotId ??
-                                  slot.id;
-                                const label =
-                                  slot.label ||
-                                  slot.name ||
-                                  slot.displayLabel ||
-                                  slot.timeSlotLabel ||
-                                  `${slot.startTime || slot.startAt} - ${
-                                    slot.endTime || slot.endAt
-                                  }`;
+                              .map((resource) => {
+                                const resourceId =
+                                  resource.id ?? resource.resourceId;
+                                const resourceName = resource.name || "Chưa có tên";
+                                const resourceType =
+                                  resource.type || resource.resourceType || "";
+                                const resourceCapacity = resource.capacity;
 
                                 return (
                                   <SelectItem
-                                    key={slotId}
-                                    value={String(slotId)}
+                                    key={resourceId || resourceName}
+                                    value={String(resourceId)}
                                   >
-                                    {label}
+                                    <div className="flex flex-col gap-1">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <span>{resourceName}</span>
+                                        {resourceType && (
+                                          <span className="text-xs text-muted-foreground">
+                                            {resourceType}
+                                          </span>
+                                        )}
+                                      </div>
+                                      {resourceCapacity !== undefined && (
+                                        <span className="text-xs text-muted-foreground">
+                                          Sức chứa: {resourceCapacity}
+                                        </span>
+                                      )}
+                                    </div>
                                   </SelectItem>
                                 );
                               })}
@@ -1782,283 +1152,461 @@ export default function AcademicTeacherRequestsPage() {
                     </div>
                   )}
 
-                  {/* Resource Selection */}
-                  {(selectedRescheduleDate && selectedRescheduleTimeSlotId) ||
-                  (!selectedRescheduleDate && !selectedRescheduleTimeSlotId) ? (
+                  {isRescheduleRequest && (
+                    <div className="space-y-4">
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Chọn lại thông tin lịch mới (nếu cần)
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Bạn có thể chọn lại ngày, khung giờ và phòng học/phương tiện
+                        nếu cần thay đổi so với đề xuất của giáo viên.
+                      </p>
+
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">
+                          Ngày mới{" "}
+                          {selectedRescheduleDate && (
+                            <span className="text-xs text-muted-foreground font-normal">
+                              (đã chọn)
+                            </span>
+                          )}
+                        </Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !selectedRescheduleDate && "text-muted-foreground"
+                              )}
+                              disabled={isActionLoading}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {selectedRescheduleDate ? (
+                                format(selectedRescheduleDate, "EEEE, dd/MM/yyyy", {
+                                  locale: vi,
+                                })
+                              ) : (
+                                <span>Chọn ngày mới (tùy chọn)</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={selectedRescheduleDate}
+                              onSelect={setSelectedRescheduleDate}
+                              disabled={(date) => date < new Date()}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+
+                      {selectedRescheduleDate && (
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">
+                            Khung giờ mới{" "}
+                            {selectedRescheduleTimeSlotId && (
+                              <span className="text-xs text-muted-foreground font-normal">
+                                (đã chọn)
+                              </span>
+                            )}
+                          </Label>
+                          {isLoadingRescheduleSlots ? (
+                            <Skeleton className="h-10 w-full" />
+                          ) : rescheduleSlotsError ? (
+                            <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                              {formatBackendError(
+                                (
+                                  rescheduleSlotsError as {
+                                    data?: { message?: string };
+                                  }
+                                )?.data?.message,
+                                "Không thể tải danh sách khung giờ"
+                              )}
+                            </div>
+                          ) : rescheduleSlots.length === 0 ? (
+                            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+                              Không có khung giờ phù hợp cho ngày đã chọn.
+                            </div>
+                          ) : (
+                            <Select
+                              value={
+                                selectedRescheduleTimeSlotId !== null &&
+                                selectedRescheduleTimeSlotId !== undefined
+                                  ? String(selectedRescheduleTimeSlotId)
+                                  : undefined
+                              }
+                              onValueChange={(value) =>
+                                setSelectedRescheduleTimeSlotId(Number(value))
+                              }
+                              disabled={isActionLoading}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Chọn khung giờ mới (tùy chọn)...">
+                                  {selectedRescheduleTimeSlotId
+                                    ? (() => {
+                                        const selectedSlot = rescheduleSlots.find(
+                                          (s) =>
+                                            (s.timeSlotTemplateId ??
+                                              s.timeSlotId ??
+                                              s.id) === selectedRescheduleTimeSlotId
+                                        );
+                                        return (
+                                          selectedSlot?.label ||
+                                          selectedSlot?.name ||
+                                          selectedSlot?.displayLabel ||
+                                          selectedSlot?.timeSlotLabel ||
+                                          `${
+                                            selectedSlot?.startTime ||
+                                            selectedSlot?.startAt
+                                          } - ${
+                                            selectedSlot?.endTime ||
+                                            selectedSlot?.endAt
+                                          }` ||
+                                          "Chưa có tên"
+                                        );
+                                      })()
+                                    : null}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                {rescheduleSlots
+                                  .filter((slot) => {
+                                    const slotId =
+                                      slot.timeSlotTemplateId ??
+                                      slot.timeSlotId ??
+                                      slot.id;
+                                    return (
+                                      slotId !== null &&
+                                      slotId !== undefined &&
+                                      slotId !== 0
+                                    );
+                                  })
+                                  .map((slot) => {
+                                    const slotId =
+                                      slot.timeSlotTemplateId ??
+                                      slot.timeSlotId ??
+                                      slot.id;
+                                    const label =
+                                      slot.label ||
+                                      slot.name ||
+                                      slot.displayLabel ||
+                                      slot.timeSlotLabel ||
+                                      `${slot.startTime || slot.startAt} - ${
+                                        slot.endTime || slot.endAt
+                                      }`;
+
+                                    return (
+                                      <SelectItem key={slotId} value={String(slotId)}>
+                                        {label}
+                                      </SelectItem>
+                                    );
+                                  })}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      )}
+
+                      {(selectedRescheduleDate && selectedRescheduleTimeSlotId) ||
+                      (!selectedRescheduleDate && !selectedRescheduleTimeSlotId) ? (
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">
+                            Phòng học/phương tiện{" "}
+                            {selectedResourceId && (
+                              <span className="text-xs text-muted-foreground font-normal">
+                                (đã chọn)
+                              </span>
+                            )}
+                          </Label>
+                          {isLoadingRescheduleResources ? (
+                            <Skeleton className="h-10 w-full" />
+                          ) : rescheduleResourcesError ? (
+                            <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                              {formatBackendError(
+                                (
+                                  rescheduleResourcesError as {
+                                    data?: { message?: string };
+                                  }
+                                )?.data?.message,
+                                "Có lỗi khi tải danh sách phòng học/phương tiện. Vui lòng thử lại sau."
+                              )}
+                            </div>
+                          ) : rescheduleResources.length === 0 ? (
+                            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+                              Không tìm thấy phòng học/phương tiện phù hợp.
+                            </div>
+                          ) : (
+                            <Select
+                              value={
+                                selectedResourceId !== null &&
+                                selectedResourceId !== undefined
+                                  ? String(selectedResourceId)
+                                  : undefined
+                              }
+                              onValueChange={(value) =>
+                                setSelectedResourceId(Number(value))
+                              }
+                              disabled={isActionLoading}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Chọn phòng học/phương tiện (tùy chọn)...">
+                                  {selectedResourceId
+                                    ? (() => {
+                                        const selectedResource =
+                                          rescheduleResources.find(
+                                            (r) =>
+                                              (r.id ?? r.resourceId) ===
+                                              selectedResourceId
+                                          );
+                                        return (
+                                          selectedResource?.name || "Chưa có tên"
+                                        );
+                                      })()
+                                    : null}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                {rescheduleResources
+                                  .filter((resource) => {
+                                    const resourceId =
+                                      resource.id ?? resource.resourceId;
+                                    return (
+                                      resourceId !== null &&
+                                      resourceId !== undefined &&
+                                      resourceId !== 0
+                                    );
+                                  })
+                                  .map((resource) => {
+                                    const resourceId =
+                                      resource.id ?? resource.resourceId;
+                                    const resourceName =
+                                      resource.name || "Chưa có tên";
+                                    const resourceType =
+                                      resource.type || resource.resourceType || "";
+                                    const resourceCapacity = resource.capacity;
+
+                                    return (
+                                      <SelectItem
+                                        key={resourceId || resourceName}
+                                        value={String(resourceId)}
+                                      >
+                                        <div className="flex flex-col gap-1">
+                                          <div className="flex items-center justify-between gap-2">
+                                            <span>{resourceName}</span>
+                                            {resourceType && (
+                                              <span className="text-xs text-muted-foreground">
+                                                {resourceType}
+                                              </span>
+                                            )}
+                                          </div>
+                                          {resourceCapacity !== undefined && (
+                                            <span className="text-xs text-muted-foreground">
+                                              Sức chứa: {resourceCapacity}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </SelectItem>
+                                    );
+                                  })}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+                          Vui lòng chọn ngày và khung giờ trước khi chọn phòng
+                          học/phương tiện.
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {isReplacementRequest && (
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium">
-                        Phòng học/phương tiện{" "}
-                        {selectedResourceId && (
-                          <span className="text-xs text-muted-foreground font-normal">
-                            (đã chọn)
-                          </span>
-                        )}
-                      </Label>
-                      {isLoadingRescheduleResources ? (
-                        <Skeleton className="h-10 w-full" />
-                      ) : rescheduleResourcesError ? (
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Chọn giáo viên dạy thay
+                      </p>
+                      {!requestId ? (
+                        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                          Không tìm thấy thông tin request. Vui lòng thử lại sau.
+                        </div>
+                      ) : isLoadingCandidates ? (
+                        <div className="rounded-lg border p-4 text-center text-sm text-muted-foreground">
+                          Đang tải danh sách giáo viên...
+                        </div>
+                      ) : replacementCandidatesError ? (
                         <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
                           {formatBackendError(
-                          (
-                            rescheduleResourcesError as {
-                              data?: { message?: string };
-                            }
-                          )?.data?.message,
-                        "Có lỗi khi tải danh sách phòng học/phương tiện. Vui lòng thử lại sau."
-                      )}
-                    </div>
-                      ) : rescheduleResources.length === 0 ? (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
-                      Không tìm thấy phòng học/phương tiện phù hợp.
-                    </div>
-                  ) : (
-                    <Select
-                      value={
-                        selectedResourceId !== null && selectedResourceId !== undefined
-                          ? String(selectedResourceId)
-                          : undefined
-                      }
-                      onValueChange={(value) =>
-                        setSelectedResourceId(Number(value))
-                      }
-                      disabled={isActionLoading}
-                    >
-                      <SelectTrigger>
-                            <SelectValue placeholder="Chọn phòng học/phương tiện (tùy chọn)...">
-                          {selectedResourceId
-                            ? (() => {
-                                const selectedResource =
-                                      rescheduleResources.find(
-                                    (r) =>
-                                      (r.id ?? r.resourceId) ===
-                                      selectedResourceId
-                                  );
-                                    return (
-                                      selectedResource?.name || "Chưa có tên"
-                                    );
-                              })()
-                            : null}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {rescheduleResources
-                          .filter((resource) => {
-                            const resourceId =
-                              resource.id ?? resource.resourceId;
-                            return resourceId !== null && resourceId !== undefined && resourceId !== 0;
-                          })
-                          .map((resource) => {
-                            const resourceId =
-                              resource.id ?? resource.resourceId;
-                            const resourceName =
-                              resource.name || "Chưa có tên";
-                          const resourceType =
-                            resource.type || resource.resourceType || "";
-                          const resourceCapacity = resource.capacity;
-
-                            return (
-                              <SelectItem
-                                key={resourceId || resourceName}
-                                value={String(resourceId)}
-                              >
-                              <div className="flex flex-col gap-1">
-                                <div className="flex items-center justify-between gap-2">
-                                  <span>{resourceName}</span>
-                                  {resourceType && (
-                                    <span className="text-xs text-muted-foreground">
-                                      {resourceType}
-                                    </span>
-                                  )}
-                                </div>
-                                {resourceCapacity !== undefined && (
-                                  <span className="text-xs text-muted-foreground">
-                                    Sức chứa: {resourceCapacity}
-                                  </span>
-                                )}
-                              </div>
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
-                      Vui lòng chọn ngày và khung giờ trước khi chọn phòng
-                      học/phương tiện.
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {isReplacementRequest && (
-                <div className="space-y-2">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Chọn giáo viên dạy thay
-                  </p>
-                  {!requestId ? (
-                    <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-                      Không tìm thấy thông tin request. Vui lòng thử lại sau.
-                    </div>
-                  ) : isLoadingCandidates ? (
-                    <div className="rounded-lg border p-4 text-center text-sm text-muted-foreground">
-                      Đang tải danh sách giáo viên...
-                    </div>
-                  ) : replacementCandidatesError ? (
-                    <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-                      {formatBackendError(
-                        (
-                          replacementCandidatesError as {
-                            data?: { message?: string };
-                          }
-                        )?.data?.message,
-                        "Có lỗi khi tải danh sách giáo viên. Vui lòng thử lại sau."
-                      )}
-                    </div>
-                  ) : replacementCandidates.length === 0 ? (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
-                      Không tìm thấy giáo viên phù hợp để dạy thay.
-                    </div>
-                  ) : (
-                    <Select
-                      value={
-                        selectedReplacementTeacherId !== null &&
-                        selectedReplacementTeacherId !== undefined
-                          ? String(selectedReplacementTeacherId)
-                          : undefined
-                      }
-                      onValueChange={(value) =>
-                        setSelectedReplacementTeacherId(Number(value))
-                      }
-                      disabled={isActionLoading}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn giáo viên dạy thay...">
-                          {selectedReplacementTeacherId
-                            ? (() => {
-                                // First try to find in candidates list
-                                const selectedCandidate =
-                                  replacementCandidates.find(
-                                    (c) =>
-                                      (c.teacherId ??
-                                        (c as { id?: number }).id) ===
-                                      selectedReplacementTeacherId
-                                  );
-                                if (selectedCandidate) {
-                                  return (
-                                    selectedCandidate.fullName ||
-                                    selectedCandidate.displayName ||
-                                    selectedCandidate.teacherName ||
-                                    "Chưa có tên"
-                                  );
-                                }
-                                return "Chưa có tên";
-                              })()
-                            : null}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {replacementCandidates
-                          .filter((candidate) => {
-                            const teacherId =
-                              candidate.teacherId ??
-                              (candidate as { id?: number }).id;
-                            return teacherId !== null && teacherId !== undefined && teacherId !== 0;
-                          })
-                          .map((candidate) => {
-                          const teacherId =
-                            candidate.teacherId ??
-                            (candidate as { id?: number }).id;
-                          const teacherName =
-                            candidate.fullName ||
-                            candidate.displayName ||
-                            candidate.teacherName ||
-                            "Chưa có tên";
-                          const teacherLevel = candidate.level || "";
-                          return (
-                            <SelectItem
-                              key={teacherId || teacherName}
-                              value={
-                                teacherId !== null && teacherId !== undefined
-                                  ? String(teacherId)
-                                  : ""
+                            (
+                              replacementCandidatesError as {
+                                data?: { message?: string };
                               }
-                            >
-                              <div className="flex flex-col gap-1">
-                                <div className="flex items-center justify-between gap-2">
-                                  <span>
-                                    {teacherName}
-                                    {teacherLevel && (
-                                      <span className="ml-2 text-xs text-muted-foreground">
-                                        ({teacherLevel})
-                                      </span>
-                                    )}
-                                  </span>
-                                </div>
-                              </div>
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
+                            )?.data?.message,
+                            "Có lỗi khi tải danh sách giáo viên. Vui lòng thử lại sau."
+                          )}
+                        </div>
+                      ) : replacementCandidates.length === 0 ? (
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+                          Không tìm thấy giáo viên phù hợp để dạy thay.
+                        </div>
+                      ) : (
+                        <Select
+                          value={
+                            selectedReplacementTeacherId !== null &&
+                            selectedReplacementTeacherId !== undefined
+                              ? String(selectedReplacementTeacherId)
+                              : undefined
+                          }
+                          onValueChange={(value) =>
+                            setSelectedReplacementTeacherId(Number(value))
+                          }
+                          disabled={isActionLoading}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn giáo viên dạy thay...">
+                              {selectedReplacementTeacherId
+                                ? (() => {
+                                    const selectedCandidate =
+                                      replacementCandidates.find(
+                                        (c) =>
+                                          (c.teacherId ??
+                                            (c as { id?: number }).id) ===
+                                          selectedReplacementTeacherId
+                                      );
+                                    if (selectedCandidate) {
+                                      return (
+                                        selectedCandidate.fullName ||
+                                        selectedCandidate.displayName ||
+                                        selectedCandidate.teacherName ||
+                                        "Chưa có tên"
+                                      );
+                                    }
+                                    return "Chưa có tên";
+                                  })()
+                                : null}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {replacementCandidates
+                              .filter((candidate) => {
+                                const teacherId =
+                                  candidate.teacherId ??
+                                  (candidate as { id?: number }).id;
+                                return (
+                                  teacherId !== null &&
+                                  teacherId !== undefined &&
+                                  teacherId !== 0
+                                );
+                              })
+                              .map((candidate) => {
+                                const teacherId =
+                                  candidate.teacherId ??
+                                  (candidate as { id?: number }).id;
+                                const teacherName =
+                                  candidate.fullName ||
+                                  candidate.displayName ||
+                                  candidate.teacherName ||
+                                  "Chưa có tên";
+                                const teacherLevel = candidate.level || "";
+                                return (
+                                  <SelectItem
+                                    key={teacherId || teacherName}
+                                    value={
+                                      teacherId !== null && teacherId !== undefined
+                                        ? String(teacherId)
+                                        : ""
+                                    }
+                                  >
+                                    <div className="flex flex-col gap-1">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <span>
+                                          {teacherName}
+                                          {teacherLevel && (
+                                            <span className="ml-2 text-xs text-muted-foreground">
+                                              ({teacherLevel})
+                                            </span>
+                                          )}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </SelectItem>
+                                );
+                              })}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
 
-              {canDecide && (
-                <div className="space-y-2">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Ghi chú xử lý
-                  </p>
-                  <Textarea
-                    placeholder="Nhập ghi chú gửi giáo viên (tối thiểu 10 ký tự nếu từ chối)."
-                    rows={4}
-                    value={decisionNote}
-                    onChange={(event) => setDecisionNote(event.target.value)}
-                  />
-                </div>
-              )}
-
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs text-muted-foreground">
-                  {canDecide
-                    ? "Sau khi xử lý, giáo viên sẽ nhận được thông báo ngay."
-                    : "Yêu cầu này đã được xử lý."}
-                </p>
                 {canDecide && (
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="border-rose-200 text-rose-600 hover:bg-rose-50"
-                      disabled={isActionLoading}
-                      onClick={() => handleDecision("reject")}
-                    >
-                      {pendingAction === "reject"
-                        ? "Đang từ chối..."
-                        : "Từ chối"}
-                    </Button>
-                    <Button
-                      type="button"
-                      disabled={isActionLoading}
-                      onClick={() => handleDecision("approve")}
-                    >
-                      {pendingAction === "approve"
-                        ? "Đang chấp thuận..."
-                        : "Chấp thuận"}
-                    </Button>
+                  <div className="lg:col-span-2">
+                    <div className="sticky top-0 space-y-4 rounded-xl border border-border/60 bg-background p-4">
+                      <h3 className="font-semibold text-foreground flex items-center gap-2">
+                        Xử lý yêu cầu
+                      </h3>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-foreground">
+                          Ghi chú
+                          <span className="text-xs font-normal text-muted-foreground ml-1">
+                            (bắt buộc khi từ chối, tối thiểu 10 ký tự)
+                          </span>
+                        </label>
+                        <Textarea
+                          value={decisionNote}
+                          onChange={(event) => setDecisionNote(event.target.value)}
+                          placeholder="Nhập ghi chú gửi giáo viên..."
+                          className="min-h-[120px] resize-none"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="border-rose-200 text-rose-600 hover:bg-rose-50"
+                          disabled={isActionLoading}
+                          onClick={() => handleDecision("reject")}
+                        >
+                          {pendingAction === "reject"
+                            ? "Đang từ chối..."
+                            : "Từ chối"}
+                        </Button>
+                        <Button
+                          type="button"
+                          disabled={isActionLoading}
+                          onClick={() => handleDecision("approve")}
+                        >
+                          {pendingAction === "approve"
+                            ? "Đang chấp thuận..."
+                            : "Chấp thuận"}
+                        </Button>
+                        <p className="text-xs text-muted-foreground">
+                          Sau khi xử lý, giáo viên sẽ nhận được thông báo ngay.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Không tìm thấy thông tin yêu cầu. Vui lòng thử lại sau.
-            </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Không tìm thấy thông tin yêu cầu. Vui lòng thử lại sau.
+              </p>
+            )}
+          </FullScreenModalBody>
+
+          {!canDecide && !isLoadingDetail && (
+            <FullScreenModalFooter>
+              <Button variant="outline" onClick={() => handleCloseRequestDetail()}>
+                Đóng
+              </Button>
+            </FullScreenModalFooter>
           )}
-        </DialogContent>
-      </Dialog>
+        </FullScreenModalContent>
+      </FullScreenModal>
 
       {/* Create Request Dialog */}
       <CreateRequestDialog

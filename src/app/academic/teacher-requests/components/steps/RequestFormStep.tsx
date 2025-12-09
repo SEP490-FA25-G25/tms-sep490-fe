@@ -405,8 +405,8 @@ export function RequestFormStep({
                 return teacherId !== null && teacherId !== undefined && teacherId !== 0;
               })
               .map((candidate) => {
-                const teacherId =
-                  candidate.teacherId ?? (candidate as { id?: number }).id;
+              const teacherId =
+                candidate.teacherId ?? (candidate as { id?: number }).id;
               const teacherName =
                 candidate.fullName ||
                 candidate.displayName ||
@@ -437,7 +437,7 @@ export function RequestFormStep({
                   </div>
                 </SelectItem>
               );
-              })}
+            })}
           </SelectContent>
         </Select>
       </div>
@@ -597,35 +597,35 @@ export function RequestFormStep({
                       return resourceId !== null && resourceId !== undefined && resourceId !== 0;
                     })
                     .map((resource) => {
-                      const resourceId = resource.id ?? resource.resourceId;
-                      const resourceName = resource.name || "Chưa có tên";
-                      const resourceType =
-                        resource.type || resource.resourceType || "";
-                      const resourceCapacity = resource.capacity;
+                    const resourceId = resource.id ?? resource.resourceId;
+                    const resourceName = resource.name || "Chưa có tên";
+                    const resourceType =
+                      resource.type || resource.resourceType || "";
+                    const resourceCapacity = resource.capacity;
 
-                      return (
-                        <SelectItem
-                          key={resourceId || resourceName}
+                    return (
+                      <SelectItem
+                        key={resourceId || resourceName}
                           value={String(resourceId)}
-                        >
-                          <div className="flex flex-col gap-1">
-                            <div className="flex items-center justify-between gap-2">
-                              <span>{resourceName}</span>
-                              {resourceType && (
-                                <span className="text-xs text-muted-foreground">
-                                  {resourceType}
-                                </span>
-                              )}
-                            </div>
-                            {resourceCapacity !== undefined && (
+                      >
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span>{resourceName}</span>
+                            {resourceType && (
                               <span className="text-xs text-muted-foreground">
-                                Sức chứa: {resourceCapacity}
+                                {resourceType}
                               </span>
                             )}
                           </div>
-                        </SelectItem>
-                      );
-                    })}
+                          {resourceCapacity !== undefined && (
+                            <span className="text-xs text-muted-foreground">
+                              Sức chứa: {resourceCapacity}
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             )}

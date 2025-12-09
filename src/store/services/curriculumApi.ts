@@ -31,6 +31,7 @@ export interface SubjectWithLevelsDTO {
   status: string
   createdAt: string
   updatedAt: string
+  curriculumId?: number
   levels: LevelDTO[]
   plos?: { code: string; description: string }[]
   levelCount?: number
