@@ -80,7 +80,7 @@ const TranscriptPage = () => {
       const query = searchQuery.toLowerCase().trim();
       const matchesSearch =
         query === '' ||
-        item.courseName.toLowerCase().includes(query) ||
+        item.subjectName.toLowerCase().includes(query) ||
         item.classCode.toLowerCase().includes(query) ||
         item.className.toLowerCase().includes(query);
 
@@ -259,7 +259,7 @@ const TranscriptPage = () => {
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="min-w-0 flex-1">
                                     <p className="font-semibold text-sm leading-tight line-clamp-2">
-                                      {item.courseName}
+                                      {item.subjectName}
                                     </p>
                                     <p className="text-xs text-muted-foreground mt-0.5">
                                       {item.classCode} • {item.className}

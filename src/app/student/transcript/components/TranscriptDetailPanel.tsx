@@ -130,7 +130,7 @@ const TranscriptDetailPanel: React.FC<TranscriptDetailPanelProps> = ({
             <div className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
               <span className="font-mono text-xs">{selectedClass.classCode}</span>
               <span>•</span>
-              <span className="text-xs">{selectedClass.courseName}</span>
+              <span className="text-xs">{selectedClass.subjectName}</span>
             </div>
           </div>
           <Badge

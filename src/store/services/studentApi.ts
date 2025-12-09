@@ -81,7 +81,7 @@ export interface StudentTranscriptDTO {
   classId: number
   classCode: string
   className: string
-  courseName: string
+  subjectName: string
   teacherName: string
   status: string
   averageScore?: number

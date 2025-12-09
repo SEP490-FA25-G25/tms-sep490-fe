@@ -697,9 +697,10 @@ function SessionDetailDialog({ sessionId, onClose }: SessionDetailDialogProps) {
                   </div>
                 </div>
               </div>
-              {detail.studentStatus.homeworkDescription && (
-                <p className="text-sm text-muted-foreground">📝 {detail.studentStatus.homeworkDescription}</p>
-              )}
+                <div className="rounded-lg bg-muted/50 p-3">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Ghi chú của giáo viên</p>
+                  <p className="text-sm text-foreground">{detail.studentStatus.note}</p>
+                </div>
             </div>
 
             <div className="space-y-3 rounded-2xl border border-border/60 bg-background/80 p-4">

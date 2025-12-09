@@ -111,8 +111,7 @@ export interface SessionInfoDTO {
 export interface StudentStatusDTO {
   attendanceStatus: AttendanceStatus
   homeworkStatus: HomeworkStatus
-  homeworkDueDate: string | null
-  homeworkDescription: string | null
+  note: string | null
 }
 
 export interface MaterialDTO {
