@@ -305,7 +305,10 @@ export default function AdminUsersPage() {
                         </div>
                       ) : users.length === 0 ? (
                         <div className="text-center py-12 text-muted-foreground">
-                          {users.length === 0 ? (
+                          {/* Nếu có filter/search thì hiện "không tìm thấy", ngược lại hiện "chưa có" */}
+                          {searchTerm || roleFilter !== "ALL" || statusFilter !== "ALL" || branchFilter !== null ? (
+                            <p>Không tìm thấy người dùng nào phù hợp với bộ lọc</p>
+                          ) : (
                             <>
                               <p>Chưa có người dùng nào trong hệ thống</p>
                               <Button
@@ -316,10 +319,6 @@ export default function AdminUsersPage() {
                                 Tạo người dùng đầu tiên
                               </Button>
                             </>
-                          ) : (
-                            <p>
-                              Không tìm thấy người dùng nào phù hợp với bộ lọc
-                            </p>
                           )}
                         </div>
                       ) : (
