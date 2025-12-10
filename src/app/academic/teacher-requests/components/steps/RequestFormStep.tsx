@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { CalendarIcon, ArrowLeft } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import {
   useCreateRequestForTeacherMutation,
   useGetTeacherSessionsForStaffQuery,
@@ -113,7 +113,7 @@ export function RequestFormStep({
   // Form state
   const [reason, setReason] = useState("");
   const [reasonError, setReasonError] = useState<string | null>(null);
-  const REASON_MIN_LENGTH = 15;
+  const REASON_MIN_LENGTH = 10;
 
   // RESCHEDULE state
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -238,10 +238,28 @@ export function RequestFormStep({
     }
   );
 
-  const modalityResources = modalityResourcesResponse?.data ?? [];
+  const modalityResources = useMemo(
+    () => modalityResourcesResponse?.data ?? [],
+    [modalityResourcesResponse?.data]
+  );
   const slots = slotsResponse?.data ?? [];
   const rescheduleResources = rescheduleResourcesResponse?.data ?? [];
   const replacementCandidates = candidatesResponse?.data ?? [];
+
+  // Auto-select first resource for MODALITY_CHANGE if not selected yet
+  useEffect(() => {
+    if (
+      requestType === "MODALITY_CHANGE" &&
+      !selectedModalityResourceId &&
+      modalityResources.length > 0
+    ) {
+      const firstResource = modalityResources[0];
+      const resourceId = firstResource.id ?? firstResource.resourceId;
+      if (resourceId !== null && resourceId !== undefined && resourceId !== 0) {
+        setSelectedModalityResourceId(resourceId);
+      }
+    }
+  }, [requestType, selectedModalityResourceId, modalityResources]);
 
   const handleSubmit = async () => {
     const trimmedReason = reason.trim();
@@ -478,11 +496,6 @@ export function RequestFormStep({
                           </span>
                         )}
                       </div>
-                      {candidate.email && (
-                        <span className="text-xs text-muted-foreground">
-                          {candidate.email}
-                        </span>
-                      )}
                     </div>
                   </SelectItem>
                 );
@@ -860,7 +873,6 @@ export function RequestFormStep({
       <div className="flex flex-wrap items-center justify-between gap-3 pt-4">
         <div>
           <Button variant="ghost" onClick={onBack}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
             Quay lại
           </Button>
         </div>
@@ -878,7 +890,11 @@ export function RequestFormStep({
                 (!selectedDate ||
                   !selectedTimeSlotId ||
                   !selectedResourceId)) ||
-              (requestType === "MODALITY_CHANGE" && !selectedModalityResourceId)
+              (requestType === "MODALITY_CHANGE" &&
+                (!selectedModalityResourceId ||
+                  !modalityResources.some(
+                    (r) => (r.id ?? r.resourceId) === selectedModalityResourceId
+                  )))
             }
           >
             {isLoading ? "Đang tạo..." : "Tạo yêu cầu"}

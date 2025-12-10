@@ -30,7 +30,6 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { ENROLLMENT_STATUS_STYLES, getStatusStyle } from '@/lib/status-colors';
 import { useGetStudentTranscriptQuery } from '@/store/services/studentApi';
 import { useGetAllSubjectsQuery } from '@/store/services/subjectApi';
 import type { StudentTranscriptDTO } from '@/store/services/studentApi';

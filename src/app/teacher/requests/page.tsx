@@ -272,7 +272,7 @@ export default function MyRequestsPage() {
 
   // Load teacher request config for policy values
   const { data: teacherConfig } = useGetTeacherRequestConfigQuery();
-  const reasonMinLength = teacherConfig?.data?.reasonMinLength ?? 15;
+  const reasonMinLength = teacherConfig?.data?.reasonMinLength ?? 10;
   const [activeType, setActiveType] = useState<RequestType | null>(null);
   const [typeFilter, setTypeFilter] = useState<"ALL" | RequestType>("ALL");
   const [statusFilter, setStatusFilter] = useState<"ALL" | RequestStatus>(
@@ -1068,7 +1068,7 @@ export function TeacherRequestDetailContent({
   isActionLoading,
   pendingAction,
   hideRequestType = false,
-  reasonMinLength = 15,
+  reasonMinLength = 10,
 }: {
   request: TeacherRequestDTO;
   fallbackRequest?: TeacherRequestDTO;

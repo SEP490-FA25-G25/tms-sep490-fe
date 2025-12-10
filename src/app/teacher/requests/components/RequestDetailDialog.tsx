@@ -92,7 +92,7 @@ export function RequestDetailDialog({
   onDecisionNoteChange,
   isActionLoading = false,
   pendingAction = null,
-  reasonMinLength = 15,
+  reasonMinLength = 10,
 }: RequestDetailDialogProps) {
   const statusMeta = request ? REQUEST_STATUS_META[request.status] : null;
 
@@ -162,7 +162,7 @@ function RequestDetailContent({
   onDecisionNoteChange,
   isActionLoading = false,
   pendingAction = null,
-  reasonMinLength = 15,
+  reasonMinLength = 10,
 }: {
   request: TeacherRequestDTO;
   onConfirmReplacement?: (action: "confirm") => void;
