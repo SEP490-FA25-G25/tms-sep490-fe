@@ -113,7 +113,7 @@ const STEPS = [
 ];
 
 export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
-  const REASON_MIN_LENGTH = 15;
+  const REASON_MIN_LENGTH = 10;
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedSession, setSelectedSession] = useState<MySessionDTO | null>(
     null

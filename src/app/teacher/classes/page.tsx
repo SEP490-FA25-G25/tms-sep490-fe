@@ -43,7 +43,7 @@ import {
 interface FilterState {
   status: string;
   branchName: string;
-  courseName: string;
+  subjectName: string;
   modality: "ALL" | "ONLINE" | "OFFLINE";
   searchTerm: string;
 }
@@ -73,7 +73,7 @@ export default function TeacherClassesPage() {
   const [filters, setFilters] = useState<FilterState>({
     status: "ALL",
     branchName: "ALL",
-    courseName: "ALL",
+  subjectName: "ALL",
     modality: "ALL",
     searchTerm: "",
   });
@@ -103,10 +103,19 @@ export default function TeacherClassesPage() {
     return [];
   }, [classesResponse]);
 
+  const normalizedClasses = useMemo(() => {
+    return allClasses.map((item) => ({
+      ...item,
+      subjectName: item.subjectName,
+      subjectCode: item.subjectCode,
+      curriculumName: item.curriculumName,
+    }));
+  }, [allClasses]);
+
   // Extract unique options for filters
   const branchOptions = useMemo(() => {
     const map = new Map<string, string>();
-    allClasses.forEach((item) => {
+    normalizedClasses.forEach((item) => {
       if (item.branchName) {
         map.set(item.branchName, item.branchName);
       }
@@ -114,23 +123,23 @@ export default function TeacherClassesPage() {
     return Array.from(map.entries())
       .map(([name]) => ({ name }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [allClasses]);
+  }, [normalizedClasses]);
 
-  const courseOptions = useMemo(() => {
+  const subjectOptions = useMemo(() => {
     const map = new Map<string, string>();
-    allClasses.forEach((item) => {
-      if (item.courseName) {
-        map.set(item.courseName, item.courseName);
+    normalizedClasses.forEach((item) => {
+      if (item.subjectName) {
+        map.set(item.subjectName, item.subjectName);
       }
     });
     return Array.from(map.entries())
       .map(([name]) => ({ name }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [allClasses]);
+  }, [normalizedClasses]);
 
   // Apply filters
   const classes = useMemo(() => {
-    let filtered = [...allClasses];
+    let filtered = [...normalizedClasses];
 
     // Status tab filter
     if (activeStatusTab !== "all") {
@@ -155,26 +164,28 @@ export default function TeacherClassesPage() {
     }
 
     // Course filter
-    if (filters.courseName !== "ALL") {
+    if (filters.subjectName !== "ALL") {
       filtered = filtered.filter(
-        (item) => item.courseName === filters.courseName
+        (item) => item.subjectName === filters.subjectName
       );
     }
 
     // Search filter
     if (filters.searchTerm.trim() !== "") {
       const searchLower = filters.searchTerm.toLowerCase().trim();
-      filtered = filtered.filter(
-        (item) =>
+      filtered = filtered.filter((item) => {
+        const subject = (item.subjectName || "").toLowerCase();
+        return (
           item.name.toLowerCase().includes(searchLower) ||
           item.code.toLowerCase().includes(searchLower) ||
-          item.courseName.toLowerCase().includes(searchLower) ||
+          subject.includes(searchLower) ||
           item.branchName.toLowerCase().includes(searchLower)
-      );
+        );
+      });
     }
 
     return filtered;
-  }, [allClasses, activeStatusTab, filters]);
+  }, [normalizedClasses, activeStatusTab, filters]);
 
   // Apply sorting
   const sortedClasses = useMemo(() => {
@@ -236,7 +247,7 @@ export default function TeacherClassesPage() {
     return (
       filters.status !== "ALL" ||
       filters.branchName !== "ALL" ||
-      filters.courseName !== "ALL" ||
+      filters.subjectName !== "ALL" ||
       filters.modality !== "ALL" ||
       filters.searchTerm.trim() !== ""
     );
@@ -246,7 +257,7 @@ export default function TeacherClassesPage() {
     setFilters({
       status: "ALL",
       branchName: "ALL",
-      courseName: "ALL",
+      subjectName: "ALL",
       modality: "ALL",
       searchTerm: "",
     });
@@ -387,25 +398,25 @@ export default function TeacherClassesPage() {
                 </Select>
 
                 <Select
-                  value={filters.courseName}
+                  value={filters.subjectName}
                   onValueChange={(value) =>
-                    setFilters((prev) => ({ ...prev, courseName: value }))
+                    setFilters((prev) => ({ ...prev, subjectName: value }))
                   }
                 >
                   <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Khóa học" />
+                    <SelectValue placeholder="Môn học" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ALL">Tất cả khóa học</SelectItem>
-                    {courseOptions.length > 0 ? (
-                      courseOptions.map((course) => (
-                        <SelectItem key={course.name} value={course.name}>
-                          {course.name}
+                    <SelectItem value="ALL">Tất cả môn học</SelectItem>
+                    {subjectOptions.length > 0 ? (
+                      subjectOptions.map((subject) => (
+                        <SelectItem key={subject.name} value={subject.name}>
+                          {subject.name}
                         </SelectItem>
                       ))
                     ) : (
                       <SelectItem value="NO_DATA" disabled>
-                        Chưa có dữ liệu khóa học
+                        Chưa có dữ liệu môn học
                       </SelectItem>
                     )}
                   </SelectContent>
@@ -460,15 +471,15 @@ export default function TeacherClassesPage() {
                     {filters.branchName} · Bỏ
                   </Badge>
                 )}
-                {filters.courseName !== "ALL" && (
+                {filters.subjectName !== "ALL" && (
                   <Badge
                     variant="secondary"
                     className="cursor-pointer"
                     onClick={() =>
-                      setFilters((prev) => ({ ...prev, courseName: "ALL" }))
+                      setFilters((prev) => ({ ...prev, subjectName: "ALL" }))
                     }
                   >
-                    {filters.courseName} · Bỏ
+                    {filters.subjectName} · Bỏ
                   </Badge>
                 )}
               </div>
@@ -679,7 +690,7 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
       : classItem.status === "ONGOING" || classItem.status === "COMPLETED");
 
   // Determine which info item is the last one to render
-  const hasCourse = !!classItem.courseName;
+  const hasSubject = !!classItem.subjectName;
   const hasBranch = !!classItem.branchName;
   const hasDate = !!(startDate || endDate);
   const hasSessions = totalSessions > 0;
@@ -691,8 +702,8 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
     ? "date"
     : hasBranch
     ? "branch"
-    : hasCourse
-    ? "course"
+    : hasSubject
+    ? "subject"
     : null;
 
   return (
@@ -731,16 +742,16 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
 
         {/* Class Info Grid */}
         <div className="text-xs">
-          {/* Course */}
-          {classItem.courseName && (
+          {/* Subject */}
+          {classItem.subjectName && (
             <div
               className={cn(
                 "flex items-center gap-1.5 text-muted-foreground",
-                lastItem !== "course" && "mb-1.5"
+                lastItem !== "subject" && "mb-1.5"
               )}
             >
               <GraduationCap className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">{classItem.courseName}</span>
+              <span className="truncate">{classItem.subjectName}</span>
             </div>
           )}
 

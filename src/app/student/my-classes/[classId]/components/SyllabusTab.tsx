@@ -1,12 +1,24 @@
-import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Separator } from '@/components/ui/separator';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Separator } from "@/components/ui/separator";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Download,
   Eye,
@@ -19,60 +31,81 @@ import {
   Target,
   Award,
   Clock,
-} from 'lucide-react';
-import { useGetCourseSyllabusQuery, useGetCourseMaterialsQuery } from '@/store/services/courseApi';
-import type { ClassDetailDTO } from '@/types/studentClass';
+} from "lucide-react";
+import {
+  useGetCourseSyllabusQuery,
+  useGetCourseMaterialsQuery,
+} from "@/store/services/courseApi";
+import type { ClassDetailDTO } from "@/types/studentClass";
 
 interface SyllabusTabProps {
   classDetail: ClassDetailDTO;
   isLoading?: boolean;
 }
 
-const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => {
+const SyllabusTab: React.FC<SyllabusTabProps> = ({
+  classDetail,
+  isLoading,
+}) => {
   const { user } = useAuth();
-  const course = classDetail.course;
-  const [expandedPhases, setExpandedPhases] = useState<string[]>(['phase-0']); // Expand first phase by default
+  const [expandedPhases, setExpandedPhases] = useState<string[]>(["phase-0"]); // Expand first phase by default
   const [expandedSessions, setExpandedSessions] = useState<string[]>([]);
 
   // Kiểm tra xem user có phải là STUDENT không
   // Chỉ truyền studentId khi user là STUDENT, không truyền khi là TEACHER hoặc role khác
-  const isStudent = user?.roles?.some(role => role === 'STUDENT' || role === 'ROLE_STUDENT') ?? false;
+  const isStudent =
+    user?.roles?.some(
+      (role) => role === "STUDENT" || role === "ROLE_STUDENT"
+    ) ?? false;
   const studentId = isStudent ? user?.id : undefined;
+
+  const subject = classDetail.subject;
+  const courseId = subject?.id;
 
   // Fetch course syllabus and materials
   const {
     data: courseSyllabus,
     isLoading: syllabusLoading,
     error: syllabusError,
-  } = useGetCourseSyllabusQuery(course.id);
+  } = useGetCourseSyllabusQuery(courseId ?? 0, { skip: !courseId });
 
   const {
     data: materials,
     isLoading: materialsLoading,
     error: materialsError,
-  } = useGetCourseMaterialsQuery({
-    courseId: course.id,
-    studentId: studentId,
-  });
+  } = useGetCourseMaterialsQuery(
+    {
+      courseId: courseId ?? 0,
+      studentId: studentId,
+    },
+    { skip: !courseId }
+  );
+
+  if (!subject) {
+    return (
+      <div className="rounded-xl border border-border/60 bg-muted/20 p-6 text-sm text-muted-foreground">
+        Không tìm thấy thông tin môn học/khóa học.
+      </div>
+    );
+  }
 
   const isLoadingData = isLoading || syllabusLoading || materialsLoading;
   const hasError = syllabusError || materialsError;
 
-
   // Helper functions
   const getMaterialIcon = (type?: string) => {
     switch (type?.toUpperCase()) {
-      case 'VIDEO':
+      case "VIDEO":
         return <Video className="h-4 w-4" />;
-      case 'PDF':
-      case 'DOCUMENT':
+      case "PDF":
+      case "DOCUMENT":
         return <FileText className="h-4 w-4" />;
-      case 'SLIDE':
-      case 'PRESENTATION':
+      case "SLIDE":
+      case "PRESENTATION":
         return <BookOpen className="h-4 w-4" />;
-      case 'AUDIO':
+      case "AUDIO":
         return <Music className="h-4 w-4" />;
-      case 'IMAGE':
+      case "IMAGE":
         return <Image className="h-4 w-4" />;
       default:
         return <FileText className="h-4 w-4" />;
@@ -81,47 +114,45 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
 
   const getMaterialTypeLabel = (type?: string) => {
     switch (type?.toUpperCase()) {
-      case 'VIDEO':
-        return 'Video';
-      case 'PDF':
-      case 'DOCUMENT':
-        return 'PDF';
-      case 'SLIDE':
-      case 'PRESENTATION':
-        return 'Slide';
-      case 'AUDIO':
-        return 'Audio';
-      case 'IMAGE':
-        return 'Hình ảnh';
+      case "VIDEO":
+        return "Video";
+      case "PDF":
+      case "DOCUMENT":
+        return "PDF";
+      case "SLIDE":
+      case "PRESENTATION":
+        return "Slide";
+      case "AUDIO":
+        return "Audio";
+      case "IMAGE":
+        return "Hình ảnh";
       default:
-        return 'Tài liệu';
+        return "Tài liệu";
     }
   };
 
   const formatFileSize = (bytes?: number) => {
-    if (!bytes) return '';
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    if (!bytes) return "";
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+    return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i];
   };
-
 
   // Get materials for different levels
   const courseMaterials = materials?.courseLevel || [];
   const getMaterialsForPhase = (phaseId: number) => {
-    return materials?.phases?.find(p => p.id === phaseId)?.materials || [];
+    return materials?.phases?.find((p) => p.id === phaseId)?.materials || [];
   };
   const getMaterialsForSession = (sessionId: number) => {
     if (!materials?.phases) return [];
     for (const phase of materials.phases) {
-      const session = phase.sessions?.find(s => s.id === sessionId);
+      const session = phase.sessions?.find((s) => s.id === sessionId);
       if (session) {
         return session.materials || [];
       }
     }
     return [];
   };
-
 
   if (isLoadingData) {
     return (
@@ -160,9 +191,13 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
         <Card>
           <CardContent className="space-y-6">
             <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-2">Tên khóa học</h4>
-              <p className="text-base font-semibold">{course.name}</p>
-              <p className="text-sm text-muted-foreground mt-1">Mã: {course.code}</p>
+              <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                Tên khóa học
+              </h4>
+              <p className="text-base font-semibold">{subject.name}</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Mã: {subject.code}
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -173,7 +208,9 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                 </div>
                 <p className="text-base text-foreground">
                   {courseSyllabus?.totalHours || 0} giờ
-                  {courseSyllabus?.totalDurationWeeks && courseSyllabus.totalDurationWeeks > 0 && ` (${courseSyllabus.totalDurationWeeks} tuần)`}
+                  {courseSyllabus?.totalDurationWeeks &&
+                    courseSyllabus.totalDurationWeeks > 0 &&
+                    ` (${courseSyllabus.totalDurationWeeks} tuần)`}
                 </p>
               </div>
 
@@ -184,7 +221,8 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                 </div>
                 <p className="text-base text-foreground">
                   {courseSyllabus?.numberOfSessions || 0} buổi học
-                  {courseSyllabus?.hoursPerSession && ` • ${courseSyllabus.hoursPerSession} giờ/buổi`}
+                  {courseSyllabus?.hoursPerSession &&
+                    ` • ${courseSyllabus.hoursPerSession} giờ/buổi`}
                 </p>
               </div>
             </div>
@@ -192,36 +230,54 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {courseSyllabus?.subjectName && (
                 <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Khung chương trình</h4>
-                  <p className="text-base text-foreground">{courseSyllabus.subjectName}</p>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                    Khung chương trình
+                  </h4>
+                  <p className="text-base text-foreground">
+                    {courseSyllabus.subjectName}
+                  </p>
                 </div>
               )}
 
               {courseSyllabus?.levelName && (
                 <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Trình độ</h4>
-                  <p className="text-base text-foreground">{courseSyllabus.levelName}</p>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                    Trình độ
+                  </h4>
+                  <p className="text-base text-foreground">
+                    {courseSyllabus.levelName}
+                  </p>
                 </div>
               )}
             </div>
 
             {courseSyllabus?.prerequisites && (
               <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">Điều kiện tiên quyết</h4>
-                <p className="text-base text-foreground">{courseSyllabus.prerequisites}</p>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                  Điều kiện tiên quyết
+                </h4>
+                <p className="text-base text-foreground">
+                  {courseSyllabus.prerequisites}
+                </p>
               </div>
             )}
 
             {courseSyllabus?.teachingMethods && (
               <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">Phương pháp giảng dạy</h4>
-                <p className="text-base text-foreground">{courseSyllabus.teachingMethods}</p>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                  Phương pháp giảng dạy
+                </h4>
+                <p className="text-base text-foreground">
+                  {courseSyllabus.teachingMethods}
+                </p>
               </div>
             )}
 
             {courseSyllabus?.description && (
               <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">Mô tả khóa học</h4>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                  Mô tả khóa học
+                </h4>
                 <p className="text-base text-foreground">
                   {courseSyllabus.description}
                 </p>
@@ -254,7 +310,8 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                     <h4 className="font-medium truncate">{material.title}</h4>
                     <p className="text-sm text-muted-foreground">
                       {getMaterialTypeLabel(material.materialType)}
-                      {material.fileSize && ` • ${formatFileSize(material.fileSize)}`}
+                      {material.fileSize &&
+                        ` • ${formatFileSize(material.fileSize)}`}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -293,7 +350,12 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
           <Target className="h-5 w-5 text-primary" />
           <h3 className="text-xl font-semibold">Nội dung chi tiết</h3>
           <Badge variant="secondary">
-            {phases.length} giai đoạn • {phases.reduce((total, phase) => total + (phase.totalSessions || 0), 0)} buổi học
+            {phases.length} giai đoạn •{" "}
+            {phases.reduce(
+              (total, phase) => total + (phase.totalSessions || 0),
+              0
+            )}{" "}
+            buổi học
           </Badge>
         </div>
 
@@ -309,13 +371,19 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
               const phaseId = `phase-${phaseIndex}`;
 
               return (
-                <AccordionItem key={phase.id} value={phaseId} className="rounded-lg border bg-card last:border-b">
+                <AccordionItem
+                  key={phase.id}
+                  value={phaseId}
+                  className="rounded-lg border bg-card last:border-b"
+                >
                   <AccordionTrigger className="px-5 py-4 hover:no-underline">
                     <div className="flex items-start justify-between gap-3 text-left">
                       <div className="space-y-1">
                         <p className="text-xs uppercase tracking-wide text-muted-foreground">
                           Giai đoạn {phase.phaseNumber}
-                          {phase.durationWeeks && phase.durationWeeks > 0 && ` • ${phase.durationWeeks} tuần`}
+                          {phase.durationWeeks &&
+                            phase.durationWeeks > 0 &&
+                            ` • ${phase.durationWeeks} tuần`}
                         </p>
                         <div className="text-base font-semibold text-foreground">
                           {phase.name}
@@ -327,7 +395,9 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                         )}
                       </div>
                       <div className="flex items-center gap-3 text-sm text-muted-foreground shrink-0">
-                        {phase.totalSessions && <span>{phase.totalSessions} buổi</span>}
+                        {phase.totalSessions && (
+                          <span>{phase.totalSessions} buổi</span>
+                        )}
                         {phaseMaterials.length > 0 && (
                           <span className="flex items-center gap-1">
                             <BookOpen className="h-4 w-4" />
@@ -357,9 +427,13 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                  <h6 className="font-medium text-sm truncate">{material.title}</h6>
+                                  <h6 className="font-medium text-sm truncate">
+                                    {material.title}
+                                  </h6>
                                   <span className="text-xs text-muted-foreground">
-                                    {getMaterialTypeLabel(material.materialType)}
+                                    {getMaterialTypeLabel(
+                                      material.materialType
+                                    )}
                                   </span>
                                 </div>
                                 {material.fileSize && (
@@ -396,39 +470,55 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                     {phase.sessions && phase.sessions.length > 0 ? (
                       <div className="space-y-3">
                         {phase.sessions.map((session) => {
-                          const sessionMaterials = getMaterialsForSession(session.id);
+                          const sessionMaterials = getMaterialsForSession(
+                            session.id
+                          );
                           const sessionId = `session-${session.id}`;
 
-                          const isSessionExpanded = expandedSessions.includes(sessionId);
+                          const isSessionExpanded =
+                            expandedSessions.includes(sessionId);
 
                           return (
-                            <div key={session.id} className="border rounded-lg bg-card overflow-hidden">
+                            <div
+                              key={session.id}
+                              className="border rounded-lg bg-card overflow-hidden"
+                            >
                               <Accordion
                                 type="single"
                                 collapsible
-                                value={isSessionExpanded ? sessionId : undefined}
+                                value={
+                                  isSessionExpanded ? sessionId : undefined
+                                }
                                 onValueChange={(value: string | undefined) => {
                                   // Đảm bảo accordion luôn là controlled component
                                   // Khi click vào accordion đang mở, value sẽ là undefined
                                   // Khi click vào accordion đang đóng, value sẽ là sessionId
                                   if (value === sessionId) {
                                     // Mở accordion: thêm sessionId vào array nếu chưa có
-                                    setExpandedSessions(prev => 
-                                      prev.includes(sessionId) ? prev : [...prev, sessionId]
+                                    setExpandedSessions((prev) =>
+                                      prev.includes(sessionId)
+                                        ? prev
+                                        : [...prev, sessionId]
                                     );
                                   } else {
                                     // Đóng accordion: xóa sessionId khỏi array
-                                    setExpandedSessions(prev => prev.filter(id => id !== sessionId));
+                                    setExpandedSessions((prev) =>
+                                      prev.filter((id) => id !== sessionId)
+                                    );
                                   }
                                 }}
                               >
-                                <AccordionItem value={sessionId} className="border-b-0">
+                                <AccordionItem
+                                  value={sessionId}
+                                  className="border-b-0"
+                                >
                                   <AccordionTrigger className="px-4 py-3 hover:no-underline">
                                     <div className="flex items-start justify-between gap-3 text-left w-full">
                                       <div className="space-y-2">
                                         <div className="flex items-center gap-3">
                                           <h4 className="font-semibold text-base text-foreground">
-                                            Buổi {session.sequenceNo}: {session.topic}
+                                            Buổi {session.sequenceNo}:{" "}
+                                            {session.topic}
                                           </h4>
                                           {session.isCompleted && (
                                             <Badge variant="success">
@@ -445,7 +535,9 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                                       </div>
                                       <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
                                         {sessionMaterials.length > 0 && (
-                                          <span>{sessionMaterials.length} tài liệu</span>
+                                          <span>
+                                            {sessionMaterials.length} tài liệu
+                                          </span>
                                         )}
                                       </div>
                                     </div>
@@ -473,9 +565,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                                           <span>Kỹ năng</span>
                                         </div>
                                         <div className="flex flex-wrap gap-2">
-                                          <span
-                                            className="rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wide"
-                                          >
+                                          <span className="rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
                                             {session.skill}
                                           </span>
                                         </div>
@@ -496,18 +586,26 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                                               className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40"
                                             >
                                               <div className="shrink-0 text-muted-foreground">
-                                                {getMaterialIcon(material.materialType)}
+                                                {getMaterialIcon(
+                                                  material.materialType
+                                                )}
                                               </div>
                                               <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2">
-                                                  <h6 className="font-medium text-sm truncate">{material.title}</h6>
+                                                  <h6 className="font-medium text-sm truncate">
+                                                    {material.title}
+                                                  </h6>
                                                   <span className="text-xs text-muted-foreground">
-                                                    {getMaterialTypeLabel(material.materialType)}
+                                                    {getMaterialTypeLabel(
+                                                      material.materialType
+                                                    )}
                                                   </span>
                                                 </div>
                                                 {material.fileSize && (
                                                   <p className="text-xs text-muted-foreground">
-                                                    {formatFileSize(material.fileSize)}
+                                                    {formatFileSize(
+                                                      material.fileSize
+                                                    )}
                                                   </p>
                                                 )}
                                               </div>
@@ -589,7 +687,9 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <p className="text-sm text-foreground flex-1">{clo.description}</p>
+                          <p className="text-sm text-foreground flex-1">
+                            {clo.description}
+                          </p>
                           {clo.isAchieved && (
                             <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
                           )}
@@ -610,14 +710,16 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
       )}
 
       {/* Cơ cấu điểm - Using CourseAssessment templates */}
-      {courseSyllabus && (
+      {courseSyllabus && courseSyllabus.assessments && courseSyllabus.assessments.length > 0 && (
         <>
           <Separator />
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <Target className="h-5 w-5 text-blue-500" />
+              <Target className="h-5 w-5 text-primary" />
               <h3 className="text-xl font-semibold">Cơ cấu điểm</h3>
-              <Badge variant="secondary">{courseSyllabus.assessments?.length || 0}</Badge>
+              <Badge variant="secondary">
+                {courseSyllabus.assessments?.length || 0}
+              </Badge>
             </div>
             <Card className="overflow-hidden py-0">
               <Table>
@@ -631,27 +733,37 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {courseSyllabus.assessments && courseSyllabus.assessments.length > 0 ? (
+                  {courseSyllabus.assessments &&
+                  courseSyllabus.assessments.length > 0 ? (
                     courseSyllabus.assessments.map((assessment) => (
                       <TableRow key={assessment.id}>
-                        <TableCell className="font-medium">{assessment.name}</TableCell>
+                        <TableCell className="font-medium">
+                          {assessment.name}
+                        </TableCell>
                         <TableCell>
                           <Badge variant="outline">
-                            {assessment.assessmentType || 'Chưa xác định'}
+                            {assessment.assessmentType || "Chưa xác định"}
                           </Badge>
                         </TableCell>
                         <TableCell>{assessment.maxScore}</TableCell>
-                        <TableCell>{assessment.duration || '—'}</TableCell>
+                        <TableCell>{assessment.duration || "—"}</TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
-                            {assessment.cloMappings && assessment.cloMappings.length > 0 ? (
+                            {assessment.cloMappings &&
+                            assessment.cloMappings.length > 0 ? (
                               assessment.cloMappings.map((clo, index) => (
-                                <Badge key={`${assessment.id}-clo-${clo}-${index}`} variant="secondary" className="text-xs">
+                                <Badge
+                                  key={`${assessment.id}-clo-${clo}-${index}`}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
                                   {clo}
                                 </Badge>
                               ))
                             ) : (
-                              <span className="text-sm text-muted-foreground">—</span>
+                              <span className="text-sm text-muted-foreground">
+                                —
+                              </span>
                             )}
                           </div>
                         </TableCell>
@@ -659,7 +771,10 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
+                      <TableCell
+                        colSpan={5}
+                        className="text-center text-muted-foreground py-6"
+                      >
                         Chưa có cơ cấu điểm cho khóa học này
                       </TableCell>
                     </TableRow>

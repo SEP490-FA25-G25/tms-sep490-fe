@@ -40,7 +40,9 @@ function calculateTrend(
     // Get assessments sorted by scheduledDate
     const assessmentsWithScores = gradebook.assessments
       .map((assessment) => {
-        const score = student.scores[assessment.assessmentId];
+        const score = student.scores.find(
+          (s) => s.assessmentId === (assessment.assessmentId ?? assessment.id)
+        );
         if (
           !score ||
           !score.isGraded ||

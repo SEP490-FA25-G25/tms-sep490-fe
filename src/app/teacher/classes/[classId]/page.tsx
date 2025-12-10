@@ -19,17 +19,10 @@ import {
 import type { ClassDetailDTO as StudentClassDetailDTO } from "@/types/studentClass";
 import SyllabusTab from "@/app/student/my-classes/[classId]/components/SyllabusTab";
 import AttendanceMatrixTab from "./components/AttendanceMatrixTab";
-import GradesTab from "./components/GradesTab";
 import SessionsTab from "./components/SessionsTab";
 import StudentsTab from "./components/StudentsTab";
 
-const VALID_TABS = [
-  "sessions",
-  "syllabus",
-  "attendance",
-  "grades",
-  "students",
-] as const;
+const VALID_TABS = ["sessions", "syllabus", "attendance", "students"] as const;
 type TabValue = (typeof VALID_TABS)[number];
 
 const TeacherClassDetailPage = () => {
@@ -79,14 +72,14 @@ const TeacherClassDetailPage = () => {
   // Get class students
   const { data: studentsResponse, isLoading: isLoadingStudents } =
     useGetClassStudentsQuery(
-    { classId: classIdNumber, page: 0, size: 100 },
-    { skip: !isValidClassId }
-  );
+      { classId: classIdNumber, page: 0, size: 100 },
+      { skip: !isValidClassId }
+    );
 
   const students = studentsResponse?.data?.content || [];
   const totalStudents =
     studentsResponse?.data?.page?.totalElements || students.length;
-  
+
   // Use actual student count from API instead of enrollmentSummary
   const actualEnrolledCount = totalStudents;
 
@@ -94,27 +87,72 @@ const TeacherClassDetailPage = () => {
   const classDetail: StudentClassDetailDTO | undefined =
     classDetailResponse?.data
       ? (() => {
-    const apiData = classDetailResponse.data;
-    return {
-      id: apiData.id,
-      code: apiData.code,
-      name: apiData.name,
-      course: {
-        id: apiData.subject.id,
-        name: apiData.subject.name,
-        code: apiData.subject.code,
-      },
-      branch: {
-        id: apiData.branch.id,
-        name: apiData.branch.name,
-        address: apiData.branch.address,
-      },
-      modality: apiData.modality,
-      startDate: apiData.startDate,
-      plannedEndDate: apiData.plannedEndDate,
-      actualEndDate: apiData.actualEndDate,
-      scheduleDays: apiData.scheduleDays,
-      maxCapacity: apiData.maxCapacity,
+          const apiData = classDetailResponse.data;
+          const subjectLevel = apiData.subject.level;
+          const curriculum = subjectLevel?.curriculum
+            ? {
+                id: subjectLevel.curriculum.id,
+                code: subjectLevel.curriculum.code,
+                name: subjectLevel.curriculum.name,
+              }
+            : undefined;
+
+          return {
+            id: apiData.id,
+            code: apiData.code,
+            name: apiData.name,
+            subject: {
+              id: apiData.subject.id,
+              name: apiData.subject.name,
+              code: apiData.subject.code,
+              level: subjectLevel
+                ? {
+                    id: subjectLevel.id,
+                    code: subjectLevel.code,
+                    name: subjectLevel.name,
+                    curriculum,
+                  }
+                : undefined,
+            },
+            curriculum,
+            level: subjectLevel
+              ? {
+                  id: subjectLevel.id,
+                  code: subjectLevel.code,
+                  name: subjectLevel.name,
+                  curriculum,
+                }
+              : undefined,
+            // keep course for backward compat
+            course: {
+              id: apiData.subject.id,
+              name: apiData.subject.name,
+              code: apiData.subject.code,
+              subject: {
+                id: apiData.subject.id,
+                name: apiData.subject.name,
+                code: apiData.subject.code,
+              },
+              level: subjectLevel
+                ? {
+                    id: subjectLevel.id,
+                    code: subjectLevel.code,
+                    name: subjectLevel.name,
+                  }
+                : undefined,
+              curriculum,
+            },
+            branch: {
+              id: apiData.branch.id,
+              name: apiData.branch.name,
+              address: apiData.branch.address,
+            },
+            modality: apiData.modality,
+            startDate: apiData.startDate,
+            plannedEndDate: apiData.plannedEndDate,
+            actualEndDate: apiData.actualEndDate,
+            scheduleDays: apiData.scheduleDays,
+            maxCapacity: apiData.maxCapacity,
             status:
               apiData.status === "ONGOING"
                 ? "ONGOING"
@@ -126,9 +164,9 @@ const TeacherClassDetailPage = () => {
             teachers:
               apiData.teachers.length > 0
                 ? apiData.teachers.map((t, index) => ({
-        teacherId: t.teacherId,
-        teacherName: t.fullName,
-        teacherEmail: t.email,
+                    teacherId: t.teacherId,
+                    teacherName: t.fullName,
+                    teacherEmail: t.email,
                     isPrimaryInstructor:
                       index === 0 ||
                       t.sessionCount ===
@@ -137,16 +175,16 @@ const TeacherClassDetailPage = () => {
                         ), // First teacher or one with highest session count is primary
                   }))
                 : [],
-      scheduleSummary: apiData.scheduleSummary,
-      enrollmentSummary: {
+            scheduleSummary: apiData.scheduleSummary,
+            enrollmentSummary: {
               totalEnrolled: actualEnrolledCount, // Use actual count from students API
-        maxCapacity: apiData.enrollmentSummary.maxCapacity,
-      },
+              maxCapacity: apiData.enrollmentSummary.maxCapacity,
+            },
             nextSession: apiData.upcomingSessions?.[0]
               ? {
-        id: apiData.upcomingSessions[0].id,
-        classId: apiData.id,
-        date: apiData.upcomingSessions[0].date,
+                  id: apiData.upcomingSessions[0].id,
+                  classId: apiData.id,
+                  date: apiData.upcomingSessions[0].date,
                   type: apiData.upcomingSessions[0].type as
                     | "CLASS"
                     | "TEACHER_RESCHEDULE",
@@ -154,16 +192,16 @@ const TeacherClassDetailPage = () => {
                     | "PLANNED"
                     | "CANCELLED"
                     | "DONE",
-        room: apiData.upcomingSessions[0].room,
-        teacherNote: undefined,
-        startTime: apiData.upcomingSessions[0].startTime,
-        endTime: apiData.upcomingSessions[0].endTime,
+                  room: apiData.upcomingSessions[0].room,
+                  teacherNote: undefined,
+                  startTime: apiData.upcomingSessions[0].startTime,
+                  endTime: apiData.upcomingSessions[0].endTime,
                   teachers: apiData.upcomingSessions[0].teachers.map(
                     (t) => t.fullName
                   ),
                 }
               : undefined,
-    };
+          };
         })()
       : undefined;
 
@@ -270,7 +308,7 @@ const TeacherClassDetailPage = () => {
                       className="w-full space-y-6"
                     >
                       <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-40 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2 -mt-6 pt-6">
-                        <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-muted/50">
+                        <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted/50">
                           <TabsTrigger
                             value="students"
                             className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
@@ -294,12 +332,6 @@ const TeacherClassDetailPage = () => {
                             className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
                           >
                             Ma trận điểm danh
-                          </TabsTrigger>
-                          <TabsTrigger
-                            value="grades"
-                            className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
-                          >
-                            Xem điểm
                           </TabsTrigger>
                         </TabsList>
                       </div>
@@ -325,10 +357,6 @@ const TeacherClassDetailPage = () => {
 
                       <TabsContent value="attendance" className="space-y-4">
                         <AttendanceMatrixTab classId={classIdNumber} />
-                      </TabsContent>
-
-                      <TabsContent value="grades" className="space-y-4">
-                        <GradesTab classId={classIdNumber} />
                       </TabsContent>
                     </Tabs>
                   )}

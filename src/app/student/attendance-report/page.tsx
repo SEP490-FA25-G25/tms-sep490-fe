@@ -175,6 +175,7 @@ export default function StudentAttendanceReportOverviewPage() {
                               excused={item.excused}
                               upcoming={item.upcoming}
                               status={item.status}
+                              enrollmentStatus={item.enrollmentStatus}
                               onClick={() =>
                                 navigate(
                                   `/student/attendance-report/${item.classId}`

@@ -235,33 +235,36 @@ export function BaseFlowComponent({
         {children}
       </div>
 
-      <div className="flex items-center justify-between pt-4 border-t">
-        <Button
-          variant="ghost"
-          onClick={onBack}
-          disabled={currentStep === 1 || isSubmitting}
-          className={cn(currentStep === 1 && 'invisible')}
-        >
-          <ArrowLeftIcon className="mr-2 h-4 w-4" />
-          Quay lại
-        </Button>
-
-        {isLastStep ? (
-          <Button
-            onClick={handleSubmitClick}
-            disabled={isSubmitDisabled || isSubmitting}
-          >
-            {isSubmitting ? 'Đang gửi...' : submitLabel}
-          </Button>
-        ) : (
-          <Button
-            onClick={onNext}
-            disabled={isNextDisabled}
-          >
-            {nextLabel}
-            <ArrowLeftIcon className="ml-2 h-4 w-4 rotate-180" />
-          </Button>
-        )}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t">
+        <div>
+          {currentStep > 1 && (
+            <Button
+              variant="ghost"
+              onClick={onBack}
+              disabled={isSubmitting}
+            >
+              Quay lại
+            </Button>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          {isLastStep ? (
+            <Button
+              onClick={handleSubmitClick}
+              disabled={isSubmitDisabled || isSubmitting}
+            >
+              {isSubmitting ? 'Đang gửi...' : submitLabel}
+            </Button>
+          ) : (
+            <Button
+              onClick={onNext}
+              disabled={isNextDisabled}
+            >
+              {nextLabel}
+              <ArrowLeftIcon className="ml-2 h-4 w-4 rotate-180" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Confirmation Dialog */}

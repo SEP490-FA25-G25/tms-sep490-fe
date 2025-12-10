@@ -9,12 +9,24 @@ import type { RootState } from '../index'
 import type { StudentClassDTO } from '@/types/academicTransfer'
 import type { WeeklyScheduleData } from '@/store/services/studentScheduleApi'
 
-export type { StudentSearchResult, TransferOption, TransferEligibility } from '@/types/academicTransfer'
+// Note: Avoid re-exporting TransferOption/TransferEligibility to prevent conflicts with local definitions
+export type { StudentSearchResult } from '@/types/academicTransfer'
 
 interface StudentSearchResponse {
   content: import('@/types/academicTransfer').StudentSearchResult[]
-  pageable: any
+  pageable: Pageable
   totalElements: number
+}
+
+type Pageable = {
+  pageNumber: number
+  pageSize: number
+  offset?: number
+  paged?: boolean
+  unpaged?: boolean
+  sort?: unknown
+  totalPages?: number
+  totalElements?: number
 }
 
 // Student search parameters interface
@@ -445,10 +457,13 @@ export interface TransferEligibility {
   learningMode?: SessionModality
   enrollmentStatus?: string
   enrollmentDate?: string
+  scheduleDays?: string
+  scheduleTime?: string
   transferQuota: TransferQuota
   hasPendingTransfer: boolean
   canTransfer: boolean
   scheduleInfo?: string
+  contentGapAnalysis?: ContentGap
   allSessions?: SessionInfo[]
 }
 
@@ -483,15 +498,6 @@ export interface ContentGap {
   impactDescription?: string
 }
 
-export interface ContentGapAnalysis {
-  gapLevel: 'NONE' | 'MINOR' | 'MODERATE' | 'MAJOR'
-  missedSessions: number
-  totalSessions: number
-  gapSessions: ContentGapSession[]
-  recommendedActions?: string[]
-  impactDescription?: string
-}
-
 export interface TransferOption {
   classId: number
   classCode: string
@@ -513,8 +519,9 @@ export interface TransferOption {
   availableSlots: number
   classStatus: string
   contentGap?: ContentGap
+  contentGapAnalysis?: ContentGap
   canTransfer: boolean
-  contentGapAnalysis?: ContentGapAnalysis
+  progressNote?: string // Simple progress comparison, e.g., "Chênh 3 buổi"
   upcomingSessions?: Array<{
     sessionId: number
     date: string

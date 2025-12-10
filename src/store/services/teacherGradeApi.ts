@@ -10,7 +10,7 @@ import type {
 export interface TeacherAssessmentDTO {
   id: number;
   classId: number;
-  courseAssessmentId?: number;
+  subjectAssessmentId?: number;
   name: string;
   description?: string;
   kind?: string;
@@ -81,6 +81,7 @@ export interface GradebookDTO {
 
 export interface GradebookAssessmentDTO {
   id: number;
+  assessmentId?: number;
   name: string;
   kind?: string;
   maxScore?: number;
@@ -110,6 +111,7 @@ export interface GradebookStudentScoreDTO {
   feedback?: string;
   gradedBy?: string;
   gradedAt?: string;
+  isGraded?: boolean;
 }
 
 // Base query with auth

@@ -106,11 +106,11 @@ function ClassCard({
 
         {/* Class Info Grid */}
         <div className="grid gap-3 text-sm sm:grid-cols-2">
-          {/* Course */}
-          {classItem.courseName && (
+          {/* Subject */}
+          {classItem.subjectName && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <GraduationCap className="h-4 w-4 flex-shrink-0" />
-              <span className="truncate">{classItem.courseName}</span>
+              <span className="truncate">{classItem.subjectName}</span>
             </div>
           )}
 
@@ -224,7 +224,7 @@ export default function TeacherGradesPage() {
         (item) =>
           item.name.toLowerCase().includes(searchLower) ||
           item.code.toLowerCase().includes(searchLower) ||
-          item.courseName.toLowerCase().includes(searchLower) ||
+          (item.subjectName || "").toLowerCase().includes(searchLower) ||
           item.branchName.toLowerCase().includes(searchLower)
       );
     }
@@ -391,7 +391,9 @@ export default function TeacherGradesPage() {
                 className="border-0 bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
               >
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{card.label}</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    {card.label}
+                  </CardTitle>
                   <div
                     className={cn(
                       "flex h-9 w-9 items-center justify-center rounded-lg",
@@ -483,7 +485,7 @@ export default function TeacherGradesPage() {
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground truncate">
-                        {item.courseName}
+                        {item.subjectName}
                       </p>
                       <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
                         <Clock9 className="h-3.5 w-3.5" />
@@ -536,7 +538,7 @@ export default function TeacherGradesPage() {
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground truncate">
-                      {item.courseName}
+                      {item.subjectName}
                     </p>
                     <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
                       <Calendar className="h-3.5 w-3.5" />

@@ -465,7 +465,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                     ) : (
                       transferOptions.map((option: TransferOption) => {
                         const gapText = getContentGapText(option.contentGapAnalysis)
-                        const { hasBranchChange, hasModalityChange } = getChangeIndicators(option.changes)
+                        const { hasModalityChange } = getChangeIndicators(option.changes)
                         const isScheduled = option.classStatus === 'SCHEDULED'
                         const startDate = option.startDate ? new Date(option.startDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : null
                         const isFull = (option.availableSlots ?? 0) <= 0

@@ -11,8 +11,8 @@ export interface AttendanceSessionDTO {
   sessionId: number;
   classId: number;
   classCode?: string;
-  courseCode?: string;
-  courseName: string;
+  subjectCode?: string;
+  subjectName: string;
   date: string;
   startTime: string;
   endTime: string;
@@ -50,8 +50,8 @@ export interface AttendanceSessionDetailDTO {
   sessionId: number;
   classId: number;
   classCode?: string;
-  courseCode?: string;
-  courseName: string;
+  subjectCode?: string;
+  subjectName: string;
   date: string;
   timeSlotName?: string;
   sessionStartTime?: string;
@@ -78,8 +78,8 @@ export interface AttendanceReportDTO {
   sessionId: number;
   classId: number;
   classCode?: string;
-  courseCode?: string;
-  courseName: string;
+  subjectCode?: string;
+  subjectName: string;
   date: string;
   timeSlotName?: string;
   sessionStartTime?: string;
@@ -105,8 +105,9 @@ export interface AttendanceClassDTO {
   id: number;
   code: string;
   name: string;
-  courseName: string;
-  courseCode: string;
+  subjectName?: string;
+  subjectCode?: string;
+  curriculumName?: string;
   branchName: string;
   branchCode: string;
   modality: "ONLINE" | "OFFLINE";
@@ -128,9 +129,13 @@ export interface StudentAttendanceOverviewClassDTO {
   classId: number;
   classCode: string;
   className: string;
-  courseId: number;
-  courseCode: string;
-  courseName: string;
+  courseId?: number;
+  courseCode?: string;
+  courseName?: string;
+  subjectId?: number;
+  subjectCode?: string;
+  subjectName?: string;
+  curriculumName?: string;
    startDate: string;
    actualEndDate: string | null;
   totalSessions: number;
@@ -139,6 +144,7 @@ export interface StudentAttendanceOverviewClassDTO {
   excused?: number;
   upcoming: number;
   status: string;
+  enrollmentStatus?: string;
   lastUpdated: string | null;
 }
 
@@ -248,8 +254,8 @@ export interface AttendanceMatrixStudentResponseDTO {
 export interface AttendanceMatrixResponseDTO {
   classId?: number;
   classCode?: string;
-  courseCode?: string;
-  courseName?: string;
+  subjectCode?: string;
+  subjectName?: string;
   className?: string;
   attendanceRate?: number; // rate as decimal (0-1), tỷ lệ chuyên cần của cả lớp
   summary?: {
@@ -264,7 +270,7 @@ export interface AttendanceMatrixResponseDTO {
 export interface AttendanceMatrixDTO {
   classId: number;
   classCode?: string;
-  courseCode?: string;
+  subjectCode?: string;
   className: string;
   summary: {
     totalSessions: number;

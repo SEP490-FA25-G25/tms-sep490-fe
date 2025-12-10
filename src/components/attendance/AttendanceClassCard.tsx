@@ -9,7 +9,7 @@ import {
   Cell,
   Tooltip,
 } from "recharts";
-import { CLASS_STATUS_STYLES, getStatusStyle } from "@/lib/status-colors";
+import { CLASS_STATUS_STYLES, ENROLLMENT_STATUS_STYLES, getStatusStyle } from "@/lib/status-colors";
 
 interface AttendanceClassCardProps {
   classCode: string;
@@ -22,6 +22,7 @@ interface AttendanceClassCardProps {
   excused?: number;
   upcoming: number;
   status: string;
+  enrollmentStatus?: string; // ENROLLED, TRANSFERRED, COMPLETED
   onClick: () => void;
 }
 
@@ -32,6 +33,13 @@ const CLASS_STATUS_LABELS: Record<string, string> = {
   SCHEDULED: "Đã lên lịch",
   CANCELLED: "Đã hủy",
   DRAFT: "Bản nháp",
+};
+
+const ENROLLMENT_STATUS_LABELS: Record<string, string> = {
+  ENROLLED: "Đang học",
+  TRANSFERRED: "Đã chuyển lớp",
+  COMPLETED: "Đã hoàn thành",
+  DROPPED: "Đã hủy",
 };
 
 function getStatusLabel(status?: string | null) {
@@ -178,10 +186,16 @@ export function AttendanceClassCard({
   excused = 0,
   upcoming,
   status,
+  enrollmentStatus,
   onClick,
 }: AttendanceClassCardProps) {
-  const statusLabel = getStatusLabel(status);
-  const statusClassName = getStatusStyle(CLASS_STATUS_STYLES, status);
+  // Use enrollmentStatus if available, otherwise fallback to class status
+  const statusLabel = enrollmentStatus 
+    ? ENROLLMENT_STATUS_LABELS[enrollmentStatus] || enrollmentStatus
+    : getStatusLabel(status);
+  const statusClassName = enrollmentStatus
+    ? getStatusStyle(ENROLLMENT_STATUS_STYLES, enrollmentStatus)
+    : getStatusStyle(CLASS_STATUS_STYLES, status);
 
   return (
     <Card

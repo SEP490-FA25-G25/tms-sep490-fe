@@ -6,33 +6,18 @@ export interface Notification {
   id: number;
   recipientId: number;
   recipientName?: string;
-  type: 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR' | 'URGENT' | 'SYSTEM' | 'ANNOUNCEMENT';
-  typeDisplayName?: string;
+  type: 'SYSTEM' | 'REQUEST' | 'REMINDER' | 'NOTIFICATION';
   title: string;
   message: string;
-  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-  priorityDisplayName?: string;
   status: 'UNREAD' | 'READ' | 'ARCHIVED';
-  statusDisplayName?: string;
-  actionUrl?: string;
-  actionText?: string;
-  referenceType?: string;
-  referenceId?: number;
-  metadata?: string;
   createdAt: string;
-  updatedAt?: string;
-  expiresAt?: string;
   readAt?: string;
-  expired: boolean;
   unread: boolean; // true = chưa đọc, false = đã đọc
-  isRead?: boolean;
 }
 
 export interface NotificationFilter {
   status?: 'UNREAD' | 'READ' | 'ARCHIVED';
-  isRead?: boolean;
   type?: Notification['type'];
-  priority?: Notification['priority'];
   search?: string;
   page?: number;
   size?: number;
@@ -50,10 +35,14 @@ export interface NotificationResponse {
 }
 
 export interface NotificationStats {
-  totalNotifications: number;
+  totalCount: number;
   unreadCount: number;
-  urgentCount: number;
-  highPriorityCount: number;
+  readCount: number;
+  archivedCount: number;
+  todayCount: number;
+  thisWeekCount: number;
+  thisMonthCount: number;
+  countsByType: Record<string, number>;
 }
 
 export const notificationApi = createApi({
@@ -65,16 +54,11 @@ export const notificationApi = createApi({
     getNotifications: builder.query<NotificationResponse, NotificationFilter>({
       query: (filters) => {
         const params = new URLSearchParams();
-        if (filters.isRead !== undefined) {
-          params.append('status', filters.isRead ? 'READ' : 'UNREAD');
-        } else if (filters.status) {
+        if (filters.status) {
           params.append('status', filters.status);
         }
         if (filters.type) {
           params.append('type', filters.type);
-        }
-        if (filters.priority) {
-          params.append('priority', filters.priority);
         }
         if (filters.search) {
           params.append('search', filters.search);
@@ -182,12 +166,11 @@ export const notificationApi = createApi({
     }),
 
     // Create notification (for admin/system use)
-    createNotification: builder.mutation<Notification, Partial<Notification> & {
-      userId?: number;
+    createNotification: builder.mutation<Notification, {
+      recipientId: number;
+      type: Notification['type'];
       title: string;
       message: string;
-      type?: Notification['type'];
-      priority?: Notification['priority'];
     }>({
       query: (notification) => ({
         url: '/notifications',

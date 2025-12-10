@@ -77,13 +77,17 @@ export function SelectTypeStep({
         ))}
       </div>
 
-      <div className="flex items-center justify-end gap-3 pt-4 border-t">
-        <Button variant="ghost" onClick={onBack}>
-          Quay lại
-        </Button>
-        <Button onClick={handleContinue} disabled={!selectedType}>
-          Tiếp tục
-        </Button>
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t">
+        <div>
+          <Button variant="ghost" onClick={onBack}>
+            Quay lại
+          </Button>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button onClick={handleContinue} disabled={!selectedType}>
+            Tiếp tục
+          </Button>
+        </div>
       </div>
     </div>
   );

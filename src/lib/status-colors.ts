@@ -32,12 +32,13 @@ export type ClassStatus = keyof typeof CLASS_STATUS_STYLES;
 // ENROLLMENT STATUS STYLES
 // ============================================
 export const ENROLLMENT_STATUS_STYLES = {
-  ENROLLED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  ONGOING: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  COMPLETED: 'bg-slate-50 text-slate-700 border-slate-200',
-  DROPPED: 'bg-rose-50 text-rose-700 border-rose-200',
-  WITHDRAWN: 'bg-amber-50 text-amber-700 border-amber-200',
-  PENDING: 'bg-sky-50 text-sky-700 border-sky-200',
+  ENROLLED: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800',
+  ONGOING: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800',
+  TRANSFERRED: 'bg-muted text-muted-foreground border-border opacity-70',
+  COMPLETED: 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900/30 dark:text-slate-400 dark:border-slate-800',
+  DROPPED: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800',
+  WITHDRAWN: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800',
+  PENDING: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-800',
 } as const;
 
 export type EnrollmentStatus = keyof typeof ENROLLMENT_STATUS_STYLES;
