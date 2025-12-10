@@ -11,12 +11,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { Loader2 } from 'lucide-react';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { useGetStudentClassesQuery } from '@/store/services/studentClassApi';
+import { useGetAllSubjectsQuery } from '@/store/services/subjectApi';
 import type { ClassStatus, EnrollmentStatus, Modality, StudentClassDTO } from '@/types/studentClass';
 import { CLASS_STATUSES, ENROLLMENT_STATUSES, MODALITIES } from '@/types/studentClass';
 import { CLASS_STATUS_STYLES, ENROLLMENT_STATUS_STYLES, getStatusStyle } from '@/lib/status-colors';
@@ -45,6 +55,10 @@ const MyClassesPage = () => {
   });
   const [branchOptions, setBranchOptions] = useState<Array<{ id: number; name: string }>>([]);
   const [courseOptions, setCourseOptions] = useState<Array<{ id: number; name: string }>>([]);
+  const [openCourseCombobox, setOpenCourseCombobox] = useState(false);
+
+  // Get all subjects for course filter
+  const { data: subjectsResponse } = useGetAllSubjectsQuery();
 
   const [page, setPage] = useState(0);
   const [pageSize] = useState(12);
@@ -66,11 +80,11 @@ const MyClassesPage = () => {
   const getEnrollmentStatusFilter = (tabStatus: 'all' | ClassStatus): EnrollmentStatus[] | undefined => {
     switch (tabStatus) {
       case 'ONGOING':
-        return ['ENROLLED'];
+        return ['ENROLLED', 'TRANSFERRED'];  // Include transferred classes in ONGOING tab
       case 'COMPLETED':
         return ['COMPLETED'];
       default:
-        return undefined;
+        return undefined;  // Backend handles default (ENROLLED + COMPLETED + TRANSFERRED)
     }
   };
 
@@ -104,8 +118,7 @@ const MyClassesPage = () => {
           item.className,
           item.classCode,
           item.courseName,
-          item.branchName,
-          ...(item.instructorNames || []),
+          item.branchAddress,
         ];
         return searchableFields.some(
           (field) => field && field.toLowerCase().includes(searchTerm)
@@ -144,8 +157,8 @@ const MyClassesPage = () => {
       const map = new Map<number, string>();
       prev.forEach((item) => map.set(item.id, item.name));
       (classesResponse?.data?.content || []).forEach((item) => {
-        if (item.branchId && item.branchName) {
-          map.set(item.branchId, item.branchName);
+        if (item.branchId && item.branchAddress) {
+          map.set(item.branchId, item.branchAddress);
         }
       });
       return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
@@ -274,23 +287,64 @@ const MyClassesPage = () => {
                       </SelectContent>
                     </Select>
 
-                    <Select value={filters.courseId.toString()} onValueChange={(value) => setFilter('courseId', value === 'all' ? 'all' : parseInt(value))}>
-                      <SelectTrigger className="w-[160px] h-9">
-                        <SelectValue placeholder="Tất cả khóa học" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Tất cả khóa học</SelectItem>
-                        {courseOptions.length > 0 ? (
-                          courseOptions.map((course) => (
-                            <SelectItem key={course.id} value={course.id.toString()}>
-                              {course.name}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <div className="px-2 py-1 text-xs text-muted-foreground">Chưa có dữ liệu khóa học</div>
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={openCourseCombobox} onOpenChange={setOpenCourseCombobox}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openCourseCombobox}
+                          className="w-[200px] h-9 justify-between"
+                        >
+                          {filters.courseId !== 'all'
+                            ? subjectsResponse?.find((s) => s.id === filters.courseId)?.name || 'Chọn khóa học'
+                            : 'Chọn khóa học'}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[200px] p-0">
+                        <Command>
+                          <CommandInput placeholder="Tìm khóa học..." />
+                          <CommandList>
+                            <CommandEmpty>Không tìm thấy khóa học.</CommandEmpty>
+                            <CommandGroup>
+                              <CommandItem
+                                value="all"
+                                onSelect={() => {
+                                  setFilter('courseId', 'all');
+                                  setOpenCourseCombobox(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    'mr-2 h-4 w-4',
+                                    filters.courseId === 'all' ? 'opacity-100' : 'opacity-0'
+                                  )}
+                                />
+                                Tất cả khóa học
+                              </CommandItem>
+                              {(subjectsResponse || []).map((subject) => (
+                                <CommandItem
+                                  key={subject.id}
+                                  value={subject.name}
+                                  onSelect={() => {
+                                    setFilter('courseId', subject.id);
+                                    setOpenCourseCombobox(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      'mr-2 h-4 w-4',
+                                      filters.courseId === subject.id ? 'opacity-100' : 'opacity-0'
+                                    )}
+                                  />
+                                  {subject.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
 
                     <Button
                       variant="outline"
@@ -334,9 +388,6 @@ const MyClassesPage = () => {
                           classItem.totalSessions > 0
                             ? (classItem.completedSessions / classItem.totalSessions) * 100
                             : 0;
-                        const teacherSummary = classItem.instructorNames?.length
-                          ? `${classItem.instructorNames[0]}${classItem.instructorNames.length > 1 ? ` +${classItem.instructorNames.length - 1}` : ''}`
-                          : 'Chưa phân công';
 
                         return (
                           <Card
@@ -353,12 +404,16 @@ const MyClassesPage = () => {
                                   <p className="text-sm text-muted-foreground font-medium">{classItem.classCode}</p>
                                 </div>
                                 <div className="flex flex-col items-end gap-2">
-                                  <Badge className={cn('text-xs', getStatusStyle(CLASS_STATUS_STYLES, classItem.status))}>
-                                    {CLASS_STATUSES[classItem.status]}
-                                  </Badge>
-                                  <Badge className={cn('text-xs', getStatusStyle(ENROLLMENT_STATUS_STYLES, classItem.enrollmentStatus))}>
-                                    {ENROLLMENT_STATUSES[classItem.enrollmentStatus]}
-                                  </Badge>
+                                  {/* Show TRANSFERRED badge if transferred, otherwise show class status */}
+                                  {classItem.enrollmentStatus === 'TRANSFERRED' ? (
+                                    <Badge className="text-xs bg-muted text-muted-foreground border-border opacity-70">
+                                      {ENROLLMENT_STATUSES[classItem.enrollmentStatus]}
+                                    </Badge>
+                                  ) : (
+                                    <Badge className={cn('text-xs', getStatusStyle(CLASS_STATUS_STYLES, classItem.status))}>
+                                      {CLASS_STATUSES[classItem.status]}
+                                    </Badge>
+                                  )}
                                   <Badge variant="outline" className="text-xs">
                                     {MODALITIES[classItem.modality]}
                                   </Badge>
@@ -366,22 +421,28 @@ const MyClassesPage = () => {
                               </div>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                              <div className="grid grid-cols-2 gap-3 text-sm">
+                              <div className="space-y-3 text-sm">
                                 <div className="space-y-1">
-                                  <p className="text-muted-foreground">Giáo viên</p>
-                                  <p className="font-medium text-foreground">{teacherSummary}</p>
-                                </div>
-                                <div className="space-y-1 text-right">
                                   <p className="text-muted-foreground">Địa điểm</p>
-                                  <p className="font-medium text-foreground">{classItem.branchName}</p>
+                                  <p className="font-medium text-foreground">{classItem.branchAddress}</p>
                                 </div>
                                 <div className="space-y-1">
-                                  <p className="text-muted-foreground">Lịch</p>
-                                  <p className="font-medium text-foreground">{classItem.scheduleSummary}</p>
+                                  <p className="text-muted-foreground">Lịch học</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {classItem.scheduleDetails && classItem.scheduleDetails.length > 0 ? (
+                                      classItem.scheduleDetails.map((schedule, index) => (
+                                        <Badge key={index} variant="secondary" className="text-xs font-normal">
+                                          {schedule.day} {schedule.startTime}-{schedule.endTime}
+                                        </Badge>
+                                      ))
+                                    ) : (
+                                      <span className="text-xs text-muted-foreground">{classItem.scheduleSummary}</span>
+                                    )}
+                                  </div>
                                 </div>
-                                <div className="space-y-1 text-right">
-                                  <p className="text-muted-foreground">Khóa học</p>
-                                  <p className="font-medium text-foreground">{classItem.courseName}</p>
+                                <div className="space-y-1 col-span-2">
+                                  <p className="text-muted-foreground">Môn học</p>
+                                  <p className="font-medium text-foreground text-sm">{classItem.subjectName}</p>
                                 </div>
                               </div>
 

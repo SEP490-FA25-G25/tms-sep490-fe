@@ -41,7 +41,12 @@ export type AttendanceStatus = "PLANNED" | "PRESENT" | "ABSENT" | "EXCUSED" | "L
 // Homework status options
 export type HomeworkStatus = "COMPLETED" | "INCOMPLETE" | "NO_HOMEWORK";
 
-// Main DTO for student class listing (cards)
+export interface ScheduleDetail {
+  day: string;
+  startTime: string;
+  endTime: string;
+}
+
 export interface StudentClassDTO {
   classId: number;
   classCode: string;
@@ -50,7 +55,7 @@ export interface StudentClassDTO {
   courseName: string;
   courseCode: string;
   branchId: number;
-  branchName: string;
+  branchAddress: string;
   modality: Modality;
   status: ClassStatus;
   startDate: string; // ISO date
@@ -60,8 +65,8 @@ export interface StudentClassDTO {
   enrollmentStatus: EnrollmentStatus;
   totalSessions: number;
   completedSessions: number;
-  instructorNames: string[]; // Aggregated from TeachingSlot
   scheduleSummary: string; // e.g., "T2,T4,T6 19:00-21:00"
+  scheduleDetails?: ScheduleDetail[]; // Detailed schedule per day
   // Removed over-fetched fields (Phase 2 optimization):
   // - attendedSessions (expensive SUM query)
   // - attendanceRate (expensive calculation)
@@ -70,7 +75,7 @@ export interface StudentClassDTO {
 }
 
 // Nested interfaces for ClassDetailDTO
-export interface SubjectInfo {
+export interface CurriculumInfo {  // Renamed from SubjectInfo
   id: number;
   code: string;
   name: string;
@@ -82,7 +87,7 @@ export interface LevelInfo {
   name: string;
 }
 
-export interface CourseInfo {
+export interface SubjectInfo {
   id: number;
   name: string;
   code: string;
@@ -92,7 +97,7 @@ export interface CourseInfo {
   hoursPerSession?: number;
   prerequisites?: string;
   targetAudience?: string;
-  subject?: SubjectInfo;
+  curriculum?: CurriculumInfo;
   level?: LevelInfo;
 }
 
@@ -119,7 +124,7 @@ export interface ClassDetailDTO {
   id: number;
   code: string;
   name: string;
-  course: CourseInfo;
+  subject: SubjectInfo;
   branch: BranchInfo;
   modality: Modality;
   startDate: string; // ISO date
@@ -131,8 +136,9 @@ export interface ClassDetailDTO {
   enrollmentStatus?: EnrollmentStatus; 
   teachers: TeacherSummary[];
   scheduleSummary: string;
+  scheduleDetails?: ScheduleDetail[];
   enrollmentSummary: EnrollmentSummary;
-  nextSession?: SessionDTO; // Optimization: Only next session, not full list
+  nextSession?: SessionDTO;
 }
 
 // Session DTO for class schedule

@@ -16,13 +16,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { ENROLLMENT_STATUS_STYLES, getStatusStyle } from '@/lib/status-colors';
 import { useGetStudentTranscriptQuery } from '@/store/services/studentApi';
+import { useGetAllSubjectsQuery } from '@/store/services/subjectApi';
 import type { StudentTranscriptDTO } from '@/store/services/studentApi';
 import { AlertCircle, BookOpen, GraduationCap, RotateCcw, Search } from 'lucide-react';
 import TranscriptDetailPanel from './components/TranscriptDetailPanel';
@@ -35,6 +45,8 @@ const TranscriptPage = () => {
   const [selectedClass, setSelectedClass] = useState<StudentTranscriptDTO | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
+  const [subjectFilter, setSubjectFilter] = useState<string>('');
+  const [openSubjectCombobox, setOpenSubjectCombobox] = useState(false);
 
   const {
     data: transcriptResponse,
@@ -44,6 +56,9 @@ const TranscriptPage = () => {
   } = useGetStudentTranscriptQuery({
     studentId,
   });
+
+  // Get all subjects for filter
+  const { data: subjectsResponse } = useGetAllSubjectsQuery();
 
   // Sort transcript: ONGOING first, then COMPLETED, then others
   const transcriptData = useMemo(() => {
@@ -73,7 +88,16 @@ const TranscriptPage = () => {
     });
   }, [transcriptResponse]);
 
-  // Filter transcript data based on search and status filter
+  // Get all subjects for filter (show all, not just those in transcript)
+  const availableSubjects = useMemo(() => {
+    if (!subjectsResponse) return [];
+    
+    return subjectsResponse
+      .filter((subject) => subject.status === 'ACTIVE')
+      .sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+  }, [subjectsResponse]);
+
+  // Filter transcript data based on search, status, and subject filter
   const filteredData = useMemo(() => {
     return transcriptData.filter((item) => {
       // Search filter
@@ -87,15 +111,19 @@ const TranscriptPage = () => {
       // Status filter
       const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter;
 
-      return matchesSearch && matchesStatus;
-    });
-  }, [transcriptData, searchQuery, statusFilter]);
+      // Subject filter
+      const matchesSubject = subjectFilter === '' || item.subjectName === subjectFilter;
 
-  const hasActiveFilter = searchQuery !== '' || statusFilter !== 'ALL';
+      return matchesSearch && matchesStatus && matchesSubject;
+    });
+  }, [transcriptData, searchQuery, statusFilter, subjectFilter]);
+
+  const hasActiveFilter = searchQuery !== '' || statusFilter !== 'ALL' || subjectFilter !== '';
 
   const handleResetFilter = () => {
     setSearchQuery('');
     setStatusFilter('ALL');
+    setSubjectFilter('');
   };
 
   // Auto-select first class when data loads
@@ -154,6 +182,64 @@ const TranscriptPage = () => {
                       />
                     </div>
                     <div className="flex items-center gap-2">
+                      {/* Subject Filter Combobox */}
+                      <Popover open={openSubjectCombobox} onOpenChange={setOpenSubjectCombobox}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={openSubjectCombobox}
+                            className="w-[200px] h-9 justify-between"
+                          >
+                            {subjectFilter || "Chọn môn học"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[200px] p-0">
+                          <Command>
+                            <CommandInput placeholder="Tìm môn học..." />
+                            <CommandList>
+                              <CommandEmpty>Không tìm thấy môn học.</CommandEmpty>
+                              <CommandGroup>
+                                <CommandItem
+                                  value=""
+                                  onSelect={() => {
+                                    setSubjectFilter('');
+                                    setOpenSubjectCombobox(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      'mr-2 h-4 w-4',
+                                      subjectFilter === '' ? 'opacity-100' : 'opacity-0'
+                                    )}
+                                  />
+                                  Tất cả môn học
+                                </CommandItem>
+                                {availableSubjects.map((subject) => (
+                                  <CommandItem
+                                    key={subject.id}
+                                    value={subject.name}
+                                    onSelect={(currentValue) => {
+                                      setSubjectFilter(currentValue === subjectFilter ? '' : currentValue);
+                                      setOpenSubjectCombobox(false);
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        'mr-2 h-4 w-4',
+                                        subjectFilter === subject.name ? 'opacity-100' : 'opacity-0'
+                                      )}
+                                    />
+                                    {subject.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+
                       <Select
                         value={statusFilter}
                         onValueChange={(value: StatusFilter) => setStatusFilter(value)}
@@ -268,7 +354,11 @@ const TranscriptPage = () => {
                                   <Badge
                                     className={cn(
                                       'text-[10px] px-1.5 py-0.5 shrink-0',
-                                      getStatusStyle(ENROLLMENT_STATUS_STYLES, item.status)
+                                      item.status === 'ONGOING' 
+                                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                        : item.status === 'COMPLETED'
+                                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                          : 'bg-muted text-muted-foreground opacity-70'
                                     )}
                                   >
                                     {getStatusText(item.status)}

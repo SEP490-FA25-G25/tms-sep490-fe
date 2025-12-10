@@ -6,6 +6,7 @@ import type {
   FetchBaseQueryError,
   FetchBaseQueryMeta,
 } from "@reduxjs/toolkit/query";
+import type { ScheduleDetail } from "@/types/studentClass";
 
 // Teacher summary DTO for classes
 export interface TeacherSummaryDTO {
@@ -248,6 +249,7 @@ export interface ClassDetailDTO {
   updatedAt?: string; // OffsetDateTime from backend
   teachers: TeacherSummaryDTO[]; // List of all teachers teaching this class
   scheduleSummary: string;
+  scheduleDetails: ScheduleDetail[];
   enrollmentSummary: EnrollmentSummary;
   upcomingSessions: SessionDTO[];
 }

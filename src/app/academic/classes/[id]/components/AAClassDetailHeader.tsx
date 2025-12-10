@@ -233,8 +233,12 @@ export function AAClassDetailHeader({
                 <Clock className="h-4 w-4 shrink-0" />
                 <span className="text-xs font-medium">Lịch học</span>
               </div>
-              <p className="text-sm font-semibold text-foreground truncate" title={classData.scheduleSummary}>
-                {classData.scheduleSummary || '—'}
+              <p className="text-sm font-semibold text-foreground whitespace-normal">
+                {classData.scheduleDetails && classData.scheduleDetails.length > 0
+                  ? classData.scheduleDetails
+                      .map((d) => `${d.day}\u00A0${d.startTime}-${d.endTime}`)
+                      .join(', ')
+                  : '—'}
               </p>
             </div>
 

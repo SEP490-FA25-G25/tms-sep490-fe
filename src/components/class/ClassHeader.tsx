@@ -26,7 +26,9 @@ const formatDate = (dateString?: string) => {
 };
 
 export function ClassHeader({ classDetail }: ClassHeaderProps) {
-  const scheduleDisplay = classDetail.scheduleSummary || "Chưa có lịch";
+  const scheduleDisplay = classDetail.scheduleDetails && classDetail.scheduleDetails.length > 0
+    ? classDetail.scheduleDetails.map(d => `${d.day}\u00A0${d.startTime}-${d.endTime}`).join(", ")
+    : classDetail.scheduleSummary || "Chưa có lịch";
   const enrollment = classDetail.enrollmentSummary?.totalEnrolled ?? 0;
   const capacity =
     classDetail.enrollmentSummary?.maxCapacity ?? classDetail.maxCapacity ?? 0;
@@ -67,18 +69,18 @@ export function ClassHeader({ classDetail }: ClassHeaderProps) {
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-                {classDetail.course?.subject && (
+                {classDetail.subject?.curriculum && (
                   <div className="flex items-center gap-2">
                     <BookOpen className="h-4 w-4" />
-                    <span>{classDetail.course.subject.name}</span>
+                    <span>{classDetail.subject.curriculum.name}</span>
                   </div>
                 )}
-                {classDetail.course?.level && (
+                {classDetail.subject?.level && (
                   <Badge
                     variant="outline"
                     className="text-xs font-medium border-primary/30 text-primary bg-primary/5"
                   >
-                    {classDetail.course.level.name}
+                    {classDetail.subject.level.name}
                   </Badge>
                 )}
                 {classDetail.branch && (
@@ -87,22 +89,22 @@ export function ClassHeader({ classDetail }: ClassHeaderProps) {
                     <span>{classDetail.branch.name}</span>
                   </div>
                 )}
-                {!classDetail.course?.subject && classDetail.course?.name && (
+                {!classDetail.subject?.curriculum && classDetail.subject?.name && (
                   <div className="flex items-center gap-2">
                     <BookOpen className="h-4 w-4" />
-                    <span>{classDetail.course.name}</span>
+                    <span>{classDetail.subject.name}</span>
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Info grid - 4 cards like AA header */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="rounded-lg border border-border/70 bg-muted/10 p-3 space-y-1">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="h-4 w-4" />
-                <span className="text-sm font-medium">Hình thức</span>
+          {/* Info grid - responsive: 2 cols on mobile, 4 cols on tablet+ */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="rounded-lg border bg-card shadow-sm p-3 space-y-1">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <MapPin className="h-4 w-4 shrink-0" />
+                <span className="text-xs font-medium">Hình thức</span>
               </div>
               <p className="text-sm font-semibold text-foreground">
                 {classDetail.modality
@@ -113,22 +115,22 @@ export function ClassHeader({ classDetail }: ClassHeaderProps) {
               </p>
             </div>
 
-            <div className="rounded-lg border border-border/70 bg-muted/10 p-3 space-y-1">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Clock className="h-4 w-4" />
-                <span className="text-sm font-medium">Lịch học</span>
+            <div className="rounded-lg border bg-card shadow-sm p-3 space-y-1">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Clock className="h-4 w-4 shrink-0" />
+                <span className="text-xs font-medium">Lịch học</span>
               </div>
               <p className="text-sm font-semibold text-foreground">
                 {scheduleDisplay}
               </p>
             </div>
 
-            <div className="rounded-lg border border-border/70 bg-muted/10 p-3 space-y-1">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                <span className="text-sm font-medium">Thời gian</span>
+            <div className="rounded-lg border bg-card shadow-sm p-3 space-y-1">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Calendar className="h-4 w-4 shrink-0" />
+                <span className="text-xs font-medium">Thời gian</span>
               </div>
-              <p className="text-sm font-semibold text-foreground">
+              <p className="text-sm font-semibold text-foreground truncate">
                 {formatDate(classDetail.startDate)} -{" "}
                 {formatDate(
                   classDetail.plannedEndDate || classDetail.actualEndDate
@@ -136,10 +138,10 @@ export function ClassHeader({ classDetail }: ClassHeaderProps) {
               </p>
             </div>
 
-            <div className="rounded-lg border border-border/70 bg-muted/10 p-3 space-y-1">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Users className="h-4 w-4" />
-                <span className="text-sm font-medium">Sĩ số</span>
+            <div className="rounded-lg border bg-card shadow-sm p-3 space-y-1">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Users className="h-4 w-4 shrink-0" />
+                <span className="text-xs font-medium">Sĩ số</span>
               </div>
               <p className="text-sm font-semibold text-foreground">
                 {enrollment}/{capacity || "—"}

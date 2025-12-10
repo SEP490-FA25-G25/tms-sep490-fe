@@ -30,8 +30,8 @@ interface SyllabusTabProps {
 
 const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => {
   const { user } = useAuth();
-  const course = classDetail.course;
-  const [expandedPhases, setExpandedPhases] = useState<string[]>(['phase-0']); // Expand first phase by default
+  const subject = classDetail.subject;  // Changed from course
+  const [expandedPhases, setExpandedPhases] = useState<string[]>([]);
   const [expandedSessions, setExpandedSessions] = useState<string[]>([]);
 
   // Kiểm tra xem user có phải là STUDENT không
@@ -44,14 +44,14 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
     data: courseSyllabus,
     isLoading: syllabusLoading,
     error: syllabusError,
-  } = useGetCourseSyllabusQuery(course.id);
+  } = useGetCourseSyllabusQuery(subject.id);  // Changed from course.id
 
   const {
     data: materials,
     isLoading: materialsLoading,
     error: materialsError,
   } = useGetCourseMaterialsQuery({
-    courseId: course.id,
+    courseId: subject.id,  // Changed from course.id
     studentId: studentId,
   });
 
@@ -161,8 +161,8 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
           <CardContent className="space-y-6">
             <div>
               <h4 className="text-sm font-medium text-muted-foreground mb-2">Tên khóa học</h4>
-              <p className="text-base font-semibold">{course.name}</p>
-              <p className="text-sm text-muted-foreground mt-1">Mã: {course.code}</p>
+              <p className="text-base font-semibold">{subject.name}</p>
+              <p className="text-sm text-muted-foreground mt-1">Mã: {subject.code}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -610,14 +610,14 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
       )}
 
       {/* Cơ cấu điểm - Using CourseAssessment templates */}
-      {courseSyllabus && (
+      {courseSyllabus && courseSyllabus.assessments && courseSyllabus.assessments.length > 0 && (
         <>
           <Separator />
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <Target className="h-5 w-5 text-blue-500" />
+              <Target className="h-5 w-5 text-primary" />
               <h3 className="text-xl font-semibold">Cơ cấu điểm</h3>
-              <Badge variant="secondary">{courseSyllabus.assessments?.length || 0}</Badge>
+              <Badge variant="secondary">{courseSyllabus.assessments.length}</Badge>
             </div>
             <Card className="overflow-hidden py-0">
               <Table>
@@ -631,39 +631,33 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {courseSyllabus.assessments && courseSyllabus.assessments.length > 0 ? (
-                    courseSyllabus.assessments.map((assessment) => (
-                      <TableRow key={assessment.id}>
-                        <TableCell className="font-medium">{assessment.name}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {assessment.assessmentType || 'Chưa xác định'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{assessment.maxScore}</TableCell>
-                        <TableCell>{assessment.duration || '—'}</TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {assessment.cloMappings && assessment.cloMappings.length > 0 ? (
-                              assessment.cloMappings.map((clo, index) => (
-                                <Badge key={`${assessment.id}-clo-${clo}-${index}`} variant="secondary" className="text-xs">
-                                  {clo}
-                                </Badge>
-                              ))
-                            ) : (
-                              <span className="text-sm text-muted-foreground">—</span>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
-                        Chưa có cơ cấu điểm cho khóa học này
+                  {courseSyllabus.assessments.map((assessment) => (
+                    <TableRow key={assessment.id}>
+                      <TableCell className="font-medium">{assessment.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {assessment.type || 'Chưa xác định'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{assessment.maxScore}</TableCell>
+                      <TableCell>
+                        {assessment.durationMinutes ? `${assessment.durationMinutes} phút` : '—'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {assessment.mappedCLOs && assessment.mappedCLOs.length > 0 ? (
+                            assessment.mappedCLOs.map((clo, index) => (
+                              <Badge key={`${assessment.id}-clo-${clo}-${index}`} variant="secondary" className="text-xs">
+                                {clo}
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-sm text-muted-foreground">—</span>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
-                  )}
+                  ))}
                 </TableBody>
               </Table>
             </Card>
