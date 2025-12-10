@@ -34,11 +34,13 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
 
 export default function TeacherProfilePage() {
   const { data: profile, error, isLoading } = useGetMyProfileQuery();
   const navigate = useNavigate();
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
   // Filter classes into two categories
   const currentClasses = useMemo(
@@ -218,7 +220,12 @@ export default function TeacherProfilePage() {
                       </div>
                       <div className="flex flex-col gap-3">
                         <Button>Chỉnh sửa thông tin</Button>
-                        <Button variant="ghost">Đổi mật khẩu</Button>
+                        <Button
+                          variant="ghost"
+                          onClick={() => setIsChangePasswordOpen(true)}
+                        >
+                          Đổi mật khẩu
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -525,6 +532,10 @@ export default function TeacherProfilePage() {
           </div>
         </SidebarInset>
       </SidebarProvider>
+      <ChangePasswordDialog
+        open={isChangePasswordOpen}
+        onOpenChange={setIsChangePasswordOpen}
+      />
     </TeacherRoute>
   );
 }
