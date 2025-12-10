@@ -114,6 +114,8 @@ export default function StudentProfilePage() {
     switch (status) {
       case 'ENROLLED':
         return 'Đang học';
+      case 'TRANSFERRED':
+        return 'Đã chuyển lớp';
       case 'COMPLETED':
         return 'Đã hoàn thành';
       case 'DROPPED':

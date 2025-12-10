@@ -18,8 +18,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { useGetStudentClassesQuery } from '@/store/services/studentClassApi';
 import type { ClassStatus, EnrollmentStatus, Modality, StudentClassDTO } from '@/types/studentClass';
-import { CLASS_STATUSES, MODALITIES } from '@/types/studentClass';
-import { CLASS_STATUS_STYLES, getStatusStyle } from '@/lib/status-colors';
+import { CLASS_STATUSES, ENROLLMENT_STATUSES, MODALITIES } from '@/types/studentClass';
+import { CLASS_STATUS_STYLES, ENROLLMENT_STATUS_STYLES, getStatusStyle } from '@/lib/status-colors';
 import { AlertCircle, BookOpen, RotateCcw, Search } from 'lucide-react';
 
 interface FilterState {
@@ -355,6 +355,9 @@ const MyClassesPage = () => {
                                 <div className="flex flex-col items-end gap-2">
                                   <Badge className={cn('text-xs', getStatusStyle(CLASS_STATUS_STYLES, classItem.status))}>
                                     {CLASS_STATUSES[classItem.status]}
+                                  </Badge>
+                                  <Badge className={cn('text-xs', getStatusStyle(ENROLLMENT_STATUS_STYLES, classItem.enrollmentStatus))}>
+                                    {ENROLLMENT_STATUSES[classItem.enrollmentStatus]}
                                   </Badge>
                                   <Badge variant="outline" className="text-xs">
                                     {MODALITIES[classItem.modality]}

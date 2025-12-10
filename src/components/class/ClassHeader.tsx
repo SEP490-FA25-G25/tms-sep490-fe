@@ -1,8 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { CLASS_STATUS_STYLES, getStatusStyle } from "@/lib/status-colors";
+import { CLASS_STATUS_STYLES, ENROLLMENT_STATUS_STYLES, getStatusStyle } from "@/lib/status-colors";
 import type { ClassDetailDTO } from "@/types/studentClass";
-import { CLASS_STATUSES, MODALITIES } from "@/types/studentClass";
+import { CLASS_STATUSES, ENROLLMENT_STATUSES, MODALITIES } from "@/types/studentClass";
 import {
   BookOpen,
   Building2,
@@ -38,14 +38,26 @@ export function ClassHeader({ classDetail }: ClassHeaderProps) {
           {/* Header top row */}
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-3">
-              <Badge
-                className={cn(
-                  "text-xs",
-                  getStatusStyle(CLASS_STATUS_STYLES, classDetail.status)
+              <div className="flex items-center gap-2">
+                <Badge
+                  className={cn(
+                    "text-xs",
+                    getStatusStyle(CLASS_STATUS_STYLES, classDetail.status)
+                  )}
+                >
+                  {CLASS_STATUSES[classDetail.status]}
+                </Badge>
+                {classDetail.enrollmentStatus && (
+                  <Badge
+                    className={cn(
+                      "text-xs",
+                      getStatusStyle(ENROLLMENT_STATUS_STYLES, classDetail.enrollmentStatus)
+                    )}
+                  >
+                    {ENROLLMENT_STATUSES[classDetail.enrollmentStatus]}
+                  </Badge>
                 )}
-              >
-                {CLASS_STATUSES[classDetail.status]}
-              </Badge>
+              </div>
               <div className="space-y-1">
                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
                   {classDetail.name}

@@ -139,6 +139,7 @@ export interface StudentAttendanceOverviewClassDTO {
   excused?: number;
   upcoming: number;
   status: string;
+  enrollmentStatus?: string;
   lastUpdated: string | null;
 }
 

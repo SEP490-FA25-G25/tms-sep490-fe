@@ -128,6 +128,7 @@ export interface ClassDetailDTO {
   scheduleDays: number[]; // [1,3,5] for T2,T4,Thứ6 (1=Thứ2, 2=Thứ3, etc.)
   maxCapacity: number;
   status: ClassStatus;
+  enrollmentStatus?: EnrollmentStatus; 
   teachers: TeacherSummary[];
   scheduleSummary: string;
   enrollmentSummary: EnrollmentSummary;
@@ -251,8 +252,8 @@ export const MODALITIES: Record<Modality, string> = {
 };
 
 export const ENROLLMENT_STATUSES: Record<EnrollmentStatus, string> = {
-  ENROLLED: 'Đã đăng ký',
-  TRANSFERRED: 'Đã chuyển',
+  ENROLLED: 'Đang học',
+  TRANSFERRED: 'Đã chuyển lớp',
   DROPPED: 'Đã hủy',
   COMPLETED: 'Đã hoàn thành'
 };
