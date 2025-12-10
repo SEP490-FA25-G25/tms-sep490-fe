@@ -67,18 +67,26 @@ export function ClassHeader({ classDetail }: ClassHeaderProps) {
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-                {classDetail.course?.subject && (
+                {classDetail.subject && (
                   <div className="flex items-center gap-2">
                     <BookOpen className="h-4 w-4" />
-                    <span>{classDetail.course.subject.name}</span>
+                    <span>{classDetail.subject.name}</span>
                   </div>
                 )}
-                {classDetail.course?.level && (
+                {classDetail.level && (
                   <Badge
                     variant="outline"
                     className="text-xs font-medium border-primary/30 text-primary bg-primary/5"
                   >
-                    {classDetail.course.level.name}
+                    {classDetail.level.name}
+                  </Badge>
+                )}
+                {classDetail.curriculum && (
+                  <Badge
+                    variant="outline"
+                    className="text-xs font-medium border-primary/30 text-primary bg-primary/5"
+                  >
+                    {classDetail.curriculum.name}
                   </Badge>
                 )}
                 {classDetail.branch && (
@@ -87,7 +95,8 @@ export function ClassHeader({ classDetail }: ClassHeaderProps) {
                     <span>{classDetail.branch.name}</span>
                   </div>
                 )}
-                {!classDetail.course?.subject && classDetail.course?.name && (
+                {/* Fallback to old course fields if subject not present */}
+                {!classDetail.subject && classDetail.course?.name && (
                   <div className="flex items-center gap-2">
                     <BookOpen className="h-4 w-4" />
                     <span>{classDetail.course.name}</span>

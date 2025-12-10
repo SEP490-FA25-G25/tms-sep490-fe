@@ -289,7 +289,7 @@ export function TeacherCalendarView({
                     style={getEventStyle(session)}
                   >
                     <div className="font-semibold truncate">
-                      {session.subjectName || session.courseName}
+                      {session.subjectName}
                     </div>
                     <div className="truncate opacity-90">
                       {session.classCode}

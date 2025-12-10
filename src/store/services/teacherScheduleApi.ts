@@ -51,8 +51,6 @@ export interface TeacherSessionSummaryDTO {
   subjectName?: string;
   classCode: string;
   className: string;
-  courseId: number;
-  courseName: string;
   topic: string;
   sessionType: SessionType;
   sessionStatus: SessionStatus;

@@ -31,6 +31,13 @@ interface SyllabusTabProps {
 const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => {
   const { user } = useAuth();
   const course = classDetail.course;
+  if (!course) {
+    return (
+      <div className="rounded-xl border border-border/60 bg-muted/20 p-6 text-sm text-muted-foreground">
+        Không tìm thấy thông tin môn học/khóa học.
+      </div>
+    );
+  }
   const [expandedPhases, setExpandedPhases] = useState<string[]>(['phase-0']); // Expand first phase by default
   const [expandedSessions, setExpandedSessions] = useState<string[]>([]);
 
