@@ -34,6 +34,11 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
   const [expandedPhases, setExpandedPhases] = useState<string[]>(['phase-0']); // Expand first phase by default
   const [expandedSessions, setExpandedSessions] = useState<string[]>([]);
 
+  // Kiểm tra xem user có phải là STUDENT không
+  // Chỉ truyền studentId khi user là STUDENT, không truyền khi là TEACHER hoặc role khác
+  const isStudent = user?.roles?.some(role => role === 'STUDENT' || role === 'ROLE_STUDENT') ?? false;
+  const studentId = isStudent ? user?.id : undefined;
+
   // Fetch course syllabus and materials
   const {
     data: courseSyllabus,
@@ -47,7 +52,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
     error: materialsError,
   } = useGetCourseMaterialsQuery({
     courseId: course.id,
-    studentId: user?.id,
+    studentId: studentId,
   });
 
   const isLoadingData = isLoading || syllabusLoading || materialsLoading;
@@ -394,16 +399,25 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                           const sessionMaterials = getMaterialsForSession(session.id);
                           const sessionId = `session-${session.id}`;
 
+                          const isSessionExpanded = expandedSessions.includes(sessionId);
+                          
                           return (
                             <div key={session.id} className="border rounded-lg bg-card overflow-hidden">
                               <Accordion
                                 type="single"
                                 collapsible
-                                value={expandedSessions.includes(sessionId) ? sessionId : undefined}
+                                value={isSessionExpanded ? sessionId : undefined}
                                 onValueChange={(value: string | undefined) => {
-                                  if (value) {
-                                    setExpandedSessions(prev => [...prev, sessionId]);
+                                  // Đảm bảo accordion luôn là controlled component
+                                  // Khi click vào accordion đang mở, value sẽ là undefined
+                                  // Khi click vào accordion đang đóng, value sẽ là sessionId
+                                  if (value === sessionId) {
+                                    // Mở accordion: thêm sessionId vào array nếu chưa có
+                                    setExpandedSessions(prev => 
+                                      prev.includes(sessionId) ? prev : [...prev, sessionId]
+                                    );
                                   } else {
+                                    // Đóng accordion: xóa sessionId khỏi array
                                     setExpandedSessions(prev => prev.filter(id => id !== sessionId));
                                   }
                                 }}
@@ -566,8 +580,8 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {courseSyllabus.clos.map((clo) => (
-                    <TableRow key={clo.id}>
+                  {courseSyllabus.clos.map((clo, index) => (
+                    <TableRow key={clo.id || `clo-${index}`}>
                       <TableCell>
                         <Badge variant="secondary" className="text-xs">
                           {clo.code}
@@ -632,7 +646,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                           <div className="flex flex-wrap gap-1">
                             {assessment.cloMappings && assessment.cloMappings.length > 0 ? (
                               assessment.cloMappings.map((clo, index) => (
-                                <Badge key={index} variant="secondary" className="text-xs">
+                                <Badge key={`${assessment.id}-clo-${clo}-${index}`} variant="secondary" className="text-xs">
                                   {clo}
                                 </Badge>
                               ))
