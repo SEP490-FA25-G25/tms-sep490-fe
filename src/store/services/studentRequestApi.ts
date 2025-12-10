@@ -9,13 +9,10 @@ import type { RootState } from '../index'
 import type { StudentClassDTO } from '@/types/academicTransfer'
 import type { WeeklyScheduleData } from '@/store/services/studentScheduleApi'
 
-// Re-export StudentSearchResult from academicTransfer
-export type { StudentSearchResult } from '@/types/academicTransfer'
+export type { StudentSearchResult, TransferOption, TransferEligibility } from '@/types/academicTransfer'
 
-// Student search response interface
 interface StudentSearchResponse {
   content: import('@/types/academicTransfer').StudentSearchResult[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   pageable: any
   totalElements: number
 }
@@ -161,7 +158,6 @@ export interface MissedSessionsResponse {
 export type MakeupPriority = 'HIGH' | 'MEDIUM' | 'LOW'
 
 export interface MakeupMatchScore {
-  branchMatch: boolean
   modalityMatch: boolean
   capacityOk?: boolean
   dateProximityScore?: number
@@ -573,6 +569,8 @@ export interface TransferRequestPayload {
 
 export interface TransferOnBehalfPayload extends TransferRequestPayload {
   studentId: number
+  capacityOverride?: boolean
+  overrideReason?: string
 }
 
 export interface TransferRequestResponse {
@@ -881,7 +879,7 @@ export const studentRequestApi = createApi({
     }),
     submitTransferOnBehalf: builder.mutation<ApiResponse<TransferRequestResponse>, TransferOnBehalfPayload>({
       query: (body) => ({
-        url: '/academic-requests/transfer/on-behalf',
+        url: '/academic-requests/transfer-requests/on-behalf',
         method: 'POST',
         body,
       }),
@@ -889,7 +887,6 @@ export const studentRequestApi = createApi({
     }),
 
     // Student Classes API for AA - /api/v1/students
-    // Backend trả về Page<StudentClassDTO> với pagination structure
     getStudentClasses: builder.query<ApiResponse<{ content: StudentClassDTO[]; totalElements: number }>, { studentId: number }>({
       query: ({ studentId }) => ({
         url: `/students/${studentId}/classes`,

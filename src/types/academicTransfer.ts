@@ -91,6 +91,7 @@ export interface TransferEligibility {
   subjectName: string
   branchId: number
   branchName: string
+  branchAddress?: string
   modality: 'ONLINE' | 'OFFLINE'
   learningMode?: 'ONLINE' | 'OFFLINE'
   enrollmentStatus: string
@@ -98,6 +99,7 @@ export interface TransferEligibility {
   hasPendingTransfer: boolean
   canTransfer: boolean
   scheduleInfo?: string
+  scheduleTime?: string  // e.g. "T2 07:00-08:30, T4 07:00-08:30"
   allSessions?: SessionInfo[]
 }
 
@@ -122,9 +124,10 @@ export interface TransferOption {
   className: string
   branchId: number
   branchName: string
+  branchAddress?: string
   modality: 'ONLINE' | 'OFFLINE'
   scheduleDays: string
-  scheduleTime: string
+  scheduleTime: string  // e.g. "T2 07:00-08:30, T4 07:00-08:30"
   scheduleInfo?: string
   startDate?: string
   endDate?: string

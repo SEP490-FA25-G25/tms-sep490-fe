@@ -20,7 +20,8 @@ import {
 import {
   useSuccessHandler,
   useErrorHandler,
-  Validation
+  Validation,
+  getCapacityText
 } from '../utils'
 import type { MakeupFlowProps } from '../UnifiedRequestFlow'
 
@@ -80,18 +81,8 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
   const { handleSuccess } = useSuccessHandler(onSuccess)
   const { handleError } = useErrorHandler()
 
-  // Helpers
   const getClassId = (classInfo?: { classId?: number; id?: number }) =>
     classInfo?.classId ?? classInfo?.id ?? null
-
-  const getCapacityText = (available?: number | null, max?: number | null) => {
-    const hasAvailable = typeof available === 'number'
-    const hasMax = typeof max === 'number'
-    if (hasAvailable && hasMax) return `${available}/${max} chỗ trống`
-    if (hasAvailable) return `Còn ${available} chỗ trống`
-    if (hasMax) return `Tối đa ${max} chỗ`
-    return 'Sức chứa đang cập nhật'
-  }
 
   // Handlers
   const handleNext = () => {
@@ -205,51 +196,51 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
               </div>
             ) : (
               <div className="space-y-2">
-              {missedSessions.map((session) => (
-                <SelectionCard
-                  key={session.sessionId}
-                  item={session}
-                  isSelected={selectedMissedId === session.sessionId}
-                  onSelect={() => setSelectedMissedId(session.sessionId)}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {(session.classInfo?.classCode || session.classInfo?.code) && (
-                          <Badge variant="outline" className="text-xs shrink-0">
-                            {session.classInfo.classCode || session.classInfo.code}
-                          </Badge>
-                        )}
-                        <span className="text-xs text-muted-foreground">
-                          {format(parseISO(session.date), 'EEE, dd/MM', { locale: vi })}
-                          {typeof session.daysAgo === 'number' && ` · ${session.daysAgo === 0 ? 'Hôm nay' : `${session.daysAgo} ngày trước`}`}
-                        </span>
-                        <Badge variant={session.classInfo.modality === 'ONLINE' ? 'default' : 'secondary'} className="text-xs">
-                          {session.classInfo.modality === 'ONLINE' ? (
-                            <><VideoIcon className="h-3 w-3 mr-1" />Online</>
-                          ) : (
-                            <><MapPinIcon className="h-3 w-3 mr-1" />Offline</>
+                {missedSessions.map((session) => (
+                  <SelectionCard
+                    key={session.sessionId}
+                    item={session}
+                    isSelected={selectedMissedId === session.sessionId}
+                    onSelect={() => setSelectedMissedId(session.sessionId)}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {(session.classInfo?.classCode || session.classInfo?.code) && (
+                            <Badge variant="outline" className="text-xs shrink-0">
+                              {session.classInfo.classCode || session.classInfo.code}
+                            </Badge>
                           )}
-                        </Badge>
-                      </div>
-                      <p className="font-medium text-sm truncate">
-                        Buổi {session.subjectSessionNumber}: {session.subjectSessionTitle}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {session.timeSlotInfo?.startTime} - {session.timeSlotInfo?.endTime} · {session.classInfo?.branchName}
-                      </p>
-                      {session.classInfo?.resourceName && (
-                        <p className="text-xs text-muted-foreground">
-                          {session.classInfo.modality === 'ONLINE' ? '🔗' : '📍'} {session.classInfo.resourceName}
+                          <span className="text-xs text-muted-foreground">
+                            {format(parseISO(session.date), 'EEE, dd/MM', { locale: vi })}
+                            {typeof session.daysAgo === 'number' && ` · ${session.daysAgo === 0 ? 'Hôm nay' : `${session.daysAgo} ngày trước`}`}
+                          </span>
+                          <Badge variant={session.classInfo.modality === 'ONLINE' ? 'default' : 'secondary'} className="text-xs">
+                            {session.classInfo.modality === 'ONLINE' ? (
+                              <><VideoIcon className="h-3 w-3 mr-1" />Online</>
+                            ) : (
+                              <><MapPinIcon className="h-3 w-3 mr-1" />Offline</>
+                            )}
+                          </Badge>
+                        </div>
+                        <p className="font-medium text-sm truncate">
+                          Buổi {session.subjectSessionNumber}: {session.subjectSessionTitle}
                         </p>
+                        <p className="text-xs text-muted-foreground">
+                          {session.timeSlotInfo?.startTime} - {session.timeSlotInfo?.endTime} · {session.classInfo?.branchName}
+                        </p>
+                        {session.classInfo?.resourceName && (
+                          <p className="text-xs text-muted-foreground">
+                            {session.classInfo.modality === 'ONLINE' ? '🔗' : '📍'} {session.classInfo.resourceName}
+                          </p>
+                        )}
+                      </div>
+                      {session.isExcusedAbsence && (
+                        <Badge variant="secondary" className="text-xs shrink-0">Có phép</Badge>
                       )}
                     </div>
-                    {session.isExcusedAbsence && (
-                      <Badge variant="secondary" className="text-xs shrink-0">Có phép</Badge>
-                    )}
-                  </div>
-                </SelectionCard>
-              ))}
+                  </SelectionCard>
+                ))}
               </div>
             )}
           </div>
@@ -288,54 +279,57 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
               </div>
             ) : (
               <div className="space-y-2">
-              {makeupOptions.map((option) => {
-                const availableSlots = option.availableSlots ?? option.classInfo?.availableSlots ?? null
-                const maxCapacity = option.maxCapacity ?? option.classInfo?.maxCapacity ?? null
-                const branchAddress = option.classInfo.branchAddress ?? option.classInfo.branchName ?? 'Địa chỉ đang cập nhật'
+                {makeupOptions.map((option) => {
+                  const availableSlots = option.availableSlots ?? option.classInfo?.availableSlots ?? null
+                  const maxCapacity = option.maxCapacity ?? option.classInfo?.maxCapacity ?? null
+                  const branchAddress = option.classInfo.branchAddress ?? option.classInfo.branchName ?? 'Địa chỉ đang cập nhật'
 
-                return (
-                  <SelectionCard
-                    key={option.sessionId}
-                    item={option}
-                    isSelected={selectedMakeupId === option.sessionId}
-                    onSelect={() => setSelectedMakeupId(option.sessionId)}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="min-w-0 flex-1 space-y-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant="outline" className="text-xs shrink-0">
-                            {option.classInfo.classCode || option.classInfo.code}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {format(parseISO(option.date), 'EEE, dd/MM', { locale: vi })}
-                          </span>
-                          <Badge variant={option.classInfo.modality === 'ONLINE' ? 'default' : 'secondary'} className="text-xs">
-                            {option.classInfo.modality === 'ONLINE' ? (
-                              <><VideoIcon className="h-3 w-3 mr-1" />Online</>
-                            ) : (
-                              <><MapPinIcon className="h-3 w-3 mr-1" />Offline</>
-                            )}
-                          </Badge>
-                        </div>
-                        <p className="font-medium text-sm truncate">
-                          Buổi {option.subjectSessionNumber}: {option.subjectSessionTitle}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {option.timeSlotInfo.startTime}-{option.timeSlotInfo.endTime} · {branchAddress}
-                        </p>
-                        {option.classInfo?.resourceName && (
-                          <p className="text-xs text-muted-foreground">
-                            {option.classInfo.modality === 'ONLINE' ? '🔗' : '📍'} {option.classInfo.resourceName}
+                  return (
+                    <SelectionCard
+                      key={option.sessionId}
+                      item={option}
+                      isSelected={selectedMakeupId === option.sessionId}
+                      onSelect={() => setSelectedMakeupId(option.sessionId)}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant="outline" className="text-xs shrink-0">
+                              {option.classInfo.classCode || option.classInfo.code}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {format(parseISO(option.date), 'EEE, dd/MM', { locale: vi })}
+                            </span>
+                            <Badge variant={option.classInfo.modality === 'ONLINE' ? 'default' : 'secondary'} className="text-xs">
+                              {option.classInfo.modality === 'ONLINE' ? (
+                                <><VideoIcon className="h-3 w-3 mr-1" />Online</>
+                              ) : (
+                                <><MapPinIcon className="h-3 w-3 mr-1" />Offline</>
+                              )}
+                            </Badge>
+                          </div>
+                          <p className="font-medium text-sm truncate">
+                            Buổi {option.subjectSessionNumber}: {option.subjectSessionTitle}
                           </p>
-                        )}
-                        <p className="text-xs text-muted-foreground">
-                          {getCapacityText(availableSlots, maxCapacity)}
-                        </p>
+                          <p className="text-xs text-muted-foreground">
+                            {option.timeSlotInfo.startTime}-{option.timeSlotInfo.endTime} · {branchAddress}
+                          </p>
+                          {option.classInfo?.resourceName && (
+                            <p className="text-xs text-muted-foreground">
+                              {option.classInfo.modality === 'ONLINE' ? '🔗' : '📍'} {option.classInfo.resourceName}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            {getCapacityText(
+                              maxCapacity != null && availableSlots != null ? maxCapacity - availableSlots : null,
+                              maxCapacity
+                            )}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </SelectionCard>
-                )
-              })}
+                    </SelectionCard>
+                  )
+                })}
               </div>
             )}
           </div>
