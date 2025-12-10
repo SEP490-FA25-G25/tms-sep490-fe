@@ -26,7 +26,7 @@ export interface TeacherClassInfo {
   classId: number;
   classCode: string;
   className: string;
-  courseName: string;
+  subjectName: string;
   branchName: string;
   startDate: string;
   plannedEndDate: string;

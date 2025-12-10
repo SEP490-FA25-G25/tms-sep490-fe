@@ -126,7 +126,7 @@ export default function TeacherAttendancePage() {
       const query = searchQuery.trim().toLowerCase();
       filtered = filtered.filter((session) => {
         const searchFields = [
-          session.courseName,
+          session.subjectName,
           session.topic,
           session.resourceName,
           session.modality,
@@ -364,7 +364,7 @@ function SessionCard({ session }: { session: AttendanceSessionDTO }) {
           {/* Course */}
           <div>
             <h3 className="text-base font-semibold text-foreground">
-              {session.courseName}
+              {session.subjectName}
             </h3>
           </div>
 

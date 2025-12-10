@@ -116,8 +116,8 @@ const AttendanceMatrixTab: React.FC<AttendanceMatrixTabProps> = ({
     return {
       classId: apiData.classId ?? 0,
       classCode: apiData.classCode,
-      courseCode: apiData.courseCode,
-      className: apiData.className || apiData.courseName || "",
+      subjectCode: apiData.subjectCode,
+      className: apiData.className || apiData.subjectName || "",
       summary: {
         totalSessions: apiData.summary?.totalSessions ?? sessions.length,
         averageAttendanceRate,

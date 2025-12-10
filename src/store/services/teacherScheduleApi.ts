@@ -80,8 +80,8 @@ export interface ClassInfoDTO {
   classId: number;
   classCode: string;
   className: string;
-  courseId: number;
-  courseName: string;
+  subjectId: number;
+  subjectName: string;
   teacherId: number;
   teacherName: string;
   branchId: number;

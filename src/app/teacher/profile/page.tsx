@@ -391,7 +391,7 @@ export default function TeacherProfilePage() {
                                 </TableCell>
                                 <TableCell>{cls.className}</TableCell>
                                 <TableCell className="text-muted-foreground">
-                                  {cls.courseName}
+                                  {cls.subjectName}
                                 </TableCell>
                                 <TableCell className="text-sm">
                                   {cls.branchName}
@@ -483,7 +483,7 @@ export default function TeacherProfilePage() {
                                 </TableCell>
                                 <TableCell>{cls.className}</TableCell>
                                 <TableCell className="text-muted-foreground">
-                                  {cls.courseName}
+                                  {cls.subjectName}
                                 </TableCell>
                                 <TableCell className="text-sm">
                                   {cls.branchName}
