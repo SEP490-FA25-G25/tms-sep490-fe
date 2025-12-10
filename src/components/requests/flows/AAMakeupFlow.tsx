@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { skipToken } from '@reduxjs/toolkit/query'
-import { AlertTriangle, Check, Loader2 } from 'lucide-react'
+import { AlertTriangle, Check, Loader2, MapPinIcon, VideoIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   AlertDialog,
@@ -32,7 +32,6 @@ import {
 } from '../UnifiedRequestFlow'
 import {
   Validation,
-  getModalityLabel,
   useErrorHandler,
   useSuccessHandler
 } from '../utils'
@@ -128,18 +127,17 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
     setCurrentStep(2) // Auto advance to next step
   }
 
-  const handleCancelStudentSelection = () => {
-    // This will close the modal via onSuccess callback
-    onSuccess()
-  }
-
   const handleNext = () => {
     if (currentStep === 2 && selectedMissedSession) setCurrentStep(3)
+    if (currentStep === 3 && selectedMakeupOption) setCurrentStep(4)
   }
 
   const handleBack = () => {
-    if (currentStep === 3) {
+    if (currentStep === 4) {
+      setCurrentStep(3)
+    } else if (currentStep === 3) {
       setCurrentStep(2)
+      setSelectedMakeupId(null)
     } else if (currentStep === 2) {
       setCurrentStep(1)
       setSelectedStudent(null)
@@ -198,7 +196,8 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
 
   const step1Complete = !!selectedStudent
   const step2Complete = !!(selectedStudent && selectedMissedSession)
-  const step3Complete = !!(selectedStudent && selectedMissedSession && selectedMakeupOption && reason.trim().length >= reasonMinLength)
+  const step3Complete = !!(selectedStudent && selectedMissedSession && selectedMakeupOption)
+  const step4Complete = !!(step3Complete && reason.trim().length >= reasonMinLength)
 
   const steps = [
     {
@@ -221,6 +220,13 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
       description: 'Gợi ý buổi học phù hợp',
       isComplete: step3Complete,
       isAvailable: step2Complete
+    },
+    {
+      id: 4,
+      title: 'Lý do học bù',
+      description: 'Điền lý do và ghi chú',
+      isComplete: step4Complete,
+      isAvailable: step3Complete
     }
   ]
 
@@ -228,7 +234,6 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
     return (
       <SelectStudentStep
         onSelect={handleSelectStudent}
-        onCancel={handleCancelStudentSelection}
         steps={steps}
         currentStep={currentStep}
       />
@@ -242,8 +247,8 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
       onNext={handleNext}
       onBack={handleBack}
       onSubmit={handleSubmit}
-      isNextDisabled={currentStep === 2 && !selectedMissedSession}
-      isSubmitDisabled={!step3Complete}
+      isNextDisabled={(currentStep === 2 && !selectedMissedSession) || (currentStep === 3 && !selectedMakeupOption)}
+      isSubmitDisabled={!step4Complete}
       isSubmitting={isCreating}
       submitLabel="Xử lý yêu cầu"
     >
@@ -294,15 +299,32 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
                     onSelect={() => setSelectedMissedId(session.sessionId)}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <div className="space-y-1">
-                        <p className="font-medium">
-                          {format(parseISO(session.date), 'EEEE, dd/MM', { locale: vi })} · {session.classInfo.classCode || session.classInfo.code}
-                        </p>
+                      <div className="space-y-1 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium">
+                            {format(parseISO(session.date), 'EEEE, dd/MM', { locale: vi })} · {session.classInfo.classCode || session.classInfo.code}
+                          </p>
+                          <Badge variant={session.classInfo.modality === 'ONLINE' ? 'default' : 'secondary'} className="text-xs">
+                            {session.classInfo.modality === 'ONLINE' ? (
+                              <><VideoIcon className="h-3 w-3 mr-1" />Online</>
+                            ) : (
+                              <><MapPinIcon className="h-3 w-3 mr-1" />Offline</>
+                            )}
+                          </Badge>
+                        </div>
                         <p className="text-sm text-muted-foreground">
                           Buổi {session.subjectSessionNumber}: {session.subjectSessionTitle}
                         </p>
+                        <p className="text-xs text-muted-foreground">
+                          {session.timeSlotInfo.startTime} - {session.timeSlotInfo.endTime} · {session.classInfo.branchName}
+                        </p>
+                        {session.classInfo.resourceName && (
+                          <p className="text-xs text-muted-foreground">
+                            {session.classInfo.modality === 'ONLINE' ? '🔗' : '📍'} {session.classInfo.resourceName}
+                          </p>
+                        )}
                       </div>
-                      <Badge variant={session.isExcusedAbsence ? 'success' : 'warning'}>
+                      <Badge variant={session.isExcusedAbsence ? 'success' : 'warning'} className="shrink-0">
                         {session.isExcusedAbsence ? 'Có phép' : 'Không phép'}
                       </Badge>
                     </div>
@@ -362,16 +384,33 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="space-y-1 flex-1">
-                          <p className="font-medium">
-                            {format(parseISO(option.date), 'EEEE, dd/MM', { locale: vi })} · {option.classInfo.classCode || option.classInfo.code}
-                          </p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium">
+                              {format(parseISO(option.date), 'EEEE, dd/MM', { locale: vi })} · {option.classInfo.classCode || option.classInfo.code}
+                            </p>
+                            <Badge variant={option.classInfo.modality === 'ONLINE' ? 'default' : 'secondary'} className="text-xs">
+                              {option.classInfo.modality === 'ONLINE' ? (
+                                <><VideoIcon className="h-3 w-3 mr-1" />Online</>
+                              ) : (
+                                <><MapPinIcon className="h-3 w-3 mr-1" />Offline</>
+                              )}
+                            </Badge>
+                          </div>
                           <p className="text-sm text-muted-foreground">
                             Buổi {option.subjectSessionNumber}: {option.subjectSessionTitle}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {option.timeSlotInfo.startTime} - {option.timeSlotInfo.endTime} · {getModalityLabel(option.classInfo.modality)}
+                            {option.timeSlotInfo.startTime} - {option.timeSlotInfo.endTime}
                           </p>
-                          <p className="text-xs text-muted-foreground">{branchAddress}</p>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <span>{branchAddress}</span>
+                            {option.classInfo.resourceName && (
+                              <>
+                                <span>·</span>
+                                <span>{option.classInfo.modality === 'ONLINE' ? '🔗' : '📍'} {option.classInfo.resourceName}</span>
+                              </>
+                            )}
+                          </div>
                           <div className="flex items-center gap-2">
                             {isOverCapacity ? (
                               <Badge variant="destructive" className="gap-1">
@@ -391,64 +430,94 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
                 })}
               </div>
             )}
+          </div>
+        </Section>
+      )}
 
-            {selectedMakeupOption && (
-              <div className="border-t pt-3 mt-3 space-y-3">
-                {/* Thông tin buổi vắng và buổi học bù */}
-                <div className="rounded-lg bg-muted/30 p-3 border space-y-3">
-                  {/* Buổi vắng */}
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Buổi đã vắng:</p>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline" className="text-xs">
-                        {selectedMissedSession.classInfo.classCode || selectedMissedSession.classInfo.code}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {format(parseISO(selectedMissedSession.date), 'EEE, dd/MM', { locale: vi })}
-                      </span>
-                      <span className="text-xs text-muted-foreground">·</span>
-                      <span className="text-xs font-medium">
-                        Buổi {selectedMissedSession.subjectSessionNumber}: {selectedMissedSession.subjectSessionTitle}
-                      </span>
-                    </div>
+      {/* Step 4: Session info display + Reason/Note input */}
+      {currentStep === 4 && selectedMissedSession && selectedMakeupOption && (
+        <Section>
+          <div className="min-h-80 space-y-4">
+            {/* Thông tin buổi vắng và buổi học bù */}
+            <div className="rounded-lg bg-muted/30 p-3 border space-y-3">
+              {/* Buổi vắng */}
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Buổi đã vắng:</p>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="outline" className="text-xs">
+                      {selectedMissedSession.classInfo.classCode || selectedMissedSession.classInfo.code}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {format(parseISO(selectedMissedSession.date), 'EEE, dd/MM', { locale: vi })}
+                    </span>
+                    <Badge variant={selectedMissedSession.classInfo.modality === 'ONLINE' ? 'default' : 'secondary'} className="text-xs">
+                      {selectedMissedSession.classInfo.modality === 'ONLINE' ? 'Online' : 'Offline'}
+                    </Badge>
                   </div>
-
-                  {/* Buổi học bù */}
-                  <div className="border-t pt-3">
-                    <p className="text-xs text-muted-foreground mb-1">Buổi học bù đã chọn:</p>
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-sm">{selectedMakeupOption.classInfo.classCode || selectedMakeupOption.classInfo.code}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {format(parseISO(selectedMakeupOption.date), 'EEE dd/MM', { locale: vi })} · {selectedMakeupOption.timeSlotInfo.startTime}-{selectedMakeupOption.timeSlotInfo.endTime}
-                        </span>
-                      </div>
-                      <p className="text-xs font-medium">
-                        Buổi {selectedMakeupOption.subjectSessionNumber}: {selectedMakeupOption.subjectSessionTitle}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {getModalityLabel(selectedMakeupOption.classInfo.modality)} · {selectedMakeupOption.classInfo.branchAddress ?? selectedMakeupOption.classInfo.branchName ?? 'Địa chỉ đang cập nhật'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <ReasonInput
-                    value={reason}
-                    onChange={setReason}
-                    placeholder="Mô tả lý do học viên cần học bù (tối thiểu 10 ký tự)"
-                    error={Validation.reason(reason)}
-                  />
-
-                  <NoteInput
-                    value={note}
-                    onChange={setNote}
-                    placeholder="Ghi chú thêm về yêu cầu học bù..."
-                  />
+                  <p className="text-xs font-medium">
+                    Buổi {selectedMissedSession.subjectSessionNumber}: {selectedMissedSession.subjectSessionTitle}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedMissedSession.timeSlotInfo.startTime} - {selectedMissedSession.timeSlotInfo.endTime}
+                  </p>
+                  {selectedMissedSession.classInfo.resourceName && (
+                    <p className="text-xs text-muted-foreground">
+                      {selectedMissedSession.classInfo.modality === 'ONLINE' ? '🔗' : '📍'} {selectedMissedSession.classInfo.resourceName}
+                    </p>
+                  )}
                 </div>
               </div>
-            )}
+
+              {/* Buổi học bù */}
+              <div className="border-t pt-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground mb-1">Buổi học bù đã chọn:</p>
+                  <Button variant="ghost" size="sm" className="h-7 text-xs shrink-0" onClick={() => setCurrentStep(3)}>Đổi buổi</Button>
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-sm">{selectedMakeupOption.classInfo.classCode || selectedMakeupOption.classInfo.code}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {format(parseISO(selectedMakeupOption.date), 'EEE dd/MM', { locale: vi })}
+                    </span>
+                    <Badge variant={selectedMakeupOption.classInfo.modality === 'ONLINE' ? 'default' : 'secondary'} className="text-xs">
+                      {selectedMakeupOption.classInfo.modality === 'ONLINE' ? 'Online' : 'Offline'}
+                    </Badge>
+                  </div>
+                  <p className="text-xs font-medium">
+                    Buổi {selectedMakeupOption.subjectSessionNumber}: {selectedMakeupOption.subjectSessionTitle}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedMakeupOption.timeSlotInfo.startTime}-{selectedMakeupOption.timeSlotInfo.endTime}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedMakeupOption.classInfo.branchAddress ?? selectedMakeupOption.classInfo.branchName ?? 'Địa chỉ đang cập nhật'}
+                  </p>
+                  {selectedMakeupOption.classInfo.resourceName && (
+                    <p className="text-xs text-muted-foreground">
+                      {selectedMakeupOption.classInfo.modality === 'ONLINE' ? '🔗' : '📍'} {selectedMakeupOption.classInfo.resourceName}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Reason and Note inputs */}
+            <div className="space-y-3">
+              <ReasonInput
+                value={reason}
+                onChange={setReason}
+                placeholder="Mô tả lý do học viên cần học bù (tối thiểu 10 ký tự)"
+                error={Validation.reason(reason)}
+              />
+
+              <NoteInput
+                value={note}
+                onChange={setNote}
+                placeholder="Ghi chú thêm về yêu cầu học bù..."
+              />
+            </div>
           </div>
         </Section>
       )}
