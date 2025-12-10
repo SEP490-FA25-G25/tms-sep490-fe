@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { addDays, addMonths, addWeeks, format, parseISO, startOfToday } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { MapPinIcon } from 'lucide-react'
+import { MapPinIcon, VideoIcon } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Calendar } from '@/components/ui/calendar'
 import { Button } from '@/components/ui/button'
@@ -306,7 +306,7 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
                     })}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
+                      <div className="min-w-0 flex-1 space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <Badge variant="outline" className="font-mono text-xs shrink-0">
                             {session.classCode}
@@ -314,12 +314,24 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
                           <span className="text-xs text-muted-foreground">
                             {format(parseISO(session.date), 'EEE, dd/MM', { locale: vi })} · {session.startTime}-{session.endTime}
                           </span>
+                          <Badge variant={session.modality === 'ONLINE' ? 'default' : 'secondary'} className="text-xs">
+                            {session.modality === 'ONLINE' ? (
+                              <><VideoIcon className="h-3 w-3 mr-1" />Online</>
+                            ) : (
+                              <><MapPinIcon className="h-3 w-3 mr-1" />Offline</>
+                            )}
+                          </Badge>
                         </div>
-                        <p className="font-medium text-sm mt-1 truncate">{session.topic}</p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                          <MapPinIcon className="h-3 w-3 shrink-0" />
-                          {session.branchName}
-                        </p>
+                        <p className="font-medium text-sm truncate">{session.topic}</p>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <span>{session.branchName}</span>
+                          {session.resourceName && (
+                            <>
+                              <span>·</span>
+                              <span>{session.resourceName}</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </SelectionCard>
@@ -378,15 +390,17 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
                         })}
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <Badge variant="outline" className="text-xs shrink-0">{session.classCode}</Badge>
                               <span className="text-xs text-muted-foreground">
                                 {session.startTime}-{session.endTime}
                               </span>
                             </div>
-                            <p className="font-medium text-sm mt-1 truncate">{session.topic}</p>
-                            <p className="text-xs text-muted-foreground">{session.branchName}</p>
+                            <p className="font-medium text-sm truncate">{session.topic}</p>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <span>{session.branchName}</span>
+                            </div>
                           </div>
                         </div>
                       </SelectionCard>

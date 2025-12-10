@@ -3,6 +3,8 @@ import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { skipToken } from '@reduxjs/toolkit/query'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { MapPinIcon, VideoIcon } from 'lucide-react'
 
 import {
   useGetStudentClassesQuery,
@@ -146,11 +148,6 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
     setCurrentStep(2) // Auto advance to next step
   }
 
-  const handleCancelStudentSelection = () => {
-    // This will close the modal via onSuccess callback
-    onSuccess()
-  }
-
   const handleWeekChange = (direction: 'prev' | 'next') => {
     if (!baseWeekStart) return
     const nextStart = new Date(parseISO(baseWeekStart))
@@ -161,11 +158,15 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
 
   const handleNext = () => {
     if (currentStep === 2 && selectedClass) setCurrentStep(3)
+    if (currentStep === 3 && selectedSession) setCurrentStep(4)
   }
 
   const handleBack = () => {
-    if (currentStep === 3) {
+    if (currentStep === 4) {
+      setCurrentStep(3)
+    } else if (currentStep === 3) {
       setCurrentStep(2)
+      setSelectedSessionId(null)
     } else if (currentStep === 2) {
       setCurrentStep(1)
       setSelectedStudent(null)
@@ -203,7 +204,8 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
   // Step states
   const step1Complete = !!selectedStudent
   const step2Complete = !!(selectedStudent && selectedClass)
-  const step3Complete = !!(selectedStudent && selectedClass && selectedSession && reason.trim().length >= 10)
+  const step3Complete = !!(selectedStudent && selectedClass && selectedSession)
+  const step4Complete = !!(step3Complete && reason.trim().length >= 10)
 
   const steps = [
     {
@@ -222,10 +224,17 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
     },
     {
       id: 3,
-      title: 'Chọn buổi và lý do',
-      description: 'Chọn buổi chưa diễn ra và điền lý do',
+      title: 'Chọn buổi học',
+      description: 'Chọn buổi chưa diễn ra',
       isComplete: step3Complete,
       isAvailable: step2Complete
+    },
+    {
+      id: 4,
+      title: 'Lý do nghỉ học',
+      description: 'Điền lý do và ghi chú',
+      isComplete: step4Complete,
+      isAvailable: step3Complete
     }
   ]
 
@@ -234,7 +243,6 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
     return (
       <SelectStudentStep
         onSelect={handleSelectStudent}
-        onCancel={handleCancelStudentSelection}
         steps={steps}
         currentStep={currentStep}
       />
@@ -248,8 +256,8 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
       onNext={handleNext}
       onBack={handleBack}
       onSubmit={handleSubmit}
-      isNextDisabled={currentStep === 2 && !selectedClass}
-      isSubmitDisabled={!step3Complete}
+      isNextDisabled={(currentStep === 2 && !selectedClass) || (currentStep === 3 && !selectedSession)}
+      isSubmitDisabled={!step4Complete}
       isSubmitting={isSubmitting}
       submitLabel="Xử lý yêu cầu"
     >
@@ -289,7 +297,7 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
         </Section>
       )}
 
-      {/* Step 3: Weekly schedule + reason */}
+      {/* Step 3: Session selection only */}
       {currentStep === 3 && selectedClass && (
         <Section>
           <div className="min-h-[280px] space-y-4">
@@ -330,13 +338,28 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
                           >
                             <div className="flex items-center gap-3">
                               <div className="flex-1 space-y-1">
-                                <p className="font-medium">
-                                  {session.classCode} · {session.startTime} - {session.endTime}
-                                </p>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className="font-medium">
+                                    {session.classCode} · {session.startTime} - {session.endTime}
+                                  </p>
+                                  <Badge variant={session.modality === 'ONLINE' ? 'default' : 'secondary'} className="text-xs">
+                                    {session.modality === 'ONLINE' ? (
+                                      <><VideoIcon className="h-3 w-3 mr-1" />Online</>
+                                    ) : (
+                                      <><MapPinIcon className="h-3 w-3 mr-1" />Offline</>
+                                    )}
+                                  </Badge>
+                                </div>
                                 <p className="text-sm text-muted-foreground">{session.topic}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {session.branchName} · {session.modality === 'ONLINE' ? 'Trực tuyến' : 'Tại trung tâm'}
-                                </p>
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <span>{session.branchName}</span>
+                                  {session.resourceName && (
+                                    <>
+                                      <span>·</span>
+                                      <span>{session.resourceName}</span>
+                                    </>
+                                  )}
+                                </div>
                                 {!session.isSelectable && session.disabledReason && (
                                   <p className="text-xs font-medium text-rose-600">{session.disabledReason}</p>
                                 )}
@@ -350,43 +373,56 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
                 ))
               )}
             </div>
+          </div>
+        </Section>
+      )}
 
-            {selectedSession && (
-              <div className="border-t pt-3 mt-3">
-                <div className="rounded-lg bg-muted/30 p-3 border mb-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-sm">{selectedSession.classCode}</span>
-                        <span className="text-xs text-muted-foreground">{selectedSession.startTime}-{selectedSession.endTime}</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {format(parseISO(selectedSession.date), 'EEE dd/MM', { locale: vi })} · {selectedSession.topic}
-                      </p>
-                    </div>
-                    <Button variant="ghost" size="sm" className="h-7 text-xs shrink-0" onClick={() => setSelectedSessionId(null)}>Đổi</Button>
+      {/* Step 4: Session info display + Reason/Note input */}
+      {currentStep === 4 && selectedSession && (
+        <Section>
+          <div className="min-h-[280px] space-y-4">
+            {/* Selected Session Summary */}
+            <div className="rounded-lg bg-muted/30 p-3 border">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-sm">{selectedSession.classCode}</span>
+                    <span className="text-xs text-muted-foreground">{selectedSession.startTime}-{selectedSession.endTime}</span>
+                    <Badge variant={selectedSession.modality === 'ONLINE' ? 'default' : 'secondary'} className="text-xs">
+                      {selectedSession.modality === 'ONLINE' ? 'Online' : 'Offline'}
+                    </Badge>
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    {format(parseISO(selectedSession.date), 'EEE dd/MM', { locale: vi })} · {selectedSession.topic}
+                  </p>
+                  {selectedSession.resourceName && (
+                    <p className="text-xs text-muted-foreground">
+                      {selectedSession.modality === 'ONLINE' ? '🔗' : '📍'} {selectedSession.resourceName}
+                    </p>
+                  )}
                 </div>
-
-                <div className="space-y-3">
-                  <ReasonInput
-                    value={reason}
-                    onChange={(val) => {
-                      setReason(val)
-                      if (reasonError) setReasonError(null)
-                    }}
-                    placeholder="Chia sẻ lý do cụ thể để lưu vào hồ sơ..."
-                    error={reasonError}
-                  />
-
-                  <NoteInput
-                    value={note}
-                    onChange={setNote}
-                    placeholder="Ghi chú thêm cho phụ huynh..."
-                  />
-                </div>
+                <Button variant="ghost" size="sm" className="h-7 text-xs shrink-0" onClick={() => setCurrentStep(3)}>Đổi buổi</Button>
               </div>
-            )}
+            </div>
+
+            {/* Reason and Note inputs */}
+            <div className="space-y-3">
+              <ReasonInput
+                value={reason}
+                onChange={(val) => {
+                  setReason(val)
+                  if (reasonError) setReasonError(null)
+                }}
+                placeholder="Chia sẻ lý do cụ thể để lưu vào hồ sơ..."
+                error={reasonError}
+              />
+
+              <NoteInput
+                value={note}
+                onChange={setNote}
+                placeholder="Ghi chú thêm cho phụ huynh..."
+              />
+            </div>
           </div>
         </Section>
       )}

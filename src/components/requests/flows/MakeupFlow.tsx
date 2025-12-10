@@ -2,14 +2,14 @@ import { useState, useEffect, useMemo } from 'react'
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { skipToken } from '@reduxjs/toolkit/query'
+import { MapPinIcon, VideoIcon } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import {
   useGetMissedSessionsQuery,
   useGetMakeupOptionsQuery,
   useSubmitStudentRequestMutation,
-  useGetStudentRequestConfigQuery,
-  type SessionModality
+  useGetStudentRequestConfigQuery
 } from '@/store/services/studentRequestApi'
 import {
   Section,
@@ -83,13 +83,6 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
   // Helpers
   const getClassId = (classInfo?: { classId?: number; id?: number }) =>
     classInfo?.classId ?? classInfo?.id ?? null
-
-  const formatModality = (modality?: SessionModality) => {
-    switch (modality) {
-      case 'ONLINE': return 'Trực tuyến'
-      default: return 'Tại trung tâm'
-    }
-  }
 
   const getCapacityText = (available?: number | null, max?: number | null) => {
     const hasAvailable = typeof available === 'number'
@@ -220,7 +213,7 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
                   onSelect={() => setSelectedMissedId(session.sessionId)}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         {(session.classInfo?.classCode || session.classInfo?.code) && (
                           <Badge variant="outline" className="text-xs shrink-0">
@@ -231,10 +224,25 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
                           {format(parseISO(session.date), 'EEE, dd/MM', { locale: vi })}
                           {typeof session.daysAgo === 'number' && ` · ${session.daysAgo === 0 ? 'Hôm nay' : `${session.daysAgo} ngày trước`}`}
                         </span>
+                        <Badge variant={session.classInfo.modality === 'ONLINE' ? 'default' : 'secondary'} className="text-xs">
+                          {session.classInfo.modality === 'ONLINE' ? (
+                            <><VideoIcon className="h-3 w-3 mr-1" />Online</>
+                          ) : (
+                            <><MapPinIcon className="h-3 w-3 mr-1" />Offline</>
+                          )}
+                        </Badge>
                       </div>
-                      <p className="font-medium text-sm mt-1 truncate">
+                      <p className="font-medium text-sm truncate">
                         Buổi {session.subjectSessionNumber}: {session.subjectSessionTitle}
                       </p>
+                      <p className="text-xs text-muted-foreground">
+                        {session.timeSlotInfo?.startTime} - {session.timeSlotInfo?.endTime} · {session.classInfo?.branchName}
+                      </p>
+                      {session.classInfo?.resourceName && (
+                        <p className="text-xs text-muted-foreground">
+                          {session.classInfo.modality === 'ONLINE' ? '🔗' : '📍'} {session.classInfo.resourceName}
+                        </p>
+                      )}
                     </div>
                     {session.isExcusedAbsence && (
                       <Badge variant="secondary" className="text-xs shrink-0">Có phép</Badge>
@@ -284,7 +292,6 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
                 const availableSlots = option.availableSlots ?? option.classInfo?.availableSlots ?? null
                 const maxCapacity = option.maxCapacity ?? option.classInfo?.maxCapacity ?? null
                 const branchAddress = option.classInfo.branchAddress ?? option.classInfo.branchName ?? 'Địa chỉ đang cập nhật'
-                const modalityLabel = formatModality(option.classInfo.modality)
 
                 return (
                   <SelectionCard
@@ -294,20 +301,35 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
                     onSelect={() => setSelectedMakeupId(option.sessionId)}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <div className="min-w-0 flex-1">
+                      <div className="min-w-0 flex-1 space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <Badge variant="outline" className="text-xs shrink-0">
                             {option.classInfo.classCode || option.classInfo.code}
                           </Badge>
                           <span className="text-xs text-muted-foreground">
-                            {format(parseISO(option.date), 'EEE, dd/MM', { locale: vi })} · {option.timeSlotInfo.startTime}-{option.timeSlotInfo.endTime}
+                            {format(parseISO(option.date), 'EEE, dd/MM', { locale: vi })}
                           </span>
+                          <Badge variant={option.classInfo.modality === 'ONLINE' ? 'default' : 'secondary'} className="text-xs">
+                            {option.classInfo.modality === 'ONLINE' ? (
+                              <><VideoIcon className="h-3 w-3 mr-1" />Online</>
+                            ) : (
+                              <><MapPinIcon className="h-3 w-3 mr-1" />Offline</>
+                            )}
+                          </Badge>
                         </div>
-                        <p className="font-medium text-sm mt-1 truncate">
+                        <p className="font-medium text-sm truncate">
                           Buổi {option.subjectSessionNumber}: {option.subjectSessionTitle}
                         </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {branchAddress} · {modalityLabel} · {getCapacityText(availableSlots, maxCapacity)}
+                        <p className="text-xs text-muted-foreground">
+                          {option.timeSlotInfo.startTime}-{option.timeSlotInfo.endTime} · {branchAddress}
+                        </p>
+                        {option.classInfo?.resourceName && (
+                          <p className="text-xs text-muted-foreground">
+                            {option.classInfo.modality === 'ONLINE' ? '🔗' : '📍'} {option.classInfo.resourceName}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          {getCapacityText(availableSlots, maxCapacity)}
                         </p>
                       </div>
                     </div>
@@ -329,17 +351,28 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
               <div>
                 <p className="text-xs text-muted-foreground mb-1.5">Buổi vắng:</p>
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant="outline" className="text-xs">
                       {selectedMissedSession!.classInfo.classCode || selectedMissedSession!.classInfo.code}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
                       {format(parseISO(selectedMissedSession!.date), 'EEE, dd/MM', { locale: vi })}
                     </span>
+                    <Badge variant={selectedMissedSession!.classInfo.modality === 'ONLINE' ? 'default' : 'secondary'} className="text-xs">
+                      {selectedMissedSession!.classInfo.modality === 'ONLINE' ? 'Online' : 'Offline'}
+                    </Badge>
                   </div>
                   <p className="text-sm font-medium">
                     Buổi {selectedMissedSession!.subjectSessionNumber}: {selectedMissedSession!.subjectSessionTitle}
                   </p>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedMissedSession!.timeSlotInfo?.startTime} - {selectedMissedSession!.timeSlotInfo?.endTime}
+                  </p>
+                  {selectedMissedSession!.classInfo?.resourceName && (
+                    <p className="text-xs text-muted-foreground">
+                      {selectedMissedSession!.classInfo.modality === 'ONLINE' ? '🔗' : '📍'} {selectedMissedSession!.classInfo.resourceName}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -347,23 +380,31 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
               <div>
                 <p className="text-xs text-muted-foreground mb-1.5">Học bù tại:</p>
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant="outline" className="text-xs">
                       {selectedMakeupOption.classInfo.classCode || selectedMakeupOption.classInfo.code}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
                       {format(parseISO(selectedMakeupOption.date), 'EEE, dd/MM', { locale: vi })}
                     </span>
+                    <Badge variant={selectedMakeupOption.classInfo.modality === 'ONLINE' ? 'default' : 'secondary'} className="text-xs">
+                      {selectedMakeupOption.classInfo.modality === 'ONLINE' ? 'Online' : 'Offline'}
+                    </Badge>
                   </div>
                   <p className="text-sm font-medium">
                     Buổi {selectedMakeupOption.subjectSessionNumber}: {selectedMakeupOption.subjectSessionTitle}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {selectedMakeupOption.timeSlotInfo.startTime}-{selectedMakeupOption.timeSlotInfo.endTime} · {formatModality(selectedMakeupOption.classInfo.modality)}
+                    {selectedMakeupOption.timeSlotInfo.startTime}-{selectedMakeupOption.timeSlotInfo.endTime}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {selectedMakeupOption.classInfo.branchAddress ?? selectedMakeupOption.classInfo.branchName ?? 'Địa chỉ đang cập nhật'}
                   </p>
+                  {selectedMakeupOption.classInfo?.resourceName && (
+                    <p className="text-xs text-muted-foreground">
+                      {selectedMakeupOption.classInfo.modality === 'ONLINE' ? '🔗' : '📍'} {selectedMakeupOption.classInfo.resourceName}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

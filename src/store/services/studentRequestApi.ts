@@ -125,6 +125,9 @@ export interface ClassMeta {
   modality?: SessionModality
   availableSlots?: number
   maxCapacity?: number
+  resourceName?: string
+  resourceType?: 'ROOM' | 'VIRTUAL'
+  onlineLink?: string
 }
 
 export interface TimeSlotInfo extends TimeSlotRange {

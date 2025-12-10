@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { useSubmitTransferRequestMutation } from '@/store/services/studentRequestApi'
+import { useSubmitStudentRequestMutation } from '@/store/services/studentRequestApi'
 import { Textarea } from '@/components/ui/textarea'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -38,7 +38,7 @@ export default function TransferConfirmationStep({
   const [quotaAcknowledged, setQuotaAcknowledged] = useState(false)
   const [contentGapAcknowledged, setContentGapAcknowledged] = useState(false)
 
-  const [submitTransfer, { isLoading, error }] = useSubmitTransferRequestMutation()
+  const [submitTransfer, { isLoading, error }] = useSubmitStudentRequestMutation()
   const latestStateRef = useRef({
     isFormValid: false,
     currentClassId: currentEnrollment.classId,
@@ -186,16 +186,17 @@ export default function TransferConfirmationStep({
       }
 
       const result = await submitTransfer({
+        requestType: 'TRANSFER',
         currentClassId: state.currentClassId,
-        targetClassId: state.targetClassId,
-        effectiveDate: state.effectiveDate,
-        sessionId: sessionForTransfer.sessionId,
+        targetSessionId: sessionForTransfer.sessionId,
         requestReason: state.requestReason.trim(),
         note: '',
       }).unwrap()
 
       if (result.success) {
-        latestSuccessRef.current(result.data)
+        // Cast StudentRequest to TransferRequestResponse for compatibility
+        // Note: This is a workaround - the actual response is StudentRequest
+        latestSuccessRef.current(result.data as unknown as TransferRequestResponse)
       }
     } catch {
       // Error is handled by the mutation and displayed below
