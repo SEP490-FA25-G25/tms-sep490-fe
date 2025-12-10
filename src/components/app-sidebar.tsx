@@ -81,24 +81,14 @@ const roleBasedNav = {
         icon: HomeIcon,
       },
       {
-        title: "Quản lý người dùng",
+        title: "Quản lý tài khoản người dùng",
         url: "/admin/users",
         icon: UsersIcon,
       },
       {
-        title: "Phân tích hệ thống",
-        url: "/admin/analytics",
-        icon: BarChartIcon,
-      },
-      {
-        title: "Quản lý trung tâm và chi nhánh",
-        url: "/admin/centers",
-        icon: BuildingIcon,
-      },
-      {
-        title: "Quản lý chương trình đào tạo",
-        url: "/admin/subjects",
-        icon: BookOpenIcon,
+        title: "Quản lý vai trò hệ thống",
+        url: "/admin/roles",
+        icon: AwardIcon,
       },
     ],
   },
@@ -415,7 +405,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     items: roleBasedNav[role as keyof typeof roleBasedNav]?.navMain ?? [],
   }));
 
-  const brandHref = navSections[0]?.items?.[0]?.url ?? "/login";
+  const brandHref = "/";
 
   const handleLogout = () => {
     logout();
@@ -432,8 +422,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1 data-[slot=sidebar-menu-button]:!justify-start"
             >
               <Link to={brandHref} className="flex items-center gap-2">
-                <img src="/logo.jpg" alt="TMS Logo" className="h-8 w-auto" />
-                <span className="text-base font-semibold">Hệ thống TMS</span>
+                <img
+                  src="/logo.jpg"
+                  alt="TMS Logo"
+                  className="h-10 w-10 rounded-full object-cover"
+                />
+                <span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 1.05 }}>
+                  <span style={{ fontWeight: 700, color: "#2e5a34", fontSize: "1rem" }}>TMS</span>
+                  <span style={{ fontWeight: 500, color: "#5c6a7c", fontSize: "0.75rem", marginTop: "2px" }}>
+                    Training Management System
+                  </span>
+                </span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

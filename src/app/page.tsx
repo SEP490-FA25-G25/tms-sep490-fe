@@ -1,5 +1,8 @@
 import { Link } from "react-router-dom"
 import "./landing.css"
+import { useAuth } from "@/hooks/useAuth"
+import { useNavigate } from "react-router-dom"
+import { getDefaultRouteForUser } from "@/utils/role-routes"
 import {
 
   CalendarDays,
@@ -97,6 +100,21 @@ const feedbacks = [
 ]
 
 export default function LandingPage() {
+
+  const { user, logout, isAuthenticated } = useAuth()
+  const navigate = useNavigate()
+
+  const handleGotoDashboard = () => {
+    if (user?.roles) {
+      const defaultRoute = getDefaultRouteForUser(user.roles)
+      navigate(defaultRoute)
+    }
+  }
+
+  const handleLogout = () => {
+    logout()
+    navigate("/")
+  }
   return (
     <div className="min-h-screen bg-background text-foreground landing-container">
       <header className="lp-header">
@@ -120,12 +138,36 @@ export default function LandingPage() {
             <a href="#consultation">Tư vấn</a>
           </nav>
 
-          <div className="lp-flex lp-items-center" style={{ gap: "1rem" }}>
-            <Link to="/login" className="lp-btn lp-btn-primary lp-btn-regular">Đăng nhập</Link>
-            <a href="#consultation" className="lp-btn lp-btn-primary lp-btn-regular">
-              Đăng ký ngay
-            </a>
-          </div>
+          {isAuthenticated && user ? (
+            <div className="relative group">
+              <button className="flex items-center gap-2 cursor-pointer">
+                <img
+                  src={user.avatarUrl || "/default-avatar.png"}
+                  alt="Avatar"
+                  className="h-10 w-10 rounded-full object-cover border-2 border-green-500"
+                />
+              </button>
+              {/* Dropdown menu */}
+              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                <button
+                  onClick={handleGotoDashboard}
+                  className="w-full px-4 py-3 text-left hover:bg-gray-100 rounded-t-lg"
+                >
+                  Dashboard
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-full px-4 py-3 text-left hover:bg-gray-100 text-red-500 rounded-b-lg border-t"
+                >
+                  Đăng xuất
+                </button>
+              </div>
+            </div>
+          ) : (
+            <Link to="/login" className="lp-btn lp-btn-primary">
+              Đăng nhập
+            </Link>
+          )}
         </div>
       </header>
 

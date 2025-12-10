@@ -36,7 +36,7 @@ const STATUS_VALUES = ['ACTIVE', 'INACTIVE', 'SUSPENDED'] as const
 
 const createUserSchema = z.object({
   email: z.string().email('Email không hợp lệ').min(1, 'Email là bắt buộc'),
-  password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
+  password: z.string().min(8, 'Mật khẩu phải có ít nhất 8 ký tự'),
   fullName: z.string().min(1, 'Họ tên là bắt buộc'),
   phone: z.string().optional(),
   facebookUrl: z.string().url('URL không hợp lệ').optional().or(z.literal('')),
@@ -170,7 +170,7 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
             <Label htmlFor="password">
               Mật khẩu <span className="text-destructive">*</span>
             </Label>
-            <Input id="password" type="password" placeholder="Tối thiểu 6 ký tự" {...register('password')} />
+            <Input id="password" type="password" placeholder="Tối thiểu 8 ký tự" {...register('password')} />
             {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
           </div>
 
