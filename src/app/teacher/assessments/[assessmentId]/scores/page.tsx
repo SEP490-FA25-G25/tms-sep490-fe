@@ -26,7 +26,7 @@ import { CheckCircle, XCircle, FileText, Users, Loader2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { toast } from "sonner";
 
 export default function AssessmentScoresPage() {
@@ -74,7 +74,7 @@ export default function AssessmentScoresPage() {
     });
   };
 
-  const handleSaveScore = async () => {
+  const handleSaveScore = useCallback(async () => {
     if (!editingStudentId || !assessmentId) return;
 
     if (editingScore.score === null) {
@@ -114,7 +114,40 @@ export default function AssessmentScoresPage() {
       const err = error as { data?: { message?: string } };
       toast.error(err?.data?.message || "Có lỗi xảy ra khi lưu điểm");
     }
-  };
+  }, [
+    assessmentId,
+    editingScore.feedback,
+    editingScore.score,
+    editingStudentId,
+    assessmentInfo.maxScore,
+    scores,
+    refetch,
+    saveScore,
+  ]);
+
+  // Blur handler: chỉ lưu khi rời khỏi tất cả input/textarea của cùng học viên
+  const handleBlurSave = useCallback(
+    (e: React.FocusEvent<HTMLElement>) => {
+      // Nếu focus chuyển sang một ô khác của cùng student thì bỏ qua
+      const next = e.relatedTarget as HTMLElement | null;
+      if (
+        next &&
+        next.dataset &&
+        next.dataset.studentId &&
+        editingStudentId &&
+        next.dataset.studentId === String(editingStudentId)
+      ) {
+        return;
+      }
+      // Rời hẳn ra ngoài -> lưu nếu có điểm, nếu không thì thoát edit
+      if (editingScore.score !== null) {
+        void handleSaveScore();
+      } else {
+        setEditingStudentId(null);
+      }
+    },
+    [editingScore.score, editingStudentId, handleSaveScore]
+  );
 
   const handleBatchSave = async () => {
     if (!assessmentId) return;
@@ -345,6 +378,7 @@ export default function AssessmentScoresPage() {
                                     min="0"
                                     max={assessmentInfo.maxScore}
                                     step="0.01"
+                                    data-student-id={student.studentId}
                                     value={
                                       editingScore.score === null
                                         ? ""
@@ -371,14 +405,7 @@ export default function AssessmentScoresPage() {
                                         setEditingStudentId(null);
                                       }
                                     }}
-                                    onBlur={() => {
-                                      // Khi rời ô nhập, nếu đã có điểm hợp lệ thì tự lưu
-                                      if (editingScore.score !== null) {
-                                        void handleSaveScore();
-                                      } else {
-                                        setEditingStudentId(null);
-                                      }
-                                    }}
+                                    onBlur={handleBlurSave}
                                     className="w-24"
                                     autoFocus
                                     placeholder="Nhập điểm"
@@ -430,6 +457,7 @@ export default function AssessmentScoresPage() {
                                   />
                                 ) : isEditing ? (
                                   <Textarea
+                                    data-student-id={student.studentId}
                                     value={editingScore.feedback}
                                     onChange={(e) =>
                                       setEditingScore({
@@ -448,14 +476,7 @@ export default function AssessmentScoresPage() {
                                         setEditingStudentId(null);
                                       }
                                     }}
-                                    onBlur={() => {
-                                      // Khi rời ô nhận xét, nếu đã có điểm thì tự lưu kèm nhận xét
-                                      if (editingScore.score !== null) {
-                                        void handleSaveScore();
-                                      } else {
-                                        setEditingStudentId(null);
-                                      }
-                                    }}
+                                    onBlur={handleBlurSave}
                                     placeholder="Nhận xét... (Enter để lưu, Shift+Enter để xuống dòng)"
                                     className="min-h-[60px]"
                                   />
