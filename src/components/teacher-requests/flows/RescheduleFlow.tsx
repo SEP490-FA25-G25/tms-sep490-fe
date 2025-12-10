@@ -50,6 +50,7 @@ const STEPS = [
 ]
 
 export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
+  const REASON_MIN_LENGTH = 15
   const [currentStep, setCurrentStep] = useState(1)
   const [selectedSession, setSelectedSession] = useState<MySessionDTO | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
@@ -137,8 +138,8 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
     if (!selectedSession || !selectedDate || !selectedTimeSlotId || !selectedResource) return
 
     const trimmedReason = reason.trim()
-    if (trimmedReason.length < 10) {
-      setReasonError('Lý do phải có tối thiểu 10 ký tự')
+    if (trimmedReason.length < REASON_MIN_LENGTH) {
+      setReasonError(`Lý do phải có tối thiểu ${REASON_MIN_LENGTH} ký tự`)
       return
     }
 
@@ -478,7 +479,7 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
             }}
             placeholder="Ví dụ: Tôi cần đổi lịch vì có việc đột xuất..."
             error={reasonError}
-            minLength={10}
+            minLength={REASON_MIN_LENGTH}
           />
         </div>
 
@@ -554,7 +555,7 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
         (currentStep === 3 && !selectedTimeSlotId) ||
         (currentStep === 4 && !selectedResource)
       }
-      isSubmitDisabled={reason.trim().length < 10}
+      isSubmitDisabled={reason.trim().length < REASON_MIN_LENGTH}
       isSubmitting={isSubmitting}
     >
       {currentStep === 1 && renderStep1()}

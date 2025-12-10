@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Progress } from '@/components/ui/progress'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,26 +48,59 @@ export interface UnifiedRequestFlowProps {
   onSuccess: () => void
 }
 
-// Shared Step Header Component (Wizard Style)
+// Shared Step Header Component (Wizard Style - Numbered Circles)
 interface StepHeaderProps {
   steps: StepConfig[]
   currentStep: number
 }
 
 function StepHeader({ steps, currentStep }: StepHeaderProps) {
-  const progress = Math.round(((currentStep - 1) / (steps.length - 1)) * 100)
-
   return (
-    <div className="space-y-4 mb-6">
-      <div className="flex items-center justify-between text-sm">
-        <span className="font-medium text-muted-foreground">
-          Bước {currentStep} / {steps.length}
-        </span>
-        <span className="font-medium text-primary">
-          {steps[currentStep - 1]?.title}
-        </span>
+    <div className="mb-6">
+      <div className="flex items-center justify-between">
+        {steps.map((step, index) => {
+          const stepNumber = index + 1
+          const isActive = currentStep === stepNumber
+          const isCompleted = step.isComplete || currentStep > stepNumber
+
+          return (
+            <div key={step.id} className="flex items-center flex-1">
+              <div className="flex flex-col items-center flex-1">
+                <div
+                  className={cn(
+                    "h-8 w-8 rounded-full flex items-center justify-center font-medium text-sm transition-colors",
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : isCompleted
+                      ? "bg-primary/20 text-primary"
+                      : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  {stepNumber}
+                </div>
+                <span
+                  className={cn(
+                    "text-xs mt-1 text-center",
+                    isActive
+                      ? "text-primary font-medium"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  {step.title}
+                </span>
+              </div>
+              {index < steps.length - 1 && (
+                <div
+                  className={cn(
+                    "h-0.5 flex-1 mx-2 transition-colors",
+                    isCompleted ? "bg-primary" : "bg-muted"
+                  )}
+                />
+              )}
+            </div>
+          )
+        })}
       </div>
-      <Progress value={progress} className="h-2" />
     </div>
   )
 }
@@ -231,7 +263,7 @@ export function BaseFlowComponent({
     <div className="space-y-6">
       <StepHeader steps={steps} currentStep={currentStep} />
 
-      <div className="px-1">
+      <div className="px-1 min-h-[450px]">
         {children}
       </div>
 
@@ -294,7 +326,7 @@ export function Section({
   className?: string
 }) {
   return (
-    <div className={cn('space-y-4 animate-in fade-in slide-in-from-right-4 duration-300', className)}>
+    <div className={cn('min-h-[450px] space-y-4 animate-in fade-in slide-in-from-right-4 duration-300', className)}>
       {children}
     </div>
   )
@@ -303,7 +335,6 @@ export function Section({
 // Import individual flow components
 import AbsenceFlow from './flows/AbsenceFlow'
 import MakeupFlow from './flows/MakeupFlow'
-import TransferFlow from './flows/TransferFlow'
 
 // Main Unified Request Flow Component
 export default function UnifiedRequestFlow({ type, onSuccess }: UnifiedRequestFlowProps) {
@@ -313,7 +344,7 @@ export default function UnifiedRequestFlow({ type, onSuccess }: UnifiedRequestFl
     case 'MAKEUP':
       return <MakeupFlow onSuccess={onSuccess} />
     case 'TRANSFER':
-      return <TransferFlow onSuccess={onSuccess} />
+      return <div>Transfer flow không khả dụng. Vui lòng liên hệ Phòng Học vụ.</div>
     default:
       return <div>Unknown flow type</div>
   }

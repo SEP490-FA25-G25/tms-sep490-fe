@@ -15,12 +15,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
-  FullScreenModal,
-  FullScreenModalContent,
-  FullScreenModalHeader,
-  FullScreenModalTitle,
-  FullScreenModalBody,
-} from '@/components/ui/full-screen-modal'
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   Pagination,
   PaginationContent,
@@ -525,16 +524,16 @@ export default function AcademicRequestsPage() {
       />
 
       {/* On-Behalf Creation Modal */}
-      <FullScreenModal open={activeRequestType !== null} onOpenChange={(open) => !open && setActiveRequestType(null)}>
-        <FullScreenModalContent size="2xl">
-          <FullScreenModalHeader>
-            <FullScreenModalTitle>
+      <Dialog open={activeRequestType !== null} onOpenChange={(open) => !open && setActiveRequestType(null)}>
+        <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
               {activeRequestType === 'ABSENCE' && 'Báo nghỉ học viên'}
               {activeRequestType === 'MAKEUP' && 'Xếp lịch học bù'}
               {activeRequestType === 'TRANSFER' && 'Đổi lớp học viên'}
-            </FullScreenModalTitle>
-          </FullScreenModalHeader>
-          <FullScreenModalBody>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
             {activeRequestType === 'ABSENCE' && (
               <AAAbsenceFlow
                 onSuccess={() => {
@@ -561,9 +560,9 @@ export default function AcademicRequestsPage() {
                 }}
               />
             )}
-          </FullScreenModalBody>
-        </FullScreenModalContent>
-      </FullScreenModal>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   )
 }
