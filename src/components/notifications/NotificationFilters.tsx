@@ -19,18 +19,18 @@ export function NotificationFilters({
     onMarkAllAsRead,
     hasUnread,
 }: NotificationFiltersProps) {
-    const hasActiveFilters = filters.type !== undefined || filters.priority !== undefined
+    const hasActiveFilters = filters.type !== undefined || filters.status !== undefined
 
     return (
         <div className="flex flex-col gap-4 border-b pb-4">
             <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
                 {/* Primary Filter (Tabs) */}
                 <Tabs
-                    value={filters.isRead === undefined ? "all" : filters.isRead ? "read" : "unread"}
+                    value={filters.status === undefined ? "all" : filters.status === "READ" ? "read" : "unread"}
                     onValueChange={(value) => {
-                        if (value === "all") onFilterChange("isRead", undefined)
-                        else if (value === "unread") onFilterChange("isRead", false)
-                        else if (value === "read") onFilterChange("isRead", true)
+                        if (value === "all") onFilterChange("status", undefined)
+                        else if (value === "unread") onFilterChange("status", "UNREAD")
+                        else if (value === "read") onFilterChange("status", "READ")
                     }}
                     className="w-full sm:w-auto"
                 >
@@ -75,31 +75,10 @@ export function NotificationFilters({
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">Tất cả loại</SelectItem>
-                        <SelectItem value="INFO">Thông tin</SelectItem>
-                        <SelectItem value="SUCCESS">Thành công</SelectItem>
-                        <SelectItem value="WARNING">Cảnh báo</SelectItem>
-                        <SelectItem value="ERROR">Lỗi</SelectItem>
-                        <SelectItem value="URGENT">Khẩn cấp</SelectItem>
                         <SelectItem value="SYSTEM">Hệ thống</SelectItem>
-                        <SelectItem value="ANNOUNCEMENT">Thông báo</SelectItem>
-                    </SelectContent>
-                </Select>
-
-                <Select
-                    value={filters.priority || "all"}
-                    onValueChange={(value) =>
-                        onFilterChange("priority", value === "all" ? undefined : value)
-                    }
-                >
-                    <SelectTrigger className="h-8 w-[130px] text-xs">
-                        <SelectValue placeholder="Mức độ ưu tiên" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Tất cả mức độ</SelectItem>
-                        <SelectItem value="LOW">Thấp</SelectItem>
-                        <SelectItem value="MEDIUM">Trung bình</SelectItem>
-                        <SelectItem value="HIGH">Cao</SelectItem>
-                        <SelectItem value="URGENT">Khẩn cấp</SelectItem>
+                        <SelectItem value="REQUEST">Yêu cầu</SelectItem>
+                        <SelectItem value="REMINDER">Nhắc nhở</SelectItem>
+                        <SelectItem value="NOTIFICATION">Thông báo</SelectItem>
                     </SelectContent>
                 </Select>
 

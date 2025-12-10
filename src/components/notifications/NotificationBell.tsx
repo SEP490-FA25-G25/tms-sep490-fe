@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
 import type { Notification } from "@/store/services/notificationApi";
-import { BellIcon, ExternalLinkIcon, ClockIcon } from "lucide-react";
+import { BellIcon } from "lucide-react";
 import {
   useGetRecentNotificationsQuery,
   useGetUnreadCountQuery,
@@ -43,7 +43,6 @@ export function NotificationBell({
   // Polling every 30 seconds to get realtime notification updates
   const { data: unreadCount = 0, refetch: refetchUnreadCount } =
     useGetUnreadCountQuery(undefined, {
-      skip:true,
       pollingInterval: 30000, // 30 seconds
       refetchOnMountOrArgChange: true,
       refetchOnFocus: true,
@@ -55,7 +54,7 @@ export function NotificationBell({
     error,
     refetch,
   } = useGetRecentNotificationsQuery(undefined, {
-    skip: !isOpen || true, // Only fetch when dropdown is open
+    skip: !isOpen, // Only fetch when dropdown is open
     refetchOnMountOrArgChange: true,
   });
 
@@ -91,10 +90,25 @@ export function NotificationBell({
       await handleMarkAsRead(notification.id);
     }
 
-    // Navigate to action URL if available
-    if (notification.actionUrl) {
-      navigate(notification.actionUrl);
-      setIsOpen(false);
+    // Navigate based on notification type (frontend routing logic)
+    const getRoute = (type: Notification['type']): string | null => {
+      switch (type) {
+        case 'REQUEST':
+          return '/student-requests'
+        case 'REMINDER':
+          return '/my-classes'
+        case 'SYSTEM':
+        case 'NOTIFICATION':
+          return '/notifications'
+        default:
+          return null
+      }
+    }
+
+    const route = getRoute(notification.type)
+    if (route) {
+      navigate(route)
+      setIsOpen(false)
     }
   };
 
@@ -261,19 +275,8 @@ export function NotificationBell({
                                 : "text-muted-foreground/70"
                             }`}
                           >
-                            <ClockIcon className="h-3 w-3" />
                             {formatTimeAgo(notification.createdAt)}
                           </div>
-
-                          {notification.actionUrl && (
-                            <ExternalLinkIcon
-                              className={`h-3 w-3 ${
-                                isUnread
-                                  ? "text-muted-foreground"
-                                  : "text-muted-foreground/70"
-                              }`}
-                            />
-                          )}
                         </div>
                       </div>
                     </div>

@@ -23,13 +23,27 @@ import { toast } from "sonner"
 import { formatTimeAgo } from "@/lib/date-utils"
 import {
   getNotificationTypeConfig,
-  getPriorityConfig,
   isNotificationRead,
 } from "@/lib/notification-utils"
 import { cn } from "@/lib/utils"
 
 interface NotificationCardProps {
   notification: Notification
+}
+
+function getNotificationRoute(notification: Notification): string | null {
+  switch (notification.type) {
+    case 'REQUEST':
+      return '/student-requests'
+    case 'REMINDER':
+      return '/my-classes'
+    case 'SYSTEM':
+      return '/notifications'
+    case 'NOTIFICATION':
+      return '/notifications'
+    default:
+      return null
+  }
 }
 
 export function NotificationCard({ notification }: NotificationCardProps) {
@@ -39,7 +53,6 @@ export function NotificationCard({ notification }: NotificationCardProps) {
 
   const isRead = isNotificationRead(notification)
   const typeConfig = getNotificationTypeConfig(notification.type)
-  const priorityConfigValue = getPriorityConfig(notification.priority)
   const TypeIcon = typeConfig.icon
 
   const handleMarkAsRead = async (e?: React.MouseEvent) => {
@@ -72,9 +85,10 @@ export function NotificationCard({ notification }: NotificationCardProps) {
       }
     }
 
-    // Navigate to action URL if available
-    if (notification.actionUrl) {
-      navigate(notification.actionUrl)
+    // Navigate based on notification type
+    const route = getNotificationRoute(notification)
+    if (route) {
+      navigate(route)
     }
   }
 
@@ -125,11 +139,6 @@ export function NotificationCard({ notification }: NotificationCardProps) {
               <span>{formatTimeAgo(notification.createdAt)}</span>
             </div>
 
-            {notification.priority !== 'LOW' && notification.priority !== 'MEDIUM' && (
-              <Badge variant={priorityConfigValue.badgeVariant} className="text-[10px] h-5 px-1.5 font-normal">
-                {priorityConfigValue.label}
-              </Badge>
-            )}
             <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-normal text-muted-foreground">
               {typeConfig.label}
             </Badge>

@@ -1,9 +1,7 @@
 import {
   InfoIcon,
-  CheckCircleIcon,
-  AlertTriangleIcon,
-  XCircleIcon,
   AlertCircleIcon,
+  BellIcon,
   MegaphoneIcon,
   type LucideIcon,
 } from "lucide-react"
@@ -18,77 +16,29 @@ export interface NotificationTypeConfig {
 }
 
 export const notificationTypeConfig: Record<Notification['type'], NotificationTypeConfig> = {
-  INFO: {
-    icon: InfoIcon,
-    className: "text-blue-600",
-    bgClassName: "bg-blue-100",
-    label: "Thông tin"
-  },
-  SUCCESS: {
-    icon: CheckCircleIcon,
-    className: "text-green-600",
-    bgClassName: "bg-green-100",
-    label: "Thành công"
-  },
-  WARNING: {
-    icon: AlertTriangleIcon,
-    className: "text-yellow-600",
-    bgClassName: "bg-yellow-100",
-    label: "Cảnh báo"
-  },
-  ERROR: {
-    icon: XCircleIcon,
-    className: "text-red-600",
-    bgClassName: "bg-red-100",
-    label: "Lỗi"
-  },
-  URGENT: {
-    icon: AlertCircleIcon,
-    className: "text-red-600",
-    bgClassName: "bg-red-100",
-    label: "Khẩn cấp"
-  },
   SYSTEM: {
     icon: MegaphoneIcon,
     className: "text-purple-600",
     bgClassName: "bg-purple-100",
     label: "Hệ thống"
   },
-  ANNOUNCEMENT: {
-    icon: MegaphoneIcon,
-    className: "text-indigo-600",
-    bgClassName: "bg-indigo-100",
+  REQUEST: {
+    icon: AlertCircleIcon,
+    className: "text-blue-600",
+    bgClassName: "bg-blue-100",
+    label: "Yêu cầu"
+  },
+  REMINDER: {
+    icon: BellIcon,
+    className: "text-orange-600",
+    bgClassName: "bg-orange-100",
+    label: "Nhắc nhở"
+  },
+  NOTIFICATION: {
+    icon: InfoIcon,
+    className: "text-green-600",
+    bgClassName: "bg-green-100",
     label: "Thông báo"
-  },
-}
-
-// Priority config for notification styling
-export interface PriorityConfig {
-  className: string
-  badgeVariant: "default" | "secondary" | "destructive" | "outline"
-  label: string
-}
-
-export const priorityConfig: Record<Notification['priority'], PriorityConfig> = {
-  LOW: {
-    className: "border-gray-200",
-    badgeVariant: "secondary",
-    label: "Thấp"
-  },
-  MEDIUM: {
-    className: "border-blue-200",
-    badgeVariant: "default",
-    label: "Trung bình"
-  },
-  HIGH: {
-    className: "border-orange-200",
-    badgeVariant: "destructive",
-    label: "Cao"
-  },
-  URGENT: {
-    className: "border-red-200",
-    badgeVariant: "destructive",
-    label: "Khẩn cấp"
   },
 }
 
@@ -96,20 +46,12 @@ export const priorityConfig: Record<Notification['priority'], PriorityConfig> = 
  * Get type config for a notification
  */
 export function getNotificationTypeConfig(type: Notification['type']): NotificationTypeConfig {
-  return notificationTypeConfig[type] || notificationTypeConfig.INFO
-}
-
-/**
- * Get priority config for a notification
- */
-export function getPriorityConfig(priority: Notification['priority']): PriorityConfig {
-  return priorityConfig[priority] || priorityConfig.MEDIUM
+  return notificationTypeConfig[type] || notificationTypeConfig.NOTIFICATION
 }
 
 /**
  * Check if notification is read
  */
 export function isNotificationRead(notification: Notification): boolean {
-  return notification.isRead ?? (notification.status === 'READ' || notification.unread === false)
+  return notification.status === 'READ' || notification.status === 'ARCHIVED' || !notification.unread
 }
-
