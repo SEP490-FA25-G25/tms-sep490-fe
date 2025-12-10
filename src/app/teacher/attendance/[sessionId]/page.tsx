@@ -145,8 +145,8 @@ type SessionInfo = {
   sessionId: number;
   classId: number;
   classCode?: string;
-  courseCode?: string;
-  courseName: string;
+  subjectCode?: string;
+  subjectName: string;
   date: string;
   startTime?: string;
   endTime?: string;
@@ -234,8 +234,8 @@ export default function AttendanceDetailPage() {
         sessionId: sessionDetail.sessionId,
         classId: sessionDetail.classId,
         classCode: sessionDetail.classCode,
-        courseCode: sessionDetail.courseCode,
-        courseName: sessionDetail.courseName,
+        subjectCode: sessionDetail.subjectCode,
+        subjectName: sessionDetail.subjectName,
         date: sessionDetail.date,
         startTime: mergedStart,
         endTime: mergedEnd,
@@ -253,8 +253,8 @@ export default function AttendanceDetailPage() {
         sessionId: fallbackSession.sessionId,
         classId: fallbackSession.classId,
         classCode: fallbackSession.classCode,
-        courseCode: fallbackSession.courseCode,
-        courseName: fallbackSession.courseName,
+        subjectCode: fallbackSession.subjectCode,
+        subjectName: fallbackSession.subjectName,
         date: fallbackSession.date,
         startTime: mergedStart,
         endTime: mergedEnd,
@@ -607,7 +607,7 @@ export default function AttendanceDetailPage() {
               <div className="space-y-3">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">
-                    {session.courseName}
+                    {session.subjectName}
                   </h3>
                 </div>
 
@@ -1000,7 +1000,7 @@ export default function AttendanceDetailPage() {
                           Tên khóa học
                         </Label>
                         <p className="text-sm font-medium">
-                          {reportData?.courseName || "N/A"}
+                          {reportData?.subjectName || "N/A"}
                         </p>
                       </div>
 

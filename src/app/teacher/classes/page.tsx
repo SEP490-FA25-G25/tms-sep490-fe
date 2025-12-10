@@ -106,8 +106,8 @@ export default function TeacherClassesPage() {
   const normalizedClasses = useMemo(() => {
     return allClasses.map((item) => ({
       ...item,
-      subjectName: item.subjectName ?? item.courseName,
-      subjectCode: item.subjectCode ?? item.courseCode,
+      subjectName: item.subjectName,
+      subjectCode: item.subjectCode,
       curriculumName: item.curriculumName,
     }));
   }, [allClasses]);

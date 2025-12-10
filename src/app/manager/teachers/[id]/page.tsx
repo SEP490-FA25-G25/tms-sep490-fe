@@ -403,7 +403,7 @@ export default function ManagerTeacherDetailPage() {
                           </TableCell>
                           <TableCell>{cls.className}</TableCell>
                           <TableCell className="text-xs text-muted-foreground">
-                            {cls.courseName}
+                            {cls.subjectName}
                           </TableCell>
                           <TableCell className="text-xs">
                             {cls.branchName}

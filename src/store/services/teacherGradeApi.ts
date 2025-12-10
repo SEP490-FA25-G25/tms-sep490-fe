@@ -10,7 +10,7 @@ import type {
 export interface TeacherAssessmentDTO {
   id: number;
   classId: number;
-  courseAssessmentId?: number;
+  subjectAssessmentId?: number;
   name: string;
   description?: string;
   kind?: string;

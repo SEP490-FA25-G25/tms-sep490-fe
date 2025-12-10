@@ -12,7 +12,6 @@ import {
   useGetRequestByIdQuery,
   useConfirmReplacementRequestMutation,
   useRejectReplacementRequestMutation,
-  useGetTeacherRequestConfigQuery,
   type RequestType,
   type RequestStatus,
   type TeacherRequestDTO,
@@ -270,9 +269,8 @@ export default function MyRequestsPage() {
     refetchOnFocus: true,
   });
 
-  // Load teacher request config for policy values
-  const { data: teacherConfig } = useGetTeacherRequestConfigQuery();
-  const reasonMinLength = teacherConfig?.data?.reasonMinLength ?? 10;
+  // Hardcoded validation values
+  const reasonMinLength = 10;
   const [activeType, setActiveType] = useState<RequestType | null>(null);
   const [typeFilter, setTypeFilter] = useState<"ALL" | RequestType>("ALL");
   const [statusFilter, setStatusFilter] = useState<"ALL" | RequestStatus>(
