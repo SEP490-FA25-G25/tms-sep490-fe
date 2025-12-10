@@ -9,7 +9,7 @@ import { Suspense, lazy } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { NavigationGuardProvider } from "@/contexts/NavigationGuardContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { AuthRedirect } from "@/components/AuthRedirect";
+import { AuthRedirect } from "@/components/dashboard/AuthRedirect";
 import { ApiSetup } from "@/components/ApiSetup";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -38,6 +38,7 @@ const AdminUsersPage = lazy(() => import("./app/admin/users/page"));
 const AdminCentersPage = lazy(() => import("./app/admin/centers/page"));
 const AdminSubjectsPage = lazy(() => import("./app/admin/subjects/page"));
 const AdminAnalyticsPage = lazy(() => import("./app/admin/analytics/page"));
+const AdminDashboardPage = lazy(() => import("./app/admin/dashboard/page"));
 
 // Teacher pages
 const TeacherClassesPage = lazy(() => import("./app/teacher/classes/page"));
@@ -352,6 +353,14 @@ function App() {
                   element={
                     <ProtectedRoute requiredRoles={["ADMIN"]}>
                       <AdminUsersPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/dashboard-stats"
+                  element={
+                    <ProtectedRoute requiredRoles={["ADMIN"]}>
+                      <AdminDashboardPage />
                     </ProtectedRoute>
                   }
                 />

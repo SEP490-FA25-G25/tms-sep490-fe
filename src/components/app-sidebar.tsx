@@ -77,18 +77,13 @@ const roleBasedNav = {
     navMain: [
       {
         title: "Bảng điều khiển",
-        url: "/admin/dashboard",
+        url: "/admin/dashboard-stats",
         icon: HomeIcon,
       },
       {
         title: "Quản lý tài khoản người dùng",
         url: "/admin/users",
         icon: UsersIcon,
-      },
-      {
-        title: "Quản lý vai trò hệ thống",
-        url: "/admin/roles",
-        icon: AwardIcon,
       },
     ],
   },
