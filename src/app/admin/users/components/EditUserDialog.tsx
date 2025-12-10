@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -25,6 +25,7 @@ import {
   useUpdateUserMutation,
   type UpdateUserRequest,
   type UserResponse,
+  useCheckPhoneExistsQuery,
 } from "@/store/services/userApi";
 import { useGetBranchesQuery } from "@/store/services/classCreationApi";
 import { ROLES } from "@/hooks/useRoleBasedAccess";
@@ -42,14 +43,30 @@ const ROLE_OPTIONS = [
 ];
 
 const GENDER_VALUES = ["MALE", "FEMALE", "OTHER"] as const;
-const STATUS_VALUES = ["ACTIVE", "INACTIVE", "SUSPENDED"] as const;
+const STATUS_VALUES = ["ACTIVE", "INACTIVE"] as const;
 
 const updateUserSchema = z.object({
-  fullName: z.string().min(1, "Họ tên là bắt buộc"),
-  phone: z.string().optional(),
+  fullName: z
+    .string()
+    .min(1, "Họ tên là bắt buộc")
+    .refine(
+      (val) => val.trim().length > 0,
+      "Họ tên không được chỉ chứa khoảng trắng"
+    ),
+  phone: z
+    .string()
+    .regex(/^(0[3|5|7|8|9])[0-9]{8}$/, "Số điện thoại phải có 10-11 chữ số")
+    .optional()
+    .or(z.literal("")),
   facebookUrl: z.string().url("URL không hợp lệ").optional().or(z.literal("")),
   avatarUrl: z.string().url("URL không hợp lệ").optional().or(z.literal("")),
-  dob: z.string().optional(),
+  dob: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || new Date(val) < new Date(),
+      "Ngày sinh phải là ngày trong quá khứ"
+    ),
   gender: z.enum(GENDER_VALUES),
   address: z.string().optional(),
   status: z.enum(STATUS_VALUES),
@@ -84,6 +101,20 @@ export function EditUserDialog({
     skip: !open,
   });
 
+  const [phoneToCheck, setPhoneToCheck] = useState<string | null>(null);
+
+  // Check phone có tồn tại chưa (realtime)
+  const { data: phoneExistsData } = useCheckPhoneExistsQuery(
+    phoneToCheck || "",
+    { skip: !phoneToCheck }
+  );
+
+  // Phone triggers duplicate error only if it exists AND is different from current user's phone
+  const isPhoneDuplicate =
+    !!phoneToCheck &&
+    phoneExistsData?.data === true &&
+    phoneToCheck !== user?.phone;
+
   const {
     register,
     handleSubmit,
@@ -93,10 +124,34 @@ export function EditUserDialog({
     reset,
   } = useForm<UpdateUserFormData>({
     resolver: zodResolver(updateUserSchema),
+    mode: "onChange",
   });
 
   const selectedRoleIds = watch("roleIds") || [];
   const selectedBranchIds = watch("branchIds") || [];
+  const phone = watch("phone");
+
+  // Debounce phone check
+  useEffect(() => {
+    const phoneRegex = /^(0[3|5|7|8|9])[0-9]{8}$/;
+
+    // Nếu phone rỗng, hoặc không đúng format, hoặc giống số hiện tại => không check API
+    if (
+      !phone ||
+      !phoneRegex.test(phone) ||
+      errors.phone ||
+      phone === user?.phone
+    ) {
+      setPhoneToCheck(null);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setPhoneToCheck(phone);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [phone, errors.phone, user?.phone]);
 
   const branches = useMemo(
     () => branchesResponse?.data || [],
@@ -105,17 +160,19 @@ export function EditUserDialog({
 
   // Pre-fill form when user changes
   useEffect(() => {
-    if (user && open && branches.length > 0) {
+    if (user && open) {
       const roleIds = getRoleIdsFromCodes(user.roles || []);
-      // Map branch names to branch IDs
-      const branchIds = user.branches
+      // Map branch names với branch IDs (chỉ khi branches đã load)
+      const branchIds = branches.length > 0 && user.branches
         ? user.branches
-            .map((branchName) => {
-              const branch = branches.find((b) => b.name === branchName);
-              return branch?.id;
-            })
-            .filter((id): id is number => id !== undefined)
+          .map((branchName) => {
+            const branch = branches.find((b) => b.name === branchName);
+            return branch?.id;
+          })
+          .filter((id): id is number => id !== undefined)
         : [];
+
+      console.log('EditUserDialog reset:', { userRoles: user.roles, roleIds, branchIds });
 
       reset({
         fullName: user.fullName || "",
@@ -125,7 +182,7 @@ export function EditUserDialog({
         dob: user.dob ? user.dob.split("T")[0] : "", // Convert ISO date to YYYY-MM-DD
         gender: user.gender || "MALE",
         address: user.address || "",
-        status: user.status || "ACTIVE",
+        status: (user.status === "ACTIVE" || user.status === "INACTIVE") ? user.status : "ACTIVE",
         roleIds,
         branchIds,
       });
@@ -158,6 +215,23 @@ export function EditUserDialog({
 
   const onSubmit = async (data: UpdateUserFormData) => {
     if (!user) return;
+    if (isPhoneDuplicate) return; // Block submit if duplicate phone
+
+    // check roleIds luôn có giá trị - nếu data.roleIds rỗng thì dùng original roleIds
+    const originalRoleIds = getRoleIdsFromCodes(user.roles || []);
+    const finalRoleIds = data.roleIds && data.roleIds.length > 0
+      ? data.roleIds
+      : originalRoleIds;
+
+    // check branchIds luôn có giá trị - nếu data.branchIds rỗng thì dùng original branchIds  
+    const originalBranchIds = branches.length > 0 && user.branches
+      ? user.branches
+        .map((branchName) => branches.find((b) => b.name === branchName)?.id)
+        .filter((id): id is number => id !== undefined)
+      : [];
+    const finalBranchIds = data.branchIds && data.branchIds.length > 0
+      ? data.branchIds
+      : originalBranchIds;
 
     try {
       const request: UpdateUserRequest = {
@@ -169,12 +243,11 @@ export function EditUserDialog({
         gender: data.gender,
         address: data.address || undefined,
         status: data.status,
-        roleIds: data.roleIds,
-        branchIds:
-          data.branchIds && data.branchIds.length > 0
-            ? data.branchIds
-            : undefined,
+        roleIds: finalRoleIds.length > 0 ? finalRoleIds : undefined,
+        branchIds: finalBranchIds.length > 0 ? finalBranchIds : undefined,
       };
+
+      console.log('Update request:', request);
 
       await updateUser({ id: user.id, data: request }).unwrap();
       toast.success("Cập nhật người dùng thành công");
@@ -185,7 +258,7 @@ export function EditUserDialog({
     } catch (error: unknown) {
       toast.error(
         (error as { data?: { message?: string } })?.data?.message ||
-          "Cập nhật người dùng thất bại. Vui lòng thử lại."
+        "Cập nhật người dùng thất bại. Vui lòng thử lại."
       );
     }
   };
@@ -240,6 +313,14 @@ export function EditUserDialog({
                 placeholder="0912345678"
                 {...register("phone")}
               />
+              {errors.phone && (
+                <p className="text-sm text-destructive">{errors.phone.message}</p>
+              )}
+              {isPhoneDuplicate && (
+                <p className="text-sm text-destructive">
+                  Số điện thoại đã được sử dụng
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="gender">
@@ -273,6 +354,9 @@ export function EditUserDialog({
             <div className="space-y-2">
               <Label htmlFor="dob">Ngày sinh</Label>
               <Input id="dob" type="date" {...register("dob")} />
+              {errors.dob && (
+                <p className="text-sm text-destructive">{errors.dob.message}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="status">
@@ -283,7 +367,7 @@ export function EditUserDialog({
                 onValueChange={(value) =>
                   setValue(
                     "status",
-                    value as "ACTIVE" | "INACTIVE" | "SUSPENDED"
+                    value as "ACTIVE" | "INACTIVE"
                   )
                 }
               >
@@ -293,7 +377,6 @@ export function EditUserDialog({
                 <SelectContent>
                   <SelectItem value="ACTIVE">Hoạt động</SelectItem>
                   <SelectItem value="INACTIVE">Không hoạt động</SelectItem>
-                  <SelectItem value="SUSPENDED">Tạm khóa</SelectItem>
                 </SelectContent>
               </Select>
               {errors.status && (
@@ -406,7 +489,7 @@ export function EditUserDialog({
             >
               Hủy
             </Button>
-            <Button type="submit" disabled={isUpdating}>
+            <Button type="submit" disabled={isUpdating || isPhoneDuplicate}>
               {isUpdating ? "Đang cập nhật..." : "Cập nhật"}
             </Button>
           </DialogFooter>
