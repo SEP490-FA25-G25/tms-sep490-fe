@@ -75,7 +75,7 @@ export interface StudentClassDTO {
 }
 
 // Nested interfaces for ClassDetailDTO
-export interface CurriculumInfo {  // Renamed from SubjectInfo
+export interface CurriculumInfo {
   id: number;
   code: string;
   name: string;
@@ -85,6 +85,14 @@ export interface LevelInfo {
   id: number;
   code: string;
   name: string;
+  curriculum?: CurriculumInfo;
+}
+
+export interface SubjectInfo {
+  id: number;
+  code: string;
+  name: string;
+  level?: LevelInfo;
 }
 
 export interface SubjectInfo {

@@ -105,8 +105,12 @@ export interface AttendanceClassDTO {
   id: number;
   code: string;
   name: string;
-  courseName: string;
-  courseCode: string;
+  // Backend may still return course*, add subject* for consistency
+  courseName?: string;
+  courseCode?: string;
+  subjectName?: string;
+  subjectCode?: string;
+  curriculumName?: string;
   branchName: string;
   branchCode: string;
   modality: "ONLINE" | "OFFLINE";
@@ -128,9 +132,13 @@ export interface StudentAttendanceOverviewClassDTO {
   classId: number;
   classCode: string;
   className: string;
-  courseId: number;
-  courseCode: string;
-  courseName: string;
+  courseId?: number;
+  courseCode?: string;
+  courseName?: string;
+  subjectId?: number;
+  subjectCode?: string;
+  subjectName?: string;
+  curriculumName?: string;
    startDate: string;
    actualEndDate: string | null;
   totalSessions: number;
