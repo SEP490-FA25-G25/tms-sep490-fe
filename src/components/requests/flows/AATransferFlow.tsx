@@ -1,10 +1,18 @@
-import { useState, useCallback, useMemo } from 'react'
-import { format, parseISO, addDays } from 'date-fns'
-import { vi } from 'date-fns/locale'
+import { useState } from 'react'
 import { skipToken } from '@reduxjs/toolkit/query'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowRightIcon, Info, MapPin, Clock, AlertTriangle, Check } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Info, MapPin, Clock, AlertTriangle, Check, Users } from 'lucide-react'
 import {
   useGetAcademicTransferEligibilityQuery,
   useGetAcademicTransferOptionsQuery,
@@ -18,8 +26,7 @@ import {
   Section,
   ReasonInput,
   NoteInput,
-  BaseFlowComponent,
-  SelectionCard
+  BaseFlowComponent
 } from '../UnifiedRequestFlow'
 import HorizontalTimeline from './HorizontalTimeline'
 import {
@@ -51,11 +58,13 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
   const [selectedCurrentClass, setSelectedCurrentClass] = useState<TransferEligibility | null>(null)
   const [selectedTargetClass, setSelectedTargetClass] = useState<TransferOption | null>(null)
   const [targetModality, setTargetModality] = useState<SessionModality | undefined>()
-  const [weekOffset, setWeekOffset] = useState(0)
-  const [selectedSessionIndex, setSelectedSessionIndex] = useState<number | null>(null)
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null)
   const [requestReason, setRequestReason] = useState('')
   const [note, setNote] = useState('')
+
+  // State for capacity override confirmation dialog (shown on submit if target class is full)
+  const [showOverrideDialog, setShowOverrideDialog] = useState(false)
+  const [overrideReason, setOverrideReason] = useState('')
 
   const {
     data: eligibilityResponse,
@@ -83,63 +92,12 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
 
   const transferOptions = optionsResponse?.data?.availableClasses ?? []
 
-  // Group upcoming sessions by week
-  const upcomingSessions = useMemo(() => selectedTargetClass?.upcomingSessions ?? [], [selectedTargetClass])
-  const sessionsByWeek = useMemo(() => {
-    if (upcomingSessions.length === 0) return []
-
-    const grouped: Array<{ weekStart: Date; weekEnd: Date; sessions: typeof upcomingSessions }> = []
-    let currentWeek: typeof upcomingSessions = []
-    let weekStart: Date | null = null
-
-    upcomingSessions.forEach((session, index) => {
-      const sessionDate = parseISO(session.date)
-
-      if (!weekStart) {
-        weekStart = sessionDate
-      }
-
-      const daysSinceWeekStart = Math.floor((sessionDate.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24))
-
-      if (daysSinceWeekStart < 7) {
-        currentWeek.push(session)
-      } else {
-        grouped.push({
-          weekStart: weekStart,
-          weekEnd: addDays(weekStart, 6),
-          sessions: currentWeek
-        })
-        weekStart = sessionDate
-        currentWeek = [session]
-      }
-
-      if (index === upcomingSessions.length - 1 && currentWeek.length > 0) {
-        grouped.push({
-          weekStart: weekStart!,
-          weekEnd: addDays(weekStart!, 6),
-          sessions: currentWeek
-        })
-      }
-    })
-
-    return grouped
-  }, [upcomingSessions])
-
-  const currentWeek = sessionsByWeek[weekOffset]
-  const selectedSession = selectedSessionIndex !== null && currentWeek
-    ? currentWeek.sessions[selectedSessionIndex]
-    : null
-  
-  // For new timeline: find selected session by ID
-  const selectedTimelineSession = selectedSessionId && selectedTargetClass?.allSessions
+  // Find selected session from timeline
+  const selectedSession = selectedSessionId && selectedTargetClass?.allSessions
     ? selectedTargetClass.allSessions.find(s => s.sessionId === selectedSessionId)
     : null
-  
-  const effectiveDate = selectedTimelineSession?.date ?? selectedSession?.date ?? ''
 
-  const weekRangeLabel = currentWeek
-    ? `${format(currentWeek.weekStart, 'dd/MM', { locale: vi })} - ${format(currentWeek.weekEnd, 'dd/MM', { locale: vi })}`
-    : ''
+  const effectiveDate = selectedSession?.date ?? ''
 
   const [submitTransfer, { isLoading: isSubmitting }] = useSubmitTransferOnBehalfMutation()
   const { handleSuccess } = useSuccessHandler(onSuccess)
@@ -150,7 +108,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
     setSelectedCurrentClass(null)
     setSelectedTargetClass(null)
     setTargetModality(undefined)
-    setSelectedSessionIndex(null)
+    setSelectedSessionId(null)
     setRequestReason('')
     setNote('')
     setCurrentStep(2) // Auto advance to next step
@@ -160,14 +118,6 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
     // This will close the modal via onSuccess callback
     onSuccess()
   }
-
-  const handleChangeWeek = useCallback((direction: 'prev' | 'next') => {
-    setWeekOffset(prev => {
-      const newOffset = direction === 'next' ? prev + 1 : prev - 1
-      return Math.max(0, Math.min(newOffset, sessionsByWeek.length - 1))
-    })
-    setSelectedSessionIndex(null)
-  }, [sessionsByWeek.length])
 
   const handleNext = () => {
     if (currentStep === 2 && selectedCurrentClass) {
@@ -200,10 +150,28 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
       return
     }
 
-    if (!selectedSession) {
+    if (!selectedSessionId || !selectedSession) {
       handleError(new Error('Vui lòng chọn buổi học bắt đầu'))
       return
     }
+
+    // Check if target class is full - show confirmation dialog
+    const isTargetFull = (selectedTargetClass.availableSlots ?? 0) <= 0
+    if (isTargetFull && !showOverrideDialog) {
+      setShowOverrideDialog(true)
+      return
+    }
+
+    await executeSubmit()
+  }
+
+  const executeSubmit = async () => {
+    if (!selectedStudent || !selectedCurrentClass || !selectedTargetClass || !selectedSessionId || !effectiveDate) {
+      console.error('Missing required fields for submit')
+      return
+    }
+
+    const isTargetFull = (selectedTargetClass.availableSlots ?? 0) <= 0
 
     try {
       await submitTransfer({
@@ -211,11 +179,16 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
         currentClassId: selectedCurrentClass.classId,
         targetClassId: selectedTargetClass.classId,
         effectiveDate,
-        sessionId: selectedSession.sessionId,
+        sessionId: selectedSessionId,
         requestReason: requestReason.trim(),
         note: note.trim() || undefined,
+        // Capacity override fields (AA only)
+        capacityOverride: isTargetFull ? true : undefined,
+        overrideReason: isTargetFull ? overrideReason.trim() : undefined,
       }).unwrap()
 
+      setShowOverrideDialog(false)
+      setOverrideReason('')
       handleSuccess()
     } catch (error) {
       handleError(error)
@@ -273,349 +246,422 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
   }
 
   return (
-    <BaseFlowComponent
-      steps={steps}
-      currentStep={currentStep}
-      onNext={handleNext}
-      onBack={handleBack}
-      onSubmit={handleSubmit}
-      isNextDisabled={
-        (currentStep === 2 && !selectedCurrentClass) ||
-        (currentStep === 3 && !selectedTargetClass)
-      }
-      isSubmitDisabled={!step4Complete}
-      isSubmitting={isSubmitting}
-      submitLabel="Xử lý yêu cầu"
-    >
+    <>
+      <BaseFlowComponent
+        steps={steps}
+        currentStep={currentStep}
+        onNext={handleNext}
+        onBack={handleBack}
+        onSubmit={handleSubmit}
+        isNextDisabled={
+          (currentStep === 2 && !selectedCurrentClass) ||
+          (currentStep === 3 && !selectedTargetClass)
+        }
+        isSubmitDisabled={!step4Complete}
+        isSubmitting={isSubmitting}
+        submitLabel="Xử lý yêu cầu"
+      >
 
-      {/* Step 2: Current class selection */}
-      {currentStep === 2 && selectedStudent && (
-        <Section>
-          <div className="min-h-[280px] space-y-4">
-            {/* Policy Info - AA View with Statistics */}
-            {eligibilityData && (
-              <div className="rounded-lg border bg-muted/30 p-3">
-                <div className="flex items-start gap-2">
-                  <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                  <div className="space-y-2 text-xs flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium text-foreground">Quy định chuyển lớp:</p>
+        {/* Step 2: Current class selection */}
+        {currentStep === 2 && selectedStudent && (
+          <Section>
+            <div className="min-h-[280px] space-y-4">
+              {/* Policy Info - AA View with Statistics */}
+              {eligibilityData && (
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <div className="flex items-start gap-2">
+                    <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                    <div className="space-y-2 text-xs flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium text-foreground">Quy định chuyển lớp:</p>
+                      </div>
+
+                      <ul className="space-y-0.5 text-muted-foreground">
+                        <li className="flex items-start gap-1.5">
+                          <span className="text-muted-foreground mt-0.5">•</span>
+                          <span>Mỗi môn học: Tối đa <span className="font-medium text-foreground">{eligibilityData.policyInfo?.maxTransfersPerCourse ?? 1} lần chuyển</span></span>
+                        </li>
+                        <li className="flex items-start gap-1.5">
+                          <span className="text-muted-foreground mt-0.5">•</span>
+                          <span>AA có thể <span className="font-medium text-foreground">override sức chứa lớp</span> khi lớp mục tiêu đã đầy</span>
+                        </li>
+                        <li className="flex items-start gap-1.5">
+                          <span className="text-muted-foreground mt-0.5">•</span>
+                          <span>Hỗ trợ chuyển <span className="font-medium text-foreground">linh hoạt</span>: cơ sở, hình thức, lịch học</span>
+                        </li>
+                      </ul>
                     </div>
-                    
-                    <ul className="space-y-0.5 text-muted-foreground">
-                      <li className="flex items-start gap-1.5">
-                        <span className="text-muted-foreground mt-0.5">•</span>
-                        <span>Mỗi môn học: Tối đa <span className="font-medium text-foreground">{eligibilityData.policyInfo?.maxTransfersPerCourse ?? 1} lần chuyển</span></span>
-                      </li>
-                      <li className="flex items-start gap-1.5">
-                        <span className="text-muted-foreground mt-0.5">•</span>
-                        <span>AA có thể tạo yêu cầu <span className="font-medium text-foreground">vượt quota</span> (on-behalf)</span>
-                      </li>
-                      <li className="flex items-start gap-1.5">
-                        <span className="text-muted-foreground mt-0.5">•</span>
-                        <span>Hỗ trợ chuyển <span className="font-medium text-foreground">linh hoạt</span>: cơ sở, hình thức, lịch học</span>
-                      </li>
-                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {!isLoadingEligibility && eligibilityOptions.length === 0 ? (
+                <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
+                  Học viên không có lớp nào đủ điều kiện chuyển
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Chọn lớp hiện tại của học viên:</p>
+                  {eligibilityOptions.map((cls: TransferEligibility) => {
+                    const quotaUsed = cls.transferQuota.used >= cls.transferQuota.limit
+                    const hasPending = cls.hasPendingTransfer
+                    const isDisabled = quotaUsed || hasPending
+
+                    return (
+                      <div
+                        key={cls.enrollmentId}
+                        onClick={() => {
+                          if (!isDisabled) {
+                            setSelectedCurrentClass(cls)
+                            setSelectedTargetClass(null)
+                          }
+                        }}
+                        className={cn(
+                          'block rounded-lg border p-3 transition',
+                          isDisabled
+                            ? 'cursor-not-allowed opacity-60 bg-muted/20'
+                            : 'cursor-pointer hover:border-primary/50 hover:bg-muted/30',
+                          selectedCurrentClass?.enrollmentId === cls.enrollmentId && !isDisabled && 'border-primary bg-primary/5'
+                        )}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium text-sm">{cls.classCode}</span>
+                              <Badge variant="secondary" className="text-xs font-normal">
+                                {cls.subjectName}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                              <MapPin className="h-3 w-3" />
+                              <span>{cls.branchName}</span>
+                              <span>·</span>
+                              <span>{cls.modality && getModalityLabel(cls.modality)}</span>
+                            </div>
+                            {/* Time slots - each on separate line */}
+                            {cls.scheduleTime && (
+                              <div className="mt-1.5 flex items-start gap-1 text-xs text-muted-foreground">
+                                <Clock className="h-3 w-3 mt-0.5 shrink-0" />
+                                <div className="flex flex-col gap-0.5">
+                                  {cls.scheduleTime.split(', ').map((slot: string, idx: number) => (
+                                    <span key={idx}>{slot}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-end gap-1.5 shrink-0">
+                            {/* Status Badge */}
+                            {hasPending ? (
+                              <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 border-amber-200">
+                                <Clock className="h-3 w-3 mr-1" />
+                                Chờ duyệt
+                              </Badge>
+                            ) : quotaUsed ? (
+                              <Badge variant="outline" className="text-xs text-rose-600 border-rose-300">
+                                <AlertTriangle className="h-3 w-3 mr-1" />
+                                Hết quota
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary" className="text-xs bg-emerald-100 text-emerald-700 border-emerald-200">
+                                <Check className="h-3 w-3 mr-1" />
+                                Còn quota
+                              </Badge>
+                            )}
+
+                            {/* Quota Display */}
+                            <span className={cn(
+                              "text-xs font-medium tabular-nums",
+                              quotaUsed ? "text-rose-600" : "text-muted-foreground"
+                            )}>
+                              {cls.transferQuota.used}/{cls.transferQuota.limit} lượt
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </Section>
+        )}
+
+        {/* Step 3: Target class selection - 2 column layout */}
+        {currentStep === 3 && selectedCurrentClass && (
+          <Section>
+            <div className="min-h-[320px]">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                {/* Left Column - Current Class (Fixed) */}
+                <div className="lg:col-span-4">
+                  <div className="sticky top-0">
+                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Lớp hiện tại</h4>
+                    <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm">{selectedCurrentClass.classCode}</span>
+                        <Badge variant="secondary" className="text-xs font-normal">
+                          {selectedCurrentClass.subjectName}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <MapPin className="h-3 w-3" />
+                        <span>{selectedCurrentClass.branchName}</span>
+                        <span>·</span>
+                        <span>{selectedCurrentClass.modality && getModalityLabel(selectedCurrentClass.modality)}</span>
+                      </div>
+                      {/* Time slots */}
+                      {selectedCurrentClass.scheduleTime && (
+                        <div className="flex items-start gap-1 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3 mt-0.5 shrink-0" />
+                          <div className="flex flex-col gap-0.5">
+                            {selectedCurrentClass.scheduleTime.split(', ').map((slot: string, idx: number) => (
+                              <span key={idx}>{slot}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {/* Quota */}
+                      <div className="pt-2 border-t flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">Quota chuyển lớp</span>
+                        <Badge variant={selectedCurrentClass.canTransfer ? "secondary" : "outline"}
+                          className={cn("text-xs",
+                            selectedCurrentClass.canTransfer
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "text-rose-600 border-rose-300"
+                          )}>
+                          {selectedCurrentClass.transferQuota.used}/{selectedCurrentClass.transferQuota.limit}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column - Target Classes (Scrollable) */}
+                <div className="lg:col-span-8 space-y-3">
+                  {/* Filter */}
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-medium text-muted-foreground shrink-0">Lọc hình thức:</label>
+                    <Select
+                      value={targetModality ?? 'all'}
+                      onValueChange={(value) => setTargetModality(value === 'all' ? undefined : value as SessionModality)}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Tất cả" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tất cả</SelectItem>
+                        <SelectItem value="OFFLINE">Tại trung tâm</SelectItem>
+                        <SelectItem value="ONLINE">Trực tuyến</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Target class list */}
+                  <div className="max-h-[400px] overflow-y-auto pr-1 space-y-2">
+                    {!isLoadingOptions && transferOptions.length === 0 ? (
+                      <div className="py-8 text-center text-sm text-muted-foreground border border-dashed rounded-lg">
+                        Không có lớp mục tiêu phù hợp
+                      </div>
+                    ) : (
+                      transferOptions.map((option: TransferOption) => {
+                        const gapText = getContentGapText(option.contentGapAnalysis)
+                        const { hasBranchChange, hasModalityChange } = getChangeIndicators(option.changes)
+                        const isScheduled = option.classStatus === 'SCHEDULED'
+                        const startDate = option.startDate ? new Date(option.startDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : null
+                        const isFull = (option.availableSlots ?? 0) <= 0
+
+                        const handleSelectClass = () => {
+                          // Direct selection for all classes (override confirmation happens at submit)
+                          setSelectedTargetClass(option)
+                          setSelectedSessionId(null) // Reset session selection when changing target class
+                        }
+
+                        return (
+                          <div
+                            key={option.classId}
+                            onClick={handleSelectClass}
+                            className={cn(
+                              'block cursor-pointer rounded-lg border px-3 py-2.5 transition',
+                              isFull
+                                ? 'border-rose-200 bg-rose-50/50 hover:border-rose-300 hover:bg-rose-50'
+                                : 'hover:border-primary/50 hover:bg-muted/30',
+                              selectedTargetClass?.classId === option.classId && (isFull
+                                ? 'border-rose-400 bg-rose-100/50 ring-1 ring-rose-300'
+                                : 'border-primary bg-primary/5')
+                            )}
+                          >
+                            <div className="space-y-1.5">
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Badge variant="outline" className={cn(
+                                    "text-xs shrink-0",
+                                    isFull && "border-rose-300 text-rose-700"
+                                  )}>
+                                    {option.classCode}
+                                  </Badge>
+                                  {isFull && (
+                                    <Badge variant="destructive" className="text-xs">
+                                      <Users className="h-3 w-3 mr-1" />
+                                      Đầy
+                                    </Badge>
+                                  )}
+                                  {isScheduled && (
+                                    <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
+                                      Sắp khai giảng
+                                    </Badge>
+                                  )}
+                                </div>
+                                <span className={cn(
+                                  'text-xs font-medium shrink-0 tabular-nums',
+                                  isFull ? 'text-rose-600' : 'text-emerald-600'
+                                )}>
+                                  {getCapacityText(option.enrolledCount, option.maxCapacity)}
+                                </span>
+                              </div>
+
+                              {/* Branch + Modality */}
+                              <div className={cn(
+                                "flex items-center gap-1.5 text-xs",
+                                isFull && "text-muted-foreground/70"
+                              )}>
+                                <MapPin className="h-3 w-3 shrink-0 text-muted-foreground" />
+                                {hasModalityChange && <span className="text-blue-600 font-medium">→</span>}
+                                <span className={cn(hasModalityChange && "text-blue-600 font-medium")}>
+                                  {getModalityLabel(option.modality)}
+                                </span>
+                              </div>
+
+                              {/* Time slots */}
+                              {option.scheduleTime && (
+                                <div className={cn(
+                                  "flex items-start gap-1 text-xs text-muted-foreground",
+                                  isFull && "text-muted-foreground/70"
+                                )}>
+                                  <Clock className="h-3 w-3 mt-0.5 shrink-0" />
+                                  <div className="flex flex-col gap-0.5">
+                                    {option.scheduleTime.split(', ').map((slot: string, idx: number) => (
+                                      <span key={idx}>{slot}</span>
+                                    ))}
+                                    {isScheduled && startDate && (
+                                      <span className="text-blue-600">Bắt đầu {startDate}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Full Class Warning */}
+                              {isFull && (
+                                <div className="flex items-start gap-1.5 text-xs text-rose-700 bg-rose-100 border border-rose-200 rounded px-2 py-1">
+                                  <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5" />
+                                  <span>Lớp đã đầy, cần xác nhận override</span>
+                                </div>
+                              )}
+
+                              {/* Content Gap Warning */}
+                              {gapText && !isFull && (
+                                <div className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                                  <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5" />
+                                  <span>{gapText}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })
+                    )}
                   </div>
                 </div>
               </div>
-            )}
-
-            {!isLoadingEligibility && eligibilityOptions.length === 0 ? (
-              <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
-                Học viên không có lớp nào đủ điều kiện chuyển
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Chọn lớp hiện tại của học viên:</p>
-                {eligibilityOptions.map((cls: TransferEligibility) => {
-                  const quotaUsed = cls.transferQuota.used >= cls.transferQuota.limit
-                  const hasPending = cls.hasPendingTransfer
-                  
-                  return (
-                    <label
-                      key={cls.enrollmentId}
-                      className={cn(
-                        'block cursor-pointer rounded-lg border p-3 transition',
-                        'hover:border-primary/50 hover:bg-muted/30',
-                        selectedCurrentClass?.enrollmentId === cls.enrollmentId && 'border-primary bg-primary/5'
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        name="currentClass"
-                        className="sr-only"
-                        checked={selectedCurrentClass?.enrollmentId === cls.enrollmentId}
-                        onChange={() => {
-                          setSelectedCurrentClass(cls)
-                          setSelectedTargetClass(null)
-                        }}
-                      />
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-medium text-sm">{cls.classCode}</span>
-                            <Badge variant="secondary" className="text-xs font-normal">
-                              {cls.subjectName}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                            <MapPin className="h-3 w-3" />
-                            <span>{cls.branchName}</span>
-                            <span>·</span>
-                            <span>{cls.modality && getModalityLabel(cls.modality)}</span>
-                          </div>
-                          {cls.scheduleInfo && (
-                            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              <span className="truncate">{cls.scheduleInfo}</span>
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex flex-col items-end gap-1.5 shrink-0">
-                          {/* Status Badge */}
-                          {hasPending ? (
-                            <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 border-amber-200">
-                              <Clock className="h-3 w-3 mr-1" />
-                              Chờ duyệt
-                            </Badge>
-                          ) : quotaUsed ? (
-                            <Badge variant="outline" className="text-xs text-rose-600 border-rose-300">
-                              <AlertTriangle className="h-3 w-3 mr-1" />
-                              Hết quota
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="text-xs bg-emerald-100 text-emerald-700 border-emerald-200">
-                              <Check className="h-3 w-3 mr-1" />
-                              Còn quota
-                            </Badge>
-                          )}
-                          
-                          {/* Quota Display */}
-                          <span className={cn(
-                            "text-xs font-medium tabular-nums",
-                            quotaUsed ? "text-rose-600" : "text-muted-foreground"
-                          )}>
-                            {cls.transferQuota.used}/{cls.transferQuota.limit} lượt
-                          </span>
-                        </div>
-                      </div>
-                    </label>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        </Section>
-      )}
-
-      {/* Step 3: Target class selection (pure class selection only) */}
-      {currentStep === 3 && selectedCurrentClass && (
-        <Section>
-          <div className="min-h-[280px] space-y-4">
-
-            {/* Filters - Modality only */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium mb-1">Hình thức học</label>
-                <select
-                  value={targetModality ?? ''}
-                  onChange={(e) => setTargetModality(e.target.value as SessionModality | undefined)}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">Tất cả hình thức</option>
-                  <option value="OFFLINE">Tại trung tâm</option>
-                  <option value="ONLINE">Trực tuyến</option>
-                </select>
-              </div>
             </div>
+          </Section>
+        )}
 
-            {/* Target class options */}
-            {!isLoadingOptions && transferOptions.length === 0 ? (
-              <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">
-                Không có lớp mục tiêu phù hợp với bộ lọc hiện tại
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {transferOptions.map((option: TransferOption) => {
-                  const gapText = getContentGapText(option.contentGapAnalysis)
-                  const { hasBranchChange, hasModalityChange } = getChangeIndicators(option.changes)
-                  const isScheduled = option.classStatus === 'SCHEDULED'
-                  const startDate = option.startDate ? new Date(option.startDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : null
-                  const scheduleInfo = [option.scheduleDays, option.scheduleTime].filter(Boolean).join(' · ')
+        {/* Step 4: Session selection & confirmation */}
+        {currentStep === 4 && selectedTargetClass && selectedCurrentClass && (
+          <Section>
+            <div className="space-y-4">
+              {/* Horizontal Timeline */}
+              {selectedCurrentClass.allSessions && selectedTargetClass.allSessions && (
+                <HorizontalTimeline
+                  currentClassSessions={selectedCurrentClass.allSessions}
+                  targetClassSessions={selectedTargetClass.allSessions}
+                  currentClassCode={selectedCurrentClass.classCode}
+                  targetClassCode={selectedTargetClass.classCode}
+                  selectedSessionId={selectedSessionId}
+                  onSelectSession={setSelectedSessionId}
+                  currentSubjectId={selectedCurrentClass.subjectId}
+                  targetSubjectId={selectedTargetClass.subjectId}
+                />
+              )}
 
-                  return (
-                    <label
-                      key={option.classId}
-                      className={cn(
-                        'block cursor-pointer rounded-lg border px-3 py-2.5 transition hover:border-primary/50 hover:bg-muted/30',
-                        selectedTargetClass?.classId === option.classId && 'border-primary bg-primary/5'
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        name="targetClass"
-                        className="sr-only"
-                        checked={selectedTargetClass?.classId === option.classId}
-                        onChange={() => {
-                          setSelectedTargetClass(option)
-                          setWeekOffset(0)
-                          setSelectedSessionIndex(null)
-                        }}
-                      />
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Badge variant="outline" className="text-xs shrink-0">
-                              {option.classCode}
-                            </Badge>
-                            <Badge variant="secondary" className="text-xs font-normal">
-                              {option.subjectName}
-                            </Badge>
-                            {isScheduled && (
-                              <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
-                                Sắp khai giảng
-                              </Badge>
-                            )}
-                          </div>
-                          <span className={cn(
-                            'text-xs font-medium shrink-0 tabular-nums',
-                            option.availableSlots > 0 ? 'text-emerald-600' : 'text-rose-600'
-                          )}>
-                            {getCapacityText(option.availableSlots, option.maxCapacity)}
-                          </span>
-                        </div>
-                        
-                        {/* Branch + Modality with change indicators */}
-                        <div className="flex items-center gap-1.5 text-xs">
-                          <MapPin className="h-3 w-3 shrink-0 text-muted-foreground" />
-                          {hasBranchChange && <span className="text-blue-600 font-medium">→</span>}
-                          <span className={cn(hasBranchChange && "text-blue-600 font-medium")}>
-                            {option.branchName}
-                          </span>
-                          <span className="text-muted-foreground">·</span>
-                          {hasModalityChange && <span className="text-blue-600 font-medium">→</span>}
-                          <span className={cn(hasModalityChange && "text-blue-600 font-medium")}>
-                            {getModalityLabel(option.modality)}
-                          </span>
-                        </div>
-                        
-                        {/* Schedule Info */}
-                        {scheduleInfo && (
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3 shrink-0" />
-                            <span>{scheduleInfo}</span>
-                            {isScheduled && startDate && (
-                              <>
-                                <span>·</span>
-                                <span>Bắt đầu {startDate}</span>
-                              </>
-                            )}
-                          </div>
-                        )}
-                        
-                        {/* Content Gap Warning */}
-                        {gapText && (
-                          <div className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
-                            <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5" />
-                            <span>{gapText}</span>
-                          </div>
-                        )}
-                      </div>
-                    </label>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        </Section>
-      )}
-
-      {/* Step 4: Session selection & confirmation */}
-      {currentStep === 4 && selectedTargetClass && selectedCurrentClass && (
-        <Section>
-          <div className="space-y-4">
-            {/* Horizontal Timeline - only show if both classes have allSessions */}
-            {selectedCurrentClass.allSessions && selectedTargetClass.allSessions ? (
-              <HorizontalTimeline
-                currentClassSessions={selectedCurrentClass.allSessions}
-                targetClassSessions={selectedTargetClass.allSessions}
-                currentClassCode={selectedCurrentClass.classCode}
-                targetClassCode={selectedTargetClass.classCode}
-                selectedSessionId={selectedSessionId}
-                onSelectSession={setSelectedSessionId}
-                currentSubjectId={selectedCurrentClass.subjectId}
-                targetSubjectId={selectedTargetClass.subjectId}
+              <ReasonInput
+                value={requestReason}
+                onChange={setRequestReason}
+                placeholder="Lý do yêu cầu chuyển lớp..."
+                error={null}
               />
-            ) : (
-              /* Fallback: Old week-based session selection UI */
-              <div className="space-y-2">
-                <label className="block text-sm font-medium">Buổi bắt đầu</label>
 
-                {upcomingSessions.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-3 text-center border rounded-lg">
-                    Không có buổi học sắp tới
-                  </p>
-                ) : (
-                  <>
-                    {/* Week Navigation */}
-                    <div className="flex items-center justify-between border-b pb-2">
-                      <span className="font-medium text-sm">{weekRangeLabel}</span>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleChangeWeek('prev')} disabled={weekOffset === 0}>
-                          <ArrowRightIcon className="h-3 w-3 rotate-180" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setWeekOffset(0)} disabled={weekOffset === 0}>Đầu</Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleChangeWeek('next')} disabled={weekOffset >= sessionsByWeek.length - 1}>
-                          <ArrowRightIcon className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
+              <NoteInput
+                value={note}
+                onChange={setNote}
+                placeholder="Ghi chú thêm về yêu cầu chuyển lớp..."
+              />
+            </div>
+          </Section>
+        )}
+      </BaseFlowComponent>
 
-                    {/* Session List */}
-                    <div className="space-y-2">
-                      {currentWeek?.sessions.map((session, index) => {
-                        const isActive = selectedSessionIndex === index
-                        const sessionDate = parseISO(session.date)
-
-                        return (
-                          <SelectionCard
-                            key={index}
-                            item={session}
-                            isSelected={isActive}
-                            onSelect={() => setSelectedSessionIndex(index)}
-                          >
-                            <div className="flex-1 space-y-1">
-                              <p className="font-medium text-sm">
-                                Buổi {session.subjectSessionNumber} · {format(sessionDate, 'dd/MM/yyyy (EEEE)', { locale: vi })}
-                              </p>
-                              <p className="text-sm text-muted-foreground">{session.subjectSessionTitle}</p>
-                              <p className="text-xs text-muted-foreground">{session.timeSlot}</p>
-                            </div>
-                          </SelectionCard>
-                        )
-                      })}
-                    </div>
-                  </>
-                )}
+      {/* Capacity Override Confirmation Dialog (shown at submit time) */}
+      <AlertDialog
+        open={showOverrideDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowOverrideDialog(false)
+            setOverrideReason('')
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-rose-600">
+              <AlertTriangle className="h-5 w-5" />
+              Xác nhận Override sức chứa lớp
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Lớp <span className="font-semibold text-foreground">{selectedTargetClass?.classCode}</span> hiện
+                  đã đạt sức chứa tối đa ({selectedTargetClass?.enrolledCount}/{selectedTargetClass?.maxCapacity} học viên).
+                </p>
+                <p>
+                  Bạn đang thực hiện <strong className="text-rose-600">override</strong> giới hạn sức chứa với tư cách Giáo vụ.
+                  Vui lòng cung cấp lý do để ghi nhận vào hệ thống.
+                </p>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">Lý do override *</label>
+                  <textarea
+                    className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm 
+                               placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-rose-500"
+                    placeholder="Nhập lý do cần override sức chứa lớp..."
+                    value={overrideReason}
+                    onChange={(e) => setOverrideReason(e.target.value)}
+                  />
+                </div>
               </div>
-            )}
-
-            <ReasonInput
-              value={requestReason}
-              onChange={setRequestReason}
-              placeholder="Lý do yêu cầu chuyển lớp..."
-              error={null}
-            />
-
-            <NoteInput
-              value={note}
-              onChange={setNote}
-              placeholder="Ghi chú thêm về yêu cầu chuyển lớp..."
-            />
-          </div>
-        </Section>
-      )}
-    </BaseFlowComponent>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-rose-600 hover:bg-rose-700"
+              disabled={overrideReason.trim().length < 10}
+              onClick={executeSubmit}
+            >
+              Xác nhận Override và Xử lý
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

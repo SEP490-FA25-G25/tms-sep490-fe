@@ -7,7 +7,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   useGetClassAssessmentsQuery,
-  useGetClassGradesSummaryQuery,
   useGetClassGradebookQuery,
   type TeacherAssessmentDTO,
   useSaveOrUpdateScoreMutation,
@@ -18,15 +17,10 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  TrendingUp,
-  TrendingDown,
   Users,
-  BarChart3,
   Edit,
   Table2,
   Search,
-  ArrowUp,
-  ArrowDown,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -83,12 +77,6 @@ export default function TeacherGradesPage() {
   const [assessmentPage, setAssessmentPage] = useState(0);
   const [gradebookSearchQuery, setGradebookSearchQuery] = useState("");
   const [gradebookPage, setGradebookPage] = useState(0);
-  const [gradebookSortField, setGradebookSortField] = useState<
-    "name" | "averageScore" | "attendanceRate"
-  >("name");
-  const [gradebookSortOrder, setGradebookSortOrder] = useState<"asc" | "desc">(
-    "asc"
-  );
   const ASSESSMENT_PAGE_SIZE = 5;
   const GRADEBOOK_PAGE_SIZE = 10;
 
@@ -103,12 +91,6 @@ export default function TeacherGradesPage() {
     { classId: Number(classId), filter },
     { skip: !classId }
   );
-
-  const {
-    data: summary,
-    isLoading: isLoadingSummary,
-    error: summaryError,
-  } = useGetClassGradesSummaryQuery(Number(classId), { skip: !classId });
 
   const {
     data: gradebook,
@@ -182,34 +164,6 @@ export default function TeacherGradesPage() {
       });
     }
 
-    // Apply sorting
-    filtered = [...filtered].sort((a, b) => {
-      let comparison = 0;
-
-      switch (gradebookSortField) {
-        case "name": {
-          const nameA = a.studentName?.toLowerCase() || "";
-          const nameB = b.studentName?.toLowerCase() || "";
-          comparison = nameA.localeCompare(nameB, "vi");
-          break;
-        }
-        case "averageScore": {
-          const scoreA = a.averageScore ?? 0;
-          const scoreB = b.averageScore ?? 0;
-          comparison = Number(scoreA) - Number(scoreB);
-          break;
-        }
-        case "attendanceRate": {
-          const rateA = a.attendanceScore ?? 0;
-          const rateB = b.attendanceScore ?? 0;
-          comparison = Number(rateA) - Number(rateB);
-          break;
-        }
-      }
-
-      return gradebookSortOrder === "asc" ? comparison : -comparison;
-    });
-
     // Apply pagination
     const startIndex = gradebookPage * GRADEBOOK_PAGE_SIZE;
     const endIndex = startIndex + GRADEBOOK_PAGE_SIZE;
@@ -218,8 +172,6 @@ export default function TeacherGradesPage() {
     gradebook,
     gradebookSearchQuery,
     gradebookPage,
-    gradebookSortField,
-    gradebookSortOrder,
   ]);
 
   const totalGradebookPages = useMemo(() => {
@@ -291,8 +243,10 @@ export default function TeacherGradesPage() {
     const drafts: Record<number, { value: string; error?: string }> = {};
 
     gradebook.assessments.forEach((assessment) => {
-      const score = student.scores[assessment.assessmentId];
-      drafts[assessment.assessmentId] =
+      const score = student.scores.find(
+        (s) => s.assessmentId === assessment.id
+      );
+      drafts[assessment.id] =
         score && score.score !== null && score.score !== undefined
           ? { value: String(score.score) }
           : { value: "" };
@@ -312,7 +266,9 @@ export default function TeacherGradesPage() {
       setEditingAssessmentId(null);
       return;
     }
-    const existingScore = activeStudent.scores[assessmentId];
+    const existingScore = activeStudent.scores.find(
+      (s) => s.assessmentId === assessmentId
+    );
     setScoreDrafts((prev) => ({
       ...prev,
       [assessmentId]:
@@ -420,31 +376,31 @@ export default function TeacherGradesPage() {
     }
 
     return gradebook.assessments.map((assessment) => {
-      const score = activeStudent.scores[assessment.assessmentId];
+      const score = activeStudent.scores.find(
+        (s) => s.assessmentId === assessment.id
+      );
       const maxScore = assessment.maxScore || 100;
       const percentage =
-        score && score.isGraded && score.score !== null
+        score && score.score !== null && score.score !== undefined
           ? (Number(score.score) / maxScore) * 100
           : null;
-      const draft = scoreDrafts[assessment.assessmentId] || {
+      const draft = scoreDrafts[assessment.id] || {
         value: "",
         error: undefined,
       };
       const inputValue = draft.value ?? "";
-      const isSavingThisScore = savingAssessmentId === assessment.assessmentId;
-      const saveState = saveStatus[assessment.assessmentId];
-      const isEditing = editingAssessmentId === assessment.assessmentId;
+      const isSavingThisScore = savingAssessmentId === assessment.id;
+      const saveState = saveStatus[assessment.id];
+      const isEditing = editingAssessmentId === assessment.id;
 
       return (
         <div
-          key={assessment.assessmentId}
+          key={assessment.id}
           className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/30 transition-colors"
         >
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <p className="font-semibold text-base">
-                {assessment.assessmentName}
-              </p>
+              <p className="font-semibold text-base">{assessment.name}</p>
               {assessment.kind && (
                 <Badge variant="outline" className="text-xs">
                   {ASSESSMENT_KINDS[assessment.kind] || assessment.kind}
@@ -479,20 +435,17 @@ export default function TeacherGradesPage() {
                     max={maxScore}
                     value={inputValue}
                     onChange={(event) =>
-                      handleScoreChange(
-                        assessment.assessmentId,
-                        event.target.value
-                      )
+                      handleScoreChange(assessment.id, event.target.value)
                     }
                     onKeyDown={(event) => {
                       if (event.key === "Enter") {
                         event.preventDefault();
                         if (inputValue.trim() !== "" && !isSavingThisScore) {
-                          handleSaveScore(assessment.assessmentId, maxScore);
+                          handleSaveScore(assessment.id, maxScore);
                         }
                       } else if (event.key === "Escape") {
                         event.preventDefault();
-                        handleCancelEditing(assessment.assessmentId);
+                        handleCancelEditing(assessment.id);
                       }
                     }}
                     className="w-28 text-right"
@@ -501,9 +454,7 @@ export default function TeacherGradesPage() {
                   />
                   <Button
                     size="sm"
-                    onClick={() =>
-                      handleSaveScore(assessment.assessmentId, maxScore)
-                    }
+                    onClick={() => handleSaveScore(assessment.id, maxScore)}
                     disabled={isSavingThisScore || inputValue.trim() === ""}
                   >
                     {isSavingThisScore ? "Đang lưu..." : "Lưu điểm"}
@@ -512,7 +463,7 @@ export default function TeacherGradesPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleCancelEditing(assessment.assessmentId)}
+                  onClick={() => handleCancelEditing(assessment.id)}
                 >
                   Hủy
                 </Button>
@@ -521,13 +472,11 @@ export default function TeacherGradesPage() {
               <div
                 className={cn(
                   "flex items-center gap-3 justify-end cursor-pointer hover:opacity-80 transition-opacity",
-                  score && score.isGraded && score.score !== null
-                    ? ""
-                    : "text-muted-foreground"
+                  score && score.score !== null ? "" : "text-muted-foreground"
                 )}
-                onClick={() => handleStartEditing(assessment.assessmentId)}
+                onClick={() => handleStartEditing(assessment.id)}
               >
-                {score && score.isGraded && score.score !== null ? (
+                {score && score.score !== null ? (
                   <>
                     <Award
                       className={cn(
@@ -584,9 +533,6 @@ export default function TeacherGradesPage() {
   // Debug: Log errors
   if (assessmentsError) {
     console.error("Assessments error:", assessmentsError);
-  }
-  if (summaryError) {
-    console.error("Summary error:", summaryError);
   }
 
   // Early return if no classId
@@ -671,7 +617,6 @@ export default function TeacherGradesPage() {
               Danh sách bài kiểm tra
             </TabsTrigger>
             <TabsTrigger value="gradebook">Bảng điểm học sinh</TabsTrigger>
-            <TabsTrigger value="summary">Tổng quan điểm số</TabsTrigger>
           </TabsList>
 
           {/* Tab 1: Assessments List */}
@@ -896,287 +841,20 @@ export default function TeacherGradesPage() {
             )}
           </TabsContent>
 
-          {/* Tab 2: Grades Summary */}
-          <TabsContent value="summary" className="space-y-6">
-            {isLoadingSummary ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-32 w-full rounded-lg" />
-                  ))}
-                </div>
-                <Skeleton className="h-64 w-full rounded-lg" />
-              </div>
-            ) : summaryError ? (
-              <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center text-sm text-destructive">
-                <p>
-                  Có lỗi xảy ra khi tải tổng quan điểm số. Vui lòng thử lại sau.
-                </p>
-              </div>
-            ) : !summary ? (
-              <div className="rounded-lg border border-dashed p-12 text-center">
-                <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-sm text-muted-foreground">
-                  Chưa có dữ liệu điểm số
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* Summary Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium text-muted-foreground">
-                        Điểm trung bình
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="h-5 w-5 text-emerald-600" />
-                        <span className="text-2xl font-bold">
-                          {summary.averageScore
-                            ? summary.averageScore.toFixed(1)
-                            : "N/A"}
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium text-muted-foreground">
-                        Điểm cao nhất
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="h-5 w-5 text-blue-600" />
-                        <span className="text-2xl font-bold">
-                          {summary.highestScore
-                            ? summary.highestScore.toFixed(1)
-                            : "N/A"}
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-medium text-muted-foreground">
-                        Điểm thấp nhất
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center gap-2">
-                        <TrendingDown className="h-5 w-5 text-orange-600" />
-                        <span className="text-2xl font-bold">
-                          {summary.lowestScore
-                            ? summary.lowestScore.toFixed(1)
-                            : "N/A"}
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Score Distribution */}
-                {summary.scoreDistribution &&
-                  Object.keys(summary.scoreDistribution).length > 0 && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Phân bố điểm số</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          {Object.entries(summary.scoreDistribution)
-                            .sort(([a], [b]) => {
-                              const aNum = parseInt(a.split("-")[0]);
-                              const bNum = parseInt(b.split("-")[0]);
-                              return bNum - aNum;
-                            })
-                            .map(([range, count]) => (
-                              <div
-                                key={range}
-                                className="flex items-center gap-4"
-                              >
-                                <span className="w-20 text-sm font-medium">
-                                  {range}
-                                </span>
-                                <div className="flex-1 h-6 bg-muted rounded-full overflow-hidden">
-                                  <div
-                                    className="h-full bg-primary rounded-full"
-                                    style={{
-                                      width: `${
-                                        (count / summary.totalStudents) * 100
-                                      }%`,
-                                    }}
-                                  />
-                                </div>
-                                <span className="w-12 text-sm text-muted-foreground text-right">
-                                  {count}
-                                </span>
-                              </div>
-                            ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                {/* Top Students */}
-                {summary.topStudents && summary.topStudents.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Top 5 học sinh xuất sắc</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        {summary.topStudents.map((student, index) => (
-                          <div
-                            key={student.studentId}
-                            className="flex items-center justify-between p-3 rounded-lg border"
-                          >
-                            <div className="flex items-center gap-3">
-                              <Badge
-                                variant="outline"
-                                className="w-8 h-8 flex items-center justify-center"
-                              >
-                                {index + 1}
-                              </Badge>
-                              <div>
-                                <p className="font-medium">
-                                  {student.studentName}
-                                </p>
-                                {student.studentCode && (
-                                  <p className="text-xs text-muted-foreground">
-                                    {student.studentCode}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-semibold text-emerald-600">
-                                {student.averageScore?.toFixed(1) || "N/A"}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {student.gradedCount} bài
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Bottom Students */}
-                {summary.bottomStudents &&
-                  summary.bottomStudents.length > 0 && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Học sinh cần quan tâm</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          {summary.bottomStudents.map((student, index) => (
-                            <div
-                              key={student.studentId}
-                              className="flex items-center justify-between p-3 rounded-lg border"
-                            >
-                              <div className="flex items-center gap-3">
-                                <Badge
-                                  variant="outline"
-                                  className="w-8 h-8 flex items-center justify-center"
-                                >
-                                  {index + 1}
-                                </Badge>
-                                <div>
-                                  <p className="font-medium">
-                                    {student.studentName}
-                                  </p>
-                                  {student.studentCode && (
-                                    <p className="text-xs text-muted-foreground">
-                                      {student.studentCode}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <p className="font-semibold text-orange-600">
-                                  {student.averageScore?.toFixed(1) || "N/A"}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {student.gradedCount} bài
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-              </>
-            )}
-          </TabsContent>
-
           {/* Tab 2: Gradebook Matrix */}
           <TabsContent value="gradebook" className="space-y-4">
-            {/* Search and Sort */}
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Tìm kiếm theo tên học sinh, mã học sinh..."
-                  value={gradebookSearchQuery}
-                  onChange={(e) => {
-                    setGradebookSearchQuery(e.target.value);
-                    setGradebookPage(0);
-                  }}
-                  className="pl-10"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Select
-                  value={gradebookSortField}
-                  onValueChange={(value) => {
-                    setGradebookSortField(value as typeof gradebookSortField);
-                    setGradebookPage(0);
-                  }}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Sắp xếp theo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="name">Tên</SelectItem>
-                    <SelectItem value="averageScore">
-                      Điểm trung bình
-                    </SelectItem>
-                    <SelectItem value="attendanceRate">Chuyên cần</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setGradebookSortOrder(
-                      gradebookSortOrder === "asc" ? "desc" : "asc"
-                    );
-                    setGradebookPage(0);
-                  }}
-                  className="gap-2"
-                >
-                  {gradebookSortOrder === "asc" ? (
-                    <>
-                      <ArrowUp className="h-4 w-4" />
-                      Tăng dần
-                    </>
-                  ) : (
-                    <>
-                      <ArrowDown className="h-4 w-4" />
-                      Giảm dần
-                    </>
-                  )}
-                </Button>
-              </div>
+            {/* Search */}
+            <div className="relative max-w-sm">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Tìm tên/mã học sinh"
+                value={gradebookSearchQuery}
+                onChange={(e) => {
+                  setGradebookSearchQuery(e.target.value);
+                  setGradebookPage(0);
+                }}
+                className="pl-10"
+              />
             </div>
             {isLoadingGradebook ? (
               <div className="space-y-3">
@@ -1229,12 +907,6 @@ export default function TeacherGradesPage() {
                         <TableHead className="min-w-[200px]">
                           Học sinh
                         </TableHead>
-                        <TableHead className="text-center min-w-[140px]">
-                          Điểm trung bình
-                        </TableHead>
-                        <TableHead className="text-center min-w-[180px]">
-                          Chuyên cần
-                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1267,52 +939,6 @@ export default function TeacherGradesPage() {
                                   )}
                                 </div>
                               </div>
-                            </TableCell>
-                            <TableCell>
-                              {student.averageScore !== null &&
-                              student.averageScore !== undefined ? (
-                                <div className="flex items-center justify-center gap-2">
-                                  <Award
-                                    className={cn(
-                                      "h-5 w-5",
-                                      getScoreColor(student.averageScore, 100)
-                                    )}
-                                  />
-                                  <span
-                                    className={cn(
-                                      "text-xl font-bold",
-                                      getScoreColor(student.averageScore, 100)
-                                    )}
-                                  >
-                                    {student.averageScore.toFixed(1)}
-                                  </span>
-                                </div>
-                              ) : (
-                                <div className="text-center">
-                                  <span className="text-muted-foreground">
-                                    Chưa có điểm
-                                  </span>
-                                </div>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {student.attendanceFinalized &&
-                              student.attendanceScore !== undefined &&
-                              student.totalSessions !== undefined ? (
-                                <div className="text-center space-y-1">
-                                  <p className="text-lg font-semibold text-primary">
-                                    {student.attendanceScore.toFixed(1)}%
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {student.attendedSessions ?? 0}/
-                                    {student.totalSessions ?? 0} buổi
-                                  </p>
-                                </div>
-                              ) : (
-                                <div className="text-center text-sm text-muted-foreground">
-                                  Chưa có dữ liệu
-                                </div>
-                              )}
                             </TableCell>
                           </TableRow>
                         );
@@ -1414,102 +1040,30 @@ export default function TeacherGradesPage() {
                   </DialogHeader>
                   <div className="space-y-6 mt-6">
                     {/* Student Info Card */}
-                    {(() => {
-                      const avgScore = activeStudent?.averageScore;
-                      const gradedCount = activeStudent?.gradedCount || 0;
-                      const totalAssessments =
-                        activeStudent?.totalAssessments ||
-                        gradebook.assessments.length;
-
-                      return (
-                        <div className="rounded-lg border bg-gradient-to-r from-primary/5 to-primary/10 p-6">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-4">
-                              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-primary text-primary-foreground font-bold text-xl shadow-md">
-                                {selectedStudent.studentName
-                                  .charAt(0)
-                                  .toUpperCase()}
-                              </div>
-                              <div>
-                                <p className="text-xl font-semibold">
-                                  {selectedStudent.studentName}
-                                </p>
-                                {selectedStudent.studentCode && (
-                                  <p className="text-sm text-muted-foreground mt-1">
-                                    {selectedStudent.studentCode}
-                                  </p>
-                                )}
-                                <p className="text-sm text-muted-foreground">
-                                  {gradebook.className}
-                                </p>
-                              </div>
-                            </div>
-                            {avgScore !== null && avgScore !== undefined && (
-                              <div className="text-right">
-                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                                  Điểm trung bình
-                                </p>
-                                <div className="flex items-baseline gap-2">
-                                  <Award
-                                    className={cn(
-                                      "h-6 w-6",
-                                      getScoreColor(avgScore, 100)
-                                    )}
-                                  />
-                                  <p
-                                    className={cn(
-                                      "text-4xl font-bold",
-                                      getScoreColor(avgScore, 100)
-                                    )}
-                                  >
-                                    {avgScore.toFixed(1)}
-                                  </p>
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {gradedCount}/{totalAssessments} bài đã nhập
-                                </p>
-                              </div>
-                            )}
-                          </div>
+                    <div className="rounded-lg border bg-gradient-to-r from-primary/5 to-primary/10 p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-primary text-primary-foreground font-bold text-xl shadow-md">
+                          {selectedStudent.studentName.charAt(0).toUpperCase()}
                         </div>
-                      );
-                    })()}
-
-                    {/* Attendance */}
-                    {activeStudent?.attendanceFinalized ? (
-                      <div className="rounded-lg border bg-muted/40 p-5">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-semibold">
-                              Điểm chuyên cần
+                        <div className="space-y-1">
+                          <p className="text-xl font-semibold">
+                            {selectedStudent.studentName}
+                          </p>
+                          {selectedStudent.studentCode && (
+                            <p className="text-sm text-muted-foreground">
+                              {selectedStudent.studentCode}
                             </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {activeStudent.attendedSessions ?? 0}/
-                              {activeStudent.totalSessions ?? 0} buổi đã tham
-                              gia
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-4xl font-bold text-primary">
-                              {activeStudent.attendanceScore !== undefined
-                                ? activeStudent.attendanceScore.toFixed(1)
-                                : "--"}
-                              <span className="text-base font-normal text-muted-foreground ml-1">
-                                %
-                              </span>
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Tỷ lệ chuyên cần
-                            </p>
-                          </div>
+                          )}
+                          <p className="text-sm text-muted-foreground">
+                            {gradebook.className}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Đã chấm: {activeStudent?.gradedCount ?? 0}/
+                            {activeStudent?.totalAssessments ?? gradebook.assessments.length} bài
+                          </p>
                         </div>
                       </div>
-                    ) : (
-                      <div className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">
-                        Điểm chuyên cần sẽ được tự động cập nhật khi lớp học
-                        hoàn thành.
-                      </div>
-                    )}
+                    </div>
 
                     {/* Assessment Scores */}
                     {gradebook.assessments.length === 0 ? (

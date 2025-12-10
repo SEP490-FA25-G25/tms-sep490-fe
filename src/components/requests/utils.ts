@@ -24,20 +24,20 @@ export function getModalityLabel(modality?: SessionModality) {
   }
 }
 
-// Capacity text formatter
-export function getCapacityText(available?: number | null, max?: number | null) {
-  const hasAvailable = typeof available === 'number'
+// Capacity text formatter - shows enrolled/max (sĩ số)
+export function getCapacityText(enrolled?: number | null, max?: number | null) {
+  const hasEnrolled = typeof enrolled === 'number'
   const hasMax = typeof max === 'number'
-  if (hasAvailable && hasMax) {
-    return `${available}/${max} chỗ trống`
+  if (hasEnrolled && hasMax) {
+    return `${enrolled}/${max}`
   }
-  if (hasAvailable) {
-    return `Còn ${available} chỗ trống`
+  if (hasEnrolled) {
+    return `${enrolled} học viên`
   }
   if (hasMax) {
-    return `Tối đa ${max} chỗ`
+    return `Tối đa ${max}`
   }
-  return 'Sức chứa đang cập nhật'
+  return 'Đang cập nhật'
 }
 
 // Content gap formatter (minimal, clean)
