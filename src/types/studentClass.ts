@@ -85,14 +85,6 @@ export interface LevelInfo {
   id: number;
   code: string;
   name: string;
-  curriculum?: CurriculumInfo;
-}
-
-export interface SubjectInfo {
-  id: number;
-  code: string;
-  name: string;
-  level?: LevelInfo;
 }
 
 export interface SubjectInfo {
@@ -105,8 +97,8 @@ export interface SubjectInfo {
   hoursPerSession?: number;
   prerequisites?: string;
   targetAudience?: string;
-  curriculum?: CurriculumInfo;
   level?: LevelInfo;
+  curriculum?: CurriculumInfo;
 }
 
 export interface BranchInfo {
