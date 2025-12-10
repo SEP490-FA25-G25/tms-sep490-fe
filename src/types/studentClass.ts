@@ -70,7 +70,7 @@ export interface StudentClassDTO {
 }
 
 // Nested interfaces for ClassDetailDTO
-export interface SubjectInfo {
+export interface CurriculumInfo {
   id: number;
   code: string;
   name: string;
@@ -80,6 +80,14 @@ export interface LevelInfo {
   id: number;
   code: string;
   name: string;
+  curriculum?: CurriculumInfo;
+}
+
+export interface SubjectInfo {
+  id: number;
+  code: string;
+  name: string;
+  level?: LevelInfo;
 }
 
 export interface CourseInfo {
@@ -94,6 +102,7 @@ export interface CourseInfo {
   targetAudience?: string;
   subject?: SubjectInfo;
   level?: LevelInfo;
+  curriculum?: CurriculumInfo;
 }
 
 export interface BranchInfo {
@@ -119,7 +128,10 @@ export interface ClassDetailDTO {
   id: number;
   code: string;
   name: string;
-  course: CourseInfo;
+  subject?: SubjectInfo;
+  curriculum?: CurriculumInfo;
+  level?: LevelInfo;
+  course?: CourseInfo; // backward compat
   branch: BranchInfo;
   modality: Modality;
   startDate: string; // ISO date
