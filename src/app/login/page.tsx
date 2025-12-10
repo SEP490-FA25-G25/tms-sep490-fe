@@ -1,6 +1,7 @@
 ﻿import { LoginForm } from "@/components/login-form"
 import { useNavigate } from "react-router-dom"
 
+
 const loginBanner = new URL("../../assets/Linhvatlogin.png", import.meta.url).href
 
 export default function LoginPage() {

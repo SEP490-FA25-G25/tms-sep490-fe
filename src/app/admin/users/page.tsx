@@ -24,7 +24,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable } from "@/app/academic/student-requests/components/DataTable";
 import { createUserColumns } from "./components/userColumns";
@@ -57,7 +57,6 @@ const STATUS_OPTIONS = [
   { value: "ALL", label: "Tất cả trạng thái" },
   { value: "ACTIVE", label: "Hoạt động" },
   { value: "INACTIVE", label: "Không hoạt động" },
-  { value: "SUSPENDED", label: "Tạm khóa" },
 ];
 
 export default function AdminUsersPage() {
@@ -66,6 +65,12 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [userDetail, setUserDetail] = useState<UserResponse | null>(null);
+  const resetFilters = () => {
+    setSearchTerm("");
+    setRoleFilter("ALL");
+    setStatusFilter("ALL");
+    setPage(0);
+  };
   const [userToEdit, setUserToEdit] = useState<UserResponse | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const extractErrorMessage = (error: unknown, fallback: string) =>
@@ -123,13 +128,7 @@ export default function AdminUsersPage() {
       try {
         await updateUserStatus({ id: user.id, status: newStatus }).unwrap();
         toast.success(
-          `Đã ${
-            newStatus === "ACTIVE"
-              ? "kích hoạt"
-              : newStatus === "INACTIVE"
-              ? "vô hiệu hóa"
-              : "tạm khóa"
-          } tài khoản`
+          `Đã ${newStatus === "ACTIVE" ? "kích hoạt" : "vô hiệu hóa"} tài khoản`
         );
         refetchUsers();
       } catch (error: unknown) {
@@ -160,10 +159,10 @@ export default function AdminUsersPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <h1 className="text-3xl font-bold tracking-tight">
-                        Quản lý Người dùng
+                        Quản lý tài khoản người dùng
                       </h1>
                       <p className="text-muted-foreground mt-1">
-                        Quản lý người dùng, vai trò và quyền hạn trong hệ thống
+                        Quản lý tài khoản người dùng trong hệ thống
                       </p>
                     </div>
                     <Button
@@ -227,6 +226,17 @@ export default function AdminUsersPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {/* Nút Reset Filters */}
+                    {(searchTerm || roleFilter !== "ALL" || statusFilter !== "ALL") && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={resetFilters}
+                        title="Xóa bộ lọc"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
 
