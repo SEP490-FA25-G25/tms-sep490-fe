@@ -47,6 +47,8 @@ export interface TeacherSessionSummaryDTO {
   timeSlotTemplateId: number;
   startTime: string;
   endTime: string;
+  subjectId?: number;
+  subjectName?: string;
   classCode: string;
   className: string;
   courseId: number;
@@ -57,6 +59,8 @@ export interface TeacherSessionSummaryDTO {
   modality: ClassModality;
   location: string | null;
   branchName: string;
+  resourceType?: "ROOM" | "VIRTUAL" | string;
+  resourceCode?: string | null;
   totalStudents: number;
   presentCount: number;
   absentCount: number;

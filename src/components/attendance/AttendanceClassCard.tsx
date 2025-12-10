@@ -190,7 +190,6 @@ export function AttendanceClassCard({
   onClick,
 }: AttendanceClassCardProps) {
   // Use enrollmentStatus if available, otherwise fallback to class status
-  const displayStatus = enrollmentStatus || status;
   const statusLabel = enrollmentStatus 
     ? ENROLLMENT_STATUS_LABELS[enrollmentStatus] || enrollmentStatus
     : getStatusLabel(status);

@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { format, addDays, parseISO, isToday } from "date-fns";
 import { cn } from "@/lib/utils";
+import { getCalendarVariant } from "@/lib/status-colors";
 import {
   type DayOfWeek,
   type TeacherSessionSummaryDTO,
@@ -32,38 +33,6 @@ const DAY_LABELS: Record<DayOfWeek, string> = {
   FRIDAY: "Thứ 6",
   SATURDAY: "Thứ 7",
   SUNDAY: "CN",
-};
-
-// Colors for different session statuses or types
-const SESSION_VARIANTS: Record<
-  string,
-  { bg: string; border: string; borderLeft: string; text: string }
-> = {
-  PLANNED: {
-    bg: "bg-sky-50",
-    border: "border-sky-200",
-    borderLeft: "border-l-sky-600",
-    text: "text-sky-700",
-  },
-  DONE: {
-    bg: "bg-emerald-50",
-    border: "border-emerald-200",
-    borderLeft: "border-l-emerald-600",
-    text: "text-emerald-700",
-  },
-  CANCELLED: {
-    bg: "bg-rose-50",
-    border: "border-rose-200",
-    borderLeft: "border-l-rose-600",
-    text: "text-rose-700",
-  },
-  // Fallback
-  DEFAULT: {
-    bg: "bg-slate-50",
-    border: "border-slate-200",
-    borderLeft: "border-l-slate-600",
-    text: "text-slate-700",
-  },
 };
 
 const DEFAULT_START_HOUR = 7;
@@ -301,9 +270,10 @@ export function TeacherCalendarView({
 
               {/* Events */}
               {scheduleData.schedule[day]?.map((session) => {
-                const variant =
-                  SESSION_VARIANTS[session.sessionStatus] ||
-                  SESSION_VARIANTS.DEFAULT;
+                const variant = getCalendarVariant(
+                  session.sessionStatus,
+                  undefined
+                );
 
                 return (
                   <button
@@ -319,7 +289,7 @@ export function TeacherCalendarView({
                     style={getEventStyle(session)}
                   >
                     <div className="font-semibold truncate">
-                      {session.courseName}
+                      {session.subjectName || session.courseName}
                     </div>
                     <div className="truncate opacity-90">
                       {session.classCode}
@@ -330,6 +300,23 @@ export function TeacherCalendarView({
                         {session.endTime.slice(0, 5)}
                       </span>
                     </div>
+                    {(session.resourceCode || session.resourceType) && (
+                      <div className="mt-1 flex items-center gap-1 text-[10px] opacity-80">
+                        {session.resourceType === "VIRTUAL" ? (
+                          <>
+                            <span>🔗</span>
+                            <span className="truncate">Zoom</span>
+                          </>
+                        ) : session.resourceType === "ROOM" ? (
+                          <>
+                            <span>📍</span>
+                            <span className="truncate">
+                              {session.resourceCode || session.location}
+                            </span>
+                          </>
+                        ) : null}
+                      </div>
+                    )}
                     {session.isMakeup && (
                       <Badge
                         variant="secondary"
