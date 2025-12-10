@@ -172,18 +172,6 @@ export const userApi = createApi({
     }),
 
     /**
-     * Delete user (soft delete)
-     * DELETE /api/v1/users/{id}
-     */
-    deleteUser: builder.mutation<ApiResponse<void>, number>({
-      query: (id) => ({
-        url: `/users/${id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['User'],
-    }),
-
-    /**
      * Check if email exists
      * GET /api/v1/users/check/email/{email}
      */
@@ -208,7 +196,6 @@ export const {
   useCreateUserMutation,
   useUpdateUserStatusMutation,
   useUpdateUserMutation,
-  useDeleteUserMutation,
   useCheckEmailExistsQuery,
   useCheckPhoneExistsQuery,
   useLazyGetUsersQuery,

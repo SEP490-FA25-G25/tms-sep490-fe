@@ -31,6 +31,7 @@ import { createUserColumns } from "./components/userColumns";
 import { CreateUserDialog } from "./components/CreateUserDialog";
 import { EditUserDialog } from "./components/EditUserDialog";
 import { UserDetailDialog } from "./components/UserDetailDialog";
+import { ConfirmStatusDialog } from "./components/ConfirmStatusDialog";
 import {
   useGetUsersQuery,
   useGetUserByIdQuery,
@@ -76,6 +77,10 @@ export default function AdminUsersPage() {
   };
   const [userToEdit, setUserToEdit] = useState<UserResponse | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [statusChangeRequest, setStatusChangeRequest] = useState<{
+    user: UserResponse;
+    newStatus: string;
+  } | null>(null);
   const extractErrorMessage = (error: unknown, fallback: string) =>
     (error as { data?: { message?: string } })?.data?.message || fallback;
 
@@ -131,18 +136,9 @@ export default function AdminUsersPage() {
   const columns = createUserColumns({
     onView: (user) => setUserDetail(user),
     onEdit: (user) => setUserToEdit(user),
-    onStatusChange: async (user, newStatus) => {
-      try {
-        await updateUserStatus({ id: user.id, status: newStatus }).unwrap();
-        toast.success(
-          `Đã ${newStatus === "ACTIVE" ? "kích hoạt" : "vô hiệu hóa"} tài khoản`
-        );
-        refetchUsers();
-      } catch (error: unknown) {
-        toast.error(extractErrorMessage(error, "Cập nhật trạng thái thất bại"));
-      }
+    onStatusChange: (user, newStatus) => {
+      setStatusChangeRequest({ user, newStatus });
     },
-    // Xóa người dùng đã được vô hiệu hóa trên UI nên không cần handler
   });
 
   return (
@@ -421,6 +417,31 @@ export default function AdminUsersPage() {
         open={!!userDetail}
         onOpenChange={(open) => {
           if (!open) setUserDetail(null);
+        }}
+      />
+
+      <ConfirmStatusDialog
+        user={statusChangeRequest?.user ?? null}
+        newStatus={statusChangeRequest?.newStatus ?? null}
+        open={!!statusChangeRequest}
+        onOpenChange={(open) => {
+          if (!open) setStatusChangeRequest(null);
+        }}
+        onConfirm={async () => {
+          if (!statusChangeRequest) return;
+          try {
+            await updateUserStatus({
+              id: statusChangeRequest.user.id,
+              status: statusChangeRequest.newStatus,
+            }).unwrap();
+            toast.success(
+              `Đã ${statusChangeRequest.newStatus === "ACTIVE" ? "kích hoạt" : "vô hiệu hóa"} tài khoản`
+            );
+            refetchUsers();
+            setStatusChangeRequest(null);
+          } catch (error: unknown) {
+            toast.error(extractErrorMessage(error, "Cập nhật trạng thái thất bại"));
+          }
         }}
       />
     </AdminRoute>
