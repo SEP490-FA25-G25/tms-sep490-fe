@@ -71,6 +71,15 @@ export interface TransferQuota {
   remaining: number
 }
 
+export interface SessionInfo {
+  sessionId: number
+  date: string
+  subjectSessionNumber: number
+  subjectSessionTitle: string
+  timeSlot: string
+  status: 'PLANNED' | 'DONE' | 'CANCELLED'
+}
+
 export interface TransferEligibility {
   enrollmentId: number
   classId: number
@@ -78,6 +87,8 @@ export interface TransferEligibility {
   className: string
   courseId: number
   courseName: string
+  subjectId: number
+  subjectName: string
   branchId: number
   branchName: string
   modality: 'ONLINE' | 'OFFLINE'
@@ -87,12 +98,11 @@ export interface TransferEligibility {
   hasPendingTransfer: boolean
   canTransfer: boolean
   scheduleInfo?: string
+  allSessions?: SessionInfo[]
 }
 
 export interface PolicyInfo {
   maxTransfersPerCourse: number
-  usedTransfers?: number
-  remainingTransfers?: number
   autoApprovalConditions?: string
   requiresAAApproval?: boolean
   policyDescription?: string

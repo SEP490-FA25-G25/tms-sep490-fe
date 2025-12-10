@@ -430,10 +430,7 @@ export interface SessionInfo {
   subjectSessionNumber: number
   subjectSessionTitle: string
   timeSlot: string
-  status: string
-  isPast: boolean
-  isUpcoming: boolean
-  isLastAttended?: boolean
+  status: 'PLANNED' | 'DONE' | 'CANCELLED'
 }
 
 export interface TransferEligibility {
@@ -454,14 +451,10 @@ export interface TransferEligibility {
   canTransfer: boolean
   scheduleInfo?: string
   allSessions?: SessionInfo[]
-  lastAttendedSessionId?: number
-  upcomingSessionId?: number
 }
 
 export interface PolicyInfo {
   maxTransfersPerCourse: number
-  usedTransfers?: number
-  remainingTransfers?: number
   autoApprovalConditions?: string
   requiresAAApproval?: boolean
   policyDescription?: string

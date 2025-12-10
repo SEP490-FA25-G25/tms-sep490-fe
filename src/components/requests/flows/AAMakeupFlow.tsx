@@ -2,9 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { skipToken } from '@reduxjs/toolkit/query'
-import { AlertTriangle, Check, Loader2, Search, UserX, CheckCircle2 } from 'lucide-react'
+import { AlertTriangle, Check, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,9 +20,9 @@ import {
   useGetStudentMakeupOptionsQuery,
   useGetStudentMissedSessionsQuery,
   useGetStudentRequestConfigQuery,
-  useSearchStudentsQuery,
   type StudentSearchResult
 } from '@/store/services/studentRequestApi'
+import { SelectStudentStep } from '@/app/academic/student-requests/components/steps/SelectStudentStep'
 import {
   BaseFlowComponent,
   NoteInput,
@@ -34,7 +33,6 @@ import {
 import {
   Validation,
   getModalityLabel,
-  useDebouncedValue,
   useErrorHandler,
   useSuccessHandler
 } from '../utils'
@@ -47,7 +45,6 @@ interface AAMakeupFlowProps {
 
 export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
   const [currentStep, setCurrentStep] = useState(1)
-  const [studentSearch, setStudentSearch] = useState('')
   const [selectedStudent, setSelectedStudent] = useState<StudentSearchResult | null>(null)
   const [selectedMissedId, setSelectedMissedId] = useState<number | null>(null)
   const [selectedMakeupId, setSelectedMakeupId] = useState<number | null>(null)
@@ -61,19 +58,6 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
   const makeupLookbackWeeks = configResponse?.data?.makeupLookbackWeeks ?? DEFAULT_MAKEUP_LOOKBACK_WEEKS
   const makeupWeeksLimit = configResponse?.data?.makeupWeeksLimit ?? 4
   const reasonMinLength = configResponse?.data?.reasonMinLength ?? 10
-
-  const debouncedStudentSearch = useDebouncedValue(studentSearch)
-  const trimmedSearch = debouncedStudentSearch.trim()
-  const shouldSearchStudents = trimmedSearch.length >= 2
-
-  const studentQueryResult = useSearchStudentsQuery(
-    shouldSearchStudents
-      ? { search: trimmedSearch, size: 10, page: 0 }
-      : skipToken,
-    { skip: !shouldSearchStudents, refetchOnMountOrArgChange: true }
-  )
-  const studentOptions = studentQueryResult.data?.data?.content ?? []
-  const isSearchingStudents = shouldSearchStudents && studentQueryResult.isFetching
 
   const {
     data: missedResponse,
@@ -140,23 +124,26 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
 
   const handleSelectStudent = (student: StudentSearchResult) => {
     setSelectedStudent(student)
-    setStudentSearch('') // Clear search để hiển thị selected card
     handleReset()
+    setCurrentStep(2) // Auto advance to next step
   }
 
-  const handleClearSelection = () => {
-    setSelectedStudent(null)
-    setStudentSearch('')
-    handleReset()
+  const handleCancelStudentSelection = () => {
+    // This will close the modal via onSuccess callback
+    onSuccess()
   }
 
   const handleNext = () => {
-    if (currentStep === 1 && selectedStudent) setCurrentStep(2)
-    else if (currentStep === 2 && selectedMissedSession) setCurrentStep(3)
+    if (currentStep === 2 && selectedMissedSession) setCurrentStep(3)
   }
 
   const handleBack = () => {
-    if (currentStep > 1) setCurrentStep((step) => step - 1)
+    if (currentStep === 3) {
+      setCurrentStep(2)
+    } else if (currentStep === 2) {
+      setCurrentStep(1)
+      setSelectedStudent(null)
+    }
   }
 
   const handleSubmit = async () => {
@@ -237,6 +224,17 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
     }
   ]
 
+  if (currentStep === 1) {
+    return (
+      <SelectStudentStep
+        onSelect={handleSelectStudent}
+        onCancel={handleCancelStudentSelection}
+        steps={steps}
+        currentStep={currentStep}
+      />
+    )
+  }
+
   return (
     <BaseFlowComponent
       steps={steps}
@@ -244,129 +242,11 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
       onNext={handleNext}
       onBack={handleBack}
       onSubmit={handleSubmit}
-      isNextDisabled={
-        (currentStep === 1 && !selectedStudent) ||
-        (currentStep === 2 && !selectedMissedSession)
-      }
+      isNextDisabled={currentStep === 2 && !selectedMissedSession}
       isSubmitDisabled={!step3Complete}
       isSubmitting={isCreating}
       submitLabel="Xử lý yêu cầu"
     >
-      {currentStep === 1 && (
-        <Section>
-          <div className="min-h-[280px] space-y-3">
-            {selectedStudent ? (
-              /* Hiển thị selected student card với button Chọn lại */
-              <div className="rounded-lg bg-primary/5 border-2 border-primary p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-                      <span className="font-semibold text-base">{selectedStudent.fullName}</span>
-                      <span className="text-sm text-muted-foreground">{selectedStudent.studentCode}</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground pl-7">
-                      {selectedStudent.email}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1 pl-7">
-                      {selectedStudent.branchName} · {selectedStudent.activeEnrollments} lớp đang học
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleClearSelection}
-                  >
-                    Chọn lại
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              /* Search input và dropdown */
-              <>
-                <Input
-                  placeholder="Nhập tên hoặc mã học viên (tối thiểu 2 ký tự)"
-                  value={studentSearch}
-                  onChange={(event) => setStudentSearch(event.target.value)}
-                  autoFocus
-                />
-
-                {/* Dropdown search results */}
-                {shouldSearchStudents && !isSearchingStudents && studentOptions.length > 0 && (
-                  <div className="rounded-lg border bg-card shadow-sm">
-                    <div className="px-3 py-2 border-b bg-muted/30">
-                      <p className="text-xs text-muted-foreground">
-                        Tìm thấy {studentOptions.length} học viên
-                      </p>
-                    </div>
-                    <div className="divide-y">
-                      {studentOptions.map((student) => (
-                        <button
-                          key={student.id}
-                          type="button"
-                          onClick={() => handleSelectStudent(student)}
-                          className="w-full px-3 py-2.5 text-left transition hover:bg-muted/50"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="font-medium text-sm truncate">{student.fullName}</span>
-                            <span className="text-xs text-muted-foreground shrink-0">{student.studentCode}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-0.5 truncate">{student.email}</p>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Loading state */}
-                {isSearchingStudents && (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <Loader2 className="h-8 w-8 text-muted-foreground animate-spin mb-3" />
-                    <p className="text-sm text-muted-foreground">Đang tìm kiếm...</p>
-                  </div>
-                )}
-
-                {/* Initial state - chưa nhập gì */}
-                {!isSearchingStudents && studentSearch.trim().length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
-                      <Search className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <p className="text-sm font-medium text-foreground">Tìm kiếm học viên</p>
-                    <p className="text-xs text-muted-foreground mt-1 max-w-60">
-                      Nhập tên hoặc mã học viên vào ô tìm kiếm phía trên để bắt đầu
-                    </p>
-                  </div>
-                )}
-
-                {/* Nhập chưa đủ 2 ký tự */}
-                {!isSearchingStudents && studentSearch.trim().length > 0 && studentSearch.trim().length < 2 && (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
-                      <Search className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">Nhập thêm ít nhất {2 - studentSearch.trim().length} ký tự</p>
-                  </div>
-                )}
-
-                {/* Không tìm thấy kết quả */}
-                {shouldSearchStudents && !isSearchingStudents && studentOptions.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
-                      <UserX className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <p className="text-sm font-medium text-foreground">Không tìm thấy học viên</p>
-                    <p className="text-xs text-muted-foreground mt-1 max-w-60">
-                      Thử tìm kiếm với tên hoặc mã học viên khác
-                    </p>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </Section>
-      )}
 
       {currentStep === 2 && selectedStudent && (
         <Section>

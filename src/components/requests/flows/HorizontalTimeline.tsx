@@ -14,8 +14,6 @@ interface HorizontalTimelineProps {
   targetClassCode: string
   selectedSessionId: number | null
   onSelectSession: (sessionId: number) => void
-  lastAttendedSessionId?: number
-  upcomingSessionId?: number
   currentSubjectId?: number
   targetSubjectId?: number
 }
@@ -27,8 +25,6 @@ export default function HorizontalTimeline({
   targetClassCode,
   selectedSessionId,
   onSelectSession,
-  lastAttendedSessionId,
-  upcomingSessionId,
   currentSubjectId,
   targetSubjectId
 }: HorizontalTimelineProps) {
@@ -39,6 +35,17 @@ export default function HorizontalTimeline({
   }
 
   const [centerIndex, setCenterIndex] = useState(0)
+
+  // Frontend computes upcoming session
+  const upcomingSessionId = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    const upcoming = currentClassSessions.find(
+      (s) => s.status === 'PLANNED' && new Date(s.date) >= today
+    )
+    return upcoming?.sessionId
+  }, [currentClassSessions])
 
   // Auto-center vào buổi tiếp theo (hoặc đầu danh sách nếu không có)
   useEffect(() => {
@@ -137,9 +144,20 @@ export default function HorizontalTimeline({
             className="flex gap-2 pb-2 justify-center"
           >
             {visibleCurrentSessions.map((session) => {
-              const isLastAttended = session.sessionId === lastAttendedSessionId
+              // Frontend computes UI flags
+              const today = new Date()
+              today.setHours(0, 0, 0, 0)
+              const sessionDate = new Date(session.date)
+              sessionDate.setHours(0, 0, 0, 0)
+              
+              const isPast = sessionDate < today || session.status === 'DONE'
               const isUpcoming = session.sessionId === upcomingSessionId
-              const isPast = session.isPast
+              
+              // Find last attended: last session with DONE status before today
+              const lastAttendedSession = currentClassSessions
+                .filter(s => s.status === 'DONE' && new Date(s.date) < today)
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+              const isLastAttended = session.sessionId === lastAttendedSession?.sessionId
 
               return (
                 <div
@@ -209,8 +227,14 @@ export default function HorizontalTimeline({
                 )
               }
 
+              // Frontend computes isPast for target session
+              const today = new Date()
+              today.setHours(0, 0, 0, 0)
+              const sessionDate = new Date(alignedSession.date)
+              sessionDate.setHours(0, 0, 0, 0)
+              
+              const isPast = sessionDate < today || alignedSession.status === 'DONE'
               const isSelected = alignedSession.sessionId === selectedSessionId
-              const isPast = alignedSession.isPast
               const canSelect = !isPast
 
               return (

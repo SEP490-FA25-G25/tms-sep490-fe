@@ -32,13 +32,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
-  FullScreenModal,
-  FullScreenModalContent,
-  FullScreenModalHeader,
-  FullScreenModalTitle,
-  FullScreenModalBody,
-} from '@/components/ui/full-screen-modal'
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -439,14 +432,14 @@ export default function StudentRequestsPage() {
         </SidebarInset>
       </SidebarProvider>
       {/* Request Flow Modal */}
-      <FullScreenModal open={activeType !== null} onOpenChange={(open) => !open && handleModalClose()}>
-        <FullScreenModalContent size="lg">
-          <FullScreenModalHeader>
-            <FullScreenModalTitle>
+      <Dialog open={activeType !== null} onOpenChange={(open) => !open && handleModalClose()}>
+        <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
               {activeType && REQUEST_TYPE_LABELS[activeType]}
-            </FullScreenModalTitle>
-          </FullScreenModalHeader>
-          <FullScreenModalBody>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
             {activeType && (
               <UnifiedRequestFlow
                 type={activeType}
@@ -456,9 +449,9 @@ export default function StudentRequestsPage() {
                 }}
               />
             )}
-          </FullScreenModalBody>
-        </FullScreenModalContent>
-      </FullScreenModal>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <RequestDetailDialog
         requestId={detailId}

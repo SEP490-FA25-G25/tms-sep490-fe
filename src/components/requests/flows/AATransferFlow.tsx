@@ -3,11 +3,9 @@ import { format, parseISO, addDays } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { skipToken } from '@reduxjs/toolkit/query'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { ArrowRightIcon, Search, Loader2, UserX, CheckCircle2, Info, MapPin, Clock, AlertTriangle } from 'lucide-react'
+import { ArrowRightIcon, Info, MapPin, Clock, AlertTriangle, Check } from 'lucide-react'
 import {
-  useSearchStudentsQuery,
   useGetAcademicTransferEligibilityQuery,
   useGetAcademicTransferOptionsQuery,
   useSubmitTransferOnBehalfMutation,
@@ -15,6 +13,7 @@ import {
   type TransferEligibility,
   type TransferOption
 } from '@/store/services/studentRequestApi'
+import { SelectStudentStep } from '@/app/academic/student-requests/components/steps/SelectStudentStep'
 import {
   Section,
   ReasonInput,
@@ -24,7 +23,6 @@ import {
 } from '../UnifiedRequestFlow'
 import HorizontalTimeline from './HorizontalTimeline'
 import {
-  useDebouncedValue,
   getModalityLabel,
   getCapacityText,
   getContentGapText,
@@ -49,7 +47,6 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
   // Wizard State
   const [currentStep, setCurrentStep] = useState(1)
 
-  const [studentSearch, setStudentSearch] = useState('')
   const [selectedStudent, setSelectedStudent] = useState<StudentSearchResult | null>(null)
   const [selectedCurrentClass, setSelectedCurrentClass] = useState<TransferEligibility | null>(null)
   const [selectedTargetClass, setSelectedTargetClass] = useState<TransferOption | null>(null)
@@ -59,25 +56,6 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null)
   const [requestReason, setRequestReason] = useState('')
   const [note, setNote] = useState('')
-
-  const debouncedStudentSearch = useDebouncedValue(studentSearch)
-  const trimmedSearch = debouncedStudentSearch.trim()
-  const shouldSearchStudents = trimmedSearch.length >= 2
-
-  const studentQueryResult = useSearchStudentsQuery(
-    shouldSearchStudents && selectedBranchId
-      ? { 
-          search: trimmedSearch, 
-          size: 10, 
-          page: 0,
-          branchIds: [selectedBranchId]
-        }
-      : skipToken,
-    { skip: !shouldSearchStudents || !selectedBranchId, refetchOnMountOrArgChange: true }
-  )
-
-  const studentOptions = studentQueryResult.data?.data?.content ?? []
-  const isSearchingStudents = shouldSearchStudents && studentQueryResult.isFetching
 
   const {
     data: eligibilityResponse,
@@ -169,24 +147,18 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
 
   const handleSelectStudent = (student: StudentSearchResult) => {
     setSelectedStudent(student)
-    setStudentSearch('') // Clear search để hiển thị selected card
     setSelectedCurrentClass(null)
     setSelectedTargetClass(null)
     setTargetModality(undefined)
     setSelectedSessionIndex(null)
     setRequestReason('')
     setNote('')
+    setCurrentStep(2) // Auto advance to next step
   }
 
-  const handleClearSelection = () => {
-    setSelectedStudent(null)
-    setStudentSearch('')
-    setSelectedCurrentClass(null)
-    setSelectedTargetClass(null)
-    setTargetModality(undefined)
-    setSelectedSessionIndex(null)
-    setRequestReason('')
-    setNote('')
+  const handleCancelStudentSelection = () => {
+    // This will close the modal via onSuccess callback
+    onSuccess()
   }
 
   const handleChangeWeek = useCallback((direction: 'prev' | 'next') => {
@@ -198,9 +170,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
   }, [sessionsByWeek.length])
 
   const handleNext = () => {
-    if (currentStep === 1 && selectedStudent) {
-      setCurrentStep(2)
-    } else if (currentStep === 2 && selectedCurrentClass) {
+    if (currentStep === 2 && selectedCurrentClass) {
       setCurrentStep(3)
     } else if (currentStep === 3 && selectedTargetClass) {
       setCurrentStep(4)
@@ -208,7 +178,14 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
   }
 
   const handleBack = () => {
-    if (currentStep > 1) setCurrentStep(currentStep - 1)
+    if (currentStep === 4) {
+      setCurrentStep(3)
+    } else if (currentStep === 3) {
+      setCurrentStep(2)
+    } else if (currentStep === 2) {
+      setCurrentStep(1)
+      setSelectedStudent(null)
+    }
   }
 
   const handleSubmit = async () => {
@@ -283,6 +260,18 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
     }
   ]
 
+  // Step 1 uses SelectStudentStep component outside BaseFlowComponent
+  if (currentStep === 1) {
+    return (
+      <SelectStudentStep
+        onSelect={handleSelectStudent}
+        onCancel={handleCancelStudentSelection}
+        steps={steps}
+        currentStep={currentStep}
+      />
+    )
+  }
+
   return (
     <BaseFlowComponent
       steps={steps}
@@ -291,7 +280,6 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
       onBack={handleBack}
       onSubmit={handleSubmit}
       isNextDisabled={
-        (currentStep === 1 && !selectedStudent) ||
         (currentStep === 2 && !selectedCurrentClass) ||
         (currentStep === 3 && !selectedTargetClass)
       }
@@ -299,122 +287,6 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
       isSubmitting={isSubmitting}
       submitLabel="Xử lý yêu cầu"
     >
-      {/* Step 1: Student selection */}
-      {currentStep === 1 && (
-        <Section>
-          <div className="min-h-[280px] space-y-3">
-            {selectedStudent ? (
-              /* Hiển thị selected student card với button Chọn lại */
-              <div className="rounded-lg bg-primary/5 border-2 border-primary p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-                      <span className="font-semibold text-base">{selectedStudent.fullName}</span>
-                      <span className="text-sm text-muted-foreground">{selectedStudent.studentCode}</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground pl-7">
-                      {selectedStudent.email}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1 pl-7">
-                      {selectedStudent.branchName} · {selectedStudent.activeEnrollments} lớp đang học
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleClearSelection}
-                  >
-                    Chọn lại
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              /* Search input và dropdown */
-              <>
-                <Input
-                  placeholder="Nhập tên hoặc mã học viên (tối thiểu 2 ký tự)"
-                  value={studentSearch}
-                  onChange={(event) => setStudentSearch(event.target.value)}
-                  autoFocus
-                />
-
-                {/* Dropdown search results */}
-                {shouldSearchStudents && !isSearchingStudents && studentOptions.length > 0 && (
-                  <div className="rounded-lg border bg-card shadow-sm">
-                    <div className="px-3 py-2 border-b bg-muted/30">
-                      <p className="text-xs text-muted-foreground">
-                        Tìm thấy {studentOptions.length} học viên
-                      </p>
-                    </div>
-                    <div className="divide-y">
-                      {studentOptions.map((student) => (
-                        <button
-                          key={student.id}
-                          type="button"
-                          onClick={() => handleSelectStudent(student)}
-                          className="w-full px-3 py-2.5 text-left transition hover:bg-muted/50"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="font-medium text-sm truncate">{student.fullName}</span>
-                            <span className="text-xs text-muted-foreground shrink-0">{student.studentCode}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-0.5 truncate">{student.email}</p>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Loading state */}
-                {isSearchingStudents && (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <Loader2 className="h-8 w-8 text-muted-foreground animate-spin mb-3" />
-                    <p className="text-sm text-muted-foreground">Đang tìm kiếm...</p>
-                  </div>
-                )}
-
-                {/* Initial state - chưa nhập gì */}
-                {!isSearchingStudents && studentSearch.trim().length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
-                      <Search className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <p className="text-sm font-medium text-foreground">Tìm kiếm học viên</p>
-                    <p className="text-xs text-muted-foreground mt-1 max-w-60">
-                      Nhập tên hoặc mã học viên vào ô tìm kiếm phía trên để bắt đầu
-                    </p>
-                  </div>
-                )}
-
-                {/* Nhập chưa đủ 2 ký tự */}
-                {!isSearchingStudents && studentSearch.trim().length > 0 && studentSearch.trim().length < 2 && (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
-                      <Search className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">Nhập thêm ít nhất {2 - studentSearch.trim().length} ký tự</p>
-                  </div>
-                )}
-
-                {/* Không tìm thấy kết quả */}
-                {shouldSearchStudents && !isSearchingStudents && studentOptions.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
-                      <UserX className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <p className="text-sm font-medium text-foreground">Không tìm thấy học viên</p>
-                    <p className="text-xs text-muted-foreground mt-1 max-w-60">
-                      Thử tìm kiếm với tên hoặc mã học viên khác
-                    </p>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        </Section>
-      )}
 
       {/* Step 2: Current class selection */}
       {currentStep === 2 && selectedStudent && (
@@ -428,18 +300,6 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                   <div className="space-y-2 text-xs flex-1">
                     <div className="flex items-center justify-between">
                       <p className="font-medium text-foreground">Quy định chuyển lớp:</p>
-                      {eligibilityData.policyInfo?.usedTransfers !== undefined && (
-                        <Badge 
-                          variant={
-                            (eligibilityData.policyInfo.usedTransfers ?? 0) >= 3 
-                              ? "destructive" 
-                              : "secondary"
-                          }
-                          className="text-xs"
-                        >
-                          Đã chuyển: {eligibilityData.policyInfo.usedTransfers} lần
-                        </Badge>
-                      )}
                     </div>
                     
                     <ul className="space-y-0.5 text-muted-foreground">
@@ -456,17 +316,6 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                         <span>Hỗ trợ chuyển <span className="font-medium text-foreground">linh hoạt</span>: cơ sở, hình thức, lịch học</span>
                       </li>
                     </ul>
-                    
-                    {/* Warning for abuse pattern */}
-                    {(eligibilityData.policyInfo?.usedTransfers ?? 0) >= 3 && (
-                      <div className="flex items-start gap-1.5 mt-2 p-2 rounded bg-amber-50 border border-amber-200">
-                        <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
-                        <p className="text-xs text-amber-800">
-                          <span className="font-medium">Cảnh báo:</span> Học viên đã chuyển lớp nhiều lần. 
-                          Xem xét lý do trước khi duyệt thêm.
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -537,7 +386,7 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                             </Badge>
                           ) : (
                             <Badge variant="secondary" className="text-xs bg-emerald-100 text-emerald-700 border-emerald-200">
-                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              <Check className="h-3 w-3 mr-1" />
                               Còn quota
                             </Badge>
                           )}
@@ -695,8 +544,6 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                 targetClassCode={selectedTargetClass.classCode}
                 selectedSessionId={selectedSessionId}
                 onSelectSession={setSelectedSessionId}
-                lastAttendedSessionId={selectedCurrentClass.lastAttendedSessionId}
-                upcomingSessionId={selectedCurrentClass.upcomingSessionId}
                 currentSubjectId={selectedCurrentClass.subjectId}
                 targetSubjectId={selectedTargetClass.subjectId}
               />
