@@ -400,7 +400,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({ classDetail, isLoading }) => 
                           const sessionId = `session-${session.id}`;
 
                           const isSessionExpanded = expandedSessions.includes(sessionId);
-                          
+
                           return (
                             <div key={session.id} className="border rounded-lg bg-card overflow-hidden">
                               <Accordion

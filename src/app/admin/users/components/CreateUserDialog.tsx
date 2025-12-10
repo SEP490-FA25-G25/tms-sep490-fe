@@ -70,11 +70,11 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
   const { data: branchesResponse } = useGetBranchesQuery(undefined, { skip: !open })
 
   // Check email có tồn tại chưa
-  const { data: emailExistsData, isFetching: isCheckingEmail } = useCheckEmailExistsQuery(emailToCheck || '', { skip: !emailToCheck })
+  const { data: emailExistsData } = useCheckEmailExistsQuery(emailToCheck || '', { skip: !emailToCheck })
   const emailExists = emailExistsData?.data === true
 
   // Check phone có tồn tại chưa
-  const { data: phoneExistsData, isFetching: isCheckingPhone } = useCheckPhoneExistsQuery(phoneToCheck || '', { skip: !phoneToCheck })
+  const { data: phoneExistsData } = useCheckPhoneExistsQuery(phoneToCheck || '', { skip: !phoneToCheck })
   const phoneExists = phoneExistsData?.data === true
 
   console.log('Phone check:', { phoneToCheck, phoneExistsData, phoneExists })
