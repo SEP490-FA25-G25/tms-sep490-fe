@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
@@ -29,10 +29,13 @@ export default function HorizontalTimeline({
   targetSubjectId
 }: HorizontalTimelineProps) {
   const totalSessions = currentClassSessions.length
-  const clampCenterIndex = (value: number) => {
-    if (totalSessions === 0) return 0
-    return Math.min(Math.max(value, 0), totalSessions - 1)
-  }
+  const clampCenterIndex = useCallback(
+    (value: number) => {
+      if (totalSessions === 0) return 0
+      return Math.min(Math.max(value, 0), totalSessions - 1)
+    },
+    [totalSessions]
+  )
 
   const [centerIndex, setCenterIndex] = useState(0)
 
@@ -56,12 +59,12 @@ export default function HorizontalTimeline({
       : -1
 
     setCenterIndex(clampCenterIndex(upcomingIndex !== -1 ? upcomingIndex : 0))
-  }, [upcomingSessionId, currentClassSessions, totalSessions])
+  }, [upcomingSessionId, currentClassSessions, totalSessions, clampCenterIndex])
 
   // Giữ centerIndex trong biên khi dữ liệu thay đổi
   useEffect(() => {
     setCenterIndex((prev) => clampCenterIndex(prev))
-  }, [totalSessions])
+  }, [totalSessions, clampCenterIndex])
 
   const handlePrev = () => {
     setCenterIndex((prev) => clampCenterIndex(prev - 1))
