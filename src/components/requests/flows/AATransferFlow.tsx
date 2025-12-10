@@ -12,7 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Info, MapPin, Clock, AlertTriangle, Check, Users } from 'lucide-react'
+import { Info, MapPin, Clock, AlertTriangle } from 'lucide-react'
 import {
   useGetAcademicTransferEligibilityQuery,
   useGetAcademicTransferOptionsQuery,
@@ -32,7 +32,6 @@ import HorizontalTimeline from './HorizontalTimeline'
 import {
   getModalityLabel,
   getCapacityText,
-  getContentGapText,
   getChangeIndicators,
   useSuccessHandler,
   useErrorHandler,
@@ -351,30 +350,20 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                             )}
                           </div>
                           <div className="flex flex-col items-end gap-1.5 shrink-0">
-                            {/* Status Badge */}
-                            {hasPending ? (
+                            {/* Status Badge - Only show if pending */}
+                            {hasPending && (
                               <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 border-amber-200">
                                 <Clock className="h-3 w-3 mr-1" />
                                 Chờ duyệt
                               </Badge>
-                            ) : quotaUsed ? (
-                              <Badge variant="outline" className="text-xs text-rose-600 border-rose-300">
-                                <AlertTriangle className="h-3 w-3 mr-1" />
-                                Hết quota
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary" className="text-xs bg-emerald-100 text-emerald-700 border-emerald-200">
-                                <Check className="h-3 w-3 mr-1" />
-                                Còn quota
-                              </Badge>
                             )}
 
-                            {/* Quota Display */}
+                            {/* Quota Display - Color coding only */}
                             <span className={cn(
                               "text-xs font-medium tabular-nums",
-                              quotaUsed ? "text-rose-600" : "text-muted-foreground"
+                              quotaUsed ? "text-rose-600" : "text-emerald-600"
                             )}>
-                              {cls.transferQuota.used}/{cls.transferQuota.limit} lượt
+                              Quota: {cls.transferQuota.used}/{cls.transferQuota.limit} lượt
                             </span>
                           </div>
                         </div>
@@ -464,8 +453,8 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                       </div>
                     ) : (
                       transferOptions.map((option: TransferOption) => {
-                        const gapText = getContentGapText(option.contentGapAnalysis)
-                        const { hasBranchChange, hasModalityChange } = getChangeIndicators(option.changes)
+                        const progressNote = option.progressNote
+                        const { hasModalityChange } = getChangeIndicators(option.changes)
                         const isScheduled = option.classStatus === 'SCHEDULED'
                         const startDate = option.startDate ? new Date(option.startDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : null
                         const isFull = (option.availableSlots ?? 0) <= 0
@@ -482,29 +471,17 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                             onClick={handleSelectClass}
                             className={cn(
                               'block cursor-pointer rounded-lg border px-3 py-2.5 transition',
-                              isFull
-                                ? 'border-rose-200 bg-rose-50/50 hover:border-rose-300 hover:bg-rose-50'
-                                : 'hover:border-primary/50 hover:bg-muted/30',
-                              selectedTargetClass?.classId === option.classId && (isFull
-                                ? 'border-rose-400 bg-rose-100/50 ring-1 ring-rose-300'
-                                : 'border-primary bg-primary/5')
+                              'hover:border-primary/50 hover:bg-muted/30',
+                              selectedTargetClass?.classId === option.classId &&
+                                'border-primary bg-primary/5 ring-1 ring-primary/20'
                             )}
                           >
                             <div className="space-y-1.5">
                               <div className="flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <Badge variant="outline" className={cn(
-                                    "text-xs shrink-0",
-                                    isFull && "border-rose-300 text-rose-700"
-                                  )}>
+                                  <Badge variant="outline" className="text-xs shrink-0">
                                     {option.classCode}
                                   </Badge>
-                                  {isFull && (
-                                    <Badge variant="destructive" className="text-xs">
-                                      <Users className="h-3 w-3 mr-1" />
-                                      Đầy
-                                    </Badge>
-                                  )}
                                   {isScheduled && (
                                     <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
                                       Sắp khai giảng
@@ -549,19 +526,19 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                                 </div>
                               )}
 
-                              {/* Full Class Warning */}
+                              {/* Full Class Warning - Always show when full */}
                               {isFull && (
-                                <div className="flex items-start gap-1.5 text-xs text-rose-700 bg-rose-100 border border-rose-200 rounded px-2 py-1">
+                                <div className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
                                   <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5" />
-                                  <span>Lớp đã đầy, cần xác nhận override</span>
+                                  <span>Lớp đã đầy, cần xác nhận override khi submit</span>
                                 </div>
                               )}
 
                               {/* Content Gap Warning */}
-                              {gapText && !isFull && (
-                                <div className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
-                                  <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5" />
-                                  <span>{gapText}</span>
+                              {progressNote && !isFull && (
+                                <div className="flex items-start gap-1.5 text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded px-2 py-1">
+                                  <Info className="h-3 w-3 shrink-0 mt-0.5" />
+                                  <span>{progressNote}</span>
                                 </div>
                               )}
                             </div>
@@ -580,7 +557,15 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
         {currentStep === 4 && selectedTargetClass && selectedCurrentClass && (
           <Section>
             <div className="space-y-4">
-              {/* Horizontal Timeline */}
+              {/* Context: Lý do chuyển lớp (Context Before Action) */}
+              <ReasonInput
+                value={requestReason}
+                onChange={setRequestReason}
+                placeholder="Lý do yêu cầu chuyển lớp..."
+                error={null}
+              />
+
+              {/* Horizontal Timeline - Chọn buổi học để bắt đầu (Effective Date) */}
               {selectedCurrentClass.allSessions && selectedTargetClass.allSessions && (
                 <HorizontalTimeline
                   currentClassSessions={selectedCurrentClass.allSessions}
@@ -593,13 +578,6 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
                   targetSubjectId={selectedTargetClass.subjectId}
                 />
               )}
-
-              <ReasonInput
-                value={requestReason}
-                onChange={setRequestReason}
-                placeholder="Lý do yêu cầu chuyển lớp..."
-                error={null}
-              />
 
               <NoteInput
                 value={note}

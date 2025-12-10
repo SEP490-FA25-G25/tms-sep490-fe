@@ -91,20 +91,18 @@ export default function TransferConfirmationStep({
       return selectedClass.contentGap
     }
 
-    if (selectedClass.contentGapAnalysis) {
+    // Use progressNote if available (new backend format)
+    if (selectedClass.progressNote) {
       return {
-        severity: selectedClass.contentGapAnalysis.gapLevel,
-        missedSessions: selectedClass.contentGapAnalysis.missedSessions,
-        gapSessions: selectedClass.contentGapAnalysis.gapSessions,
-        recommendation:
-          selectedClass.contentGapAnalysis.impactDescription ??
-          selectedClass.contentGapAnalysis.recommendedActions?.join('. ') ??
-          'Tiến độ tương đương, không thiếu nội dung',
+        severity: 'NONE' as const,
+        missedSessions: 0,
+        gapSessions: [],
+        recommendation: selectedClass.progressNote,
       }
     }
 
     return {
-      severity: 'NONE',
+      severity: 'NONE' as const,
       missedSessions: 0,
       gapSessions: [],
       recommendation: 'Tiến độ tương đương, không thiếu nội dung',

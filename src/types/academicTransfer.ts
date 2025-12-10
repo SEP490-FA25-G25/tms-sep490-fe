@@ -122,6 +122,8 @@ export interface TransferOption {
   classId: number
   classCode: string
   className: string
+  subjectId?: number
+  subjectName?: string
   branchId: number
   branchName: string
   branchAddress?: string
@@ -139,21 +141,17 @@ export interface TransferOption {
   classStatus: string
   contentGap?: ContentGap
   canTransfer: boolean
-  contentGapAnalysis?: {
-    gapLevel: 'NONE' | 'MINOR' | 'MODERATE' | 'MAJOR'
-    missedSessions: number
-    totalSessions: number
-    gapSessions: Array<ContentGapSession & { scheduledDate?: string }>
-    recommendedActions?: string[]
-    impactDescription?: string
-  }
+  progressNote?: string // Simple progress comparison from backend
   upcomingSessions?: Array<{
     sessionId: number
     date: string
-    courseSessionNumber: number
-    courseSessionTitle: string
+    courseSessionNumber?: number
+    subjectSessionNumber?: number
+    courseSessionTitle?: string
+    subjectSessionTitle?: string
     timeSlot: string
   }>
+  allSessions?: SessionInfo[]
   changes?: {
     branch?: string
     modality?: string

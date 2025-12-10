@@ -483,15 +483,6 @@ export interface ContentGap {
   impactDescription?: string
 }
 
-export interface ContentGapAnalysis {
-  gapLevel: 'NONE' | 'MINOR' | 'MODERATE' | 'MAJOR'
-  missedSessions: number
-  totalSessions: number
-  gapSessions: ContentGapSession[]
-  recommendedActions?: string[]
-  impactDescription?: string
-}
-
 export interface TransferOption {
   classId: number
   classCode: string
@@ -514,7 +505,7 @@ export interface TransferOption {
   classStatus: string
   contentGap?: ContentGap
   canTransfer: boolean
-  contentGapAnalysis?: ContentGapAnalysis
+  progressNote?: string // Simple progress comparison, e.g., "Chênh 3 buổi"
   upcomingSessions?: Array<{
     sessionId: number
     date: string
