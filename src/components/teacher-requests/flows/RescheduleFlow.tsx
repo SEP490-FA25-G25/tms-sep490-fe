@@ -1,163 +1,250 @@
-import { useState, useMemo, useEffect } from 'react'
-import { format, parseISO } from 'date-fns'
-import { vi } from 'date-fns/locale'
-import { skipToken } from '@reduxjs/toolkit/query'
-import { CalendarIcon, ClockIcon, MapPinIcon } from 'lucide-react'
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Calendar } from '@/components/ui/calendar'
+import { useState, useMemo, useEffect } from "react";
+import { format, parseISO } from "date-fns";
+import { vi } from "date-fns/locale";
+import { skipToken } from "@reduxjs/toolkit/query";
+import { CalendarIcon, ClockIcon, MapPinIcon } from "lucide-react";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover'
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { cn } from '@/lib/utils'
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import {
   useGetMySessionsQuery,
   useGetRescheduleSlotsQuery,
   useGetRescheduleResourcesQuery,
   useCreateRequestMutation,
   type MySessionDTO,
-  type ResourceDTO
-} from '@/store/services/teacherRequestApi'
+  type ResourceDTO,
+} from "@/store/services/teacherRequestApi";
 import {
   BaseFlowComponent,
   Section,
   ReasonInput,
-  SelectionCard
-} from '../UnifiedTeacherRequestFlow'
-import { useSuccessHandler, useErrorHandler } from '@/components/requests/utils'
+  SelectionCard,
+} from "../UnifiedTeacherRequestFlow";
+import {
+  useSuccessHandler,
+  useErrorHandler,
+} from "@/components/requests/utils";
+
+// Format khung giờ
+const formatTimeRange = (start?: string | null, end?: string | null) => {
+  const toDisplay = (time?: string | null) => {
+    if (!time) return null;
+    const [h, m] = time.split(":");
+    const hour = Number(h);
+    if (Number.isNaN(hour) || m == null) return null;
+    const meridiem = hour >= 12 ? "PM" : "AM";
+    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+    const displayMinute = m.padStart(2, "0");
+    return { text: `${displayHour}:${displayMinute}`, meridiem };
+  };
+
+  const startObj = toDisplay(start);
+  const endObj = toDisplay(end);
+  if (!startObj || !endObj) return null;
+
+  if (startObj.meridiem === endObj.meridiem) {
+    return `${startObj.text}-${endObj.text}${startObj.meridiem}`;
+  }
+
+  return `${startObj.text}${startObj.meridiem}-${endObj.text}${endObj.meridiem}`;
+};
 
 interface RescheduleFlowProps {
-  onSuccess: () => void
+  onSuccess: () => void;
 }
 
 const STEPS = [
-  { id: 1, title: 'Chọn buổi học', description: 'Chọn buổi học cần đổi lịch', isComplete: false, isAvailable: true },
-  { id: 2, title: 'Chọn ngày mới', description: 'Chọn ngày mới cho buổi học', isComplete: false, isAvailable: true },
-  { id: 3, title: 'Chọn khung giờ mới', description: 'Chọn khung giờ mới cho buổi học', isComplete: false, isAvailable: true },
-  { id: 4, title: 'Chọn phòng/phương tiện', description: 'Chọn phòng học hoặc phương tiện mới', isComplete: false, isAvailable: true },
-  { id: 5, title: 'Nhập lý do', description: 'Mô tả lý do cần đổi lịch', isComplete: false, isAvailable: true }
-]
+  {
+    id: 1,
+    title: "Chọn buổi học",
+    description: "Chọn buổi học cần đổi lịch",
+    isComplete: false,
+    isAvailable: true,
+  },
+  {
+    id: 2,
+    title: "Chọn ngày mới",
+    description: "Chọn ngày mới cho buổi học",
+    isComplete: false,
+    isAvailable: true,
+  },
+  {
+    id: 3,
+    title: "Chọn khung giờ mới",
+    description: "Chọn khung giờ mới cho buổi học",
+    isComplete: false,
+    isAvailable: true,
+  },
+  {
+    id: 4,
+    title: "Chọn phòng/phương tiện",
+    description: "Chọn phòng học hoặc phương tiện mới",
+    isComplete: false,
+    isAvailable: true,
+  },
+  {
+    id: 5,
+    title: "Nhập lý do",
+    description: "Mô tả lý do cần đổi lịch",
+    isComplete: false,
+    isAvailable: true,
+  },
+];
 
 export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
-  const REASON_MIN_LENGTH = 15
-  const [currentStep, setCurrentStep] = useState(1)
-  const [selectedSession, setSelectedSession] = useState<MySessionDTO | null>(null)
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
-  const [selectedTimeSlotId, setSelectedTimeSlotId] = useState<number | undefined>(undefined)
-  const [selectedResource, setSelectedResource] = useState<ResourceDTO | null>(null)
-  const [reason, setReason] = useState('')
-  const [reasonError, setReasonError] = useState<string | null>(null)
+  const REASON_MIN_LENGTH = 15;
+  const [currentStep, setCurrentStep] = useState(1);
+  const [selectedSession, setSelectedSession] = useState<MySessionDTO | null>(
+    null
+  );
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedTimeSlotId, setSelectedTimeSlotId] = useState<
+    number | undefined
+  >(undefined);
+  const [selectedResource, setSelectedResource] = useState<ResourceDTO | null>(
+    null
+  );
+  const [reason, setReason] = useState("");
+  const [reasonError, setReasonError] = useState<string | null>(null);
 
   // Fetch sessions
-  const { data: sessionsResponse, isFetching: isLoadingSessions } = useGetMySessionsQuery({})
-  const sessions = useMemo(() => sessionsResponse?.data ?? [], [sessionsResponse])
+  const { data: sessionsResponse, isFetching: isLoadingSessions } =
+    useGetMySessionsQuery({});
+  const sessions = useMemo(
+    () => sessionsResponse?.data ?? [],
+    [sessionsResponse]
+  );
 
   // Fetch slots for selected date
-  const selectedDateString = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : undefined
-  const { data: slotsResponse, isFetching: isLoadingSlots } = useGetRescheduleSlotsQuery(
-    selectedSession && selectedDateString
-      ? {
-          sessionId: selectedSession.sessionId ?? selectedSession.id ?? 0,
-          date: selectedDateString,
-          // teacherId is optional - backend will get it from auth token for teachers
-        }
-      : skipToken,
-    { skip: !selectedSession || !selectedDate }
-  )
-  const slots = useMemo(() => slotsResponse?.data ?? [], [slotsResponse])
+  const selectedDateString = selectedDate
+    ? format(selectedDate, "yyyy-MM-dd")
+    : undefined;
+  const { data: slotsResponse, isFetching: isLoadingSlots } =
+    useGetRescheduleSlotsQuery(
+      selectedSession && selectedDateString
+        ? {
+            sessionId: selectedSession.sessionId ?? selectedSession.id ?? 0,
+            date: selectedDateString,
+            // teacherId is optional - backend will get it from auth token for teachers
+          }
+        : skipToken,
+      { skip: !selectedSession || !selectedDate }
+    );
+  const slots = useMemo(() => slotsResponse?.data ?? [], [slotsResponse]);
 
   // Fetch resources for selected date and timeslot
-  const { data: resourcesResponse, isFetching: isLoadingResources } = useGetRescheduleResourcesQuery(
-    selectedSession && selectedDateString && selectedTimeSlotId
-      ? {
-          sessionId: selectedSession.sessionId ?? selectedSession.id ?? 0,
-          date: selectedDateString,
-          timeSlotId: selectedTimeSlotId,
-          // teacherId is optional - backend will get it from auth token for teachers
-        }
-      : skipToken,
-    { skip: !selectedSession || !selectedDate || !selectedTimeSlotId }
-  )
-  const resources = useMemo(() => resourcesResponse?.data ?? [], [resourcesResponse])
+  const { data: resourcesResponse, isFetching: isLoadingResources } =
+    useGetRescheduleResourcesQuery(
+      selectedSession && selectedDateString && selectedTimeSlotId
+        ? {
+            sessionId: selectedSession.sessionId ?? selectedSession.id ?? 0,
+            date: selectedDateString,
+            timeSlotId: selectedTimeSlotId,
+            // teacherId is optional - backend will get it from auth token for teachers
+          }
+        : skipToken,
+      { skip: !selectedSession || !selectedDate || !selectedTimeSlotId }
+    );
+  const resources = useMemo(
+    () => resourcesResponse?.data ?? [],
+    [resourcesResponse]
+  );
 
-  const [createRequest, { isLoading: isSubmitting }] = useCreateRequestMutation()
-  const { handleSuccess } = useSuccessHandler(onSuccess)
-  const { handleError } = useErrorHandler()
+  const [createRequest, { isLoading: isSubmitting }] =
+    useCreateRequestMutation();
+  const { handleSuccess } = useSuccessHandler(onSuccess);
+  const { handleError } = useErrorHandler();
 
   // Reset timeslot and resource when date changes
   useEffect(() => {
     if (selectedDate) {
-      setSelectedTimeSlotId(undefined)
-      setSelectedResource(null)
+      setSelectedTimeSlotId(undefined);
+      setSelectedResource(null);
     }
-  }, [selectedDate])
+  }, [selectedDate]);
 
   // Reset resource when timeslot changes
   useEffect(() => {
     if (selectedTimeSlotId) {
-      setSelectedResource(null)
+      setSelectedResource(null);
     }
-  }, [selectedTimeSlotId])
+  }, [selectedTimeSlotId]);
 
   const handleNext = () => {
     if (currentStep === 1 && selectedSession) {
-      setCurrentStep(2)
+      setCurrentStep(2);
     } else if (currentStep === 2 && selectedDate) {
-      setCurrentStep(3)
+      setCurrentStep(3);
     } else if (currentStep === 3 && selectedTimeSlotId) {
-      setCurrentStep(4)
+      setCurrentStep(4);
     } else if (currentStep === 4 && selectedResource) {
-      setCurrentStep(5)
+      setCurrentStep(5);
     }
-  }
+  };
 
   const handleBack = () => {
     if (currentStep === 2) {
-      setCurrentStep(1)
+      setCurrentStep(1);
     } else if (currentStep === 3) {
-      setCurrentStep(2)
+      setCurrentStep(2);
     } else if (currentStep === 4) {
-      setCurrentStep(3)
+      setCurrentStep(3);
     } else if (currentStep === 5) {
-      setCurrentStep(4)
+      setCurrentStep(4);
     }
-  }
+  };
 
   const handleSubmit = async () => {
-    if (!selectedSession || !selectedDate || !selectedTimeSlotId || !selectedResource) return
+    if (
+      !selectedSession ||
+      !selectedDate ||
+      !selectedTimeSlotId ||
+      !selectedResource
+    )
+      return;
 
-    const trimmedReason = reason.trim()
+    const trimmedReason = reason.trim();
     if (trimmedReason.length < REASON_MIN_LENGTH) {
-      setReasonError(`Lý do phải có tối thiểu ${REASON_MIN_LENGTH} ký tự`)
-      return
+      setReasonError(`Lý do phải có tối thiểu ${REASON_MIN_LENGTH} ký tự`);
+      return;
     }
 
     try {
       await createRequest({
         sessionId: selectedSession.sessionId ?? selectedSession.id ?? 0,
-        requestType: 'RESCHEDULE',
-        newDate: format(selectedDate, 'yyyy-MM-dd'),
+        requestType: "RESCHEDULE",
+        newDate: format(selectedDate, "yyyy-MM-dd"),
         newTimeSlotId: selectedTimeSlotId,
         newResourceId: selectedResource.id ?? selectedResource.resourceId,
-        reason: trimmedReason
-      }).unwrap()
+        reason: trimmedReason,
+      }).unwrap();
 
-      handleSuccess()
+      handleSuccess();
     } catch (error) {
-      handleError(error)
+      handleError(error);
     }
-  }
+  };
 
   const renderStep1 = () => {
     if (isLoadingSessions) {
@@ -167,7 +254,7 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
             <Skeleton key={i} className="h-20 w-full rounded-lg" />
           ))}
         </div>
-      )
+      );
     }
 
     if (sessions.length === 0) {
@@ -175,7 +262,9 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <span className="text-lg font-semibold text-muted-foreground">14</span>
+              <span className="text-lg font-semibold text-muted-foreground">
+                14
+              </span>
             </EmptyMedia>
             <EmptyTitle>Không có buổi học phù hợp</EmptyTitle>
             <EmptyDescription>
@@ -183,15 +272,17 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
-      )
+      );
     }
 
     return (
       <div className="space-y-3">
         {sessions.map((session) => {
-          const sessionId = session.sessionId ?? session.id ?? 0
-          const isSelected = selectedSession?.sessionId === sessionId || selectedSession?.id === sessionId
-          
+          const sessionId = session.sessionId ?? session.id ?? 0;
+          const isSelected =
+            selectedSession?.sessionId === sessionId ||
+            selectedSession?.id === sessionId;
+
           return (
             <SelectionCard
               key={sessionId}
@@ -203,13 +294,18 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium text-sm">{session.className}</span>
+                    <span className="font-medium text-sm">
+                      {session.className}
+                    </span>
                     <span className="text-xs text-muted-foreground">
-                      {format(parseISO(session.date), 'EEE · dd/MM', { locale: vi })}
+                      {format(parseISO(session.date), "EEE · dd/MM", {
+                        locale: vi,
+                      })}
                     </span>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {session.startTime} - {session.endTime} · {session.subjectName}
+                    {session.startTime} - {session.endTime} ·{" "}
+                    {session.subjectName}
                   </div>
                   {session.topic && (
                     <div className="text-xs text-muted-foreground mt-1">
@@ -218,15 +314,17 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
                   )}
                 </div>
                 {session.hasPendingRequest && (
-                  <span className="text-xs text-amber-600">Đang có yêu cầu</span>
+                  <span className="text-xs text-amber-600">
+                    Đang có yêu cầu
+                  </span>
                 )}
               </div>
             </SelectionCard>
-          )
+          );
         })}
       </div>
-    )
-  }
+    );
+  };
 
   const renderStep2 = () => {
     if (!selectedSession) {
@@ -234,10 +332,12 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
         <Empty>
           <EmptyHeader>
             <EmptyTitle>Chưa chọn buổi học</EmptyTitle>
-            <EmptyDescription>Vui lòng quay lại bước trước để chọn buổi học.</EmptyDescription>
+            <EmptyDescription>
+              Vui lòng quay lại bước trước để chọn buổi học.
+            </EmptyDescription>
           </EmptyHeader>
         </Empty>
-      )
+      );
     }
 
     return (
@@ -283,14 +383,17 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
             <div className="text-sm">
               <p className="font-medium">{selectedSession.className}</p>
               <p className="text-muted-foreground">
-                {format(parseISO(selectedSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })} · {selectedSession.startTime} - {selectedSession.endTime}
+                {format(parseISO(selectedSession.date), "EEEE, dd/MM/yyyy", {
+                  locale: vi,
+                })}{" "}
+                · {selectedSession.startTime} - {selectedSession.endTime}
               </p>
             </div>
           </div>
         )}
       </Section>
-    )
-  }
+    );
+  };
 
   const renderStep3 = () => {
     if (!selectedSession || !selectedDate) {
@@ -298,10 +401,12 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
         <Empty>
           <EmptyHeader>
             <EmptyTitle>Chưa chọn đầy đủ thông tin</EmptyTitle>
-            <EmptyDescription>Vui lòng quay lại các bước trước để chọn buổi học và ngày mới.</EmptyDescription>
+            <EmptyDescription>
+              Vui lòng quay lại các bước trước để chọn buổi học và ngày mới.
+            </EmptyDescription>
           </EmptyHeader>
         </Empty>
-      )
+      );
     }
 
     if (isLoadingSlots) {
@@ -311,7 +416,7 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
             <Skeleton key={i} className="h-16 w-full rounded-lg" />
           ))}
         </div>
-      )
+      );
     }
 
     if (slots.length === 0) {
@@ -323,11 +428,12 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
             </EmptyMedia>
             <EmptyTitle>Không có khung giờ phù hợp</EmptyTitle>
             <EmptyDescription>
-              Không tìm thấy khung giờ phù hợp cho ngày đã chọn. Vui lòng chọn ngày khác.
+              Không tìm thấy khung giờ phù hợp cho ngày đã chọn. Vui lòng chọn
+              ngày khác.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
-      )
+      );
     }
 
     return (
@@ -346,24 +452,26 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
             <SelectContent>
               {slots
                 .filter((slot) => {
-                  const slotId = slot.timeSlotTemplateId ?? slot.timeSlotId ?? slot.id;
+                  const slotId =
+                    slot.timeSlotTemplateId ?? slot.timeSlotId ?? slot.id;
                   return slotId != null && slotId !== 0;
                 })
                 .map((slot) => {
-                  const slotId = slot.timeSlotTemplateId ?? slot.timeSlotId ?? slot.id;
+                  const slotId =
+                    slot.timeSlotTemplateId ?? slot.timeSlotId ?? slot.id;
+                  const formattedRange = formatTimeRange(
+                    slot.startTime || slot.startAt,
+                    slot.endTime || slot.endAt
+                  );
+                  // Chỉ hiển thị khoảng giờ, bỏ tên slot
+                  const fallbackRange = `${slot.startTime || slot.startAt} - ${
+                    slot.endTime || slot.endAt
+                  }`;
                   const label =
-                    slot.label ||
-                    slot.name ||
-                    slot.displayLabel ||
-                    slot.timeSlotLabel ||
-                    `${slot.startTime || slot.startAt} - ${slot.endTime || slot.endAt}` ||
-                    `Slot ${slotId}`;
+                    formattedRange ?? fallbackRange ?? `Slot ${slotId}`;
 
                   return (
-                    <SelectItem
-                      key={slotId}
-                      value={String(slotId)}
-                    >
+                    <SelectItem key={slotId} value={String(slotId)}>
                       {label}
                     </SelectItem>
                   );
@@ -379,14 +487,14 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
             </p>
             <div className="text-sm">
               <p className="font-medium">
-                {format(selectedDate, 'EEEE, dd/MM/yyyy', { locale: vi })}
+                {format(selectedDate, "EEEE, dd/MM/yyyy", { locale: vi })}
               </p>
             </div>
           </div>
         )}
       </Section>
-    )
-  }
+    );
+  };
 
   const renderStep4 = () => {
     if (!selectedSession || !selectedDate || !selectedTimeSlotId) {
@@ -394,10 +502,12 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
         <Empty>
           <EmptyHeader>
             <EmptyTitle>Chưa chọn đầy đủ thông tin</EmptyTitle>
-            <EmptyDescription>Vui lòng quay lại các bước trước để chọn đầy đủ thông tin.</EmptyDescription>
+            <EmptyDescription>
+              Vui lòng quay lại các bước trước để chọn đầy đủ thông tin.
+            </EmptyDescription>
           </EmptyHeader>
         </Empty>
-      )
+      );
     }
 
     if (isLoadingResources) {
@@ -407,7 +517,7 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
             <Skeleton key={i} className="h-16 w-full rounded-lg" />
           ))}
         </div>
-      )
+      );
     }
 
     if (resources.length === 0) {
@@ -419,19 +529,22 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
             </EmptyMedia>
             <EmptyTitle>Không có phòng/phương tiện phù hợp</EmptyTitle>
             <EmptyDescription>
-              Không tìm thấy phòng học hoặc phương tiện phù hợp cho khung giờ đã chọn.
+              Không tìm thấy phòng học hoặc phương tiện phù hợp cho khung giờ đã
+              chọn.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
-      )
+      );
     }
 
     return (
       <div className="space-y-3">
         {resources.map((resource) => {
-          const resourceId = resource.id ?? resource.resourceId ?? 0
-          const isSelected = selectedResource?.id === resourceId || selectedResource?.resourceId === resourceId
-          
+          const resourceId = resource.id ?? resource.resourceId ?? 0;
+          const isSelected =
+            selectedResource?.id === resourceId ||
+            selectedResource?.resourceId === resourceId;
+
           return (
             <SelectionCard
               key={resourceId}
@@ -444,7 +557,9 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-medium text-sm">{resource.name}</span>
                     {resource.type && (
-                      <span className="text-xs text-muted-foreground">({resource.type})</span>
+                      <span className="text-xs text-muted-foreground">
+                        ({resource.type})
+                      </span>
                     )}
                   </div>
                   {resource.capacity && (
@@ -455,11 +570,11 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
                 </div>
               </div>
             </SelectionCard>
-          )
+          );
         })}
       </div>
-    )
-  }
+    );
+  };
 
   const renderStep5 = () => {
     return (
@@ -469,13 +584,14 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
             Lý do yêu cầu <span className="text-destructive">*</span>
           </label>
           <p className="text-xs text-muted-foreground">
-            Hãy mô tả rõ khó khăn và mong muốn hỗ trợ để bộ phận Học vụ xử lý nhanh hơn.
+            Hãy mô tả rõ khó khăn và mong muốn hỗ trợ để bộ phận Học vụ xử lý
+            nhanh hơn.
           </p>
           <ReasonInput
             value={reason}
             onChange={(value) => {
-              setReason(value)
-              setReasonError(null)
+              setReason(value);
+              setReasonError(null);
             }}
             placeholder="Ví dụ: Tôi cần đổi lịch vì có việc đột xuất..."
             error={reasonError}
@@ -491,7 +607,10 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
             <div className="text-sm">
               <p className="font-medium">{selectedSession.className}</p>
               <p className="text-muted-foreground">
-                {format(parseISO(selectedSession.date), 'EEEE, dd/MM/yyyy', { locale: vi })} · {selectedSession.startTime} - {selectedSession.endTime}
+                {format(parseISO(selectedSession.date), "EEEE, dd/MM/yyyy", {
+                  locale: vi,
+                })}{" "}
+                · {selectedSession.startTime} - {selectedSession.endTime}
               </p>
             </div>
           </div>
@@ -504,21 +623,25 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
             </p>
             <div className="text-sm">
               <p className="font-medium">
-                {format(selectedDate, 'EEEE, dd/MM/yyyy', { locale: vi })}
+                {format(selectedDate, "EEEE, dd/MM/yyyy", { locale: vi })}
               </p>
               <p className="text-muted-foreground">
                 {(() => {
                   const selectedSlot = slots.find(
-                    (s) => (s.timeSlotTemplateId ?? s.timeSlotId ?? s.id) === selectedTimeSlotId
-                  )
+                    (s) =>
+                      (s.timeSlotTemplateId ?? s.timeSlotId ?? s.id) ===
+                      selectedTimeSlotId
+                  );
                   return (
                     selectedSlot?.label ||
                     selectedSlot?.name ||
                     selectedSlot?.displayLabel ||
                     selectedSlot?.timeSlotLabel ||
-                    `${selectedSlot?.startTime || selectedSlot?.startAt} - ${selectedSlot?.endTime || selectedSlot?.endAt}` ||
-                    'Chưa có thông tin'
-                  )
+                    `${selectedSlot?.startTime || selectedSlot?.startAt} - ${
+                      selectedSlot?.endTime || selectedSlot?.endAt
+                    }` ||
+                    "Chưa có thông tin"
+                  );
                 })()}
               </p>
             </div>
@@ -539,8 +662,8 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
           </div>
         )}
       </Section>
-    )
-  }
+    );
+  };
 
   return (
     <BaseFlowComponent
@@ -564,6 +687,5 @@ export default function RescheduleFlow({ onSuccess }: RescheduleFlowProps) {
       {currentStep === 4 && renderStep4()}
       {currentStep === 5 && renderStep5()}
     </BaseFlowComponent>
-  )
+  );
 }
-
