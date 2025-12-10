@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
-import { useCreateUserMutation, useCheckEmailExistsQuery, type CreateUserRequest } from '@/store/services/userApi'
+import { useCreateUserMutation, useCheckEmailExistsQuery, useCheckPhoneExistsQuery, type CreateUserRequest } from '@/store/services/userApi'
 import { useGetBranchesQuery } from '@/store/services/classCreationApi'
 import { ROLES } from '@/hooks/useRoleBasedAccess'
 
@@ -32,16 +32,23 @@ const ROLE_OPTIONS = [
 ]
 
 const GENDER_VALUES = ['MALE', 'FEMALE', 'OTHER'] as const
-const STATUS_VALUES = ['ACTIVE', 'INACTIVE', 'SUSPENDED'] as const
+const STATUS_VALUES = ['ACTIVE', 'INACTIVE'] as const
 
 const createUserSchema = z.object({
   email: z.string().email('Email không hợp lệ').min(1, 'Email là bắt buộc'),
   password: z.string().min(8, 'Mật khẩu phải có ít nhất 8 ký tự'),
-  fullName: z.string().min(1, 'Họ tên là bắt buộc'),
-  phone: z.string().optional(),
+  fullName: z.string()
+    .min(1, 'Họ tên là bắt buộc')
+    .refine((val) => val.trim().length > 0, 'Họ tên không được chỉ chứa khoảng trắng'),
+  phone: z.string().regex(/^(0[3|5|7|8|9])[0-9]{8}$/, 'Số điện thoại phải có 10-11 chữ số').optional().or(z.literal('')),
   facebookUrl: z.string().url('URL không hợp lệ').optional().or(z.literal('')),
   avatarUrl: z.string().url('URL không hợp lệ').optional().or(z.literal('')),
-  dob: z.string().optional(),
+  dob: z.string()
+    .optional()
+    .refine(
+      (val) => !val || new Date(val) < new Date(),
+      'Ngày sinh phải là ngày trong quá khứ'
+    ),
   gender: z.enum(GENDER_VALUES),
   address: z.string().optional(),
   status: z.enum(STATUS_VALUES),
@@ -58,12 +65,19 @@ interface CreateUserDialogProps {
 
 export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) {
   const [emailToCheck, setEmailToCheck] = useState<string | null>(null)
+  const [phoneToCheck, setPhoneToCheck] = useState<string | null>(null)
   const [createUser, { isLoading: isCreating }] = useCreateUserMutation()
   const { data: branchesResponse } = useGetBranchesQuery(undefined, { skip: !open })
 
-  // Check email exists
-  useCheckEmailExistsQuery(emailToCheck || '', { skip: !emailToCheck })
+  // Check email có tồn tại chưa
+  const { data: emailExistsData, isFetching: isCheckingEmail } = useCheckEmailExistsQuery(emailToCheck || '', { skip: !emailToCheck })
+  const emailExists = emailExistsData?.data === true
 
+  // Check phone có tồn tại chưa
+  const { data: phoneExistsData, isFetching: isCheckingPhone } = useCheckPhoneExistsQuery(phoneToCheck || '', { skip: !phoneToCheck })
+  const phoneExists = phoneExistsData?.data === true
+
+  console.log('Phone check:', { phoneToCheck, phoneExistsData, phoneExists })
   const {
     register,
     handleSubmit,
@@ -73,6 +87,7 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
     reset,
   } = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
+    mode: 'onChange',
     defaultValues: {
       gender: 'MALE',
       status: 'ACTIVE',
@@ -84,11 +99,41 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
   const selectedRoleIds = watch('roleIds') || []
   const selectedBranchIds = watch('branchIds') || []
   const email = watch('email')
+  const phone = watch('phone')
 
   const branches = branchesResponse?.data || []
 
+  // Debounce email check - tự động check khi email thay đổi
+  useEffect(() => {
+    if (!email || !email.includes('@') || errors.email) {
+      setEmailToCheck(null)
+      return
+    }
+
+    const timer = setTimeout(() => {
+      setEmailToCheck(email)
+    }, 500) // Debounce 500ms
+
+    return () => clearTimeout(timer)
+  }, [email, errors.email])
+
+  // Debounce phone check - tự động check khi phone thay đổi
+  useEffect(() => {
+    const phoneRegex = /^(0[3|5|7|8|9])[0-9]{8}$/
+    if (!phone || !phoneRegex.test(phone) || errors.phone) {
+      setPhoneToCheck(null)
+      return
+    }
+
+    const timer = setTimeout(() => {
+      setPhoneToCheck(phone)
+    }, 500) // Debounce 500ms
+
+    return () => clearTimeout(timer)
+  }, [phone, errors.phone])
+
   const handleEmailBlur = () => {
-    if (email && email.includes('@')) {
+    if (email && email.includes('@') && !errors.email) {
       setEmailToCheck(email)
     }
   }
@@ -163,6 +208,9 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
               onBlur={handleEmailBlur}
             />
             {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+            {!errors.email && emailExists && (
+              <p className="text-sm text-destructive">Email đã tồn tại</p>
+            )}
           </div>
 
           {/* Password */}
@@ -188,6 +236,10 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
             <div className="space-y-2">
               <Label htmlFor="phone">Số điện thoại</Label>
               <Input id="phone" placeholder="0912345678" {...register('phone')} />
+              {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
+              {!errors.phone && phoneExists && (
+                <p className="text-sm text-destructive">Số điện thoại đã tồn tại</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="gender">
@@ -215,6 +267,7 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
             <div className="space-y-2">
               <Label htmlFor="dob">Ngày sinh</Label>
               <Input id="dob" type="date" {...register('dob')} />
+              {errors.dob && <p className="text-sm text-destructive">{errors.dob.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="status">
@@ -222,7 +275,7 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
               </Label>
               <Select
                 value={watch('status')}
-                onValueChange={(value) => setValue('status', value as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED')}
+                onValueChange={(value) => setValue('status', value as 'ACTIVE' | 'INACTIVE')}
               >
                 <SelectTrigger id="status">
                   <SelectValue />
@@ -230,7 +283,6 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
                 <SelectContent>
                   <SelectItem value="ACTIVE">Hoạt động</SelectItem>
                   <SelectItem value="INACTIVE">Không hoạt động</SelectItem>
-                  <SelectItem value="SUSPENDED">Tạm khóa</SelectItem>
                 </SelectContent>
               </Select>
               {errors.status && <p className="text-sm text-destructive">{errors.status.message}</p>}

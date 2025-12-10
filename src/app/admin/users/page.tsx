@@ -216,7 +216,7 @@ export default function AdminUsersPage() {
                       }}
                     >
                       <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Trạng thái" />
+                        <SelectValue placeholder="Hành động" />
                       </SelectTrigger>
                       <SelectContent>
                         {STATUS_OPTIONS.map((option) => (
