@@ -80,8 +80,8 @@ export interface GradebookDTO {
 }
 
 export interface GradebookAssessmentDTO {
-  assessmentId: number;
-  assessmentName: string;
+  id: number;
+  name: string;
   kind?: string;
   maxScore?: number;
   scheduledDate?: string;
@@ -91,10 +91,10 @@ export interface GradebookStudentDTO {
   studentId: number;
   studentCode: string;
   studentName: string;
-  scores: Record<number, GradebookScoreDTO>; // assessmentId -> score
+  scores: GradebookStudentScoreDTO[];
   averageScore?: number;
-  gradedCount: number;
-  totalAssessments: number;
+  gradedCount?: number;
+  totalAssessments?: number;
   attendedSessions?: number;
   totalSessions?: number;
   attendanceRate?: number;
@@ -102,11 +102,12 @@ export interface GradebookStudentDTO {
   attendanceFinalized?: boolean;
 }
 
-export interface GradebookScoreDTO {
+export interface GradebookStudentScoreDTO {
+  assessmentId: number;
   score?: number;
+  scorePercentage?: number;
   maxScore?: number;
   feedback?: string;
-  isGraded: boolean;
   gradedBy?: string;
   gradedAt?: string;
 }
@@ -164,6 +165,7 @@ export const teacherGradeApi = createApi({
       },
       providesTags: (_result, _error, { classId }) => [
         { type: "Assessments", id: classId },
+        { type: "Assessments", id: "LIST" },
       ],
     }),
 
@@ -221,10 +223,13 @@ export const teacherGradeApi = createApi({
         }
         return response as StudentScoreDTO;
       },
+      // Invalidate toàn bộ dữ liệu liên quan để cập nhật "đã nhập" và bảng điểm
       invalidatesTags: (_result, _error, { assessmentId }) => [
         { type: "Scores", id: assessmentId },
         { type: "Scores", id: "LIST" },
+        { type: "Assessments", id: "LIST" },
         { type: "GradesSummary", id: "LIST" },
+        { type: "Gradebook", id: "LIST" },
       ],
     }),
 
@@ -240,11 +245,13 @@ export const teacherGradeApi = createApi({
       }),
       transformResponse: (response: { data: StudentScoreDTO[] }) =>
         response.data,
+      // Invalidate toàn bộ dữ liệu liên quan để cập nhật "đã nhập" và bảng điểm
       invalidatesTags: (_result, _error, { assessmentId }) => [
         { type: "Scores", id: assessmentId },
         { type: "Scores", id: "LIST" },
-        { type: "GradesSummary", id: "LIST" },
         { type: "Assessments", id: "LIST" },
+        { type: "GradesSummary", id: "LIST" },
+        { type: "Gradebook", id: "LIST" },
       ],
     }),
 
@@ -264,6 +271,7 @@ export const teacherGradeApi = createApi({
       },
       providesTags: (_result, _error, classId) => [
         { type: "GradesSummary", id: classId },
+        { type: "GradesSummary", id: "LIST" },
       ],
     }),
 
@@ -282,6 +290,7 @@ export const teacherGradeApi = createApi({
       },
       providesTags: (_result, _error, classId) => [
         { type: "Gradebook", id: classId },
+        { type: "Gradebook", id: "LIST" },
         { type: "Scores", id: "LIST" },
       ],
     }),

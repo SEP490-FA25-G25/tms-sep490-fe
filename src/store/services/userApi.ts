@@ -80,6 +80,7 @@ export interface GetUsersParams {
   search?: string
   role?: string
   status?: string
+  branch?: number
 }
 
 /**
@@ -103,7 +104,7 @@ export const userApi = createApi({
         if (params.search) searchParams.append('search', params.search)
         if (params.role) searchParams.append('role', params.role)
         if (params.status) searchParams.append('status', params.status)
-        
+        if (params.branch) searchParams.append('branch', params.branch.toString())
         const query = searchParams.toString()
         return {
           url: `/users${query ? `?${query}` : ''}`,
@@ -189,6 +190,14 @@ export const userApi = createApi({
     checkEmailExists: builder.query<ApiResponse<boolean>, string>({
       query: (email) => `/users/check/email/${email}`,
     }),
+
+    /**
+     * Check if phone exists
+     * GET /api/v1/users/check/phone/{phone}
+     */
+    checkPhoneExists: builder.query<ApiResponse<boolean>, string>({
+      query: (phone) => `/users/check/phone/${phone}`,
+    }),
   }),
 })
 
@@ -201,6 +210,7 @@ export const {
   useUpdateUserMutation,
   useDeleteUserMutation,
   useCheckEmailExistsQuery,
+  useCheckPhoneExistsQuery,
   useLazyGetUsersQuery,
 } = userApi
 

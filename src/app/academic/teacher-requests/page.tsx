@@ -122,6 +122,30 @@ const formatBackendError = (
   return errorMessage;
 };
 
+// Hiển thị khung giờ dạng 8:40-10:10AM (nếu cùng AM/PM) hoặc 11:30AM-12:30PM (khác AM/PM)
+const formatTimeRange = (start?: string | null, end?: string | null) => {
+  const toDisplay = (time?: string | null) => {
+    if (!time) return null;
+    const [h, m] = time.split(":");
+    const hour = Number(h);
+    if (Number.isNaN(hour) || m == null) return null;
+    const meridiem = hour >= 12 ? "PM" : "AM";
+    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+    const displayMinute = m.padStart(2, "0");
+    return { text: `${displayHour}:${displayMinute}`, meridiem };
+  };
+
+  const startObj = toDisplay(start);
+  const endObj = toDisplay(end);
+  if (!startObj || !endObj) return null;
+
+  if (startObj.meridiem === endObj.meridiem) {
+    return `${startObj.text}-${endObj.text}${startObj.meridiem}`;
+  }
+
+  return `${startObj.text}${startObj.meridiem}-${endObj.text}${endObj.meridiem}`;
+};
+
 export default function AcademicTeacherRequestsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
@@ -1253,19 +1277,23 @@ export default function AcademicTeacherRequestsPage() {
                                               s.timeSlotId ??
                                               s.id) === selectedRescheduleTimeSlotId
                                         );
-                                        return (
-                                          selectedSlot?.label ||
-                                          selectedSlot?.name ||
-                                          selectedSlot?.displayLabel ||
-                                          selectedSlot?.timeSlotLabel ||
-                                          `${
-                                            selectedSlot?.startTime ||
-                                            selectedSlot?.startAt
-                                          } - ${
-                                            selectedSlot?.endTime ||
+                                        const formattedRange = formatTimeRange(
+                                          selectedSlot?.startTime ||
+                                            selectedSlot?.startAt,
+                                          selectedSlot?.endTime ||
                                             selectedSlot?.endAt
-                                          }` ||
-                                          "Chưa có tên"
+                                        );
+                                        const fallbackRange = `${
+                                          selectedSlot?.startTime ||
+                                          selectedSlot?.startAt
+                                        } - ${
+                                          selectedSlot?.endTime ||
+                                          selectedSlot?.endAt
+                                        }`;
+                                        return (
+                                          formattedRange ??
+                                          fallbackRange ??
+                                          "Chưa có thông tin"
                                         );
                                       })()
                                     : null}
@@ -1289,14 +1317,15 @@ export default function AcademicTeacherRequestsPage() {
                                       slot.timeSlotTemplateId ??
                                       slot.timeSlotId ??
                                       slot.id;
+                                    const formattedRange = formatTimeRange(
+                                      slot.startTime || slot.startAt,
+                                      slot.endTime || slot.endAt
+                                    );
+                                    const fallbackRange = `${
+                                      slot.startTime || slot.startAt
+                                    } - ${slot.endTime || slot.endAt}`;
                                     const label =
-                                      slot.label ||
-                                      slot.name ||
-                                      slot.displayLabel ||
-                                      slot.timeSlotLabel ||
-                                      `${slot.startTime || slot.startAt} - ${
-                                        slot.endTime || slot.endAt
-                                      }`;
+                                      formattedRange ?? fallbackRange ?? `Slot ${slotId}`;
 
                                     return (
                                       <SelectItem key={slotId} value={String(slotId)}>

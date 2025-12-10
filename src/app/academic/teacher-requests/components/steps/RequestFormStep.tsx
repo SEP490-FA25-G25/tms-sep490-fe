@@ -12,8 +12,8 @@ import {
   type RequestType,
 } from "@/store/services/teacherRequestApi";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { ReasonInput } from "@/components/teacher-requests/UnifiedTeacherRequestFlow";
 import {
   Select,
   SelectContent,
@@ -37,6 +37,30 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
+
+// Hiển thị khung giờ dạng 8:40-10:10AM (nếu cùng AM/PM) hoặc 11:30AM-12:30PM (khác AM/PM)
+const formatTimeRange = (start?: string | null, end?: string | null) => {
+  const toDisplay = (time?: string | null) => {
+    if (!time) return null;
+    const [h, m] = time.split(":");
+    const hour = Number(h);
+    if (Number.isNaN(hour) || m == null) return null;
+    const meridiem = hour >= 12 ? "PM" : "AM";
+    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+    const displayMinute = m.padStart(2, "0");
+    return { text: `${displayHour}:${displayMinute}`, meridiem };
+  };
+
+  const startObj = toDisplay(start);
+  const endObj = toDisplay(end);
+  if (!startObj || !endObj) return null;
+
+  if (startObj.meridiem === endObj.meridiem) {
+    return `${startObj.text}-${endObj.text}${startObj.meridiem}`;
+  }
+
+  return `${startObj.text}${startObj.meridiem}-${endObj.text}${endObj.meridiem}`;
+};
 
 interface RequestFormStepProps {
   teacherId: number;
@@ -86,21 +110,28 @@ export function RequestFormStep({
   const teacherIdNumber = teacherIdProp;
   const sessionIdNumber = sessionIdProp;
 
-  const reasonLimit = 500;
-
   // Form state
   const [reason, setReason] = useState("");
-  
+  const [reasonError, setReasonError] = useState<string | null>(null);
+  const REASON_MIN_LENGTH = 15;
+
   // RESCHEDULE state
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-  const [selectedTimeSlotId, setSelectedTimeSlotId] = useState<number | undefined>();
-  const [selectedResourceId, setSelectedResourceId] = useState<number | undefined>();
-  
+  const [selectedTimeSlotId, setSelectedTimeSlotId] = useState<
+    number | undefined
+  >();
+  const [selectedResourceId, setSelectedResourceId] = useState<
+    number | undefined
+  >();
+
   // REPLACEMENT state
-  const [selectedReplacementTeacherId, setSelectedReplacementTeacherId] = useState<number | undefined>();
-  
+  const [selectedReplacementTeacherId, setSelectedReplacementTeacherId] =
+    useState<number | undefined>();
+
   // MODALITY_CHANGE state
-  const [selectedModalityResourceId, setSelectedModalityResourceId] = useState<number | undefined>();
+  const [selectedModalityResourceId, setSelectedModalityResourceId] = useState<
+    number | undefined
+  >();
 
   const [createRequest, { isLoading }] = useCreateRequestForTeacherMutation();
 
@@ -127,7 +158,9 @@ export function RequestFormStep({
 
   // Load resources for MODALITY_CHANGE
   const shouldLoadModalityResources =
-    requestType === "MODALITY_CHANGE" && Boolean(sessionIdNumber) && Boolean(teacherIdNumber);
+    requestType === "MODALITY_CHANGE" &&
+    Boolean(sessionIdNumber) &&
+    Boolean(teacherIdNumber);
   const {
     data: modalityResourcesResponse,
     isFetching: isFetchingModalityResources,
@@ -211,8 +244,19 @@ export function RequestFormStep({
   const replacementCandidates = candidatesResponse?.data ?? [];
 
   const handleSubmit = async () => {
-    if (!reason.trim() || !sessionIdNumber || !requestType || !teacherIdNumber) {
+    const trimmedReason = reason.trim();
+    if (
+      !trimmedReason ||
+      !sessionIdNumber ||
+      !requestType ||
+      !teacherIdNumber
+    ) {
       toast.error("Vui lòng điền đầy đủ thông tin");
+      return;
+    }
+
+    if (trimmedReason.length < REASON_MIN_LENGTH) {
+      setReasonError(`Lý do phải có tối thiểu ${REASON_MIN_LENGTH} ký tự`);
       return;
     }
 
@@ -247,9 +291,11 @@ export function RequestFormStep({
         teacherId: teacherIdNumber,
         sessionId: sessionIdNumber,
         requestType,
-        reason: reason.trim(),
+        reason: trimmedReason,
         replacementTeacherId:
-          requestType === "REPLACEMENT" ? selectedReplacementTeacherId : undefined,
+          requestType === "REPLACEMENT"
+            ? selectedReplacementTeacherId
+            : undefined,
         newDate:
           requestType === "RESCHEDULE" && selectedDate
             ? format(selectedDate, "yyyy-MM-dd")
@@ -280,7 +326,6 @@ export function RequestFormStep({
       );
     }
   };
-
 
   const renderSessionSection = () => {
     if (!sessionIdNumber || !requestType) {
@@ -402,42 +447,46 @@ export function RequestFormStep({
               .filter((candidate) => {
                 const teacherId =
                   candidate.teacherId ?? (candidate as { id?: number }).id;
-                return teacherId !== null && teacherId !== undefined && teacherId !== 0;
+                return (
+                  teacherId !== null &&
+                  teacherId !== undefined &&
+                  teacherId !== 0
+                );
               })
               .map((candidate) => {
-              const teacherId =
-                candidate.teacherId ?? (candidate as { id?: number }).id;
-              const teacherName =
-                candidate.fullName ||
-                candidate.displayName ||
-                candidate.teacherName ||
-                "Chưa có tên";
-              const hasConflict = (candidate as { hasConflict?: boolean })
-                .hasConflict;
+                const teacherId =
+                  candidate.teacherId ?? (candidate as { id?: number }).id;
+                const teacherName =
+                  candidate.fullName ||
+                  candidate.displayName ||
+                  candidate.teacherName ||
+                  "Chưa có tên";
+                const hasConflict = (candidate as { hasConflict?: boolean })
+                  .hasConflict;
 
-              return (
-                <SelectItem
-                  key={teacherId || teacherName}
-                  value={String(teacherId)}
-                >
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span>{teacherName}</span>
-                      {hasConflict && (
-                        <span className="text-xs text-amber-600">
-                          (Có xung đột)
+                return (
+                  <SelectItem
+                    key={teacherId || teacherName}
+                    value={String(teacherId)}
+                  >
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span>{teacherName}</span>
+                        {hasConflict && (
+                          <span className="text-xs text-amber-600">
+                            (Có xung đột)
+                          </span>
+                        )}
+                      </div>
+                      {candidate.email && (
+                        <span className="text-xs text-muted-foreground">
+                          {candidate.email}
                         </span>
                       )}
                     </div>
-                    {candidate.email && (
-                      <span className="text-xs text-muted-foreground">
-                        {candidate.email}
-                      </span>
-                    )}
-                  </div>
-                </SelectItem>
-              );
-            })}
+                  </SelectItem>
+                );
+              })}
           </SelectContent>
         </Select>
       </div>
@@ -494,7 +543,8 @@ export function RequestFormStep({
             ) : slotsError ? (
               <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
                 {formatBackendError(
-                  (slotsError as { data?: { message?: string } })?.data?.message,
+                  (slotsError as { data?: { message?: string } })?.data
+                    ?.message,
                   "Không thể tải danh sách khung giờ"
                 )}
               </div>
@@ -505,13 +555,12 @@ export function RequestFormStep({
             ) : (
               <Select
                 value={
-                  selectedTimeSlotId !== null && selectedTimeSlotId !== undefined
+                  selectedTimeSlotId !== null &&
+                  selectedTimeSlotId !== undefined
                     ? String(selectedTimeSlotId)
                     : undefined
                 }
-                onValueChange={(value) =>
-                  setSelectedTimeSlotId(Number(value))
-                }
+                onValueChange={(value) => setSelectedTimeSlotId(Number(value))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn khung giờ..." />
@@ -520,36 +569,34 @@ export function RequestFormStep({
                   {slots
                     .filter((slot) => {
                       const slotId =
-                        slot.timeSlotTemplateId ??
-                        slot.timeSlotId ??
-                        slot.id;
+                        slot.timeSlotTemplateId ?? slot.timeSlotId ?? slot.id;
                       return (
-                        slotId !== null &&
-                        slotId !== undefined &&
-                        slotId !== 0
+                        slotId !== null && slotId !== undefined && slotId !== 0
                       );
                     })
                     .map((slot) => {
                       const slotId =
-                        slot.timeSlotTemplateId ??
-                        slot.timeSlotId ??
-                        slot.id;
-                    const label =
-                      slot.label ||
-                      slot.name ||
-                      slot.displayLabel ||
-                      slot.timeSlotLabel ||
-                      `${slot.startTime || slot.startAt} - ${slot.endTime || slot.endAt}`;
+                        slot.timeSlotTemplateId ?? slot.timeSlotId ?? slot.id;
+                      const formattedRange = formatTimeRange(
+                        slot.startTime || slot.startAt,
+                        slot.endTime || slot.endAt
+                      );
+                      // Chỉ hiển thị khoảng giờ, bỏ tên slot
+                      const fallbackRange = `${
+                        slot.startTime || slot.startAt
+                      } - ${slot.endTime || slot.endAt}`;
+                      const label =
+                        formattedRange ?? fallbackRange ?? `Slot ${slotId}`;
 
-                    return (
-                      <SelectItem
-                        key={slotId || label}
-                        value={String(slotId)}
-                      >
-                        {label}
-                      </SelectItem>
-                    );
-                  })}
+                      return (
+                        <SelectItem
+                          key={slotId || label}
+                          value={String(slotId)}
+                        >
+                          {label}
+                        </SelectItem>
+                      );
+                    })}
                 </SelectContent>
               </Select>
             )}
@@ -560,7 +607,8 @@ export function RequestFormStep({
         {selectedDate && selectedTimeSlotId && (
           <div className="space-y-2">
             <Label className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Chọn phòng học/phương tiện <span className="text-destructive">*</span>
+              Chọn phòng học/phương tiện{" "}
+              <span className="text-destructive">*</span>
             </Label>
             {isFetchingRescheduleResources ? (
               <Skeleton className="h-10 w-full" />
@@ -579,13 +627,12 @@ export function RequestFormStep({
             ) : (
               <Select
                 value={
-                  selectedResourceId !== null && selectedResourceId !== undefined
+                  selectedResourceId !== null &&
+                  selectedResourceId !== undefined
                     ? String(selectedResourceId)
                     : undefined
                 }
-                onValueChange={(value) =>
-                  setSelectedResourceId(Number(value))
-                }
+                onValueChange={(value) => setSelectedResourceId(Number(value))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn phòng học/phương tiện..." />
@@ -594,38 +641,42 @@ export function RequestFormStep({
                   {rescheduleResources
                     .filter((resource) => {
                       const resourceId = resource.id ?? resource.resourceId;
-                      return resourceId !== null && resourceId !== undefined && resourceId !== 0;
+                      return (
+                        resourceId !== null &&
+                        resourceId !== undefined &&
+                        resourceId !== 0
+                      );
                     })
                     .map((resource) => {
-                    const resourceId = resource.id ?? resource.resourceId;
-                    const resourceName = resource.name || "Chưa có tên";
-                    const resourceType =
-                      resource.type || resource.resourceType || "";
-                    const resourceCapacity = resource.capacity;
+                      const resourceId = resource.id ?? resource.resourceId;
+                      const resourceName = resource.name || "Chưa có tên";
+                      const resourceType =
+                        resource.type || resource.resourceType || "";
+                      const resourceCapacity = resource.capacity;
 
-                    return (
-                      <SelectItem
-                        key={resourceId || resourceName}
+                      return (
+                        <SelectItem
+                          key={resourceId || resourceName}
                           value={String(resourceId)}
-                      >
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <span>{resourceName}</span>
-                            {resourceType && (
+                        >
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <span>{resourceName}</span>
+                              {resourceType && (
+                                <span className="text-xs text-muted-foreground">
+                                  {resourceType}
+                                </span>
+                              )}
+                            </div>
+                            {resourceCapacity !== undefined && (
                               <span className="text-xs text-muted-foreground">
-                                {resourceType}
+                                Sức chứa: {resourceCapacity}
                               </span>
                             )}
                           </div>
-                          {resourceCapacity !== undefined && (
-                            <span className="text-xs text-muted-foreground">
-                              Sức chứa: {resourceCapacity}
-                            </span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    );
-                  })}
+                        </SelectItem>
+                      );
+                    })}
                 </SelectContent>
               </Select>
             )}
@@ -651,8 +702,8 @@ export function RequestFormStep({
       return (
         <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
           {formatBackendError(
-            (modalityResourcesError as { data?: { message?: string } })
-              ?.data?.message,
+            (modalityResourcesError as { data?: { message?: string } })?.data
+              ?.message,
             "Không thể tải danh sách phòng học/phương tiện"
           )}
         </div>
@@ -669,7 +720,9 @@ export function RequestFormStep({
 
     const filteredModalityResources = modalityResources.filter((resource) => {
       const resourceId = resource.id ?? resource.resourceId;
-      return resourceId !== null && resourceId !== undefined && resourceId !== 0;
+      return (
+        resourceId !== null && resourceId !== undefined && resourceId !== 0
+      );
     });
 
     const modalitySelectValue =
@@ -701,8 +754,7 @@ export function RequestFormStep({
             {filteredModalityResources.map((resource) => {
               const resourceId = resource.id ?? resource.resourceId;
               const resourceName = resource.name || "Chưa có tên";
-              const resourceType =
-                resource.type || resource.resourceType || "";
+              const resourceType = resource.type || resource.resourceType || "";
               const resourceCapacity = resource.capacity;
               const isCurrent = resource.currentResource;
 
@@ -744,78 +796,88 @@ export function RequestFormStep({
 
   return (
     <div className="flex flex-col gap-6 max-h-[600px] overflow-y-auto">
-        {/* Session Info */}
-        <section className="rounded-2xl border border-border/60 bg-card/40 p-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Thông tin buổi học
-            </h2>
-            {session && (
-              <span className="text-xs text-muted-foreground">
-                ID buổi: {session.sessionId ?? session.id}
-              </span>
-            )}
-          </div>
-          <div className="mt-3">{renderSessionSection()}</div>
-        </section>
+      {/* Session Info */}
+      <section className="rounded-2xl border border-border/60 bg-card/40 p-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Thông tin buổi học
+          </h2>
+          {session && (
+            <span className="text-xs text-muted-foreground">
+              ID buổi: {session.sessionId ?? session.id}
+            </span>
+          )}
+        </div>
+        <div className="mt-3">{renderSessionSection()}</div>
+      </section>
 
-        {/* Request Type Specific Fields */}
-        {(requestType === "REPLACEMENT" ||
-          requestType === "RESCHEDULE" ||
-          requestType === "MODALITY_CHANGE") && (
-          <section className="rounded-2xl border border-border/70 p-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-4">
-              {requestType === "REPLACEMENT"
-                ? "Thông tin giáo viên dạy thay"
-                : requestType === "RESCHEDULE"
-                ? "Thông tin lịch mới"
-                : "Thông tin phương tiện mới"}
-            </h2>
-            {renderReplacementSection()}
-            {renderRescheduleSection()}
-            {renderModalityChangeSection()}
-          </section>
-        )}
-
-        {/* Reason */}
+      {/* Request Type Specific Fields */}
+      {(requestType === "REPLACEMENT" ||
+        requestType === "RESCHEDULE" ||
+        requestType === "MODALITY_CHANGE") && (
         <section className="rounded-2xl border border-border/70 p-4">
-          <Label
-            htmlFor="reason"
-            className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
-          >
-            Lý do yêu cầu <span className="text-destructive">*</span>
-          </Label>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Hãy mô tả rõ lý do tạo yêu cầu này.
-          </p>
-          <Textarea
-            id="reason"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Ví dụ: Giáo viên có việc đột xuất cần đổi lịch..."
-            className="mt-4 min-h-[140px]"
-            maxLength={reasonLimit}
-          />
-          <div className="mt-2 text-right text-xs text-muted-foreground">
-            {reason.length}/{reasonLimit} ký tự
-          </div>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-4">
+            {requestType === "REPLACEMENT"
+              ? "Thông tin giáo viên dạy thay"
+              : requestType === "RESCHEDULE"
+              ? "Thông tin lịch mới"
+              : "Thông tin phương tiện mới"}
+          </h2>
+          {renderReplacementSection()}
+          {renderRescheduleSection()}
+          {renderModalityChangeSection()}
         </section>
+      )}
 
-        {/* Footer */}
-        <div className="flex flex-wrap items-center justify-end gap-3 pt-4 border-t">
+      {/* Reason */}
+      <section className="rounded-2xl border border-border/70 p-4">
+        <Label
+          htmlFor="reason"
+          className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
+        >
+          Lý do yêu cầu <span className="text-destructive">*</span>
+        </Label>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Hãy mô tả rõ lý do tạo yêu cầu này.
+        </p>
+        <div className="mt-4">
+          <ReasonInput
+            value={reason}
+            onChange={(val) => {
+              setReason(val);
+              if (reasonError && val.trim().length >= REASON_MIN_LENGTH) {
+                setReasonError(null);
+              }
+            }}
+            placeholder="Ví dụ: Giáo viên có việc đột xuất cần đổi lịch..."
+            error={reasonError}
+            minLength={REASON_MIN_LENGTH}
+          />
+        </div>
+      </section>
+
+      {/* Footer */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-4">
+        <div>
           <Button variant="ghost" onClick={onBack}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Quay lại
           </Button>
+        </div>
+        <div className="flex items-center gap-3">
           <Button
             onClick={handleSubmit}
             disabled={
               !reason.trim() ||
+              reason.trim().length < REASON_MIN_LENGTH ||
               !session ||
               isLoading ||
-              (requestType === "REPLACEMENT" && !selectedReplacementTeacherId) ||
+              (requestType === "REPLACEMENT" &&
+                !selectedReplacementTeacherId) ||
               (requestType === "RESCHEDULE" &&
-                (!selectedDate || !selectedTimeSlotId || !selectedResourceId)) ||
+                (!selectedDate ||
+                  !selectedTimeSlotId ||
+                  !selectedResourceId)) ||
               (requestType === "MODALITY_CHANGE" && !selectedModalityResourceId)
             }
           >
@@ -823,6 +885,6 @@ export function RequestFormStep({
           </Button>
         </div>
       </div>
+    </div>
   );
 }
-

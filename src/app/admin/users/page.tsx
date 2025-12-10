@@ -37,9 +37,10 @@ import {
   useUpdateUserStatusMutation,
   type UserResponse,
 } from "@/store/services/userApi";
+import { useGetBranchesQuery } from "@/store/services/classCreationApi";
 import { ROLES } from "@/hooks/useRoleBasedAccess";
 
-const PAGE_SIZE = 100; // Increased to show more users per page for better filtering
+const PAGE_SIZE = 10; // Increased to show more users per page for better filtering
 
 const ROLE_OPTIONS = [
   { value: "ALL", label: "Tất cả vai trò" },
@@ -62,6 +63,7 @@ const STATUS_OPTIONS = [
 export default function AdminUsersPage() {
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+  const [branchFilter, setBranchFilter] = useState<number | null>(null);
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [userDetail, setUserDetail] = useState<UserResponse | null>(null);
@@ -69,12 +71,16 @@ export default function AdminUsersPage() {
     setSearchTerm("");
     setRoleFilter("ALL");
     setStatusFilter("ALL");
+    setBranchFilter(null);
     setPage(0);
   };
   const [userToEdit, setUserToEdit] = useState<UserResponse | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const extractErrorMessage = (error: unknown, fallback: string) =>
     (error as { data?: { message?: string } })?.data?.message || fallback;
+
+  const { data: branchesResponse } = useGetBranchesQuery(undefined);
+  const branches = branchesResponse?.data || [];
 
   // Fetch users with server-side filtering
   const {
@@ -90,6 +96,7 @@ export default function AdminUsersPage() {
     search: searchTerm || undefined,
     role: roleFilter !== "ALL" ? roleFilter : undefined,
     status: statusFilter !== "ALL" ? statusFilter : undefined,
+    branch: branchFilter !== null ? branchFilter : undefined,
   });
 
   // Debug: Log API errors
@@ -226,8 +233,28 @@ export default function AdminUsersPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {/* Branch Filter */}
+                    <Select
+                      value={branchFilter?.toString() || "ALL"}
+                      onValueChange={(value) => {
+                        setBranchFilter(value === "ALL" ? null : parseInt(value));
+                        setPage(0);
+                      }}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Chi nhánh" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">Tất cả chi nhánh</SelectItem>
+                        {branches.map((branch: { id: number; name: string }) => (
+                          <SelectItem key={branch.id} value={branch.id.toString()}>
+                            {branch.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     {/* Nút Reset Filters */}
-                    {(searchTerm || roleFilter !== "ALL" || statusFilter !== "ALL") && (
+                    {(searchTerm || roleFilter !== "ALL" || statusFilter !== "ALL" || branchFilter !== null) && (
                       <Button
                         variant="outline"
                         size="icon"
