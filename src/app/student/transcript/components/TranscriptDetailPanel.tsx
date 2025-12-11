@@ -160,28 +160,29 @@ const TranscriptDetailPanel: React.FC<TranscriptDetailPanelProps> = ({
               </div>
             ) : assessments.length > 0 ? (
               <div className="border rounded-lg overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead>Bài kiểm tra</TableHead>
-                      <TableHead>Loại</TableHead>
-                      <TableHead>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">Ngày</span>
-                        </div>
-                      </TableHead>
-                      <TableHead className="hidden md:table-cell">
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5" />
-                          <span>Thời lượng</span>
-                        </div>
-                      </TableHead>
-                      <TableHead className="text-center">Điểm</TableHead>
-                      <TableHead className="hidden lg:table-cell">Chấm bởi</TableHead>
-                      <TableHead className="hidden lg:table-cell">Ngày chấm</TableHead>
-                    </TableRow>
-                  </TableHeader>
+                <div className="overflow-x-auto">
+                  <Table className="min-w-[800px]">
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead>Bài kiểm tra</TableHead>
+                        <TableHead>Loại</TableHead>
+                        <TableHead>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline">Ngày</span>
+                          </div>
+                        </TableHead>
+                        <TableHead className="hidden md:table-cell">
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5" />
+                            <span>Thời lượng</span>
+                          </div>
+                        </TableHead>
+                        <TableHead className="text-center">Điểm</TableHead>
+                        <TableHead className="hidden lg:table-cell">Chấm bởi</TableHead>
+                        <TableHead className="hidden lg:table-cell">Ngày chấm</TableHead>
+                      </TableRow>
+                    </TableHeader>
                   <TableBody>
                     {assessments.map((assessment) => {
                       const score = scoreMap.get(assessment.id);
@@ -259,6 +260,7 @@ const TranscriptDetailPanel: React.FC<TranscriptDetailPanelProps> = ({
                     })}
                   </TableBody>
                 </Table>
+                </div>
               </div>
             ) : (
               <div className="text-center py-8 text-sm text-muted-foreground border rounded-lg bg-muted/30">
@@ -316,6 +318,13 @@ const TranscriptDetailPanel: React.FC<TranscriptDetailPanelProps> = ({
                       <Clock className="h-4 w-4 text-muted-foreground" />
                       <span className="text-muted-foreground">Thời lượng:</span>
                       <span>{selectedDetail.assessment.durationMinutes} phút</span>
+                    </div>
+                  )}
+                  {selectedDetail.assessment.skill && (
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">Kỹ năng:</span>
+                      <span>{selectedDetail.assessment.skill}</span>
                     </div>
                   )}
                 </div>

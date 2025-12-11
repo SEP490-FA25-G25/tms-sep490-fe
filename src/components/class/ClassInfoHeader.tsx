@@ -1,15 +1,15 @@
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { ClassStatusBadge } from '@/components/qa/ClassStatusBadge'
-import type { QAClassDetailDTO } from '@/types/qa'
-import { BookOpen, Calendar, Clock, MapPin, Users, CheckCircle, BookCheck, Plus, Phone, Building2 } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import type { ClassDetailDTO } from '@/store/services/classApi'
+import { BookOpen, Calendar, Clock, MapPin, Users, CheckCircle, BookCheck, Phone, Building2 } from 'lucide-react'
+import type { ReactNode } from 'react'
 
-interface QAClassHeaderProps {
-  classInfo: QAClassDetailDTO
+interface ClassInfoHeaderProps {
+  classData: ClassDetailDTO
+  actions?: ReactNode
 }
 
-const formatDate = (dateString?: string) => {
+const formatDate = (dateString?: string | null) => {
   if (!dateString) return '—'
   return new Date(dateString).toLocaleDateString('vi-VN', {
     day: '2-digit',
@@ -18,13 +18,29 @@ const formatDate = (dateString?: string) => {
   })
 }
 
-export function QAClassHeader({ classInfo }: QAClassHeaderProps) {
-  const enrollment = classInfo.currentEnrollment ?? 0
-  const capacity = classInfo.maxCapacity ?? 0
-  const completedSessions = classInfo.sessionSummary?.completedSessions ?? 0
-  const totalSessions = classInfo.sessionSummary?.totalSessions ?? 0
-  const attendanceRate = classInfo.performanceMetrics?.attendanceRate ?? 0
-  const homeworkRate = classInfo.performanceMetrics?.homeworkCompletionRate ?? 0
+const getModalityLabel = (modality: string) => {
+  switch (modality) {
+    case 'ONLINE':
+      return 'Trực tuyến'
+    case 'OFFLINE':
+      return 'Trực tiếp'
+    default:
+      return modality
+  }
+}
+
+export function ClassInfoHeader({ classData, actions }: ClassInfoHeaderProps) {
+  const enrollment = classData.enrollmentSummary?.currentEnrolled ?? 0
+  const capacity = classData.enrollmentSummary?.maxCapacity ?? classData.maxCapacity ?? 0
+  const completedSessions = classData.sessionSummary?.completedSessions ?? 0
+  const totalSessions = classData.sessionSummary?.totalSessions ?? 0
+  const attendanceRate = classData.performanceMetrics?.attendanceRate ?? 0
+  const homeworkRate = classData.performanceMetrics?.homeworkCompletionRate ?? 0
+
+  // Build schedule display from scheduleDetails
+  const scheduleDisplay = classData.scheduleDetails && classData.scheduleDetails.length > 0
+    ? classData.scheduleDetails.map(d => `${d.day} ${d.startTime}-${d.endTime}`).join(', ')
+    : classData.scheduleSummary || 'Chưa có lịch'
 
   return (
     <div className="border-b bg-background">
@@ -34,64 +50,64 @@ export function QAClassHeader({ classInfo }: QAClassHeaderProps) {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-3">
-                <ClassStatusBadge status={classInfo.status} />
+                <ClassStatusBadge status={classData.status} />
                 <Badge variant="outline" className="text-xs">
-                  {classInfo.modality}
+                  {getModalityLabel(classData.modality)}
                 </Badge>
               </div>
               <div className="space-y-1">
                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-                  {classInfo.className}
+                  {classData.name}
                 </h1>
-                <p className="text-lg text-muted-foreground">{classInfo.classCode}</p>
+                <p className="text-lg text-muted-foreground">{classData.code}</p>
               </div>
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <BookOpen className="h-4 w-4" />
-                  <span>Khóa học: {classInfo.subjectName}</span>
+                  <span>Khóa học: {classData.subject?.name}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4" />
-                  <span>Chi nhánh: {classInfo.branchName}</span>
+                  <span>Chi nhánh: {classData.branch?.name}</span>
                 </div>
-                {classInfo.branchAddress && (
+                {classData.branch?.address && (
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
                     <span>
-                      {classInfo.branchAddress}
-                      {classInfo.branchDistrict && `, ${classInfo.branchDistrict}`}
-                      {classInfo.branchCity && `, ${classInfo.branchCity}`}
+                      {classData.branch.address}
+                      {classData.branch.district && `, ${classData.branch.district}`}
+                      {classData.branch.city && `, ${classData.branch.city}`}
                     </span>
                   </div>
                 )}
-                {classInfo.branchPhone && (
+                {classData.branch?.phone && (
                   <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4" />
-                    <span>{classInfo.branchPhone}</span>
+                    <span>{classData.branch.phone}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
-                  <span>Bắt đầu: {formatDate(classInfo.startDate)}</span>
+                  <span>Bắt đầu: {formatDate(classData.startDate)}</span>
                 </div>
-                {classInfo.endDate && (
+                {(classData.plannedEndDate || classData.actualEndDate) && (
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    <span>Kết thúc: {formatDate(classInfo.endDate)}</span>
+                    <span>Kết thúc: {formatDate(classData.actualEndDate || classData.plannedEndDate)}</span>
                   </div>
                 )}
               </div>
+              {/* Schedule display - separate line */}
+              <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  <span>Lịch học: {scheduleDisplay}</span>
+                </div>
+              </div>
             </div>
 
-            {/* Action Button */}
-            <div className="shrink-0">
-              <Button asChild>
-                <Link to={`/qa/reports/create?classId=${classInfo.classId}`}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Tạo báo cáo
-                </Link>
-              </Button>
-            </div>
+            {/* Action Button slot */}
+            {actions && <div className="shrink-0">{actions}</div>}
           </div>
 
           {/* Stats grid - responsive */}

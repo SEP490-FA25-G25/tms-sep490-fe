@@ -171,8 +171,8 @@ export interface QAClassListItemDTO {
   classId: number;
   classCode: string;
   className: string;
-  courseId: number;
-  courseName: string;
+  subjectId: number;
+  subjectName: string;
   branchName: string;
   modality: string;
   status: string;
@@ -188,10 +188,14 @@ export interface QAClassDetailDTO {
   classId: number;
   classCode: string;
   className: string;
-  courseName: string;
-  courseId: number;
+  subjectName: string;
+  subjectId: number;
   branchId: number;
   branchName: string;
+  branchAddress?: string;
+  branchPhone?: string;
+  branchDistrict?: string;
+  branchCity?: string;
   modality: string;
   status: string;
   startDate: string;
@@ -261,6 +265,53 @@ export interface QASessionListResponse {
   }>;
 }
 
+// ========== QA Scores Types ==========
+export interface QAClassScoresDTO {
+  classId: number;
+  classCode: string;
+  scoreSummary: ScoreSummary;
+  students: StudentScoresSummary[];
+}
+
+export interface ScoreSummary {
+  classAverage: number;
+  totalStudents: number;
+  studentsWithScores: number;
+  totalAssessments: number;
+}
+
+export interface StudentScoresSummary {
+  studentId: number;
+  studentCode: string;
+  studentName: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  avatarUrl?: string;
+  enrolledAt?: string;
+  averageScore: number;
+  totalAssessments: number;
+  completedAssessments: number;
+  scores: AssessmentScore[];
+}
+
+export interface AssessmentScore {
+  assessmentId: number;
+  assessmentName: string;
+  assessmentKind: string;
+  skill: string;
+  maxScore: number;
+  durationMinutes?: number;
+  scheduledDate?: string;
+  actualDate?: string;
+  scoreId?: number;
+  score?: number;
+  scorePercentage?: number;
+  feedback?: string;
+  gradedByName?: string;
+  gradedAt?: string;
+}
+
 export interface SessionDetailDTO {
   sessionId: number;
   classId: number;
@@ -293,7 +344,39 @@ export interface SessionDetailDTO {
     cloId: number;
     cloCode: string;
     description?: string;
-  }>
+  }>;
+  
+  sequenceNo?: number;
+  skills?: string[];
+  phase?: {
+    phaseId: number;
+    phaseNumber: number;
+    phaseName: string;
+    learningFocus?: string;
+  };
+  resources?: Array<{
+    resourceId: number;
+    resourceType: 'ROOM' | 'VIRTUAL';
+    code: string;
+    name: string;
+    // For ROOM
+    branchName?: string;
+    branchAddress?: string;
+    capacity?: number;
+    equipment?: string;
+    // For VIRTUAL
+    meetingUrl?: string;
+    meetingId?: string;
+    meetingPasscode?: string;
+    accountEmail?: string;
+  }>;
+  materials?: Array<{
+    materialId: number;
+    title: string;
+    description?: string;
+    materialType: 'DOCUMENT' | 'MEDIA' | 'ARCHIVE' | 'LINK' | 'OTHER';
+    url: string;
+  }>;
 }
 
 // QA Report Types

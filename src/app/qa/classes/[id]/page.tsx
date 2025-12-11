@@ -1,24 +1,29 @@
 "use client"
 
 import type { CSSProperties } from 'react'
-import { useParams } from "react-router-dom"
-import { useGetQAClassDetailQuery } from "@/store/services/qaApi"
+import { useParams, Link } from "react-router-dom"
+import { useGetClassByIdQuery } from "@/store/services/classApi"
 import { AppSidebar } from '@/components/app-sidebar'
 import { SiteHeader } from '@/components/site-header'
-import { QAClassHeader } from "@/components/qa/QAClassHeader"
+import { ClassInfoHeader } from "@/components/class/ClassInfoHeader"
 import { SessionsListTab } from "@/components/qa/SessionsListTab"
+import { ScoresTab } from "@/components/qa/ScoresTab"
 import { QAReportsListTab } from "@/components/qa/QAReportsListTab"
+import { OverviewTab } from "@/app/academic/classes/[id]/components/OverviewTab"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
-import { AlertTriangle } from "lucide-react"
+import { AlertTriangle, Plus } from "lucide-react"
 
 export default function ClassDetailsPage() {
     const params = useParams()
     const classId = parseInt(params.id as string)
 
-    const { data: classInfo, isLoading, error } = useGetQAClassDetailQuery(classId)
+    const { data: classResponse, isLoading, error } = useGetClassByIdQuery(classId, {
+        skip: !classId
+    })
+    const classData = classResponse?.data
 
     const renderHeader = () => {
         if (isLoading) {
@@ -44,7 +49,7 @@ export default function ClassDetailsPage() {
             )
         }
 
-        if (error || !classInfo) {
+        if (error || !classData) {
             return (
                 <div className="border-b bg-background">
                     <div className="@container/main py-4">
@@ -61,7 +66,16 @@ export default function ClassDetailsPage() {
             )
         }
 
-        return <QAClassHeader classInfo={classInfo} />
+        const qaActions = (
+            <Button asChild>
+                <Link to={`/qa/reports/create?classId=${classData.id}`}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Tạo báo cáo
+                </Link>
+            </Button>
+        )
+
+        return <ClassInfoHeader classData={classData} actions={qaActions} />
     }
 
     return (
@@ -100,15 +114,27 @@ export default function ClassDetailsPage() {
                                     </div>
                                 )}
 
-                                {!isLoading && classInfo && (
-                                    <Tabs defaultValue="sessions" className="w-full space-y-6">
+                                {!isLoading && classData && (
+                                    <Tabs defaultValue="overview" className="w-full space-y-6">
                                         <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2 -mt-6 pt-6">
-                                            <TabsList className="grid w-full grid-cols-2 h-auto p-1 bg-muted/50">
+                                            <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted/50">
+                                                <TabsTrigger
+                                                    value="overview"
+                                                    className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
+                                                >
+                                                    Tổng quan
+                                                </TabsTrigger>
                                                 <TabsTrigger
                                                     value="sessions"
                                                     className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
                                                 >
                                                     Buổi học
+                                                </TabsTrigger>
+                                                <TabsTrigger
+                                                    value="scores"
+                                                    className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
+                                                >
+                                                    Điểm số
                                                 </TabsTrigger>
                                                 <TabsTrigger
                                                     value="reports"
@@ -119,12 +145,20 @@ export default function ClassDetailsPage() {
                                             </TabsList>
                                         </div>
 
+                                        <TabsContent value="overview" className="space-y-6">
+                                            <OverviewTab classData={classData} />
+                                        </TabsContent>
+
                                         <TabsContent value="sessions" className="space-y-6">
-                                            <SessionsListTab classId={classInfo.classId} />
+                                            <SessionsListTab classId={classData.id} />
+                                        </TabsContent>
+
+                                        <TabsContent value="scores" className="space-y-6">
+                                            <ScoresTab classId={classData.id} />
                                         </TabsContent>
 
                                         <TabsContent value="reports" className="space-y-6">
-                                            <QAReportsListTab classId={classInfo.classId} />
+                                            <QAReportsListTab classId={classData.id} />
                                         </TabsContent>
                                     </Tabs>
                                 )}

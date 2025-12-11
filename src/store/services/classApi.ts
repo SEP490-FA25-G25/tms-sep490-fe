@@ -197,6 +197,8 @@ export interface BranchDTO {
   address: string;
   phone: string;
   email: string;
+  district?: string;
+  city?: string;
 }
 
 export interface EnrollmentSummary {
@@ -206,6 +208,18 @@ export interface EnrollmentSummary {
   utilizationRate: number;
   canEnrollStudents: boolean;
   enrollmentRestrictionReason?: string;
+}
+
+export interface SessionSummary {
+  totalSessions: number;
+  completedSessions: number;
+  upcomingSessions: number;
+  cancelledSessions: number;
+}
+
+export interface PerformanceMetrics {
+  attendanceRate: number;
+  homeworkCompletionRate: number;
 }
 
 export interface SessionDTO {
@@ -251,6 +265,8 @@ export interface ClassDetailDTO {
   scheduleSummary: string;
   scheduleDetails: ScheduleDetail[];
   enrollmentSummary: EnrollmentSummary;
+  sessionSummary?: SessionSummary;
+  performanceMetrics?: PerformanceMetrics;
   upcomingSessions: SessionDTO[];
 }
 
@@ -575,13 +591,14 @@ export const classApi = createApi({
 
     // Get sessions with attendance and homework metrics
     getClassSessionsWithMetrics: builder.query<
-      ApiResponse<import("@/types/qa").QASessionListResponse>,
+      import("@/types/qa").QASessionListResponse,
       number
     >({
       query: (classId) => ({
         url: `/classes/${classId}/sessions/metrics`,
         method: "GET",
       }),
+      transformResponse: (response: ApiResponse<import("@/types/qa").QASessionListResponse>) => response.data,
       providesTags: ["Classes"],
     }),
   }),
