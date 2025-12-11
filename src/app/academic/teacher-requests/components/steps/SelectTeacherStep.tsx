@@ -3,10 +3,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SearchIcon, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  useGetTeachersForStaffQuery,
-} from "@/store/services/teacherRequestApi";
+import { useGetTeachersForStaffQuery } from "@/store/services/teacherRequestApi";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Empty,
   EmptyDescription,
@@ -24,14 +23,17 @@ export function SelectTeacherStep({
   onCancel,
 }: SelectTeacherStepProps) {
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [selectedTeacherId, setSelectedTeacherId] = useState<number | undefined>();
+  const [selectedTeacherId, setSelectedTeacherId] = useState<
+    number | undefined
+  >();
+  const { selectedBranchId } = useAuth();
 
   const {
     data: teachersResponse,
     isLoading,
     error,
     refetch,
-  } = useGetTeachersForStaffQuery();
+  } = useGetTeachersForStaffQuery({ branchId: selectedBranchId || undefined });
 
   const teachers = teachersResponse?.data ?? [];
 
@@ -141,4 +143,3 @@ export function SelectTeacherStep({
     </div>
   );
 }
-

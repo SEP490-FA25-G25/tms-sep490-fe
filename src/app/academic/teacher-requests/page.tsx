@@ -66,6 +66,7 @@ import {
   type RequestType as TeacherRequestType,
   type RequestStatus as TeacherRequestStatus,
 } from "@/store/services/teacherRequestApi";
+import { useAuth } from "@/hooks/useAuth";
 import { TeacherRequestDetailContent } from "@/app/teacher/requests/page";
 import { CreateRequestDialog } from "./components/CreateRequestDialog";
 import { DataTable } from "./components/DataTable";
@@ -179,6 +180,7 @@ export default function AcademicTeacherRequestsPage() {
   const [historyPage, setHistoryPage] = useState(0);
   const [activeTab, setActiveTab] = useState<"pending" | "history">("pending");
   const PAGE_SIZE = 10;
+  const { selectedBranchId } = useAuth();
 
   // Teacher requests queries
   const {
@@ -188,6 +190,7 @@ export default function AcademicTeacherRequestsPage() {
     refetch: refetchTeacherRequests,
   } = useGetStaffRequestsQuery({
     status: teacherStatusFilter === "ALL" ? undefined : teacherStatusFilter,
+    branchId: selectedBranchId || undefined,
   });
 
   const {
@@ -195,7 +198,9 @@ export default function AcademicTeacherRequestsPage() {
     isFetching: isLoadingDetail,
     refetch: refetchRequestDetail,
   } = useGetRequestByIdQuery(
-    selectedRequestId !== null ? selectedRequestId : skipToken,
+    selectedRequestId !== null
+      ? { id: selectedRequestId, branchId: selectedBranchId || undefined }
+      : skipToken,
     {
       skip: selectedRequestId === null,
     }
@@ -343,8 +348,8 @@ export default function AcademicTeacherRequestsPage() {
             teacherId: selectedRequest.teacherId,
           }
         : {
-          requestId: selectedRequestId,
-        }
+            requestId: selectedRequestId,
+          }
       : skipToken
   );
 
@@ -1005,7 +1010,8 @@ export default function AcademicTeacherRequestsPage() {
                     variant="outline"
                     className={cn(
                       "font-medium",
-                      TEACHER_REQUEST_TYPE_BADGES[selectedRequest.requestType].className
+                      TEACHER_REQUEST_TYPE_BADGES[selectedRequest.requestType]
+                        .className
                     )}
                   >
                     {TEACHER_REQUEST_TYPE_LABELS[selectedRequest.requestType]}
@@ -1056,13 +1062,15 @@ export default function AcademicTeacherRequestsPage() {
                     canDecide ? "lg:col-span-3" : "lg:col-span-4"
                   )}
                 >
-                  {(selectedRequest.teacherName || selectedRequest.submittedBy) && (
+                  {(selectedRequest.teacherName ||
+                    selectedRequest.submittedBy) && (
                     <div className="rounded-xl border border-border/60 bg-muted/10 p-4">
                       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                         Giáo viên gửi yêu cầu
                       </p>
                       <p className="mt-1 text-sm font-medium text-foreground">
-                        {selectedRequest.teacherName || selectedRequest.submittedBy}
+                        {selectedRequest.teacherName ||
+                          selectedRequest.submittedBy}
                         {selectedRequest.teacherEmail && (
                           <span className="ml-2 text-xs font-normal text-muted-foreground">
                             ({selectedRequest.teacherEmail})
@@ -1124,7 +1132,9 @@ export default function AcademicTeacherRequestsPage() {
                                           (r.id ?? r.resourceId) ===
                                           selectedResourceId
                                       );
-                                    return selectedResource?.name || "Chưa có tên";
+                                    return (
+                                      selectedResource?.name || "Chưa có tên"
+                                    );
                                   })()
                                 : null}
                             </SelectValue>
@@ -1132,7 +1142,8 @@ export default function AcademicTeacherRequestsPage() {
                           <SelectContent>
                             {modalityResources
                               .filter((resource) => {
-                                const resourceId = resource.id ?? resource.resourceId;
+                                const resourceId =
+                                  resource.id ?? resource.resourceId;
                                 return (
                                   resourceId !== null &&
                                   resourceId !== undefined &&
@@ -1142,7 +1153,8 @@ export default function AcademicTeacherRequestsPage() {
                               .map((resource) => {
                                 const resourceId =
                                   resource.id ?? resource.resourceId;
-                                const resourceName = resource.name || "Chưa có tên";
+                                const resourceName =
+                                  resource.name || "Chưa có tên";
                                 const resourceType =
                                   resource.type || resource.resourceType || "";
                                 const resourceCapacity = resource.capacity;
@@ -1182,8 +1194,8 @@ export default function AcademicTeacherRequestsPage() {
                         Chọn lại thông tin lịch mới (nếu cần)
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Bạn có thể chọn lại ngày, khung giờ và phòng học/phương tiện
-                        nếu cần thay đổi so với đề xuất của giáo viên.
+                        Bạn có thể chọn lại ngày, khung giờ và phòng học/phương
+                        tiện nếu cần thay đổi so với đề xuất của giáo viên.
                       </p>
 
                       <div className="space-y-2">
@@ -1201,15 +1213,20 @@ export default function AcademicTeacherRequestsPage() {
                               variant="outline"
                               className={cn(
                                 "w-full justify-start text-left font-normal",
-                                !selectedRescheduleDate && "text-muted-foreground"
+                                !selectedRescheduleDate &&
+                                  "text-muted-foreground"
                               )}
                               disabled={isActionLoading}
                             >
                               <CalendarIcon className="mr-2 h-4 w-4" />
                               {selectedRescheduleDate ? (
-                                format(selectedRescheduleDate, "EEEE, dd/MM/yyyy", {
-                                  locale: vi,
-                                })
+                                format(
+                                  selectedRescheduleDate,
+                                  "EEEE, dd/MM/yyyy",
+                                  {
+                                    locale: vi,
+                                  }
+                                )
                               ) : (
                                 <span>Chọn ngày mới (tùy chọn)</span>
                               )}
@@ -1271,12 +1288,14 @@ export default function AcademicTeacherRequestsPage() {
                                 <SelectValue placeholder="Chọn khung giờ mới (tùy chọn)...">
                                   {selectedRescheduleTimeSlotId
                                     ? (() => {
-                                        const selectedSlot = rescheduleSlots.find(
-                                          (s) =>
-                                            (s.timeSlotTemplateId ??
-                                              s.timeSlotId ??
-                                              s.id) === selectedRescheduleTimeSlotId
-                                        );
+                                        const selectedSlot =
+                                          rescheduleSlots.find(
+                                            (s) =>
+                                              (s.timeSlotTemplateId ??
+                                                s.timeSlotId ??
+                                                s.id) ===
+                                              selectedRescheduleTimeSlotId
+                                          );
                                         const formattedRange = formatTimeRange(
                                           selectedSlot?.startTime ||
                                             selectedSlot?.startAt,
@@ -1325,10 +1344,15 @@ export default function AcademicTeacherRequestsPage() {
                                       slot.startTime || slot.startAt
                                     } - ${slot.endTime || slot.endAt}`;
                                     const label =
-                                      formattedRange ?? fallbackRange ?? `Slot ${slotId}`;
+                                      formattedRange ??
+                                      fallbackRange ??
+                                      `Slot ${slotId}`;
 
                                     return (
-                                      <SelectItem key={slotId} value={String(slotId)}>
+                                      <SelectItem
+                                        key={slotId}
+                                        value={String(slotId)}
+                                      >
                                         {label}
                                       </SelectItem>
                                     );
@@ -1339,8 +1363,10 @@ export default function AcademicTeacherRequestsPage() {
                         </div>
                       )}
 
-                      {(selectedRescheduleDate && selectedRescheduleTimeSlotId) ||
-                      (!selectedRescheduleDate && !selectedRescheduleTimeSlotId) ? (
+                      {(selectedRescheduleDate &&
+                        selectedRescheduleTimeSlotId) ||
+                      (!selectedRescheduleDate &&
+                        !selectedRescheduleTimeSlotId) ? (
                         <div className="space-y-2">
                           <Label className="text-sm font-medium">
                             Phòng học/phương tiện{" "}
@@ -1391,7 +1417,8 @@ export default function AcademicTeacherRequestsPage() {
                                               selectedResourceId
                                           );
                                         return (
-                                          selectedResource?.name || "Chưa có tên"
+                                          selectedResource?.name ||
+                                          "Chưa có tên"
                                         );
                                       })()
                                     : null}
@@ -1414,7 +1441,9 @@ export default function AcademicTeacherRequestsPage() {
                                     const resourceName =
                                       resource.name || "Chưa có tên";
                                     const resourceType =
-                                      resource.type || resource.resourceType || "";
+                                      resource.type ||
+                                      resource.resourceType ||
+                                      "";
                                     const resourceCapacity = resource.capacity;
 
                                     return (
@@ -1460,7 +1489,8 @@ export default function AcademicTeacherRequestsPage() {
                       </p>
                       {!requestId ? (
                         <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-                          Không tìm thấy thông tin request. Vui lòng thử lại sau.
+                          Không tìm thấy thông tin request. Vui lòng thử lại
+                          sau.
                         </div>
                       ) : isLoadingCandidates ? (
                         <div className="rounded-lg border p-4 text-center text-sm text-muted-foreground">
@@ -1544,7 +1574,8 @@ export default function AcademicTeacherRequestsPage() {
                                   <SelectItem
                                     key={teacherId || teacherName}
                                     value={
-                                      teacherId !== null && teacherId !== undefined
+                                      teacherId !== null &&
+                                      teacherId !== undefined
                                         ? String(teacherId)
                                         : ""
                                     }
@@ -1586,7 +1617,9 @@ export default function AcademicTeacherRequestsPage() {
                         </label>
                         <Textarea
                           value={decisionNote}
-                          onChange={(event) => setDecisionNote(event.target.value)}
+                          onChange={(event) =>
+                            setDecisionNote(event.target.value)
+                          }
                           placeholder="Nhập ghi chú gửi giáo viên..."
                           className="min-h-[120px] resize-none"
                         />
@@ -1629,7 +1662,10 @@ export default function AcademicTeacherRequestsPage() {
 
           {!canDecide && !isLoadingDetail && (
             <FullScreenModalFooter>
-              <Button variant="outline" onClick={() => handleCloseRequestDetail()}>
+              <Button
+                variant="outline"
+                onClick={() => handleCloseRequestDetail()}
+              >
                 Đóng
               </Button>
             </FullScreenModalFooter>

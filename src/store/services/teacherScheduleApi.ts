@@ -86,6 +86,7 @@ export interface ClassInfoDTO {
   teacherName: string;
   branchId: number;
   branchName: string;
+  branchAddress?: string;
   modality: ClassModality;
 }
 

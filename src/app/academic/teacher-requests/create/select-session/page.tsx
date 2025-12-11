@@ -24,6 +24,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { useAuth } from "@/hooks/useAuth";
 
 const formatDateLabel = (dateString: string) => {
   try {
@@ -41,6 +42,7 @@ export default function SelectSessionPage() {
   const [selectedSessionId, setSelectedSessionId] = useState<
     number | undefined
   >();
+  const { selectedBranchId } = useAuth();
 
   const teacherIdNumber = teacherId ? Number(teacherId) : undefined;
 
@@ -51,7 +53,7 @@ export default function SelectSessionPage() {
     refetch,
     isFetching,
   } = useGetTeacherSessionsForStaffQuery(
-    { teacherId: teacherIdNumber! },
+    { teacherId: teacherIdNumber!, branchId: selectedBranchId || undefined },
     {
       skip: !teacherIdNumber,
     }
@@ -70,7 +72,10 @@ export default function SelectSessionPage() {
     );
   };
 
-  const sessions = useMemo(() => sessionsResponse?.data ?? [], [sessionsResponse]);
+  const sessions = useMemo(
+    () => sessionsResponse?.data ?? [],
+    [sessionsResponse]
+  );
   const isEmpty = !isLoading && !isFetching && sessions.length === 0;
 
   const renderContent = () => {
@@ -117,7 +122,8 @@ export default function SelectSessionPage() {
             </EmptyMedia>
             <EmptyTitle>Không có buổi học phù hợp</EmptyTitle>
             <EmptyDescription>
-              Giáo viên này không có buổi dạy nào trong 14 ngày tới để tạo yêu cầu.
+              Giáo viên này không có buổi dạy nào trong 14 ngày tới để tạo yêu
+              cầu.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -234,4 +240,3 @@ export default function SelectSessionPage() {
     </DashboardLayout>
   );
 }
-

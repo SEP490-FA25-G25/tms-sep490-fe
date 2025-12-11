@@ -32,9 +32,7 @@ import {
   Search,
   Plus,
   Users,
-  Loader2,
   Download,
-  Upload,
   UserCheck,
   GraduationCap,
   UserX,
@@ -51,11 +49,9 @@ import { StudentImportDialog } from "./components/StudentImportDialog";
 import {
   useGetStudentsQuery,
   useGetStudentDetailQuery,
-  useExportStudentsMutation,
   type StudentListItemDTO,
 } from "@/store/services/studentApi";
 import { useDebounce } from "@/hooks/useDebounce";
-import { toast } from "sonner";
 
 // ========== Types ==========
 type EnrollmentFilter = "all" | "enrolled" | "not_enrolled";
@@ -178,10 +174,6 @@ export default function StudentListPage() {
       skip: !selectedStudentId,
     });
 
-  // RTK Query - Export students
-  const [exportStudents, { isLoading: isExporting }] =
-    useExportStudentsMutation();
-
   // Extract data from API response
   // Spring Boot Page response has nested "page" object for pagination info
   const rawStudents = useMemo(
@@ -290,33 +282,6 @@ export default function StudentListPage() {
   const handleEnroll = () => {
     // TODO: Mở modal phân lớp
     console.log("Enroll student:", selectedStudentId);
-  };
-
-  const handleExport = async () => {
-    try {
-      const result = await exportStudents({
-        search: debouncedSearch || undefined,
-        status: filters.status,
-        gender: filters.gender,
-      }).unwrap();
-
-      // Create download link
-      const url = window.URL.createObjectURL(result);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `danh-sach-hoc-vien-${
-        new Date().toISOString().split("T")[0]
-      }.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      toast.success("Xuất danh sách học viên thành công!");
-    } catch (error) {
-      console.error("Export error:", error);
-      toast.error("Có lỗi xảy ra khi xuất file. Vui lòng thử lại.");
-    }
   };
 
   // Loading state
