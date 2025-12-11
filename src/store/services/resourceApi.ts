@@ -82,7 +82,6 @@ export interface TimeSlot {
     // Flags for UI actions
     hasAnySessions?: boolean; // Can't delete if true
     hasFutureSessions?: boolean; // Can't deactivate if true
-    hasTeacherAvailability?: boolean; // Can't delete if true
 }
 
 export interface CreateTimeSlotRequest {
