@@ -590,3 +590,6 @@ export function Step6Validation({ classId, onFinish }: Step6ValidationProps) {
     </div>
   );
 }
+
+// Alias for Step5 (after removing AssignTeacher step)
+export { Step6Validation as Step5Validation };

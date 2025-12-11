@@ -52,7 +52,7 @@ export function useWizardNavigation(initialClassId?: number | null): UseWizardNa
    * Go to next step
    */
   const goToNextStep = useCallback(() => {
-    if (currentStep < 6) {
+    if (currentStep < 5) {
       navigateToStep((currentStep + 1) as WizardStep)
     }
   }, [currentStep, navigateToStep])
@@ -66,9 +66,9 @@ export function useWizardNavigation(initialClassId?: number | null): UseWizardNa
     }
   }, [currentStep, navigateToStep])
 
-  // Validate step is in range 1-6
+  // Validate step is in range 1-5
   useEffect(() => {
-    if (currentStep < 1 || currentStep > 6) {
+    if (currentStep < 1 || currentStep > 5) {
       navigateToStep(1)
     }
   }, [currentStep, navigateToStep])
@@ -84,7 +84,7 @@ export function useWizardNavigation(initialClassId?: number | null): UseWizardNa
   }, [])
 
   const isFirstStep = currentStep === 1
-  const isLastStep = currentStep === 6
+  const isLastStep = currentStep === 5
 
   return {
     currentStep,
