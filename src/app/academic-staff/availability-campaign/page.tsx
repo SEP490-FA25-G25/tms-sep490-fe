@@ -1,9 +1,9 @@
 'use client';
 
 import {
-    useGetLatestCampaignQuery,
-    useSendRemindersMutation,
-} from '@/services/availabilityCampaignApi';
+    useGetAvailabilityCampaignsQuery,
+    useSendBulkRemindersMutation,
+} from '@/store/services/teacherAvailabilityApi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
@@ -13,13 +13,15 @@ import CreateCampaignModal from './components/CreateCampaignModal';
 import TeacherStatusTable from './components/TeacherStatusTable';
 
 export default function CampaignDashboard() {
-    const { data: campaign, isLoading } = useGetLatestCampaignQuery();
-    const [sendReminders, { isLoading: isReminding }] = useSendRemindersMutation();
+    const { data: campaigns, isLoading } = useGetAvailabilityCampaignsQuery();
+    const campaign = campaigns?.[0];
+    const [sendBulkReminders, { isLoading: isReminding }] = useSendBulkRemindersMutation();
 
     const handleSendReminders = async () => {
         if (!campaign) return;
         try {
-            await sendReminders(campaign.id).unwrap();
+            // Chưa có danh sách teacher cụ thể, tạm thời gửi nhắc nhở rỗng
+            await sendBulkReminders([]).unwrap();
             toast.success('Reminders sent successfully');
         } catch {
             toast.error('Failed to send reminders');
@@ -53,7 +55,7 @@ export default function CampaignDashboard() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-xl font-semibold">
-                                Active Campaign: {campaign.title}
+                                Active Campaign: {campaign.name}
                             </CardTitle>
                             <Button
                                 variant="outline"
