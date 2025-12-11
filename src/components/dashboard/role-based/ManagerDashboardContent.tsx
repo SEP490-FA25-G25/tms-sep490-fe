@@ -92,10 +92,10 @@ export function ManagerDashboardContent() {
   } = useGetManagerDashboardQuery(
     dateFrom && dateTo
       ? {
-          rangeType: "CUSTOM",
-          fromDate: dateFrom.toISOString().split("T")[0],
-          toDate: dateTo.toISOString().split("T")[0],
-        }
+        rangeType: "CUSTOM",
+        fromDate: dateFrom.toISOString().split("T")[0],
+        toDate: dateTo.toISOString().split("T")[0],
+      }
       : undefined
   );
 
@@ -186,7 +186,7 @@ export function ManagerDashboardContent() {
               value: summary.totalStudents,
               helper: "Bao gồm tất cả chi nhánh thuộc phạm vi",
               icon: Activity,
-              onClick: () => navigate("/manager/reports"),
+              onClick: () => navigate("/manager/qa-reports"),
             },
             {
               label: "Giáo viên đang hoạt động",
@@ -200,7 +200,7 @@ export function ManagerDashboardContent() {
               value: summary.activeClasses,
               helper: "Trạng thái Đang diễn ra trong vùng của bạn",
               icon: CalendarDays,
-              onClick: () => navigate("/manager/reports"),
+              onClick: () => navigate("/manager/qa-reports"),
             },
             {
               label: "Yêu cầu đang chờ phê duyệt",
@@ -261,7 +261,7 @@ export function ManagerDashboardContent() {
             </CardHeader>
             <CardContent>
               {dashboard?.classesPerBranch &&
-              dashboard.classesPerBranch.length > 0 ? (
+                dashboard.classesPerBranch.length > 0 ? (
                 <div className="flex flex-col gap-4 md:flex-row">
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2 mb-1">
@@ -367,7 +367,7 @@ export function ManagerDashboardContent() {
                             key={index}
                             fill={
                               ["#6366f1", "#22c55e", "#f97316", "#ec4899"][
-                                index % 4
+                              index % 4
                               ]
                             }
                           />
@@ -430,8 +430,8 @@ export function ManagerDashboardContent() {
                       <p className="text-xs text-muted-foreground mt-1">
                         {dashboard?.teachingWorkload
                           ? `${dashboard.teachingWorkload.teachingPercent.toFixed(
-                              1
-                            )}%`
+                            1
+                          )}%`
                           : "-"}
                       </p>
                     </div>
@@ -443,8 +443,8 @@ export function ManagerDashboardContent() {
                       <p className="text-xs text-muted-foreground mt-1">
                         {dashboard?.teachingWorkload
                           ? `${dashboard.teachingWorkload.availablePercent.toFixed(
-                              1
-                            )}%`
+                            1
+                          )}%`
                           : "-"}
                       </p>
                     </div>
@@ -454,8 +454,8 @@ export function ManagerDashboardContent() {
                     <span className="font-semibold">
                       {dashboard?.teachingWorkload
                         ? `${dashboard.teachingWorkload.totalTeachingHoursInRange.toFixed(
-                            1
-                          )} giờ`
+                          1
+                        )} giờ`
                         : "-"}
                     </span>
                   </p>
@@ -523,7 +523,7 @@ export function ManagerDashboardContent() {
             </CardHeader>
             <CardContent>
               {dashboard?.attendanceTrend &&
-              dashboard.attendanceTrend.length > 0 ? (
+                dashboard.attendanceTrend.length > 0 ? (
                 <div className="h-40 w-full">
                   <ResponsiveContainer>
                     <ReLineChart data={dashboard.attendanceTrend}>
@@ -580,7 +580,7 @@ export function ManagerDashboardContent() {
           </CardHeader>
           <CardContent>
             {dashboard?.enrollmentTrend &&
-            dashboard.enrollmentTrend.length > 0 ? (
+              dashboard.enrollmentTrend.length > 0 ? (
               <div className="h-52 w-full">
                 <ResponsiveContainer>
                   <AreaChart data={dashboard.enrollmentTrend}>

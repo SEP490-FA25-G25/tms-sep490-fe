@@ -203,6 +203,8 @@ const ManagerStudentFeedbackPage = lazy(
   () => import("./app/manager/student-feedback/page")
 );
 const ManagerPoliciesPage = lazy(() => import("./app/manager/policies/page"));
+const ManagerQAReportsPage = lazy(() => import("./app/manager/qa-reports/page"));
+const ManagerQAReportDetailPage = lazy(() => import("./app/manager/qa-reports/[id]/page"));
 
 // Curriculum pages
 // const CurriculumPage = lazy(() => import("./app/curriculum/page"));
@@ -347,6 +349,22 @@ function App() {
                   element={
                     <ProtectedRoute requiredRoles={["MANAGER"]}>
                       <ManagerStudentFeedbackPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/manager/qa-reports"
+                  element={
+                    <ProtectedRoute requiredRoles={["MANAGER"]}>
+                      <ManagerQAReportsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/manager/qa-reports/:id"
+                  element={
+                    <ProtectedRoute requiredRoles={["MANAGER"]}>
+                      <ManagerQAReportDetailPage />
                     </ProtectedRoute>
                   }
                 />
@@ -650,7 +668,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
-                
+
                 <Route
                   path="/teacher/requests/create/select-type"
                   element={

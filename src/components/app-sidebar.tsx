@@ -150,8 +150,8 @@ const roleBasedNav = {
         icon: MessageCircleIcon,
       },
       {
-        title: "Báo cáo",
-        url: "/manager/reports",
+        title: "Báo cáo chất lượng",
+        url: "/manager/qa-reports",
         icon: FileTextIcon,
       },
       {
