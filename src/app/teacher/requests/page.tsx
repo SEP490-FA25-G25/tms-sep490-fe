@@ -1105,21 +1105,6 @@ export function TeacherRequestDetailContent({
     return undefined;
   };
 
-  const getNestedNumber = (
-    source: unknown,
-    path: string[]
-  ): number | undefined => {
-    const value = getNestedValue(source, path);
-    if (typeof value === "number") {
-      return value;
-    }
-    if (typeof value === "string" && value.trim().length > 0) {
-      const parsed = Number(value);
-      return Number.isFinite(parsed) ? parsed : undefined;
-    }
-    return undefined;
-  };
-
   const getNestedArray = <T = unknown,>(
     source: unknown,
     path: string[]
@@ -1127,6 +1112,14 @@ export function TeacherRequestDetailContent({
     const value = getNestedValue(source, path);
     return Array.isArray(value) ? (value as T[]) : undefined;
   };
+  const classCode =
+    request.classInfo?.classCode ||
+    request.classCode ||
+    request.session?.classCode ||
+    getNestedString(request, ["session", "classCode"]) ||
+    getNestedString(request, ["sessionInfo", "classCode"]) ||
+    fallbackRequest?.classCode ||
+    undefined;
   const className =
     request.classInfo?.name ||
     request.className ||
@@ -1134,9 +1127,16 @@ export function TeacherRequestDetailContent({
     request.session?.className ||
     getNestedString(request, ["session", "className"]) ||
     getNestedString(request, ["sessionInfo", "className"]) ||
-    request.classInfo?.classCode ||
     fallbackRequest?.className ||
     undefined;
+  const classDisplay =
+    (typeof classCode === "string" && classCode.trim().length > 0
+      ? classCode.trim()
+      : undefined) ||
+    (typeof className === "string" && className.trim().length > 0
+      ? className.trim()
+      : undefined) ||
+    "Chưa cập nhật";
   const branchName =
     request.classInfo?.branchName ||
     getNestedString(request, ["classInfo", "branchName"]) ||
@@ -1272,7 +1272,9 @@ export function TeacherRequestDetailContent({
     undefined;
   const newResourceName =
     request.newResourceName ||
+    getNestedString(request, ["newSessionResourceName"]) ||
     getNestedString(request, ["newResource", "name"]) ||
+    getNestedString(request, ["newSession", "resource", "name"]) ||
     fallbackRequest?.newResourceName ||
     undefined;
 
@@ -1303,26 +1305,10 @@ export function TeacherRequestDetailContent({
     getNestedString(request, ["replacementTeacher", "note"]) ||
     fallbackRequest?.replacementTeacherNote ||
     undefined;
-  const replacementTeacherMatchScore =
-    getNestedNumber(request, ["replacementTeacher", "matchScore"]) ??
-    getNestedNumber(fallbackRequest, ["replacementTeacher", "matchScore"]);
   const replacementTeacherSkills =
     getNestedArray<unknown>(request, ["replacementTeacher", "skills"]) ??
     getNestedArray<unknown>(fallbackRequest, ["replacementTeacher", "skills"]);
 
-  // Compute days until the original session date (for display similar to student requests)
-  let daysUntilSession: number | null = null;
-  if (sessionDate) {
-    try {
-      const sessionDateObj = parseISO(sessionDate);
-      const now = new Date();
-      daysUntilSession = Math.ceil(
-        (sessionDateObj.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-      );
-    } catch {
-      daysUntilSession = null;
-    }
-  }
   const formattedReplacementSkills = replacementTeacherSkills
     ?.map((skill) => {
       if (!skill) return undefined;
@@ -1352,15 +1338,7 @@ export function TeacherRequestDetailContent({
       newSessionEnd ||
       newTimeSlotLabel ||
       newResourceName);
-  const hasReplacementInfo =
-    request.requestType === "REPLACEMENT" &&
-    (replacementTeacherName ||
-      replacementTeacherEmail ||
-      replacementTeacherPhone ||
-      replacementTeacherSpecialization ||
-      replacementTeacherMatchScore !== undefined ||
-      (formattedReplacementSkills && formattedReplacementSkills.length > 0) ||
-      replacementTeacherNote);
+  const hasReplacementInfo = request.requestType === "REPLACEMENT";
 
   return (
     <div className="space-y-4">
@@ -1392,48 +1370,47 @@ export function TeacherRequestDetailContent({
         </>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div>
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Thông tin buổi học
           </p>
-          <div className="mt-1 space-y-1">
+          <div className="mt-2 space-y-1">
             <p className="font-medium text-foreground">
-              {className || "Chưa cập nhật"}
-              {sessionDate && (
-                <>
-                  {" "}
-                  <span className="font-medium">
-                    ·{" "}
-                    {format(parseISO(sessionDate), "dd/MM/yyyy", {
-                      locale: vi,
-                    })}
-                  </span>
-                </>
-              )}
+              Lớp: <span className="font-medium">{classDisplay}</span>
             </p>
-            {sessionTopic && (
-              <p className="text-sm text-muted-foreground">{sessionTopic}</p>
+            {sessionDate && (
+              <p className="text-sm text-muted-foreground">
+                Ngày học:{" "}
+                <span className="font-medium text-foreground">
+                  {format(parseISO(sessionDate), "dd/MM/yyyy", { locale: vi })}
+                </span>
+              </p>
             )}
             {(sessionStart || sessionEnd) && (
               <p className="text-sm text-muted-foreground">
-                {sessionStart && sessionEnd
-                  ? `${sessionStart} - ${sessionEnd}`
-                  : sessionStart || sessionEnd || ""}
+                Giờ học:{" "}
+                <span className="font-medium text-foreground">
+                  {sessionStart && sessionEnd
+                    ? `${sessionStart} - ${sessionEnd}`
+                    : sessionStart || sessionEnd || ""}
+                </span>
               </p>
             )}
-            {daysUntilSession !== null && (
-              <p
-                className={cn(
-                  "text-xs font-medium",
-                  daysUntilSession >= 0
-                    ? "text-muted-foreground"
-                    : "text-amber-600 dark:text-amber-400"
-                )}
-              >
-                {daysUntilSession >= 0
-                  ? `Còn ${daysUntilSession} ngày`
-                  : `Đã qua ${Math.abs(daysUntilSession)} ngày`}
+            {request.currentResourceName && (
+              <p className="text-sm text-muted-foreground">
+                Phòng/Resource hiện tại:{" "}
+                <span className="font-medium text-foreground">
+                  {request.currentResourceName}
+                </span>
+              </p>
+            )}
+            {sessionTopic && (
+              <p className="text-sm text-muted-foreground">
+                Nội dung buổi học:{" "}
+                <span className="font-medium text-foreground">
+                  {sessionTopic}
+                </span>
               </p>
             )}
             {branchName && (
@@ -1443,45 +1420,26 @@ export function TeacherRequestDetailContent({
             )}
           </div>
         </div>
-        <div className="space-y-1 text-sm text-muted-foreground">
-          {request.currentModality && (
-            <p>
-              Phương thức hiện tại:{" "}
-              <span className="font-medium text-foreground">
-                {request.currentModality.toUpperCase() === "OFFLINE"
-                  ? "Trực tiếp"
-                  : request.currentModality.toUpperCase() === "ONLINE" ||
-                    request.currentModality.toUpperCase() === "VIRTUAL"
-                  ? "Online"
-                  : request.currentModality}
-              </span>
-            </p>
-          )}
-          {request.newModality && (
-            <p>
-              Đề xuất mới:{" "}
-              <span className="font-medium text-foreground">
-                {request.newModality.toUpperCase() === "OFFLINE"
-                  ? "Trực tiếp"
-                  : request.newModality.toUpperCase() === "ONLINE" ||
-                    request.newModality.toUpperCase() === "VIRTUAL"
-                  ? "Online"
-                  : request.newModality}
-              </span>
-            </p>
-          )}
-        </div>
-      </div>
 
-      <div className="h-px bg-border" />
-
-      {hasModalityChangeInfo && (
-        <>
-          <div>
+        {hasModalityChangeInfo && (
+          <div className="rounded-2xl border border-sky-200 bg-sky-50/40 p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Thông tin đề xuất
             </p>
             <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+              {request.newModality && (
+                <p>
+                  Đề xuất mới:{" "}
+                  <span className="font-medium text-foreground">
+                    {request.newModality.toUpperCase() === "OFFLINE"
+                      ? "Trực tiếp"
+                      : request.newModality.toUpperCase() === "ONLINE" ||
+                        request.newModality.toUpperCase() === "VIRTUAL"
+                      ? "Online"
+                      : request.newModality}
+                  </span>
+                </p>
+              )}
               {newResourceName && (
                 <p>
                   Resource được gợi ý:{" "}
@@ -1492,14 +1450,10 @@ export function TeacherRequestDetailContent({
               )}
             </div>
           </div>
+        )}
 
-          <div className="h-px bg-border" />
-        </>
-      )}
-
-      {hasRescheduleInfo && (
-        <>
-          <div>
+        {hasRescheduleInfo && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/40 p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Thông tin đề xuất
             </p>
@@ -1524,7 +1478,7 @@ export function TeacherRequestDetailContent({
               )}
               {newResourceName && (
                 <p>
-                  Resource đề xuất:{" "}
+                  Phòng/Resource mới:{" "}
                   <span className="font-medium text-foreground">
                     {newResourceName}
                   </span>
@@ -1532,81 +1486,81 @@ export function TeacherRequestDetailContent({
               )}
             </div>
           </div>
+        )}
 
-          <div className="h-px bg-border" />
-        </>
-      )}
-
-      {hasReplacementInfo && (
-        <>
-          <div>
+        {hasReplacementInfo && (
+          <div className="rounded-2xl border border-purple-200 bg-purple-50/40 p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Giáo viên dạy thay
+              Thông tin đề xuất
             </p>
             <div className="mt-2 space-y-1 text-sm text-muted-foreground">
-              {replacementTeacherName && (
-                <p>
-                  Họ và tên:{" "}
-                  <span className="font-medium text-foreground">
-                    {replacementTeacherName}
-                  </span>
-                </p>
-              )}
-              {replacementTeacherEmail && (
-                <p>
-                  Email:{" "}
-                  <span className="font-medium text-foreground">
-                    {replacementTeacherEmail}
-                  </span>
-                </p>
-              )}
-              {replacementTeacherPhone && (
-                <p>
-                  Số điện thoại:{" "}
-                  <span className="font-medium text-foreground">
-                    {replacementTeacherPhone}
-                  </span>
-                </p>
-              )}
-              {replacementTeacherSpecialization && (
-                <p>
-                  Chuyên môn:{" "}
-                  <span className="font-medium text-foreground">
-                    {replacementTeacherSpecialization}
-                  </span>
-                </p>
-              )}
-              {formattedReplacementSkills &&
-                formattedReplacementSkills.length > 0 && (
-                  <div>
-                    <p>Kỹ năng:</p>
-                    <ul className="mt-1 list-disc space-y-1 pl-5 text-sm">
-                      {formattedReplacementSkills.map((skill, index) => (
-                        <li key={`${skill}-${index}`}>{skill}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              {replacementTeacherNote && (
-                <p>
-                  Ghi chú:{" "}
-                  <span className="font-medium text-foreground">
-                    {replacementTeacherNote}
-                  </span>
+              {replacementTeacherName ? (
+                <>
+                  <p>
+                    Họ và tên:{" "}
+                    <span className="font-medium text-foreground">
+                      {replacementTeacherName}
+                    </span>
+                  </p>
+                  {replacementTeacherEmail && (
+                    <p>
+                      Email:{" "}
+                      <span className="font-medium text-foreground">
+                        {replacementTeacherEmail}
+                      </span>
+                    </p>
+                  )}
+                  {replacementTeacherPhone && (
+                    <p>
+                      Số điện thoại:{" "}
+                      <span className="font-medium text-foreground">
+                        {replacementTeacherPhone}
+                      </span>
+                    </p>
+                  )}
+                  {replacementTeacherSpecialization && (
+                    <p>
+                      Chuyên môn:{" "}
+                      <span className="font-medium text-foreground">
+                        {replacementTeacherSpecialization}
+                      </span>
+                    </p>
+                  )}
+                  {formattedReplacementSkills &&
+                    formattedReplacementSkills.length > 0 && (
+                      <div>
+                        <p>Kỹ năng:</p>
+                        <ul className="mt-1 list-disc space-y-1 pl-5 text-sm">
+                          {formattedReplacementSkills.map((skill, index) => (
+                            <li key={`${skill}-${index}`}>{skill}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  {replacementTeacherNote && (
+                    <p>
+                      Ghi chú:{" "}
+                      <span className="font-medium text-foreground">
+                        {replacementTeacherNote}
+                      </span>
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-muted-foreground italic">
+                  Không tìm thấy giáo viên dạy thay phù hợp
                 </p>
               )}
             </div>
           </div>
+        )}
+      </div>
 
-          <div className="h-px bg-border" />
-        </>
-      )}
-
-      <div>
+      <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Lý do
         </p>
-        <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
+        <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap">
           {requestReason || "Chưa cung cấp"}
         </p>
       </div>
@@ -1702,8 +1656,6 @@ export function TeacherRequestDetailContent({
             </>
           );
         })()}
-
-      <div className="h-px bg-border" />
 
       <div className="space-y-2 text-sm text-muted-foreground">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

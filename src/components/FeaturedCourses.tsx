@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowRight, BookOpen, Clock, Star, CheckCircle } from 'lucide-react';
+import { ArrowRight, BookOpen, Clock, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Define course categories

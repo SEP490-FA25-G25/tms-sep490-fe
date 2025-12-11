@@ -130,7 +130,7 @@ export default function CreateQAReportPage() {
         { skip: !formData.classId }
     )
 
-    const courseId = classDetail?.courseId
+    const courseId = classDetail?.subjectId
 
     // Fetch phases for selected class's course
     const { data: coursePhases } = useGetPhasesByCourseIdQuery(

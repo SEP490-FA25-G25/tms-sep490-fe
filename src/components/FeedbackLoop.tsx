@@ -7,8 +7,9 @@ interface Feedback {
     name: string;
     role: string;
     quote: string;
-    image: string;
+    image?: string;
     color?: string;
+    highlight?: boolean;
 }
 
 interface FeedbackLoopProps {

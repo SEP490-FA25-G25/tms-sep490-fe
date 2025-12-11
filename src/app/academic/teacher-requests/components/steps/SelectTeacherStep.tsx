@@ -15,12 +15,10 @@ import {
 
 interface SelectTeacherStepProps {
   onSelect: (teacherId: number) => void;
-  onCancel: () => void;
 }
 
 export function SelectTeacherStep({
   onSelect,
-  onCancel,
 }: SelectTeacherStepProps) {
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedTeacherId, setSelectedTeacherId] = useState<
@@ -133,9 +131,6 @@ export function SelectTeacherStep({
 
       {/* Footer */}
       <div className="flex items-center justify-end gap-3 pt-4 border-t">
-        <Button variant="ghost" onClick={onCancel}>
-          Hủy
-        </Button>
         <Button onClick={handleContinue} disabled={!selectedTeacherId}>
           Tiếp tục
         </Button>

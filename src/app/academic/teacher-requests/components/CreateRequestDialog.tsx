@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,7 +6,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { SelectTeacherStep } from "./steps/SelectTeacherStep";
-import { SelectTypeStep } from "./steps/SelectTypeStep";
 import { SelectSessionStep } from "./steps/SelectSessionStep";
 import { RequestFormStep } from "./steps/RequestFormStep";
 import type { RequestType } from "@/store/services/teacherRequestApi";
@@ -14,18 +13,32 @@ import type { RequestType } from "@/store/services/teacherRequestApi";
 interface CreateRequestDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialRequestType?: RequestType;
 }
 
-type Step = "teacher" | "type" | "session" | "form";
+type Step = "teacher" | "session" | "info" | "reason";
+
+export interface RequestSelectionState {
+  selectedDate?: Date;
+  selectedTimeSlotId?: number;
+  selectedResourceId?: number;
+  selectedReplacementTeacherId?: number;
+  selectedModalityResourceId?: number;
+  selectedTimeSlotLabel?: string;
+  selectedResourceLabel?: string;
+  selectedModalityResourceLabel?: string;
+}
 
 export function CreateRequestDialog({
   open,
   onOpenChange,
+  initialRequestType,
 }: CreateRequestDialogProps) {
   const [currentStep, setCurrentStep] = useState<Step>("teacher");
   const [selectedTeacherId, setSelectedTeacherId] = useState<number | undefined>();
   const [selectedRequestType, setSelectedRequestType] = useState<RequestType | undefined>();
   const [selectedSessionId, setSelectedSessionId] = useState<number | undefined>();
+  const [selectionState, setSelectionState] = useState<RequestSelectionState>({});
 
   const handleClose = () => {
     // Reset state when closing
@@ -36,19 +49,35 @@ export function CreateRequestDialog({
     onOpenChange(false);
   };
 
+  // Prefill type when opened from preset
+  useEffect(() => {
+    if (open) {
+      if (initialRequestType) {
+        setSelectedRequestType(initialRequestType);
+      }
+      setCurrentStep("teacher");
+    } else {
+      // reset when closed
+      setSelectedRequestType(undefined);
+    }
+  }, [open, initialRequestType]);
+
   const handleTeacherSelected = (teacherId: number) => {
     setSelectedTeacherId(teacherId);
-    setCurrentStep("type");
-  };
-
-  const handleTypeSelected = (requestType: RequestType) => {
-    setSelectedRequestType(requestType);
+    setSelectedSessionId(undefined);
+    setSelectionState({});
     setCurrentStep("session");
   };
 
   const handleSessionSelected = (sessionId: number) => {
     setSelectedSessionId(sessionId);
-    setCurrentStep("form");
+    setSelectionState({});
+    setCurrentStep("info");
+  };
+
+  const handleInfoNext = (state: RequestSelectionState) => {
+    setSelectionState(state);
+    setCurrentStep("reason");
   };
 
   const handleFormSuccess = () => {
@@ -56,15 +85,17 @@ export function CreateRequestDialog({
   };
 
   const handleBack = () => {
-    if (currentStep === "form") {
+    if (currentStep === "reason") {
+      setCurrentStep("info");
+    } else if (currentStep === "info") {
       setCurrentStep("session");
-      setSelectedSessionId(undefined);
+      setSelectionState({});
     } else if (currentStep === "session") {
-      setCurrentStep("type");
-      setSelectedRequestType(undefined);
-    } else if (currentStep === "type") {
       setCurrentStep("teacher");
-      setSelectedTeacherId(undefined);
+      setSelectedSessionId(undefined);
+      setSelectionState({});
+    } else {
+      handleClose();
     }
   };
 
@@ -72,11 +103,11 @@ export function CreateRequestDialog({
     switch (currentStep) {
       case "teacher":
         return "Chọn giáo viên";
-      case "type":
-        return "Chọn loại yêu cầu";
       case "session":
         return "Chọn buổi học";
-      case "form":
+      case "info":
+        return "Điền thông tin";
+      case "reason":
         return "Điền thông tin yêu cầu";
       default:
         return "Tạo yêu cầu cho giáo viên";
@@ -97,17 +128,17 @@ export function CreateRequestDialog({
           <div className="flex items-center justify-between mb-6">
             {[
               { key: "teacher", label: "Chọn giáo viên" },
-              { key: "type", label: "Chọn loại" },
-              { key: "session", label: "Chọn buổi" },
-              { key: "form", label: "Điền form" },
+              { key: "session", label: "Chọn buổi học" },
+              { key: "info", label: "Điền thông tin" },
+              { key: "reason", label: "Điền lý do" },
             ].map((step, index) => {
               const stepKey = step.key as Step;
               const isActive = currentStep === stepKey;
               const isCompleted =
                 (stepKey === "teacher" && selectedTeacherId) ||
-                (stepKey === "type" && selectedRequestType) ||
                 (stepKey === "session" && selectedSessionId) ||
-                (stepKey === "form" && currentStep === "form");
+                (stepKey === "info" && currentStep !== "teacher" && currentStep !== "session") ||
+                (stepKey === "reason" && currentStep === "reason");
 
               return (
                 <div key={step.key} className="flex items-center flex-1">
@@ -146,18 +177,9 @@ export function CreateRequestDialog({
           </div>
 
           {/* Step content */}
-          {currentStep === "teacher" && (
+          {currentStep === "teacher" && selectedRequestType && (
             <SelectTeacherStep
               onSelect={handleTeacherSelected}
-              onCancel={handleClose}
-            />
-          )}
-
-          {currentStep === "type" && selectedTeacherId && (
-            <SelectTypeStep
-              teacherId={selectedTeacherId}
-              onSelect={handleTypeSelected}
-              onBack={handleBack}
             />
           )}
 
@@ -172,7 +194,7 @@ export function CreateRequestDialog({
               />
             )}
 
-          {currentStep === "form" &&
+          {currentStep === "info" &&
             selectedTeacherId &&
             selectedRequestType &&
             selectedSessionId && (
@@ -180,6 +202,22 @@ export function CreateRequestDialog({
                 teacherId={selectedTeacherId}
                 sessionId={selectedSessionId}
                 requestType={selectedRequestType}
+                mode="info"
+                onInfoNext={handleInfoNext}
+                onBack={handleBack}
+              />
+            )}
+
+          {currentStep === "reason" &&
+            selectedTeacherId &&
+            selectedRequestType &&
+            selectedSessionId && (
+              <RequestFormStep
+                teacherId={selectedTeacherId}
+                sessionId={selectedSessionId}
+                requestType={selectedRequestType}
+                mode="reason"
+                selectionState={selectionState}
                 onSuccess={handleFormSuccess}
                 onBack={handleBack}
               />
