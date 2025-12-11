@@ -29,10 +29,6 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useGetCentersQuery } from "@/store/services/centerApi";
-import { useGetUsersQuery } from "@/store/services/userApi";
-import type { CenterResponse } from "@/store/services/centerApi";
-import type { UserResponse } from "@/store/services/userApi";
 import { BranchFormDialog } from "./components/BranchFormDialog";
 import { toast } from "sonner";
 
@@ -45,23 +41,6 @@ export default function ManagerBranchesPage() {
     refetch,
   } = useGetManagerBranchesQuery();
   const branches = branchResponse?.data ?? [];
-
-  const { data: centersResponse } = useGetCentersQuery({
-    page: 0,
-    size: 100,
-    sort: "name,asc",
-  });
-  const centers: CenterResponse[] = centersResponse?.data?.content ?? [];
-
-  const { data: centerHeadResponse, isFetching: isFetchingCenterHeads } =
-    useGetUsersQuery({
-      page: 0,
-      size: 50,
-      sort: "fullName,asc",
-      role: "CENTER_HEAD",
-    });
-  const centerHeadOptions: UserResponse[] =
-    centerHeadResponse?.data?.content ?? [];
 
   const [createBranch, { isLoading: isCreating }] =
     useCreateManagerBranchMutation();
@@ -84,7 +63,7 @@ export default function ManagerBranchesPage() {
     } catch (error) {
       toast.error(
         (error as { data?: { message?: string } })?.data?.message ??
-          "Không thể tạo chi nhánh"
+        "Không thể tạo chi nhánh"
       );
     }
   };
@@ -139,10 +118,6 @@ export default function ManagerBranchesPage() {
       <BranchFormDialog
         open={showForm}
         onOpenChange={setShowForm}
-        centers={centers}
-        centerHeadOptions={centerHeadOptions}
-        loadingCenters={!centers.length}
-        loadingCenterHeads={isFetchingCenterHeads}
         onSubmit={handleSubmit}
         isSubmitting={isCreating}
       />
@@ -162,8 +137,8 @@ function BranchCard({
     branch.status === "ACTIVE"
       ? "default"
       : branch.status === "INACTIVE"
-      ? "secondary"
-      : "outline";
+        ? "secondary"
+        : "outline";
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Enter" || event.key === " ") {
