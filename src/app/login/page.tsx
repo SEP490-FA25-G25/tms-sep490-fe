@@ -21,11 +21,11 @@ export default function LoginPage() {
             className="flex items-center gap-2 font-medium hover:opacity-80 transition-opacity cursor-pointer"
           >
             <img
-              src="/logo.jpg"
+              src="/Logo_TMS.png"
               alt="TMS Logo"
               className="h-10 w-10 rounded-full object-cover"
             />
-            <span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 1.05 }}>
+            <span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 1.05, alignItems: "flex-start", textAlign: "left" }}>
               <span style={{ fontWeight: 700, color: "#2e5a34", fontSize: "1rem" }}>TMS</span>
               <span style={{ fontWeight: 500, color: "#5c6a7c", fontSize: "0.8rem", marginTop: "2px" }}>
                 Training Management System

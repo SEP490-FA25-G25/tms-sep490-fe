@@ -421,13 +421,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:!p-1 data-[slot=sidebar-menu-button]:!justify-start"
+              className="data-[slot=sidebar-menu-button]:!p-2 data-[slot=sidebar-menu-button]:!justify-start data-[slot=sidebar-menu-button]:!h-auto"
             >
               <Link to={brandHref} className="flex items-center gap-2">
                 <img
-                  src="/logo.jpg"
+                  src="/Logo_TMS.png"
                   alt="TMS Logo"
-                  className="h-10 w-10 rounded-full object-cover"
+                  className="h-10 w-10 rounded-full object-cover shrink-0"
                 />
                 <span
                   style={{
@@ -439,7 +439,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <span
                     style={{
                       fontWeight: 700,
-                      color: "#2e5a34",
+                      color: "rgba(57, 121, 65, 1)",
                       fontSize: "1rem",
                     }}
                   >

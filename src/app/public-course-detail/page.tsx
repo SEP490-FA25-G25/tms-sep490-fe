@@ -9,13 +9,27 @@ import {
     Mail,
     Facebook,
     Phone,
-    MessageCircle
+    MessageCircle,
+    LayoutDashboard,
+    LogOut
 } from 'lucide-react';
 import '../landing.css';
-import { Studywithpannacle } from '@/components/Studywithpannacle';
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { getDefaultRouteForUser } from "@/utils/role-routes";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ConsultationForm } from "@/components/ConsultationForm";
 
 // Image imports
-const consultLogo = new URL('../../assets/logo.png', import.meta.url).href;
+const consultLogo = new URL('../../assets/TMS1.png', import.meta.url).href;
 const cambridgeStartersImg = new URL('../../assets/Linhvat9.png', import.meta.url).href;
 const cambridgeMoversImg = new URL('../../assets/Linhvat13.png', import.meta.url).href;
 const cambridgeFlyersImg = new URL('../../assets/Linhvat12.png', import.meta.url).href;
@@ -188,6 +202,20 @@ const coursesData = [
 export default function PublicCourseDetailPage() {
     const { id } = useParams();
     const course = coursesData.find(c => c.id === id);
+    const { user, logout, isAuthenticated } = useAuth();
+    const navigate = useNavigate();
+
+    const handleGotoDashboard = () => {
+        if (user?.roles) {
+            const defaultRoute = getDefaultRouteForUser(user.roles);
+            navigate(defaultRoute);
+        }
+    };
+
+    const handleLogout = () => {
+        logout();
+        navigate("/");
+    };
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -209,7 +237,7 @@ export default function PublicCourseDetailPage() {
                 <div className="lp-container lp-flex lp-justify-between lp-items-center">
                     <Link to="/" className="lp-logo">
                         <img
-                            src="/logo.jpg"
+                            src="/Logo_TMS.png"
                             alt="Hệ thống TMS"
                             style={{ height: "2.5rem", width: "2.5rem", borderRadius: "50%", objectFit: "cover" }}
                         />
@@ -220,17 +248,58 @@ export default function PublicCourseDetailPage() {
                     </Link>
 
                     <nav className="lp-header-nav">
-                        <Link to="/#courses">Khóa học</Link>
+                        <Link to="/#courses">Môn học</Link>
                         <Link to="/schedule#schedule-info">Lịch khai giảng</Link>
-                        <Link to="/#feedback">Góc chia sẻ</Link>
-                        <Link to="/#consultation">Tư vấn</Link>
                     </nav>
 
-                    <div className="lp-flex lp-items-center" style={{ gap: '1rem' }}>
-                        <Link to="/login" className="lp-btn lp-btn-primary lp-btn-regular">Đăng nhập</Link>
-                        <a href="#register" className="lp-btn lp-btn-primary lp-btn-regular">
-                            Đăng ký ngay
+                    <div className="flex items-center gap-6">
+                        <a href="#register" className="lp-btn lp-btn-primary">
+                            Đăng ký nhanh
                         </a>
+                        {isAuthenticated && user ? (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button className="flex items-center gap-2 cursor-pointer outline-none">
+                                        <Avatar className="h-10 w-10 border-2 border-green-500">
+                                            <AvatarImage src={user.avatarUrl || ""} alt={user.fullName || "Avatar"} />
+                                            <AvatarFallback className="bg-green-100 text-green-700 font-semibold">
+                                                {user.fullName?.charAt(0)?.toUpperCase() || "U"}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-64" align="end" sideOffset={8}>
+                                    <DropdownMenuLabel className="p-0 font-normal">
+                                        <div className="flex items-center gap-3 px-3 py-3">
+                                            <Avatar className="h-10 w-10">
+                                                <AvatarImage src={user.avatarUrl || ""} alt={user.fullName || "Avatar"} />
+                                                <AvatarFallback className="bg-green-100 text-green-700 font-semibold">
+                                                    {user.fullName?.charAt(0)?.toUpperCase() || "U"}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex flex-col">
+                                                <span className="font-medium text-sm">{user.fullName}</span>
+                                                <span className="text-xs text-muted-foreground">{user.email}</span>
+                                            </div>
+                                        </div>
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={handleGotoDashboard} className="cursor-pointer">
+                                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                                        Dashboard
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-500 focus:text-red-500">
+                                        <LogOut className="mr-2 h-4 w-4" />
+                                        Đăng xuất
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        ) : (
+                            <Link to="/login" className="lp-btn lp-btn-primary">
+                                Đăng nhập
+                            </Link>
+                        )}
                     </div>
                 </div>
             </header>
@@ -312,8 +381,6 @@ export default function PublicCourseDetailPage() {
                     </div>
                 </section>
 
-                {/* Studywithpannacle Section */}
-                <Studywithpannacle />
 
                 {/* Registration Form (Reused from Landing) */}
                 <section id="register" className="lp-consultation lp-section">
@@ -331,41 +398,7 @@ export default function PublicCourseDetailPage() {
                         </div>
 
                         <div className="lp-form-wrapper">
-                            <form onSubmit={(e) => e.preventDefault()}>
-                                <div className="lp-form-group">
-                                    <label className="lp-form-label">Họ và tên</label>
-                                    <input type="text" className="lp-form-input" placeholder="Nguyễn Thu Hà" required />
-                                </div>
-
-                                <div className="lp-form-group">
-                                    <label className="lp-form-label">Email</label>
-                                    <input type="email" className="lp-form-input" placeholder="email@example.com" required />
-                                </div>
-
-                                <div className="lp-form-group">
-                                    <label className="lp-form-label">Số điện thoại</label>
-                                    <input type="tel" className="lp-form-input" placeholder="0912 345 678" required />
-                                </div>
-
-                                <div className="lp-form-group">
-                                    <label className="lp-form-label">Chọn khóa học quan tâm</label>
-                                    <select
-                                        className="lp-form-select"
-                                        defaultValue={course.id.includes('ielts') ? 'ielts' : course.id.includes('toeic') ? 'toeic' : course.id.includes('cambridge') ? 'cambridge' : 'other'}
-                                    >
-                                        <option value="" disabled>Chọn khóa học</option>
-                                        <option value="ielts">IELTS Foundation / Intermediate / Advanced</option>
-                                        <option value="toeic">TOEIC 450+ / 650+ / 800+</option>
-                                        <option value="cambridge">Cambridge Starters / Movers / Flyers</option>
-                                        <option value="giao-tiep">Tiếng Anh Giao Tiếp</option>
-                                        <option value="other">Khác</option>
-                                    </select>
-                                </div>
-
-                                <button type="submit" className="lp-btn lp-btn-primary" style={{ width: '100%', marginTop: '1rem' }}>
-                                    Gửi đăng ký
-                                </button>
-                            </form>
+                            <ConsultationForm />
                         </div>
                     </div>
                 </section>

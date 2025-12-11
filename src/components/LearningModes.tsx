@@ -33,7 +33,7 @@ export function LearningModes() {
 
                         <div className="flex flex-col gap-4 w-full max-w-md">
                             <div className="bg-[#d9f99d] text-[#1A3320] px-8 py-4 rounded-2xl font-bold text-lg border-b-4 border-[#1A3320] active:border-b-0 active:translate-y-1 transition-all cursor-pointer uppercase tracking-wide text-center md:text-left">
-                                TIẾNG ANH ONLINE
+                                LỚP HỌC ONLINE
                             </div>
                             <div className="bg-[#d9f99d] text-[#1A3320] px-8 py-4 rounded-2xl font-bold text-lg border-b-4 border-[#1A3320] active:border-b-0 active:translate-y-1 transition-all cursor-pointer uppercase tracking-wide text-center md:text-left">
                                 DÀNH CHO NGƯỜI BẬN RỘN
@@ -67,7 +67,7 @@ export function LearningModes() {
 
                         <div className="flex flex-col gap-4 w-full max-w-md items-end">
                             <div className="bg-[#d9f99d] text-[#1A3320] px-8 py-4 rounded-2xl font-bold text-lg border-b-4 border-[#1A3320] active:border-b-0 active:translate-y-1 transition-all cursor-pointer uppercase tracking-wide text-center md:text-right w-full">
-                                TIẾNG ANH OFFLINE
+                                LỚP HỌC OFFLINE
                             </div>
                             <div className="bg-[#d9f99d] text-[#1A3320] px-8 py-4 rounded-2xl font-bold text-lg border-b-4 border-[#1A3320] active:border-b-0 active:translate-y-1 transition-all cursor-pointer uppercase tracking-wide text-center md:text-right w-full">
                                 HỌC TRỰC TIẾP VỚI GIÁO VIÊN KINH NGHIỆM

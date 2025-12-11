@@ -170,7 +170,7 @@ export function ConsultationForm() {
           type="tel"
           name="phone"
           className="lp-form-input"
-          placeholder="Nhập số điện thoại (VD: 0912345678)"
+          placeholder="Nhập số điện thoại"
           value={formData.phone}
           onChange={handleChange}
           required
@@ -200,7 +200,7 @@ export function ConsultationForm() {
       </div>
 
       <div className="lp-form-group">
-        <label className="lp-form-label">Khóa học quan tâm</label>
+        <label className="lp-form-label">Môn học quan tâm</label>
         <select
           name="courseId"
           className="lp-form-select"
@@ -209,7 +209,7 @@ export function ConsultationForm() {
           disabled={coursesLoading}
         >
           <option value="">
-            {coursesLoading ? 'Đang tải...' : 'Chọn khóa học (không bắt buộc)'}
+            {coursesLoading ? 'Đang tải...' : 'Chọn môn học'}
           </option>
           {courses.map((course) => (
             <option key={course.id} value={course.id}>

@@ -20,24 +20,33 @@ import { FeedbackLoop } from "@/components/FeedbackLoop"
 import { FeatureCarousel } from "@/components/FeatureCarousel"
 import { LearningModes } from '@/components/LearningModes';
 import { FeaturedCourses } from '@/components/FeaturedCourses';
-import { Studywithpannacle } from '@/components/Studywithpannacle';
 import { ConsultationForm } from '@/components/ConsultationForm';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { LayoutDashboard, LogOut } from "lucide-react";
 
 const topBanner = new URL("../assets/Linhvat2.png", import.meta.url).href
-const consultLogo = new URL("../assets/logo.png", import.meta.url).href
-const centerImage = new URL("../assets/Trungtam1.png", import.meta.url).href
+const consultLogo = new URL("../assets/TMS1.png", import.meta.url).href
+const centerImage = new URL("../assets/3 con linh vật.png", import.meta.url).href
 
 
 const featureCards = [
   {
     icon: <Sparkles size={24} />,
     title: "Tiết học vui và sinh động",
-    desc: "Trò chơi, role-play và tình huống thực tế cho trẻ em, sinh viên, người đi làm."
+    desc: "Giáo trình thực tế, giáo viên năng động, trò chơi, role-play cho trẻ em, sinh viên, người đi làm."
   },
   {
     icon: <Layers3 size={24} />,
     title: "Lộ trình rõ ràng",
-    desc: "Mục tiêu theo tuần/tháng, báo cáo tiến độ định kỳ cho phụ huynh hoặc học viên trưởng thành."
+    desc: "Mục tiêu theo tuần/tháng, báo cáo tiến độ định kỳ cho học viên."
   },
   {
     icon: <CalendarDays size={24} />,
@@ -46,7 +55,7 @@ const featureCards = [
   },
   {
     icon: <Users2 size={24} />,
-    title: "Nhóm nhỏ 1:6",
+    title: "Hoạt động tương tác",
     desc: "Tương tác nhiều, giáo viên kèm sát để sửa phát âm kịp thời."
   }
 ]
@@ -57,45 +66,39 @@ const feedbacks = [
     name: "Cẩm Em",
     role: "Nhân viên văn phòng",
     quote:
-      "Giờ học ngắn gọn, cuối buổi luôn có mini-quiz nên mình nhớ bài lâu và tự tin giao tiếp với khách nước ngoài hơn.",
-    image: "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=400&q=80"
+      "Giờ học vui nhộn, giáo trình chi tiết nên mình nhớ bài lâu và tự tin giao tiếp với khách nước ngoài hơn."
   },
   {
     id: 2,
     name: "Phạm Thị Hạnh",
     role: "Sinh viên năm nhất",
     quote:
-      "Lớp nhỏ 1:6 nên được sửa phát âm từng câu. Bạn bè thân thiện, hoạt động nhóm vui và đỡ ngại nói hơn.",
-    image: "https://images.unsplash.com/photo-1509099836639-18ba02e2e1ba?auto=format&fit=crop&w=400&q=80"
+      "Lớp offline chỉ khoảng 15 học viên nên được sửa phát âm từng câu. Bạn bè thân thiện, hoạt động nhóm vui và đỡ ngại nói hơn."
   },
   {
     id: 3,
     name: "Ngân Hà",
-    role: "Sinh viên khoa tiếng Nhật",
-    quote: "Mock test tăng 20 điểm sau 2 tháng nhờ lộ trình rõ ràng và bài tập sát đề.",
-    image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80",
+    role: "Sinh viên ngành ngôn ngữ",
+    quote: "Mock test tăng 20 điểm sau 2 tháng nhờ lộ trình rõ ràng và thầy cô tâm huyết.",
     highlight: true
   },
   {
     id: 4,
-    name: "Trương Hồ Phương Thảo",
-    role: "Phụ huynh học sinh lớp 8",
-    quote: "Con hào hứng tham gia CLB nói tiếng Anh hàng tuần, về nhà chủ động kể lại câu chuyện bằng tiếng Anh.",
-    image: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=400&q=80"
+    name: "Trương Phương Thảo",
+    role: "Học sinh lớp 8",
+    quote: "Con hào hứng tham gia lớp nói tiếng Anh hàng tuần, về nhà chủ động kể lại câu chuyện bằng tiếng Anh."
   },
   {
     id: 5,
     name: "Minh Khang",
     role: "Học sinh lớp 5",
-    quote: "Role-play và sticker giúp con nói nhiều hơn, không còn sợ sai như trước.",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80"
+    quote: "Role-play và sticker giúp con nói nhiều hơn, không còn sợ sai như trước."
   },
   {
     id: 6,
     name: "Nguyễn Văn An",
     role: "Kỹ sư phần mềm",
-    quote: "Môi trường học chuyên nghiệp, giáo viên bản ngữ nhiệt tình. Kỹ năng giao tiếp nâng rõ rệt sau 3 tháng.",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80"
+    quote: "Môi trường học chuyên nghiệp, giáo viên bản ngữ nhiệt tình. Kỹ năng giao tiếp nâng rõ rệt sau 3 tháng."
   }
 ]
 
@@ -121,7 +124,7 @@ export default function LandingPage() {
         <div className="lp-container lp-flex lp-justify-between lp-items-center">
           <Link to="/" className="lp-logo">
             <img
-              src="/logo.jpg"
+              src="/Logo_TMS.png"
               alt="Hệ thống TMS"
               style={{ height: "2.5rem", width: "2.5rem", borderRadius: "50%", objectFit: "cover" }}
             />
@@ -132,42 +135,59 @@ export default function LandingPage() {
           </Link>
 
           <nav className="lp-header-nav">
-            <a href="#courses">Khóa học</a>
+            <a href="#courses">Môn học</a>
             <Link to="/schedule#schedule-info">Lịch khai giảng</Link>
-            <a href="#feedback">Góc chia sẻ</a>
-            <a href="#consultation">Tư vấn</a>
           </nav>
 
-          {isAuthenticated && user ? (
-            <div className="relative group">
-              <button className="flex items-center gap-2 cursor-pointer">
-                <img
-                  src={user.avatarUrl || "/default-avatar.png"}
-                  alt="Avatar"
-                  className="h-10 w-10 rounded-full object-cover border-2 border-green-500"
-                />
-              </button>
-              {/* Dropdown menu */}
-              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                <button
-                  onClick={handleGotoDashboard}
-                  className="w-full px-4 py-3 text-left hover:bg-gray-100 rounded-t-lg"
-                >
-                  Dashboard
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="w-full px-4 py-3 text-left hover:bg-gray-100 text-red-500 rounded-b-lg border-t"
-                >
-                  Đăng xuất
-                </button>
-              </div>
-            </div>
-          ) : (
-            <Link to="/login" className="lp-btn lp-btn-primary">
-              Đăng nhập
-            </Link>
-          )}
+          <div className="flex items-center gap-6">
+            <a href="#consultation" className="lp-btn lp-btn-primary">
+              Đăng ký nhanh
+            </a>
+            {isAuthenticated && user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 cursor-pointer outline-none">
+                    <Avatar className="h-10 w-10 border-2 border-green-500">
+                      <AvatarImage src={user.avatarUrl || ""} alt={user.fullName || "Avatar"} />
+                      <AvatarFallback className="bg-green-100 text-green-700 font-semibold">
+                        {user.fullName?.charAt(0)?.toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-64" align="end" sideOffset={8}>
+                  <DropdownMenuLabel className="p-0 font-normal">
+                    <div className="flex items-center gap-3 px-3 py-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={user.avatarUrl || ""} alt={user.fullName || "Avatar"} />
+                        <AvatarFallback className="bg-green-100 text-green-700 font-semibold">
+                          {user.fullName?.charAt(0)?.toUpperCase() || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-sm">{user.fullName}</span>
+                        <span className="text-xs text-muted-foreground">{user.email}</span>
+                      </div>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleGotoDashboard} className="cursor-pointer">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-500 focus:text-red-500">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Đăng xuất
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link to="/login" className="lp-btn lp-btn-primary">
+                Đăng nhập
+              </Link>
+            )}
+          </div>
         </div>
       </header>
 
@@ -175,12 +195,12 @@ export default function LandingPage() {
         <section className="lp-top-banner" aria-label="Hình ảnh nổi bật">
           <div className="lp-top-banner-card">
             <div className="lp-top-banner-text">
-              <p className="lp-banner-kicker">Tiếng Anh cho mọi lứa tuổi</p>
+              <p className="lp-banner-kicker">Ngôn ngữ cho mọi lứa tuổi</p>
               <h1 className="lp-banner-title">DẠY TỪ TÂM, HỌC TỪ THÍCH, GIỎI TOÀN DIỆN!</h1>
               <p className="lp-banner-subtitle">
                 Luôn thành tâm xem xét, quan tâm đến cảm nhận và sự tiến bộ từng ngày của học viên. Đề xuất những phương pháp tân tiến, khoa học và phù hợp nhất.
               </p>
-              <a href="#courses" className="lp-btn lp-btn-primary lp-btn-banner">Xem khóa học</a>
+              <a href="#courses" className="lp-btn lp-btn-primary lp-btn-banner">Xem môn học</a>
             </div>
             <div className="lp-top-banner-image">
               <img src={topBanner} alt="Hình ảnh TMS" className="lp-top-banner-image-combined" />
@@ -195,8 +215,8 @@ export default function LandingPage() {
                 <MessageCircle size={20} />
               </div>
               <div>
-                <div className="lp-banner-info-title">Giao tiếp</div>
-                <div className="lp-banner-info-desc">Lộ trình khóa học giao tiếp được thiết kế bài bản với đội ngũ giáo viên uy tín.</div>
+                <div className="lp-banner-info-title">Tiến trình</div>
+                <div className="lp-banner-info-desc">Tiến trình học viên được báo cáo và theo dõi thông qua hệ thống.</div>
               </div>
             </div>
             <div className="lp-banner-info-item">
@@ -204,8 +224,8 @@ export default function LandingPage() {
                 <BookOpen size={20} />
               </div>
               <div>
-                <div className="lp-banner-info-title">Luyện tập</div>
-                <div className="lp-banner-info-desc">Hệ thống cung cấp tài liệu và video trực tuyến mỗi buổi học.</div>
+                <div className="lp-banner-info-title">Giáo trình</div>
+                <div className="lp-banner-info-desc">Hệ thống cung cấp tài liệu và giáo trình được chuẩn hóa mỗi buổi học.</div>
               </div>
             </div>
             <div className="lp-banner-info-item">
@@ -222,57 +242,31 @@ export default function LandingPage() {
 
         <section className="py-20 bg-white relative mb-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-center">
               {/* Left Column: Image */}
-              <div className="relative z-10">
+              <div className="relative z-10 lg:col-span-2">
                 <img
                   src={centerImage}
                   alt="Lớp học TMS"
-                  className="rounded-lg shadow-xl w-full h-[400px] object-cover"
+                  className="rounded-lg shadow-xl w-full h-auto object-cover"
                 />
               </div>
 
               {/* Right Column: Text */}
               <div className="pt-4">
                 <h2 className="text-3xl md:text-4xl font-bold mb-6 text-slate-900 uppercase leading-tight">
-                  Lý do hàng ngàn học viên <br /> tìm đến TMS
+                  HỌC VIÊN ĐẾN VỚI TMS
                 </h2>
                 <p className="text-lg text-slate-600 leading-relaxed mb-8">
                   Với phương châm "Không có học sinh kém, chỉ có giáo viên chưa đủ giỏi", đội ngũ giáo viên tại
                   <span className="font-bold text-green-700"> TMS </span>
-                  luôn nỗ lực không ngừng nghỉ nâng cao, cải thiện và tinh giản giáo trình học sao cho phù hợp với người Việt Nam nhất,
-                  biến Tiếng Anh trở nên thú vị, dễ hiểu với mọi đối tượng, nhất là đối với người bận rộn!
+                  luôn nỗ lực không ngừng nghỉ nâng cao, cải thiện và chuẩn hóa GIÁO TRÌNH HỌC sao cho phù hợp với người Việt Nam nhất,
+                  biến việc học ngôn ngữ trở nên thú vị, dễ hiểu với mọi đối tượng, nhất là đối với người bận rộn!
                 </p>
               </div>
             </div>
 
-            {/* Stats Card - Overlapping with Animation */}
-            <div className="relative z-20 mt-[-60px] lg:mt-[-80px] mx-4 lg:mx-0">
-              <div className="max-w-5xl mx-auto relative group transition-transform duration-300 hover:-translate-y-2">
-                {/* Animated Border Background */}
-                <div className="absolute -inset-[3px] rounded-2xl overflow-hidden">
-                  <div className="absolute inset-[-100%] bg-[conic-gradient(from_90deg_at_50%_50%,#dcfce7_0%,#16a34a_50%,#dcfce7_100%)] animate-[spin_4s_linear_infinite]" />
-                </div>
 
-                {/* Main Card Content */}
-                <div className="relative bg-green-50 rounded-2xl shadow-lg p-8 md:p-10 border border-green-100">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center divide-y md:divide-y-0 md:divide-x divide-green-200">
-                    <div className="p-2">
-                      <div className="text-4xl font-extrabold text-slate-900 mb-2">1,000</div>
-                      <div className="text-slate-600 font-medium italic">Học viên tham gia khoá học</div>
-                    </div>
-                    <div className="p-2">
-                      <div className="text-4xl font-extrabold text-slate-900 mb-2">720</div>
-                      <div className="text-slate-600 font-medium italic">Học viên đạt chứng chỉ</div>
-                    </div>
-                    <div className="p-2">
-                      <div className="text-4xl font-extrabold text-slate-900 mb-2">3</div>
-                      <div className="text-slate-600 font-medium italic">Năm hoạt động</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
 
@@ -289,8 +283,6 @@ export default function LandingPage() {
           <FeedbackLoop feedbacks={feedbacks} />
         </section>
 
-        {/* Study with TMS Section */}
-        <Studywithpannacle />
 
         <section id="consultation" className="lp-consultation lp-section">
           <div className="lp-container lp-consultation-container">
@@ -319,7 +311,7 @@ export default function LandingPage() {
           <div className="lp-footer-top">
             <h2 className="text-3xl font-bold text-[#FFFFFF] uppercase">TMS - TRAINING MANAGEMENT SYSTEM</h2>
             <div className="lp-footer-subtitle">
-              Hệ thống Anh ngữ Luyện thi IELTS, TOEIC và Cambridge Cam kết chuẩn đầu ra
+              Hệ thống Đào tạo Ngôn ngữ - Cam kết chuẩn đầu ra Quốc tế!
             </div>
           </div>
 

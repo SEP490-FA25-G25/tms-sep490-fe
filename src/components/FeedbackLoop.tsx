@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Quote, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Feedback {
     id: number;
@@ -97,9 +98,12 @@ export function FeedbackLoop({ feedbacks }: FeedbackLoopProps) {
                                     </div>
 
                                     <div className="flex items-center gap-4 mt-auto pt-6 border-t border-white/20">
-                                        <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white/50 bg-white/10 flex-shrink-0">
-                                            <img src={fb.image} alt={fb.name} className="w-full h-full object-cover" />
-                                        </div>
+                                        <Avatar className="w-14 h-14 border-2 border-white/50 bg-white/10 flex-shrink-0">
+                                            <AvatarImage src={fb.image} alt={fb.name} className="object-cover" />
+                                            <AvatarFallback className="bg-white/20 text-white font-bold text-lg">
+                                                {fb.name.charAt(0).toUpperCase()}
+                                            </AvatarFallback>
+                                        </Avatar>
                                         <div>
                                             <h4 className="font-bold text-lg">{fb.name}</h4>
                                             <p className="text-sm opacity-90">{fb.role}</p>
