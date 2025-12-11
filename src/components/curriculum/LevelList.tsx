@@ -208,7 +208,7 @@ export function LevelList() {
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="w-full justify-start gap-2 h-9 px-2 bg-yellow-100 text-yellow-900 hover:bg-yellow-200"
+                                    className="w-full justify-start gap-2 h-9 px-2"
                                     onClick={() => navigate(`/curriculum/levels/${level.id}`)}
                                 >
                                     <Eye className="h-4 w-4" />
@@ -229,7 +229,7 @@ export function LevelList() {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="w-full justify-start gap-2 h-9 px-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                                className="w-full justify-start gap-2 h-9 px-2"
                                                 onClick={() => setLevelToReactivate(level.id)}
                                             >
                                                 <RotateCcw className="h-4 w-4" />
@@ -239,7 +239,7 @@ export function LevelList() {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="w-full justify-start gap-2 h-9 px-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                                className="w-full justify-start gap-2 h-9 px-2"
                                                 onClick={() => setLevelToDelete(level.id)}
                                             >
                                                 <Trash2 className="h-4 w-4" />
@@ -249,7 +249,7 @@ export function LevelList() {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="w-full justify-start gap-2 h-9 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                                            className="w-full justify-start gap-2 h-9 px-2"
                                             onClick={() => setLevelToDeletePermanently(level.id)}
                                         >
                                             <Trash2 className="h-4 w-4" />

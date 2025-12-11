@@ -171,7 +171,7 @@ export function SubjectList() {
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="w-full justify-start gap-2 h-9 px-2 bg-yellow-100 text-yellow-900 hover:bg-yellow-200"
+                                    className="w-full justify-start gap-2 h-9 px-2"
                                     onClick={() => navigate(`/curriculum/subjects/${subject.id}`)}
                                 >
                                     <Eye className="h-4 w-4" />
@@ -192,7 +192,7 @@ export function SubjectList() {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="w-full justify-start gap-2 h-9 px-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                                className="w-full justify-start gap-2 h-9 px-2"
                                                 onClick={() => setSubjectToReactivate(subject.id)}
                                             >
                                                 <RotateCcw className="h-4 w-4" />
@@ -202,7 +202,7 @@ export function SubjectList() {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="w-full justify-start gap-2 h-9 px-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                                className="w-full justify-start gap-2 h-9 px-2"
                                                 onClick={() => setSubjectToDelete(subject.id)}
                                             >
                                                 <Trash2 className="h-4 w-4" />
@@ -212,7 +212,7 @@ export function SubjectList() {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="w-full justify-start gap-2 h-9 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                                            className="w-full justify-start gap-2 h-9 px-2"
                                             onClick={() => setSubjectToDeletePermanently(subject.id)}
                                         >
                                             <Trash2 className="h-4 w-4" />
@@ -250,7 +250,7 @@ export function SubjectList() {
 
             <DataTable
                 columns={columns}
-                data={[...(subjectsData?.data || [])].sort((a, b) => 
+                data={[...(subjectsData?.data || [])].sort((a, b) =>
                     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
                 )}
                 searchKey="name"
@@ -260,7 +260,7 @@ export function SubjectList() {
             <SubjectDialog
                 open={isDialogOpen}
                 onOpenChange={setIsDialogOpen}
-                subject={selectedSubject ? { 
+                subject={selectedSubject ? {
                     id: selectedSubject.id,
                     code: selectedSubject.code,
                     name: selectedSubject.name,

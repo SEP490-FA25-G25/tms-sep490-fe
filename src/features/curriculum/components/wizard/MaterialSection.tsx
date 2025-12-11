@@ -35,30 +35,28 @@ export function MaterialSection({ materials, onUpdate, scope, phaseId, sessionId
         url: "",
     });
 
+    // Allowed file types (matching backend policy)
     const MATERIAL_EXTENSIONS: Record<string, string[]> = {
         DOCUMENT: [
-            'pdf', 'doc', 'docx', 'txt', 'rtf', // Text
-            'xls', 'xlsx', 'csv', 'ods', // Spreadsheet
-            'ppt', 'pptx', 'key', // Slide
-            'java', 'js', 'ts', 'py', 'c', 'cpp', 'h', 'html', 'css', 'json', 'xml', 'sql' // Code
+            'pdf', 'doc', 'docx',  // Documents
+            'xls', 'xlsx',          // Spreadsheets
+            'ppt', 'pptx'           // Presentations
         ],
         MEDIA: [
-            'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', // Image
-            'mp4', 'mov', 'avi', 'mkv', 'webm', // Video
-            'mp3', 'wav', 'ogg', 'm4a' // Audio
+            'jpg', 'jpeg', 'png', 'gif', 'webp'  // Images only (no video/audio)
         ],
-        ARCHIVE: ['zip', 'rar', '7z', 'tar', 'gz'],
-        LINK: [],
-        OTHER: []
+        LINK: [],   // External URLs (for video, etc.)
+        OTHER: []   // Fallback
+        // ARCHIVE removed - not allowed
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Check file size (e.g., 500MB limit)
-        if (file.size > 500 * 1024 * 1024) {
-            toast.error("File quá lớn. Vui lòng chọn file nhỏ hơn 500MB.");
+        // Check file size (20MB limit)
+        if (file.size > 20 * 1024 * 1024) {
+            toast.error("File quá lớn. Vui lòng chọn file nhỏ hơn 20MB.");
             return;
         }
 

@@ -17,12 +17,12 @@ import {
     CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
-import { 
-    Plus, 
-    Trash2, 
-    Upload, 
-    Link as LinkIcon, 
-    FileText, 
+import {
+    Plus,
+    Trash2,
+    Upload,
+    Link as LinkIcon,
+    FileText,
     Loader2,
     File,
     Image,
@@ -51,12 +51,12 @@ interface MaterialSectionProps {
 
 type UploadMode = 'file' | 'link';
 
-export function MaterialSection({ 
-    materials, 
-    onUpdate, 
-    scope, 
-    phaseId, 
-    sessionId, 
+export function MaterialSection({
+    materials,
+    onUpdate,
+    scope,
+    phaseId,
+    sessionId,
     title,
     collapsible = false,
     defaultOpen = false
@@ -75,19 +75,18 @@ export function MaterialSection({
     const [materialToDelete, setMaterialToDelete] = useState<Material | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    // Allowed file types (matching backend policy)
     const MATERIAL_EXTENSIONS: Record<string, string[]> = {
         DOCUMENT: [
-            'pdf', 'doc', 'docx', 'txt', 'rtf',
-            'xls', 'xlsx', 'csv', 'ods',
-            'ppt', 'pptx', 'key',
-            'java', 'js', 'ts', 'py', 'c', 'cpp', 'h', 'html', 'css', 'json', 'xml', 'sql'
+            'pdf', 'doc', 'docx',  // Documents
+            'xls', 'xlsx',          // Spreadsheets
+            'ppt', 'pptx'           // Presentations
         ],
         MEDIA: [
-            'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg',
-            'mp4', 'mov', 'avi', 'mkv', 'webm',
-            'mp3', 'wav', 'ogg', 'm4a'
+            'jpg', 'jpeg', 'png', 'gif', 'webp'  // Images only (no video/audio)
         ],
-        ARCHIVE: ['zip', 'rar', '7z', 'tar', 'gz'],
+        // ARCHIVE removed - not allowed
+        // Video/Audio removed - use LINK instead
     };
 
     const getFileIcon = (type: string, fileName?: string) => {
@@ -129,8 +128,8 @@ export function MaterialSection({
     };
 
     const handleFileUpload = async (file: File) => {
-        if (file.size > 500 * 1024 * 1024) {
-            toast.error("File quá lớn. Vui lòng chọn file nhỏ hơn 500MB.");
+        if (file.size > 20 * 1024 * 1024) {
+            toast.error("File quá lớn. Vui lòng chọn file nhỏ hơn 20MB.");
             return;
         }
 
@@ -138,7 +137,7 @@ export function MaterialSection({
 
         try {
             const response = await uploadFile(file).unwrap();
-            
+
             const material: Material = {
                 id: crypto.randomUUID(),
                 name: file.name,
@@ -177,7 +176,7 @@ export function MaterialSection({
     const handleDrop = async (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
-        
+
         const file = e.dataTransfer.files?.[0];
         if (file) {
             await handleFileUpload(file);
@@ -193,7 +192,7 @@ export function MaterialSection({
             toast.error("Vui lòng nhập đường dẫn URL.");
             return;
         }
-        
+
         // Validate URL format
         try {
             new URL(linkUrl);
@@ -239,7 +238,7 @@ export function MaterialSection({
                     toast.success("Đã xóa file!");
                 }
             }
-            
+
             onUpdate(materials.filter((m) => m.id !== materialToDelete.id));
         } catch (error) {
             console.error("Delete failed:", error);
@@ -264,8 +263,8 @@ export function MaterialSection({
                         onClick={() => setUploadMode('file')}
                         className={cn(
                             "flex-1 py-2.5 px-4 text-sm font-medium transition-colors flex items-center justify-center gap-2",
-                            uploadMode === 'file' 
-                                ? "bg-background text-foreground border-b-2 border-primary" 
+                            uploadMode === 'file'
+                                ? "bg-background text-foreground border-b-2 border-primary"
                                 : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                         )}
                     >
@@ -277,8 +276,8 @@ export function MaterialSection({
                         onClick={() => setUploadMode('link')}
                         className={cn(
                             "flex-1 py-2.5 px-4 text-sm font-medium transition-colors flex items-center justify-center gap-2",
-                            uploadMode === 'link' 
-                                ? "bg-background text-foreground border-b-2 border-primary" 
+                            uploadMode === 'link'
+                                ? "bg-background text-foreground border-b-2 border-primary"
                                 : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                         )}
                     >
@@ -297,8 +296,8 @@ export function MaterialSection({
                             onDrop={handleDrop}
                             className={cn(
                                 "border-2 border-dashed rounded-lg p-6 text-center transition-all",
-                                isDragging 
-                                    ? "border-primary bg-primary/5" 
+                                isDragging
+                                    ? "border-primary bg-primary/5"
                                     : "border-muted-foreground/25 hover:border-muted-foreground/50",
                                 isUploading && "opacity-50 pointer-events-none"
                             )}
@@ -309,8 +308,9 @@ export function MaterialSection({
                                 className="hidden"
                                 onChange={handleFileInputChange}
                                 disabled={isUploading}
+                                accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
                             />
-                            
+
                             <div className="flex flex-col items-center gap-3">
                                 {isUploading ? (
                                     <Loader2 className="w-10 h-10 text-primary animate-spin" />
@@ -319,7 +319,7 @@ export function MaterialSection({
                                         <Upload className="w-6 h-6 text-primary" />
                                     </div>
                                 )}
-                                
+
                                 <div className="space-y-1">
                                     <p className="text-sm font-medium">
                                         {isUploading ? "Đang tải lên..." : "Kéo thả file vào đây"}
@@ -328,7 +328,7 @@ export function MaterialSection({
                                         hoặc
                                     </p>
                                 </div>
-                                
+
                                 <Button
                                     variant="outline"
                                     size="sm"
@@ -341,9 +341,9 @@ export function MaterialSection({
                                         Chọn file từ máy tính
                                     </label>
                                 </Button>
-                                
+
                                 <p className="text-xs text-muted-foreground mt-2">
-                                    Hỗ trợ: PDF, Word, Excel, PowerPoint, Hình ảnh, Video, Audio, ZIP... (Tối đa 500MB)
+                                    Hỗ trợ: PDF, Word, Excel, PowerPoint, Hình ảnh (Tối đa 20MB). Video vui lòng dùng "Thêm liên kết"
                                 </p>
                             </div>
                         </div>
@@ -361,7 +361,7 @@ export function MaterialSection({
                                     className="bg-background"
                                 />
                             </div>
-                            
+
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">
                                     Đường dẫn URL <span className="text-destructive">*</span>
@@ -414,7 +414,7 @@ export function MaterialSection({
                                 )}>
                                     {getFileIcon(material.type, material.name)}
                                 </div>
-                                
+
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium truncate">{material.name}</p>
                                     <div className="flex items-center gap-2 mt-0.5">
@@ -432,7 +432,7 @@ export function MaterialSection({
                                         </a>
                                     </div>
                                 </div>
-                                
+
                                 <Button
                                     variant="ghost"
                                     size="icon"
