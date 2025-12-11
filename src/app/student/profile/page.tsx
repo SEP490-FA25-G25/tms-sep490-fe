@@ -95,9 +95,8 @@ export default function StudentProfilePage() {
     }
   }, [profile]);
 
-  // Filter currentClasses into categories based on class status
   const activeClasses = useMemo(
-    () => profile?.currentClasses?.filter((c) => c.status === "IN_PROGRESS") || [],
+    () => profile?.currentClasses?.filter((c) => c.status === "ENROLLED") || [],
     [profile]
   );
 
@@ -108,14 +107,14 @@ export default function StudentProfilePage() {
 
   const getClassStatusText = (status: string) => {
     switch (status) {
-      case "IN_PROGRESS":
+      case "ENROLLED":
         return "Đang học";
       case "COMPLETED":
         return "Đã hoàn thành";
-      case "CANCELLED":
-        return "Đã hủy";
-      case "SCHEDULED":
-        return "Sắp bắt đầu";
+      case "DROPPED":
+        return "Đã bỏ học";
+      case "TRANSFERRED":
+        return "Đã chuyển lớp";
       default:
         return status;
     }

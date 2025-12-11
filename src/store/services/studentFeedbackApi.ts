@@ -38,6 +38,7 @@ export interface StudentFeedbackItem {
 export interface StudentFeedbacksParams {
   status?: 'PENDING' | 'SUBMITTED'
   classId?: number
+  phaseId?: number
   search?: string
 }
 
@@ -80,6 +81,7 @@ export const studentFeedbackApi = createApi({
         const searchParams = new URLSearchParams()
         if (params?.status) searchParams.append('status', params.status)
         if (params?.classId) searchParams.append('classId', params.classId.toString())
+        if (params?.phaseId) searchParams.append('phaseId', params.phaseId.toString())
         if (params?.search) searchParams.append('search', params.search)
         const queryString = searchParams.toString()
         return `/student/feedbacks${queryString ? `?${queryString}` : ''}`

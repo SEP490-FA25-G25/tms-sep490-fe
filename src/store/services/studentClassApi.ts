@@ -41,6 +41,28 @@ export const studentClassApi = createApi({
       providesTags: ['StudentClass'],
     }),
 
+    // Get student's own classes (for authenticated student) - NEW ENDPOINT
+    getMyClasses: builder.query<
+      ApiResponse<PaginatedResponse<StudentClassDTO>>,
+      Omit<GetStudentClassesRequest, 'studentId'>
+    >({
+      query: ({ enrollmentStatus, classStatus, branchId, courseId, modality, page = 0, size = 20, sort = 'enrollmentDate', direction = 'desc' }) => ({
+        url: `/students/me/classes`,
+        params: {
+          enrollmentStatus,
+          classStatus,
+          branchId,
+          courseId,
+          modality,
+          page,
+          size,
+          sort,
+          direction
+        },
+      }),
+      providesTags: ['StudentClass'],
+    }),
+
     // Get detailed information about a specific class
     getClassDetail: builder.query<
       ApiResponse<ClassDetailDTO>,
@@ -102,6 +124,7 @@ export const studentClassApi = createApi({
 // Export hooks for components to use
 export const {
   useGetStudentClassesQuery,
+  useGetMyClassesQuery,
   useGetClassDetailQuery,
   useGetClassSessionsQuery,
   useGetClassAssessmentsQuery,

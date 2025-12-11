@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react'
 import { useMemo, useState, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { MessageCircleIcon, RotateCcw, Search, Star } from 'lucide-react'
+import { MessageCircleIcon, RotateCcw, Search, Star, X } from 'lucide-react'
 
 import { StudentRoute } from '@/components/ProtectedRoute'
 import { AppSidebar } from '@/components/app-sidebar'
@@ -21,6 +21,8 @@ import {
   useGetStudentFeedbacksQuery,
   type StudentFeedbackItem,
 } from '@/store/services/studentFeedbackApi'
+import { useGetMyClassesQuery } from '@/store/services/studentClassApi'
+import { Combobox } from '@/components/ui/combobox'
 import FeedbackFormPanel from './components/FeedbackFormPanel'
 import FeedbackDetailPanel from './components/FeedbackDetailPanel'
 
@@ -30,7 +32,19 @@ export default function StudentPendingFeedbackPage() {
   const [activeTab, setActiveTab] = useState<TabValue>('PENDING')
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [selectedClassId, setSelectedClassId] = useState<string | undefined>()
+  const [selectedPhaseId, setSelectedPhaseId] = useState<string | undefined>()
   const [selectedFeedback, setSelectedFeedback] = useState<StudentFeedbackItem | null>(null)
+
+  // Get studentId from localStorage (set during login)
+  const studentId = typeof window !== 'undefined' ?
+    JSON.parse(localStorage.getItem('user') || '{}')?.studentId : undefined
+
+  // Fetch student's own classes for filter (no need to pass studentId)
+  const { data: classesData } = useGetMyClassesQuery({
+    enrollmentStatus: ['ENROLLED', 'COMPLETED'],
+    size: 100
+  })
 
   // Debounce search
   useEffect(() => {
@@ -42,13 +56,16 @@ export default function StudentPendingFeedbackPage() {
 
   const { data: feedbacks = [], isLoading, refetch } = useGetStudentFeedbacksQuery({
     status: activeTab,
+    classId: selectedClassId ? parseInt(selectedClassId) : undefined,
+    phaseId: selectedPhaseId ? parseInt(selectedPhaseId) : undefined,
     search: debouncedSearch || undefined,
   })
 
-  // Reset selection when tab changes
+  // Reset selection and phase filter when tab or class changes
   useEffect(() => {
     setSelectedFeedback(null)
-  }, [activeTab])
+    setSelectedPhaseId(undefined)
+  }, [activeTab, selectedClassId])
 
   // Auto-select first feedback when data loads
   useEffect(() => {
@@ -73,6 +90,28 @@ export default function StudentPendingFeedbackPage() {
     return feedbacks.filter(f => !f.isFeedback).length
   }, [feedbacks])
 
+  // Get unique phases from feedbacks for the selected class
+  const availablePhases = useMemo(() => {
+    if (!selectedClassId) return []
+    const classIdNum = parseInt(selectedClassId)
+    const phases = new Map<number, string>()
+    feedbacks.forEach(f => {
+      if (f.classId === classIdNum && f.phaseId && f.phaseName) {
+        phases.set(f.phaseId, f.phaseName)
+      }
+    })
+    return Array.from(phases, ([id, name]) => ({ value: id.toString(), label: name }))
+  }, [feedbacks, selectedClassId])
+
+  // Prepare class options for combobox
+  const classOptions = useMemo(() => {
+    if (!classesData?.data?.content) return []
+    return classesData.data.content.map(c => ({
+      value: c.classId.toString(),
+      label: `${c.classCode} - ${c.className}`
+    }))
+  }, [classesData])
+
   const formatDate = (value?: string) => {
     if (!value) return '—'
     try {
@@ -86,9 +125,13 @@ export default function StudentPendingFeedbackPage() {
     refetch()
   }
 
-  const handleResetSearch = () => {
+  const handleResetFilters = () => {
     setSearchQuery('')
+    setSelectedClassId(undefined)
+    setSelectedPhaseId(undefined)
   }
+
+  const activeFilterCount = [selectedClassId, selectedPhaseId, searchQuery].filter(Boolean).length
 
   return (
     <StudentRoute>
@@ -114,7 +157,7 @@ export default function StudentPendingFeedbackPage() {
                   </p>
                 </div>
 
-                {/* Tabs + Search */}
+                {/* Tabs + Filters */}
                 <div className="flex items-center justify-between gap-4 flex-wrap">
                   <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
                     <TabsList>
@@ -132,26 +175,53 @@ export default function StudentPendingFeedbackPage() {
                     </TabsList>
                   </Tabs>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Class Filter */}
+                    <Combobox
+                      options={classOptions}
+                      value={selectedClassId}
+                      onValueChange={setSelectedClassId}
+                      placeholder="Tất cả lớp"
+                      searchPlaceholder="Tìm lớp..."
+                      emptyText="Không tìm thấy lớp"
+                      className="h-9 w-[180px]"
+                    />
+
+                    {/* Phase Filter - Only show when class is selected */}
+                    {selectedClassId && availablePhases.length > 0 && (
+                      <Combobox
+                        options={availablePhases}
+                        value={selectedPhaseId}
+                        onValueChange={setSelectedPhaseId}
+                        placeholder="Tất cả phase"
+                        searchPlaceholder="Tìm phase..."
+                        emptyText="Không tìm thấy phase"
+                        className="h-9 w-[160px]"
+                      />
+                    )}
+
+                    {/* Search */}
                     <div className="relative">
                       <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
-                        placeholder="Tìm theo lớp, khóa học..."
+                        placeholder="Tìm theo tên..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-8 h-9 w-[200px] sm:w-[280px]"
+                        className="pl-8 h-9 w-[160px]"
                       />
                     </div>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-9 w-9 shrink-0"
-                      onClick={handleResetSearch}
-                      disabled={!searchQuery}
-                      title="Xóa tìm kiếm"
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                    </Button>
+
+                    {/* Reset Filters Button */}
+                    {activeFilterCount > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 gap-1.5"
+                        onClick={handleResetFilters}
+                      >
+                        <RotateCcw />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </header>
@@ -222,7 +292,7 @@ export default function StudentPendingFeedbackPage() {
                                 {/* Footer */}
                                 <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1 border-t border-border/50">
                                   <span>
-                                    {item.isFeedback 
+                                    {item.isFeedback
                                       ? `Nộp: ${formatDate(item.submittedAt)}`
                                       : `Tạo: ${formatDate(item.createdAt)}`
                                     }
@@ -290,7 +360,7 @@ export default function StudentPendingFeedbackPage() {
                           <MessageCircleIcon className="h-10 w-10" />
                         </EmptyMedia>
                         <EmptyTitle>
-                          {searchQuery 
+                          {searchQuery
                             ? 'Không tìm thấy kết quả'
                             : activeTab === 'PENDING'
                               ? 'Không có phản hồi cần hoàn thành'
@@ -298,7 +368,7 @@ export default function StudentPendingFeedbackPage() {
                           }
                         </EmptyTitle>
                         <EmptyDescription>
-                          {searchQuery 
+                          {searchQuery
                             ? 'Thử thay đổi từ khóa tìm kiếm'
                             : activeTab === 'PENDING'
                               ? 'Khi phase kết thúc, phản hồi mới sẽ xuất hiện tại đây.'
@@ -307,7 +377,7 @@ export default function StudentPendingFeedbackPage() {
                         </EmptyDescription>
                       </EmptyHeader>
                       {searchQuery && (
-                        <Button variant="ghost" size="sm" onClick={handleResetSearch}>
+                        <Button variant="ghost" size="sm" onClick={handleResetFilters}>
                           <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
                           Xóa tìm kiếm
                         </Button>

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
 import { AppSidebar } from '@/components/app-sidebar';
-import { ClassHeader } from '@/components/class/ClassHeader';
+import { StudentClassHeader } from '@/components/class/StudentClassHeader';
 import { StudentRoute } from '@/components/ProtectedRoute';
 import { SiteHeader } from '@/components/site-header';
 import { Button } from '@/components/ui/button';
@@ -98,7 +98,7 @@ const ClassDetailPage = () => {
     }
 
     return (
-      <ClassHeader classDetail={classDetail} />
+      <StudentClassHeader classDetail={classDetail} />
     );
   };
 
