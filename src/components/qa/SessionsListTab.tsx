@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { useGetQASessionListQuery } from "@/store/services/qaApi"
+import { useGetClassSessionsWithMetricsQuery } from "@/store/services/classApi"
 import { SessionStatus, getSessionStatusDisplayName, sessionStatusOptions } from "@/types/qa"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -40,7 +40,7 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
     const [statusFilter, setStatusFilter] = useState<string>("all")
     const navigate = useNavigate()
 
-    const { data: sessionListData, isLoading, error } = useGetQASessionListQuery(classId)
+    const { data: sessionListData, isLoading, error } = useGetClassSessionsWithMetricsQuery(classId)
 
     const handleFilterChange = (value: string) => {
         setStatusFilter(value)

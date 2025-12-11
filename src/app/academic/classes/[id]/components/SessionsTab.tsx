@@ -37,7 +37,7 @@ export function SessionsTab({ classId }: SessionsTabProps) {
   const navigate = useNavigate();
 
   const {
-    data: response,
+    data: sessionListData,
     isLoading,
     error,
   } = useGetClassSessionsWithMetricsQuery(classId);
@@ -63,7 +63,6 @@ export function SessionsTab({ classId }: SessionsTabProps) {
     );
   }
 
-  const sessionListData = response?.data;
   if (!sessionListData) {
     return (
       <Alert>
