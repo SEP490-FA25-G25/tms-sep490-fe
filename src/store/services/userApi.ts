@@ -186,6 +186,50 @@ export const userApi = createApi({
     checkPhoneExists: builder.query<ApiResponse<boolean>, string>({
       query: (phone) => `/users/check/phone/${phone}`,
     }),
+    /**
+     * Download User Import Template
+     * GET /api/v1/admin/users/import/template
+     */
+    downloadUserImportTemplate: builder.query<void, void>({
+      query: () => ({
+        url: '/admin/users/import/template',
+        responseHandler: async (response) => {
+          const blob = await response.blob()
+          const url = window.URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.setAttribute('download', 'user_import_template.xlsx')
+          document.body.appendChild(link)
+          link.click()
+          link.parentNode?.removeChild(link)
+        },
+      }),
+    }),
+
+    /**
+     * Preview User Import
+     * POST /api/v1/admin/users/import/preview
+     */
+    previewUserImport: builder.mutation<ApiResponse<UserImportPreview>, FormData>({
+      query: (formData) => ({
+        url: '/admin/users/import/preview',
+        method: 'POST',
+        body: formData,
+      }),
+    }),
+
+    /**
+     * Execute User Import
+     * POST /api/v1/admin/users/import/execute
+     */
+    executeUserImport: builder.mutation<ApiResponse<number>, UserImportData[]>({
+      query: (data) => ({
+        url: '/admin/users/import/execute',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['User'],
+    }),
   }),
 })
 
@@ -199,5 +243,27 @@ export const {
   useCheckEmailExistsQuery,
   useCheckPhoneExistsQuery,
   useLazyGetUsersQuery,
+  useLazyDownloadUserImportTemplateQuery,
+  usePreviewUserImportMutation,
+  useExecuteUserImportMutation,
 } = userApi
+
+// Types for Import
+export interface UserImportData {
+  fullName: string
+  email: string
+  phone?: string
+  role: string
+  branchCode?: string
+  status: string
+  errorMessage?: string
+  valid: boolean
+}
+
+export interface UserImportPreview {
+  users: UserImportData[]
+  totalCount: number
+  validCount: number
+  errorCount: number
+}
 

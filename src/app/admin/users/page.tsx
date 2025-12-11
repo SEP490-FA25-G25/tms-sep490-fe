@@ -24,7 +24,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Plus, Search, RotateCcw } from "lucide-react";
+import { Plus, Search, RotateCcw, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable } from "@/app/academic/student-requests/components/DataTable";
 import { createUserColumns } from "./components/userColumns";
@@ -32,6 +32,7 @@ import { CreateUserDialog } from "./components/CreateUserDialog";
 import { EditUserDialog } from "./components/EditUserDialog";
 import { UserDetailDialog } from "./components/UserDetailDialog";
 import { ConfirmStatusDialog } from "./components/ConfirmStatusDialog";
+import { UserImportDialog } from "./components/UserImportDialog";
 import {
   useGetUsersQuery,
   useGetUserByIdQuery,
@@ -141,6 +142,8 @@ export default function AdminUsersPage() {
     },
   });
 
+  const [showImportDialog, setShowImportDialog] = useState(false);
+
   return (
     <AdminRoute>
       <SidebarProvider
@@ -168,13 +171,23 @@ export default function AdminUsersPage() {
                         Quản lý tài khoản người dùng trong hệ thống
                       </p>
                     </div>
-                    <Button
-                      onClick={() => setShowCreateDialog(true)}
-                      className="gap-2"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Tạo người dùng
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowImportDialog(true)}
+                        className="gap-2"
+                      >
+                        <Upload className="h-4 w-4" />
+                        Import Excel
+                      </Button>
+                      <Button
+                        onClick={() => setShowCreateDialog(true)}
+                        className="gap-2"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Tạo người dùng
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
@@ -387,6 +400,12 @@ export default function AdminUsersPage() {
             refetchUsers();
           }
         }}
+      />
+
+      <UserImportDialog
+        open={showImportDialog}
+        onOpenChange={setShowImportDialog}
+        onSuccess={() => refetchUsers()}
       />
 
       <EditUserDialog
