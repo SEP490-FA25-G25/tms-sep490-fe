@@ -141,6 +141,7 @@ const AcademicCreateRequestFormPage = lazy(
   () => import("./app/academic/teacher-requests/create/form/page")
 );
 const AcademicStudentsPage = lazy(() => import("./app/academic/students/page"));
+const AcademicTeachersPage = lazy(() => import("./app/academic/teachers/page"));
 const CreateClassPage = lazy(
   () => import("./app/academic/classes/create/page")
 );
@@ -210,7 +211,9 @@ const ManagerPoliciesPage = lazy(() => import("./app/manager/policies/page"));
 // const CurriculumPage = lazy(() => import("./app/curriculum/page"));
 const CurriculumsPage = lazy(() => import("./app/curriculum/curriculums/page"));
 const CurriculumLevelsPage = lazy(() => import("./app/curriculum/levels/page"));
-const CurriculumSubjectsPage = lazy(() => import("./app/curriculum/subjects/page"));
+const CurriculumSubjectsPage = lazy(
+  () => import("./app/curriculum/subjects/page")
+);
 const CurriculumCourseDetailPage = lazy(
   () => import("./app/curriculum/courses/[id]/page")
 );
@@ -959,6 +962,16 @@ function App() {
                       ]}
                     >
                       <AcademicStudentsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/academic/teachers"
+                  element={
+                    <ProtectedRoute
+                      requiredRoles={["ACADEMIC_AFFAIR", "ADMIN"]}
+                    >
+                      <AcademicTeachersPage />
                     </ProtectedRoute>
                   }
                 />

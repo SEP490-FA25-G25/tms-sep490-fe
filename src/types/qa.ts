@@ -446,29 +446,6 @@ export interface FeedbackFilters {
   size?: number;
 }
 
-export interface QASessionListResponse {
-  classId: number;
-  classCode: string;
-  totalSessions: number;
-  sessions: Array<{
-    sessionId: number;
-    sequenceNumber?: number;
-    date: string;
-    dayOfWeek?: string;
-    timeSlot: string;
-    topic: string;
-    status: string;
-    teacherName: string;
-    totalStudents: number;
-    presentCount: number;
-    absentCount: number;
-    attendanceRate: number;
-    homeworkCompletedCount: number;
-    homeworkCompletionRate: number;
-    hasQAReport: boolean;
-    qaReportCount: number;
-  }>;
-}
 
 // Enums
 // Update enum definitions to match backend UPPERCASE values

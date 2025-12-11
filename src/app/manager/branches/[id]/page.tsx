@@ -119,7 +119,7 @@ export default function ManagerBranchDetailPage() {
       await deactivateBranch(branch.id).unwrap();
       toast.success("Đã ngưng hoạt động chi nhánh");
       refetch();
-    } catch (error) {
+    } catch {
       toast.error("Không thể ngưng hoạt động chi nhánh");
     }
   };
@@ -136,7 +136,7 @@ export default function ManagerBranchDetailPage() {
       await activateBranch(branch.id).unwrap();
       toast.success("Đã kích hoạt lại chi nhánh");
       refetch();
-    } catch (error) {
+    } catch {
       toast.error("Không thể kích hoạt lại chi nhánh");
     }
   };

@@ -308,8 +308,17 @@ export function LevelList() {
             <LevelDialog
                 open={isDialogOpen}
                 onOpenChange={setIsDialogOpen}
-                level={selectedLevel ? { ...selectedLevel, subjectId: selectedLevel.subjectId || 0 } : null}
-                subjectId={selectedSubjectId}
+                level={
+                    selectedLevel
+                        ? {
+                              id: selectedLevel.id,
+                              curriculumId: selectedSubjectId || 0,
+                              code: selectedLevel.code,
+                              name: selectedLevel.name,
+                              description: selectedLevel.description,
+                          }
+                        : null
+                }
             />
 
             <AlertDialog open={!!levelToDelete} onOpenChange={(open) => !open && setLevelToDelete(null)}>
