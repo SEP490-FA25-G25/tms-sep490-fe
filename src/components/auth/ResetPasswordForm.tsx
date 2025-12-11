@@ -31,6 +31,15 @@ export function ResetPasswordForm({ className }: ResetPasswordFormProps) {
 
   const token = searchParams.get("token")
 
+  const meetsAllRules = (password: string) => {
+    if (!password) return false
+    const hasLength = password.length >= 8
+    const hasUpper = /[A-Z]/.test(password)
+    const hasLower = /[a-z]/.test(password)
+    const hasNumber = /\d/.test(password)
+    return hasLength && hasUpper && hasLower && hasNumber
+  }
+
   useEffect(() => {
     if (!token) {
       setIsTokenValid(false)
@@ -47,6 +56,12 @@ export function ResetPasswordForm({ className }: ResetPasswordFormProps) {
       newErrors.newPassword = "Vui lòng nhập mật khẩu mới"
     } else if (newPassword.length < 8) {
       newErrors.newPassword = "Mật khẩu phải có ít nhất 8 ký tự"
+    } else if (!/[A-Z]/.test(newPassword)) {
+      newErrors.newPassword = "Mật khẩu phải có ít nhất 1 chữ hoa"
+    } else if (!/[a-z]/.test(newPassword)) {
+      newErrors.newPassword = "Mật khẩu phải có ít nhất 1 chữ thường"
+    } else if (!/\d/.test(newPassword)) {
+      newErrors.newPassword = "Mật khẩu phải có ít nhất 1 số"
     }
 
     if (!confirmPassword) {
@@ -255,7 +270,12 @@ export function ResetPasswordForm({ className }: ResetPasswordFormProps) {
           <Button
             type="submit"
             variant="default"
-            disabled={isLoading || !token}
+            disabled={
+              isLoading ||
+              !token ||
+              !meetsAllRules(newPassword) ||
+              newPassword !== confirmPassword
+            }
             className="w-full"
           >
             {isLoading ? "Đang cập nhật..." : "Cập nhật mật khẩu"}
