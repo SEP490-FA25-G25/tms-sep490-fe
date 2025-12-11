@@ -39,7 +39,7 @@ import { useGetMyBranchesQuery } from "@/store/services/branchApi";
 // Validation schema - removed HYBRID
 const createClassSchema = z.object({
   branchId: z.number().positive("Vui lòng chọn chi nhánh"),
-  courseId: z.number().positive("Vui lòng chọn môn học"), // API still uses courseId for subjectId
+  subjectId: z.number().positive("Vui lòng chọn môn học"),
   code: z.string().optional(),
   name: z
     .string()
@@ -124,8 +124,8 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
   const approvalStatus = existingClassData?.data?.approvalStatus;
   const isEditLocked = Boolean(
     classId &&
-      ((classStatus === "DRAFT" && approvalStatus === "PENDING") ||
-        approvalStatus === "APPROVED")
+    ((classStatus === "DRAFT" && approvalStatus === "PENDING") ||
+      approvalStatus === "APPROVED")
   );
   const editLockMessage = (() => {
     if (classStatus === "DRAFT" && approvalStatus === "PENDING") {
@@ -148,7 +148,7 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
   const courses = useMemo(() => coursesData?.data || [], [coursesData]);
 
   const selectedBranchId = watch("branchId");
-  const selectedCourseId = watch("courseId");
+  const selectedSubjectId = watch("subjectId");
   const selectedDays = watch("scheduleDays") || [];
   const selectedDate = watch("startDate");
   const modality = watch("modality");
@@ -168,7 +168,7 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
       // Verify course exists in available courses
       const courseExists = courses.some((c) => c.id === data.subject.id);
       if (courseExists) {
-        setValue("courseId", data.subject.id);
+        setValue("subjectId", data.subject.id);
       }
 
       setValue("code", data.code);
@@ -183,13 +183,13 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
 
   // Auto-generate class code when all required fields are filled
   const handlePreviewFetch = useCallback(async () => {
-    if (!selectedBranchId || !selectedCourseId || !selectedDate) {
+    if (!selectedBranchId || !selectedSubjectId || !selectedDate) {
       return;
     }
     try {
       const response = await previewClassCode({
         branchId: selectedBranchId,
-        courseId: selectedCourseId,
+        subjectId: selectedSubjectId,
         startDate: selectedDate,
       }).unwrap();
 
@@ -202,7 +202,7 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
   }, [
     previewClassCode,
     selectedBranchId,
-    selectedCourseId,
+    selectedSubjectId,
     selectedDate,
     setValue,
   ]);
@@ -210,12 +210,12 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
   // Auto-fetch preview when all conditions met
   useEffect(() => {
     const canPreviewCode = Boolean(
-      selectedBranchId && selectedCourseId && selectedDate
+      selectedBranchId && selectedSubjectId && selectedDate
     );
     if (canPreviewCode) {
       void handlePreviewFetch();
     }
-  }, [selectedBranchId, selectedCourseId, selectedDate, handlePreviewFetch]);
+  }, [selectedBranchId, selectedSubjectId, selectedDate, handlePreviewFetch]);
 
   // Real-time validation functions
   const validateBranch = (value: number | undefined): string | null => {
@@ -264,7 +264,7 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
 
   const handleSubjectChange = (val: string) => {
     const value = parseInt(val);
-    setValue("courseId", value, { shouldValidate: true });
+    setValue("subjectId", value, { shouldValidate: true });
     setSubjectError(validateSubject(value));
   };
 
@@ -337,7 +337,7 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
   const onSubmit = async (data: FormData) => {
     // Final validation before submit
     const branchErr = validateBranch(data.branchId);
-    const subjectErr = validateSubject(data.courseId);
+    const subjectErr = validateSubject(data.subjectId);
     const dateErr = validateStartDate(data.startDate);
     const capErr = validateCapacity(data.maxCapacity);
     const nameErr = validateName(data.name);
@@ -480,19 +480,19 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
           )}
         </div>
 
-        {/* Subject (Course in API) */}
+        {/* Subject */}
         <div className="space-y-2">
-          <Label htmlFor="courseId">
+          <Label htmlFor="subjectId">
             Môn học <span className="text-destructive">*</span>
           </Label>
           <Select
-            key={`course-${selectedCourseId || "empty"}`}
-            value={selectedCourseId ? selectedCourseId.toString() : ""}
+            key={`subject-${selectedSubjectId || "empty"}`}
+            value={selectedSubjectId ? selectedSubjectId.toString() : ""}
             onValueChange={handleSubjectChange}
             disabled={isEditLocked || isCoursesLoading}
           >
             <SelectTrigger
-              id="courseId"
+              id="subjectId"
               className={cn(subjectError && "border-destructive")}
             >
               <SelectValue placeholder="Chọn môn học" />
@@ -505,9 +505,9 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
               ))}
             </SelectContent>
           </Select>
-          {(subjectError || errors.courseId) && (
+          {(subjectError || errors.subjectId) && (
             <p className="text-sm text-destructive">
-              {subjectError || errors.courseId?.message}
+              {subjectError || errors.subjectId?.message}
             </p>
           )}
         </div>
@@ -617,7 +617,7 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
               onBlur={handleNameBlur}
               className={cn(
                 (nameError || nameDuplicateError || errors.name) &&
-                  "border-destructive"
+                "border-destructive"
               )}
             />
             {isCheckingName && (

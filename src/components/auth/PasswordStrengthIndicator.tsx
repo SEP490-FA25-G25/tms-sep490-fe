@@ -23,11 +23,6 @@ const passwordRules: PasswordValidationRule[] = [
     message: "Có ít nhất 1 số",
     isValid: false,
   },
-  {
-    regex: /[!@#$%^&*(),.?":{}|<>]/,
-    message: "Có ít nhất 1 ký tự đặc biệt",
-    isValid: false,
-  },
 ]
 
 interface PasswordStrengthIndicatorProps {
@@ -55,7 +50,7 @@ export function PasswordStrengthIndicator({
 
     const score = rules.filter(rule => rule.isValid).length
     const feedback = rules.filter(rule => !rule.isValid).map(rule => rule.message)
-    const isValid = score >= 3 // Require at least 3 rules to pass
+    const isValid = score === rules.length // Bắt buộc thỏa tất cả yêu cầu
 
     setStrength({
       score,
@@ -74,7 +69,6 @@ export function PasswordStrengthIndicator({
       case 3:
         return "bg-yellow-500"
       case 4:
-      case 5:
         return "bg-emerald-500"
       default:
         return "bg-gray-300"
@@ -91,7 +85,6 @@ export function PasswordStrengthIndicator({
       case 3:
         return "Khá"
       case 4:
-      case 5:
         return "Mạnh"
       default:
         return ""
@@ -116,7 +109,7 @@ export function PasswordStrengthIndicator({
       )}
 
       <div className="flex gap-1">
-        {Array.from({ length: 5 }).map((_, index) => (
+        {Array.from({ length: passwordRules.length }).map((_, index) => (
           <div
             key={index}
             className={cn(
@@ -154,7 +147,7 @@ export function PasswordStrengthIndicator({
 
       {!strength.isValid && password && (
         <p className="text-xs text-rose-500">
-          Mật khẩu phải đáp ứng ít nhất 3 yêu cầu trên
+          Mật khẩu phải đáp ứng tất cả yêu cầu trên
         </p>
       )}
     </div>

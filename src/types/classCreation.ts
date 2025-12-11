@@ -15,7 +15,7 @@ export type ConflictReason = 'CAPACITY_EXCEEDED' | 'BOOKING_CONFLICT' | 'UNKNOWN
 
 export interface CreateClassFormData {
   branchId: number
-  courseId: number
+  subjectId: number
   code?: string
   name: string
   modality: ClassModality
@@ -390,7 +390,7 @@ export interface ClassCodePreviewData {
 
 export interface PreviewClassCodeRequest {
   branchId: number
-  courseId: number
+  subjectId: number
   startDate: string
 }
 
