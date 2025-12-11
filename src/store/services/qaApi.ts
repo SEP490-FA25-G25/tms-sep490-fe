@@ -81,17 +81,16 @@ export const qaApi = createApi({
       providesTags: (_result, _error, { courseId }) => [{ type: 'QADashboard', id: `comparison-${courseId}` }],
     }),
 
-    // Classes
     getQAClasses: builder.query<{ data: QAClassListItemDTO[]; total: number; page: number; size: number }, QAListParams>({
       query: ({ branchIds, status, search, page = 0, size = 20, sort = 'startDate', sortDir = 'desc' }) => ({
         url: '/qa/classes',
         params: { branchIds, status, search, page, size, sort, sortDir },
       }),
-      transformResponse: (response: { data: { content: QAClassListItemDTO[]; page: { totalElements: number; number: number; size: number } } }) => ({
+      transformResponse: (response: { data: { content: QAClassListItemDTO[]; totalElements: number; number: number; size: number } }) => ({
         data: response.data.content,
-        total: response.data.page.totalElements,
-        page: response.data.page.number,
-        size: response.data.page.size
+        total: response.data.totalElements,
+        page: response.data.number,
+        size: response.data.size
       }),
       providesTags: ['QAClass'],
     }),

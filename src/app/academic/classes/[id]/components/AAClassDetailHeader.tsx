@@ -112,17 +112,6 @@ export function AAClassDetailHeader({
   onEnrollFromExcel,
 }: AAClassDetailHeaderProps) {
   const unified = getUnifiedStatus(classData.status, classData.approvalStatus)
-  
-  const canEdit =
-    (classData.status === 'DRAFT' &&
-      classData.approvalStatus !== 'PENDING' &&
-      classData.approvalStatus !== 'APPROVED') ||
-    classData.approvalStatus === 'REJECTED'
-
-  const editDisabledReason =
-    classData.approvalStatus === 'PENDING'
-      ? 'Lớp đang chờ duyệt, không thể chỉnh sửa.'
-      : 'Lớp đã được duyệt, không thể chỉnh sửa.'
 
   return (
     <div className="border-b bg-background">
@@ -165,19 +154,6 @@ export function AAClassDetailHeader({
 
             {/* Action Buttons */}
             <div className="flex flex-wrap items-center gap-2 shrink-0">
-              {canEdit ? (
-                <Button variant="outline" asChild>
-                  <Link to={`/academic/classes/${classData.id}/edit`}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Chỉnh sửa
-                  </Link>
-                </Button>
-              ) : (
-                <Button variant="outline" disabled title={editDisabledReason}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Chỉnh sửa
-                </Button>
-              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button>
