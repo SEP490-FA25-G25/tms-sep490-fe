@@ -186,6 +186,63 @@ export interface CreateStudentResponse {
     userId: number
     fullName: string
   }
+  isExistingStudent?: boolean 
+}
+
+export interface CheckStudentExistenceRequest {
+  type: 'EMAIL' | 'PHONE'
+  value: string
+  currentBranchId: number
+}
+
+export interface CheckStudentExistenceResponse {
+  exists: boolean
+  studentId?: number
+  studentCode?: string
+  fullName?: string
+  email?: string
+  phone?: string
+  currentBranches?: Array<{
+    id: number
+    name: string
+    code: string
+  }>
+  canAddToCurrentBranch: boolean
+}
+
+export interface SyncToBranchRequest {
+  targetBranchId: number
+  phone?: string
+  address?: string
+  newSkillAssessments?: SkillAssessmentInput[]
+}
+
+export interface SyncToBranchResponse {
+  studentId: number
+  studentCode: string
+  userAccountId: number
+  email: string
+  fullName: string
+  phone?: string
+  gender: string
+  dob?: string
+  status: string
+  allBranches: Array<{
+    id: number
+    name: string
+    code: string
+  }>
+  newlyAddedBranch: {
+    id: number
+    name: string
+    code: string
+  }
+  newSkillAssessmentsCreated: number
+  syncedAt: string
+  syncedBy: {
+    userId: number
+    fullName: string
+  }
 }
 
 // Update Student types
@@ -237,6 +294,8 @@ export interface StudentImportData {
   existingStudentId?: number
   existingStudentCode?: string
   errorMessage?: string
+  needsBranchSync?: boolean
+  note?: string
 }
 
 export interface StudentImportPreview {
@@ -393,10 +452,38 @@ export const studentApi = createApi({
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled
-          // Invalidate AvailableStudents in classApi after successful student creation
           dispatch(classApi.util.invalidateTags(['AvailableStudents']))
         } catch {
-          // Do nothing on error
+          // Error handling already done in component
+        }
+      },
+    }),
+
+    checkStudentExistence: builder.query<ApiResponse<CheckStudentExistenceResponse>, CheckStudentExistenceRequest>({
+      query: (params) => ({
+        url: '/students/check-existence',
+        method: 'GET',
+        params: {
+          type: params.type,
+          value: params.value,
+          currentBranchId: params.currentBranchId,
+        },
+      }),
+    }),
+
+    syncStudentToBranch: builder.mutation<ApiResponse<SyncToBranchResponse>, { studentId: number; request: SyncToBranchRequest }>({
+      query: ({ studentId, request }) => ({
+        url: `/students/${studentId}/sync-to-branch`,
+        method: 'POST',
+        body: request,
+      }),
+      invalidatesTags: ['Student'],
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled
+          dispatch(classApi.util.invalidateTags(['AvailableStudents']))
+        } catch {
+          // Error handling already done in component
         }
       },
     }),
@@ -498,6 +585,9 @@ export const {
   useGetStudentDetailQuery,
   useGetStudentEnrollmentHistoryQuery,
   useCreateStudentMutation,
+  useCheckStudentExistenceQuery,
+  useLazyCheckStudentExistenceQuery,
+  useSyncStudentToBranchMutation,
   useGetStudentTranscriptQuery,
   useExportStudentsMutation,
   useUpdateStudentMutation,

@@ -103,6 +103,8 @@ export interface StudentFormProps {
   isSubmitting?: boolean
   onCancel?: () => void
   submitLabel?: string
+  onEmailBlur?: (email: string) => void
+  onPhoneBlur?: (phone: string) => void
 }
 
 // ========== Types for SkillAssessmentItem ==========
@@ -462,6 +464,8 @@ export function StudentForm({
   isSubmitting = false,
   onCancel,
   submitLabel,
+  onEmailBlur,
+  onPhoneBlur,
 }: StudentFormProps) {
   // Form state
   const [formData, setFormData] = useState<StudentFormData>({
@@ -819,6 +823,7 @@ export function StudentForm({
               placeholder="student@example.com"
               value={formData.email}
               onChange={(e) => handleChange('email', e.target.value)}
+              onBlur={(e) => onEmailBlur?.(e.target.value)}
             />
           </div>
 
@@ -848,6 +853,7 @@ export function StudentForm({
               placeholder="0912345678"
               value={formData.phone}
               onChange={(e) => handleChange('phone', e.target.value)}
+              onBlur={(e) => onPhoneBlur?.(e.target.value)}
             />
           </div>
 

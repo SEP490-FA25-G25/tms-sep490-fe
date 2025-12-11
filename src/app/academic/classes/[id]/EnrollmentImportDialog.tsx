@@ -21,6 +21,12 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import {
   Upload,
   FileSpreadsheet,
   Download,
@@ -47,6 +53,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { StudentDetailDrawer } from '@/app/academic/students/components/StudentDetailDrawer'
+import { useGetStudentDetailQuery } from '@/store/services/studentApi'
 
 interface EnrollmentImportDialogProps {
   classId: number
@@ -69,12 +77,20 @@ export function EnrollmentImportDialog({
   const [overrideCapacity, setOverrideCapacity] = useState(false)
   const [overrideReason, setOverrideReason] = useState('')
   const [selectedStudents, setSelectedStudents] = useState<Set<number>>(new Set())
+  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null)
+  const [showDetailDrawer, setShowDetailDrawer] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [previewMutation, { isLoading: isPreviewing }] = usePreviewClassEnrollmentImportMutation()
   const [executeMutation, { isLoading: isExecuting }] = useExecuteClassEnrollmentImportMutation()
 
   const classTemplateQuery = useDownloadClassEnrollmentTemplateQuery({ classId }, { skip: !open })
+  
+  // Query for student detail when drawer is opened
+  const { data: studentDetail, isLoading: isLoadingDetail } = useGetStudentDetailQuery(
+    selectedStudentId!,
+    { skip: !selectedStudentId || !showDetailDrawer }
+  )
 
   // Compute derived values - all students sorted: valid first, then errors
   const allStudentsSorted = preview?.students ? [
@@ -244,7 +260,16 @@ export function EnrollmentImportDialog({
     setOverrideCapacity(false)
     setOverrideReason('')
     setSelectedStudents(new Set())
+    setSelectedStudentId(null)
+    setShowDetailDrawer(false)
     onOpenChange(false)
+  }
+
+  const handleStudentClick = (student: StudentEnrollmentData) => {
+    if (student.status === 'FOUND' && student.resolvedStudentId) {
+      setSelectedStudentId(student.resolvedStudentId)
+      setShowDetailDrawer(true)
+    }
   }
 
   const toggleStudentSelection = (student: StudentEnrollmentData, idx: number) => {
@@ -302,6 +327,7 @@ export function EnrollmentImportDialog({
     (!willExceedCapacity || overrideCapacity)
 
   return (
+    <>
     <FullScreenModal open={open} onOpenChange={onOpenChange}>
       <FullScreenModalContent size="2xl" className="bg-muted/10 p-0 gap-0">
         <FullScreenModalHeader className="bg-background border-b px-6 py-4">
@@ -406,6 +432,21 @@ export function EnrollmentImportDialog({
                       </p>
                       <p className="text-xs text-amber-700 mt-1">
                         Những sinh viên bị lỗi hoặc đã đăng ký lớp này sẽ được hiển thị mờ trong danh sách bên dưới.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Info banner for cross-branch students */}
+                {preview.students.filter(s => s.needsBranchSync).length > 0 && (
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
+                    <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-800">
+                        Có {preview.students.filter(s => s.needsBranchSync).length} học viên từ chi nhánh khác
+                      </p>
+                      <p className="text-xs text-blue-700 mt-1">
+                        Những học viên này sẽ được tự động thêm vào chi nhánh quản lý lớp học trước khi đăng ký.
                       </p>
                     </div>
                   </div>
@@ -602,11 +643,13 @@ export function EnrollmentImportDialog({
                                   key={realIdx} 
                                   className={cn(
                                     "transition-colors",
-                                    isValid ? "hover:bg-muted/30" : "opacity-50 bg-muted/20"
+                                    isValid ? "hover:bg-muted/30" : "opacity-50 bg-muted/20",
+                                    student.status === 'FOUND' && "cursor-pointer"
                                   )}
+                                  onClick={() => handleStudentClick(student)}
                                 >
                                   {baseStrategy === 'PARTIAL' && (
-                                    <TableCell className="pl-4">
+                                    <TableCell className="pl-4" onClick={(e) => e.stopPropagation()}>
                                       <Checkbox
                                         checked={isSelected}
                                         onCheckedChange={() => toggleStudentSelection(student, realIdx)}
@@ -635,9 +678,25 @@ export function EnrollmentImportDialog({
                                   <TableCell>
                                     <div className="space-y-1">
                                       {student.status === 'FOUND' && (
-                                        <Badge variant="success">
-                                          Đã có hồ sơ
-                                        </Badge>
+                                        <div className="flex items-center gap-2">
+                                          <Badge variant="success">
+                                            Đã có hồ sơ
+                                          </Badge>
+                                          {student.needsBranchSync && (
+                                            <TooltipProvider>
+                                              <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                  <Badge variant="info" className="gap-1">
+                                                    Sync
+                                                  </Badge>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                  <p className="text-xs">Học viên từ chi nhánh khác,<br/>sẽ được tự động thêm vào chi nhánh này</p>
+                                                </TooltipContent>
+                                              </Tooltip>
+                                            </TooltipProvider>
+                                          )}
+                                        </div>
                                       )}
                                       {student.status === 'CREATE' && (
                                         <Badge variant="info">
@@ -726,5 +785,17 @@ export function EnrollmentImportDialog({
         </FullScreenModalFooter>
       </FullScreenModalContent>
     </FullScreenModal>
+
+    {/* Student Detail Drawer */}
+    <StudentDetailDrawer
+      open={showDetailDrawer}
+      onOpenChange={(open: boolean) => {
+        setShowDetailDrawer(open)
+        if (!open) setSelectedStudentId(null)
+      }}
+      student={studentDetail?.data || null}
+      isLoading={isLoadingDetail}
+    />
+  </>
   )
 }
