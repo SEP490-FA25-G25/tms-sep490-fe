@@ -6,6 +6,8 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import {
   useGetManagerBranchByIdQuery,
   useUpdateManagerBranchMutation,
+  useDeactivateManagerBranchMutation,
+  useActivateManagerBranchMutation,
   type ManagerBranchOverview,
   type BranchRequest,
   useGetManagerBranchesQuery,
@@ -32,13 +34,22 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -67,6 +78,7 @@ export default function ManagerBranchDetailPage() {
   const isValidId = Number.isFinite(branchId);
   const [showForm, setShowForm] = useState(false);
   const [showStaffDialog, setShowStaffDialog] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<"deactivate" | "activate" | null>(null);
 
   const {
     data: branchResponse,
@@ -88,6 +100,46 @@ export default function ManagerBranchDetailPage() {
 
   const [updateBranch, { isLoading: isUpdating }] =
     useUpdateManagerBranchMutation();
+
+  const [deactivateBranch, { isLoading: isDeactivating }] =
+    useDeactivateManagerBranchMutation();
+
+  const [activateBranch, { isLoading: isActivating }] =
+    useActivateManagerBranchMutation();
+
+  const handleDeactivate = async () => {
+    if (!branch) return;
+
+    if (branch.status === "INACTIVE") {
+      toast.info("Chi nhánh đã ở trạng thái không hoạt động");
+      return;
+    }
+
+    try {
+      await deactivateBranch(branch.id).unwrap();
+      toast.success("Đã ngưng hoạt động chi nhánh");
+      refetch();
+    } catch (error) {
+      toast.error("Không thể ngưng hoạt động chi nhánh");
+    }
+  };
+
+  const handleActivate = async () => {
+    if (!branch) return;
+
+    if (branch.status === "ACTIVE") {
+      toast.info("Chi nhánh đã ở trạng thái hoạt động");
+      return;
+    }
+
+    try {
+      await activateBranch(branch.id).unwrap();
+      toast.success("Đã kích hoạt lại chi nhánh");
+      refetch();
+    } catch (error) {
+      toast.error("Không thể kích hoạt lại chi nhánh");
+    }
+  };
 
   const handleUpdateCenterHead = async (newCenterHeadUserId: number | null) => {
     if (!branch) return;
@@ -161,14 +213,58 @@ export default function ManagerBranchDetailPage() {
       actions={
         branch ? (
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowStaffDialog(true)}>
-              Ngưng hoạt động
-            </Button>
+            {branch.status === "ACTIVE" ? (
+              <Button
+                variant="outline"
+                onClick={() => setConfirmAction("deactivate")}
+                disabled={isDeactivating}
+              >
+                {isDeactivating ? "Đang xử lý..." : "Ngưng hoạt động"}
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={() => setConfirmAction("activate")}
+                disabled={isActivating}
+              >
+                {isActivating ? "Đang xử lý..." : "Kích hoạt lại"}
+              </Button>
+            )}
             <Button onClick={() => setShowForm(true)}>Chỉnh sửa</Button>
           </div>
         ) : undefined
       }
     >
+      {/* Confirm Dialog */}
+      <AlertDialog open={confirmAction !== null} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction === "deactivate" ? "Ngưng hoạt động chi nhánh?" : "Kích hoạt lại chi nhánh?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction === "deactivate"
+                ? "Chi nhánh sẽ được chuyển sang trạng thái không hoạt động. Bạn có thể kích hoạt lại sau."
+                : "Chi nhánh sẽ được kích hoạt lại và có thể nhận học viên mới."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmAction === "deactivate") {
+                  handleDeactivate();
+                } else {
+                  handleActivate();
+                }
+                setConfirmAction(null);
+              }}
+            >
+              {confirmAction === "deactivate" ? "Ngưng hoạt động" : "Kích hoạt lại"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <div className="space-y-6">
         {isDataLoading ? (
           <BranchDetailSkeleton />
@@ -770,15 +866,4 @@ function getInitials(name?: string) {
   const parts = name.trim().split(" ");
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-function getStatusLabel(status?: string) {
-  switch (status) {
-    case "ACTIVE":
-      return "Hoạt động";
-    case "INACTIVE":
-      return "Không hoạt động";
-    default:
-      return "Không xác định";
-  }
 }

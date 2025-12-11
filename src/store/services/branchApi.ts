@@ -200,6 +200,30 @@ export const branchApi = createApi({
       invalidatesTags: ["ManagerBranch", "Branch"],
     }),
 
+    deactivateManagerBranch: builder.mutation<ApiResponse<ManagerBranchOverview>, number>({
+      query: (id) => ({
+        url: `/manager/branches/${id}/deactivate`,
+        method: "PATCH",
+      }),
+      invalidatesTags: (_result, _error, id) => [
+        { type: "ManagerBranch", id },
+        "ManagerBranch",
+        "Branch",
+      ],
+    }),
+
+    activateManagerBranch: builder.mutation<ApiResponse<ManagerBranchOverview>, number>({
+      query: (id) => ({
+        url: `/manager/branches/${id}/activate`,
+        method: "PATCH",
+      }),
+      invalidatesTags: (_result, _error, id) => [
+        { type: "ManagerBranch", id },
+        "ManagerBranch",
+        "Branch",
+      ],
+    }),
+
     getManagerBranchTeachers: builder.query<
       ApiResponse<ManagerBranchTeacher[]>,
       number
@@ -236,6 +260,8 @@ export const {
   useCreateManagerBranchMutation,
   useUpdateManagerBranchMutation,
   useDeleteManagerBranchMutation,
+  useDeactivateManagerBranchMutation,
+  useActivateManagerBranchMutation,
   useGetManagerBranchTeachersQuery,
   useCheckBranchEmailExistsQuery,
 } = branchApi;
