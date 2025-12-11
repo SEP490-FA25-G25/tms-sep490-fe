@@ -283,7 +283,7 @@ export default function QAClassesListPage() {
                                             <ClassStatusBadge status={classItem.status} />
                                         </TableCell>
                                         <TableCell>
-                                            <p className="text-sm">{classItem.courseName}</p>
+                                            <p className="text-sm">{classItem.subjectName}</p>
                                         </TableCell>
                                         <TableCell>
                                             <p className="text-sm">{classItem.branchName}</p>

@@ -11,7 +11,7 @@ const roleDefaultRoutes: Record<string, string> = {
   [ROLES.SUBJECT_LEADER]: '/curriculum',
   [ROLES.TEACHER]: '/teacher/classes',
   [ROLES.STUDENT]: '/student/schedule',
-  [ROLES.QA]: '/qa/dashboard',
+  [ROLES.QA]: '/qa/classes',
   [ROLES.ACADEMIC_AFFAIR]: '/academic/classes',
 };
 

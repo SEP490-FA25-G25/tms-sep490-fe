@@ -48,7 +48,7 @@ export function QAClassHeader({ classInfo }: QAClassHeaderProps) {
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <BookOpen className="h-4 w-4" />
-                  <span>Khóa học: {classInfo.courseName}</span>
+                  <span>Khóa học: {classInfo.subjectName}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4" />

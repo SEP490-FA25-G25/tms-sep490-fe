@@ -36,7 +36,7 @@ export const qaApi = createApi({
     }),
 
     getPhasesByCourseId: builder.query<CoursePhaseDTO[], number>({
-      query: (courseId) => `/phases/course/${courseId}`,
+      query: (courseId) => `/phases/subject/${courseId}`,
       transformResponse: (response: { data: CoursePhaseDTO[] }) => response.data,
       providesTags: (_result, _error, courseId) => [{ type: 'CoursePhase', id: courseId }],
     }),
@@ -120,11 +120,11 @@ export const qaApi = createApi({
         url: '/qa/reports',
         params: { classId, sessionId, phaseId, reportType, status, reportedBy, search, page, size, sort, sortDir },
       }),
-      transformResponse: (response: { data: { content: QAReportListItemDTO[]; page: { totalElements: number; number: number; size: number; totalPages: number } } }) => ({
+      transformResponse: (response: { data: { content: QAReportListItemDTO[]; totalElements: number; number: number; size: number } }) => ({
         data: response.data.content,
-        total: response.data.page.totalElements,
-        page: response.data.page.number,
-        size: response.data.page.size
+        total: response.data.totalElements,
+        page: response.data.number,
+        size: response.data.size
       }),
       providesTags: ['QAReport'],
     }),
@@ -176,12 +176,23 @@ export const qaApi = createApi({
         url: `/classes/${classId}/feedbacks`,
         params: filters,
       }),
-      transformResponse: (response: { data: { statistics: StudentFeedbackListResponse['statistics']; feedbacks: { content: StudentFeedbackListResponse['feedbacks']; page: { size: number; number: number; totalElements: number; totalPages: number } } } }) => ({
+      transformResponse: (response: { 
+        data: { 
+          statistics: StudentFeedbackListResponse['statistics']; 
+          feedbacks: { 
+            content: StudentFeedbackListResponse['feedbacks']; 
+            totalElements: number; 
+            number: number; 
+            size: number;
+            totalPages: number;
+          } 
+        } 
+      }) => ({
         statistics: response.data.statistics,
-        feedbacks: response.data.feedbacks.content, // Extract content array from paginated response
-        total: response.data.feedbacks.page.totalElements,
-        page: response.data.feedbacks.page.number,
-        size: response.data.feedbacks.page.size
+        feedbacks: response.data.feedbacks.content,
+        total: response.data.feedbacks.totalElements,
+        page: response.data.feedbacks.number,
+        size: response.data.feedbacks.size
       }),
       providesTags: ['QAFeedback'],
     }),

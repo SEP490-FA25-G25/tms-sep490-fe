@@ -171,8 +171,8 @@ export interface QAClassListItemDTO {
   classId: number;
   classCode: string;
   className: string;
-  courseId: number;
-  courseName: string;
+  subjectId: number;
+  subjectName: string;
   branchName: string;
   modality: string;
   status: string;
@@ -188,8 +188,8 @@ export interface QAClassDetailDTO {
   classId: number;
   classCode: string;
   className: string;
-  courseName: string;
-  courseId: number;
+  subjectName: string;
+  subjectId: number;
   branchId: number;
   branchName: string;
   modality: string;

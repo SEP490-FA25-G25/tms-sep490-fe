@@ -54,23 +54,20 @@ import {
   useGetClassFeedbacksQuery,
   useGetPhasesByCourseIdQuery,
 } from '@/store/services/qaApi'
-import { useGetMyBranchesQuery } from '@/store/services/branchApi'
 import type { StudentFeedbackListResponse } from '@/types/qa'
 import QAFeedbackDetailPanel from './components/QAFeedbackDetailPanel'
+import { useAuth } from '@/contexts/AuthContext'
 
 type FeedbackItem = StudentFeedbackListResponse['feedbacks'][number]
 
 export default function QAStudentFeedbackPage() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const { selectedBranchId } = useAuth()
 
   // URL params
   const urlClassId = searchParams.get('classId')
-  const urlBranchId = searchParams.get('branchId')
 
   // Filter states
-  const [selectedBranchId, setSelectedBranchId] = useState<number | null>(
-    urlBranchId ? parseInt(urlBranchId) : null
-  )
   const [selectedClassId, setSelectedClassId] = useState<number | null>(
     urlClassId ? parseInt(urlClassId) : null
   )
@@ -93,17 +90,6 @@ export default function QAStudentFeedbackPage() {
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  // Fetch branches that QA can manage
-  const { data: branchesData, isLoading: branchesLoading } = useGetMyBranchesQuery()
-  const myBranches = useMemo(() => branchesData?.data || [], [branchesData?.data])
-
-  // Auto-select first branch if not selected
-  useEffect(() => {
-    if (!selectedBranchId && myBranches.length > 0) {
-      setSelectedBranchId(myBranches[0].id)
-    }
-  }, [myBranches, selectedBranchId])
-
   // Fetch classes for selected branch
   const { data: classesData, isLoading: classesLoading } = useGetQAClassesQuery({
     branchIds: selectedBranchId ? [selectedBranchId] : undefined,
@@ -115,18 +101,12 @@ export default function QAStudentFeedbackPage() {
     skip: !selectedBranchId,
   })
 
-  // Reset class when branch changes
-  useEffect(() => {
-    setSelectedClassId(null)
-    setSelectedFeedback(null)
-  }, [selectedBranchId])
-
   // Selected class info (moved up for courseId access)
   const selectedClass = classesData?.data.find((c) => c.classId === selectedClassId)
 
-  // Fetch phases for the selected class's course
+  // Fetch phases for the selected class's subject
   const { data: phases = [] } = useGetPhasesByCourseIdQuery(
-    selectedClass?.courseId ?? skipToken
+    selectedClass?.subjectId ?? skipToken
   )
 
   // Fetch feedbacks for selected class
@@ -190,21 +170,14 @@ export default function QAStudentFeedbackPage() {
   }, [selectedClassId])
 
   // Handlers
-  const handleBranchSelect = (branchId: string) => {
-    const id = branchId === 'all' ? null : parseInt(branchId)
-    setSelectedBranchId(id)
-    updateSearchParams(id, null)
-  }
-
   const handleClassSelect = (classId: number | null) => {
     setSelectedClassId(classId)
     setClassComboboxOpen(false)
-    updateSearchParams(selectedBranchId, classId)
+    updateSearchParams(classId)
   }
 
-  const updateSearchParams = (branchId: number | null, classId: number | null) => {
+  const updateSearchParams = (classId: number | null) => {
     const params: Record<string, string> = {}
-    if (branchId) params.branchId = branchId.toString()
     if (classId) params.classId = classId.toString()
     setSearchParams(params)
   }
@@ -244,30 +217,8 @@ export default function QAStudentFeedbackPage() {
                     </p>
                   </div>
 
-                  {/* Branch + Class Selector - Right side of header */}
+                  {/* Class Selector - Right side of header */}
                   <div className="flex items-center gap-2 flex-wrap">
-                    {/* Branch Selector */}
-                    <Select
-                      value={selectedBranchId?.toString() || 'all'}
-                      onValueChange={handleBranchSelect}
-                      disabled={branchesLoading}
-                    >
-                      <SelectTrigger className="h-9 w-auto min-w-[160px]">
-                        <SelectValue placeholder="Chọn chi nhánh..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {myBranches.length > 1 && (
-                          <SelectItem value="all">Tất cả chi nhánh</SelectItem>
-                        )}
-                        {myBranches.map((branch) => (
-                          <SelectItem key={branch.id} value={branch.id.toString()}>
-                            {branch.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    {/* Class Selector - Combobox */}
                     <Popover open={classComboboxOpen} onOpenChange={setClassComboboxOpen}>
                       <PopoverTrigger asChild>
                         <Button
@@ -304,7 +255,7 @@ export default function QAStudentFeedbackPage() {
                               {classes.map((classItem) => (
                                 <CommandItem
                                   key={classItem.classId}
-                                  value={`${classItem.classCode} ${classItem.className} ${classItem.courseName}`}
+                                  value={`${classItem.classCode} ${classItem.className} ${classItem.subjectName}`}
                                   onSelect={() => handleClassSelect(classItem.classId)}
                                 >
                                   <Check
@@ -318,7 +269,7 @@ export default function QAStudentFeedbackPage() {
                                   <div className="flex flex-col">
                                     <span className="font-medium">{classItem.classCode}</span>
                                     <span className="text-xs text-muted-foreground">
-                                      {classItem.className} • {classItem.courseName}
+                                      {classItem.className} • {classItem.subjectName}
                                     </span>
                                   </div>
                                 </CommandItem>
@@ -396,23 +347,6 @@ export default function QAStudentFeedbackPage() {
                   </div>
                 )}
 
-                {/* No branch selected */}
-                {!selectedBranchId && !branchesLoading && (
-                  <div className="flex items-center justify-center h-full">
-                    <Empty>
-                      <EmptyHeader>
-                        <EmptyMedia variant="icon">
-                          <MessageCircleIcon className="h-10 w-10" />
-                        </EmptyMedia>
-                        <EmptyTitle>Chọn chi nhánh để bắt đầu</EmptyTitle>
-                        <EmptyDescription>
-                          Vui lòng chọn một chi nhánh từ danh sách
-                        </EmptyDescription>
-                      </EmptyHeader>
-                    </Empty>
-                  </div>
-                )}
-
                 {/* No class selected */}
                 {selectedBranchId && !selectedClassId && !classesLoading && (
                   <div className="flex items-center justify-center h-full">
@@ -433,7 +367,7 @@ export default function QAStudentFeedbackPage() {
                 )}
 
                 {/* Loading */}
-                {(branchesLoading || (selectedBranchId && classesLoading) || (selectedClassId && feedbackLoading)) && (
+                {(classesLoading || (selectedClassId && feedbackLoading)) && (
                   <div className="flex items-center justify-center h-full">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>

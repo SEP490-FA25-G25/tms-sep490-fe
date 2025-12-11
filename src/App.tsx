@@ -225,7 +225,6 @@ const LevelDetailPage = lazy(() => import("./app/curriculum/levels/[id]/page"));
 
 // QA pages
 const QARootPage = lazy(() => import("./app/qa/page"));
-const QADashboardPage = lazy(() => import("./app/qa/dashboard/page"));
 const QAClassesPage = lazy(() => import("./app/qa/classes/page"));
 const QAClassDetailPage = lazy(() => import("./app/qa/classes/[id]/page"));
 const QASessionDetailPage = lazy(() => import("./app/qa/sessions/[id]/page"));
@@ -1165,14 +1164,6 @@ function App() {
                   element={
                     <ProtectedRoute requiredRoles={["QA"]}>
                       <QARootPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/qa/dashboard"
-                  element={
-                    <ProtectedRoute requiredRoles={["QA"]}>
-                      <QADashboardPage />
                     </ProtectedRoute>
                   }
                 />

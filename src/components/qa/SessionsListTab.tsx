@@ -24,22 +24,12 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from "@/components/ui/pagination"
-import {
     Users,
     BookOpen,
     Loader2,
     AlertTriangle,
     Search,
 } from "lucide-react"
-
-const PAGE_SIZE = 10
 
 interface SessionsListTabProps {
     classId: number
@@ -48,20 +38,16 @@ interface SessionsListTabProps {
 export function SessionsListTab({ classId }: SessionsListTabProps) {
     const [searchQuery, setSearchQuery] = useState("")
     const [statusFilter, setStatusFilter] = useState<string>("all")
-    const [page, setPage] = useState(0)
     const navigate = useNavigate()
 
     const { data: sessionListData, isLoading, error } = useGetQASessionListQuery(classId)
 
-    // Reset page when filter/search changes
     const handleFilterChange = (value: string) => {
         setStatusFilter(value)
-        setPage(0)
     }
 
     const handleSearchChange = (value: string) => {
         setSearchQuery(value)
-        setPage(0)
     }
 
     if (isLoading) {
@@ -110,10 +96,7 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
         return statusMatch && searchMatch
     })
 
-    // Pagination calculations
     const totalItems = filteredSessions.length
-    const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE))
-    const paginatedSessions = filteredSessions.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
     const getAttendanceColor = (rate: number) => {
         if (rate >= 90) return "text-emerald-600"
@@ -176,7 +159,7 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
 
             {/* Sessions Table */}
             <div className="rounded-lg border overflow-hidden bg-card">
-                {paginatedSessions.length > 0 ? (
+                {filteredSessions.length > 0 ? (
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted/50">
@@ -190,7 +173,7 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {paginatedSessions.map((session) => (
+                            {filteredSessions.map((session) => (
                                 <TableRow 
                                     key={session.sessionId}
                                     className="cursor-pointer hover:bg-muted/50"
@@ -238,56 +221,12 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
                 )}
             </div>
 
-            {/* Pagination */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
-                <p className="text-muted-foreground">
-                    Trang {page + 1} / {totalPages} · {totalItems} buổi học
+            {/* Total count */}
+            {filteredSessions.length > 0 && (
+                <p className="text-sm text-muted-foreground text-center">
+                    Tổng {totalItems} buổi học
                 </p>
-                <Pagination>
-                    <PaginationContent>
-                        <PaginationItem>
-                            <PaginationPrevious
-                                href="#"
-                                onClick={(e) => {
-                                    e.preventDefault()
-                                    setPage((prev) => Math.max(prev - 1, 0))
-                                }}
-                                className={page === 0 ? 'pointer-events-none opacity-50' : ''}
-                            />
-                        </PaginationItem>
-                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                            let pageNum = i
-                            if (totalPages > 5 && page > 2) {
-                                pageNum = Math.min(page - 2 + i, totalPages - 1)
-                            }
-                            return (
-                                <PaginationItem key={pageNum}>
-                                    <PaginationLink
-                                        href="#"
-                                        onClick={(e) => {
-                                            e.preventDefault()
-                                            setPage(pageNum)
-                                        }}
-                                        isActive={pageNum === page}
-                                    >
-                                        {pageNum + 1}
-                                    </PaginationLink>
-                                </PaginationItem>
-                            )
-                        })}
-                        <PaginationItem>
-                            <PaginationNext
-                                href="#"
-                                onClick={(e) => {
-                                    e.preventDefault()
-                                    setPage((prev) => Math.min(prev + 1, totalPages - 1))
-                                }}
-                                className={page + 1 >= totalPages ? 'pointer-events-none opacity-50' : ''}
-                            />
-                        </PaginationItem>
-                    </PaginationContent>
-                </Pagination>
-            </div>
+            )}
         </div>
     )
 }

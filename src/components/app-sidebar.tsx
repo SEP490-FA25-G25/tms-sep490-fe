@@ -306,11 +306,6 @@ const roleBasedNav = {
   [ROLES.QA]: {
     navMain: [
       {
-        title: "Tổng quan QA",
-        url: "/qa/dashboard",
-        icon: BarChartIcon,
-      },
-      {
         title: "Danh sách lớp học",
         url: "/qa/classes",
         icon: SchoolIcon,
