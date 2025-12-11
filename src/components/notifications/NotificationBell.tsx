@@ -170,8 +170,8 @@ export function NotificationBell({
           variant === "sidebar" && isMobile
             ? "bottom"
             : variant === "sidebar"
-            ? "right"
-            : undefined
+              ? "right"
+              : undefined
         }
         align="end"
         sideOffset={variant === "header" ? 8 : 4}
@@ -223,11 +223,10 @@ export function NotificationBell({
               return (
                 <DropdownMenuItem
                   key={notification.id}
-                  className={`p-0 cursor-pointer transition-colors ${
-                    isUnread
-                      ? "bg-blue-50/50 dark:bg-blue-950/20"
-                      : "opacity-75 hover:opacity-100"
-                  }`}
+                  className={`p-0 cursor-pointer transition-colors ${isUnread
+                    ? "bg-blue-50/50 dark:bg-blue-950/20"
+                    : "opacity-75 hover:opacity-100"
+                    }`}
                   onClick={(e) => handleNotificationClick(notification, e)}
                 >
                   <div className="w-full px-4 py-3 border-b last:border-b-0">
@@ -247,33 +246,30 @@ export function NotificationBell({
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center justify-between gap-2">
                           <p
-                            className={`text-sm truncate ${
-                              isUnread
-                                ? "font-semibold text-foreground"
-                                : "font-normal text-muted-foreground"
-                            }`}
+                            className={`text-sm truncate ${isUnread
+                              ? "font-semibold text-foreground"
+                              : "font-normal text-muted-foreground"
+                              }`}
                           >
                             {notification.title}
                           </p>
                         </div>
 
                         <p
-                          className={`text-xs line-clamp-2 ${
-                            isUnread
-                              ? "text-muted-foreground"
-                              : "text-muted-foreground/70"
-                          }`}
+                          className={`text-xs line-clamp-2 ${isUnread
+                            ? "text-muted-foreground"
+                            : "text-muted-foreground/70"
+                            }`}
                         >
                           {notification.message}
                         </p>
 
                         <div className="flex items-center justify-between gap-2">
                           <div
-                            className={`flex items-center gap-1 text-xs ${
-                              isUnread
-                                ? "text-muted-foreground"
-                                : "text-muted-foreground/70"
-                            }`}
+                            className={`flex items-center gap-1 text-xs ${isUnread
+                              ? "text-muted-foreground"
+                              : "text-muted-foreground/70"
+                              }`}
                           >
                             {formatTimeAgo(notification.createdAt)}
                           </div>

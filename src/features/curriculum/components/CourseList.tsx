@@ -10,7 +10,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Edit, Eye, Loader2, Trash2, RotateCcw, MoreVertical } from "lucide-react";
+import { Edit, Eye, Loader2, Trash2, RotateCcw, MoreVertical, Plus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
     useGetAllCoursesQuery,
@@ -58,9 +58,9 @@ export function CourseList() {
     // Fetch filters data
     const { data: subjectsData } = useGetCurriculumsWithLevelsQuery();
 
-    // Fetch courses with filters
+    // Fetch courses with filters - uses /subjects endpoint
     const { data: courses } = useGetAllCoursesQuery({
-        subjectId: selectedSubjectId,
+        curriculumId: selectedSubjectId,
         levelId: selectedLevelId
     });
 
@@ -320,6 +320,16 @@ export function CourseList() {
 
     return (
         <div className="space-y-4">
+            {/* Title and Create Button */}
+            <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold">Danh sách Môn học</h2>
+                {isSubjectLeader && (
+                    <Button onClick={() => navigate("/curriculum/courses/create")}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Tạo Môn học
+                    </Button>
+                )}
+            </div>
             {/* Filter Section */}
             <div className="flex items-center gap-4">
                 <div className="w-[250px]">

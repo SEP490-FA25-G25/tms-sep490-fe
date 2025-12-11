@@ -43,7 +43,7 @@ import { toast } from "sonner";
 import * as z from "zod";
 
 const formSchema = z.object({
-    subjectId: z.number().min(1, "Vui lòng chọn môn học"),
+    curriculumId: z.number().min(1, "Vui lòng chọn khung chương trình"),
     code: z.string().min(1, "Mã cấp độ là bắt buộc"),
     name: z.string().min(1, "Tên cấp độ là bắt buộc"),
     description: z.string().optional().refine(
@@ -59,15 +59,15 @@ interface LevelDialogProps {
     onOpenChange: (open: boolean) => void;
     level?: {
         id: number;
-        subjectId: number;
+        curriculumId: number;
         code: string;
         name: string;
         description?: string;
     } | null;
-    subjectId?: number; // Pre-selected subject ID if creating from a filtered view
+    curriculumId?: number; // Pre-selected curriculum ID if creating from a filtered view
 }
 
-export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialogProps) {
+export function LevelDialog({ open, onOpenChange, level, curriculumId }: LevelDialogProps) {
     const { data: subjectsData, isLoading: isLoadingSubjects } = useGetCurriculumsWithLevelsQuery();
     const [createLevel, { isLoading: isCreating }] = useCreateLevelMutation();
     const [updateLevel, { isLoading: isUpdating }] = useUpdateLevelMutation();
@@ -76,13 +76,13 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
     const [codeError, setCodeError] = useState<string | null>(null);
     const [nameError, setNameError] = useState<string | null>(null);
 
-    // Get all subjects with their levels for duplicate check
-    const subjects = subjectsData?.data || [];
+    // Get all curriculums with their levels for duplicate check
+    const curriculums = subjectsData?.data || [];
 
     const form = useForm<LevelFormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            subjectId: 0,
+            curriculumId: 0,
             code: "",
             name: "",
             description: "",
@@ -93,14 +93,14 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
         if (open) {
             if (level) {
                 form.reset({
-                    subjectId: level.subjectId,
+                    curriculumId: level.curriculumId,
                     code: level.code,
                     name: level.name,
                     description: level.description || "",
                 });
             } else {
                 form.reset({
-                    subjectId: subjectId || 0,
+                    curriculumId: curriculumId || 0,
                     code: "",
                     name: "",
                     description: "",
@@ -110,7 +110,7 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
             setCodeError(null);
             setNameError(null);
         }
-    }, [level, open, subjectId, form]);
+    }, [level, open, curriculumId, form]);
 
     const handleOpenChangeWrapper = (newOpen: boolean) => {
         if (!newOpen && form.formState.isDirty) {
@@ -126,41 +126,41 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
         onOpenChange(false);
     };
 
-    // Validation functions for duplicate check within same subject
-    const validateCode = (code: string, currentSubjectId: number): string | null => {
+    // Validation functions for duplicate check within same curriculum
+    const validateCode = (code: string, currentCurriculumId: number): string | null => {
         const trimmedCode = code.trim().toLowerCase();
-        // Find the subject and check its levels
-        const subject = subjects.find(s => s.id === currentSubjectId);
-        if (!subject) return null;
-        
-        const isDuplicate = subject.levels?.some(
+        // Find the curriculum and check its levels
+        const curriculum = curriculums.find(s => s.id === currentCurriculumId);
+        if (!curriculum) return null;
+
+        const isDuplicate = curriculum.levels?.some(
             (l) => l.code.toLowerCase() === trimmedCode && String(l.id) !== String(level?.id)
         );
         if (isDuplicate) {
-            return "Mã cấp độ đã tồn tại trong môn học này";
+            return "Mã cấp độ đã tồn tại trong khung chương trình này";
         }
         return null;
     };
 
-    const validateName = (name: string, currentSubjectId: number): string | null => {
+    const validateName = (name: string, currentCurriculumId: number): string | null => {
         const trimmedName = name.trim().toLowerCase();
-        // Find the subject and check its levels
-        const subject = subjects.find(s => s.id === currentSubjectId);
-        if (!subject) return null;
-        
-        const isDuplicate = subject.levels?.some(
+        // Find the curriculum and check its levels
+        const curriculum = curriculums.find(s => s.id === currentCurriculumId);
+        if (!curriculum) return null;
+
+        const isDuplicate = curriculum.levels?.some(
             (l) => l.name.toLowerCase() === trimmedName && String(l.id) !== String(level?.id)
         );
         if (isDuplicate) {
-            return "Tên cấp độ đã tồn tại trong môn học này";
+            return "Tên cấp độ đã tồn tại trong khung chương trình này";
         }
         return null;
     };
 
     const onSubmit = async (values: LevelFormValues) => {
         // Validate duplicates before submit
-        const codeErr = validateCode(values.code, values.subjectId);
-        const nameErr = validateName(values.name, values.subjectId);
+        const codeErr = validateCode(values.code, values.curriculumId);
+        const nameErr = validateName(values.name, values.curriculumId);
 
         if (codeErr) {
             setCodeError(codeErr);
@@ -208,7 +208,7 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
                             <div className="grid grid-cols-2 gap-6">
                                 <FormField
                                     control={form.control}
-                                    name="subjectId"
+                                    name="curriculumId"
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Khung chương trình <span className="text-rose-500">*</span></FormLabel>
@@ -217,8 +217,8 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
                                                 <FormControl>
                                                     <Input
                                                         value={(() => {
-                                                            const subject = subjects.find(s => s.id === field.value);
-                                                            return subject ? `${subject.name} (${subject.code})` : "";
+                                                            const curriculum = curriculums.find(s => s.id === field.value);
+                                                            return curriculum ? `${curriculum.name} (${curriculum.code})` : "";
                                                         })()}
                                                         disabled
                                                         className="bg-muted"
@@ -232,13 +232,13 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
                                                 >
                                                     <FormControl>
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder="Chọn môn học" />
+                                                            <SelectValue placeholder="Chọn khung chương trình" />
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        {subjectsData?.data?.map((subject) => (
-                                                            <SelectItem key={subject.id} value={subject.id.toString()}>
-                                                                {subject.name} ({subject.code})
+                                                        {subjectsData?.data?.map((curriculum) => (
+                                                            <SelectItem key={curriculum.id} value={curriculum.id.toString()}>
+                                                                {curriculum.name} ({curriculum.code})
                                                             </SelectItem>
                                                         ))}
                                                     </SelectContent>
@@ -256,15 +256,15 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
                                         <FormItem>
                                             <FormLabel>Mã cấp độ <span className="text-rose-500">*</span></FormLabel>
                                             <FormControl>
-                                                <Input 
-                                                    placeholder="Ví dụ: L1" 
+                                                <Input
+                                                    placeholder="Ví dụ: L1"
                                                     {...field}
                                                     className={codeError ? "border-rose-500" : ""}
                                                     onChange={(e) => {
                                                         field.onChange(e);
-                                                        const currentSubjectId = form.getValues("subjectId");
-                                                        if (currentSubjectId) {
-                                                            setCodeError(validateCode(e.target.value, currentSubjectId));
+                                                        const currentCurriculumId = form.getValues("curriculumId");
+                                                        if (currentCurriculumId) {
+                                                            setCodeError(validateCode(e.target.value, currentCurriculumId));
                                                         }
                                                     }}
                                                 />
@@ -282,15 +282,15 @@ export function LevelDialog({ open, onOpenChange, level, subjectId }: LevelDialo
                                     <FormItem>
                                         <FormLabel>Tên cấp độ <span className="text-rose-500">*</span></FormLabel>
                                         <FormControl>
-                                            <Input 
-                                                placeholder="Ví dụ: Level 1" 
+                                            <Input
+                                                placeholder="Ví dụ: Level 1"
                                                 {...field}
                                                 className={nameError ? "border-rose-500" : ""}
                                                 onChange={(e) => {
                                                     field.onChange(e);
-                                                    const currentSubjectId = form.getValues("subjectId");
-                                                    if (currentSubjectId) {
-                                                        setNameError(validateName(e.target.value, currentSubjectId));
+                                                    const currentCurriculumId = form.getValues("curriculumId");
+                                                    if (currentCurriculumId) {
+                                                        setNameError(validateName(e.target.value, currentCurriculumId));
                                                     }
                                                 }}
                                             />

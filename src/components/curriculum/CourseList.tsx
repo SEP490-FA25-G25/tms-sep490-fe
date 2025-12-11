@@ -10,7 +10,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Edit, Eye, Loader2, Trash2, RotateCcw, MoreVertical, Copy, Calendar } from "lucide-react";
+import { Edit, Eye, Loader2, Trash2, RotateCcw, MoreVertical, Copy, Calendar, Plus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -61,9 +61,9 @@ export function CourseList() {
     // Fetch filters data
     const { data: subjectsData } = useGetCurriculumsWithLevelsQuery();
 
-    // Fetch courses with filters
+    // Fetch courses with filters - uses /subjects endpoint
     const { data: courses } = useGetAllCoursesQuery({
-        subjectId: selectedSubjectId,
+        curriculumId: selectedSubjectId,
         levelId: selectedLevelId
     });
 
@@ -349,7 +349,7 @@ export function CourseList() {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="w-full justify-start gap-2 h-9 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                className="w-full justify-start gap-2 h-9 px-2"
                                                 onClick={() => navigate(`/curriculum/courses/${course.id}/edit`)}
                                             >
                                                 <Edit className="h-4 w-4" />
@@ -360,11 +360,23 @@ export function CourseList() {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="w-full justify-start gap-2 h-9 px-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                                className="w-full justify-start gap-2 h-9 px-2"
                                                 onClick={() => navigate(`/curriculum/courses/${course.id}/edit`)}
                                             >
                                                 <Edit className="h-4 w-4" />
                                                 Chỉnh sửa
+                                            </Button>
+                                        )}
+                                        {course.status === 'PENDING_ACTIVATION' && (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="w-full justify-start gap-2 h-9 px-2"
+                                                onClick={() => navigate(`/curriculum/courses/${course.id}/edit`)}
+                                                title="Chỉnh sửa sẽ đưa môn học về trạng thái Nháp và cần phê duyệt lại"
+                                            >
+                                                <Edit className="h-4 w-4" />
+                                                Chỉnh sửa (cần duyệt lại)
                                             </Button>
                                         )}
                                         {/* Clone button - show for non-DRAFT courses */}
@@ -372,7 +384,7 @@ export function CourseList() {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="w-full justify-start gap-2 h-9 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                                                className="w-full justify-start gap-2 h-9 px-2"
                                                 onClick={() => setCourseToClone(course.id)}
                                             >
                                                 <Copy className="h-4 w-4" />
@@ -383,7 +395,7 @@ export function CourseList() {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="w-full justify-start gap-2 h-9 px-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                                className="w-full justify-start gap-2 h-9 px-2"
                                                 onClick={() => setCourseToReactivate(course.id)}
                                             >
                                                 <RotateCcw className="h-4 w-4" />
@@ -393,7 +405,7 @@ export function CourseList() {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="w-full justify-start gap-2 h-9 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                className="w-full justify-start gap-2 h-9 px-2"
                                                 onClick={() => setCourseToDelete(course.id)}
                                             >
                                                 <Trash2 className="h-4 w-4" />
@@ -404,7 +416,7 @@ export function CourseList() {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="w-full justify-start gap-2 h-9 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                className="w-full justify-start gap-2 h-9 px-2"
                                                 onClick={() => setCourseToDeletePermanently(course.id)}
                                             >
                                                 <Trash2 className="h-4 w-4" />
@@ -423,6 +435,16 @@ export function CourseList() {
 
     return (
         <div className="space-y-4">
+            {/* Title and Create Button */}
+            <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold">Danh sách Môn học</h2>
+                {isSubjectLeader && (
+                    <Button onClick={() => navigate("/curriculum/courses/create")}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Tạo Môn học
+                    </Button>
+                )}
+            </div>
             {/* Filter Section */}
             <div className="flex items-center gap-4">
                 <div className="w-[250px]">
