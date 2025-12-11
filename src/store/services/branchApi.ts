@@ -208,6 +208,17 @@ export const branchApi = createApi({
         { type: "ManagerBranch", id: `teachers-${id}` },
       ],
     }),
+
+    checkBranchEmailExists: builder.query<
+      ApiResponse<boolean>,
+      { email: string; excludeId?: number }
+    >({
+      query: ({ email, excludeId }) => {
+        const params = new URLSearchParams({ email });
+        if (excludeId) params.append("excludeId", excludeId.toString());
+        return `/manager/branches/check-email?${params.toString()}`;
+      },
+    }),
   }),
 });
 
@@ -225,6 +236,7 @@ export const {
   useUpdateManagerBranchMutation,
   useDeleteManagerBranchMutation,
   useGetManagerBranchTeachersQuery,
+  useCheckBranchEmailExistsQuery,
 } = branchApi;
 
 
