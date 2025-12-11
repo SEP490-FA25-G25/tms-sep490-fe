@@ -616,12 +616,18 @@ export const teacherRequestApi = createApi({
     }),
 
     // Get request detail
-    getRequestById: builder.query<TeacherRequestDetailResponse, number>({
-      query: (id) => ({
+    getRequestById: builder.query<
+      TeacherRequestDetailResponse,
+      { id: number; branchId?: number }
+    >({
+      query: ({ id, branchId }) => ({
         url: `/teacher-requests/${id}`,
         method: "GET",
+        params: branchId ? { branchId } : undefined,
       }),
-      providesTags: (_result, _error, id) => [{ type: "TeacherRequest", id }],
+      providesTags: (_result, _error, { id }) => [
+        { type: "TeacherRequest", id },
+      ],
     }),
 
     // Create request
@@ -640,12 +646,15 @@ export const teacherRequestApi = createApi({
     // Staff: Get all requests
     getStaffRequests: builder.query<
       TeacherRequestListResponse,
-      { status?: RequestStatus }
+      { status?: RequestStatus; branchId?: number }
     >({
-      query: ({ status }) => ({
+      query: ({ status, branchId }) => ({
         url: "/teacher-requests/staff",
         method: "GET",
-        params: status ? { status } : {},
+        params: {
+          ...(status ? { status } : {}),
+          ...(branchId ? { branchId } : {}),
+        },
       }),
       providesTags: ["TeacherRequest"],
     }),
@@ -715,22 +724,30 @@ export const teacherRequestApi = createApi({
     }),
 
     // Academic Staff: Get list of teachers
-    getTeachersForStaff: builder.query<TeachersListResponse, void>({
-      query: () => ({
-        url: "/teacher-requests/staff/teachers",
-        method: "GET",
-      }),
+    getTeachersForStaff: builder.query<
+      TeachersListResponse,
+      { branchId?: number } | void
+    >({
+      query: (args) => {
+        const branchId = args && "branchId" in args ? args.branchId : undefined;
+        return {
+          url: "/teacher-requests/staff/teachers",
+          method: "GET",
+          params: branchId ? { branchId } : undefined,
+        };
+      },
     }),
 
     // Academic Staff: Get teacher's sessions
     getTeacherSessionsForStaff: builder.query<
       MySessionsResponse,
-      { teacherId: number; date?: string; classId?: number }
+      { teacherId: number; date?: string; classId?: number; branchId?: number }
     >({
-      query: ({ teacherId, date, classId }) => {
+      query: ({ teacherId, date, classId, branchId }) => {
         const params: Record<string, string | number> = {};
         if (date) params.date = date;
         if (classId) params.classId = classId;
+        if (branchId) params.branchId = branchId;
         return {
           url: `/teacher-requests/staff/teachers/${teacherId}/sessions`,
           method: "GET",

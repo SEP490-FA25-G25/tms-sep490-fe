@@ -141,7 +141,7 @@ export default function SessionDetailsPage() {
     return (
         <DashboardLayout
             title={`Buổi học #${session.sessionId}`}
-            description={`${session.classCode} - ${session.courseName}`}
+            description={`${session.classCode} - ${session.subjectName}`}
         >
             <div className="space-y-6">
                 {/* Back Button */}
@@ -216,7 +216,7 @@ export default function SessionDetailsPage() {
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">Khóa học</p>
-                                <p className="font-medium">{session.courseName}</p>
+                                <p className="font-medium">{session.subjectName}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">Giáo viên</p>

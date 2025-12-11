@@ -18,10 +18,8 @@ import {
   ChevronDown,
   FileUp,
   UserPlus,
-  Edit,
   AlertCircle,
 } from 'lucide-react'
-import { Link } from 'react-router-dom'
 
 interface AAClassDetailHeaderProps {
   classData: ClassDetailDTO

@@ -21,12 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Clock,
-  Search,
-  Users,
-  Calendar,
-} from "lucide-react";
+import { Clock, Search, Users, Calendar } from "lucide-react";
 import {
   useGetTimeSlotsQuery,
   type TimeSlot,
@@ -43,18 +38,16 @@ export default function ManagerTimeSlotsPage() {
   const { data: managerBranchesResponse } = useGetManagerBranchesQuery();
   const managerBranches = useMemo(
     () => managerBranchesResponse?.data ?? [],
-    [managerBranchesResponse?.data],
+    [managerBranchesResponse?.data]
   );
 
-  const { data: timeSlots, isFetching } = useGetTimeSlotsQuery(
-    {
-      branchId: branchFilter === "ALL" ? undefined : branchFilter,
-    },
-  );
+  const { data: timeSlots, isFetching } = useGetTimeSlotsQuery({
+    branchId: branchFilter === "ALL" ? undefined : branchFilter,
+  });
 
   const managerBranchIds = useMemo(
     () => new Set(managerBranches.map((b) => b.id)),
-    [managerBranches],
+    [managerBranches]
   );
 
   const scopedTimeSlots = useMemo(() => {
@@ -71,7 +64,7 @@ export default function ManagerTimeSlotsPage() {
       result = result.filter(
         (ts) =>
           ts.name.toLowerCase().includes(q) ||
-          ts.branchName.toLowerCase().includes(q),
+          ts.branchName.toLowerCase().includes(q)
       );
     }
 
@@ -91,8 +84,9 @@ export default function ManagerTimeSlotsPage() {
 
   const stats = useMemo(() => {
     const total = filteredTimeSlots.length;
-    const active = filteredTimeSlots.filter((ts) => ts.status === "ACTIVE")
-      .length;
+    const active = filteredTimeSlots.filter(
+      (ts) => ts.status === "ACTIVE"
+    ).length;
     const inactive = total - active;
     return { total, active, inactive };
   }, [filteredTimeSlots]);
@@ -132,7 +126,9 @@ export default function ManagerTimeSlotsPage() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Đang hoạt động</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Đang hoạt động
+              </CardTitle>
               <Calendar className="h-4 w-4 text-emerald-500" />
             </CardHeader>
             <CardContent>
@@ -173,9 +169,7 @@ export default function ManagerTimeSlotsPage() {
           <div className="ml-auto flex flex-wrap items-center gap-3">
             <Select
               value={statusFilter}
-              onValueChange={(value) =>
-                setStatusFilter(value as StatusFilter)
-              }
+              onValueChange={(value) => setStatusFilter(value as StatusFilter)}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Trạng thái" />
@@ -190,9 +184,7 @@ export default function ManagerTimeSlotsPage() {
             <Select
               value={branchFilter.toString()}
               onValueChange={(value) =>
-                setBranchFilter(
-                  value === "ALL" ? "ALL" : parseInt(value, 10),
-                )
+                setBranchFilter(value === "ALL" ? "ALL" : parseInt(value, 10))
               }
             >
               <SelectTrigger className="w-[220px]">
@@ -308,7 +300,8 @@ export default function ManagerTimeSlotsPage() {
                                 : "Không có buổi học tương lai"}
                             </span>
                             <span>
-                              {ts.hasTeacherAvailability
+                              {(ts as { hasTeacherAvailability?: boolean })
+                                .hasTeacherAvailability
                                 ? "Được dùng trong lịch rảnh GV"
                                 : "Chưa được gắn vào lịch rảnh GV"}
                             </span>
@@ -349,5 +342,3 @@ export default function ManagerTimeSlotsPage() {
     </DashboardLayout>
   );
 }
-
-

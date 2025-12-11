@@ -11,6 +11,7 @@ import {
   useGetReplacementCandidatesQuery,
   type RequestType,
 } from "@/store/services/teacherRequestApi";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ReasonInput } from "@/components/teacher-requests/UnifiedTeacherRequestFlow";
@@ -109,6 +110,7 @@ export function RequestFormStep({
 }: RequestFormStepProps) {
   const teacherIdNumber = teacherIdProp;
   const sessionIdNumber = sessionIdProp;
+  const { selectedBranchId } = useAuth();
 
   // Form state
   const [reason, setReason] = useState("");
@@ -141,7 +143,7 @@ export function RequestFormStep({
     isFetching: isFetchingSession,
     error: sessionError,
   } = useGetTeacherSessionsForStaffQuery(
-    { teacherId: teacherIdNumber! },
+    { teacherId: teacherIdNumber!, branchId: selectedBranchId || undefined },
     {
       skip: !teacherIdNumber,
     }

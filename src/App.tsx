@@ -87,9 +87,6 @@ const AssessmentScoresPage = lazy(
 );
 const TeacherStudentsPage = lazy(() => import("./app/teacher/students/page"));
 const TeacherProfilePage = lazy(() => import("./app/teacher/profile/page"));
-const TeacherAvailabilityPage = lazy(
-  () => import("./app/teacher/availability/page")
-);
 
 // Student pages
 const StudentSchedulePage = lazy(() => import("./app/student/schedule/page"));
@@ -147,9 +144,6 @@ const CreateClassPage = lazy(
 );
 const EditClassPage = lazy(
   () => import("./app/academic/classes/[id]/edit/page")
-);
-const AvailabilityCampaignPage = lazy(
-  () => import("./app/academic/teacher-availability/page")
 );
 
 // Center Head pages
@@ -610,22 +604,6 @@ function App() {
                   }
                 />
                 <Route
-                  path="/teacher/availability"
-                  element={
-                    <ProtectedRoute
-                      requiredRoles={[
-                        "TEACHER",
-                        "ADMIN",
-                        "MANAGER",
-                        "CENTER_HEAD",
-                        "SUBJECT_LEADER",
-                      ]}
-                    >
-                      <TeacherAvailabilityPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
                   path="/teacher/requests/create/select-type"
                   element={
                     <ProtectedRoute
@@ -976,19 +954,8 @@ function App() {
                   }
                 />
                 <Route
-                  path="/academic/teacher-availability"
-                  element={
-                    <ProtectedRoute
-                      requiredRoles={[
-                        "ACADEMIC_AFFAIR",
-                        "ADMIN",
-                        "MANAGER",
-                        "CENTER_HEAD",
-                      ]}
-                    >
-                      <AvailabilityCampaignPage />
-                    </ProtectedRoute>
-                  }
+                  path="/curriculum"
+                  element={<Navigate to="/curriculum/curriculums" replace />}
                 />
 
                 {/* Curriculum routes */}

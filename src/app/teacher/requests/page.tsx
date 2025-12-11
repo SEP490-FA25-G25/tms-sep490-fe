@@ -16,6 +16,7 @@ import {
   type RequestStatus,
   type TeacherRequestDTO,
 } from "@/store/services/teacherRequestApi";
+import { skipToken } from "@reduxjs/toolkit/query";
 import { TeacherRoute } from "@/components/ProtectedRoute";
 import { useAuth } from "@/hooks/useAuth";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
@@ -392,7 +393,7 @@ export default function MyRequestsPage() {
   }, [displayedRequests, page]);
 
   const { data: detailData, isFetching: isLoadingDetail } =
-    useGetRequestByIdQuery(detailId ?? 0, {
+    useGetRequestByIdQuery(detailId !== null ? { id: detailId } : skipToken, {
       skip: detailId === null,
     });
 
@@ -1447,7 +1448,12 @@ export function TeacherRequestDetailContent({
             <p>
               Phương thức hiện tại:{" "}
               <span className="font-medium text-foreground">
-                {request.currentModality}
+                {request.currentModality.toUpperCase() === "OFFLINE"
+                  ? "Trực tiếp"
+                  : request.currentModality.toUpperCase() === "ONLINE" ||
+                    request.currentModality.toUpperCase() === "VIRTUAL"
+                  ? "Online"
+                  : request.currentModality}
               </span>
             </p>
           )}
@@ -1455,7 +1461,12 @@ export function TeacherRequestDetailContent({
             <p>
               Đề xuất mới:{" "}
               <span className="font-medium text-foreground">
-                {request.newModality}
+                {request.newModality.toUpperCase() === "OFFLINE"
+                  ? "Trực tiếp"
+                  : request.newModality.toUpperCase() === "ONLINE" ||
+                    request.newModality.toUpperCase() === "VIRTUAL"
+                  ? "Online"
+                  : request.newModality}
               </span>
             </p>
           )}

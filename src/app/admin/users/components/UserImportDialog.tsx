@@ -14,7 +14,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, XCircle, Loader2, Download } from 'lucide-react'
+import { Upload, AlertCircle, CheckCircle, XCircle, Loader2, Download } from 'lucide-react'
 import { toast } from 'sonner'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
@@ -49,7 +49,7 @@ export function UserImportDialog({ open, onOpenChange, onSuccess }: UserImportDi
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
         },
         maxFiles: 1,
-        onDrop: (acceptedFiles) => {
+        onDrop: (acceptedFiles: File[]) => {
             if (acceptedFiles.length > 0) {
                 setFile(acceptedFiles[0])
             }
@@ -79,8 +79,9 @@ export function UserImportDialog({ open, onOpenChange, onSuccess }: UserImportDi
             } else {
                 toast.error(response.message || 'Lỗi khi preview')
             }
-        } catch (error: any) {
-            toast.error(error?.data?.message || 'Lỗi khi upload file')
+        } catch (error: unknown) {
+            const message = (error as { data?: { message?: string } })?.data?.message
+            toast.error(message || 'Lỗi khi upload file')
         }
     }
 
@@ -101,8 +102,9 @@ export function UserImportDialog({ open, onOpenChange, onSuccess }: UserImportDi
             } else {
                 toast.error(response.message || 'Lỗi khi import')
             }
-        } catch (error: any) {
-            toast.error(error?.data?.message || 'Lỗi khi thực hiện import')
+        } catch (error: unknown) {
+            const message = (error as { data?: { message?: string } })?.data?.message
+            toast.error(message || 'Lỗi khi thực hiện import')
         }
     }
 
