@@ -5,9 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, SearchIcon, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  useGetTeachersForStaffQuery,
-} from "@/store/services/teacherRequestApi";
+import { useGetTeachersForStaffQuery } from "@/store/services/teacherRequestApi";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Empty,
@@ -15,18 +13,22 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function SelectTeacherPage() {
   const navigate = useNavigate();
-  const [selectedTeacherId, setSelectedTeacherId] = useState<number | undefined>();
+  const [selectedTeacherId, setSelectedTeacherId] = useState<
+    number | undefined
+  >();
   const [searchKeyword, setSearchKeyword] = useState("");
+  const { selectedBranchId } = useAuth();
 
   const {
     data: teachersResponse,
     isLoading,
     error,
     refetch,
-  } = useGetTeachersForStaffQuery();
+  } = useGetTeachersForStaffQuery({ branchId: selectedBranchId || undefined });
 
   const teachers = teachersResponse?.data ?? [];
 
@@ -43,7 +45,9 @@ export default function SelectTeacherPage() {
 
   const handleContinue = () => {
     if (!selectedTeacherId) return;
-    navigate(`/academic/teacher-requests/create/select-type?teacherId=${selectedTeacherId}`);
+    navigate(
+      `/academic/teacher-requests/create/select-type?teacherId=${selectedTeacherId}`
+    );
   };
 
   return (
@@ -155,4 +159,3 @@ export default function SelectTeacherPage() {
     </DashboardLayout>
   );
 }
-

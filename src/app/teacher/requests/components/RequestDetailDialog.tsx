@@ -403,6 +403,33 @@ function ModalityChangeRequestContent({
 }: {
   request: TeacherRequestDTO;
 }) {
+  const formatModality = (value?: string) => {
+    if (!value) return undefined;
+    const upper = value.toUpperCase();
+    if (upper === "OFFLINE") return "Trực tiếp";
+    if (upper === "ONLINE" || upper === "VIRTUAL") return "Online";
+    return value;
+  };
+
+  const currentModality = formatModality(request.currentModality);
+
+  const newModality =
+    formatModality(request.newModality || request.newResource?.type);
+
+  const currentResource =
+    request.currentResourceName || undefined;
+
+  const newResource =
+    request.newResourceName ||
+    (typeof request.newResource?.name === "string"
+      ? request.newResource.name
+      : undefined) ||
+    (typeof (request.newResource as { displayName?: unknown })?.displayName ===
+    "string"
+      ? (request.newResource as { displayName?: string }).displayName
+      : undefined) ||
+    undefined;
+
   return (
     <div className="rounded-xl border border-sky-200 bg-sky-50/50 dark:border-sky-900 dark:bg-sky-950/20 p-4">
       <div className="flex items-center gap-2 mb-3">
@@ -412,18 +439,15 @@ function ModalityChangeRequestContent({
         </h3>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <InfoItem
-          label="Phương thức hiện tại"
-          value={request.currentModality ?? "—"}
-        />
-        <InfoItem label="Phương thức mới" value={request.newModality ?? "—"} />
+        <InfoItem label="Phương thức hiện tại" value={currentModality ?? "—"} />
+        <InfoItem label="Phương thức mới" value={newModality ?? "—"} />
         <InfoItem
           label="Phòng học/Phương tiện hiện tại"
-          value={request.currentResourceName ?? "—"}
+          value={currentResource ?? "—"}
         />
         <InfoItem
           label="Phòng học/Phương tiện mới"
-          value={request.newResourceName ?? "—"}
+          value={newResource ?? "—"}
         />
       </div>
     </div>

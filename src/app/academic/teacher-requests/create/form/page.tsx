@@ -40,6 +40,7 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { useAuth } from "@/hooks/useAuth";
 
 // Helper function to format error messages
 const formatBackendError = (
@@ -79,23 +80,31 @@ export default function CreateRequestFormPage() {
   const requestType = searchParams.get("type") as RequestType;
 
   const teacherIdNumber = teacherId ? Number(teacherId) : undefined;
+  const { selectedBranchId } = useAuth();
   const sessionIdNumber = sessionId ? Number(sessionId) : undefined;
 
   const reasonLimit = 500;
 
   // Form state
   const [reason, setReason] = useState("");
-  
+
   // RESCHEDULE state
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-  const [selectedTimeSlotId, setSelectedTimeSlotId] = useState<number | undefined>();
-  const [selectedResourceId, setSelectedResourceId] = useState<number | undefined>();
-  
+  const [selectedTimeSlotId, setSelectedTimeSlotId] = useState<
+    number | undefined
+  >();
+  const [selectedResourceId, setSelectedResourceId] = useState<
+    number | undefined
+  >();
+
   // REPLACEMENT state
-  const [selectedReplacementTeacherId, setSelectedReplacementTeacherId] = useState<number | undefined>();
-  
+  const [selectedReplacementTeacherId, setSelectedReplacementTeacherId] =
+    useState<number | undefined>();
+
   // MODALITY_CHANGE state
-  const [selectedModalityResourceId, setSelectedModalityResourceId] = useState<number | undefined>();
+  const [selectedModalityResourceId, setSelectedModalityResourceId] = useState<
+    number | undefined
+  >();
 
   const [createRequest, { isLoading }] = useCreateRequestForTeacherMutation();
 
@@ -105,7 +114,7 @@ export default function CreateRequestFormPage() {
     isFetching: isFetchingSession,
     error: sessionError,
   } = useGetTeacherSessionsForStaffQuery(
-    { teacherId: teacherIdNumber! },
+    { teacherId: teacherIdNumber!, branchId: selectedBranchId || undefined },
     {
       skip: !teacherIdNumber,
     }
@@ -122,7 +131,9 @@ export default function CreateRequestFormPage() {
 
   // Load resources for MODALITY_CHANGE
   const shouldLoadModalityResources =
-    requestType === "MODALITY_CHANGE" && Boolean(sessionIdNumber) && Boolean(teacherIdNumber);
+    requestType === "MODALITY_CHANGE" &&
+    Boolean(sessionIdNumber) &&
+    Boolean(teacherIdNumber);
   const {
     data: modalityResourcesResponse,
     isFetching: isFetchingModalityResources,
@@ -206,7 +217,12 @@ export default function CreateRequestFormPage() {
   const replacementCandidates = candidatesResponse?.data ?? [];
 
   const handleSubmit = async () => {
-    if (!reason.trim() || !sessionIdNumber || !requestType || !teacherIdNumber) {
+    if (
+      !reason.trim() ||
+      !sessionIdNumber ||
+      !requestType ||
+      !teacherIdNumber
+    ) {
       toast.error("Vui lòng điền đầy đủ thông tin");
       return;
     }
@@ -244,7 +260,9 @@ export default function CreateRequestFormPage() {
         requestType,
         reason: reason.trim(),
         replacementTeacherId:
-          requestType === "REPLACEMENT" ? selectedReplacementTeacherId : undefined,
+          requestType === "REPLACEMENT"
+            ? selectedReplacementTeacherId
+            : undefined,
         newDate:
           requestType === "RESCHEDULE" && selectedDate
             ? format(selectedDate, "yyyy-MM-dd")
@@ -487,7 +505,8 @@ export default function CreateRequestFormPage() {
             ) : slotsError ? (
               <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
                 {formatBackendError(
-                  (slotsError as { data?: { message?: string } })?.data?.message,
+                  (slotsError as { data?: { message?: string } })?.data
+                    ?.message,
                   "Không thể tải danh sách khung giờ"
                 )}
               </div>
@@ -497,12 +516,8 @@ export default function CreateRequestFormPage() {
               </div>
             ) : (
               <Select
-                value={
-                  selectedTimeSlotId ? String(selectedTimeSlotId) : ""
-                }
-                onValueChange={(value) =>
-                  setSelectedTimeSlotId(Number(value))
-                }
+                value={selectedTimeSlotId ? String(selectedTimeSlotId) : ""}
+                onValueChange={(value) => setSelectedTimeSlotId(Number(value))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn khung giờ..." />
@@ -515,7 +530,9 @@ export default function CreateRequestFormPage() {
                       slot.name ||
                       slot.displayLabel ||
                       slot.timeSlotLabel ||
-                      `${slot.startTime || slot.startAt} - ${slot.endTime || slot.endAt}`;
+                      `${slot.startTime || slot.startAt} - ${
+                        slot.endTime || slot.endAt
+                      }`;
 
                     return (
                       <SelectItem
@@ -536,7 +553,8 @@ export default function CreateRequestFormPage() {
         {selectedDate && selectedTimeSlotId && (
           <div className="space-y-2">
             <Label className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Chọn phòng học/phương tiện <span className="text-destructive">*</span>
+              Chọn phòng học/phương tiện{" "}
+              <span className="text-destructive">*</span>
             </Label>
             {isFetchingRescheduleResources ? (
               <Skeleton className="h-10 w-full" />
@@ -555,9 +573,7 @@ export default function CreateRequestFormPage() {
             ) : (
               <Select
                 value={selectedResourceId ? String(selectedResourceId) : ""}
-                onValueChange={(value) =>
-                  setSelectedResourceId(Number(value))
-                }
+                onValueChange={(value) => setSelectedResourceId(Number(value))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn phòng học/phương tiện..." />
@@ -618,8 +634,8 @@ export default function CreateRequestFormPage() {
       return (
         <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
           {formatBackendError(
-            (modalityResourcesError as { data?: { message?: string } })
-              ?.data?.message,
+            (modalityResourcesError as { data?: { message?: string } })?.data
+              ?.message,
             "Không thể tải danh sách phòng học/phương tiện"
           )}
         </div>
@@ -641,9 +657,7 @@ export default function CreateRequestFormPage() {
         </Label>
         <Select
           value={
-            selectedModalityResourceId
-              ? String(selectedModalityResourceId)
-              : ""
+            selectedModalityResourceId ? String(selectedModalityResourceId) : ""
           }
           onValueChange={(value) =>
             setSelectedModalityResourceId(Number(value))
@@ -656,8 +670,7 @@ export default function CreateRequestFormPage() {
             {modalityResources.map((resource) => {
               const resourceId = resource.id ?? resource.resourceId;
               const resourceName = resource.name || "Chưa có tên";
-              const resourceType =
-                resource.type || resource.resourceType || "";
+              const resourceType = resource.type || resource.resourceType || "";
               const resourceCapacity = resource.capacity;
               const isCurrent = resource.currentResource;
 
@@ -772,9 +785,12 @@ export default function CreateRequestFormPage() {
               !reason.trim() ||
               !session ||
               isLoading ||
-              (requestType === "REPLACEMENT" && !selectedReplacementTeacherId) ||
+              (requestType === "REPLACEMENT" &&
+                !selectedReplacementTeacherId) ||
               (requestType === "RESCHEDULE" &&
-                (!selectedDate || !selectedTimeSlotId || !selectedResourceId)) ||
+                (!selectedDate ||
+                  !selectedTimeSlotId ||
+                  !selectedResourceId)) ||
               (requestType === "MODALITY_CHANGE" && !selectedModalityResourceId)
             }
           >
@@ -785,4 +801,3 @@ export default function CreateRequestFormPage() {
     </DashboardLayout>
   );
 }
-

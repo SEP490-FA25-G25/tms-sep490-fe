@@ -21,6 +21,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SelectSessionStepProps {
   teacherId: number;
@@ -45,6 +46,7 @@ export function SelectSessionStep({
   const [selectedSessionId, setSelectedSessionId] = useState<
     number | undefined
   >();
+  const { selectedBranchId } = useAuth();
 
   const {
     data: sessionsResponse,
@@ -53,7 +55,7 @@ export function SelectSessionStep({
     refetch,
     isFetching,
   } = useGetTeacherSessionsForStaffQuery(
-    { teacherId },
+    { teacherId, branchId: selectedBranchId || undefined },
     {
       skip: !teacherId,
     }
@@ -65,7 +67,10 @@ export function SelectSessionStep({
     }
   };
 
-  const sessions = useMemo(() => sessionsResponse?.data ?? [], [sessionsResponse]);
+  const sessions = useMemo(
+    () => sessionsResponse?.data ?? [],
+    [sessionsResponse]
+  );
   const isEmpty = !isLoading && !isFetching && sessions.length === 0;
 
   const renderContent = () => {
@@ -112,7 +117,8 @@ export function SelectSessionStep({
             </EmptyMedia>
             <EmptyTitle>Không có buổi học phù hợp</EmptyTitle>
             <EmptyDescription>
-              Giáo viên này không có buổi dạy nào trong 14 ngày tới để tạo yêu cầu.
+              Giáo viên này không có buổi dạy nào trong 14 ngày tới để tạo yêu
+              cầu.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -191,9 +197,7 @@ export function SelectSessionStep({
                     {session.topic || "Chưa cập nhật"}
                   </TableCell>
                   <TableCell className="text-center text-xs text-muted-foreground">
-                    {session.hasPendingRequest
-                      ? "Đang có yêu cầu"
-                      : "Không có"}
+                    {session.hasPendingRequest ? "Đang có yêu cầu" : "Không có"}
                   </TableCell>
                 </TableRow>
               );
@@ -222,4 +226,3 @@ export function SelectSessionStep({
     </div>
   );
 }
-

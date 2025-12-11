@@ -274,14 +274,16 @@ export default function CenterHeadTimeSlotsPage() {
                 const timeSlot = row.original;
                 const isActive = timeSlot.status === "ACTIVE";
                 const canDeactivate = !timeSlot.hasFutureSessions;
+                const hasTeacherAvailability =
+                    (timeSlot as { hasTeacherAvailability?: boolean }).hasTeacherAvailability ?? false;
                 // Can only delete if: INACTIVE + no sessions + no teacher availability
-                const canDelete = !isActive && !timeSlot.hasAnySessions && !timeSlot.hasTeacherAvailability;
+                const canDelete = !isActive && !timeSlot.hasAnySessions && !hasTeacherAvailability;
 
                 // Build reason for disabled delete
                 let deleteDisabledReason = "";
                 if (isActive) deleteDisabledReason = "cần ngưng HĐ";
                 else if (timeSlot.hasAnySessions) deleteDisabledReason = "đang sử dụng";
-                else if (timeSlot.hasTeacherAvailability) deleteDisabledReason = "có lịch GV";
+                else if (hasTeacherAvailability) deleteDisabledReason = "có lịch GV";
 
                 return (
                     <DropdownMenu>
