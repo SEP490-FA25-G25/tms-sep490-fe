@@ -23,9 +23,6 @@ import {
   MapPin,
   Mail,
   Phone,
-  Users,
-  BookOpen,
-  Monitor,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -164,7 +161,9 @@ function BranchCard({
               {branch.code} • {branch.centerName ?? "Chưa gán trung tâm"}
             </CardDescription>
           </div>
-          <Badge variant={statusVariant}>{branch.status ?? "UNKNOWN"}</Badge>
+          <Badge variant={statusVariant}>
+            {branch.status === "ACTIVE" ? "Hoạt động" : branch.status === "INACTIVE" ? "Không hoạt động" : "Không xác định"}
+          </Badge>
         </div>
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <Building2 className="h-4 w-4" />
@@ -212,55 +211,11 @@ function BranchCard({
             </p>
           )}
         </div>
-        <div className="grid grid-cols-3 gap-3">
-          <StatusTile
-            icon={BookOpen}
-            title="Lớp học"
-            active={branch.classStatus.active}
-            total={branch.classStatus.total}
-          />
-          <StatusTile
-            icon={Users}
-            title="Giáo viên"
-            active={branch.teacherStatus.active}
-            total={branch.teacherStatus.total}
-          />
-          <StatusTile
-            icon={Monitor}
-            title="Phòng & tài nguyên"
-            active={branch.resourceStatus.active}
-            total={branch.resourceStatus.total}
-          />
-        </div>
       </CardContent>
     </Card>
   );
 }
 
-function StatusTile({
-  title,
-  active,
-  total,
-  icon: Icon,
-}: {
-  title: string;
-  active: number;
-  total: number;
-  icon: typeof BookOpen;
-}) {
-  return (
-    <div className="rounded-lg border p-3 space-y-2">
-      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-        <Icon className="h-4 w-4" />
-        <span>{title}</span>
-      </div>
-      <div>
-        <p className="text-2xl font-semibold">{active}</p>
-        <p className="text-xs text-muted-foreground">/ {total} tổng số</p>
-      </div>
-    </div>
-  );
-}
 
 function getInitials(name?: string) {
   if (!name) return "CH";

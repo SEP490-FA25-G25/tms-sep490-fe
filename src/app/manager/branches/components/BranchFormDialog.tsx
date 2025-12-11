@@ -316,7 +316,7 @@ export function BranchFormDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ACTIVE">Đang hoạt động</SelectItem>
+                <SelectItem value="ACTIVE">Hoạt động</SelectItem>
                 <SelectItem value="INACTIVE">Không hoạt động</SelectItem>
               </SelectContent>
             </Select>

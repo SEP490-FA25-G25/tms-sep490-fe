@@ -1,15 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import {
   useGetManagerBranchByIdQuery,
-  useGetManagerBranchTeachersQuery,
   useUpdateManagerBranchMutation,
   type ManagerBranchOverview,
   type BranchRequest,
-  type ManagerBranchTeacher,
   useGetManagerBranchesQuery,
 } from "@/store/services/branchApi";
 import {
@@ -22,7 +20,6 @@ import {
 } from "@/store/services/managerStaffApi";
 import type { ManagerStaff } from "@/store/services/managerStaffApi";
 import type { ManagerTeacher as ManagerScopeTeacher } from "@/store/services/teacherApi";
-import { useGetCentersQuery } from "@/store/services/centerApi";
 import { useGetUsersQuery } from "@/store/services/userApi";
 import {
   Card,
@@ -52,27 +49,14 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  ArrowLeft,
   Building2,
   Mail,
   Phone,
   Users,
   BookOpen,
   Monitor,
-  UserCog,
-  UserCheck,
-  UserSquare2,
 } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { BranchFormDialog } from "../components/BranchFormDialog";
-import type { CenterResponse } from "@/store/services/centerApi";
 import type { UserResponse } from "@/store/services/userApi";
 import { toast } from "sonner";
 
@@ -80,7 +64,6 @@ export default function ManagerBranchDetailPage() {
   const { id } = useParams();
   const branchId = Number(id);
   const isValidId = Number.isFinite(branchId);
-  const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [showStaffDialog, setShowStaffDialog] = useState(false);
 
@@ -92,23 +75,7 @@ export default function ManagerBranchDetailPage() {
   } = useGetManagerBranchByIdQuery(branchId, { skip: !isValidId });
   const branch = branchResponse?.data;
 
-  const {
-    data: teacherResponse,
-    isLoading: isLoadingTeachers,
-    isFetching: isFetchingTeachers,
-  } = useGetManagerBranchTeachersQuery(branchId, {
-    skip: !branch,
-  });
-  const teachers: ManagerBranchTeacher[] = teacherResponse?.data ?? [];
-
-  const { data: centersResponse } = useGetCentersQuery({
-    page: 0,
-    size: 100,
-    sort: "name,asc",
-  });
-  const centers: CenterResponse[] = centersResponse?.data?.content ?? [];
-
-  const { data: centerHeadResponse, isFetching: isFetchingCenterHeads } =
+  const { data: centerHeadResponse } =
     useGetUsersQuery({
       page: 0,
       size: 50,
@@ -153,7 +120,7 @@ export default function ManagerBranchDetailPage() {
     } catch (error) {
       toast.error(
         (error as { data?: { message?: string } })?.data?.message ??
-          "Không thể cập nhật Center Head cho chi nhánh"
+        "Không thể cập nhật Center Head cho chi nhánh"
       );
     }
   };
@@ -167,7 +134,7 @@ export default function ManagerBranchDetailPage() {
     } catch (error) {
       toast.error(
         (error as { data?: { message?: string } })?.data?.message ??
-          "Không thể cập nhật chi nhánh"
+        "Không thể cập nhật chi nhánh"
       );
     }
   };
@@ -176,8 +143,8 @@ export default function ManagerBranchDetailPage() {
     branch?.status === "ACTIVE"
       ? "default"
       : branch?.status === "INACTIVE"
-      ? "secondary"
-      : "outline";
+        ? "secondary"
+        : "outline";
 
   const isDataLoading = isLoadingBranch || isFetchingBranch || !branch;
 
@@ -202,15 +169,6 @@ export default function ManagerBranchDetailPage() {
       }
     >
       <div className="space-y-6">
-        <Button
-          variant="ghost"
-          className="w-fit px-2 text-muted-foreground"
-          onClick={() => navigate("/manager/branches")}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Quay lại danh sách
-        </Button>
-
         {isDataLoading ? (
           <BranchDetailSkeleton />
         ) : !branch ? (
@@ -225,12 +183,6 @@ export default function ManagerBranchDetailPage() {
         ) : (
           <>
             <BranchSummaryCard branch={branch} statusVariant={statusVariant} />
-
-            <StaffOverviewSection />
-            <TeacherTable
-              teachers={teachers}
-              isLoading={isLoadingTeachers || isFetchingTeachers}
-            />
 
             <StaffAssignmentDialog
               open={showStaffDialog}
@@ -249,10 +201,6 @@ export default function ManagerBranchDetailPage() {
           open={showForm}
           onOpenChange={setShowForm}
           initialData={branch as ManagerBranchOverview}
-          centers={centers}
-          centerHeadOptions={centerHeadOptions}
-          loadingCenters={!centers.length}
-          loadingCenterHeads={isFetchingCenterHeads}
           onSubmit={handleSubmit}
           isSubmitting={isUpdating}
         />
@@ -367,62 +315,11 @@ function BranchSummaryCard({
         className="absolute right-4 top-4 px-3 py-1 text-xs font-semibold"
       >
         {branch.status === "ACTIVE"
-          ? "Đang hoạt động"
+          ? "Hoạt động"
           : branch.status === "INACTIVE"
-          ? "Tạm ngưng"
-          : branch.status ?? "UNKNOWN"}
+            ? "Không hoạt động"
+            : "Không xác định"}
       </Badge>
-    </Card>
-  );
-}
-
-function StaffOverviewSection() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Nhân sự chi nhánh</CardTitle>
-        <CardDescription>
-          Tổng quan Center Head, Academic Staff, QA Staff và giáo viên thuộc chi
-          nhánh. Phân bổ chi nhánh được thực hiện bởi Manager, tạo tài khoản do
-          Admin IT phụ trách.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="space-y-2 rounded-lg border p-4">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <UserSquare2 className="h-4 w-4" />
-              Center Head
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Center Head phụ trách chi nhánh, được Manager gán sau khi Admin IT
-              tạo tài khoản.
-            </p>
-          </div>
-
-          <div className="space-y-2 rounded-lg border p-4">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <UserCog className="h-4 w-4" />
-              Academic &amp; QA Staff
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Nhân sự học vụ và QA hỗ trợ chi nhánh. Manager sẽ phân bổ phạm vi
-              chi nhánh, nghiệp vụ chi tiết do từng bộ phận phụ trách.
-            </p>
-          </div>
-
-          <div className="space-y-2 rounded-lg border p-4">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <UserCheck className="h-4 w-4" />
-              Giáo viên
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Giáo viên cố định hoặc dạy nhiều chi nhánh. Quản lý chi tiết được
-              thực hiện tại màn hình &quot;Quản lý giáo viên&quot;.
-            </p>
-          </div>
-        </div>
-      </CardContent>
     </Card>
   );
 }
@@ -844,126 +741,6 @@ function TeacherAssignmentSection({
     </div>
   );
 }
-function TeacherTable({
-  teachers,
-  isLoading,
-}: {
-  teachers: ManagerBranchTeacher[];
-  isLoading: boolean;
-}) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | string>("all");
-
-  const filteredTeachers = teachers.filter((teacher) => {
-    const matchesSearch =
-      teacher.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      teacher.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || teacher.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Giáo viên thuộc chi nhánh</CardTitle>
-        <CardDescription className="space-y-3">
-          <p>Theo dõi trạng thái và số lớp mà mỗi giáo viên đang đảm nhiệm.</p>
-          <div className="flex flex-col gap-3 md:flex-row md:items-center">
-            <Input
-              placeholder="Tìm theo tên hoặc email"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              className="w-full md:flex-1"
-            />
-            <div className="flex w-full justify-end md:w-auto">
-              <Select
-                value={statusFilter}
-                onValueChange={(value) => setStatusFilter(value)}
-              >
-                <SelectTrigger className="w-full md:w-64">
-                  <SelectValue placeholder="Trạng thái" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                  <SelectItem value="ACTIVE">Đang hoạt động</SelectItem>
-                  <SelectItem value="INACTIVE">Tạm ngưng</SelectItem>
-                  <SelectItem value="SUSPENDED">Tạm khóa</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <Skeleton key={index} className="h-12 w-full" />
-            ))}
-          </div>
-        ) : filteredTeachers.length === 0 ? (
-          <div className="rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">
-            Không tìm thấy giáo viên phù hợp.
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Giáo viên</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Điện thoại</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead className="text-right">Lớp đang dạy</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTeachers.map((teacher) => (
-                <TableRow key={teacher.teacherId}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage src={teacher.avatarUrl ?? undefined} />
-                        <AvatarFallback>
-                          {getInitials(teacher.fullName)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="space-y-0.5">
-                        <p className="font-medium">{teacher.fullName}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {teacher.employeeCode ?? "Chưa có mã"}
-                        </p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm">{teacher.email}</TableCell>
-                  <TableCell className="text-sm">
-                    {teacher.phone ?? "—"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        teacher.status === "ACTIVE" ? "outline" : "secondary"
-                      }
-                    >
-                      {getStatusLabel(teacher.status)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right text-sm">
-                    <span className="font-semibold">
-                      {teacher.activeClasses}
-                    </span>{" "}
-                    / {teacher.totalClasses}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
 
 function BranchDetailSkeleton() {
   return (
@@ -991,11 +768,9 @@ function getInitials(name?: string) {
 function getStatusLabel(status?: string) {
   switch (status) {
     case "ACTIVE":
-      return "Đang hoạt động";
+      return "Hoạt động";
     case "INACTIVE":
-      return "Tạm ngưng";
-    case "SUSPENDED":
-      return "Tạm khóa";
+      return "Không hoạt động";
     default:
       return "Không xác định";
   }
