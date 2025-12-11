@@ -7,7 +7,7 @@ import {
   ArrowLeftRight,
   CalendarClock,
   UserRoundCheck,
-  Plus,
+  ChevronDown,
   RotateCcwIcon,
   CalendarIcon,
 } from "lucide-react";
@@ -52,6 +52,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -149,6 +156,8 @@ const formatTimeRange = (start?: string | null, end?: string | null) => {
 
 export default function AcademicTeacherRequestsPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [createRequestTypePreset, setCreateRequestTypePreset] =
+    useState<TeacherRequestType | undefined>(undefined);
 
   // Teacher request filter states
   const [teacherTypeFilter, setTeacherTypeFilter] = useState<
@@ -612,10 +621,44 @@ export default function AcademicTeacherRequestsPage() {
       title="Quản lý yêu cầu giáo viên"
       description="Xem xét và phê duyệt các yêu cầu xin đổi lịch, dạy thay, đổi phương thức dạy của giáo viên"
       actions={
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Tạo yêu cầu cho giáo viên
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm">
+              Tạo yêu cầu cho giáo viên
+              <ChevronDown className="h-4 w-4 ml-2" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-60">
+            <DropdownMenuLabel>Chọn loại yêu cầu</DropdownMenuLabel>
+            <DropdownMenuItem
+              onClick={() => {
+                setCreateRequestTypePreset("MODALITY_CHANGE");
+                setIsCreateDialogOpen(true);
+              }}
+            >
+              <ArrowLeftRight className="h-4 w-4 mr-2" />
+              Thay đổi phương thức
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setCreateRequestTypePreset("RESCHEDULE");
+                setIsCreateDialogOpen(true);
+              }}
+            >
+              <CalendarClock className="h-4 w-4 mr-2" />
+              Đổi lịch
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setCreateRequestTypePreset("REPLACEMENT");
+                setIsCreateDialogOpen(true);
+              }}
+            >
+              <UserRoundCheck className="h-4 w-4 mr-2" />
+              Nhờ dạy thay
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       }
     >
       <div className="space-y-6">
@@ -1679,10 +1722,14 @@ export default function AcademicTeacherRequestsPage() {
         onOpenChange={(open) => {
           setIsCreateDialogOpen(open);
           if (!open) {
+            setCreateRequestTypePreset(undefined);
+          }
+          if (!open) {
             // Refetch requests when dialog closes after successful creation
             refetchTeacherRequests();
           }
         }}
+        initialRequestType={createRequestTypePreset}
       />
     </DashboardLayout>
   );

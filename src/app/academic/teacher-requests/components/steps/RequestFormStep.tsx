@@ -38,6 +38,7 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
+import type { RequestSelectionState } from "../CreateRequestDialog";
 
 // Hiển thị khung giờ dạng 8:40-10:10AM (nếu cùng AM/PM) hoặc 11:30AM-12:30PM (khác AM/PM)
 const formatTimeRange = (start?: string | null, end?: string | null) => {
@@ -67,7 +68,10 @@ interface RequestFormStepProps {
   teacherId: number;
   sessionId: number;
   requestType: RequestType;
-  onSuccess: () => void;
+  mode: "info" | "reason";
+  selectionState?: RequestSelectionState;
+  onInfoNext?: (state: RequestSelectionState) => void;
+  onSuccess?: () => void;
   onBack: () => void;
 }
 
@@ -105,6 +109,9 @@ export function RequestFormStep({
   teacherId: teacherIdProp,
   sessionId: sessionIdProp,
   requestType,
+  mode,
+  selectionState,
+  onInfoNext,
   onSuccess,
   onBack,
 }: RequestFormStepProps) {
@@ -134,6 +141,32 @@ export function RequestFormStep({
   const [selectedModalityResourceId, setSelectedModalityResourceId] = useState<
     number | undefined
   >();
+  const [selectedTimeSlotLabel, setSelectedTimeSlotLabel] = useState<string | undefined>();
+  const [selectedResourceLabel, setSelectedResourceLabel] = useState<string | undefined>();
+  const [selectedModalityResourceLabel, setSelectedModalityResourceLabel] = useState<
+    string | undefined
+  >();
+
+  // Hydrate from selectionState when provided (reason step)
+  useEffect(() => {
+    if (selectionState) {
+      if (selectionState.selectedDate) setSelectedDate(selectionState.selectedDate);
+      if (selectionState.selectedTimeSlotId)
+        setSelectedTimeSlotId(selectionState.selectedTimeSlotId);
+      if (selectionState.selectedResourceId)
+        setSelectedResourceId(selectionState.selectedResourceId);
+      if (selectionState.selectedReplacementTeacherId)
+        setSelectedReplacementTeacherId(selectionState.selectedReplacementTeacherId);
+      if (selectionState.selectedModalityResourceId)
+        setSelectedModalityResourceId(selectionState.selectedModalityResourceId);
+      if (selectionState.selectedTimeSlotLabel)
+        setSelectedTimeSlotLabel(selectionState.selectedTimeSlotLabel);
+      if (selectionState.selectedResourceLabel)
+        setSelectedResourceLabel(selectionState.selectedResourceLabel);
+      if (selectionState.selectedModalityResourceLabel)
+        setSelectedModalityResourceLabel(selectionState.selectedModalityResourceLabel);
+    }
+  }, [selectionState]);
 
   const [createRequest, { isLoading }] = useCreateRequestForTeacherMutation();
 
@@ -263,24 +296,135 @@ export function RequestFormStep({
     }
   }, [requestType, selectedModalityResourceId, modalityResources]);
 
+  const findSlotById = (slotId?: number) =>
+    slots.find(
+      (s) => (s.timeSlotTemplateId ?? s.timeSlotId ?? s.id) === (slotId ?? 0)
+    );
+
+  const findResourceById = (rid?: number) =>
+    rescheduleResources.find(
+      (item) => (item.id ?? item.resourceId) === (rid ?? 0)
+    ) ||
+    modalityResources.find((item) => (item.id ?? item.resourceId) === (rid ?? 0));
+
+  const getSlotLabel = (slotId?: number) => {
+    const slot = findSlotById(slotId);
+    if (!slot) return undefined;
+    const formattedRange = formatTimeRange(
+      slot.startTime || slot.startAt,
+      slot.endTime || slot.endAt
+    );
+    const fallbackRange = `${slot.startTime || slot.startAt} - ${
+      slot.endTime || slot.endAt
+    }`;
+    return (
+      formattedRange ||
+      fallbackRange ||
+      slot.title ||
+      slot.name ||
+      (slot.timeSlotTemplateId ?? slot.timeSlotId ?? slot.id)?.toString()
+    );
+  };
+
+  const getResourceLabel = (rid?: number) => {
+    const r = findResourceById(rid);
+    return (
+      r?.name ||
+      r?.type ||
+      r?.resourceType ||
+      (rid ? `Phòng/phương tiện ${rid}` : undefined)
+    );
+  };
+
   const handleSubmit = async () => {
     const trimmedReason = reason.trim();
-    if (
-      !trimmedReason ||
-      !sessionIdNumber ||
-      !requestType ||
-      !teacherIdNumber
-    ) {
-      toast.error("Vui lòng điền đầy đủ thông tin");
+    const baseSelection = selectionState || {};
+
+    const effectiveReplacementTeacherId =
+      baseSelection.selectedReplacementTeacherId ?? selectedReplacementTeacherId;
+    const effectiveDate = baseSelection.selectedDate ?? selectedDate;
+    const effectiveTimeSlotId =
+      baseSelection.selectedTimeSlotId ?? selectedTimeSlotId;
+    const effectiveResourceId =
+      baseSelection.selectedResourceId ?? selectedResourceId;
+    const effectiveModalityResourceId =
+      baseSelection.selectedModalityResourceId ?? selectedModalityResourceId;
+
+    if (mode === "reason") {
+      // Validate reason and required selections already gathered
+      if (requestType === "REPLACEMENT" && !effectiveReplacementTeacherId) {
+        toast.error("Vui lòng chọn giáo viên dạy thay");
+        return;
+      }
+      if (requestType === "RESCHEDULE") {
+        if (!effectiveDate) {
+          toast.error("Vui lòng chọn ngày mới");
+          return;
+        }
+        if (!effectiveTimeSlotId) {
+          toast.error("Vui lòng chọn khung giờ mới");
+          return;
+        }
+        if (!effectiveResourceId) {
+          toast.error("Vui lòng chọn phòng học/phương tiện");
+          return;
+        }
+      }
+      if (requestType === "MODALITY_CHANGE" && !effectiveModalityResourceId) {
+        toast.error("Vui lòng chọn phòng học/phương tiện");
+        return;
+      }
+
+      if (!trimmedReason || trimmedReason.length < REASON_MIN_LENGTH) {
+        setReasonError(`Lý do phải có tối thiểu ${REASON_MIN_LENGTH} ký tự`);
+        return;
+      }
+
+      try {
+        await createRequest({
+          teacherId: teacherIdNumber!,
+          sessionId: sessionIdNumber!,
+          requestType,
+          reason: trimmedReason,
+          replacementTeacherId:
+            requestType === "REPLACEMENT"
+              ? effectiveReplacementTeacherId
+              : undefined,
+          newDate:
+            requestType === "RESCHEDULE" && effectiveDate
+              ? format(effectiveDate, "yyyy-MM-dd")
+              : undefined,
+          newTimeSlotId:
+            requestType === "RESCHEDULE" && effectiveTimeSlotId
+              ? effectiveTimeSlotId
+              : undefined,
+          newResourceId:
+            requestType === "RESCHEDULE"
+              ? effectiveResourceId
+              : requestType === "MODALITY_CHANGE"
+              ? effectiveModalityResourceId
+              : undefined,
+        }).unwrap();
+
+        const statusMessage =
+          requestType === "REPLACEMENT"
+            ? "Yêu cầu đã được tạo, đang chờ giáo viên dạy thay xác nhận"
+            : "Yêu cầu đã được tạo và tự động phê duyệt";
+        toast.success(statusMessage);
+        onSuccess?.();
+      } catch (error: unknown) {
+        const apiError = error as { data?: { message?: string } };
+        toast.error(
+          formatBackendError(
+            apiError?.data?.message,
+            "Có lỗi xảy ra khi tạo yêu cầu"
+          )
+        );
+      }
       return;
     }
 
-    if (trimmedReason.length < REASON_MIN_LENGTH) {
-      setReasonError(`Lý do phải có tối thiểu ${REASON_MIN_LENGTH} ký tự`);
-      return;
-    }
-
-    // Validate based on request type
+    // mode === "info": validate selections then go next
     if (requestType === "REPLACEMENT" && !selectedReplacementTeacherId) {
       toast.error("Vui lòng chọn giáo viên dạy thay");
       return;
@@ -306,45 +450,32 @@ export function RequestFormStep({
       return;
     }
 
-    try {
-      await createRequest({
-        teacherId: teacherIdNumber,
-        sessionId: sessionIdNumber,
-        requestType,
-        reason: trimmedReason,
-        replacementTeacherId:
-          requestType === "REPLACEMENT"
-            ? selectedReplacementTeacherId
-            : undefined,
-        newDate:
-          requestType === "RESCHEDULE" && selectedDate
-            ? format(selectedDate, "yyyy-MM-dd")
-            : undefined,
-        newTimeSlotId:
-          requestType === "RESCHEDULE" ? selectedTimeSlotId : undefined,
-        newResourceId:
-          requestType === "RESCHEDULE"
-            ? selectedResourceId
-            : requestType === "MODALITY_CHANGE"
-            ? selectedModalityResourceId
-            : undefined,
-      }).unwrap();
+    // Capture labels for summary in next step
+    const timeSlotLabel =
+      requestType === "RESCHEDULE"
+        ? selectedTimeSlotLabel || getSlotLabel(selectedTimeSlotId)
+        : undefined;
 
-      const statusMessage =
-        requestType === "REPLACEMENT"
-          ? "Yêu cầu đã được tạo, đang chờ giáo viên dạy thay xác nhận"
-          : "Yêu cầu đã được tạo và tự động phê duyệt";
-      toast.success(statusMessage);
-      onSuccess();
-    } catch (error: unknown) {
-      const apiError = error as { data?: { message?: string } };
-      toast.error(
-        formatBackendError(
-          apiError?.data?.message,
-          "Có lỗi xảy ra khi tạo yêu cầu"
-        )
-      );
-    }
+    const resourceLabel =
+      requestType === "RESCHEDULE"
+        ? selectedResourceLabel || getResourceLabel(selectedResourceId)
+        : undefined;
+
+    const modalityResourceLabel =
+      requestType === "MODALITY_CHANGE"
+        ? selectedModalityResourceLabel || getResourceLabel(selectedModalityResourceId)
+        : undefined;
+
+    onInfoNext?.({
+      selectedDate,
+      selectedTimeSlotId,
+      selectedResourceId,
+      selectedReplacementTeacherId,
+      selectedModalityResourceId,
+      selectedTimeSlotLabel: timeSlotLabel,
+      selectedResourceLabel: resourceLabel,
+      selectedModalityResourceLabel: modalityResourceLabel,
+    });
   };
 
   const renderSessionSection = () => {
@@ -575,7 +706,27 @@ export function RequestFormStep({
                     ? String(selectedTimeSlotId)
                     : undefined
                 }
-                onValueChange={(value) => setSelectedTimeSlotId(Number(value))}
+                onValueChange={(value) => {
+                  const slotId = Number(value);
+                  setSelectedTimeSlotId(slotId);
+                  const slot =
+                    slots.find(
+                      (s) =>
+                        (s.timeSlotTemplateId ?? s.timeSlotId ?? s.id) === slotId
+                    );
+                  const formattedRange =
+                    slot &&
+                    formatTimeRange(slot.startTime || slot.startAt, slot.endTime || slot.endAt);
+                  const fallbackRange =
+                    slot && `${slot.startTime || slot.startAt} - ${slot.endTime || slot.endAt}`;
+                  const label =
+                    formattedRange ||
+                    fallbackRange ||
+                    slot?.title ||
+                    slot?.name ||
+                    (slot ? `Slot ${slotId}` : `Slot ${slotId}`);
+                  setSelectedTimeSlotLabel(label);
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn khung giờ..." />
@@ -647,7 +798,23 @@ export function RequestFormStep({
                     ? String(selectedResourceId)
                     : undefined
                 }
-                onValueChange={(value) => setSelectedResourceId(Number(value))}
+                onValueChange={(value) => {
+                  const rid = Number(value);
+                  setSelectedResourceId(rid);
+                  const r =
+                    rescheduleResources.find(
+                      (item) => (item.id ?? item.resourceId) === (rid ?? 0)
+                    ) ||
+                    modalityResources.find(
+                      (item) => (item.id ?? item.resourceId) === (rid ?? 0)
+                    );
+                  const label =
+                    r?.name ||
+                    r?.type ||
+                    r?.resourceType ||
+                    (rid ? `Phòng/phương tiện ${rid}` : undefined);
+                  setSelectedResourceLabel(label);
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn phòng học/phương tiện..." />
@@ -758,9 +925,19 @@ export function RequestFormStep({
               ? String(modalitySelectValue)
               : ""
           }
-          onValueChange={(value) =>
-            setSelectedModalityResourceId(Number(value))
-          }
+          onValueChange={(value) => {
+            const rid = Number(value);
+            setSelectedModalityResourceId(rid);
+            const r = modalityResources.find(
+              (item) => (item.id ?? item.resourceId) === (rid ?? 0)
+            );
+            const label =
+              r?.name ||
+              r?.type ||
+              r?.resourceType ||
+              (rid ? `Phòng/phương tiện ${rid}` : undefined);
+            setSelectedModalityResourceLabel(label);
+          }}
         >
           <SelectTrigger>
             <SelectValue placeholder="Chọn phòng học/phương tiện..." />
@@ -838,71 +1015,183 @@ export function RequestFormStep({
               ? "Thông tin lịch mới"
               : "Thông tin phương tiện mới"}
           </h2>
-          {renderReplacementSection()}
-          {renderRescheduleSection()}
-          {renderModalityChangeSection()}
+          {mode === "info" ? (
+            <>
+              {renderReplacementSection()}
+              {renderRescheduleSection()}
+              {renderModalityChangeSection()}
+            </>
+          ) : (
+            <div className="space-y-3 text-sm text-muted-foreground">
+              {requestType === "REPLACEMENT" && (
+                <p>
+                  Giáo viên dạy thay:{" "}
+                  <span className="font-medium text-foreground">
+                    {replacementCandidates.find(
+                      (c) =>
+                        (c.teacherId ?? (c as { id?: number }).id) ===
+                        (selectionState?.selectedReplacementTeacherId ??
+                          selectedReplacementTeacherId)
+                    )?.fullName || "Chưa chọn"}
+                  </span>
+                </p>
+              )}
+              {requestType === "RESCHEDULE" && (
+                <>
+                  <p>
+                    Ngày mới:{" "}
+                    <span className="font-medium text-foreground">
+                      {selectionState?.selectedDate
+                        ? format(selectionState.selectedDate, "dd/MM/yyyy", { locale: vi })
+                        : selectedDate
+                        ? format(selectedDate, "dd/MM/yyyy", { locale: vi })
+                        : "Chưa chọn"}
+                    </span>
+                  </p>
+                  <p>
+                    Khung giờ:{" "}
+                    <span className="font-medium text-foreground">
+                      {(() => {
+                        const slotId =
+                          selectionState?.selectedTimeSlotId ?? selectedTimeSlotId;
+                        const slotLabel =
+                          selectionState?.selectedTimeSlotLabel ??
+                          selectedTimeSlotLabel ??
+                          getSlotLabel(slotId);
+                        if (slotLabel) return slotLabel;
+                        if (slotId) return `Khung giờ đã chọn (ID: ${slotId})`;
+                        return "Chưa chọn";
+                      })()}
+                    </span>
+                  </p>
+                  <p>
+                    Phòng/phương tiện:{" "}
+                    <span className="font-medium text-foreground">
+                      {(() => {
+                        const rid =
+                          selectionState?.selectedResourceId ??
+                          selectedResourceId;
+                        const label =
+                          selectionState?.selectedResourceLabel ??
+                          selectedResourceLabel ??
+                          getResourceLabel(rid);
+                        if (label) return label;
+                        if (rid) return `Phòng/phương tiện đã chọn (ID: ${rid})`;
+                        return "Chưa chọn";
+                      })()}
+                    </span>
+                  </p>
+                </>
+              )}
+              {requestType === "MODALITY_CHANGE" && (
+                <p>
+                  Phòng/phương tiện:{" "}
+                  <span className="font-medium text-foreground">
+                    {(() => {
+                      const rid =
+                        selectionState?.selectedModalityResourceId ??
+                        selectedModalityResourceId;
+                      const label =
+                        selectionState?.selectedModalityResourceLabel ??
+                        selectedModalityResourceLabel ??
+                        getResourceLabel(rid);
+                      if (label) return label;
+                      if (rid) return `Phòng/phương tiện đã chọn (ID: ${rid})`;
+                      return "Chưa chọn";
+                    })()}
+                  </span>
+                </p>
+              )}
+            </div>
+          )}
         </section>
       )}
 
-      {/* Reason */}
-      <section className="rounded-2xl border border-border/70 p-4">
-        <Label
-          htmlFor="reason"
-          className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
-        >
-          Lý do yêu cầu <span className="text-destructive">*</span>
-        </Label>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Hãy mô tả rõ lý do tạo yêu cầu này.
-        </p>
-        <div className="mt-4">
-          <ReasonInput
-            value={reason}
-            onChange={(val) => {
-              setReason(val);
-              if (reasonError && val.trim().length >= REASON_MIN_LENGTH) {
-                setReasonError(null);
-              }
-            }}
-            placeholder="Ví dụ: Giáo viên có việc đột xuất cần đổi lịch..."
-            error={reasonError}
-            minLength={REASON_MIN_LENGTH}
-          />
-        </div>
-      </section>
+      {mode === "reason" && (
+        <section className="rounded-2xl border border-border/70 p-4">
+          <Label
+            htmlFor="reason"
+            className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
+          >
+            Lý do yêu cầu <span className="text-destructive">*</span>
+          </Label>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Hãy mô tả rõ lý do tạo yêu cầu này.
+          </p>
+          <div className="mt-4">
+            <ReasonInput
+              value={reason}
+              onChange={(val) => {
+                setReason(val);
+                if (reasonError && val.trim().length >= REASON_MIN_LENGTH) {
+                  setReasonError(null);
+                }
+              }}
+              placeholder="Ví dụ: Giáo viên có việc đột xuất cần đổi lịch..."
+              error={reasonError}
+              minLength={REASON_MIN_LENGTH}
+            />
+          </div>
+        </section>
+      )}
 
       {/* Footer */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-4">
-        <div>
-          <Button variant="ghost" onClick={onBack}>
-            Quay lại
-          </Button>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={handleSubmit}
-            disabled={
-              !reason.trim() ||
-              reason.trim().length < REASON_MIN_LENGTH ||
-              !session ||
-              isLoading ||
-              (requestType === "REPLACEMENT" &&
-                !selectedReplacementTeacherId) ||
-              (requestType === "RESCHEDULE" &&
-                (!selectedDate ||
-                  !selectedTimeSlotId ||
-                  !selectedResourceId)) ||
-              (requestType === "MODALITY_CHANGE" &&
-                (!selectedModalityResourceId ||
-                  !modalityResources.some(
-                    (r) => (r.id ?? r.resourceId) === selectedModalityResourceId
-                  )))
-            }
-          >
-            {isLoading ? "Đang tạo..." : "Tạo yêu cầu"}
-          </Button>
-        </div>
-      </div>
+      {(() => {
+        const effectiveReplacementTeacherId =
+          selectionState?.selectedReplacementTeacherId ??
+          selectedReplacementTeacherId;
+        const effectiveDate = selectionState?.selectedDate ?? selectedDate;
+        const effectiveTimeSlotId =
+          selectionState?.selectedTimeSlotId ?? selectedTimeSlotId;
+        const effectiveResourceId =
+          selectionState?.selectedResourceId ?? selectedResourceId;
+        const effectiveModalityResourceId =
+          selectionState?.selectedModalityResourceId ?? selectedModalityResourceId;
+
+        const isInfoInvalid =
+          (requestType === "REPLACEMENT" && !selectedReplacementTeacherId) ||
+          (requestType === "RESCHEDULE" &&
+            (!selectedDate || !selectedTimeSlotId || !selectedResourceId)) ||
+          (requestType === "MODALITY_CHANGE" &&
+            (!selectedModalityResourceId ||
+              !modalityResources.some(
+                (r) => (r.id ?? r.resourceId) === selectedModalityResourceId
+              )));
+
+        const isReasonInvalid =
+          mode === "reason" &&
+          (!reason.trim() ||
+            reason.trim().length < REASON_MIN_LENGTH ||
+            (requestType === "REPLACEMENT" && !effectiveReplacementTeacherId) ||
+            (requestType === "RESCHEDULE" &&
+              (!effectiveDate || !effectiveTimeSlotId || !effectiveResourceId)) ||
+            (requestType === "MODALITY_CHANGE" && !effectiveModalityResourceId));
+
+        return (
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-4">
+            <div>
+              <Button variant="ghost" onClick={onBack}>
+                Quay lại
+              </Button>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={handleSubmit}
+                disabled={
+                  isLoading ||
+                  (mode === "info" ? isInfoInvalid : isReasonInvalid)
+                }
+              >
+                {mode === "info"
+                  ? "Tiếp tục"
+                  : isLoading
+                  ? "Đang tạo..."
+                  : "Tạo yêu cầu"}
+              </Button>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

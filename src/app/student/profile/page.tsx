@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { useGetMyProfileQuery, useUpdateMyProfileMutation, type UpdateMyProfileRequest, type StudentActiveClass } from "@/store/services/studentProfileApi";
+import { useGetMyProfileQuery, useUpdateMyProfileMutation, type UpdateMyProfileRequest } from "@/store/services/studentProfileApi";
 import { useUploadFileMutation } from "@/store/services/uploadApi";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
