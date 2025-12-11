@@ -107,6 +107,13 @@ export const qaApi = createApi({
       providesTags: (_result, _error, classId) => [{ type: 'QASession', id: classId }],
     }),
 
+    // Class Scores
+    getQAClassScores: builder.query<import('@/types/qa').QAClassScoresDTO, number>({
+      query: (classId) => `/qa/classes/${classId}/scores`,
+      transformResponse: (response: { data: import('@/types/qa').QAClassScoresDTO }) => response.data,
+      providesTags: (_result, _error, classId) => [{ type: 'QAClass', id: `scores-${classId}` }],
+    }),
+
     // Session Detail
     getSessionDetail: builder.query<SessionDetailDTO, number>({
       query: (sessionId) => `/qa/sessions/${sessionId}`,
@@ -250,6 +257,7 @@ export const {
   useGetQAClassesQuery,
   useGetQAClassDetailQuery,
   useGetQASessionListQuery,
+  useGetQAClassScoresQuery,
   useGetSessionDetailQuery,
   useGetQAReportsQuery,
   useGetQAReportDetailQuery,

@@ -110,6 +110,17 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
         return "text-rose-600"
     }
 
+    const formatTimeRange = (startTime?: string, endTime?: string, fallback?: string): string => {
+        if (!startTime || !endTime) return fallback || "TBA"
+        
+        const formatTime = (time: string) => {
+            const parts = time.split(":")
+            return `${parts[0]}:${parts[1]}`
+        }
+        
+        return `${formatTime(startTime)} - ${formatTime(endTime)}`
+    }
+
     const getStatusBadge = (status: string) => {
         const displayStatus = getSessionStatusDisplayName(status)
 
@@ -182,7 +193,7 @@ export function SessionsListTab({ classId }: SessionsListTabProps) {
                                     <TableCell>
                                         {new Date(session.date).toLocaleDateString('vi-VN')}
                                     </TableCell>
-                                    <TableCell>{session.timeSlot}</TableCell>
+                                    <TableCell>{formatTimeRange(session.startTime, session.endTime, session.timeSlot)}</TableCell>
                                     <TableCell className="max-w-xs truncate" title={session.topic}>
                                         {session.topic}
                                     </TableCell>

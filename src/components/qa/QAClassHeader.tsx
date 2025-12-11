@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ClassStatusBadge } from '@/components/qa/ClassStatusBadge'
 import type { QAClassDetailDTO } from '@/types/qa'
-import { BookOpen, Calendar, Clock, MapPin, Users, CheckCircle, BookCheck, Plus } from 'lucide-react'
+import { BookOpen, Calendar, Clock, MapPin, Users, CheckCircle, BookCheck, Plus, Phone, Building2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 interface QAClassHeaderProps {
@@ -51,13 +51,35 @@ export function QAClassHeader({ classInfo }: QAClassHeaderProps) {
                   <span>Khóa học: {classInfo.subjectName}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
+                  <Building2 className="h-4 w-4" />
                   <span>Chi nhánh: {classInfo.branchName}</span>
                 </div>
+                {classInfo.branchAddress && (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    <span>
+                      {classInfo.branchAddress}
+                      {classInfo.branchDistrict && `, ${classInfo.branchDistrict}`}
+                      {classInfo.branchCity && `, ${classInfo.branchCity}`}
+                    </span>
+                  </div>
+                )}
+                {classInfo.branchPhone && (
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    <span>{classInfo.branchPhone}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
                   <span>Bắt đầu: {formatDate(classInfo.startDate)}</span>
                 </div>
+                {classInfo.endDate && (
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span>Kết thúc: {formatDate(classInfo.endDate)}</span>
+                  </div>
+                )}
               </div>
             </div>
 

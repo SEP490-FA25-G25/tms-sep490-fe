@@ -184,6 +184,7 @@ export interface AssessmentDTO {
   name: string;
   description?: string;
   kind: AssessmentKind;
+  skill?: string;
   maxScore: number;
   durationMinutes?: number;
   scheduledDate: string; // ISO datetime

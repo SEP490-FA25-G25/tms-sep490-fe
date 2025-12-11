@@ -7,6 +7,7 @@ import { AppSidebar } from '@/components/app-sidebar'
 import { SiteHeader } from '@/components/site-header'
 import { QAClassHeader } from "@/components/qa/QAClassHeader"
 import { SessionsListTab } from "@/components/qa/SessionsListTab"
+import { ScoresTab } from "@/components/qa/ScoresTab"
 import { QAReportsListTab } from "@/components/qa/QAReportsListTab"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -103,12 +104,18 @@ export default function ClassDetailsPage() {
                                 {!isLoading && classInfo && (
                                     <Tabs defaultValue="sessions" className="w-full space-y-6">
                                         <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2 -mt-6 pt-6">
-                                            <TabsList className="grid w-full grid-cols-2 h-auto p-1 bg-muted/50">
+                                            <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-muted/50">
                                                 <TabsTrigger
                                                     value="sessions"
                                                     className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
                                                 >
                                                     Buổi học
+                                                </TabsTrigger>
+                                                <TabsTrigger
+                                                    value="scores"
+                                                    className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
+                                                >
+                                                    Điểm số
                                                 </TabsTrigger>
                                                 <TabsTrigger
                                                     value="reports"
@@ -121,6 +128,10 @@ export default function ClassDetailsPage() {
 
                                         <TabsContent value="sessions" className="space-y-6">
                                             <SessionsListTab classId={classInfo.classId} />
+                                        </TabsContent>
+
+                                        <TabsContent value="scores" className="space-y-6">
+                                            <ScoresTab classId={classInfo.classId} />
                                         </TabsContent>
 
                                         <TabsContent value="reports" className="space-y-6">

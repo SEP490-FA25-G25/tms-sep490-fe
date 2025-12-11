@@ -192,6 +192,10 @@ export interface QAClassDetailDTO {
   subjectId: number;
   branchId: number;
   branchName: string;
+  branchAddress?: string;
+  branchPhone?: string;
+  branchDistrict?: string;
+  branchCity?: string;
   modality: string;
   status: string;
   startDate: string;
@@ -259,6 +263,53 @@ export interface QASessionListResponse {
     hasQAReport: boolean;
     qaReportCount: number;
   }>;
+}
+
+// ========== QA Scores Types ==========
+export interface QAClassScoresDTO {
+  classId: number;
+  classCode: string;
+  scoreSummary: ScoreSummary;
+  students: StudentScoresSummary[];
+}
+
+export interface ScoreSummary {
+  classAverage: number;
+  totalStudents: number;
+  studentsWithScores: number;
+  totalAssessments: number;
+}
+
+export interface StudentScoresSummary {
+  studentId: number;
+  studentCode: string;
+  studentName: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  avatarUrl?: string;
+  enrolledAt?: string;
+  averageScore: number;
+  totalAssessments: number;
+  completedAssessments: number;
+  scores: AssessmentScore[];
+}
+
+export interface AssessmentScore {
+  assessmentId: number;
+  assessmentName: string;
+  assessmentKind: string;
+  skill: string;
+  maxScore: number;
+  durationMinutes?: number;
+  scheduledDate?: string;
+  actualDate?: string;
+  scoreId?: number;
+  score?: number;
+  scorePercentage?: number;
+  feedback?: string;
+  gradedByName?: string;
+  gradedAt?: string;
 }
 
 export interface SessionDetailDTO {
