@@ -33,6 +33,7 @@ import {
   useDownloadStudentImportTemplateQuery,
   usePreviewStudentImportMutation,
   useExecuteStudentImportMutation,
+  useGetStudentDetailQuery,
   type StudentImportPreview,
   type StudentImportData,
 } from '@/store/services/studentApi'
@@ -41,6 +42,7 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { StudentDetailDrawer } from './StudentDetailDrawer'
 
 interface StudentImportDialogProps {
   branchId: number
@@ -58,20 +60,28 @@ export function StudentImportDialog({
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<StudentImportPreview | null>(null)
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set())
+  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null)
+  const [showDetailDrawer, setShowDetailDrawer] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [previewMutation, { isLoading: isPreviewing }] = usePreviewStudentImportMutation()
   const [executeMutation, { isLoading: isExecuting }] = useExecuteStudentImportMutation()
   const templateQuery = useDownloadStudentImportTemplateQuery(undefined, { skip: !open })
+  
+  // Fetch student detail for drawer
+  const { data: studentDetail, isLoading: isLoadingDetail } = useGetStudentDetailQuery(
+    selectedStudentId || 0,
+    { skip: !selectedStudentId || !showDetailDrawer }
+  )
 
   // Computed values
   const createStudentsList = preview?.students.filter(s => s.status === 'CREATE') || []
   const foundStudentsList = preview?.students.filter(s => s.status === 'FOUND') || []
   const errorStudentsList = preview?.students.filter(s => s.status === 'ERROR') || []
 
-  // Check if a student can be selected (only CREATE status)
+  // Check if a student can be selected (CREATE or FOUND with needsBranchSync)
   const isStudentSelectable = (student: StudentImportData) => {
-    return student.status === 'CREATE'
+    return student.status === 'CREATE' || (student.status === 'FOUND' && student.needsBranchSync)
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,14 +109,14 @@ export function StudentImportDialog({
       const result = await previewMutation({ branchId, file: fileToPreview }).unwrap()
       setPreview(result.data)
 
-      // Auto-select all CREATE students
-      const createIndices = new Set<number>()
+      // Auto-select all CREATE students and FOUND students with needsBranchSync
+      const selectableIndices = new Set<number>()
       result.data.students.forEach((student, idx) => {
-        if (student.status === 'CREATE') {
-          createIndices.add(idx)
+        if (student.status === 'CREATE' || (student.status === 'FOUND' && student.needsBranchSync)) {
+          selectableIndices.add(idx)
         }
       })
-      setSelectedIndices(createIndices)
+      setSelectedIndices(selectableIndices)
     } catch (error: unknown) {
       const errorMessage = (error as { data?: { message?: string } })?.data?.message || 'Xem trước dữ liệu thất bại'
       toast.error(errorMessage)
@@ -151,13 +161,17 @@ export function StudentImportDialog({
   const handleExecute = async () => {
     if (!preview) return
 
-    if (createStudentsList.length === 0) {
-      toast.error('Không có học viên mới nào để nhập')
+    const selectableStudents = preview.students.filter(s => 
+      s.status === 'CREATE' || (s.status === 'FOUND' && s.needsBranchSync)
+    )
+
+    if (selectableStudents.length === 0) {
+      toast.error('Không có học viên nào để nhập hoặc đồng bộ')
       return
     }
 
     if (selectedIndices.size === 0) {
-      toast.error('Vui lòng chọn ít nhất một học viên để nhập')
+      toast.error('Vui lòng chọn ít nhất một học viên để nhập/đồng bộ')
       return
     }
 
@@ -182,7 +196,16 @@ export function StudentImportDialog({
     setFile(null)
     setPreview(null)
     setSelectedIndices(new Set())
+    setSelectedStudentId(null)
+    setShowDetailDrawer(false)
     onOpenChange(false)
+  }
+  
+  const handleStudentClick = (student: StudentImportData) => {
+    if (student.status === 'FOUND' && student.existingStudentId) {
+      setSelectedStudentId(student.existingStudentId)
+      setShowDetailDrawer(true)
+    }
   }
 
   const toggleStudentSelection = (idx: number, student: StudentImportData) => {
@@ -199,15 +222,17 @@ export function StudentImportDialog({
 
   const toggleAllSelection = () => {
     if (!preview) return
-    const allCreateSelected = createStudentsList.every((s) => {
+    
+    const selectableStudents = preview.students.filter(s => isStudentSelectable(s))
+    const allSelected = selectableStudents.every((s) => {
       const idx = preview.students.indexOf(s)
       return selectedIndices.has(idx)
     })
 
     const newSet = new Set(selectedIndices)
-    createStudentsList.forEach((s) => {
+    selectableStudents.forEach((s) => {
       const idx = preview.students.indexOf(s)
-      if (allCreateSelected) {
+      if (allSelected) {
         newSet.delete(idx)
       } else {
         newSet.add(idx)
@@ -220,15 +245,18 @@ export function StudentImportDialog({
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
   }
 
-  const isAllSelected = createStudentsList.length > 0 && createStudentsList.every((s) => {
-    if (!preview) return false
-    const idx = preview.students.indexOf(s)
-    return selectedIndices.has(idx)
-  })
+  const isAllSelected = preview && preview.students.filter(s => isStudentSelectable(s)).length > 0 && 
+    preview.students.filter(s => isStudentSelectable(s)).every((s) => {
+      const idx = preview.students.indexOf(s)
+      return selectedIndices.has(idx)
+    })
 
-  const canProceed = preview && createStudentsList.length > 0 && selectedIndices.size > 0
+  const canProceed = preview && 
+    (createStudentsList.length > 0 || preview.students.some(s => s.needsBranchSync)) && 
+    selectedIndices.size > 0
 
   return (
+    <>
     <FullScreenModal open={open} onOpenChange={onOpenChange}>
       <FullScreenModalContent size="2xl" className="bg-muted/10 p-0 gap-0">
         <FullScreenModalHeader className="bg-background border-b px-6 py-4">
@@ -335,7 +363,17 @@ export function StudentImportDialog({
                         {foundStudentsList.length} học viên đã tồn tại trong hệ thống
                       </p>
                       <p className="text-xs text-sky-700 mt-1">
-                        Những học viên này sẽ được bỏ qua và không tạo mới.
+                        {foundStudentsList.filter(s => s.needsBranchSync).length > 0 ? (
+                          <>
+                            {foundStudentsList.filter(s => s.needsBranchSync).length} học viên từ chi nhánh khác sẽ được tự động thêm vào chi nhánh này.
+                            {' '}
+                            {foundStudentsList.filter(s => !s.needsBranchSync).length > 0 && (
+                              `Còn lại ${foundStudentsList.filter(s => !s.needsBranchSync).length} học viên đã thuộc chi nhánh này và sẽ bỏ qua.`
+                            )}
+                          </>
+                        ) : (
+                          'Những học viên này đã thuộc chi nhánh và sẽ được bỏ qua.'
+                        )}
                       </p>
                     </div>
                   </div>
@@ -379,9 +417,9 @@ export function StudentImportDialog({
                         <TableRow className="bg-muted/30">
                           <TableHead className="w-[50px] pl-4">
                             <Checkbox
-                              checked={isAllSelected}
+                              checked={isAllSelected || false}
                               onCheckedChange={toggleAllSelection}
-                              disabled={createStudentsList.length === 0}
+                              disabled={!preview || preview.students.filter(s => isStudentSelectable(s)).length === 0}
                             />
                           </TableHead>
                           <TableHead className="min-w-[250px]">Học viên</TableHead>
@@ -407,10 +445,12 @@ export function StudentImportDialog({
                                 key={idx} 
                                 className={cn(
                                   "transition-colors",
-                                  isSelectable ? "hover:bg-muted/30" : "opacity-60 bg-muted/20"
+                                  isSelectable ? "hover:bg-muted/30" : "opacity-60 bg-muted/20",
+                                  student.status === 'FOUND' && "cursor-pointer"
                                 )}
+                                onClick={() => handleStudentClick(student)}
                               >
-                                <TableCell className="pl-4">
+                                <TableCell className="pl-4" onClick={(e) => e.stopPropagation()}>
                                   <Checkbox
                                     checked={isSelected}
                                     onCheckedChange={() => toggleStudentSelection(idx, student)}
@@ -445,9 +485,16 @@ export function StudentImportDialog({
                                       </Badge>
                                     )}
                                     {student.status === 'FOUND' && (
-                                      <Badge variant="secondary">
-                                        Đã có: {student.existingStudentCode}
-                                      </Badge>
+                                      <div className="flex items-center gap-2">
+                                        <Badge variant="secondary">
+                                          Đã có: {student.existingStudentCode}
+                                        </Badge>
+                                        {student.needsBranchSync && (
+                                          <Badge variant="info" className="gap-1 text-xs">
+                                            Sync
+                                          </Badge>
+                                        )}
+                                      </div>
                                     )}
                                     {student.status === 'ERROR' && (
                                       <Badge variant="destructive">
@@ -516,5 +563,14 @@ export function StudentImportDialog({
         </FullScreenModalFooter>
       </FullScreenModalContent>
     </FullScreenModal>
+    
+    {/* Student Detail Drawer */}
+    <StudentDetailDrawer
+      open={showDetailDrawer}
+      onOpenChange={setShowDetailDrawer}
+      student={studentDetail?.data || null}
+      isLoading={isLoadingDetail}
+    />
+  </>
   )
 }

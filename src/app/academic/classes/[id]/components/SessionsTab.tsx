@@ -129,6 +129,18 @@ export function SessionsTab({ classId }: SessionsTabProps) {
     }
   };
 
+  const formatTimeRange = (startTime?: string, endTime?: string): string => {
+    if (!startTime || !endTime) return "TBA";
+    
+    // Parse time from "HH:mm:ss" format to "HH:mm"
+    const formatTime = (time: string) => {
+      const parts = time.split(":");
+      return `${parts[0]}:${parts[1]}`;
+    };
+
+    return `${formatTime(startTime)} - ${formatTime(endTime)}`;
+  };
+
   return (
     <div className="space-y-6">
       {/* Filter */}
@@ -182,7 +194,9 @@ export function SessionsTab({ classId }: SessionsTabProps) {
                   <TableCell>
                     {new Date(session.date).toLocaleDateString("vi-VN")}
                   </TableCell>
-                  <TableCell>{session.timeSlot}</TableCell>
+                  <TableCell>
+                    {formatTimeRange(session.startTime, session.endTime)}
+                  </TableCell>
                   <TableCell
                     className="max-w-xs truncate"
                     title={session.topic}
@@ -199,13 +213,6 @@ export function SessionsTab({ classId }: SessionsTabProps) {
                       >
                         {session.presentCount}/{session.totalStudents}
                       </span>
-                      <span
-                        className={`text-xs ${getAttendanceColor(
-                          session.attendanceRate
-                        )}`}
-                      >
-                        ({session.attendanceRate.toFixed(1)}%)
-                      </span>
                     </div>
                   </TableCell>
                   <TableCell className="text-center">
@@ -217,13 +224,6 @@ export function SessionsTab({ classId }: SessionsTabProps) {
                         )}
                       >
                         {session.homeworkCompletedCount}
-                      </span>
-                      <span
-                        className={`text-xs ${getHomeworkColor(
-                          session.homeworkCompletionRate
-                        )}`}
-                      >
-                        ({session.homeworkCompletionRate.toFixed(1)}%)
                       </span>
                     </div>
                   </TableCell>

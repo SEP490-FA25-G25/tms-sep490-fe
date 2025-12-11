@@ -32,7 +32,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -770,15 +769,4 @@ function getInitials(name?: string) {
   const parts = name.trim().split(" ");
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-function getStatusLabel(status?: string) {
-  switch (status) {
-    case "ACTIVE":
-      return "Hoạt động";
-    case "INACTIVE":
-      return "Không hoạt động";
-    default:
-      return "Không xác định";
-  }
 }

@@ -114,7 +114,7 @@ export function StudentsTab({ students, isLoading, totalStudents, onStudentClick
               </TableHeader>
               <TableBody>
                 {students.map((student: ClassStudentDTO) => (
-                  <TableRow key={student.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => onStudentClick(student.id)}>
+                  <TableRow key={student.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => onStudentClick(student.studentId)}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">

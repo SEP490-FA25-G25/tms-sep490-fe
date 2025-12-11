@@ -46,8 +46,11 @@ interface StudentDetailDrawerProps {
   onOpenChange: (open: boolean) => void
   student: StudentDetailDTO | null
   isLoading?: boolean
+  /** Mode: 'view' shows Edit + Enroll buttons, 'sync' shows only Sync button */
+  mode?: 'view' | 'sync'
   onEdit?: () => void
   onEnroll?: () => void
+  onSync?: () => void
   /** Hide the enroll button (e.g., when viewing from class detail where student is already enrolled) */
   hideEnrollButton?: boolean
 }
@@ -85,8 +88,10 @@ export function StudentDetailDrawer({
   onOpenChange,
   student,
   isLoading = false,
+  mode = 'view',
   onEdit,
   onEnroll,
+  onSync,
   hideEnrollButton = false,
 }: StudentDetailDrawerProps) {
   const navigate = useNavigate()
@@ -378,16 +383,26 @@ export function StudentDetailDrawer({
         </div>
 
         <DrawerFooter className="border-t">
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={onEdit} disabled={isLoading || !student}>
-              Sửa thông tin
+          {mode === 'sync' ? (
+            <Button 
+              className="w-full" 
+              onClick={onSync} 
+              disabled={isLoading || !student}
+            >
+              Đồng bộ vào chi nhánh này
             </Button>
-            {!hideEnrollButton && !hasActiveEnrollment && (
-              <Button className="flex-1" onClick={onEnroll} disabled={isLoading || !student}>
-                Phân lớp
+          ) : (
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={onEdit} disabled={isLoading || !student}>
+                Sửa thông tin
               </Button>
-            )}
-          </div>
+              {!hideEnrollButton && !hasActiveEnrollment && (
+                <Button className="flex-1" onClick={onEnroll} disabled={isLoading || !student}>
+                  Phân lớp
+                </Button>
+              )}
+            </div>
+          )}
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

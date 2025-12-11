@@ -20,6 +20,8 @@ export interface StudentEnrollmentData {
   status: 'FOUND' | 'CREATE' | 'DUPLICATE' | 'ERROR'
   resolvedStudentId?: number
   errorMessage?: string
+  needsBranchSync?: boolean 
+  note?: string             
 }
 
 // Match backend RecommendationType enum exactly

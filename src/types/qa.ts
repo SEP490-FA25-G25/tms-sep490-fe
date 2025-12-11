@@ -245,7 +245,9 @@ export interface QASessionListResponse {
     sequenceNumber?: number;
     date: string;
     dayOfWeek?: string;
-    timeSlot: string;
+    timeSlot: string; 
+    startTime?: string;
+    endTime?: string;
     topic: string;
     status: string;
     teacherName: string;
