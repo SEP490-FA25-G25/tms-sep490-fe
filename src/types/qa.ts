@@ -344,7 +344,39 @@ export interface SessionDetailDTO {
     cloId: number;
     cloCode: string;
     description?: string;
-  }>
+  }>;
+  
+  sequenceNo?: number;
+  skills?: string[];
+  phase?: {
+    phaseId: number;
+    phaseNumber: number;
+    phaseName: string;
+    learningFocus?: string;
+  };
+  resources?: Array<{
+    resourceId: number;
+    resourceType: 'ROOM' | 'VIRTUAL';
+    code: string;
+    name: string;
+    // For ROOM
+    branchName?: string;
+    branchAddress?: string;
+    capacity?: number;
+    equipment?: string;
+    // For VIRTUAL
+    meetingUrl?: string;
+    meetingId?: string;
+    meetingPasscode?: string;
+    accountEmail?: string;
+  }>;
+  materials?: Array<{
+    materialId: number;
+    title: string;
+    description?: string;
+    materialType: 'DOCUMENT' | 'MEDIA' | 'ARCHIVE' | 'LINK' | 'OTHER';
+    url: string;
+  }>;
 }
 
 // QA Report Types
