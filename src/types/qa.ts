@@ -254,9 +254,8 @@ export interface QASessionListResponse {
     totalStudents: number;
     presentCount: number;
     absentCount: number;
-    attendanceRate: number;
     homeworkCompletedCount: number;
-    homeworkCompletionRate: number;
+    hasHomework: boolean;
     hasQAReport: boolean;
     qaReportCount: number;
   }>;
@@ -266,7 +265,7 @@ export interface SessionDetailDTO {
   sessionId: number;
   classId: number;
   classCode: string;
-  courseName: string;
+  subjectName: string;
   date: string;
   timeSlot: string;
   topic: string;
@@ -278,9 +277,8 @@ export interface SessionDetailDTO {
     totalStudents: number;
     presentCount: number;
     absentCount: number;
-    attendanceRate: number;
     homeworkCompletedCount: number;
-    homeworkCompletionRate: number;
+    hasHomework: boolean;
   };
   students: Array<{
     studentId: number;
@@ -295,14 +293,7 @@ export interface SessionDetailDTO {
     cloId: number;
     cloCode: string;
     description?: string;
-  }>;
-  studentFeedbackSummary?: {
-    totalStudents: number;
-    feedbackSubmissions: number;
-    feedbackRate: number;
-    averageRating?: number;
-    commonFeedback?: string;
-  };
+  }>
 }
 
 // QA Report Types

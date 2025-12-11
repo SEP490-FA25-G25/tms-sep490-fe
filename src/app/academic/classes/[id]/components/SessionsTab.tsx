@@ -209,23 +209,27 @@ export function SessionsTab({ classId }: SessionsTabProps) {
                     <div className="flex items-center justify-center space-x-1">
                       <Users className="h-4 w-4" />
                       <span
-                        className={getAttendanceColor(session.attendanceRate)}
+                        className={getAttendanceColor((session.presentCount / session.totalStudents) * 100)}
                       >
                         {session.presentCount}/{session.totalStudents}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell className="text-center">
-                    <div className="flex items-center justify-center space-x-1">
-                      <BookOpen className="h-4 w-4" />
-                      <span
-                        className={getHomeworkColor(
-                          session.homeworkCompletionRate
-                        )}
-                      >
-                        {session.homeworkCompletedCount}
-                      </span>
-                    </div>
+                    {session.hasHomework ? (
+                      <div className="flex items-center justify-center space-x-1">
+                        <BookOpen className="h-4 w-4" />
+                        <span
+                          className={getHomeworkColor(
+                            (session.homeworkCompletedCount / session.totalStudents) * 100
+                          )}
+                        >
+                          {session.homeworkCompletedCount} đã làm
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Không có BT</span>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

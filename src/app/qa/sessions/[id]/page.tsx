@@ -56,13 +56,23 @@ export default function SessionDetailsPage() {
         }
     }
 
-    const getAttendanceStatusBadge = (status?: string) => {
+    const getAttendanceStatusBadge = (status?: string, isMakeup?: boolean) => {
         const statusMap: Record<string, string> = {
             'present': 'Có mặt',
             'absent': 'Vắng mặt',
             'late': 'Đi muộn',
             'excused': 'Có phép'
         }
+        
+        // If makeup student, show special badge
+        if (isMakeup) {
+            return (
+                <Badge className="text-indigo-700 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-950/30">
+                    Học bù
+                </Badge>
+            )
+        }
+        
         return (
             <Badge className={getAttendanceStatusColor(status)}>
                 {status ? statusMap[status.toLowerCase()] || status : 'Không xác định'}
@@ -138,7 +148,7 @@ export default function SessionDetailsPage() {
     return (
         <DashboardLayout
             title={`Buổi #${session.sessionId} - ${session.classCode}`}
-            description={session.courseName}
+            description={session.subjectName}
         >
             <div className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -160,7 +170,7 @@ export default function SessionDetailsPage() {
                                     </div>
                                     <div>
                                         <p className="text-sm text-muted-foreground">Lớp học</p>
-                                        <p className="font-medium">{session.classCode} - {session.courseName}</p>
+                                        <p className="font-medium">{session.classCode} - {session.subjectName}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-muted-foreground">Giáo viên</p>
@@ -209,7 +219,7 @@ export default function SessionDetailsPage() {
                                                 <TableCell className="font-medium">{student.studentCode}</TableCell>
                                                 <TableCell>{student.studentName}</TableCell>
                                                 <TableCell>
-                                                    {getAttendanceStatusBadge(student.attendanceStatus)}
+                                                    {getAttendanceStatusBadge(student.attendanceStatus, student.isMakeup)}
                                                 </TableCell>
                                                 <TableCell>
                                                     {getHomeworkStatusBadge(student.homeworkStatus)}
@@ -234,10 +244,6 @@ export default function SessionDetailsPage() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="flex justify-between">
-                                    <span className="text-sm text-muted-foreground">Tỷ lệ điểm danh</span>
-                                    <span className="font-medium">{session.attendanceStats.attendanceRate.toFixed(1)}%</span>
-                                </div>
-                                <div className="flex justify-between">
                                     <span className="text-sm text-muted-foreground">Sĩ số</span>
                                     <span className="font-medium">{session.attendanceStats.totalStudents}</span>
                                 </div>
@@ -249,10 +255,12 @@ export default function SessionDetailsPage() {
                                     <span className="text-sm text-muted-foreground">Vắng mặt</span>
                                     <span className="font-medium text-rose-600">{session.attendanceStats.absentCount}</span>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span className="text-sm text-muted-foreground">Hoàn thành BT</span>
-                                    <span className="font-medium text-emerald-600">{session.attendanceStats.homeworkCompletedCount}</span>
-                                </div>
+                                {session.attendanceStats.hasHomework && (
+                                    <div className="flex justify-between">
+                                        <span className="text-sm text-muted-foreground">Hoàn thành BT</span>
+                                        <span className="font-medium text-emerald-600">{session.attendanceStats.homeworkCompletedCount}</span>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
 
