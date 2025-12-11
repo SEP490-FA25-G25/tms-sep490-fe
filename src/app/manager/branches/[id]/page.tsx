@@ -55,6 +55,7 @@ import {
   Users,
   BookOpen,
   Monitor,
+  CalendarDays,
 } from "lucide-react";
 import { BranchFormDialog } from "../components/BranchFormDialog";
 import type { UserResponse } from "@/store/services/userApi";
@@ -161,7 +162,7 @@ export default function ManagerBranchDetailPage() {
         branch ? (
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setShowStaffDialog(true)}>
-              Quản lý phân bổ nhân sự
+              Ngưng hoạt động
             </Button>
             <Button onClick={() => setShowForm(true)}>Chỉnh sửa</Button>
           </div>
@@ -252,6 +253,12 @@ function BranchSummaryCard({
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-muted-foreground" />
                   <span>{branch.email}</span>
+                </div>
+              )}
+              {branch.openingDate && (
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                  <span>Khai trương: {new Date(branch.openingDate).toLocaleDateString("vi-VN")}</span>
                 </div>
               )}
             </div>

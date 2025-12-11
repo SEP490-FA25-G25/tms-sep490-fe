@@ -4,6 +4,9 @@ import { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import { CalendarIcon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +24,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import type {
   BranchRequest,
   ManagerBranchOverview,
@@ -65,6 +75,18 @@ const branchSchema = z.object({
       "Email không hợp lệ"
     ),
   status: z.string(),
+  openingDate: z
+    .date()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val) return true; // Optional, nếu không có thì OK
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return val >= today;
+      },
+      "Ngày khai trương phải là ngày hôm nay hoặc trong tương lai"
+    ),
 });
 
 type FormValues = z.infer<typeof branchSchema>;
@@ -120,6 +142,7 @@ export function BranchFormDialog({
       phone: initialData?.phone ?? "",
       email: initialData?.email ?? "",
       status: initialData?.status ?? "ACTIVE",
+      openingDate: initialData?.openingDate ? new Date(initialData.openingDate) : undefined,
     },
   });
 
@@ -149,6 +172,7 @@ export function BranchFormDialog({
         phone: initialData.phone ?? "",
         email: initialData.email ?? "",
         status: initialData.status ?? "ACTIVE",
+        openingDate: initialData.openingDate ? new Date(initialData.openingDate) : undefined,
       });
     } else {
       reset({
@@ -160,6 +184,7 @@ export function BranchFormDialog({
         phone: "",
         email: "",
         status: "ACTIVE",
+        openingDate: undefined,
       });
     }
   }, [initialData, reset]);
@@ -178,7 +203,7 @@ export function BranchFormDialog({
       phone: data.phone?.trim() || undefined,
       email: data.email?.trim() || undefined,
       status: data.status || "ACTIVE",
-      openingDate: undefined,
+      openingDate: data.openingDate ? format(data.openingDate, "yyyy-MM-dd") : undefined,
     };
     await onSubmit(payload);
   };
@@ -320,6 +345,44 @@ export function BranchFormDialog({
                 <SelectItem value="INACTIVE">Không hoạt động</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Ngày khai trương</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !watch("openingDate") && "text-muted-foreground"
+                  )}
+                  disabled={isSubmitting}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {watch("openingDate")
+                    ? format(watch("openingDate")!, "dd/MM/yyyy", { locale: vi })
+                    : "Chọn ngày"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={watch("openingDate")}
+                  onSelect={(date) => setValue("openingDate", date, { shouldValidate: true })}
+                  initialFocus
+                  locale={vi}
+                  disabled={(date) => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    return date < today;
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
+            {errors.openingDate && (
+              <p className="text-sm text-rose-500">{errors.openingDate.message}</p>
+            )}
           </div>
 
           <DialogFooter>

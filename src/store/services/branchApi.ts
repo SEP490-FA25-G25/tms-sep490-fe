@@ -59,6 +59,7 @@ export interface ManagerBranchOverview {
   phone?: string;
   email?: string;
   status?: string;
+  openingDate?: string;
   updatedAt?: string;
   centerHead?: ManagerBranchCenterHead | null;
   classStatus: ManagerBranchStatus;
