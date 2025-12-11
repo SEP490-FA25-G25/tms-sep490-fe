@@ -192,9 +192,13 @@ export default function SessionDetailsPage() {
                             <BookOpen className="h-4 w-4 text-muted-foreground" />
                             <div>
                                 <p className="text-sm text-muted-foreground">Bài tập</p>
-                                <p className="font-medium">
-                                    {session.attendanceStats.homeworkCompletedCount}/{session.attendanceStats.totalStudents}
-                                </p>
+                                {session.attendanceStats.hasHomework ? (
+                                    <p className="font-medium">
+                                        {session.attendanceStats.homeworkCompletedCount} đã làm
+                                    </p>
+                                ) : (
+                                    <p className="font-medium text-muted-foreground">Không có BT</p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -232,16 +236,20 @@ export default function SessionDetailsPage() {
                         <h3 className="text-lg font-semibold">Hiệu Suất</h3>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <p className="text-sm text-muted-foreground">Tỷ lệ điểm danh</p>
+                                <p className="text-sm text-muted-foreground">Điểm danh</p>
                                 <p className="font-medium text-lg">
-                                    {session.attendanceStats.attendanceRate.toFixed(1)}%
+                                    {session.attendanceStats.presentCount}/{session.attendanceStats.totalStudents}
                                 </p>
                             </div>
                             <div>
-                                <p className="text-sm text-muted-foreground">Tỷ lệ hoàn thành BT</p>
-                                <p className="font-medium text-lg">
-                                    {session.attendanceStats.homeworkCompletionRate.toFixed(1)}%
-                                </p>
+                                <p className="text-sm text-muted-foreground">Bài tập</p>
+                                {session.attendanceStats.hasHomework ? (
+                                    <p className="font-medium text-lg">
+                                        {session.attendanceStats.homeworkCompletedCount} đã làm
+                                    </p>
+                                ) : (
+                                    <p className="font-medium text-lg text-muted-foreground">Không có BT</p>
+                                )}
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">Số vắng</p>

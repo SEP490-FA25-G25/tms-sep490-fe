@@ -345,6 +345,11 @@ const roleBasedNav = {
         icon: UsersIcon,
       },
       {
+        title: "Quản lý giáo viên",
+        url: "/academic/teachers",
+        icon: GraduationCapIcon,
+      },
+      {
         title: "Quản lý yêu cầu học viên",
         url: "/academic/student-requests",
         icon: ClipboardCheckIcon,
@@ -369,10 +374,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, logout, branches, selectedBranchId, selectBranch } = useAuth();
   const navigate = useNavigate();
 
-  // Kiểm tra xem user có phải là Academic Affair hoặc Center Head và có nhiều branch không
-  const isAcademicAffair = user?.roles?.includes(ROLES.ACADEMIC_AFFAIR) ?? false;
+  const isAcademicAffair =
+    user?.roles?.includes(ROLES.ACADEMIC_AFFAIR) ?? false;
   const isCenterHead = user?.roles?.includes(ROLES.CENTER_HEAD) ?? false;
-  const showBranchSelector = (isAcademicAffair || isCenterHead) && branches.length > 1;
+  const isQA = user?.roles?.includes(ROLES.QA) ?? false;
+  const showBranchSelector =
+    (isAcademicAffair || isCenterHead || isQA) && branches.length > 1;
 
   const rolePriorities = {
     [ROLES.ADMIN]: 8,
@@ -422,9 +429,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   alt="TMS Logo"
                   className="h-10 w-10 rounded-full object-cover"
                 />
-                <span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 1.05 }}>
-                  <span style={{ fontWeight: 700, color: "#2e5a34", fontSize: "1rem" }}>TMS</span>
-                  <span style={{ fontWeight: 500, color: "#5c6a7c", fontSize: "0.75rem", marginTop: "2px" }}>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    flexDirection: "column",
+                    lineHeight: 1.05,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontWeight: 700,
+                      color: "#2e5a34",
+                      fontSize: "1rem",
+                    }}
+                  >
+                    TMS
+                  </span>
+                  <span
+                    style={{
+                      fontWeight: 500,
+                      color: "#5c6a7c",
+                      fontSize: "0.75rem",
+                      marginTop: "2px",
+                    }}
+                  >
                     Training Management System
                   </span>
                 </span>

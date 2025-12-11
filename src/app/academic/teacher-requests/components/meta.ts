@@ -111,30 +111,30 @@ export const getTimeDisplayMeta = (
   if (daysUntilSession === null) {
     return {
       label: "Không rõ",
-      className: "border bg-muted/50 text-muted-foreground",
+      className: "bg-slate-100 text-slate-700 border-slate-200",
     };
   }
   if (daysUntilSession < 0) {
     return {
       label: `Đã qua ${Math.abs(daysUntilSession)} ngày`,
-      className: "border border-rose-100 bg-rose-50 text-rose-600",
+      className: "bg-rose-100 text-rose-700 border-rose-200",
     };
   }
   if (daysUntilSession === 0) {
     return {
       label: "Diễn ra hôm nay",
-      className: "border border-amber-100 bg-amber-50 text-amber-600",
+      className: "bg-amber-100 text-amber-700 border-amber-200",
     };
   }
   if (daysUntilSession <= 2) {
     return {
       label: `Còn ${daysUntilSession} ngày`,
-      className: "border border-amber-100 bg-amber-50 text-amber-600",
+      className: "bg-amber-100 text-amber-700 border-amber-200",
     };
   }
   return {
     label: `Còn ${daysUntilSession} ngày`,
-    className: "border border-emerald-100 bg-emerald-50 text-emerald-600",
+    className: "bg-emerald-100 text-emerald-700 border-emerald-200",
   };
 };
 

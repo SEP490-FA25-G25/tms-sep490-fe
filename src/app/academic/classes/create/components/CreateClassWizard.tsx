@@ -23,16 +23,14 @@ import { Step1BasicInfo } from "./Step1BasicInfo";
 import { Step2ReviewSessions } from "./Step2ReviewSessions";
 import { Step3TimeSlots } from "./Step3TimeSlots";
 import { Step4Resources } from "./Step4Resources";
-import { Step5AssignTeacher } from "./Step5AssignTeacher";
-import { Step6Validation } from "./Step6Validation";
+import { Step5Validation } from "./Step6Validation";
 
 const STEPS = [
   { id: 1, title: "Thông tin cơ bản" },
   { id: 2, title: "Xem lại buổi học" },
   { id: 3, title: "Lịch học" },
   { id: 4, title: "Tài nguyên" },
-  { id: 5, title: "Giáo viên" },
-  { id: 6, title: "Kiểm tra & Gửi duyệt" },
+  { id: 5, title: "Kiểm tra & Gửi duyệt" },
 ];
 
 // Dynamic action button config per step
@@ -47,8 +45,7 @@ const STEP_ACTIONS: Record<number, { label: string; description: string }> = {
     label: "Gán tài nguyên",
     description: "Gán phòng/tài khoản cho các buổi",
   },
-  5: { label: "Gán giáo viên", description: "Gán giáo viên cho lớp học" },
-  6: {
+  5: {
     label: "Kiểm tra & Gửi",
     description: "Kiểm tra và gửi lớp đi phê duyệt",
   },
@@ -90,7 +87,7 @@ export function CreateClassWizard({
   // === Navigation Handlers ===
   const handleBack = () => {
     if (currentStep > 1) {
-      navigateToStep((currentStep - 1) as 1 | 2 | 3 | 4 | 5 | 6);
+      navigateToStep((currentStep - 1) as 1 | 2 | 3 | 4 | 5);
     } else {
       setShowLeaveConfirm(true);
     }
@@ -114,9 +111,9 @@ export function CreateClassWizard({
       return;
     }
 
-    if (currentStep < 6) {
+    if (currentStep < 5) {
       markStepComplete(currentStep);
-      navigateToStep((currentStep + 1) as 1 | 2 | 3 | 4 | 5 | 6);
+      navigateToStep((currentStep + 1) as 1 | 2 | 3 | 4 | 5);
     }
   };
 
@@ -153,9 +150,6 @@ export function CreateClassWizard({
         break;
       case 4:
         toast.info("Gán tài nguyên - Chức năng sẽ được triển khai sau");
-        break;
-      case 5:
-        toast.info("Gán giáo viên - Chức năng sẽ được triển khai sau");
         break;
       default:
         break;
@@ -271,25 +265,23 @@ export function CreateClassWizard({
                 return (
                   <div key={step.id} className="flex flex-col items-center">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center border-2 bg-background transition-all duration-300 ${
-                        isActive
-                          ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-110"
-                          : isCompleted
+                      className={`w-10 h-10 rounded-full flex items-center justify-center border-2 bg-background transition-all duration-300 ${isActive
+                        ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-110"
+                        : isCompleted
                           ? "border-primary bg-primary text-primary-foreground"
                           : "border-muted text-muted-foreground"
-                      }`}
+                        }`}
                     >
                       <span className="font-semibold">{step.id}</span>
                     </div>
                     <div className="mt-3 text-center">
                       <span
-                        className={`text-sm font-medium block ${
-                          isActive
-                            ? "text-primary"
-                            : isCompleted
+                        className={`text-sm font-medium block ${isActive
+                          ? "text-primary"
+                          : isCompleted
                             ? "text-foreground"
                             : "text-muted-foreground"
-                        }`}
+                          }`}
                       >
                         {step.title}
                       </span>
@@ -339,20 +331,10 @@ export function CreateClassWizard({
             )}
 
             {currentStep === 5 && (
-              <Step5AssignTeacher
-                classId={classId}
-                onContinue={() => {
-                  markStepComplete(5);
-                  navigateToStep(6);
-                }}
-              />
-            )}
-
-            {currentStep === 6 && (
-              <Step6Validation
+              <Step5Validation
                 classId={classId}
                 onFinish={() => {
-                  markStepComplete(6);
+                  markStepComplete(5);
                   setIsBlocking(false);
                   navigate("/academic/classes");
                 }}

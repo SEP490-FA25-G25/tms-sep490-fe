@@ -19,7 +19,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, GripVertical, FileText, BookOpen } from "lucide-react";
+import { Plus, Trash2, GripVertical, FileText, BookOpen, Grid3X3, CheckCircle2, XCircle, ExternalLink } from "lucide-react";
 import { MultiSelect } from "@/components/ui/multi-select";
 import {
     Dialog,
@@ -513,8 +513,8 @@ export function Step3Structure({ data, setData }: Step3Props) {
                     <div className="flex items-center gap-4">
                         {/* Session Count Badge */}
                         <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${isSessionCountValid
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                : "bg-amber-50 text-amber-700 border border-amber-200"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : "bg-amber-50 text-amber-700 border border-amber-200"
                             }`}>
                             <span>Buổi học:</span>
                             <span className="font-bold">{currentSessionCount}</span>
@@ -533,6 +533,34 @@ export function Step3Structure({ data, setData }: Step3Props) {
 
                 {/* Course Level Materials - Collapsible */}
                 <Accordion type="multiple" className="w-full space-y-2">
+                    {/* Course Materials - Button to open Dialog (moved above CLO Reference) */}
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <div className="border rounded-xl bg-white shadow-sm cursor-pointer hover:bg-slate-50 transition-colors">
+                                <div className="flex items-center justify-between py-3 px-4">
+                                    <div className="flex items-center gap-2">
+                                        <FileText className="w-4 h-4 text-primary" />
+                                        <span className="font-medium">Tài liệu chung cho môn học</span>
+                                        <Badge variant="outline" className="ml-2 bg-slate-50">
+                                            {getMaterials("COURSE").length} tài liệu
+                                        </Badge>
+                                    </div>
+                                    <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                            </div>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl! w-[90vw]">
+                            <DialogHeader>
+                                <DialogTitle>Tài liệu chung cho môn học</DialogTitle>
+                            </DialogHeader>
+                            <MaterialSection
+                                materials={getMaterials("COURSE")}
+                                onUpdate={(m) => updateMaterials(m, "COURSE")}
+                                scope="COURSE"
+                            />
+                        </DialogContent>
+                    </Dialog>
+
                     {/* CLO Reference - Collapsible */}
                     <AccordionItem value="clo-reference" className="border rounded-xl bg-white shadow-sm">
                         <AccordionPrimitive.Header className="flex">
@@ -572,26 +600,95 @@ export function Step3Structure({ data, setData }: Step3Props) {
                         </AccordionContent>
                     </AccordionItem>
 
-                    {/* Course Materials */}
-                    <AccordionItem value="course-materials" className="border rounded-xl bg-white shadow-sm">
+                    {/* Session-CLO Matrix */}
+                    <AccordionItem value="session-clo-matrix" className="border rounded-xl bg-white shadow-sm">
                         <AccordionPrimitive.Header className="flex">
                             <AccordionPrimitive.Trigger className="flex flex-1 items-center justify-between py-3 px-4 font-medium transition-all hover:no-underline group [&[data-state=open]>svg]:rotate-180">
                                 <div className="flex items-center gap-2">
-                                    <FileText className="w-4 h-4 text-primary" />
-                                    <span>Tài liệu chung cho Khóa học</span>
+                                    <Grid3X3 className="w-4 h-4 text-primary" />
+                                    <span>Ma trận Buổi học - CLO</span>
                                     <Badge variant="outline" className="ml-2 bg-slate-50">
-                                        {getMaterials("COURSE").length} tài liệu
+                                        {currentSessionCount} buổi × {data.clos?.length || 0} CLO
                                     </Badge>
                                 </div>
                                 <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
                             </AccordionPrimitive.Trigger>
                         </AccordionPrimitive.Header>
                         <AccordionContent className="px-4 pb-4">
-                            <MaterialSection
-                                materials={getMaterials("COURSE")}
-                                onUpdate={(m) => updateMaterials(m, "COURSE")}
-                                scope="COURSE"
-                            />
+                            {data.clos && data.clos.length > 0 && data.structure && data.structure.length > 0 ? (
+                                <div className="overflow-x-auto">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead className="sticky left-0 bg-white z-10 min-w-[200px]">
+                                                    Buổi học
+                                                </TableHead>
+                                                {data.clos.map((clo) => (
+                                                    <TableHead key={clo.code} className="text-center min-w-[60px] px-2">
+                                                        <span className="font-semibold text-emerald-600">
+                                                            {clo.code}
+                                                        </span>
+                                                    </TableHead>
+                                                ))}
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {data.structure.flatMap((phase, phaseIndex) =>
+                                                phase.sessions?.map((session, sessionIndex) => {
+                                                    const globalIndex = data.structure
+                                                        ?.slice(0, phaseIndex)
+                                                        .reduce((acc, p) => acc + (p.sessions?.length || 0), 0) || 0;
+                                                    const sessionNumber = globalIndex + sessionIndex + 1;
+
+                                                    return (
+                                                        <TableRow key={`${phase.id}-${session.id}`}>
+                                                            <TableCell className="sticky left-0 bg-white z-10 font-medium">
+                                                                <div>
+                                                                    <span className="text-primary">Buổi {sessionNumber}</span>
+                                                                    {session.topic && (
+                                                                        <p className="text-xs text-muted-foreground truncate max-w-[180px]">
+                                                                            {session.topic}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </TableCell>
+                                                            {data.clos?.map((clo) => {
+                                                                const hasCLO = session.cloIds?.includes(clo.code);
+                                                                return (
+                                                                    <TableCell key={clo.code} className="text-center px-2">
+                                                                        {hasCLO ? (
+                                                                            <CheckCircle2 className="h-5 w-5 text-emerald-500 mx-auto" />
+                                                                        ) : (
+                                                                            <XCircle className="h-4 w-4 text-muted-foreground/30 mx-auto" />
+                                                                        )}
+                                                                    </TableCell>
+                                                                );
+                                                            })}
+                                                        </TableRow>
+                                                    );
+                                                }) || []
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                    <div className="mt-3 flex items-center gap-6 text-sm text-muted-foreground">
+                                        <div className="flex items-center gap-2">
+                                            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                            <span>Buổi học đáp ứng CLO</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <XCircle className="h-4 w-4 text-muted-foreground/30" />
+                                            <span>Chưa ánh xạ</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="text-sm text-muted-foreground text-center py-4">
+                                    {!data.clos || data.clos.length === 0
+                                        ? "Chưa có CLO nào. Vui lòng thêm CLO ở Bước 2."
+                                        : "Chưa có buổi học nào. Vui lòng thêm giai đoạn và buổi học."
+                                    }
+                                </p>
+                            )}
                         </AccordionContent>
                     </AccordionItem>
                 </Accordion>
@@ -640,17 +737,36 @@ export function Step3Structure({ data, setData }: Step3Props) {
                                 </AccordionPrimitive.Trigger>
                             </AccordionPrimitive.Header>
                             <AccordionContent className="pb-6 pt-2 space-y-6">
-                                {/* Phase Level Materials - Collapsible */}
+                                {/* Phase Level Materials - Button to open Dialog */}
                                 <div className="px-1">
-                                    <MaterialSection
-                                        title="Tài liệu Giai đoạn"
-                                        materials={getMaterials("PHASE", phase.id)}
-                                        onUpdate={(m) => updateMaterials(m, "PHASE", phase.id)}
-                                        scope="PHASE"
-                                        phaseId={phase.id}
-                                        collapsible
-                                        defaultOpen={false}
-                                    />
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                className="w-full justify-between h-10"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <FileText className="w-4 h-4" />
+                                                    <span>Tài liệu Giai đoạn</span>
+                                                    <Badge variant="outline" className="ml-2">
+                                                        {getMaterials("PHASE", phase.id).length} tài liệu
+                                                    </Badge>
+                                                </div>
+                                                <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-4xl! w-[90vw]">
+                                            <DialogHeader>
+                                                <DialogTitle>Tài liệu Giai đoạn {pIndex + 1}: {phase.name || `Giai đoạn ${pIndex + 1}`}</DialogTitle>
+                                            </DialogHeader>
+                                            <MaterialSection
+                                                materials={getMaterials("PHASE", phase.id)}
+                                                onUpdate={(m) => updateMaterials(m, "PHASE", phase.id)}
+                                                scope="PHASE"
+                                                phaseId={phase.id}
+                                            />
+                                        </DialogContent>
+                                    </Dialog>
                                 </div>
 
                                 <div className="rounded-md border bg-white shadow-sm overflow-hidden">

@@ -45,7 +45,7 @@ export interface CreateSubjectRequest {
 }
 
 export interface CreateLevelRequest {
-  subjectId: number
+  curriculumId: number
   code: string
   name: string
   description?: string
@@ -55,6 +55,30 @@ export interface ApiResponse<T = unknown> {
   success: boolean
   message: string
   data: T
+}
+
+// Subject-PLO Matrix types
+export interface SubjectPLOMatrixDTO {
+  curriculumId: number
+  curriculumCode: string
+  curriculumName: string
+  plos: PLOInfo[]
+  subjects: SubjectPLORow[]
+}
+
+export interface PLOInfo {
+  id: number
+  code: string
+  description: string
+}
+
+export interface SubjectPLORow {
+  subjectId: number
+  subjectCode: string
+  subjectName: string
+  levelName: string | null
+  status: string
+  ploMappings: boolean[]
 }
 
 // Base query with auth
@@ -263,6 +287,14 @@ export const curriculumApi = createApi({
       }),
       invalidatesTags: ['Curriculum'],
     }),
+    // Get Subject-PLO Matrix
+    getSubjectPLOMatrix: builder.query<ApiResponse<SubjectPLOMatrixDTO>, number>({
+      query: (curriculumId) => ({
+        url: `/curriculum/curriculums/${curriculumId}/subject-plo-matrix`,
+        method: 'GET',
+      }),
+      providesTags: ['Curriculum'],
+    }),
   }),
 })
 
@@ -284,4 +316,5 @@ export const {
   useUpdateLevelSortOrderMutation,
   useGetTimeslotDurationQuery,
   useGetTimeslotDurationsQuery,
+  useGetSubjectPLOMatrixQuery,
 } = curriculumApi

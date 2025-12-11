@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useSearchParams, useNavigate } from "react-router-dom"
 import { useGetQAClassesQuery } from "@/store/services/qaApi"
-import { useGetMyBranchesQuery } from "@/store/services/branchApi"
+import { useAuth } from "@/hooks/useAuth"
 import type { QAClassListItemDTO } from "@/types/qa"
 import { DashboardLayout } from "@/components/DashboardLayout"
 import { ClassStatusBadge } from "@/components/qa/ClassStatusBadge"
@@ -62,25 +62,21 @@ export default function QAClassesListPage() {
     const [searchTerm, setSearchTerm] = useState("")
     const [statusFilter, setStatusFilter] = useState<string>("all")
     const [modalityFilter, setModalityFilter] = useState<string>("all")
-    const [branchFilter, setBranchFilter] = useState<string>("all")
     const [page, setPage] = useState(0)
 
-    // Fetch branches assigned to current user for filter dropdown
-    const { data: branchesResponse } = useGetMyBranchesQuery()
-    const branches = branchesResponse?.data || []
+    // Lấy selectedBranchId từ AuthContext (được chọn từ sidebar)
+    const { selectedBranchId } = useAuth()
 
     // Initialize state from URL parameters
     useEffect(() => {
         const search = searchParams.get('search') || ''
         const status = searchParams.get('status') || 'all'
         const modality = searchParams.get('modality') || 'all'
-        const branch = searchParams.get('branch') || 'all'
         const pageNum = parseInt(searchParams.get('page') || '0')
 
         setSearchTerm(search)
         setStatusFilter(status)
         setModalityFilter(modality)
-        setBranchFilter(branch)
         setPage(pageNum)
     }, [searchParams])
 
@@ -117,12 +113,6 @@ export default function QAClassesListPage() {
         updateUrlParams({ modality: value === 'all' ? null : value, page: '0' })
     }
 
-    const handleBranchChange = (value: string) => {
-        setBranchFilter(value)
-        setPage(0)
-        updateUrlParams({ branch: value === 'all' ? null : value, page: '0' })
-    }
-
     // Handle page change
     const handlePageChange = (newPage: number) => {
         setPage(newPage)
@@ -134,16 +124,15 @@ export default function QAClassesListPage() {
         setSearchTerm("")
         setStatusFilter("all")
         setModalityFilter("all")
-        setBranchFilter("all")
         setPage(0)
         setSearchParams(new URLSearchParams())
     }
 
     // Check if any filter is active
-    const hasActiveFilters = searchTerm !== "" || statusFilter !== "all" || modalityFilter !== "all" || branchFilter !== "all"
+    const hasActiveFilters = searchTerm !== "" || statusFilter !== "all" || modalityFilter !== "all"
 
     const { data: classesData, isLoading, error } = useGetQAClassesQuery({
-        branchIds: branchFilter === 'all' ? undefined : [parseInt(branchFilter)],
+        branchIds: selectedBranchId ? [selectedBranchId] : undefined,
         search: searchTerm || undefined,
         status: statusFilter === 'all' ? undefined : statusFilter,
         page,
@@ -222,20 +211,6 @@ export default function QAClassesListPage() {
 
                     {/* Filters - Right */}
                     <div className="flex items-center gap-2 ml-auto">
-                        <Select value={branchFilter} onValueChange={handleBranchChange}>
-                            <SelectTrigger className="h-9 w-auto min-w-[160px]">
-                                <SelectValue placeholder="Chi nhánh" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Tất cả chi nhánh</SelectItem>
-                                {branches.map((branch) => (
-                                    <SelectItem key={branch.id} value={branch.id.toString()}>
-                                        {branch.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-
                         <Select value={statusFilter} onValueChange={handleStatusChange}>
                             <SelectTrigger className="h-9 w-auto min-w-[140px]">
                                 <SelectValue />
@@ -355,7 +330,7 @@ export default function QAClassesListPage() {
                                         <div className="flex flex-col items-center justify-center text-center">
                                             <GraduationCap className="h-12 w-12 text-muted-foreground/50 mb-4" />
                                             <p className="text-muted-foreground">
-                                                {searchTerm || statusFilter !== 'all' || modalityFilter !== 'all' || branchFilter !== 'all'
+                                                {searchTerm || statusFilter !== 'all' || modalityFilter !== 'all'
                                                     ? "Không có lớp học nào phù hợp với bộ lọc đã chọn."
                                                     : "Chưa có lớp học nào."
                                                 }

@@ -40,6 +40,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { toast } from "sonner";
+import { SubjectPLOMatrix } from "@/components/curriculum/SubjectPLOMatrix";
 
 
 interface SortableRowProps {
@@ -183,7 +184,7 @@ export default function SubjectDetailPage() {
     return (
         <DashboardLayout
             title={subject.name}
-            description={`Mã chương trình: ${subject.code}`}
+            description={`Mã chương trình: ${subject.code} `}
         >
             <div className="space-y-6">
                 {/* Header Stats */}
@@ -244,10 +245,11 @@ export default function SubjectDetailPage() {
 
                 {/* Main Content */}
                 <Tabs defaultValue="overview" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 lg:w-[500px]">
+                    <TabsList className="grid w-full grid-cols-4 lg:w-[650px]">
                         <TabsTrigger value="overview">Tổng quan</TabsTrigger>
                         <TabsTrigger value="plos">Chuẩn đầu ra (PLOs)</TabsTrigger>
                         <TabsTrigger value="levels">Danh sách cấp độ</TabsTrigger>
+                        <TabsTrigger value="matrix">Ma trận Subject-PLO</TabsTrigger>
                     </TabsList>
 
                     {/* Overview Tab */}
@@ -375,7 +377,7 @@ export default function SubjectDetailPage() {
                                                         <SortableRow
                                                             key={level.id}
                                                             level={level}
-                                                            onViewDetail={(id) => navigate(`/curriculum/levels/${id}`)}
+                                                            onViewDetail={(id) => navigate(`/ curriculum / levels / ${id} `)}
                                                         />
                                                     ))
                                                 ) : (
@@ -391,6 +393,11 @@ export default function SubjectDetailPage() {
                                 </DndContext>
                             </CardContent>
                         </Card>
+                    </TabsContent>
+
+                    {/* Subject-PLO Matrix Tab */}
+                    <TabsContent value="matrix" className="mt-6">
+                        <SubjectPLOMatrix curriculumId={Number(id)} />
                     </TabsContent>
                 </Tabs>
             </div>

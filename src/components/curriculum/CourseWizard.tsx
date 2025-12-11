@@ -359,8 +359,8 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                             mappedCLOs: session.cloIds || [],
                             materials: formData.materials?.filter(m => m.scope === "SESSION" && m.sessionId === session.id).map(m => ({
                                 id: m.id && !isNaN(Number(m.id)) ? Number(m.id) : null,
-                                title: m.name,
-                                materialType: m.type,
+                                name: m.name,
+                                type: m.type,
                                 scope: m.scope,
                                 url: m.url,
                                 phaseId: m.phaseId && !isNaN(Number(m.phaseId)) ? Number(m.phaseId) : null,
@@ -369,8 +369,8 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                         })) || [],
                         materials: formData.materials?.filter(m => m.scope === "PHASE" && m.phaseId === phase.id).map(m => ({
                             id: m.id && !isNaN(Number(m.id)) ? Number(m.id) : null,
-                            title: m.name,
-                            materialType: m.type,
+                            name: m.name,
+                            type: m.type,
                             scope: m.scope,
                             url: m.url,
                             phaseId: m.phaseId && !isNaN(Number(m.phaseId)) ? Number(m.phaseId) : null,
@@ -391,8 +391,8 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                 })),
                 materials: formData.materials?.filter(m => m.scope !== "SESSION").map((material) => ({
                     id: material.id && !isNaN(Number(material.id)) ? Number(material.id) : null,
-                    title: material.name,
-                    materialType: material.type,
+                    name: material.name,
+                    type: material.type,
                     scope: material.scope,
                     url: material.url,
                     phaseId: material.phaseId && !isNaN(Number(material.phaseId)) ? Number(material.phaseId) : null,
@@ -460,8 +460,8 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                         mappedCLOs: session.cloIds || [],
                         materials: formData.materials?.filter(m => m.scope === "SESSION" && m.sessionId === session.id).map(m => ({
                             id: m.id && !isNaN(Number(m.id)) ? Number(m.id) : null,
-                            title: m.name,
-                            materialType: m.type,
+                            name: m.name,
+                            type: m.type,
                             scope: m.scope,
                             url: m.url,
                             phaseId: m.phaseId && !isNaN(Number(m.phaseId)) ? Number(m.phaseId) : null,
@@ -470,8 +470,8 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                     })) || [],
                     materials: formData.materials?.filter(m => m.scope === "PHASE" && m.phaseId === phase.id).map(m => ({
                         id: m.id && !isNaN(Number(m.id)) ? Number(m.id) : null,
-                        title: m.name,
-                        materialType: m.type,
+                        name: m.name,
+                        type: m.type,
                         scope: m.scope,
                         url: m.url,
                         phaseId: m.phaseId && !isNaN(Number(m.phaseId)) ? Number(m.phaseId) : null,
@@ -492,8 +492,8 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
             })) || [],
             materials: formData.materials?.filter(m => m.scope === "COURSE").map((material) => ({
                 id: material.id && !isNaN(Number(material.id)) ? Number(material.id) : null,
-                title: material.name,
-                materialType: material.type,
+                name: material.name,
+                type: material.type,
                 scope: material.scope,
                 url: material.url,
                 phaseId: material.phaseId && !isNaN(Number(material.phaseId)) ? Number(material.phaseId) : null,
@@ -750,10 +750,10 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                                     >
                                         <div
                                             className={`w-10 h-10 rounded-full flex items-center justify-center border-2 bg-background transition-all duration-300 ${isActive
-                                                    ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-110"
-                                                    : isCompleted
-                                                        ? "border-primary bg-primary text-primary-foreground cursor-pointer hover:scale-105"
-                                                        : "border-muted text-muted-foreground"
+                                                ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-110"
+                                                : isCompleted
+                                                    ? "border-primary bg-primary text-primary-foreground cursor-pointer hover:scale-105"
+                                                    : "border-muted text-muted-foreground"
                                                 }`}
                                         >
                                             {isCompleted ? (
@@ -765,10 +765,10 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                                         <div className="mt-3 text-center">
                                             <span
                                                 className={`text-sm font-medium block ${isActive
-                                                        ? "text-primary"
-                                                        : isCompleted
-                                                            ? "text-foreground cursor-pointer"
-                                                            : "text-muted-foreground"
+                                                    ? "text-primary"
+                                                    : isCompleted
+                                                        ? "text-foreground cursor-pointer"
+                                                        : "text-muted-foreground"
                                                     }`}
                                             >
                                                 {step.title}

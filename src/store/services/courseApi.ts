@@ -288,8 +288,8 @@ export interface CreateCourseRequest {
         mappedCLOs?: string[];
         materials?: {
           id?: number | null;
-          title: string;
-          materialType: string;
+          name: string;
+          type: string;
           scope?: string;
           url: string;
           phaseId?: number | null;
@@ -298,8 +298,8 @@ export interface CreateCourseRequest {
       }[];
       materials?: {
         id?: number | null;
-        title: string;
-        materialType: string;
+        name: string;
+        type: string;
         scope?: string;
         url: string;
         phaseId?: number | null;
@@ -320,8 +320,8 @@ export interface CreateCourseRequest {
   }[];
   materials?: {
     id?: number | null;
-    title: string;
-    materialType: string;
+    name: string;
+    type: string;
     scope?: string;
     url: string;
     phaseId?: number | null;
@@ -335,56 +335,56 @@ export const courseApi = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: ['Course', 'Material', 'Progress'],
   endpoints: (builder) => ({
-    // Student's enrolled courses
+    // Student's enrolled subjects
     getStudentCourses: builder.query<StudentCourse[], number>({
-      query: (studentId) => `/courses/student/${studentId}`,
+      query: (studentId) => `/subjects/student/${studentId}`,
       transformResponse: (response: { data: StudentCourse[] }) => response.data,
       providesTags: ['Course'],
     }),
 
-    // Course detail information
+    // Subject detail information
     getCourseDetail: builder.query<CourseDetail, number>({
-      query: (courseId) => `/courses/${courseId}/detail`,
+      query: (subjectId) => `/subjects/${subjectId}/detail`,
       transformResponse: (response: { data: CourseDetail }) => response.data,
       providesTags: ['Course'],
     }),
 
-    // Course syllabus
+    // Subject syllabus
     getCourseSyllabus: builder.query<CourseDetail, number>({
-      query: (courseId) => `/courses/${courseId}/syllabus`,
+      query: (subjectId) => `/subjects/${subjectId}/syllabus`,
       transformResponse: (response: { data: CourseDetail }) => response.data,
       providesTags: ['Course'],
     }),
 
-    // Course materials hierarchy
+    // Subject materials hierarchy
     getCourseMaterials: builder.query<MaterialHierarchy, { courseId: number; studentId?: number }>({
       query: ({ courseId, studentId }) => ({
-        url: `/courses/${courseId}/materials`,
+        url: `/subjects/${courseId}/materials`,
         params: studentId ? { studentId } : undefined,
       }),
       transformResponse: (response: { data: MaterialHierarchy }) => response.data,
       providesTags: ['Material'],
     }),
 
-    // Course PLOs
+    // Subject PLOs
     getCoursePLOs: builder.query<CoursePLO[], number>({
-      query: (courseId) => `/courses/${courseId}/plos`,
+      query: (subjectId) => `/subjects/${subjectId}/plos`,
       transformResponse: (response: { data: CoursePLO[] }) => response.data,
       providesTags: ['Course'],
     }),
 
-    // Course CLOs
+    // Subject CLOs
     getCourseCLOs: builder.query<CourseCLO[], number>({
-      query: (courseId) => `/courses/${courseId}/clos`,
+      query: (subjectId) => `/subjects/${subjectId}/clos`,
       transformResponse: (response: { data: CourseCLO[] }) => response.data,
       providesTags: ['Course'],
     }),
 
-    // Student course progress
+    // Student subject progress
     getStudentCourseProgress: builder.query<CourseProgress, { studentId: number; courseId: number }>({
       query: ({ studentId, courseId }) => ({
-        url: `/courses/student/${studentId}/progress`,
-        params: { courseId },
+        url: `/subjects/student/${studentId}/progress`,
+        params: { subjectId: courseId },
       }),
       transformResponse: (response: { data: CourseProgress }) => response.data,
       providesTags: ['Progress'],
@@ -393,16 +393,16 @@ export const courseApi = createApi({
     // Check material access
     checkMaterialAccess: builder.query<boolean, { courseId: number; materialId: number; studentId: number }>({
       query: ({ courseId, materialId, studentId }) => ({
-        url: `/courses/${courseId}/materials/${materialId}/accessible`,
+        url: `/subjects/${courseId}/materials/${materialId}/accessible`,
         params: { studentId },
       }),
       transformResponse: (response: { data: boolean }) => response.data,
     }),
 
-    // Create new course
+    // Create new subject
     createCourse: builder.mutation<CourseDetail, CreateCourseRequest>({
       query: (body) => ({
-        url: '/courses',
+        url: '/subjects',
         method: 'POST',
         body,
       }),
@@ -411,7 +411,7 @@ export const courseApi = createApi({
     }),
     updateCourse: builder.mutation<CourseDetail, { id: number; data: CreateCourseRequest }>({
       query: ({ id, data }) => ({
-        url: `/courses/${id}`,
+        url: `/subjects/${id}`,
         method: 'PUT',
         body: data,
       }),
@@ -420,26 +420,26 @@ export const courseApi = createApi({
     }),
     deactivateCourse: builder.mutation<void, number>({
       query: (id) => ({
-        url: `/courses/${id}/deactivate`,
+        url: `/subjects/${id}/deactivate`,
         method: 'PATCH',
       }),
       invalidatesTags: (_result, _error, id) => [{ type: 'Course', id }],
     }),
     reactivateCourse: builder.mutation<void, number>({
       query: (id) => ({
-        url: `/courses/${id}/reactivate`,
+        url: `/subjects/${id}/reactivate`,
         method: 'PATCH',
       }),
       invalidatesTags: (_result, _error, id) => [{ type: 'Course', id }],
     }),
     getCourseDetails: builder.query<ApiResponse<CourseDetail>, number>({
-      query: (id) => `/courses/${id}`,
+      query: (id) => `/subjects/${id}`,
       providesTags: (_result, _error, id) => [{ type: 'Course', id }],
     }),
-    // Get all courses (optionally filtered)
-    getAllCourses: builder.query<CourseDTO[], { subjectId?: number; levelId?: number } | void>({
+    // Get all subjects (optionally filtered)
+    getAllCourses: builder.query<CourseDTO[], { curriculumId?: number; levelId?: number } | void>({
       query: (params) => ({
-        url: '/courses',
+        url: '/subjects',
         method: 'GET',
         params: params || undefined,
       }),
@@ -448,21 +448,21 @@ export const courseApi = createApi({
     }),
     submitCourse: builder.mutation<void, number>({
       query: (id) => ({
-        url: `/courses/${id}/submit`,
+        url: `/subjects/${id}/submit`,
         method: 'POST',
       }),
       invalidatesTags: ['Course'],
     }),
     approveCourse: builder.mutation<void, number>({
       query: (id) => ({
-        url: `/courses/${id}/approve`,
+        url: `/subjects/${id}/approve`,
         method: 'POST',
       }),
       invalidatesTags: ['Course'],
     }),
     rejectCourse: builder.mutation<void, { id: number; reason: string }>({
       query: ({ id, reason }) => ({
-        url: `/courses/${id}/reject`,
+        url: `/subjects/${id}/reject`,
         method: 'POST',
         body: reason,
         headers: {
@@ -473,21 +473,21 @@ export const courseApi = createApi({
     }),
     deleteCourse: builder.mutation<void, number>({
       query: (id) => ({
-        url: `/courses/${id}`,
+        url: `/subjects/${id}`,
         method: 'DELETE',
       }),
       invalidatesTags: ['Course'],
     }),
     cloneCourse: builder.mutation<{ success: boolean; data: { id: number; name: string; code: string; status: string } }, number>({
       query: (id) => ({
-        url: `/courses/${id}/clone`,
+        url: `/subjects/${id}/clone`,
         method: 'POST',
       }),
       invalidatesTags: ['Course'],
     }),
     getNextVersion: builder.query<{ success: boolean; data: number }, { subjectCode: string; levelCode: string; year: number }>({
       query: ({ subjectCode, levelCode, year }) => ({
-        url: `/courses/next-version`,
+        url: `/subjects/next-version`,
         params: { subjectCode, levelCode, year },
       }),
     }),

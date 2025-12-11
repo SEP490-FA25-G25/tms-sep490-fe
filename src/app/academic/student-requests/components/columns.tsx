@@ -316,13 +316,72 @@ export const pendingColumns: ColumnDef<AcademicStudentRequest>[] = [
     },
   },
   {
-    accessorKey: 'currentClass.code',
-    header: 'Lớp',
+    id: 'sessionOrClass',
+    header: 'Buổi học/Lớp',
     cell: ({ row }) => {
-      return <span className="font-mono text-sm">{row.original.currentClass.code}</span>
+      const { requestType, targetSession, makeupSession, targetClass, effectiveDate, currentClass } = row.original
+
+      if (requestType === 'ABSENCE') {
+        // For ABSENCE requests: Show only target session info
+        return (
+          <div className="text-sm">
+            <div className="font-medium">
+              Buổi {targetSession.courseSessionNumber}: {targetSession.courseSessionTitle || 'Buổi học'}
+            </div>
+            <div className="text-muted-foreground text-xs">
+              {format(parseISO(targetSession.date), 'dd/MM', { locale: vi })} • {targetSession.timeSlot.startTime}-{targetSession.timeSlot.endTime}
+            </div>
+          </div>
+        )
+      }
+
+      if (requestType === 'MAKEUP') {
+        // For MAKEUP requests: Show "target → makeup" flow
+        if (makeupSession) {
+          return (
+            <div className="text-sm">
+              <div className="font-medium">
+                {currentClass.code} • {format(parseISO(targetSession.date), 'dd/MM', { locale: vi })} → {makeupSession.classInfo?.classCode || 'Lớp mới'} • {format(parseISO(makeupSession.date), 'dd/MM', { locale: vi })}
+              </div>
+              <div className="text-muted-foreground text-xs">
+                Buổi {targetSession.courseSessionNumber} → Buổi {makeupSession.courseSessionNumber}: {makeupSession.courseSessionTitle || 'Học bù'}
+              </div>
+            </div>
+          )
+        } else {
+          return (
+            <div className="text-sm">
+              <div className="font-medium">
+                {currentClass.code} • {format(parseISO(targetSession.date), 'dd/MM', { locale: vi })} → ?
+              </div>
+              <div className="text-muted-foreground text-xs">
+                Chưa có buổi học bù
+              </div>
+            </div>
+          )
+        }
+      }
+
+      if (requestType === 'TRANSFER' && targetClass) {
+        // For TRANSFER requests: Show "class A → class B" with effective date
+        return (
+          <div className="text-sm">
+            <div className="font-medium">
+              {currentClass.code} → {targetClass.code}
+            </div>
+            {effectiveDate && (
+              <div className="text-muted-foreground text-xs">
+                Hiệu lực {format(parseISO(effectiveDate), 'dd/MM', { locale: vi })}
+              </div>
+            )}
+          </div>
+        )
+      }
+
+      return <span className="text-sm text-muted-foreground">-</span>
     },
-    size: 100,
-    enableSorting: true,
+    size: 220,
+    enableSorting: false,
   },
   {
     accessorKey: 'requestReason',
@@ -451,13 +510,72 @@ export const historyColumns: ColumnDef<AcademicStudentRequest>[] = [
     enableSorting: false,
   },
   {
-    accessorKey: 'currentClass.code',
-    header: 'Lớp',
+    id: 'sessionOrClass',
+    header: 'Buổi học/Lớp',
     cell: ({ row }) => {
-      return <span className="font-mono text-sm">{row.original.currentClass.code}</span>
+      const { requestType, targetSession, makeupSession, targetClass, effectiveDate, currentClass } = row.original
+
+      if (requestType === 'ABSENCE') {
+        // For ABSENCE requests: Show only target session info
+        return (
+          <div className="text-sm">
+            <div className="font-medium">
+              Buổi {targetSession.courseSessionNumber}: {targetSession.courseSessionTitle || 'Buổi học'}
+            </div>
+            <div className="text-muted-foreground text-xs">
+              {format(parseISO(targetSession.date), 'dd/MM', { locale: vi })} • {targetSession.timeSlot.startTime}-{targetSession.timeSlot.endTime}
+            </div>
+          </div>
+        )
+      }
+
+      if (requestType === 'MAKEUP') {
+        // For MAKEUP requests: Show "target → makeup" flow
+        if (makeupSession) {
+          return (
+            <div className="text-sm">
+              <div className="font-medium">
+                {currentClass.code} • {format(parseISO(targetSession.date), 'dd/MM', { locale: vi })} → {makeupSession.classInfo?.classCode || 'Lớp mới'} • {format(parseISO(makeupSession.date), 'dd/MM', { locale: vi })}
+              </div>
+              <div className="text-muted-foreground text-xs">
+                Buổi {targetSession.courseSessionNumber} → Buổi {makeupSession.courseSessionNumber}: {makeupSession.courseSessionTitle || 'Học bù'}
+              </div>
+            </div>
+          )
+        } else {
+          return (
+            <div className="text-sm">
+              <div className="font-medium">
+                {currentClass.code} • {format(parseISO(targetSession.date), 'dd/MM', { locale: vi })} → ?
+              </div>
+              <div className="text-muted-foreground text-xs">
+                Chưa có buổi học bù
+              </div>
+            </div>
+          )
+        }
+      }
+
+      if (requestType === 'TRANSFER' && targetClass) {
+        // For TRANSFER requests: Show "class A → class B" with effective date
+        return (
+          <div className="text-sm">
+            <div className="font-medium">
+              {currentClass.code} → {targetClass.code}
+            </div>
+            {effectiveDate && (
+              <div className="text-muted-foreground text-xs">
+                Hiệu lực {format(parseISO(effectiveDate), 'dd/MM', { locale: vi })}
+              </div>
+            )}
+          </div>
+        )
+      }
+
+      return <span className="text-sm text-muted-foreground">-</span>
     },
-    size: 80,
-    enableSorting: true,
+    size: 200,
+    enableSorting: false,
   },
   {
     accessorKey: 'requestReason',

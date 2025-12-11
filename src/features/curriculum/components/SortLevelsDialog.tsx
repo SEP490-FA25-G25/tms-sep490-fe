@@ -38,10 +38,10 @@ interface Level {
 }
 
 interface SortLevelsDialogProps {
-  subjectId: number;
-  curriculumId?: number;
-  levels: Level[];
-  onSuccess?: () => void;
+    subjectId: number;
+    curriculumId?: number;
+    levels: Level[];
+    onSuccess?: () => void;
 }
 
 function SortableItem({ id, code, name }: { id: number; code: string; name: string }) {
@@ -120,7 +120,7 @@ export function SortLevelsDialog({ subjectId, curriculumId, levels, onSuccess }:
     const handleSave = async () => {
         try {
             const levelIds = items.map((item) => item.id);
-      await updateSortOrder({ curriculumId: curriculumId ?? subjectId, levelIds }).unwrap();
+            await updateSortOrder({ curriculumId: curriculumId ?? subjectId, levelIds }).unwrap();
             toast.success("Cập nhật thứ tự thành công");
             setOpen(false);
             if (onSuccess) onSuccess();

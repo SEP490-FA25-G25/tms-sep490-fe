@@ -24,7 +24,7 @@ const renderTimeBadge = (request: TeacherRequestDTO) => {
   return (
     <Badge
       variant="outline"
-      className={`${className} px-3 py-1 text-xs font-medium`}
+      className={className}
     >
       {label}
     </Badge>
@@ -36,7 +36,7 @@ const renderStatusBadge = (status: TeacherRequestStatus) => {
   return (
     <Badge
       variant="outline"
-      className={`${meta.badgeClass} px-3 py-1 text-xs font-medium`}
+      className={meta.badgeClass}
     >
       {meta.label}
     </Badge>
@@ -67,7 +67,7 @@ export const pendingColumns: ColumnDef<TeacherRequestDTO>[] = [
         )}
       </div>
     ),
-    size: 160,
+    size: 140,
   },
   {
     id: "timeLeft",
@@ -82,7 +82,7 @@ export const pendingColumns: ColumnDef<TeacherRequestDTO>[] = [
       </Button>
     ),
     cell: ({ row }) => renderTimeBadge(row.original),
-    size: 150,
+    size: 130,
     enableSorting: true,
     sortingFn: (rowA, rowB) => {
       const a = getDaysUntilSession(rowA.original) ?? 999;
@@ -111,7 +111,7 @@ export const pendingColumns: ColumnDef<TeacherRequestDTO>[] = [
         </div>
       );
     },
-    size: 230,
+    size: 200,
   },
   {
     id: "reason",
@@ -130,7 +130,7 @@ export const pendingColumns: ColumnDef<TeacherRequestDTO>[] = [
         </span>
       );
     },
-    size: 200,
+    size: 160,
   },
   {
     id: "requestType",
@@ -144,7 +144,7 @@ export const pendingColumns: ColumnDef<TeacherRequestDTO>[] = [
         {TEACHER_REQUEST_TYPE_LABELS[row.original.requestType]}
       </Badge>
     ),
-    size: 130,
+    size: 110,
   },
   {
     id: "status",
@@ -160,7 +160,7 @@ export const pendingColumns: ColumnDef<TeacherRequestDTO>[] = [
       </Button>
     ),
     cell: ({ row }) => renderStatusBadge(row.original.status),
-    size: 140,
+    size: 120,
     enableSorting: true,
   },
   {
@@ -186,7 +186,7 @@ export const pendingColumns: ColumnDef<TeacherRequestDTO>[] = [
       ) : (
         <span className="text-sm text-muted-foreground">—</span>
       ),
-    size: 130,
+    size: 110,
     enableSorting: true,
   },
 ];
@@ -215,7 +215,7 @@ export const historyColumns: ColumnDef<TeacherRequestDTO>[] = [
         )}
       </div>
     ),
-    size: 160,
+    size: 140,
   },
   {
     id: "classSession",
@@ -238,7 +238,7 @@ export const historyColumns: ColumnDef<TeacherRequestDTO>[] = [
         </div>
       );
     },
-    size: 230,
+    size: 200,
   },
   {
     id: "decidedBy",
@@ -248,7 +248,7 @@ export const historyColumns: ColumnDef<TeacherRequestDTO>[] = [
         {row.original.decidedByName ?? "—"}
       </span>
     ),
-    size: 140,
+    size: 130,
   },
   {
     id: "requestType",
@@ -262,7 +262,7 @@ export const historyColumns: ColumnDef<TeacherRequestDTO>[] = [
         {TEACHER_REQUEST_TYPE_LABELS[row.original.requestType]}
       </Badge>
     ),
-    size: 130,
+    size: 110,
   },
   {
     id: "status",
@@ -278,7 +278,7 @@ export const historyColumns: ColumnDef<TeacherRequestDTO>[] = [
       </Button>
     ),
     cell: ({ row }) => renderStatusBadge(row.original.status),
-    size: 140,
+    size: 120,
     enableSorting: true,
   },
   {
@@ -304,7 +304,7 @@ export const historyColumns: ColumnDef<TeacherRequestDTO>[] = [
       ) : (
         <span className="text-sm text-muted-foreground">—</span>
       ),
-    size: 130,
+    size: 110,
     enableSorting: true,
   },
   {
@@ -352,7 +352,7 @@ export const historyColumns: ColumnDef<TeacherRequestDTO>[] = [
         </div>
       );
     },
-    size: 140,
+    size: 120,
     enableSorting: true,
   },
 ];

@@ -34,6 +34,7 @@ import { teacherApi } from "./services/teacherApi";
 import { managerStaffApi } from "./services/managerStaffApi";
 import { centerHeadApi } from "./services/centerHeadApi";
 import { dashboardApi } from "./services/dashboardApi";
+import { academicTeacherApi } from "./services/academicTeacherApi";
 
 import authSlice, {
   setCredentials,
@@ -49,8 +50,6 @@ import authSlice, {
   selectSelectedBranchId,
   selectUserBranches,
 } from "./slices/authSlice";
-
-import { teacherAvailabilityApi } from "./services/teacherAvailabilityApi";
 
 export const store = configureStore({
   reducer: {
@@ -72,7 +71,7 @@ export const store = configureStore({
     [teacherScheduleApi.reducerPath]: teacherScheduleApi.reducer,
     [teacherGradeApi.reducerPath]: teacherGradeApi.reducer,
     [teacherProfileApi.reducerPath]: teacherProfileApi.reducer,
-    [teacherAvailabilityApi.reducerPath]: teacherAvailabilityApi.reducer,
+    [academicTeacherApi.reducerPath]: academicTeacherApi.reducer,
     [notificationApi.reducerPath]: notificationApi.reducer,
     [userApi.reducerPath]: userApi.reducer,
     [policyApi.reducerPath]: policyApi.reducer,
@@ -120,7 +119,7 @@ export const store = configureStore({
       .concat(teacherScheduleApi.middleware)
       .concat(teacherGradeApi.middleware)
       .concat(teacherProfileApi.middleware)
-      .concat(teacherAvailabilityApi.middleware)
+      .concat(academicTeacherApi.middleware)
       .concat(notificationApi.middleware)
       .concat(userApi.middleware)
       .concat(policyApi.middleware)

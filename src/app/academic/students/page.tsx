@@ -328,20 +328,8 @@ export default function StudentListPage() {
       description="Quản lý thông tin học viên và phân lớp"
       actions={
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={handleExport}
-            disabled={isExporting}
-          >
-            {isExporting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="mr-2 h-4 w-4" />
-            )}
-            Xuất Excel
-          </Button>
           <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
-            <Upload className="mr-2 h-4 w-4" />
+            <Download className="mr-2 h-4 w-4" />
             Nhập từ Excel
           </Button>
           <Button onClick={() => setCreateDialogOpen(true)}>

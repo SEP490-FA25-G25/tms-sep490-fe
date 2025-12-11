@@ -355,43 +355,14 @@ export default function AcademicClassesPage({
       return <span className="text-muted-foreground">Chưa phân công</span>;
     }
 
-    const displayTeachers = teachers.slice(0, 3);
-    const remainingCount = teachers.length - 3;
-
     return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="flex items-center gap-2 cursor-help">
-              <div className="flex flex-col gap-0.5">
-                {displayTeachers.map((teacher) => (
-                  <span key={teacher.id} className="text-sm">
-                    {teacher.fullName}
-                  </span>
-                ))}
-                {remainingCount > 0 && (
-                  <span className="text-sm text-muted-foreground">
-                    +{remainingCount} giáo viên nữa...
-                  </span>
-                )}
-              </div>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="right" className="max-w-xs">
-            <div className="space-y-2">
-              <p className="font-semibold text-sm mb-2">Tất cả giáo viên</p>
-              {teachers.map((teacher) => (
-                <div key={teacher.id} className="text-sm">
-                  <div className="font-medium">{teacher.fullName}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {teacher.email} • {teacher.sessionCount} buổi học
-                  </div>
-                </div>
-              ))}
-            </div>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <div className="flex flex-col gap-0.5 max-w-full">
+        {teachers.map((teacher) => (
+          <span key={teacher.id} className="text-sm truncate">
+            {teacher.fullName}
+          </span>
+        ))}
+      </div>
     );
   };
 
