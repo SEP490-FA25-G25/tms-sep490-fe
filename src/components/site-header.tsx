@@ -74,6 +74,12 @@ export function SiteHeader() {
   const getProfileUrl = () => {
     if (user?.roles?.includes("STUDENT")) return "/student/profile"
     if (user?.roles?.includes("TEACHER")) return "/teacher/profile"
+    if (user?.roles?.includes("ADMIN")) return "/admin/profile"
+    if (user?.roles?.includes("MANAGER")) return "/manager/profile"
+    if (user?.roles?.includes("QA")) return "/qa/profile"
+    if (user?.roles?.includes("CENTER_HEAD")) return "/center-head/profile"
+    if (user?.roles?.includes("ACADEMIC_AFFAIR")) return "/academic/profile"
+    // Các role khác không có trang profile riêng
     return null
   }
 

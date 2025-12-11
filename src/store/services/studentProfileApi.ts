@@ -1,44 +1,54 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQueryWithReauth } from './authApi';
 
+// Match StudentDetailDTO from backend
 export interface StudentProfile {
-  studentId: number;
+  id: number; // Backend uses 'id', not 'studentId'
   studentCode: string;
   fullName: string;
   email: string;
-  phone: string;
+  phone: string | null;
   avatarUrl?: string;
   address?: string;
-  gender: string;
-  dateOfBirth: string;
+  gender: string | null;
+  dateOfBirth: string | null; // LocalDate from backend
   facebookUrl?: string;
   status: string;
-  lastLoginAt: string;
-  branchName: string;
-  branchId: number;
-  totalEnrollments: number;
-  activeEnrollments: number;
-  completedEnrollments: number;
-  firstEnrollmentDate?: string;
-  attendanceRate: number;
-  averageScore: number;
-  totalAbsences: number;
-  totalSessions: number;
-  primaryCourseType?: string;
-  scoreScale?: string;
-  enrollments: StudentActiveClass[];
+  lastLoginAt: string | null;
+  createdAt: string | null;
+  branchName: string | null;
+  branchId: number | null;
+  currentClasses: StudentActiveClass[]; // Backend uses 'currentClasses', not 'enrollments'
+  skillAssessments?: SkillAssessmentDetail[];
 }
 
+// Match StudentActiveClassDTO from backend
 export interface StudentActiveClass {
-  classId: number;
+  id: number; // Backend uses 'id', not 'classId'
   classCode: string;
   className: string;
   courseName: string;
   branchName: string;
   startDate: string;
   plannedEndDate: string;
-  enrollmentStatus: string;
-  enrolledAt: string;
+  status: string; // Class status (IN_PROGRESS, COMPLETED, etc.)
+  attendanceRate?: number;
+  averageScore?: number;
+}
+
+export interface SkillAssessmentDetail {
+  id: number;
+  skill: string;
+  levelCode: string;
+  levelName: string;
+  score: string;
+  assessmentDate: string;
+  assessmentType: string;
+  note?: string;
+  assessedBy?: {
+    userId: number;
+    fullName: string;
+  };
 }
 
 export interface UpdateMyProfileRequest {

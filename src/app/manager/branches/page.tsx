@@ -18,19 +18,30 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Building2,
   MapPin,
   Mail,
   Phone,
+  Search,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { BranchFormDialog } from "./components/BranchFormDialog";
 import { toast } from "sonner";
 
 export default function ManagerBranchesPage() {
   const [showForm, setShowForm] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const {
     data: branchResponse,
@@ -43,6 +54,28 @@ export default function ManagerBranchesPage() {
     useCreateManagerBranchMutation();
 
   const navigate = useNavigate();
+
+  // Client-side filter and search
+  const filteredBranches = useMemo(() => {
+    return branches.filter((branch) => {
+      // Search filter
+      const searchLower = searchQuery.toLowerCase();
+      const matchesSearch =
+        !searchQuery ||
+        branch.name.toLowerCase().includes(searchLower) ||
+        branch.code.toLowerCase().includes(searchLower) ||
+        (branch.address && branch.address.toLowerCase().includes(searchLower)) ||
+        (branch.city && branch.city.toLowerCase().includes(searchLower)) ||
+        (branch.district && branch.district.toLowerCase().includes(searchLower));
+
+      // Status filter
+      const matchesStatus =
+        statusFilter === "all" || branch.status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [branches, searchQuery, statusFilter]);
+
   const handleViewDetail = (branchId: number) => {
     navigate(`/manager/branches/${branchId}`);
   };
@@ -75,6 +108,29 @@ export default function ManagerBranchesPage() {
         </Button>
       }
     >
+      {/* Search and Filter Bar */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Tìm kiếm theo tên, mã, địa chỉ..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectValue placeholder="Trạng thái" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tất cả trạng thái</SelectItem>
+            <SelectItem value="ACTIVE">Hoạt động</SelectItem>
+            <SelectItem value="INACTIVE">Không hoạt động</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       {isLoadingBranches ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 3 }).map((_, index) => (
@@ -90,19 +146,24 @@ export default function ManagerBranchesPage() {
             </Card>
           ))}
         </div>
-      ) : branches.length === 0 ? (
+      ) : filteredBranches.length === 0 ? (
         <Card className="border-dashed text-center py-10">
           <CardHeader>
-            <CardTitle>Chưa có chi nhánh nào</CardTitle>
+            <CardTitle>
+              {branches.length === 0
+                ? "Chưa có chi nhánh nào"
+                : "Không tìm thấy chi nhánh"}
+            </CardTitle>
             <CardDescription>
-              Bạn hiện chưa được phân công chi nhánh nào. Vui lòng liên hệ
-              Admin.
+              {branches.length === 0
+                ? "Bạn hiện chưa được phân công chi nhánh nào. Vui lòng liên hệ Admin."
+                : "Không có chi nhánh nào phù hợp với tiêu chí tìm kiếm."}
             </CardDescription>
           </CardHeader>
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {branches.map((branch) => (
+          {filteredBranches.map((branch) => (
             <BranchCard
               key={branch.id}
               branch={branch}
@@ -121,6 +182,7 @@ export default function ManagerBranchesPage() {
     </DashboardLayout>
   );
 }
+
 
 function BranchCard({
   branch,
