@@ -146,6 +146,7 @@ const EditClassPage = lazy(
   () => import("./app/academic/classes/[id]/edit/page")
 );
 
+
 // Center Head pages
 const CenterHeadDashboardPage = lazy(
   () => import("./app/center-head/dashboard/page")
@@ -603,6 +604,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                
                 <Route
                   path="/teacher/requests/create/select-type"
                   element={
