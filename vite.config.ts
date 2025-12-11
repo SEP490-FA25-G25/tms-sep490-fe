@@ -49,9 +49,8 @@ export default defineConfig({
             return 'vendor-icons-tabler'
           }
           
-          // Charts - let Vite auto-split based on usage
           if (id.includes('recharts')) {
-            return 'vendor-charts'
+            return 'vendor-react'
           }
           
           // Forms & Validation
