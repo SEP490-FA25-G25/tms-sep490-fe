@@ -39,6 +39,7 @@ const AdminCentersPage = lazy(() => import("./app/admin/centers/page"));
 const AdminSubjectsPage = lazy(() => import("./app/admin/subjects/page"));
 const AdminAnalyticsPage = lazy(() => import("./app/admin/analytics/page"));
 const AdminDashboardPage = lazy(() => import("./app/admin/dashboard/page"));
+const AdminProfilePage = lazy(() => import("./app/admin/profile/page"));
 
 // Teacher pages
 const TeacherClassesPage = lazy(() => import("./app/teacher/classes/page"));
@@ -186,6 +187,7 @@ const TimeSlotDetailPage = lazy(
 
 // Manager pages
 const ManagerBranchesPage = lazy(() => import("./app/manager/branches/page"));
+const ManagerProfilePage = lazy(() => import("./app/manager/profile/page"));
 const ManagerBranchDetailPage = lazy(
   () => import("./app/manager/branches/[id]/page")
 );
@@ -236,6 +238,11 @@ const QAReportEditPage = lazy(() => import("./app/qa/reports/[id]/edit/page"));
 const QAStudentFeedbackPage = lazy(
   () => import("./app/qa/student-feedback/page")
 );
+
+// Role-specific profile pages
+const QAProfilePage = lazy(() => import("./app/qa/profile/page"));
+const CenterHeadProfilePage = lazy(() => import("./app/center-head/profile/page"));
+const AcademicProfilePage = lazy(() => import("./app/academic/profile/page"));
 
 function App() {
   return (
@@ -390,6 +397,46 @@ function App() {
                   element={
                     <ProtectedRoute requiredRoles={["ADMIN"]}>
                       <AdminSubjectsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/profile"
+                  element={
+                    <ProtectedRoute requiredRoles={["ADMIN"]}>
+                      <AdminProfilePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/manager/profile"
+                  element={
+                    <ProtectedRoute requiredRoles={["MANAGER"]}>
+                      <ManagerProfilePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/qa/profile"
+                  element={
+                    <ProtectedRoute requiredRoles={["QA"]}>
+                      <QAProfilePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/center-head/profile"
+                  element={
+                    <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
+                      <CenterHeadProfilePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/academic/profile"
+                  element={
+                    <ProtectedRoute requiredRoles={["ACADEMIC_AFFAIR"]}>
+                      <AcademicProfilePage />
                     </ProtectedRoute>
                   }
                 />

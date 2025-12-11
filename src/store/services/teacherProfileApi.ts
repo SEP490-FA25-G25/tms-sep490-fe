@@ -11,6 +11,7 @@ export interface TeacherProfile {
   gender?: string;
   dateOfBirth?: string;
   facebookUrl?: string;
+  avatarUrl?: string;
   status: string;
   lastLoginAt?: string;
   branchName?: string;
@@ -34,6 +35,15 @@ export interface TeacherClassInfo {
   assignedAt: string;
 }
 
+export interface UpdateTeacherProfileRequest {
+  phone?: string;
+  address?: string;
+  facebookUrl?: string;
+  avatarUrl?: string;
+  gender?: string;
+  dob?: string;
+}
+
 export const teacherProfileApi = createApi({
   reducerPath: 'teacherProfileApi',
   baseQuery: baseQueryWithReauth,
@@ -44,8 +54,16 @@ export const teacherProfileApi = createApi({
       transformResponse: (response: { data: TeacherProfile }) => response.data,
       providesTags: ['TeacherProfile'],
     }),
+    updateMyProfile: builder.mutation<TeacherProfile, UpdateTeacherProfileRequest>({
+      query: (body) => ({
+        url: '/teacher/me/profile',
+        method: 'PUT',
+        body,
+      }),
+      transformResponse: (response: { data: TeacherProfile }) => response.data,
+      invalidatesTags: ['TeacherProfile'],
+    }),
   }),
 });
 
-export const { useGetMyProfileQuery } = teacherProfileApi;
-
+export const { useGetMyProfileQuery, useUpdateMyProfileMutation } = teacherProfileApi;
