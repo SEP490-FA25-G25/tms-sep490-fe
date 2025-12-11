@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useCreateCampaignMutation } from '@/services/availabilityCampaignApi';
+import { useCreateAvailabilityCampaignMutation } from '@/store/services/teacherAvailabilityApi';
 import { toast } from 'sonner';
 import { Loader2, Plus } from 'lucide-react';
 
@@ -21,14 +21,15 @@ interface CreateCampaignForm {
 
 export default function CreateCampaignModal() {
     const [open, setOpen] = useState(false);
-    const [createCampaign, { isLoading }] = useCreateCampaignMutation();
+    const [createCampaign, { isLoading }] = useCreateAvailabilityCampaignMutation();
     const { register, handleSubmit, reset } = useForm<CreateCampaignForm>();
 
     const onSubmit = async (data: CreateCampaignForm) => {
         try {
             await createCampaign({
-                title: data.title,
+                name: data.title,
                 deadline: new Date(data.deadline).toISOString(),
+                targetAudience: "ALL",
             }).unwrap();
             toast.success('Campaign created successfully');
             setOpen(false);

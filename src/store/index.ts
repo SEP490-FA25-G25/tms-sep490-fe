@@ -51,6 +51,7 @@ import authSlice, {
 } from "./slices/authSlice";
 
 import { teacherAvailabilityApi } from "./services/teacherAvailabilityApi";
+import { academicTeacherApi } from "./services/academicTeacherApi";
 
 export const store = configureStore({
   reducer: {
@@ -73,6 +74,7 @@ export const store = configureStore({
     [teacherGradeApi.reducerPath]: teacherGradeApi.reducer,
     [teacherProfileApi.reducerPath]: teacherProfileApi.reducer,
     [teacherAvailabilityApi.reducerPath]: teacherAvailabilityApi.reducer,
+    [academicTeacherApi.reducerPath]: academicTeacherApi.reducer,
     [notificationApi.reducerPath]: notificationApi.reducer,
     [userApi.reducerPath]: userApi.reducer,
     [policyApi.reducerPath]: policyApi.reducer,
@@ -121,6 +123,7 @@ export const store = configureStore({
       .concat(teacherGradeApi.middleware)
       .concat(teacherProfileApi.middleware)
       .concat(teacherAvailabilityApi.middleware)
+      .concat(academicTeacherApi.middleware)
       .concat(notificationApi.middleware)
       .concat(userApi.middleware)
       .concat(policyApi.middleware)
