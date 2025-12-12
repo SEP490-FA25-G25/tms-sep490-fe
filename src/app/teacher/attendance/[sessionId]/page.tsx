@@ -907,7 +907,7 @@ export default function AttendanceDetailPage() {
                     onClick={() => setIsReportDialogOpen(true)}
                     disabled={!isEditable}
                   >
-                    Nộp báo cáo
+                    Viết báo cáo
                   </Button>
                   <Button
                     onClick={handleSubmit}
@@ -925,7 +925,7 @@ export default function AttendanceDetailPage() {
         <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
           <DialogContent className="max-w-2xl rounded-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Nộp báo cáo</DialogTitle>
+              <DialogTitle>Viết báo cáo</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
               {isLoadingReport ? (
