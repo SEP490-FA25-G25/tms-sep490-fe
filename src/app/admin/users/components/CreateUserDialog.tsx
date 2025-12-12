@@ -3,12 +3,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  FullScreenModal,
+  FullScreenModalContent,
+  FullScreenModalHeader,
+  FullScreenModalTitle,
+  FullScreenModalBody,
+  FullScreenModalFooter,
+} from "@/components/ui/full-screen-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import {
   useCreateUserMutation,
@@ -47,7 +49,6 @@ const STATUS_VALUES = ["ACTIVE", "INACTIVE"] as const;
 
 const createUserSchema = z.object({
   email: z.string().email("Email không hợp lệ").min(1, "Email là bắt buộc"),
-  password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
   fullName: z
     .string()
     .min(1, "Họ tên là bắt buộc")
@@ -195,9 +196,10 @@ export function CreateUserDialog({
 
   const onSubmit = async (data: CreateUserFormData) => {
     try {
+      const defaultPassword = "12345678";
       const request: CreateUserRequest = {
         email: data.email,
-        password: data.password,
+        password: defaultPassword,
         fullName: data.fullName,
         phone: data.phone || undefined,
         facebookUrl: data.facebookUrl || undefined,
@@ -231,258 +233,287 @@ export function CreateUserDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Tạo người dùng mới</DialogTitle>
-        </DialogHeader>
+    <FullScreenModal open={open} onOpenChange={handleClose}>
+      <FullScreenModalContent size="xl">
+        <FullScreenModalHeader>
+          <FullScreenModalTitle>Tạo người dùng mới</FullScreenModalTitle>
+        </FullScreenModalHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Email */}
-          <div className="space-y-2">
-            <Label htmlFor="email">
-              Email <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="user@example.com"
-              {...register("email")}
-              onBlur={handleEmailBlur}
-            />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
-            )}
-            {!errors.email && emailExists && (
-              <p className="text-sm text-destructive">Email đã tồn tại</p>
-            )}
-          </div>
-
-          {/* Password */}
-          <div className="space-y-2">
-            <Label htmlFor="password">
-              Mật khẩu <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Tối thiểu 8 ký tự"
-              {...register("password")}
-            />
-            {errors.password && (
-              <p className="text-sm text-destructive">
-                {errors.password.message}
-              </p>
-            )}
-          </div>
-
-          {/* Full Name */}
-          <div className="space-y-2">
-            <Label htmlFor="fullName">
-              Họ tên <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="fullName"
-              placeholder="Nguyễn Văn A"
-              {...register("fullName")}
-            />
-            {errors.fullName && (
-              <p className="text-sm text-destructive">
-                {errors.fullName.message}
-              </p>
-            )}
-          </div>
-
-          {/* Phone & Gender */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="phone">Số điện thoại</Label>
-              <Input
-                id="phone"
-                placeholder="0912345678"
-                {...register("phone")}
-              />
-              {errors.phone && (
-                <p className="text-sm text-destructive">
-                  {errors.phone.message}
+        <FullScreenModalBody>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Top layout: avatar left, fields right (match student form) */}
+            <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6">
+              {/* Avatar + upload */}
+              <div className="flex flex-col items-center gap-3 rounded-lg border bg-muted/40 p-4">
+                <Avatar className="h-20 w-20 border">
+                  <AvatarFallback>
+                    {watch("fullName")?.charAt(0)?.toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                >
+                  Tải ảnh
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  JPG, PNG. Max 5MB
                 </p>
-              )}
-              {!errors.phone && phoneExists && (
-                <p className="text-sm text-destructive">
-                  Số điện thoại đã tồn tại
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="gender">
-                Giới tính <span className="text-destructive">*</span>
-              </Label>
-              <Select
-                value={watch("gender")}
-                onValueChange={(value) =>
-                  setValue("gender", value as "MALE" | "FEMALE" | "OTHER")
-                }
-              >
-                <SelectTrigger id="gender">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MALE">Nam</SelectItem>
-                  <SelectItem value="FEMALE">Nữ</SelectItem>
-                  <SelectItem value="OTHER">Khác</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.gender && (
-                <p className="text-sm text-destructive">
-                  {errors.gender.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* DOB & Status */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="dob">Ngày sinh</Label>
-              <Input id="dob" type="date" {...register("dob")} />
-              {errors.dob && (
-                <p className="text-sm text-destructive">{errors.dob.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="status">
-                Trạng thái <span className="text-destructive">*</span>
-              </Label>
-              <Select
-                value={watch("status")}
-                onValueChange={(value) =>
-                  setValue("status", value as "ACTIVE" | "INACTIVE")
-                }
-              >
-                <SelectTrigger id="status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ACTIVE">Hoạt động</SelectItem>
-                  <SelectItem value="INACTIVE">Không hoạt động</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.status && (
-                <p className="text-sm text-destructive">
-                  {errors.status.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Facebook URL */}
-          <div className="space-y-2">
-            <Label htmlFor="facebookUrl">Facebook URL</Label>
-            <Input
-              id="facebookUrl"
-              placeholder="https://facebook.com/..."
-              {...register("facebookUrl")}
-            />
-            {errors.facebookUrl && (
-              <p className="text-sm text-destructive">
-                {errors.facebookUrl.message}
-              </p>
-            )}
-          </div>
-
-          {/* Avatar URL */}
-          <div className="space-y-2">
-            <Label htmlFor="avatarUrl">Avatar URL</Label>
-            <Input
-              id="avatarUrl"
-              placeholder="https://example.com/avatar.jpg"
-              {...register("avatarUrl")}
-            />
-            {errors.avatarUrl && (
-              <p className="text-sm text-destructive">
-                {errors.avatarUrl.message}
-              </p>
-            )}
-          </div>
-
-          {/* Address */}
-          <div className="space-y-2">
-            <Label htmlFor="address">Địa chỉ</Label>
-            <Input
-              id="address"
-              placeholder="Địa chỉ thường trú"
-              {...register("address")}
-            />
-          </div>
-
-          {/* Roles */}
-          <div className="space-y-2">
-            <Label>
-              Vai trò <span className="text-destructive">*</span>
-            </Label>
-            <div className="grid grid-cols-2 gap-2 rounded-md border p-3">
-              {ROLE_OPTIONS.map((role) => (
-                <div key={role.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`role-${role.id}`}
-                    checked={selectedRoleIds.includes(role.id)}
-                    onCheckedChange={() => toggleRole(role.id)}
+                <div className="w-full space-y-2">
+                  <Label htmlFor="avatarUrl">Avatar URL</Label>
+                  <Input
+                    id="avatarUrl"
+                    placeholder="https://example.com/avatar.jpg"
+                    {...register("avatarUrl")}
                   />
-                  <Label
-                    htmlFor={`role-${role.id}`}
-                    className="text-sm font-normal cursor-pointer"
-                  >
-                    {role.label}
-                  </Label>
+                  {errors.avatarUrl && (
+                    <p className="text-sm text-destructive">
+                      {errors.avatarUrl.message}
+                    </p>
+                  )}
                 </div>
-              ))}
-            </div>
-            {errors.roleIds && (
-              <p className="text-sm text-destructive">
-                {errors.roleIds.message}
-              </p>
-            )}
-          </div>
+              </div>
 
-          {/* Branches */}
-          {branches.length > 0 && (
-            <div className="space-y-2">
-              <Label>Chi nhánh (tùy chọn)</Label>
-              <div className="grid grid-cols-2 gap-2 rounded-md border p-3 max-h-32 overflow-y-auto">
-                {branches.map((branch) => (
-                  <div key={branch.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`branch-${branch.id}`}
-                      checked={selectedBranchIds.includes(branch.id)}
-                      onCheckedChange={() => toggleBranch(branch.id)}
-                    />
-                    <Label
-                      htmlFor={`branch-${branch.id}`}
-                      className="text-sm font-normal cursor-pointer"
-                    >
-                      {branch.name}
+              {/* Form fields */}
+              <div className="space-y-4">
+                {/* Họ tên */}
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">
+                    Họ và tên <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="fullName"
+                    placeholder="Ví dụ: Nguyễn Văn A"
+                    {...register("fullName")}
+                  />
+                  {errors.fullName && (
+                    <p className="text-sm text-destructive">
+                      {errors.fullName.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Email */}
+                <div className="space-y-2">
+                  <Label htmlFor="email">
+                    Email <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="user@example.com"
+                    {...register("email")}
+                    onBlur={handleEmailBlur}
+                  />
+                  {errors.email && (
+                    <p className="text-sm text-destructive">
+                      {errors.email.message}
+                    </p>
+                  )}
+                  {!errors.email && emailExists && (
+                    <p className="text-sm text-destructive">Email đã tồn tại</p>
+                  )}
+                </div>
+
+                {/* Giới tính + Số điện thoại */}
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="gender">
+                      Giới tính <span className="text-destructive">*</span>
                     </Label>
+                    <Select
+                      value={watch("gender")}
+                      onValueChange={(value) =>
+                        setValue("gender", value as "MALE" | "FEMALE" | "OTHER")
+                      }
+                    >
+                      <SelectTrigger id="gender">
+                        <SelectValue placeholder="Chọn giới tính" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MALE">Nam</SelectItem>
+                        <SelectItem value="FEMALE">Nữ</SelectItem>
+                        <SelectItem value="OTHER">Khác</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {errors.gender && (
+                      <p className="text-sm text-destructive">
+                        {errors.gender.message}
+                      </p>
+                    )}
                   </div>
-                ))}
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Số điện thoại</Label>
+                    <Input
+                      id="phone"
+                      placeholder="0912345678"
+                      {...register("phone")}
+                    />
+                    {errors.phone && (
+                      <p className="text-sm text-destructive">
+                        {errors.phone.message}
+                      </p>
+                    )}
+                    {!errors.phone && phoneExists && (
+                      <p className="text-sm text-destructive">
+                        Số điện thoại đã tồn tại
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Ngày sinh + Địa chỉ */}
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="dob">Ngày sinh</Label>
+                    <Input id="dob" type="date" {...register("dob")} />
+                    {errors.dob && (
+                      <p className="text-sm text-destructive">
+                        {errors.dob.message}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Địa chỉ</Label>
+                    <Input
+                      id="address"
+                      placeholder="Địa chỉ thường trú"
+                      {...register("address")}
+                    />
+                  </div>
+                </div>
+
+                {/* Facebook URL */}
+                <div className="space-y-2">
+                  <Label htmlFor="facebookUrl">Facebook URL</Label>
+                  <Input
+                    id="facebookUrl"
+                    placeholder="https://facebook.com/username"
+                    {...register("facebookUrl")}
+                  />
+                  {errors.facebookUrl && (
+                    <p className="text-sm text-destructive">
+                      {errors.facebookUrl.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Trạng thái & note */}
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="status">
+                      Trạng thái <span className="text-destructive">*</span>
+                    </Label>
+                    <Select
+                      value={watch("status")}
+                      onValueChange={(value) =>
+                        setValue("status", value as "ACTIVE" | "INACTIVE")
+                      }
+                    >
+                      <SelectTrigger id="status">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ACTIVE">Hoạt động</SelectItem>
+                        <SelectItem value="INACTIVE">
+                          Không hoạt động
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {errors.status && (
+                      <p className="text-sm text-destructive">
+                        {errors.status.message}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-1 rounded-lg border bg-muted/40 p-3">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Mã người dùng và mật khẩu mặc định
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Mã người dùng tự động tạo sau khi lưu. Mật khẩu mặc định:
+                      12345678.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
-          )}
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isCreating}
-            >
-              Hủy
-            </Button>
-            <Button type="submit" disabled={isCreating}>
-              {isCreating ? "Đang tạo..." : "Tạo người dùng"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+            {/* Roles & Branches */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>
+                  Vai trò <span className="text-destructive">*</span>
+                </Label>
+                <div className="grid grid-cols-2 gap-2 rounded-md border p-3">
+                  {ROLE_OPTIONS.map((role) => (
+                    <div key={role.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`role-${role.id}`}
+                        checked={selectedRoleIds.includes(role.id)}
+                        onCheckedChange={() => toggleRole(role.id)}
+                      />
+                      <Label
+                        htmlFor={`role-${role.id}`}
+                        className="text-sm font-normal cursor-pointer"
+                      >
+                        {role.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                {errors.roleIds && (
+                  <p className="text-sm text-destructive">
+                    {errors.roleIds.message}
+                  </p>
+                )}
+              </div>
+
+              {branches.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Chi nhánh (tùy chọn)</Label>
+                  <div className="grid grid-cols-2 gap-2 rounded-md border p-3 max-h-32 overflow-y-auto">
+                    {branches.map((branch) => (
+                      <div
+                        key={branch.id}
+                        className="flex items-center space-x-2"
+                      >
+                        <Checkbox
+                          id={`branch-${branch.id}`}
+                          checked={selectedBranchIds.includes(branch.id)}
+                          onCheckedChange={() => toggleBranch(branch.id)}
+                        />
+                        <Label
+                          htmlFor={`branch-${branch.id}`}
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          {branch.name}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <FullScreenModalFooter className="px-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={isCreating}
+              >
+                Hủy
+              </Button>
+              <Button type="submit" disabled={isCreating}>
+                {isCreating ? "Đang tạo..." : "Tạo người dùng"}
+              </Button>
+            </FullScreenModalFooter>
+          </form>
+        </FullScreenModalBody>
+      </FullScreenModalContent>
+    </FullScreenModal>
   );
 }
