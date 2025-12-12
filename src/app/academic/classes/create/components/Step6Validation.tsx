@@ -183,12 +183,29 @@ export function Step6Validation({ classId, onFinish }: Step6ValidationProps) {
       { weekNumber: number; weekRange: string; sessions: typeof sessions }
     > = {};
 
+    if (!classOverview?.startDate) {
+      return [];
+    }
+
+    const startDate = new Date(classOverview.startDate);
+    const startOfFirstWeek = new Date(startDate);
+    startOfFirstWeek.setDate(startDate.getDate() - startDate.getDay()); // Start of week (Sunday)
+
     sessions.forEach((session) => {
-      const week = session.weekNumber || 1;
+      const sessionDate = new Date(session.date);
+      const daysDiff = Math.floor((sessionDate.getTime() - startOfFirstWeek.getTime()) / (1000 * 60 * 60 * 24));
+      const week = Math.floor(daysDiff / 7) + 1;
+      
       if (!grouped[week]) {
+        const weekStart = new Date(startOfFirstWeek);
+        weekStart.setDate(startOfFirstWeek.getDate() + (week - 1) * 7);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        const weekRange = `${weekStart.toLocaleDateString('vi-VN')} - ${weekEnd.toLocaleDateString('vi-VN')}`;
+        
         grouped[week] = {
           weekNumber: week,
-          weekRange: session.weekRange || "",
+          weekRange: weekRange,
           sessions: [],
         };
       }
@@ -196,7 +213,7 @@ export function Step6Validation({ classId, onFinish }: Step6ValidationProps) {
     });
 
     return Object.values(grouped).sort((a, b) => a.weekNumber - b.weekNumber);
-  }, [overview?.sessions]);
+  }, [overview?.sessions, classOverview?.startDate]);
 
   // Helpers
   const readDisplayText = useCallback((value: unknown): string | undefined => {

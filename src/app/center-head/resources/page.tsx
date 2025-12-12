@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,7 @@ import {
     type SortingState,
     useReactTable,
 } from "@tanstack/react-table";
-import { Search, PlusCircleIcon, Building2, MonitorPlay, XIcon, ArrowUpDown, Power, PowerOff, RotateCcw } from "lucide-react";
+import { Search, PlusCircleIcon, Building2, MonitorPlay, ArrowUpDown, Power, PowerOff, RotateCcw } from "lucide-react";
 import {
     Pagination,
     PaginationContent,
@@ -69,7 +69,6 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { useGetAllBranchesQuery } from "@/store/services/branchApi";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 
@@ -153,7 +152,7 @@ export default function CenterHeadResourcesPage() {
     // Fetch resources (không filter search qua API, lọc local để tránh giật)
     const { data: resources, isFetching: isFetchingResources } = useGetResourcesQuery(
         {
-            branchId: selectedBranchId,
+            branchId: selectedBranchId ?? undefined,
         }
     );
 

@@ -7,7 +7,6 @@ import {
   useGetManagerTeachersQuery,
   type ManagerTeacher,
 } from "@/store/services/teacherApi";
-import { useGetManagerBranchesQuery } from "@/store/services/branchApi";
 import {
   Table,
   TableBody,

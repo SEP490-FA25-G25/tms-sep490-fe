@@ -12,6 +12,7 @@ import {
   useGetRequestByIdQuery,
   useConfirmReplacementRequestMutation,
   useRejectReplacementRequestMutation,
+  useGetTeacherRequestConfigQuery,
   type RequestType,
   type RequestStatus,
   type TeacherRequestDTO,
@@ -49,9 +50,7 @@ import { cn } from "@/lib/utils";
 import { formatDate, formatDateTime } from "@/utils/dateFormat";
 import {
   NotebookPen,
-  RefreshCcw,
   Search,
-  X,
   Clock3,
   CheckCircle2,
   XCircle,
@@ -263,8 +262,9 @@ export default function MyRequestsPage() {
     refetchOnFocus: true,
   });
 
-  // Hardcoded validation values
-  const reasonMinLength = 10;
+  // Load teacher request config for policy values
+  const { data: teacherConfig } = useGetTeacherRequestConfigQuery();
+  const reasonMinLength = teacherConfig?.data?.reasonMinLength ?? 10;
   const [activeType, setActiveType] = useState<RequestType | null>(null);
   const [typeFilter, setTypeFilter] = useState<"ALL" | RequestType>("ALL");
   const [statusFilter, setStatusFilter] = useState<"ALL" | RequestStatus>(

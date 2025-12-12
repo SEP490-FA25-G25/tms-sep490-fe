@@ -238,32 +238,32 @@ export function BaseFlowComponent({
       <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t">
         <div>
           {currentStep > 1 && (
-        <Button
-          variant="ghost"
-          onClick={onBack}
+            <Button
+              variant="ghost"
+              onClick={onBack}
               disabled={isSubmitting}
-        >
-          Quay lại
-        </Button>
+            >
+              Quay lại
+            </Button>
           )}
         </div>
         <div className="flex items-center gap-3">
-        {isLastStep ? (
-          <Button
-            onClick={handleSubmitClick}
-            disabled={isSubmitDisabled || isSubmitting}
-          >
-            {isSubmitting ? 'Đang gửi...' : submitLabel}
-          </Button>
-        ) : (
-          <Button
-            onClick={onNext}
-            disabled={isNextDisabled}
-          >
-            {nextLabel}
-            <ArrowLeftIcon className="ml-2 h-4 w-4 rotate-180" />
-          </Button>
-        )}
+          {isLastStep ? (
+            <Button
+              onClick={handleSubmitClick}
+              disabled={isSubmitDisabled || isSubmitting}
+            >
+              {isSubmitting ? 'Đang gửi...' : submitLabel}
+            </Button>
+          ) : (
+            <Button
+              onClick={onNext}
+              disabled={isNextDisabled}
+            >
+              {nextLabel}
+              <ArrowLeftIcon className="ml-2 h-4 w-4 rotate-180" />
+            </Button>
+          )}
         </div>
       </div>
 
