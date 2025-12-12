@@ -8,7 +8,7 @@ import {
 } from "@/store/services/teacherGradeApi";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, BookOpen, Search, Users } from "lucide-react";
+import { AlertTriangle, BookOpen, Search, Users, ClipboardList } from "lucide-react";
 
 interface TeacherScoresTabProps {
   classId: number;
@@ -180,6 +180,52 @@ export function TeacherScoresTab({ classId }: TeacherScoresTabProps) {
                   {assessments.length} bài kiểm tra
                 </p>
               </div>
+
+              {/* Attendance Score Card */}
+              <Card className="bg-muted/30 border-2">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
+                        <ClipboardList className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold">
+                          Điểm chuyên cần
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {selectedStudent.attendanceScore != null ? (
+                        <span
+                          className={cn(
+                            getScoreColor(
+                              Number(selectedStudent.attendanceScore),
+                              100
+                            ),
+                            "text-2xl font-bold"
+                          )}
+                        >
+                          {Math.round(selectedStudent.attendanceScore * 10) / 10}/100
+                        </span>
+                      ) : selectedStudent.attendanceRate != null ? (
+                        <div>
+                          <span className="text-2xl font-bold text-muted-foreground">
+                            {Math.round(selectedStudent.attendanceRate * 100)}%
+                          </span>
+                          <p className="text-xs text-muted-foreground">
+                            Tỷ lệ đi học
+                          </p>
+                        </div>
+                      ) : (
+                        <Badge variant="outline" className="text-sm">
+                          Chưa có
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
               {assessments.length === 0 ? (
                 <div className="text-center py-8 text-sm text-muted-foreground border rounded-lg bg-muted/30">

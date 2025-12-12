@@ -23,6 +23,7 @@ import {
   Table2,
   Search,
   BookOpen,
+  ClipboardList,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -757,6 +758,52 @@ export default function TeacherGradesPage() {
                             {gradebook.assessments.length} bài kiểm tra
                           </p>
                         </div>
+
+                        {/* Attendance Score Card */}
+                        <Card className="bg-muted/30 border-2">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
+                                  <ClipboardList className="h-5 w-5 text-primary" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold">
+                                    Điểm chuyên cần
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                {activeStudent.attendanceScore != null ? (
+                                  <span
+                                    className={cn(
+                                      getScoreColor(
+                                        Number(activeStudent.attendanceScore),
+                                        100
+                                      ),
+                                      "text-2xl font-bold"
+                                    )}
+                                  >
+                                    {Math.round(activeStudent.attendanceScore * 10) / 10}/100
+                                  </span>
+                                ) : activeStudent.attendanceRate != null ? (
+                                  <div>
+                                    <span className="text-2xl font-bold text-muted-foreground">
+                                      {Math.round(activeStudent.attendanceRate * 100)}%
+                                    </span>
+                                    <p className="text-xs text-muted-foreground">
+                                      Tỷ lệ đi học
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <Badge variant="outline" className="text-sm">
+                                    Chưa có
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
 
                         {gradebook.assessments.length === 0 ? (
                           <div className="text-center py-8 text-sm text-muted-foreground border rounded-lg bg-muted/30">
