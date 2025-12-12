@@ -73,7 +73,7 @@ export function MaterialsLibrary({ materials }: MaterialsLibraryProps) {
     if (activeFilter === 'Tất cả') return materialList
 
     return materialList.filter(material => {
-      const materialType = getMaterialTypeLabel(material.materialType)
+      const materialType = getMaterialTypeLabel(material.type)
       return materialType === activeFilter
     })
   }

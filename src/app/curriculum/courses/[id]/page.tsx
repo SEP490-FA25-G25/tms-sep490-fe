@@ -347,7 +347,7 @@ export default function CourseDetailPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                    <h6 className="font-medium text-sm truncate">{material.title || material.name || material.fileName || 'Tài liệu'}</h6>
+                                    <h6 className="font-medium text-sm truncate">{material.name || material.title || material.fileName || 'Tài liệu'}</h6>
                                     <span className="text-xs text-muted-foreground">
                                         {getMaterialTypeLabel(materialType)}
                                     </span>
@@ -361,7 +361,7 @@ export default function CourseDetailPage() {
                                                 <Eye className="h-4 w-4" />
                                             </a>
                                         </Button>
-                                        <Button size="icon" variant="ghost" onClick={() => handleDownload(materialUrl, material.title || material.name || material.fileName || 'file')} title="Tải xuống">
+                                        <Button size="icon" variant="ghost" onClick={() => handleDownload(materialUrl, material.name || material.title || material.fileName || 'file')} title="Tải xuống">
                                             <Download className="h-4 w-4" />
                                         </Button>
                                         {materialType?.toUpperCase() === 'VIDEO' && (

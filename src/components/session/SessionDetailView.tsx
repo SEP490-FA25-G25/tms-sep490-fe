@@ -455,12 +455,12 @@ export function SessionDetailView({ sessionId }: SessionDetailViewProps) {
                                     return (
                                         <div key={material.materialId} className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                                             <div className="flex items-start gap-2">
-                                                {getMaterialIcon(material.materialType)}
+                                                {getMaterialIcon(material.type)}
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                                        <h4 className="font-semibold text-sm truncate">{material.title}</h4>
+                                                        <h4 className="font-semibold text-sm truncate">{material.name}</h4>
                                                         <Badge variant="outline" className="text-xs shrink-0">
-                                                            {getMaterialTypeLabel(material.materialType)}
+                                                            {getMaterialTypeLabel(material.type)}
                                                         </Badge>
                                                     </div>
                                                     {material.description && (
