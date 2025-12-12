@@ -91,7 +91,6 @@ export default function TeacherClassesPage() {
     refetchOnFocus: true,
   });
 
-  // Handle different response structures - API returns array directly or wrapped in data
   const allClasses = useMemo(() => {
     if (Array.isArray(classesResponse)) {
       return classesResponse;
@@ -111,7 +110,6 @@ export default function TeacherClassesPage() {
     }));
   }, [allClasses]);
 
-  // Extract unique options for filters
   const subjectOptions = useMemo(() => {
     const map = new Map<string, string>();
     normalizedClasses.forEach((item) => {
@@ -136,40 +134,33 @@ export default function TeacherClassesPage() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [normalizedClasses]);
 
-  // Apply filters
   const classes = useMemo(() => {
     let filtered = [...normalizedClasses];
 
-    // Status tab filter
     if (activeStatusTab !== "all") {
       filtered = filtered.filter((item) => item.status === activeStatusTab);
     }
 
-    // Additional status filters
     if (filters.status !== "ALL") {
       filtered = filtered.filter((item) => item.status === filters.status);
     }
 
-    // Modality filter
     if (filters.modality !== "ALL") {
       filtered = filtered.filter((item) => item.modality === filters.modality);
     }
 
-    // Branch filter
     if (filters.branchName !== "ALL") {
       filtered = filtered.filter(
         (item) => item.branchName === filters.branchName
       );
     }
 
-    // Course filter
     if (filters.subjectName !== "ALL") {
       filtered = filtered.filter(
         (item) => item.subjectName === filters.subjectName
       );
     }
 
-    // Search filter
     if (filters.searchTerm.trim() !== "") {
       const searchLower = filters.searchTerm.toLowerCase().trim();
       filtered = filtered.filter((item) => {
@@ -186,7 +177,6 @@ export default function TeacherClassesPage() {
     return filtered;
   }, [normalizedClasses, activeStatusTab, filters]);
 
-  // Apply sorting
   const sortedClasses = useMemo(() => {
     const sorted = [...classes];
 
@@ -228,7 +218,6 @@ export default function TeacherClassesPage() {
     return sorted;
   }, [classes, sortField, sortOrder]);
 
-  // Apply pagination
   const paginatedClasses = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
@@ -237,7 +226,6 @@ export default function TeacherClassesPage() {
 
   const totalPages = Math.ceil(sortedClasses.length / pageSize);
 
-  // Reset to page 1 when filters or sort change
   useEffect(() => {
     setCurrentPage(1);
   }, [activeStatusTab, filters, sortField, sortOrder]);
@@ -525,87 +513,77 @@ export default function TeacherClassesPage() {
                 ))}
               </div>
 
-              {/* Pagination */}
-              <div className="flex items-center justify-between pt-4 border-t">
-                <div className="text-sm text-muted-foreground">
-                  Trang {currentPage} / {Math.max(totalPages, 1)} · {sortedClasses.length} lớp học
+              <div className="relative flex items-center justify-center pt-4 border-t">
+                <div className="absolute left-0 text-sm text-muted-foreground">
+                  Trang {currentPage} / {Math.max(totalPages, 1)} ·{" "}
+                  {sortedClasses.length} lớp học
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Select
-                    value={pageSize.toString()}
-                    onValueChange={(value) => {
-                      setPageSize(Number(value));
-                      setCurrentPage(1);
-                    }}
-                  >
-                      <SelectTrigger className="w-[120px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="5">5 / trang</SelectItem>
-                        <SelectItem value="10">10 / trang</SelectItem>
-                        <SelectItem value="20">20 / trang</SelectItem>
-                        <SelectItem value="50">50 / trang</SelectItem>
-                      </SelectContent>
-                    </Select>
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setCurrentPage((prev) => Math.max(1, prev - 1));
+                        }}
+                        aria-disabled={currentPage === 1}
+                        className={
+                          currentPage === 1
+                            ? "pointer-events-none opacity-50"
+                            : ""
+                        }
+                      />
+                    </PaginationItem>
 
-                    <Pagination>
-                      <PaginationContent>
-                        <PaginationItem>
-                          <PaginationPrevious
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum = i + 1;
+                      if (totalPages > 5) {
+                        if (currentPage < 4) {
+                          pageNum = i + 1;
+                        } else if (currentPage > totalPages - 3) {
+                          pageNum = totalPages - 5 + i + 1;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+                      }
+                      return (
+                        <PaginationItem key={pageNum}>
+                          <PaginationLink
                             href="#"
                             onClick={(e) => {
                               e.preventDefault();
-                              setCurrentPage((prev) => Math.max(1, prev - 1));
+                              setCurrentPage(pageNum);
                             }}
-                            aria-disabled={currentPage === 1}
-                            className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                          />
+                            isActive={currentPage === pageNum}
+                          >
+                            {pageNum}
+                          </PaginationLink>
                         </PaginationItem>
+                      );
+                    })}
 
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                          let pageNum = i + 1;
-                          if (totalPages > 5) {
-                            if (currentPage < 4) {
-                              pageNum = i + 1;
-                            } else if (currentPage > totalPages - 3) {
-                              pageNum = totalPages - 5 + i + 1;
-                            } else {
-                              pageNum = currentPage - 2 + i;
-                            }
-                          }
-                          return (
-                            <PaginationItem key={pageNum}>
-                              <PaginationLink
-                                href="#"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  setCurrentPage(pageNum);
-                                }}
-                                isActive={currentPage === pageNum}
-                              >
-                                {pageNum}
-                              </PaginationLink>
-                            </PaginationItem>
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setCurrentPage((prev) =>
+                            Math.min(totalPages, prev + 1)
                           );
-                        })}
-
-                        <PaginationItem>
-                          <PaginationNext
-                            href="#"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setCurrentPage((prev) => Math.min(totalPages, prev + 1));
-                            }}
-                            aria-disabled={currentPage === totalPages}
-                            className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                          />
-                        </PaginationItem>
-                      </PaginationContent>
-                    </Pagination>
-                  </div>
-                </div>
+                        }}
+                        aria-disabled={currentPage === totalPages}
+                        className={
+                          currentPage === totalPages
+                            ? "pointer-events-none opacity-50"
+                            : ""
+                        }
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
             </>
           )}
         </div>
@@ -621,7 +599,6 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
     navigate(`/teacher/classes/${classItem.id}`);
   };
 
-  // Color coding for attendance rate
   const getAttendanceRateColor = (rate: number | undefined) => {
     if (rate === undefined || rate === null) return "text-muted-foreground";
     if (rate >= 80) return "text-emerald-700";
@@ -651,13 +628,11 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
     }
   };
 
-  // API returns rate as 0-1, convert to 0-100 for display
   const averageAttendanceRate = classItem.attendanceRate
     ? classItem.attendanceRate * 100
     : undefined;
   const totalSessions = classItem.totalSessions ?? 0;
 
-  // Format dates
   const startDate = classItem.startDate
     ? format(parseISO(classItem.startDate), "dd/MM/yyyy", { locale: vi })
     : null;
@@ -665,20 +640,17 @@ function ClassCard({ classItem }: { classItem: AttendanceClassDTO }) {
     ? format(parseISO(classItem.plannedEndDate), "dd/MM/yyyy", { locale: vi })
     : null;
 
-  // Check if class has started
   const hasClassStarted =
     classItem.status !== "SCHEDULED" &&
     (classItem.startDate
       ? parseISO(classItem.startDate) <= new Date()
       : classItem.status === "ONGOING" || classItem.status === "COMPLETED");
 
-  // Determine which info item is the last one to render
   const hasSubject = !!classItem.subjectName;
   const hasBranch = !!classItem.branchName;
   const hasDate = !!(startDate || endDate);
   const hasSessions = totalSessions > 0;
 
-  // Find the last visible item
   const lastItem = hasSessions
     ? "sessions"
     : hasDate

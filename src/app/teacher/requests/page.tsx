@@ -86,7 +86,7 @@ const REQUEST_TYPE_LABELS: Record<RequestType, string> = {
 };
 
 const REQUEST_STATUS_META: Record<
-  RequestStatus,
+  RequestStatus | "CANCELLED",
   { label: string; badgeClass: string; tone: string }
 > = {
   PENDING: {
@@ -109,6 +109,11 @@ const REQUEST_STATUS_META: Record<
     badgeClass: "bg-rose-100 text-rose-700 border-rose-200",
     tone: "text-rose-600",
   },
+  CANCELLED: {
+    label: "Đã hủy",
+    badgeClass: "bg-slate-100 text-slate-700 border-slate-200",
+    tone: "text-slate-600",
+  },
 };
 
 const REQUEST_TYPE_BADGES: Record<RequestType, { className: string }> = {
@@ -123,7 +128,7 @@ const REQUEST_TYPE_BADGES: Record<RequestType, { className: string }> = {
   },
 };
 
-const STATUS_FILTERS: Array<{ label: string; value: "ALL" | RequestStatus }> = [
+const STATUS_FILTERS: Array<{ label: string; value: "ALL" | RequestStatus | "CANCELLED" }> = [
   { label: "Tất cả trạng thái", value: "ALL" },
   { label: REQUEST_STATUS_META.PENDING.label, value: "PENDING" },
   {
@@ -132,6 +137,7 @@ const STATUS_FILTERS: Array<{ label: string; value: "ALL" | RequestStatus }> = [
   },
   { label: REQUEST_STATUS_META.APPROVED.label, value: "APPROVED" },
   { label: REQUEST_STATUS_META.REJECTED.label, value: "REJECTED" },
+  { label: REQUEST_STATUS_META.CANCELLED.label, value: "CANCELLED" },
 ];
 
 const TYPE_FILTERS: Array<{ label: string; value: "ALL" | RequestType }> = [
@@ -143,7 +149,6 @@ const TYPE_FILTERS: Array<{ label: string; value: "ALL" | RequestType }> = [
 
 const PAGE_SIZE = 8;
 
-// Helper function to format error messages from backend to user-friendly Vietnamese
 const formatBackendError = (
   errorMessage?: string,
   defaultMessage?: string
@@ -152,10 +157,7 @@ const formatBackendError = (
     return defaultMessage || "Có lỗi xảy ra. Vui lòng thử lại sau.";
   }
 
-  // Map common error codes to user-friendly messages
   if (errorMessage.includes("SESSION_NOT_IN_TIME_WINDOW")) {
-    // Note: timeWindowDays should come from config, but error handler doesn't have access to it
-    // This is a fallback message - actual validation happens in backend
     return "Ngày session đề xuất không nằm trong khoảng thời gian cho phép.";
   }
 
@@ -234,19 +236,16 @@ const formatBackendError = (
     return "Resource không khả dụng tại thời gian đã chỉ định. Vui lòng chọn resource khác hoặc thời gian khác.";
   }
 
-  // If it's a technical error code, try to extract a more readable part
   if (errorMessage.includes(":")) {
-    const parts = errorMessage.split(":");
-    if (parts.length > 1) {
-      // Use the part after the colon if it's more readable
-      const readablePart = parts.slice(1).join(":").trim();
+      const parts = errorMessage.split(":");
+      if (parts.length > 1) {
+        const readablePart = parts.slice(1).join(":").trim();
       if (readablePart.length > 0 && !readablePart.includes("_")) {
         return readablePart;
       }
     }
   }
 
-  // Return the original message if no mapping found
   return errorMessage;
 };
 
@@ -262,12 +261,11 @@ export default function MyRequestsPage() {
     refetchOnFocus: true,
   });
 
-  // Load teacher request config for policy values
   const { data: teacherConfig } = useGetTeacherRequestConfigQuery();
   const reasonMinLength = teacherConfig?.data?.reasonMinLength ?? 10;
   const [activeType, setActiveType] = useState<RequestType | null>(null);
   const [typeFilter, setTypeFilter] = useState<"ALL" | RequestType>("ALL");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | RequestStatus>(
+  const [statusFilter, setStatusFilter] = useState<"ALL" | RequestStatus | "CANCELLED">(
     "ALL"
   );
   const [searchQuery, setSearchQuery] = useState("");
@@ -314,7 +312,6 @@ export default function MyRequestsPage() {
     const normalized = searchQuery.trim().toLowerCase();
     let result = filteredRequests;
 
-    // Apply search filter
     if (normalized) {
       result = result.filter((request) => {
         const candidates = [
@@ -337,7 +334,6 @@ export default function MyRequestsPage() {
       });
     }
 
-    // Apply sorting
     if (sortField) {
       result = [...result].sort((a, b) => {
         let comparison = 0;
@@ -390,7 +386,6 @@ export default function MyRequestsPage() {
       skip: detailId === null,
     });
 
-  // Fallback: Lấy dữ liệu từ danh sách requests nếu detail không có
   const requestFromList = detailId
     ? requests.find((r) => r.id === detailId)
     : null;
@@ -592,7 +587,7 @@ export default function MyRequestsPage() {
 
         <Select
           value={statusFilter}
-          onValueChange={(value: "ALL" | RequestStatus) => {
+          onValueChange={(value: "ALL" | RequestStatus | "CANCELLED") => {
             setStatusFilter(value);
           }}
         >
@@ -789,10 +784,12 @@ export default function MyRequestsPage() {
                         <Badge
                           className={cn(
                             "w-fit font-semibold",
-                            REQUEST_STATUS_META[request.status].badgeClass
+                            REQUEST_STATUS_META[request.status as keyof typeof REQUEST_STATUS_META]?.badgeClass ||
+                            "bg-slate-100 text-slate-700 border-slate-200"
                           )}
                         >
-                          {REQUEST_STATUS_META[request.status].label}
+                          {REQUEST_STATUS_META[request.status as keyof typeof REQUEST_STATUS_META]?.label ||
+                          request.status}
                         </Badge>
                         {/* Indicator for replacement teacher */}
                         {request.requestType === "REPLACEMENT" &&
@@ -1340,10 +1337,12 @@ export function TeacherRequestDetailContent({
               <Badge
                 className={cn(
                   "font-semibold",
-                  REQUEST_STATUS_META[request.status].badgeClass
+                  REQUEST_STATUS_META[request.status as keyof typeof REQUEST_STATUS_META]?.badgeClass ||
+                  "bg-slate-100 text-slate-700 border-slate-200"
                 )}
               >
-                {REQUEST_STATUS_META[request.status].label}
+                {REQUEST_STATUS_META[request.status as keyof typeof REQUEST_STATUS_META]?.label ||
+                request.status}
               </Badge>
               <span className="text-xs text-muted-foreground">
                 Gửi lúc {formatDateTime(request.submittedAt)}
@@ -1653,7 +1652,8 @@ export function TeacherRequestDetailContent({
           {request.decidedAt ? (
             <div className="pt-2">
               {formatDateTime(request.decidedAt)} ·{" "}
-              {REQUEST_STATUS_META[request.status].label}
+              {REQUEST_STATUS_META[request.status as keyof typeof REQUEST_STATUS_META]?.label ||
+              request.status}
               {request.decidedBy && ` bởi ${request.decidedBy}`}
             </div>
           ) : (

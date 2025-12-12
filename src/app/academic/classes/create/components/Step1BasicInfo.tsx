@@ -36,7 +36,6 @@ import {
 import { useGetClassByIdQuery } from "@/store/services/classApi";
 import { useGetMyBranchesQuery } from "@/store/services/branchApi";
 
-// Validation schema - removed HYBRID
 const createClassSchema = z.object({
   branchId: z.number().positive("Vui lòng chọn chi nhánh"),
   subjectId: z.number().positive("Vui lòng chọn môn học"),
@@ -62,7 +61,6 @@ const createClassSchema = z.object({
 
 type FormData = z.infer<typeof createClassSchema>;
 
-// Reordered: Mon-Sun
 const DAY_OPTIONS = [
   { value: 1, label: "Thứ hai" },
   { value: 2, label: "Thứ ba" },
@@ -95,7 +93,6 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
     },
   });
 
-  // Real-time validation error states
   const [branchError, setBranchError] = useState<string | null>(null);
   const [subjectError, setSubjectError] = useState<string | null>(null); // Changed from courseError
   const [startDateError, setStartDateError] = useState<string | null>(null);
@@ -113,8 +110,6 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
   const [updateClass] = useUpdateClassMutation();
   const [checkClassName] = useLazyCheckClassNameQuery();
 
-  // Fetch existing class data if editing - refetch when returning to this step
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data: existingClassData, refetch: _refetchClassData } =
     useGetClassByIdQuery(classId!, {
       skip: !classId,
@@ -137,7 +132,6 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
     return "Lớp không được chỉnh sửa trong trạng thái này.";
   })();
 
-  // Use getMyBranches for current user's assigned branches
   const { data: branchesData, isLoading: isBranchesLoading } =
     useGetMyBranchesQuery();
   const { data: coursesData, isLoading: isCoursesLoading } =

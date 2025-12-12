@@ -6,7 +6,6 @@ import type {
   FetchBaseQueryError,
 } from "@reduxjs/toolkit/query";
 
-// Types for attendance sessions
 export interface AttendanceSessionDTO {
   sessionId: number;
   classId: number;
@@ -32,7 +31,6 @@ export interface AttendanceSessionsResponse {
   message?: string;
 }
 
-// Types for attendance students
 export interface AttendanceStudentDTO {
   studentId: number;
   studentCode?: string;
@@ -59,6 +57,7 @@ export interface AttendanceSessionDetailDTO {
   sessionTopic?: string;
   teacherName?: string;
   teacherNote?: string | null;
+  hasHomework?: boolean;
   summary: {
     totalStudents: number;
     presentCount: number;
@@ -73,7 +72,6 @@ export interface AttendanceStudentsResponse {
   data: AttendanceSessionDetailDTO;
 }
 
-// Report data structure (may have additional fields for report dialog)
 export interface AttendanceReportDTO {
   sessionId: number;
   classId: number;
@@ -100,7 +98,6 @@ export interface AttendanceReportResponse {
   data: AttendanceReportDTO;
 }
 
-// Types for attendance classes
 export interface AttendanceClassDTO {
   id: number;
   code: string;
@@ -124,7 +121,6 @@ export interface AttendanceClassesResponse {
   data: AttendanceClassDTO[];
 }
 
-// Types cho student attendance overview
 export interface StudentAttendanceOverviewClassDTO {
   classId: number;
   classCode: string;
@@ -156,7 +152,6 @@ export interface StudentAttendanceOverviewResponse {
   };
 }
 
-// Types cho student attendance report chi tiết theo buổi của 1 lớp
 export interface StudentAttendanceReportMakeupInfo {
   sessionId: number;
   classId: number;
@@ -213,7 +208,6 @@ export interface StudentAttendanceReportResponse {
   data: StudentAttendanceReportDTO;
 }
 
-// Types for Class Attendance Matrix
 export interface AttendanceMatrixStudentDTO {
   studentId: number;
   studentCode?: string;
@@ -234,7 +228,6 @@ export interface AttendanceMatrixSessionDTO {
   status?: string;
 }
 
-// API Response format (actual structure from backend)
 export interface AttendanceMatrixCellDTO {
   sessionId: number;
   attendanceStatus: "PRESENT" | "ABSENT" | "EXCUSED" | null;
@@ -266,7 +259,6 @@ export interface AttendanceMatrixResponseDTO {
   sessions?: AttendanceMatrixSessionDTO[];
 }
 
-// Transformed format for UI
 export interface AttendanceMatrixDTO {
   classId: number;
   classCode?: string;
@@ -364,7 +356,6 @@ export const attendanceApi = createApi({
       }),
       providesTags: ["AttendanceSession"],
     }),
-    // Get sessions for a specific date
     getSessionsForDate: builder.query<AttendanceSessionsResponse, string>({
       query: (date) => ({
         url: `/attendance/sessions/today?date=${date}`,
@@ -372,7 +363,6 @@ export const attendanceApi = createApi({
       }),
       providesTags: ["AttendanceSession"],
     }),
-    // Get students for a specific session
     getSessionStudents: builder.query<
       AttendanceStudentsResponse,
       number
@@ -385,7 +375,6 @@ export const attendanceApi = createApi({
         { type: "AttendanceSession", id: sessionId },
       ],
     }),
-    // Get report data for a specific session
     getSessionReport: builder.query<AttendanceReportResponse, number>({
       query: (sessionId) => ({
         url: `/attendance/sessions/${sessionId}/report`,
@@ -395,7 +384,6 @@ export const attendanceApi = createApi({
         { type: "AttendanceSession", id: sessionId },
       ],
     }),
-    // Submit attendance for a session
     submitAttendance: builder.mutation<
       { success: boolean; message?: string },
       {
@@ -420,7 +408,6 @@ export const attendanceApi = createApi({
         "AttendanceSession",
       ],
     }),
-    // Submit report for a session
     submitReport: builder.mutation<
       { success: boolean; message?: string },
       {
@@ -440,7 +427,6 @@ export const attendanceApi = createApi({
         "AttendanceSession",
       ],
     }),
-    // Get list of classes for attendance
     getAttendanceClasses: builder.query<AttendanceClassesResponse, void>({
       query: () => ({
         url: "/teacher/classes",
@@ -448,7 +434,6 @@ export const attendanceApi = createApi({
       }),
       providesTags: ["AttendanceSession"],
     }),
-    // Student: attendance overview theo lớp
     getStudentAttendanceOverview: builder.query<
       StudentAttendanceOverviewResponse,
       void
@@ -458,7 +443,6 @@ export const attendanceApi = createApi({
         method: "GET",
       }),
     }),
-    // Student: báo cáo điểm danh chi tiết theo buổi của 1 lớp
     getStudentAttendanceReport: builder.query<
       StudentAttendanceReportResponse,
       { classId: number }
@@ -469,7 +453,6 @@ export const attendanceApi = createApi({
         params: { classId },
       }),
     }),
-    // Get class attendance matrix
     getClassAttendanceMatrix: builder.query<
       AttendanceMatrixResponse,
       {

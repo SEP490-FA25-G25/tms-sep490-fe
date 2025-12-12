@@ -23,6 +23,7 @@ import {
   Table2,
   Search,
   BookOpen,
+  ClipboardList,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -72,9 +73,6 @@ export default function TeacherGradesPage() {
   const [gradebookSearchQuery, setGradebookSearchQuery] = useState("");
   const ASSESSMENT_PAGE_SIZE = 5;
 
-  // Debug: Log when component mounts
-  console.log("TeacherGradesPage mounted", { classId });
-
   const {
     data: assessments,
     isLoading: isLoadingAssessments,
@@ -91,13 +89,11 @@ export default function TeacherGradesPage() {
     refetch: refetchGradebook,
   } = useGetClassGradebookQuery(Number(classId), { skip: !classId });
 
-  // Filter and paginate assessments
   const filteredAndPaginatedAssessments = useMemo(() => {
     if (!assessments) return [];
 
     let filtered = assessments;
 
-    // Apply search filter
     if (assessmentSearchQuery.trim()) {
       const query = assessmentSearchQuery.trim().toLowerCase();
       filtered = filtered.filter((assessment) => {
@@ -113,7 +109,6 @@ export default function TeacherGradesPage() {
       });
     }
 
-    // Apply pagination
     const startIndex = assessmentPage * ASSESSMENT_PAGE_SIZE;
     const endIndex = startIndex + ASSESSMENT_PAGE_SIZE;
     return filtered.slice(startIndex, endIndex);
@@ -139,13 +134,11 @@ export default function TeacherGradesPage() {
     return Math.max(1, Math.ceil(filtered.length / ASSESSMENT_PAGE_SIZE));
   }, [assessments, assessmentSearchQuery]);
 
-  // Filter gradebook students (no pagination for 2-column layout)
   const filteredStudents = useMemo(() => {
     if (!gradebook || !gradebook.students) return [];
 
     let filtered = gradebook.students;
 
-    // Apply search filter
     if (gradebookSearchQuery.trim()) {
       const query = gradebookSearchQuery.trim().toLowerCase();
       filtered = filtered.filter((student) => {
@@ -158,16 +151,6 @@ export default function TeacherGradesPage() {
 
     return filtered;
   }, [gradebook, gradebookSearchQuery]);
-
-  // Debug: Log gradebook data
-  if (gradebook) {
-    console.log("Gradebook loaded:", {
-      classId: gradebook.classId,
-      className: gradebook.className,
-      studentsCount: gradebook.students.length,
-      assessmentsCount: gradebook.assessments.length,
-    });
-  }
   if (gradebookError) {
     console.error("Gradebook error:", gradebookError);
   }
@@ -340,12 +323,10 @@ export default function TeacherGradesPage() {
     }
   };
 
-  // Debug: Log errors
   if (assessmentsError) {
     console.error("Assessments error:", assessmentsError);
   }
 
-  // Early return if no classId
   if (!classId) {
     return (
       <DashboardLayout
@@ -723,7 +704,8 @@ export default function TeacherGradesPage() {
                         </div>
                       ) : (
                         filteredStudents.map((student) => {
-                          const isSelected = selectedStudent?.studentId === student.studentId;
+                          const isSelected =
+                            selectedStudent?.studentId === student.studentId;
                           return (
                             <Card
                               key={student.studentId}
@@ -777,6 +759,52 @@ export default function TeacherGradesPage() {
                           </p>
                         </div>
 
+                        {/* Attendance Score Card */}
+                        <Card className="bg-muted/30 border-2">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
+                                  <ClipboardList className="h-5 w-5 text-primary" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold">
+                                    Điểm chuyên cần
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                {activeStudent.attendanceScore != null ? (
+                                  <span
+                                    className={cn(
+                                      getScoreColor(
+                                        Number(activeStudent.attendanceScore),
+                                        100
+                                      ),
+                                      "text-2xl font-bold"
+                                    )}
+                                  >
+                                    {Math.round(activeStudent.attendanceScore * 10) / 10}/100
+                                  </span>
+                                ) : activeStudent.attendanceRate != null ? (
+                                  <div>
+                                    <span className="text-2xl font-bold text-muted-foreground">
+                                      {Math.round(activeStudent.attendanceRate * 100)}%
+                                    </span>
+                                    <p className="text-xs text-muted-foreground">
+                                      Tỷ lệ đi học
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <Badge variant="outline" className="text-sm">
+                                    Chưa có
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
                         {gradebook.assessments.length === 0 ? (
                           <div className="text-center py-8 text-sm text-muted-foreground border rounded-lg bg-muted/30">
                             <BookOpen className="h-10 w-10 mx-auto mb-2 text-muted-foreground/60" />
@@ -792,14 +820,17 @@ export default function TeacherGradesPage() {
                                   <TableHead className="hidden md:table-cell">
                                     Thời lượng
                                   </TableHead>
-                                  <TableHead className="text-center">Điểm</TableHead>
+                                  <TableHead className="text-center">
+                                    Điểm
+                                  </TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
                                 {gradebook.assessments.map((assessment) => {
-                                  const studentScore = activeStudent.scores.find(
-                                    (s) => s.assessmentId === assessment.id
-                                  );
+                                  const studentScore =
+                                    activeStudent.scores.find(
+                                      (s) => s.assessmentId === assessment.id
+                                    );
                                   const maxScore = assessment.maxScore || 100;
                                   const scoreValue = studentScore?.score;
                                   const draft = scoreDrafts[assessment.id] ?? {
@@ -821,9 +852,15 @@ export default function TeacherGradesPage() {
                                       </TableCell>
                                       <TableCell>
                                         {assessment.scheduledDate
-                                          ? format(parseISO(assessment.scheduledDate), "dd/MM/yyyy", {
-                                              locale: vi,
-                                            })
+                                          ? format(
+                                              parseISO(
+                                                assessment.scheduledDate
+                                              ),
+                                              "dd/MM/yyyy",
+                                              {
+                                                locale: vi,
+                                              }
+                                            )
                                           : "—"}
                                       </TableCell>
                                       <TableCell className="hidden md:table-cell text-muted-foreground">
@@ -858,7 +895,8 @@ export default function TeacherGradesPage() {
                                                 )
                                               }
                                               disabled={
-                                                isSaving || inputValue.trim() === ""
+                                                isSaving ||
+                                                inputValue.trim() === ""
                                               }
                                             >
                                               {isSaving ? "Đang lưu" : "Lưu"}
@@ -867,7 +905,9 @@ export default function TeacherGradesPage() {
                                               variant="ghost"
                                               size="sm"
                                               onClick={() =>
-                                                handleCancelEditing(assessment.id)
+                                                handleCancelEditing(
+                                                  assessment.id
+                                                )
                                               }
                                             >
                                               Hủy
@@ -876,7 +916,9 @@ export default function TeacherGradesPage() {
                                         ) : (
                                           <button
                                             className="inline-flex items-center justify-center gap-1 rounded-md px-2 py-1 hover:bg-muted transition-colors"
-                                            onClick={() => handleStartEditing(assessment.id)}
+                                            onClick={() =>
+                                              handleStartEditing(assessment.id)
+                                            }
                                           >
                                             {scoreValue != null ? (
                                               <span
@@ -891,7 +933,10 @@ export default function TeacherGradesPage() {
                                                 {scoreValue}/{maxScore}
                                               </span>
                                             ) : (
-                                              <Badge variant="outline" className="text-xs">
+                                              <Badge
+                                                variant="outline"
+                                                className="text-xs"
+                                              >
                                                 Chưa chấm
                                               </Badge>
                                             )}
@@ -902,14 +947,16 @@ export default function TeacherGradesPage() {
                                             {draft.error}
                                           </p>
                                         )}
-                                        {saveStatus[assessment.id] === "success" &&
+                                        {saveStatus[assessment.id] ===
+                                          "success" &&
                                           !draft.error &&
                                           !isEditing && (
                                             <p className="text-[11px] text-emerald-600 mt-1">
                                               Đã lưu điểm
                                             </p>
                                           )}
-                                        {saveStatus[assessment.id] === "error" &&
+                                        {saveStatus[assessment.id] ===
+                                          "error" &&
                                           !draft.error && (
                                             <p className="text-[11px] text-destructive mt-1">
                                               Lưu điểm thất bại
@@ -933,7 +980,8 @@ export default function TeacherGradesPage() {
                           Chọn học viên để xem điểm
                         </p>
                         <p className="text-xs text-muted-foreground/70 mt-1">
-                          Nhấn vào học viên ở danh sách bên trái để xem và nhập điểm
+                          Nhấn vào học viên ở danh sách bên trái để xem và nhập
+                          điểm
                         </p>
                       </div>
                     </div>
@@ -941,7 +989,6 @@ export default function TeacherGradesPage() {
                 </div>
               </div>
             )}
-
           </TabsContent>
         </Tabs>
       </div>
@@ -949,7 +996,6 @@ export default function TeacherGradesPage() {
   );
 }
 
-// Helper function for score color
 function getScoreColor(score: number, maxScore: number): string {
   const percentage = (score / maxScore) * 100;
   if (percentage >= 80) return "text-emerald-600";

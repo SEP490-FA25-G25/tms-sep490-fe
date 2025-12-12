@@ -31,25 +31,21 @@ const TeacherClassDetailPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // Read tab from URL query param, fallback to 'students'
   const tabFromUrl = searchParams.get("tab") || "students";
   const initialTab = VALID_TABS.includes(tabFromUrl as TabValue)
     ? tabFromUrl
     : "students";
   const [activeTab, setActiveTab] = useState<string>(initialTab);
 
-  // Sync activeTab when URL changes (e.g., browser back/forward navigation)
   useEffect(() => {
     const tab = searchParams.get("tab");
     if (tab && VALID_TABS.includes(tab as TabValue)) {
       setActiveTab(tab);
     } else if (!tab) {
-      // If no tab in URL, reset to students (default)
       setActiveTab("students");
     }
   }, [searchParams]);
 
-  // Update URL when tab changes
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     const newSearchParams = new URLSearchParams(searchParams);
@@ -70,7 +66,6 @@ const TeacherClassDetailPage = () => {
     error: detailError,
   } = useGetClassByIdQuery(classIdNumber, { skip: !isValidClassId });
 
-  // Get class students
   const { data: studentsResponse, isLoading: isLoadingStudents } =
     useGetClassStudentsQuery(
       { classId: classIdNumber, page: 0, size: 100 },
@@ -81,10 +76,8 @@ const TeacherClassDetailPage = () => {
   const totalStudents =
     studentsResponse?.data?.page?.totalElements || students.length;
 
-  // Use actual student count from API instead of enrollmentSummary
   const actualEnrolledCount = totalStudents;
 
-  // Map ClassDetailDTO from classApi to StudentClassDetailDTO format
   const classDetail: StudentClassDetailDTO | undefined =
     classDetailResponse?.data
       ? (() => {

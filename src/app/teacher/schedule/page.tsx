@@ -353,7 +353,7 @@ export default function TeacherSchedulePage() {
   return (
     <TeacherRoute>
       <DashboardLayout>
-        <div className="flex flex-1 flex-col overflow-hidden min-h-0">
+        <div className="flex flex-1 flex-col overflow-hidden min-h-0 -mx-4 lg:-mx-6">
           <header className="flex items-center justify-between border-b px-4 lg:px-6 py-4 bg-background">
             <div className="flex flex-col gap-2">
               <h1 className="text-3xl font-bold tracking-tight">
