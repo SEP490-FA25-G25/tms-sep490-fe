@@ -511,7 +511,7 @@ export default function TeacherProfilePage() {
                   <FileText className="h-10 w-10" />
                 </EmptyMedia>
                 <EmptyTitle>Chưa có lớp đã hoàn thành</EmptyTitle>
-                <EmptyDescription>Bạn chưa hoàn thành lớp học nào.</EmptyDescription>
+                <EmptyDescription>Bạn chưa có lớp đã hoàn thành dạy học.</EmptyDescription>
               </EmptyHeader>
             </Empty>
           ) : (

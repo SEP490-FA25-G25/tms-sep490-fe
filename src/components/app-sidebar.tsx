@@ -246,11 +246,6 @@ const roleBasedNav = {
         icon: ClipboardCheckIcon,
       },
       {
-        title: "Đăng ký lịch giảng dạy",
-        url: "/teacher/availability",
-        icon: CalendarIcon,
-      },
-      {
         title: "Điểm danh buổi học",
         url: "/teacher/attendance",
         icon: CheckCircleIcon,
