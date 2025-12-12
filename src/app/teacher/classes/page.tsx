@@ -30,7 +30,6 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-  PaginationEllipsis,
 } from "@/components/ui/pagination";
 import {
   Select,
@@ -526,24 +525,19 @@ export default function TeacherClassesPage() {
               </div>
 
               {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">
-                      Hiển thị {(currentPage - 1) * pageSize + 1} -{" "}
-                      {Math.min(currentPage * pageSize, sortedClasses.length)}{" "}
-                      trong tổng số {sortedClasses.length} lớp học
-                    </span>
-                  </div>
+              <div className="flex items-center justify-between pt-4 border-t">
+                <div className="text-sm text-muted-foreground">
+                  Trang {currentPage} / {Math.max(totalPages, 1)} · {sortedClasses.length} lớp học
+                </div>
 
-                  <div className="flex items-center gap-2">
-                    <Select
-                      value={pageSize.toString()}
-                      onValueChange={(value) => {
-                        setPageSize(Number(value));
-                        setCurrentPage(1);
-                      }}
-                    >
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={pageSize.toString()}
+                    onValueChange={(value) => {
+                      setPageSize(Number(value));
+                      setCurrentPage(1);
+                    }}
+                  >
                       <SelectTrigger className="w-[120px]">
                         <SelectValue />
                       </SelectTrigger>
@@ -559,70 +553,58 @@ export default function TeacherClassesPage() {
                       <PaginationContent>
                         <PaginationItem>
                           <PaginationPrevious
-                            onClick={() =>
-                              setCurrentPage((prev) => Math.max(1, prev - 1))
-                            }
-                            className={
-                              currentPage === 1
-                                ? "pointer-events-none opacity-50"
-                                : "cursor-pointer"
-                            }
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setCurrentPage((prev) => Math.max(1, prev - 1));
+                            }}
+                            aria-disabled={currentPage === 1}
+                            className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
                           />
                         </PaginationItem>
 
-                        {Array.from(
-                          { length: totalPages },
-                          (_, i) => i + 1
-                        ).map((page) => {
-                          // Show first page, last page, current page, and pages around current
-                          if (
-                            page === 1 ||
-                            page === totalPages ||
-                            (page >= currentPage - 1 && page <= currentPage + 1)
-                          ) {
-                            return (
-                              <PaginationItem key={page}>
-                                <PaginationLink
-                                  onClick={() => setCurrentPage(page)}
-                                  isActive={currentPage === page}
-                                  className="cursor-pointer"
-                                >
-                                  {page}
-                                </PaginationLink>
-                              </PaginationItem>
-                            );
-                          } else if (
-                            page === currentPage - 2 ||
-                            page === currentPage + 2
-                          ) {
-                            return (
-                              <PaginationItem key={page}>
-                                <PaginationEllipsis />
-                              </PaginationItem>
-                            );
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          let pageNum = i + 1;
+                          if (totalPages > 5) {
+                            if (currentPage < 4) {
+                              pageNum = i + 1;
+                            } else if (currentPage > totalPages - 3) {
+                              pageNum = totalPages - 5 + i + 1;
+                            } else {
+                              pageNum = currentPage - 2 + i;
+                            }
                           }
-                          return null;
+                          return (
+                            <PaginationItem key={pageNum}>
+                              <PaginationLink
+                                href="#"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setCurrentPage(pageNum);
+                                }}
+                                isActive={currentPage === pageNum}
+                              >
+                                {pageNum}
+                              </PaginationLink>
+                            </PaginationItem>
+                          );
                         })}
 
                         <PaginationItem>
                           <PaginationNext
-                            onClick={() =>
-                              setCurrentPage((prev) =>
-                                Math.min(totalPages, prev + 1)
-                              )
-                            }
-                            className={
-                              currentPage === totalPages
-                                ? "pointer-events-none opacity-50"
-                                : "cursor-pointer"
-                            }
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+                            }}
+                            aria-disabled={currentPage === totalPages}
+                            className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
                           />
                         </PaginationItem>
                       </PaginationContent>
                     </Pagination>
                   </div>
                 </div>
-              )}
             </>
           )}
         </div>

@@ -557,57 +557,63 @@ export default function CourseApprovalPage() {
                         </div>
 
                         {/* Pagination */}
-                        {pendingTotalPages > 1 && (
-                            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
-                                <p className="text-muted-foreground">
-                                    Trang {pendingPage + 1} / {pendingTotalPages} · {pendingCourses.length} yêu cầu
-                                </p>
-                                <Pagination>
-                                    <PaginationContent>
-                                        <PaginationItem>
-                                            <PaginationPrevious
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    setPendingPage((prev) => Math.max(prev - 1, 0));
-                                                }}
-                                                className={pendingPage === 0 ? "pointer-events-none opacity-50" : ""}
-                                            />
-                                        </PaginationItem>
-                                        {Array.from({ length: Math.min(pendingTotalPages, 5) }, (_, i) => {
-                                            let pageNum = i;
-                                            if (pendingTotalPages > 5 && pendingPage > 2) {
-                                                pageNum = Math.min(pendingPage - 2 + i, pendingTotalPages - 1);
-                                            }
-                                            return (
-                                                <PaginationItem key={pageNum}>
-                                                    <PaginationLink
-                                                        href="#"
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            setPendingPage(pageNum);
-                                                        }}
-                                                        isActive={pageNum === pendingPage}
-                                                    >
-                                                        {pageNum + 1}
-                                                    </PaginationLink>
-                                                </PaginationItem>
-                                            );
-                                        })}
-                                        <PaginationItem>
-                                            <PaginationNext
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    setPendingPage((prev) => Math.min(prev + 1, pendingTotalPages - 1));
-                                                }}
-                                                className={pendingPage + 1 >= pendingTotalPages ? "pointer-events-none opacity-50" : ""}
-                                            />
-                                        </PaginationItem>
-                                    </PaginationContent>
-                                </Pagination>
+                        <div className="flex items-center justify-between pt-4 border-t">
+                            <div className="text-sm text-muted-foreground">
+                                Trang {pendingPage + 1} / {Math.max(pendingTotalPages, 1)} · {pendingCourses.length} yêu cầu
                             </div>
-                        )}
+                            <Pagination>
+                                <PaginationContent>
+                                    <PaginationItem>
+                                        <PaginationPrevious
+                                            href="#"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setPendingPage((prev) => Math.max(prev - 1, 0));
+                                            }}
+                                            aria-disabled={pendingPage === 0}
+                                            className={pendingPage === 0 ? "pointer-events-none opacity-50" : ""}
+                                        />
+                                    </PaginationItem>
+                                    {Array.from({ length: Math.min(5, Math.max(pendingTotalPages, 1)) }, (_, i) => {
+                                        let pageNum = i;
+                                        if (pendingTotalPages > 5) {
+                                            if (pendingPage < 3) {
+                                                pageNum = i;
+                                            } else if (pendingPage > pendingTotalPages - 4) {
+                                                pageNum = pendingTotalPages - 5 + i;
+                                            } else {
+                                                pageNum = pendingPage - 2 + i;
+                                            }
+                                        }
+                                        return (
+                                            <PaginationItem key={pageNum}>
+                                                <PaginationLink
+                                                    href="#"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        setPendingPage(pageNum);
+                                                    }}
+                                                    isActive={pageNum === pendingPage}
+                                                >
+                                                    {pageNum + 1}
+                                                </PaginationLink>
+                                            </PaginationItem>
+                                        );
+                                    })}
+                                    <PaginationItem>
+                                        <PaginationNext
+                                            href="#"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setPendingPage((prev) => Math.min(prev + 1, pendingTotalPages - 1));
+                                            }}
+                                            aria-disabled={pendingPage >= pendingTotalPages - 1}
+                                            className={pendingPage >= pendingTotalPages - 1 ? "pointer-events-none opacity-50" : ""}
+                                        />
+                                    </PaginationItem>
+                                </PaginationContent>
+                            </Pagination>
+                        </div>
                     </TabsContent>
 
                     {/* History Tab */}
@@ -657,57 +663,63 @@ export default function CourseApprovalPage() {
                         </div>
 
                         {/* Pagination */}
-                        {historyTotalPages > 1 && (
-                            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
-                                <p className="text-muted-foreground">
-                                    Trang {historyPage + 1} / {historyTotalPages} · {historyCourses.length} yêu cầu
-                                </p>
-                                <Pagination>
-                                    <PaginationContent>
-                                        <PaginationItem>
-                                            <PaginationPrevious
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    setHistoryPage((prev) => Math.max(prev - 1, 0));
-                                                }}
-                                                className={historyPage === 0 ? "pointer-events-none opacity-50" : ""}
-                                            />
-                                        </PaginationItem>
-                                        {Array.from({ length: Math.min(historyTotalPages, 5) }, (_, i) => {
-                                            let pageNum = i;
-                                            if (historyTotalPages > 5 && historyPage > 2) {
-                                                pageNum = Math.min(historyPage - 2 + i, historyTotalPages - 1);
-                                            }
-                                            return (
-                                                <PaginationItem key={pageNum}>
-                                                    <PaginationLink
-                                                        href="#"
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            setHistoryPage(pageNum);
-                                                        }}
-                                                        isActive={pageNum === historyPage}
-                                                    >
-                                                        {pageNum + 1}
-                                                    </PaginationLink>
-                                                </PaginationItem>
-                                            );
-                                        })}
-                                        <PaginationItem>
-                                            <PaginationNext
-                                                href="#"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    setHistoryPage((prev) => Math.min(prev + 1, historyTotalPages - 1));
-                                                }}
-                                                className={historyPage + 1 >= historyTotalPages ? "pointer-events-none opacity-50" : ""}
-                                            />
-                                        </PaginationItem>
-                                    </PaginationContent>
-                                </Pagination>
+                        <div className="flex items-center justify-between pt-4 border-t">
+                            <div className="text-sm text-muted-foreground">
+                                Trang {historyPage + 1} / {Math.max(historyTotalPages, 1)} · {historyCourses.length} yêu cầu
                             </div>
-                        )}
+                            <Pagination>
+                                <PaginationContent>
+                                    <PaginationItem>
+                                        <PaginationPrevious
+                                            href="#"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setHistoryPage((prev) => Math.max(prev - 1, 0));
+                                            }}
+                                            aria-disabled={historyPage === 0}
+                                            className={historyPage === 0 ? "pointer-events-none opacity-50" : ""}
+                                        />
+                                    </PaginationItem>
+                                    {Array.from({ length: Math.min(5, Math.max(historyTotalPages, 1)) }, (_, i) => {
+                                        let pageNum = i;
+                                        if (historyTotalPages > 5) {
+                                            if (historyPage < 3) {
+                                                pageNum = i;
+                                            } else if (historyPage > historyTotalPages - 4) {
+                                                pageNum = historyTotalPages - 5 + i;
+                                            } else {
+                                                pageNum = historyPage - 2 + i;
+                                            }
+                                        }
+                                        return (
+                                            <PaginationItem key={pageNum}>
+                                                <PaginationLink
+                                                    href="#"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        setHistoryPage(pageNum);
+                                                    }}
+                                                    isActive={pageNum === historyPage}
+                                                >
+                                                    {pageNum + 1}
+                                                </PaginationLink>
+                                            </PaginationItem>
+                                        );
+                                    })}
+                                    <PaginationItem>
+                                        <PaginationNext
+                                            href="#"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setHistoryPage((prev) => Math.min(prev + 1, historyTotalPages - 1));
+                                            }}
+                                            aria-disabled={historyPage >= historyTotalPages - 1}
+                                            className={historyPage >= historyTotalPages - 1 ? "pointer-events-none opacity-50" : ""}
+                                        />
+                                    </PaginationItem>
+                                </PaginationContent>
+                            </Pagination>
+                        </div>
                     </TabsContent>
                 </Tabs>
             </div>

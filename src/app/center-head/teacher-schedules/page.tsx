@@ -315,47 +315,62 @@ export default function CenterHeadTeacherSchedulesPage() {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-4 border-t">
+          <div className="text-sm text-muted-foreground">
+            Trang {currentPage} / {Math.max(totalPages, 1)} · {filteredTeachers.length} giáo viên
+          </div>
           <Pagination>
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setCurrentPage((p) => Math.max(1, p - 1));
+                  }}
+                  aria-disabled={currentPage === 1}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
                 />
               </PaginationItem>
-              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                const page = i + 1;
+              {Array.from({ length: Math.min(5, Math.max(totalPages, 1)) }, (_, i) => {
+                let pageNum = i + 1;
+                if (totalPages > 5) {
+                  if (currentPage < 4) {
+                    pageNum = i + 1;
+                  } else if (currentPage > totalPages - 3) {
+                    pageNum = totalPages - 5 + i + 1;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                }
                 return (
-                  <PaginationItem key={page}>
+                  <PaginationItem key={pageNum}>
                     <PaginationLink
-                      onClick={() => setCurrentPage(page)}
-                      isActive={currentPage === page}
-                      className="cursor-pointer"
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentPage(pageNum);
+                      }}
+                      isActive={pageNum === currentPage}
                     >
-                      {page}
+                      {pageNum}
                     </PaginationLink>
                   </PaginationItem>
                 );
               })}
-              {totalPages > 5 && (
-                <PaginationItem>
-                  <span className="px-2">...</span>
-                </PaginationItem>
-              )}
               <PaginationItem>
                 <PaginationNext
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setCurrentPage((p) => Math.min(Math.max(totalPages, 1), p + 1));
+                  }}
+                  aria-disabled={currentPage >= Math.max(totalPages, 1)}
+                  className={currentPage >= Math.max(totalPages, 1) ? "pointer-events-none opacity-50" : ""}
                 />
               </PaginationItem>
             </PaginationContent>
           </Pagination>
-        )}
-
-        {/* Result count */}
-        <div className="text-sm text-muted-foreground text-center">
-          Hiển thị {paginatedTeachers.length} / {filteredTeachers.length} giáo viên
         </div>
       </div>
     </DashboardLayout>

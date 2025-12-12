@@ -293,35 +293,63 @@ export default function CenterHeadCurriculumPage() {
             </div>
 
             {/* Pagination */}
-            {totalCoursePages > 1 && (
+            <div className="flex items-center justify-between pt-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                Trang {currentPage} / {Math.max(totalCoursePages, 1)} · {filteredCourses.length} khóa học
+              </div>
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
                     <PaginationPrevious
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentPage((p) => Math.max(1, p - 1));
+                      }}
+                      aria-disabled={currentPage === 1}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
                     />
                   </PaginationItem>
-                  {Array.from({ length: Math.min(totalCoursePages, 5) }, (_, i) => (
-                    <PaginationItem key={i + 1}>
-                      <PaginationLink
-                        onClick={() => setCurrentPage(i + 1)}
-                        isActive={currentPage === i + 1}
-                        className="cursor-pointer"
-                      >
-                        {i + 1}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
+                  {Array.from({ length: Math.min(5, Math.max(totalCoursePages, 1)) }, (_, i) => {
+                    let pageNum = i + 1;
+                    if (totalCoursePages > 5) {
+                      if (currentPage < 4) {
+                        pageNum = i + 1;
+                      } else if (currentPage > totalCoursePages - 3) {
+                        pageNum = totalCoursePages - 5 + i + 1;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                    }
+                    return (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage(pageNum);
+                          }}
+                          isActive={pageNum === currentPage}
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  })}
                   <PaginationItem>
                     <PaginationNext
-                      onClick={() => setCurrentPage((p) => Math.min(totalCoursePages, p + 1))}
-                      className={currentPage === totalCoursePages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentPage((p) => Math.min(Math.max(totalCoursePages, 1), p + 1));
+                      }}
+                      aria-disabled={currentPage >= Math.max(totalCoursePages, 1)}
+                      className={currentPage >= Math.max(totalCoursePages, 1) ? "pointer-events-none opacity-50" : ""}
                     />
                   </PaginationItem>
                 </PaginationContent>
               </Pagination>
-            )}
+            </div>
           </TabsContent>
 
           {/* Subjects Tab */}

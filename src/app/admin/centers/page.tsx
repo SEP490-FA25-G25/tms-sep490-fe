@@ -273,51 +273,63 @@ export default function AdminCentersPage() {
                           </div>
 
                           {/* Pagination */}
-                          {totalPages > 1 && (
-                            <div className="mt-4">
-                              <Pagination>
-                                <PaginationContent>
-                                  <PaginationItem>
-                                    <PaginationPrevious
-                                      onClick={() =>
-                                        setPage(Math.max(0, page - 1))
-                                      }
-                                      className={
-                                        page === 0
-                                          ? "pointer-events-none opacity-50"
-                                          : "cursor-pointer"
-                                      }
-                                    />
-                                  </PaginationItem>
-                                  {[...Array(totalPages)].map((_, i) => (
-                                    <PaginationItem key={i}>
+                          <div className="flex items-center justify-between pt-4 border-t mt-4">
+                            <div className="text-sm text-muted-foreground">
+                              Trang {page + 1} / {Math.max(totalPages, 1)} · {totalElements} trung tâm
+                            </div>
+                            <Pagination>
+                              <PaginationContent>
+                                <PaginationItem>
+                                  <PaginationPrevious
+                                    href="#"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setPage(Math.max(0, page - 1));
+                                    }}
+                                    aria-disabled={page === 0}
+                                    className={page === 0 ? "pointer-events-none opacity-50" : ""}
+                                  />
+                                </PaginationItem>
+                                {Array.from({ length: Math.min(5, Math.max(totalPages, 1)) }, (_, i) => {
+                                  let pageNum = i;
+                                  if (totalPages > 5) {
+                                    if (page < 3) {
+                                      pageNum = i;
+                                    } else if (page > totalPages - 4) {
+                                      pageNum = totalPages - 5 + i;
+                                    } else {
+                                      pageNum = page - 2 + i;
+                                    }
+                                  }
+                                  return (
+                                    <PaginationItem key={pageNum}>
                                       <PaginationLink
-                                        onClick={() => setPage(i)}
-                                        isActive={page === i}
-                                        className="cursor-pointer"
+                                        href="#"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          setPage(pageNum);
+                                        }}
+                                        isActive={page === pageNum}
                                       >
-                                        {i + 1}
+                                        {pageNum + 1}
                                       </PaginationLink>
                                     </PaginationItem>
-                                  ))}
-                                  <PaginationItem>
-                                    <PaginationNext
-                                      onClick={() =>
-                                        setPage(
-                                          Math.min(totalPages - 1, page + 1)
-                                        )
-                                      }
-                                      className={
-                                        page >= totalPages - 1
-                                          ? "pointer-events-none opacity-50"
-                                          : "cursor-pointer"
-                                      }
-                                    />
-                                  </PaginationItem>
-                                </PaginationContent>
-                              </Pagination>
-                            </div>
-                          )}
+                                  );
+                                })}
+                                <PaginationItem>
+                                  <PaginationNext
+                                    href="#"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setPage(Math.min(totalPages - 1, page + 1));
+                                    }}
+                                    aria-disabled={page >= totalPages - 1}
+                                    className={page >= totalPages - 1 ? "pointer-events-none opacity-50" : ""}
+                                  />
+                                </PaginationItem>
+                              </PaginationContent>
+                            </Pagination>
+                          </div>
                         </>
                       )}
                     </CardContent>

@@ -946,10 +946,10 @@ export default function MyRequestsPage() {
         {filterControls}
         {renderRequestList()}
         {displayedRequests.length > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-2 text-sm md:flex-nowrap">
-            <span className="text-muted-foreground whitespace-nowrap">
-              Trang {Math.min(page + 1, totalPages)} / {totalPages}
-            </span>
+          <div className="flex items-center justify-between pt-4 border-t">
+            <div className="text-sm text-muted-foreground">
+              Trang {page + 1} / {Math.max(totalPages, 1)} · {displayedRequests.length} yêu cầu
+            </div>
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
@@ -959,11 +959,22 @@ export default function MyRequestsPage() {
                       event.preventDefault();
                       setPage((prev) => Math.max(prev - 1, 0));
                     }}
-                    disabled={page === 0}
+                    aria-disabled={page === 0}
+                    className={page === 0 ? "pointer-events-none opacity-50" : ""}
                   />
                 </PaginationItem>
-                {Array.from({ length: totalPages }, (_, index) => index).map(
-                  (pageNum) => (
+                {Array.from({ length: Math.min(5, Math.max(totalPages, 1)) }, (_, i) => {
+                  let pageNum = i;
+                  if (totalPages > 5) {
+                    if (page < 3) {
+                      pageNum = i;
+                    } else if (page > totalPages - 4) {
+                      pageNum = totalPages - 5 + i;
+                    } else {
+                      pageNum = page - 2 + i;
+                    }
+                  }
+                  return (
                     <PaginationItem key={pageNum}>
                       <PaginationLink
                         href="#"
@@ -976,8 +987,8 @@ export default function MyRequestsPage() {
                         {pageNum + 1}
                       </PaginationLink>
                     </PaginationItem>
-                  )
-                )}
+                  );
+                })}
                 <PaginationItem>
                   <PaginationNext
                     href="#"
@@ -985,7 +996,8 @@ export default function MyRequestsPage() {
                       event.preventDefault();
                       setPage((prev) => Math.min(prev + 1, totalPages - 1));
                     }}
-                    disabled={page >= totalPages - 1}
+                    aria-disabled={page >= totalPages - 1}
+                    className={page >= totalPages - 1 ? "pointer-events-none opacity-50" : ""}
                   />
                 </PaginationItem>
               </PaginationContent>

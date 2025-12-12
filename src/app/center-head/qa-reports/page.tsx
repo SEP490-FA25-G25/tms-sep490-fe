@@ -276,10 +276,10 @@ export default function CenterHeadQAReportsPage() {
                 </div>
 
                 {/* Pagination */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
-                    <p className="text-muted-foreground">
+                <div className="flex items-center justify-between pt-4 border-t">
+                    <div className="text-sm text-muted-foreground">
                         Trang {page + 1} / {Math.max(totalPages, 1)} · {totalCount} báo cáo
-                    </p>
+                    </div>
                     <Pagination>
                         <PaginationContent>
                             <PaginationItem>
@@ -289,13 +289,20 @@ export default function CenterHeadQAReportsPage() {
                                         e.preventDefault()
                                         if (page > 0) handlePageChange(page - 1)
                                     }}
+                                    aria-disabled={page === 0}
                                     className={page === 0 ? "pointer-events-none opacity-50" : ""}
                                 />
                             </PaginationItem>
-                            {Array.from({ length: Math.min(Math.max(totalPages, 1), 5) }, (_, i) => {
+                            {Array.from({ length: Math.min(5, Math.max(totalPages, 1)) }, (_, i) => {
                                 let pageNum = i
-                                if (totalPages > 5 && page > 2) {
-                                    pageNum = Math.min(page - 2 + i, totalPages - 1)
+                                if (totalPages > 5) {
+                                    if (page < 3) {
+                                        pageNum = i
+                                    } else if (page > totalPages - 4) {
+                                        pageNum = totalPages - 5 + i
+                                    } else {
+                                        pageNum = page - 2 + i
+                                    }
                                 }
                                 return (
                                     <PaginationItem key={pageNum}>
@@ -319,6 +326,7 @@ export default function CenterHeadQAReportsPage() {
                                         e.preventDefault()
                                         if (page < totalPages - 1) handlePageChange(page + 1)
                                     }}
+                                    aria-disabled={page >= totalPages - 1}
                                     className={page >= totalPages - 1 ? "pointer-events-none opacity-50" : ""}
                                 />
                             </PaginationItem>

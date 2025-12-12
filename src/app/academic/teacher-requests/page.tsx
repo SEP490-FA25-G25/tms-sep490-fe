@@ -905,11 +905,11 @@ export default function AcademicTeacherRequestsPage() {
             )}
 
             {/* Pending pagination */}
-            <div className="flex items-center justify-between text-sm">
-              <p className="text-muted-foreground">
-                Trang {pendingPage + 1} / {pendingTotalPages} ·{" "}
+            <div className="flex items-center justify-between pt-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                Trang {pendingPage + 1} / {Math.max(pendingTotalPages, 1)} ·{" "}
                 {teacherPendingRequests.length} yêu cầu
-              </p>
+              </div>
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
@@ -919,26 +919,36 @@ export default function AcademicTeacherRequestsPage() {
                         event.preventDefault();
                         setPendingPage((prev) => Math.max(prev - 1, 0));
                       }}
-                      disabled={pendingPage === 0 || isLoadingTeacherRequests}
+                      aria-disabled={pendingPage === 0 || isLoadingTeacherRequests}
+                      className={pendingPage === 0 || isLoadingTeacherRequests ? "pointer-events-none opacity-50" : ""}
                     />
                   </PaginationItem>
-                  {Array.from(
-                    { length: pendingTotalPages },
-                    (_, index) => index
-                  ).map((pageNum) => (
-                    <PaginationItem key={pageNum}>
-                      <PaginationLink
-                        href="#"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          setPendingPage(pageNum);
-                        }}
-                        isActive={pageNum === pendingPage}
-                      >
-                        {pageNum + 1}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
+                  {Array.from({ length: Math.min(5, Math.max(pendingTotalPages, 1)) }, (_, i) => {
+                    let pageNum = i;
+                    if (pendingTotalPages > 5) {
+                      if (pendingPage < 3) {
+                        pageNum = i;
+                      } else if (pendingPage > pendingTotalPages - 4) {
+                        pageNum = pendingTotalPages - 5 + i;
+                      } else {
+                        pageNum = pendingPage - 2 + i;
+                      }
+                    }
+                    return (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            setPendingPage(pageNum);
+                          }}
+                          isActive={pageNum === pendingPage}
+                        >
+                          {pageNum + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  })}
                   <PaginationItem>
                     <PaginationNext
                       href="#"
@@ -948,10 +958,8 @@ export default function AcademicTeacherRequestsPage() {
                           Math.min(prev + 1, pendingTotalPages - 1)
                         );
                       }}
-                      disabled={
-                        pendingPage >= pendingTotalPages - 1 ||
-                        isLoadingTeacherRequests
-                      }
+                      aria-disabled={pendingPage >= pendingTotalPages - 1 || isLoadingTeacherRequests}
+                      className={pendingPage >= pendingTotalPages - 1 || isLoadingTeacherRequests ? "pointer-events-none opacity-50" : ""}
                     />
                   </PaginationItem>
                 </PaginationContent>
@@ -980,11 +988,11 @@ export default function AcademicTeacherRequestsPage() {
             )}
 
             {/* History pagination */}
-            <div className="flex items-center justify-between text-sm">
-              <p className="text-muted-foreground">
-                Trang {historyPage + 1} / {historyTotalPages} ·{" "}
+            <div className="flex items-center justify-between pt-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                Trang {historyPage + 1} / {Math.max(historyTotalPages, 1)} ·{" "}
                 {teacherHistoryRequests.length} yêu cầu
-              </p>
+              </div>
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
@@ -994,26 +1002,36 @@ export default function AcademicTeacherRequestsPage() {
                         event.preventDefault();
                         setHistoryPage((prev) => Math.max(prev - 1, 0));
                       }}
-                      disabled={historyPage === 0 || isLoadingTeacherRequests}
+                      aria-disabled={historyPage === 0 || isLoadingTeacherRequests}
+                      className={historyPage === 0 || isLoadingTeacherRequests ? "pointer-events-none opacity-50" : ""}
                     />
                   </PaginationItem>
-                  {Array.from(
-                    { length: historyTotalPages },
-                    (_, index) => index
-                  ).map((pageNum) => (
-                    <PaginationItem key={pageNum}>
-                      <PaginationLink
-                        href="#"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          setHistoryPage(pageNum);
-                        }}
-                        isActive={pageNum === historyPage}
-                      >
-                        {pageNum + 1}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
+                  {Array.from({ length: Math.min(5, Math.max(historyTotalPages, 1)) }, (_, i) => {
+                    let pageNum = i;
+                    if (historyTotalPages > 5) {
+                      if (historyPage < 3) {
+                        pageNum = i;
+                      } else if (historyPage > historyTotalPages - 4) {
+                        pageNum = historyTotalPages - 5 + i;
+                      } else {
+                        pageNum = historyPage - 2 + i;
+                      }
+                    }
+                    return (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            setHistoryPage(pageNum);
+                          }}
+                          isActive={pageNum === historyPage}
+                        >
+                          {pageNum + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  })}
                   <PaginationItem>
                     <PaginationNext
                       href="#"
@@ -1023,10 +1041,8 @@ export default function AcademicTeacherRequestsPage() {
                           Math.min(prev + 1, historyTotalPages - 1)
                         );
                       }}
-                      disabled={
-                        historyPage >= historyTotalPages - 1 ||
-                        isLoadingTeacherRequests
-                      }
+                      aria-disabled={historyPage >= historyTotalPages - 1 || isLoadingTeacherRequests}
+                      className={historyPage >= historyTotalPages - 1 || isLoadingTeacherRequests ? "pointer-events-none opacity-50" : ""}
                     />
                   </PaginationItem>
                 </PaginationContent>

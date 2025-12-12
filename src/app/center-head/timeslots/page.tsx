@@ -25,7 +25,15 @@ import {
     type SortingState,
     useReactTable,
 } from "@tanstack/react-table";
-import { Search, PlusCircleIcon, Clock, XIcon, ArrowUpDown, Power, PowerOff, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, PlusCircleIcon, Clock, XIcon, ArrowUpDown, Power, PowerOff } from "lucide-react";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination";
 import {
     useGetTimeSlotsQuery,
     useDeleteTimeSlotMutation,
@@ -515,54 +523,73 @@ export default function CenterHeadTimeSlotsPage() {
                 </div>
 
                 {/* Pagination */}
-                {timeSlotTable.getPageCount() > 0 && (
-                    <div className="flex items-center justify-between px-2">
-                        <div className="text-sm text-muted-foreground">
-                            Trang {timeSlotTable.getState().pagination.pageIndex + 1} / {timeSlotTable.getPageCount()}
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => timeSlotTable.previousPage()}
-                                disabled={!timeSlotTable.getCanPreviousPage()}
-                            >
-                                <ChevronLeft className="h-4 w-4 mr-1" />
-                                Trước
-                            </Button>
-                            {Array.from({ length: timeSlotTable.getPageCount() }, (_, i) => i + 1)
-                                .filter(page =>
-                                    page === 1 ||
-                                    page === timeSlotTable.getPageCount() ||
-                                    Math.abs(page - (timeSlotTable.getState().pagination.pageIndex + 1)) <= 1
-                                )
-                                .map((page, idx, arr) => (
-                                    <span key={page} className="flex items-center">
-                                        {idx > 0 && arr[idx - 1] !== page - 1 && (
-                                            <span className="px-2 text-muted-foreground">...</span>
-                                        )}
-                                        <Button
-                                            variant={timeSlotTable.getState().pagination.pageIndex + 1 === page ? "default" : "outline"}
-                                            size="sm"
-                                            className="w-8 h-8 p-0"
-                                            onClick={() => timeSlotTable.setPageIndex(page - 1)}
-                                        >
-                                            {page}
-                                        </Button>
-                                    </span>
-                                ))}
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => timeSlotTable.nextPage()}
-                                disabled={!timeSlotTable.getCanNextPage()}
-                            >
-                                Sau
-                                <ChevronRight className="h-4 w-4 ml-1" />
-                            </Button>
-                        </div>
+                <div className="flex items-center justify-between pt-4 border-t">
+                    <div className="text-sm text-muted-foreground">
+                        Trang {timeSlotTable.getState().pagination.pageIndex + 1} / {Math.max(timeSlotTable.getPageCount(), 1)} · {filteredTimeSlots.length} khung giờ
                     </div>
-                )}
+                    <Pagination>
+                        <PaginationContent>
+                            <PaginationItem>
+                                <PaginationPrevious
+                                    href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        timeSlotTable.previousPage();
+                                    }}
+                                    aria-disabled={!timeSlotTable.getCanPreviousPage()}
+                                    className={
+                                        !timeSlotTable.getCanPreviousPage()
+                                            ? "pointer-events-none opacity-50"
+                                            : ""
+                                    }
+                                />
+                            </PaginationItem>
+                            {Array.from({ length: Math.min(5, Math.max(timeSlotTable.getPageCount(), 1)) }, (_, i) => {
+                                let pageNum = i;
+                                const totalPages = timeSlotTable.getPageCount();
+                                const currentPage = timeSlotTable.getState().pagination.pageIndex;
+                                if (totalPages > 5) {
+                                    if (currentPage < 3) {
+                                        pageNum = i;
+                                    } else if (currentPage > totalPages - 4) {
+                                        pageNum = totalPages - 5 + i;
+                                    } else {
+                                        pageNum = currentPage - 2 + i;
+                                    }
+                                }
+                                return (
+                                    <PaginationItem key={pageNum}>
+                                        <PaginationLink
+                                            href="#"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                timeSlotTable.setPageIndex(pageNum);
+                                            }}
+                                            isActive={pageNum === timeSlotTable.getState().pagination.pageIndex}
+                                        >
+                                            {pageNum + 1}
+                                        </PaginationLink>
+                                    </PaginationItem>
+                                );
+                            })}
+                            <PaginationItem>
+                                <PaginationNext
+                                    href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        timeSlotTable.nextPage();
+                                    }}
+                                    aria-disabled={!timeSlotTable.getCanNextPage()}
+                                    className={
+                                        !timeSlotTable.getCanNextPage()
+                                            ? "pointer-events-none opacity-50"
+                                            : ""
+                                    }
+                                />
+                            </PaginationItem>
+                        </PaginationContent>
+                    </Pagination>
+                </div>
 
                 {/* Dialogs */}
                 <TimeSlotDialog
