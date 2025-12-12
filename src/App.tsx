@@ -88,6 +88,8 @@ const AssessmentScoresPage = lazy(
 );
 const TeacherStudentsPage = lazy(() => import("./app/teacher/students/page"));
 const TeacherProfilePage = lazy(() => import("./app/teacher/profile/page"));
+const TeacherRegistrationsPage = lazy(() => import("./app/teacher/registrations/page"));
+const TeacherMyRegistrationsPage = lazy(() => import("./app/teacher/registrations/my-registrations/page"));
 
 // Student pages
 const StudentSchedulePage = lazy(() => import("./app/student/schedule/page"));
@@ -128,6 +130,9 @@ const AcademicTeacherRequestsPage = lazy(
 );
 const AcademicSelectTeacherPage = lazy(
   () => import("./app/academic/teacher-requests/create/select-teacher/page")
+);
+const AATeacherRegistrationsPage = lazy(
+  () => import("./app/academic/teacher-registrations/page")
 );
 const AcademicSelectRequestTypePage = lazy(
   () => import("./app/academic/teacher-requests/create/select-type/page")
@@ -624,6 +629,38 @@ function App() {
                   }
                 />
                 <Route
+                  path="/teacher/registrations"
+                  element={
+                    <ProtectedRoute
+                      requiredRoles={[
+                        "TEACHER",
+                        "ADMIN",
+                        "MANAGER",
+                        "CENTER_HEAD",
+                        "SUBJECT_LEADER",
+                      ]}
+                    >
+                      <TeacherRegistrationsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/teacher/registrations/my-registrations"
+                  element={
+                    <ProtectedRoute
+                      requiredRoles={[
+                        "TEACHER",
+                        "ADMIN",
+                        "MANAGER",
+                        "CENTER_HEAD",
+                        "SUBJECT_LEADER",
+                      ]}
+                    >
+                      <TeacherMyRegistrationsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/teacher/schedule"
                   element={
                     <ProtectedRoute
@@ -933,6 +970,21 @@ function App() {
                       ]}
                     >
                       <AcademicTeacherRequestsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/academic/teacher-registrations"
+                  element={
+                    <ProtectedRoute
+                      requiredRoles={[
+                        "ACADEMIC_AFFAIR",
+                        "ADMIN",
+                        "MANAGER",
+                        "CENTER_HEAD",
+                      ]}
+                    >
+                      <AATeacherRegistrationsPage />
                     </ProtectedRoute>
                   }
                 />

@@ -273,8 +273,15 @@ export function Step4Resources({ classId, onContinue }: Step4ResourcesProps) {
                           <SelectItem key={resource.id} value={resource.id.toString()}>
                             {resource.displayName || resource.name}
                             {resource.availabilityRate !== undefined && (
-                              <span className="text-muted-foreground ml-2">
-                                ({resource.availabilityRate.toFixed(0)}%)
+                              <span className={`ml-2 ${(resource.conflictCount || 0) > 0 ? 'text-red-500' : 'text-green-600'
+                                }`}>
+                                {resource.conflictCount && resource.totalSessions ? (
+                                  resource.conflictCount > 0
+                                    ? `(Trùng ${resource.conflictCount}/${resource.totalSessions} buổi)`
+                                    : '(Sẵn sàng)'
+                                ) : (
+                                  `(${resource.availabilityRate.toFixed(0)}%)`
+                                )}
                               </span>
                             )}
                           </SelectItem>

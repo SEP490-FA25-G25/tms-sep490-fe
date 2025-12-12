@@ -241,6 +241,11 @@ const roleBasedNav = {
         icon: SchoolIcon,
       },
       {
+        title: "Đăng ký dạy lớp",
+        url: "/teacher/registrations",
+        icon: ClipboardCheckIcon,
+      },
+      {
         title: "Đăng ký lịch giảng dạy",
         url: "/teacher/availability",
         icon: CalendarIcon,
@@ -349,6 +354,11 @@ const roleBasedNav = {
         url: "/academic/teacher-requests",
         icon: ClipboardCheckIcon,
         badge: <TeacherRequestsBadge />,
+      },
+      {
+        title: "Duyệt đăng ký dạy lớp",
+        url: "/academic/teacher-registrations",
+        icon: UsersIcon,
       },
       {
         title: "Quản lý đợt cập nhật lịch dạy",
