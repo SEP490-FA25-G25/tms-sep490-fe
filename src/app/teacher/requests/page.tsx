@@ -27,19 +27,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  FullScreenModal,
-  FullScreenModalContent,
-  FullScreenModalHeader,
-  FullScreenModalTitle,
-  FullScreenModalBody,
-} from "@/components/ui/full-screen-modal";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import UnifiedTeacherRequestFlow from "@/components/teacher-requests/UnifiedTeacherRequestFlow";
+import { CreateRequestDialog } from "./components/CreateRequestDialog";
 import { RequestDetailDialog } from "./components/RequestDetailDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -55,7 +48,6 @@ import { toast } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateTime } from "@/utils/dateFormat";
 import {
-  Plus,
   NotebookPen,
   RefreshCcw,
   Search,
@@ -903,7 +895,6 @@ export default function MyRequestsPage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" className="w-full sm:w-auto">
-                <Plus className="h-4 w-4" />
                 Tạo yêu cầu
                 <ChevronDownIcon className="h-4 w-4 ml-1" />
               </Button>
@@ -1014,30 +1005,16 @@ export default function MyRequestsPage() {
         </SidebarInset>
       </SidebarProvider>
 
-      {/* Request Flow Modal */}
-      <FullScreenModal
+      {/* Request Flow Dialog */}
+      <CreateRequestDialog
         open={activeType !== null}
         onOpenChange={(open) => !open && handleModalClose()}
-      >
-        <FullScreenModalContent size="lg">
-          <FullScreenModalHeader>
-            <FullScreenModalTitle>
-              {activeType && REQUEST_TYPE_LABELS[activeType]}
-            </FullScreenModalTitle>
-          </FullScreenModalHeader>
-          <FullScreenModalBody>
-            {activeType && (
-              <UnifiedTeacherRequestFlow
-                type={activeType}
-                onSuccess={() => {
-                  handleModalClose();
-                  refetch();
-                }}
-              />
-            )}
-          </FullScreenModalBody>
-        </FullScreenModalContent>
-      </FullScreenModal>
+        initialRequestType={activeType || undefined}
+        onSuccess={() => {
+          handleModalClose();
+          refetch();
+        }}
+      />
 
       <RequestDetailDialog
         requestId={detailId}

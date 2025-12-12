@@ -73,7 +73,7 @@ export default function TeacherClassesPage() {
   const [filters, setFilters] = useState<FilterState>({
     status: "ALL",
     branchName: "ALL",
-  subjectName: "ALL",
+    subjectName: "ALL",
     modality: "ALL",
     searchTerm: "",
   });
@@ -113,18 +113,6 @@ export default function TeacherClassesPage() {
   }, [allClasses]);
 
   // Extract unique options for filters
-  const branchOptions = useMemo(() => {
-    const map = new Map<string, string>();
-    normalizedClasses.forEach((item) => {
-      if (item.branchName) {
-        map.set(item.branchName, item.branchName);
-      }
-    });
-    return Array.from(map.entries())
-      .map(([name]) => ({ name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [normalizedClasses]);
-
   const subjectOptions = useMemo(() => {
     const map = new Map<string, string>();
     normalizedClasses.forEach((item) => {
