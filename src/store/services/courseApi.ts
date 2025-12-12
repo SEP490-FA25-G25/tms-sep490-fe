@@ -351,7 +351,7 @@ export const courseApi = createApi({
 
     // Subject syllabus
     getCourseSyllabus: builder.query<CourseDetail, number>({
-      query: (subjectId) => `/courses/${subjectId}/syllabus`,
+      query: (subjectId) => `/subjects/${subjectId}/syllabus`,
       transformResponse: (response: { data: CourseDetail }) => response.data,
       providesTags: ["Course"],
     }),
@@ -362,7 +362,7 @@ export const courseApi = createApi({
       { courseId: number; studentId?: number }
     >({
       query: ({ courseId, studentId }) => ({
-        url: `/courses/${courseId}/materials`,
+        url: `/subjects/${courseId}/materials`,
         params: studentId ? { studentId } : undefined,
       }),
       transformResponse: (response: { data: MaterialHierarchy }) =>

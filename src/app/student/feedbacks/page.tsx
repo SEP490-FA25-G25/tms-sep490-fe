@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react'
 import { useMemo, useState, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { MessageCircleIcon, RotateCcw, Search, Star, X } from 'lucide-react'
+import { MessageCircleIcon, RotateCcw, Search, Star } from 'lucide-react'
 
 import { StudentRoute } from '@/components/ProtectedRoute'
 import { AppSidebar } from '@/components/app-sidebar'
@@ -35,10 +35,6 @@ export default function StudentPendingFeedbackPage() {
   const [selectedClassId, setSelectedClassId] = useState<string | undefined>()
   const [selectedPhaseId, setSelectedPhaseId] = useState<string | undefined>()
   const [selectedFeedback, setSelectedFeedback] = useState<StudentFeedbackItem | null>(null)
-
-  // Get studentId from localStorage (set during login)
-  const studentId = typeof window !== 'undefined' ?
-    JSON.parse(localStorage.getItem('user') || '{}')?.studentId : undefined
 
   // Fetch student's own classes for filter (no need to pass studentId)
   const { data: classesData } = useGetMyClassesQuery({

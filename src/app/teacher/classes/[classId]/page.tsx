@@ -21,8 +21,9 @@ import SyllabusTab from "@/app/student/my-classes/[classId]/components/SyllabusT
 import AttendanceMatrixTab from "./components/AttendanceMatrixTab";
 import SessionsTab from "./components/SessionsTab";
 import StudentsTab from "./components/StudentsTab";
+import { TeacherScoresTab } from "./components/TeacherScoresTab";
 
-const VALID_TABS = ["sessions", "syllabus", "attendance", "students"] as const;
+const VALID_TABS = ["sessions", "syllabus", "attendance", "students", "scores"] as const;
 type TabValue = (typeof VALID_TABS)[number];
 
 const TeacherClassDetailPage = () => {
@@ -308,7 +309,7 @@ const TeacherClassDetailPage = () => {
                       className="w-full space-y-6"
                     >
                       <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-40 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2 -mt-6 pt-6">
-                        <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted/50">
+                        <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-muted/50">
                           <TabsTrigger
                             value="students"
                             className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
@@ -332,6 +333,12 @@ const TeacherClassDetailPage = () => {
                             className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
                           >
                             Ma trận điểm danh
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="scores"
+                            className="data-[state=active]:bg-background data-[state=active]:shadow-sm text-sm"
+                          >
+                            Điểm số
                           </TabsTrigger>
                         </TabsList>
                       </div>
@@ -357,6 +364,10 @@ const TeacherClassDetailPage = () => {
 
                       <TabsContent value="attendance" className="space-y-4">
                         <AttendanceMatrixTab classId={classIdNumber} />
+                      </TabsContent>
+
+                      <TabsContent value="scores" className="space-y-4">
+                        <TeacherScoresTab classId={classIdNumber} />
                       </TabsContent>
                     </Tabs>
                   )}

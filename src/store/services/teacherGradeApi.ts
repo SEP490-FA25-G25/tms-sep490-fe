@@ -85,6 +85,7 @@ export interface GradebookAssessmentDTO {
   name: string;
   kind?: string;
   maxScore?: number;
+  durationMinutes?: number;
   scheduledDate?: string;
 }
 

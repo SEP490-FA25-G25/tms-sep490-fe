@@ -18,7 +18,6 @@ import {
   Calendar,
   MapPin,
   GraduationCap,
-  RefreshCw,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
@@ -73,7 +72,7 @@ export default function TeacherClassesPage() {
   const [filters, setFilters] = useState<FilterState>({
     status: "ALL",
     branchName: "ALL",
-  subjectName: "ALL",
+    subjectName: "ALL",
     modality: "ALL",
     searchTerm: "",
   });
@@ -113,18 +112,6 @@ export default function TeacherClassesPage() {
   }, [allClasses]);
 
   // Extract unique options for filters
-  const branchOptions = useMemo(() => {
-    const map = new Map<string, string>();
-    normalizedClasses.forEach((item) => {
-      if (item.branchName) {
-        map.set(item.branchName, item.branchName);
-      }
-    });
-    return Array.from(map.entries())
-      .map(([name]) => ({ name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [normalizedClasses]);
-
   const subjectOptions = useMemo(() => {
     const map = new Map<string, string>();
     normalizedClasses.forEach((item) => {
@@ -332,24 +319,6 @@ export default function TeacherClassesPage() {
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Select
-                  value={sortField}
-                  onValueChange={(value) => setSortField(value as SortField)}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Sắp xếp theo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="name">Tên lớp</SelectItem>
-                    <SelectItem value="startDate">Ngày bắt đầu</SelectItem>
-                    <SelectItem value="attendanceRate">
-                      Tỷ lệ chuyên cần
-                    </SelectItem>
-                    <SelectItem value="totalSessions">Số buổi học</SelectItem>
-                    <SelectItem value="status">Trạng thái</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select
                   value={filters.modality}
                   onValueChange={(value) =>
                     setFilters((prev) => ({
@@ -369,31 +338,6 @@ export default function TeacherClassesPage() {
                     <SelectItem value="OFFLINE">
                       {MODALITY_LABELS.OFFLINE}
                     </SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={filters.branchName}
-                  onValueChange={(value) =>
-                    setFilters((prev) => ({ ...prev, branchName: value }))
-                  }
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Chi nhánh" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">Tất cả chi nhánh</SelectItem>
-                    {branchOptions.length > 0 ? (
-                      branchOptions.map((branch) => (
-                        <SelectItem key={branch.name} value={branch.name}>
-                          {branch.name}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="NO_DATA" disabled>
-                        Chưa có dữ liệu chi nhánh
-                      </SelectItem>
-                    )}
                   </SelectContent>
                 </Select>
 
@@ -421,17 +365,6 @@ export default function TeacherClassesPage() {
                     )}
                   </SelectContent>
                 </Select>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={resetFilters}
-                  className="gap-2"
-                  title="Làm mới và đặt lại tất cả bộ lọc"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  Làm mới
-                </Button>
               </div>
             </div>
 

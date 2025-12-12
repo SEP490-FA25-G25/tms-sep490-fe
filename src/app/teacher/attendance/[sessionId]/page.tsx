@@ -3,7 +3,7 @@ import { TeacherRoute } from "@/components/ProtectedRoute";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Users, Clock, BookOpen } from "lucide-react";
+import { Users, Clock, BookOpen } from "lucide-react";
 import {
   useGetSessionStudentsQuery,
   useGetTodaySessionsQuery,
@@ -588,17 +588,6 @@ export default function AttendanceDetailPage() {
     <TeacherRoute>
       <DashboardLayout title="Điểm danh" description="Điểm danh cho buổi học">
         <div className="space-y-6">
-          {/* Back button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-fit"
-            onClick={() => navigate("/teacher/attendance")}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Quay lại danh sách
-          </Button>
-
           {/* Session info */}
           {isLoadingSession ? (
             <Skeleton className="h-32 w-full rounded-lg" />
@@ -620,8 +609,14 @@ export default function AttendanceDetailPage() {
 
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Clock className="h-4 w-4 flex-shrink-0" />
-                  {session.timeSlotName && <span>{session.timeSlotName}</span>}
-                  {session.timeSlotName && <span className="mx-1">·</span>}
+                  {session.startTime && session.endTime && (
+                    <>
+                      <span>
+                        {session.startTime.substring(0, 5)} - {session.endTime.substring(0, 5)}
+                      </span>
+                      <span className="mx-1">·</span>
+                    </>
+                  )}
                   <span>
                     {format(parseISO(session.date), "dd/MM/yyyy", {
                       locale: vi,
