@@ -26,25 +26,19 @@ import {
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 
-// Helper function to check if attendance can be edited
-// Returns true if session has already occurred and it's within 2 calendar days from session date
-// Works regardless of session status
 // Note: This should match backend logic in AttendanceServiceImpl.canEditAttendance()
 const canEditAttendance = (sessionDate: string, endTime?: string): boolean => {
   if (!endTime) {
-    // If no end time, check if session date has passed
     try {
       const sessionDateOnly = parseISO(sessionDate);
       const now = new Date();
       const sessionEndOfDay = new Date(sessionDateOnly);
       sessionEndOfDay.setHours(23, 59, 59, 999);
 
-      // Session must have taken place (date already passed)
       if (isAfter(sessionEndOfDay, now)) {
         return false;
       }
 
-      // Allow editing until end of the second day after the session date
       const deadline = new Date(sessionEndOfDay);
       deadline.setDate(deadline.getDate() + 2);
       return !isAfter(now, deadline);
@@ -54,13 +48,10 @@ const canEditAttendance = (sessionDate: string, endTime?: string): boolean => {
   }
 
   try {
-    // Parse session date and end time
-    // Backend uses LocalDateTime (server timezone), so we need to parse as local time
-    // Format: "YYYY-MM-DD" + "HH:mm:ss" or "HH:mm"
-    const endTimeFormatted = endTime.length === 5 ? `${endTime}:00` : endTime; // Ensure HH:mm:ss format
+    // Backend uses LocalDateTime (server timezone), parse as local time to match
+    const endTimeFormatted = endTime.length === 5 ? `${endTime}:00` : endTime;
     const sessionEndDateTimeStr = `${sessionDate}T${endTimeFormatted}`;
 
-    // Parse as local datetime (not UTC) to match backend LocalDateTime behavior
     const [datePart, timePart] = sessionEndDateTimeStr.split("T");
     const [year, month, day] = datePart.split("-").map(Number);
     const [hour, minute, second = 0] = timePart.split(":").map(Number);
@@ -75,23 +66,19 @@ const canEditAttendance = (sessionDate: string, endTime?: string): boolean => {
     );
     const now = new Date();
 
-    // Check if session has ended (not a future session)
     if (isAfter(sessionEndDateTime, now)) {
       return false;
     }
 
-    // Allow editing until end of the second day after the session date
     const deadline = new Date(sessionEndDateTime);
     deadline.setDate(deadline.getDate() + 2);
     deadline.setHours(23, 59, 59, 999);
     return !isAfter(now, deadline);
   } catch {
-    // If parsing fails, don't allow editing
     return false;
   }
 };
 
-// Helper function to format error messages from backend to user-friendly Vietnamese
 const formatBackendError = (
   errorMessage?: string,
   defaultMessage?: string
@@ -100,7 +87,6 @@ const formatBackendError = (
     return defaultMessage || "Có lỗi xảy ra. Vui lòng thử lại sau.";
   }
 
-  // Map common error codes to user-friendly messages
   if (
     errorMessage.includes("SESSION_ALREADY_DONE") ||
     errorMessage.includes("1295") ||
@@ -125,11 +111,9 @@ const formatBackendError = (
     return "Lỗi máy chủ. Vui lòng thử lại sau hoặc liên hệ quản trị viên nếu vấn đề vẫn tiếp tục.";
   }
 
-  // If it's a technical error code, try to extract a more readable part
   if (errorMessage.includes(":")) {
     const parts = errorMessage.split(":");
     if (parts.length > 1) {
-      // Use the part after the colon if it's more readable
       const readablePart = parts.slice(1).join(":").trim();
       if (readablePart.length > 0 && !readablePart.includes("_")) {
         return readablePart;
@@ -137,7 +121,6 @@ const formatBackendError = (
     }
   }
 
-  // Return the original message if no mapping found
   return errorMessage;
 };
 
@@ -189,7 +172,6 @@ export default function AttendanceDetailPage() {
       refetchOnMountOrArgChange: true,
     });
 
-  // Use session info from studentsResponse if available, otherwise from sessionsResponse
   const sessionDetail = studentsResponse?.data;
   const fallbackSession = sessionsResponse?.data?.find(
     (s) => s.sessionId === sessionIdNum
@@ -270,7 +252,6 @@ export default function AttendanceDetailPage() {
     return null;
   }, [sessionDetail, fallbackSession, fallbackTimeSlotName]);
 
-  // Extract students from response - data.students is the array
   const students = useMemo(
     () => studentsResponse?.data?.students ?? [],
     [studentsResponse?.data?.students]
@@ -299,13 +280,11 @@ export default function AttendanceDetailPage() {
     );
   }, [sessionHasHomeworkFlag, students]);
 
-  // Check if attendance can be edited (session has ended and within 48 hours from end)
   const isEditable = useMemo(() => {
     if (!session) return false;
     return canEditAttendance(session.date, session.endTime);
   }, [session]);
 
-  // Report dialog state
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const { data: reportResponse, isLoading: isLoadingReport } =
     useGetSessionReportQuery(sessionIdNum, {
@@ -316,15 +295,12 @@ export default function AttendanceDetailPage() {
   const reportData = reportResponse?.data;
   const [teacherNote, setTeacherNote] = useState(reportData?.teacherNote || "");
 
-  // Update teacherNote when reportData changes
   useEffect(() => {
     if (reportData?.teacherNote !== undefined) {
       setTeacherNote(reportData.teacherNote || "");
     }
   }, [reportData?.teacherNote]);
 
-  // Initialize attendance status when students data is loaded
-  // Only initialize if state is empty (first load), don't reset on refetch
   useEffect(() => {
     if (students.length > 0 && !isInitialized.current) {
       const initialAttendance: Record<number, "PRESENT" | "ABSENT"> = {};
@@ -332,7 +308,6 @@ export default function AttendanceDetailPage() {
       const initialNotes: Record<number, string> = {};
 
       students.forEach((student) => {
-        // Initialize attendance
         if (student.attendanceStatus) {
           initialAttendance[student.studentId] =
             student.attendanceStatus === "LATE" ||
@@ -343,7 +318,6 @@ export default function AttendanceDetailPage() {
           initialAttendance[student.studentId] = "ABSENT";
         }
 
-        // Initialize homework status (only if session có bài tập)
         if (hasHomework) {
           if (student.homeworkStatus) {
             if (
@@ -359,7 +333,6 @@ export default function AttendanceDetailPage() {
           }
         }
 
-        // Initialize notes
         if (student.note) {
           initialNotes[student.studentId] = student.note;
         }
@@ -433,7 +406,6 @@ export default function AttendanceDetailPage() {
         .map((student) => {
           const currentStatus = attendanceStatus[student.studentId];
 
-          // Only create record if attendance status is set
           if (!currentStatus) {
             return null;
           }
@@ -448,12 +420,10 @@ export default function AttendanceDetailPage() {
             attendanceStatus: currentStatus,
           };
 
-          // Only include homeworkStatus if homework exists and status is set
           if (hasHomework && homeworkStatus[student.studentId]) {
             record.homeworkStatus = homeworkStatus[student.studentId];
           }
 
-          // Only include note if it's not empty
           if (notes[student.studentId]?.trim()) {
             record.note = notes[student.studentId].trim();
           }
@@ -476,10 +446,8 @@ export default function AttendanceDetailPage() {
         attendanceRecords,
       }).unwrap();
 
-      // Refetch data to get updated attendance status
       const refetchResult = await refetchStudents();
 
-      // Update local state with the latest data from server after successful save
       if (refetchResult.data?.data?.students) {
         const updatedStudents = refetchResult.data.data.students;
         const updatedAttendance: Record<number, "PRESENT" | "ABSENT"> = {};
@@ -494,7 +462,6 @@ export default function AttendanceDetailPage() {
           )?.hasHomework ?? hasHomework;
 
         updatedStudents.forEach((student) => {
-          // Update attendance status
           if (student.attendanceStatus) {
             updatedAttendance[student.studentId] =
               student.attendanceStatus === "LATE" ||
@@ -503,7 +470,6 @@ export default function AttendanceDetailPage() {
                 : "ABSENT";
           }
 
-          // Update homework status
           if (refetchHasHomeworkFlag) {
             if (student.homeworkStatus) {
               if (
@@ -519,7 +485,6 @@ export default function AttendanceDetailPage() {
             }
           }
 
-          // Update notes
           if (student.note) {
             updatedNotes[student.studentId] = student.note;
           }
@@ -588,7 +553,6 @@ export default function AttendanceDetailPage() {
     <TeacherRoute>
       <DashboardLayout title="Điểm danh" description="Điểm danh cho buổi học">
         <div className="space-y-6">
-          {/* Session info */}
           {isLoadingSession ? (
             <Skeleton className="h-32 w-full rounded-lg" />
           ) : session ? (
@@ -612,7 +576,8 @@ export default function AttendanceDetailPage() {
                   {session.startTime && session.endTime && (
                     <>
                       <span>
-                        {session.startTime.substring(0, 5)} - {session.endTime.substring(0, 5)}
+                        {session.startTime.substring(0, 5)} -{" "}
+                        {session.endTime.substring(0, 5)}
                       </span>
                       <span className="mx-1">·</span>
                     </>
@@ -640,7 +605,6 @@ export default function AttendanceDetailPage() {
             </div>
           ) : null}
 
-          {/* Attendance Table */}
           {isLoadingStudents ? (
             <div className="space-y-3">
               {[...Array(5)].map((_, index) => (
@@ -655,7 +619,6 @@ export default function AttendanceDetailPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {/* Warning message if editing is not allowed */}
               {!isEditable && session && (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
                   <p className="text-sm text-amber-800">
@@ -683,7 +646,6 @@ export default function AttendanceDetailPage() {
                   </p>
                 </div>
               )}
-              {/* Quick action buttons */}
               <div className="flex items-center justify-end gap-2">
                 <Button
                   variant="outline"
@@ -730,7 +692,6 @@ export default function AttendanceDetailPage() {
                           key={student.studentId}
                           className="border-b last:border-b-0 hover:bg-muted/30 transition-colors"
                         >
-                          {/* Cột 1: Tên học viên */}
                           <td className="p-4 border-r">
                             <div>
                               <p className="font-medium text-foreground">
@@ -749,7 +710,6 @@ export default function AttendanceDetailPage() {
                             </div>
                           </td>
 
-                          {/* Cột 2: Điểm danh */}
                           <td className="p-4 border-r">
                             <div className="flex items-center justify-center gap-3">
                               <div
@@ -823,7 +783,6 @@ export default function AttendanceDetailPage() {
                             </div>
                           </td>
 
-                          {/* Cột 3: Bài tập về nhà */}
                           <td className="p-4 border-r">
                             <div className="flex justify-center">
                               {hasHomework ? (
@@ -905,7 +864,6 @@ export default function AttendanceDetailPage() {
                             </div>
                           </td>
 
-                          {/* Cột 4: Ghi chú */}
                           <td className="p-4">
                             <div className="flex justify-center">
                               <Textarea
@@ -931,7 +889,6 @@ export default function AttendanceDetailPage() {
             </div>
           )}
 
-          {/* Summary and Submit */}
           {students.length > 0 && (
             <div className="rounded-lg border bg-muted/50 p-4">
               <div className="flex items-center justify-between">
@@ -978,7 +935,6 @@ export default function AttendanceDetailPage() {
                 </div>
               ) : (
                 <>
-                  {/* Read-only fields */}
                   <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1">
@@ -1059,7 +1015,6 @@ export default function AttendanceDetailPage() {
                     </div>
                   </div>
 
-                  {/* Teacher note input */}
                   <div className="space-y-2">
                     <Label htmlFor="teacher-note">Ghi chú</Label>
                     <Textarea

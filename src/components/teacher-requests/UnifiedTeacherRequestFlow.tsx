@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/alert-dialog'
 import { ArrowLeftIcon } from 'lucide-react'
 
-// Types
 export type TeacherFlowType = 'MODALITY_CHANGE' | 'RESCHEDULE' | 'REPLACEMENT'
 
 export interface StepConfig {
@@ -49,7 +48,6 @@ export interface UnifiedTeacherRequestFlowProps {
   onSuccess: () => void
 }
 
-// Shared Step Header Component (Wizard Style)
 interface StepHeaderProps {
   steps: StepConfig[]
   currentStep: number
@@ -73,7 +71,6 @@ function StepHeader({ steps, currentStep }: StepHeaderProps) {
   )
 }
 
-// Shared Reason Input Component
 interface ReasonInputProps {
   value: string
   onChange: (value: string) => void
@@ -83,7 +80,6 @@ interface ReasonInputProps {
   minLength?: number
 }
 
-// Shared Note Input Component
 interface NoteInputProps {
   value: string
   onChange: (value: string) => void
@@ -152,7 +148,6 @@ export function NoteInput({
   )
 }
 
-// Shared Selection Card Component
 interface SelectionCardProps<T = unknown> {
   item: T
   isSelected: boolean
@@ -185,7 +180,6 @@ export function SelectionCard<T>({
   )
 }
 
-// Base Flow Component (Wizard Logic)
 export function BaseFlowComponent({
   children,
   steps,
@@ -288,7 +282,6 @@ export function BaseFlowComponent({
   )
 }
 
-// Section wrapper for consistent spacing
 export function Section({
   children,
   className
@@ -303,12 +296,10 @@ export function Section({
   )
 }
 
-// Import individual flow components
 import ModalityChangeFlow from './flows/ModalityChangeFlow'
 import ReplacementFlow from './flows/ReplacementFlow'
 import RescheduleFlow from './flows/RescheduleFlow'
 
-// Main Unified Request Flow Component
 export default function UnifiedTeacherRequestFlow({ type, onSuccess }: UnifiedTeacherRequestFlowProps) {
   switch (type) {
     case 'MODALITY_CHANGE':

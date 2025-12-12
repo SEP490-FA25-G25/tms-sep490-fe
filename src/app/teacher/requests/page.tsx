@@ -143,7 +143,6 @@ const TYPE_FILTERS: Array<{ label: string; value: "ALL" | RequestType }> = [
 
 const PAGE_SIZE = 8;
 
-// Helper function to format error messages from backend to user-friendly Vietnamese
 const formatBackendError = (
   errorMessage?: string,
   defaultMessage?: string
@@ -152,10 +151,7 @@ const formatBackendError = (
     return defaultMessage || "Có lỗi xảy ra. Vui lòng thử lại sau.";
   }
 
-  // Map common error codes to user-friendly messages
   if (errorMessage.includes("SESSION_NOT_IN_TIME_WINDOW")) {
-    // Note: timeWindowDays should come from config, but error handler doesn't have access to it
-    // This is a fallback message - actual validation happens in backend
     return "Ngày session đề xuất không nằm trong khoảng thời gian cho phép.";
   }
 
@@ -234,19 +230,16 @@ const formatBackendError = (
     return "Resource không khả dụng tại thời gian đã chỉ định. Vui lòng chọn resource khác hoặc thời gian khác.";
   }
 
-  // If it's a technical error code, try to extract a more readable part
   if (errorMessage.includes(":")) {
-    const parts = errorMessage.split(":");
-    if (parts.length > 1) {
-      // Use the part after the colon if it's more readable
-      const readablePart = parts.slice(1).join(":").trim();
+      const parts = errorMessage.split(":");
+      if (parts.length > 1) {
+        const readablePart = parts.slice(1).join(":").trim();
       if (readablePart.length > 0 && !readablePart.includes("_")) {
         return readablePart;
       }
     }
   }
 
-  // Return the original message if no mapping found
   return errorMessage;
 };
 
@@ -262,7 +255,6 @@ export default function MyRequestsPage() {
     refetchOnFocus: true,
   });
 
-  // Load teacher request config for policy values
   const { data: teacherConfig } = useGetTeacherRequestConfigQuery();
   const reasonMinLength = teacherConfig?.data?.reasonMinLength ?? 10;
   const [activeType, setActiveType] = useState<RequestType | null>(null);
@@ -314,7 +306,6 @@ export default function MyRequestsPage() {
     const normalized = searchQuery.trim().toLowerCase();
     let result = filteredRequests;
 
-    // Apply search filter
     if (normalized) {
       result = result.filter((request) => {
         const candidates = [
@@ -337,7 +328,6 @@ export default function MyRequestsPage() {
       });
     }
 
-    // Apply sorting
     if (sortField) {
       result = [...result].sort((a, b) => {
         let comparison = 0;
@@ -390,7 +380,6 @@ export default function MyRequestsPage() {
       skip: detailId === null,
     });
 
-  // Fallback: Lấy dữ liệu từ danh sách requests nếu detail không có
   const requestFromList = detailId
     ? requests.find((r) => r.id === detailId)
     : null;

@@ -7,7 +7,6 @@ import type {
   FetchBaseQueryMeta,
 } from "@reduxjs/toolkit/query";
 
-// Types based on backend API
 export type RequestType = "MODALITY_CHANGE" | "RESCHEDULE" | "REPLACEMENT";
 export type RequestStatus =
   | "PENDING"
@@ -342,7 +341,6 @@ export interface TeacherRequestConfigResponse {
   };
 }
 
-// Base query with token injection
 const baseQuery = fetchBaseQuery({
   baseUrl: "/api/v1",
   prepareHeaders: (headers, { getState }) => {
@@ -354,7 +352,6 @@ const baseQuery = fetchBaseQuery({
   },
 });
 
-// Base query with token refresh logic
 const baseQueryWithReauth: BaseQueryFn<
   string | FetchArgs,
   unknown,
@@ -422,7 +419,6 @@ export const teacherRequestApi = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: ["TeacherRequest"],
   endpoints: (builder) => ({
-    // Get teacher's requests
     getMyRequests: builder.query<TeacherRequestListResponse, void>({
       query: () => ({
         url: "/teacher-requests/me",
@@ -431,7 +427,6 @@ export const teacherRequestApi = createApi({
       providesTags: ["TeacherRequest"],
     }),
 
-    // Get teacher request configuration (policies exposed to teacher)
     getTeacherRequestConfig: builder.query<TeacherRequestConfigResponse, void>({
       query: () => ({
         url: "/teacher-requests/config",
@@ -439,7 +434,6 @@ export const teacherRequestApi = createApi({
       }),
     }),
 
-    // Get teacher's sessions (for creating request)
     getMySessions: builder.query<
       MySessionsResponse,
       { date?: string; classId?: number }
@@ -456,9 +450,6 @@ export const teacherRequestApi = createApi({
       },
     }),
 
-    // Get available resources for modality change
-    // Supports both requestId (for existing requests) and sessionId (for new requests)
-    // For academic staff creating new request: need teacherId
     getModalityResources: builder.query<
       ResourcesResponse,
       { requestId?: number; sessionId?: number; teacherId?: number }
@@ -466,13 +457,11 @@ export const teacherRequestApi = createApi({
       query: ({ requestId, sessionId, teacherId }) => {
         if (requestId) {
           return {
-            // Academic staff use requestId -> staff endpoint
             url: `/teacher-requests/${requestId}/modality/resources/staff`,
             method: "GET",
           };
         }
         if (sessionId) {
-          // If teacherId is provided (academic staff), use staff endpoint
           if (teacherId) {
             return {
               url: `/teacher-requests/sessions/${sessionId}/modality/resources/staff`,
@@ -480,7 +469,6 @@ export const teacherRequestApi = createApi({
               params: { teacherId },
             };
           }
-          // Otherwise (teacher creating own request), use teacher endpoint
           return {
             url: `/teacher-requests/${sessionId}/modality/resources`,
             method: "GET",
@@ -490,9 +478,6 @@ export const teacherRequestApi = createApi({
       },
     }),
 
-    // Get available slots for reschedule
-    // For teachers: uses sessionId (teacherId from auth token)
-    // For academic staff: uses sessionId + teacherId
     getRescheduleSlots: builder.query<
       RescheduleSlotsResponse,
       {
@@ -503,15 +488,12 @@ export const teacherRequestApi = createApi({
       }
     >({
       query: ({ sessionId, date, teacherId, requestId }) => {
-        // If requestId is provided (academic staff viewing existing request), use requestId endpoint
         if (requestId && teacherId) {
           return {
             url: `/teacher-requests/${requestId}/reschedule/slots/staff`,
             method: "GET",
           };
         }
-        // If teacherId is provided (academic staff), use staff endpoint
-        // If not provided (teacher creating own request), use teacher endpoint
         if (teacherId && sessionId && date) {
           return {
             url: `/teacher-requests/sessions/${sessionId}/reschedule/slots/staff`,
@@ -530,10 +512,6 @@ export const teacherRequestApi = createApi({
       },
     }),
 
-    // Get resource suggestions for reschedule
-    // For requestId: backend will use newDate and newTimeSlot from the request
-    // For sessionId: need to provide date and timeSlotId
-    // For academic staff creating new request: need teacherId
     getRescheduleResources: builder.query<
       RescheduleResourcesResponse,
       {
@@ -546,15 +524,12 @@ export const teacherRequestApi = createApi({
     >({
       query: ({ requestId, sessionId, date, timeSlotId, teacherId }) => {
         if (requestId) {
-          // For existing requests, backend uses newDate and newTimeSlot from request
-          // If teacherId is provided (academic staff), use staff endpoint
           if (teacherId) {
             return {
               url: `/teacher-requests/${requestId}/reschedule/suggestions/staff`,
-              method: "GET",
-            };
+            method: "GET",
+          };
           }
-          // For teacher, use regular endpoint (if exists) or staff endpoint
           return {
             url: `/teacher-requests/${requestId}/reschedule/suggestions/staff`,
             method: "GET",
@@ -567,8 +542,6 @@ export const teacherRequestApi = createApi({
               "date and timeSlotId are required when using sessionId"
             );
           }
-          // If teacherId is provided (academic staff), use staff endpoint
-          // If not provided (teacher creating own request), use teacher endpoint
           if (teacherId) {
             return {
               url: `/teacher-requests/sessions/${sessionId}/reschedule/suggestions/staff`,
@@ -586,18 +559,12 @@ export const teacherRequestApi = createApi({
       },
     }),
 
-    // Get replacement candidates for substitute request
-    // Supports both requestId (for existing requests) and sessionId (for new requests)
-    // For academic staff creating new request: need teacherId
     getReplacementCandidates: builder.query<
       ReplacementCandidatesResponse,
       { requestId?: number; sessionId?: number; teacherId?: number }
     >({
       query: ({ requestId, sessionId, teacherId }) => {
         if (requestId) {
-          // For academic staff: use staff endpoint
-          // For teacher: use sessionId endpoint
-          // Check if this is called by academic staff or teacher
           // Since we can't determine role here, we'll use the staff endpoint for requestId
           return {
             url: `/teacher-requests/staff/${requestId}/replacement/candidates`,
@@ -615,7 +582,6 @@ export const teacherRequestApi = createApi({
       },
     }),
 
-    // Get request detail
     getRequestById: builder.query<
       TeacherRequestDetailResponse,
       { id: number; branchId?: number }

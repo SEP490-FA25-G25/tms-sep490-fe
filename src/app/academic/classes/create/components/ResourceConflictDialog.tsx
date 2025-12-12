@@ -63,7 +63,6 @@ export function ResourceConflictDialog({
   const [isApplyingBulk, setIsApplyingBulk] = useState(false)
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
 
-  // Group conflicts by day of week
   const groupedConflicts = useMemo(() => {
     const groups: Record<number, ResourceConflict[]> = {}
     conflicts.forEach((conflict) => {
@@ -76,7 +75,6 @@ export function ResourceConflictDialog({
     return groups
   }, [conflicts])
 
-  // Get all unique suggestions across all conflicts for bulk selection
   const allSuggestions = useMemo(() => {
     const map = new Map<number, ResourceOption>()
     Object.values(conflictStates).forEach((state) => {
@@ -85,7 +83,6 @@ export function ResourceConflictDialog({
     return Array.from(map.values())
   }, [conflictStates])
 
-  // Auto-load suggestions when dialog opens
   useEffect(() => {
     if (!open || conflicts.length === 0) return
 
