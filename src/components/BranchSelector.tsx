@@ -19,11 +19,6 @@ export function BranchSelector({
   selectedBranchId,
   onSelectBranch,
 }: BranchSelectorProps) {
-  // Chỉ hiển thị khi có nhiều hơn 1 branch
-  if (branches.length <= 1) {
-    return null;
-  }
-
   const selectedBranch = branches.find((b) => b.id === selectedBranchId);
 
   return (

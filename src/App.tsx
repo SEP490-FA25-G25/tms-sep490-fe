@@ -155,6 +155,9 @@ const CenterHeadDashboardPage = lazy(
 const CenterHeadClassesPage = lazy(
   () => import("./app/center-head/classes/page")
 );
+const CenterHeadClassDetailPage = lazy(
+  () => import("./app/center-head/classes/[id]/page")
+);
 const CenterHeadApprovalsPage = lazy(
   () => import("./app/center-head/approvals/page")
 );
@@ -203,6 +206,8 @@ const ManagerStudentFeedbackPage = lazy(
   () => import("./app/manager/student-feedback/page")
 );
 const ManagerPoliciesPage = lazy(() => import("./app/manager/policies/page"));
+const ManagerQAReportsPage = lazy(() => import("./app/manager/qa-reports/page"));
+const ManagerQAReportDetailPage = lazy(() => import("./app/manager/qa-reports/[id]/page"));
 
 // Curriculum pages
 // const CurriculumPage = lazy(() => import("./app/curriculum/page"));
@@ -347,6 +352,22 @@ function App() {
                   element={
                     <ProtectedRoute requiredRoles={["MANAGER"]}>
                       <ManagerStudentFeedbackPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/manager/qa-reports"
+                  element={
+                    <ProtectedRoute requiredRoles={["MANAGER"]}>
+                      <ManagerQAReportsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/manager/qa-reports/:id"
+                  element={
+                    <ProtectedRoute requiredRoles={["MANAGER"]}>
+                      <ManagerQAReportDetailPage />
                     </ProtectedRoute>
                   }
                 />
@@ -650,7 +671,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
-                
+
                 <Route
                   path="/teacher/requests/create/select-type"
                   element={
@@ -1123,6 +1144,14 @@ function App() {
                   element={
                     <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
                       <CenterHeadClassesPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/center-head/classes/:id"
+                  element={
+                    <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
+                      <CenterHeadClassDetailPage />
                     </ProtectedRoute>
                   }
                 />

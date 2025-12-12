@@ -15,7 +15,6 @@ import {
   ClipboardCheckIcon,
   NotebookPenIcon,
   SchoolIcon,
-  SlidersHorizontalIcon,
   PlusIcon,
   MessageCircleIcon,
   MessageSquareIcon,
@@ -140,18 +139,13 @@ const roleBasedNav = {
         icon: Clock,
       },
       {
-        title: "Chính sách hệ thống",
-        url: "/manager/policies",
-        icon: SlidersHorizontalIcon,
-      },
-      {
         title: "Danh sách phản hồi từ học viên",
         url: "/manager/student-feedback",
         icon: MessageCircleIcon,
       },
       {
-        title: "Báo cáo",
-        url: "/manager/reports",
+        title: "Báo cáo chất lượng",
+        url: "/manager/qa-reports",
         icon: FileTextIcon,
       },
       {
@@ -373,8 +367,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     user?.roles?.includes(ROLES.ACADEMIC_AFFAIR) ?? false;
   const isCenterHead = user?.roles?.includes(ROLES.CENTER_HEAD) ?? false;
   const isQA = user?.roles?.includes(ROLES.QA) ?? false;
+  const isSubjectLeader = user?.roles?.includes(ROLES.SUBJECT_LEADER) ?? false;
+  const isTeacher = user?.roles?.includes(ROLES.TEACHER) ?? false;
   const showBranchSelector =
-    (isAcademicAffair || isCenterHead || isQA) && branches.length > 1;
+    isAcademicAffair || isCenterHead || isQA || isSubjectLeader || isTeacher;
 
   const rolePriorities = {
     [ROLES.ADMIN]: 8,

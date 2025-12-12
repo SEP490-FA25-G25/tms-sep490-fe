@@ -32,7 +32,15 @@ import {
     type SortingState,
     useReactTable,
 } from "@tanstack/react-table";
-import { Search, PlusCircleIcon, Building2, MonitorPlay, XIcon, ArrowUpDown, Power, PowerOff, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, PlusCircleIcon, Building2, MonitorPlay, XIcon, ArrowUpDown, Power, PowerOff, RotateCcw } from "lucide-react";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination";
 import {
     useGetResourcesQuery,
     useDeleteResourceMutation,
@@ -82,19 +90,7 @@ export default function CenterHeadResourcesPage() {
     const [search, setSearch] = useState("");
     const [resourceTypeFilter, setResourceTypeFilter] = useState<ResourceType | "ALL">("ALL");
     const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
-    const { user, selectedBranchId } = useAuth();
-
-    // Initialize branch filter from selected branch in header
-    const [branchFilter, setBranchFilter] = useState<number | "ALL">(() => {
-        return selectedBranchId ?? "ALL";
-    });
-
-    // Update branch filter if selected branch changes
-    useEffect(() => {
-        if (selectedBranchId) {
-            setBranchFilter(selectedBranchId);
-        }
-    }, [selectedBranchId]);
+    const { selectedBranchId } = useAuth();
 
     // Sorting states
     const [resourceSorting, setResourceSorting] = useState<SortingState>([]);
@@ -154,19 +150,10 @@ export default function CenterHeadResourcesPage() {
     };
 
     // Fetch branches
-    const { data: branches } = useGetAllBranchesQuery();
-
-    // Auto-select branch if user has only one
-    useEffect(() => {
-        if (branches?.data?.length === 1 && branchFilter === "ALL") {
-            setBranchFilter(branches.data[0].id);
-        }
-    }, [branches, branchFilter]);
-
     // Fetch resources (không filter search qua API, lọc local để tránh giật)
     const { data: resources, isFetching: isFetchingResources } = useGetResourcesQuery(
         {
-            branchId: branchFilter === "ALL" ? undefined : branchFilter,
+            branchId: selectedBranchId,
         }
     );
 
@@ -208,13 +195,9 @@ export default function CenterHeadResourcesPage() {
         setSearch("");
         setResourceTypeFilter("ALL");
         setStatusFilter("ALL");
-        // Only clear branch filter if it's not locked by user's branchId
-        if (!user?.branchId) {
-            setBranchFilter("ALL");
-        }
     };
 
-    const hasActiveFilters = search !== "" || resourceTypeFilter !== "ALL" || statusFilter !== "ALL" || (branchFilter !== "ALL" && !user?.branchId);
+    const hasActiveFilters = search !== "" || resourceTypeFilter !== "ALL" || statusFilter !== "ALL";
 
     const resourceTypeBadge = (type: ResourceType) => {
         return type === "ROOM" ? (
@@ -483,80 +466,65 @@ export default function CenterHeadResourcesPage() {
                 </div>
 
                 {/* Filters */}
-                <div className="flex items-center gap-3 flex-wrap">
-                    <div className="relative w-[280px]">
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Tìm kiếm theo tên hoặc mã..."
+                            placeholder="Tìm tài nguyên..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="pl-9"
+                            className="pl-8 h-9 w-full"
                         />
                     </div>
 
-                    <Select
-                        value={resourceTypeFilter}
-                        onValueChange={(value) =>
-                            setResourceTypeFilter(value as ResourceType | "ALL")
-                        }
-                    >
-                        <SelectTrigger className="w-40">
-                            <SelectValue placeholder="Loại tài nguyên" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {RESOURCE_TYPE_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
-                    <Select
-                        value={statusFilter}
-                        onValueChange={(value) =>
-                            setStatusFilter(value as "ALL" | "ACTIVE" | "INACTIVE")
-                        }
-                    >
-                        <SelectTrigger className="w-[170px]">
-                            <SelectValue placeholder="Trạng thái" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {STATUS_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
-                    {!user?.branchId && (branches?.data?.length || 0) > 1 && (
+                    <div className="ml-auto flex items-center gap-2">
                         <Select
-                            value={branchFilter.toString()}
+                            value={resourceTypeFilter}
                             onValueChange={(value) =>
-                                setBranchFilter(value === "ALL" ? "ALL" : parseInt(value))
+                                setResourceTypeFilter(value as ResourceType | "ALL")
                             }
-                            disabled={!!user?.branchId}
                         >
-                            <SelectTrigger className="w-[200px]">
-                                <SelectValue placeholder="Chi nhánh" />
+                            <SelectTrigger className="h-9 w-auto min-w-[160px]">
+                                <SelectValue placeholder="Loại tài nguyên" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="ALL">Tất cả chi nhánh</SelectItem>
-                                {branches?.data?.map((branch) => (
-                                    <SelectItem key={branch.id} value={branch.id.toString()}>
-                                        {branch.name}
+                                {RESOURCE_TYPE_OPTIONS.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
-                    )}
 
-                    {hasActiveFilters && (
-                        <Button variant="ghost" size="icon" onClick={handleClearFilters}>
-                            <XIcon className="h-4 w-4" />
+                        <Select
+                            value={statusFilter}
+                            onValueChange={(value) =>
+                                setStatusFilter(value as "ALL" | "ACTIVE" | "INACTIVE")
+                            }
+                        >
+                            <SelectTrigger className="h-9 w-auto min-w-[170px]">
+                                <SelectValue placeholder="Trạng thái" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {STATUS_OPTIONS.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9 shrink-0"
+                            onClick={handleClearFilters}
+                            disabled={!hasActiveFilters}
+                            title="Xóa bộ lọc"
+                        >
+                            <RotateCcw className="h-4 w-4" />
                         </Button>
-                    )}
+                    </div>
                 </div>
 
                 {/* Resources Table */}
@@ -620,62 +588,81 @@ export default function CenterHeadResourcesPage() {
                 </div>
 
                 {/* Pagination */}
-                {resourceTable.getPageCount() > 0 && (
-                    <div className="flex items-center justify-between px-2">
-                        <div className="text-sm text-muted-foreground">
-                            Trang {resourceTable.getState().pagination.pageIndex + 1} / {resourceTable.getPageCount()}
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => resourceTable.previousPage()}
-                                disabled={!resourceTable.getCanPreviousPage()}
-                            >
-                                <ChevronLeft className="h-4 w-4 mr-1" />
-                                Trước
-                            </Button>
-                            {Array.from({ length: resourceTable.getPageCount() }, (_, i) => i + 1)
-                                .filter(page =>
-                                    page === 1 ||
-                                    page === resourceTable.getPageCount() ||
-                                    Math.abs(page - (resourceTable.getState().pagination.pageIndex + 1)) <= 1
-                                )
-                                .map((page, idx, arr) => (
-                                    <span key={page} className="flex items-center">
-                                        {idx > 0 && arr[idx - 1] !== page - 1 && (
-                                            <span className="px-2 text-muted-foreground">...</span>
-                                        )}
-                                        <Button
-                                            variant={resourceTable.getState().pagination.pageIndex + 1 === page ? "default" : "outline"}
-                                            size="sm"
-                                            className="w-8 h-8 p-0"
-                                            onClick={() => resourceTable.setPageIndex(page - 1)}
-                                        >
-                                            {page}
-                                        </Button>
-                                    </span>
-                                ))}
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => resourceTable.nextPage()}
-                                disabled={!resourceTable.getCanNextPage()}
-                            >
-                                Sau
-                                <ChevronRight className="h-4 w-4 ml-1" />
-                            </Button>
-                        </div>
+                <div className="flex items-center justify-between pt-4 border-t">
+                    <div className="text-sm text-muted-foreground">
+                        Trang {resourceTable.getState().pagination.pageIndex + 1} / {Math.max(resourceTable.getPageCount(), 1)} · {filteredResources.length} tài nguyên
                     </div>
-                )}
+                    <Pagination>
+                        <PaginationContent>
+                            <PaginationItem>
+                                <PaginationPrevious
+                                    href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        resourceTable.previousPage();
+                                    }}
+                                    aria-disabled={!resourceTable.getCanPreviousPage()}
+                                    className={
+                                        !resourceTable.getCanPreviousPage()
+                                            ? "pointer-events-none opacity-50"
+                                            : ""
+                                    }
+                                />
+                            </PaginationItem>
+                            {Array.from({ length: Math.min(5, Math.max(resourceTable.getPageCount(), 1)) }, (_, i) => {
+                                let pageNum = i;
+                                const totalPages = resourceTable.getPageCount();
+                                const currentPage = resourceTable.getState().pagination.pageIndex;
+                                if (totalPages > 5) {
+                                    if (currentPage < 3) {
+                                        pageNum = i;
+                                    } else if (currentPage > totalPages - 4) {
+                                        pageNum = totalPages - 5 + i;
+                                    } else {
+                                        pageNum = currentPage - 2 + i;
+                                    }
+                                }
+                                return (
+                                    <PaginationItem key={pageNum}>
+                                        <PaginationLink
+                                            href="#"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                resourceTable.setPageIndex(pageNum);
+                                            }}
+                                            isActive={pageNum === resourceTable.getState().pagination.pageIndex}
+                                        >
+                                            {pageNum + 1}
+                                        </PaginationLink>
+                                    </PaginationItem>
+                                );
+                            })}
+                            <PaginationItem>
+                                <PaginationNext
+                                    href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        resourceTable.nextPage();
+                                    }}
+                                    aria-disabled={!resourceTable.getCanNextPage()}
+                                    className={
+                                        !resourceTable.getCanNextPage()
+                                            ? "pointer-events-none opacity-50"
+                                            : ""
+                                    }
+                                />
+                            </PaginationItem>
+                        </PaginationContent>
+                    </Pagination>
+                </div>
 
                 {/* Dialogs */}
                 <ResourceDialog
                     open={resourceDialogOpen}
                     onOpenChange={setResourceDialogOpen}
                     resource={selectedResource}
-                    branchId={typeof branchFilter === "number" ? branchFilter : (selectedBranchId ?? 0)}
-                    branches={branches?.data || []}
+                    branchId={selectedBranchId ?? 0}
+                    branches={[]}
                 />
 
                 <AlertDialog open={!!resourceToDelete} onOpenChange={(open) => !open && setResourceToDelete(null)}>

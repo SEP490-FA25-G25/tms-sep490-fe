@@ -4,7 +4,6 @@ import { useGetClassByIdQuery } from '@/store/services/classApi'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Button } from '@/components/ui/button'
 import { AlertCircle, Check, Info } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -31,10 +30,10 @@ const DEFAULT_DAYS = [1, 3, 5]
 function calculateDurationHours(startTime: string, endTime: string): number {
   const [startHour, startMin] = startTime.split(':').map(Number)
   const [endHour, endMin] = endTime.split(':').map(Number)
-  
+
   const startMinutes = startHour * 60 + startMin
   const endMinutes = endHour * 60 + endMin
-  
+
   return (endMinutes - startMinutes) / 60
 }
 
@@ -43,7 +42,7 @@ export function Step3TimeSlots({ classId, onContinue }: Step3TimeSlotsProps) {
   const { data: sessionsData, isLoading: isSessionsLoading, refetch: refetchSessions } = useGetClassSessionsQuery(classId ?? 0, { skip: !classId })
   const branchId = classDetail?.data?.branch?.id
   const hoursPerSession = classDetail?.data?.subject?.hoursPerSession
-  
+
   const { data: timeSlotResponse, isLoading: isTimeSlotLoading } = useGetTimeSlotsQuery(
     branchId ? { branchId } : { branchId: 0 },
     { skip: !branchId }
@@ -58,11 +57,11 @@ export function Step3TimeSlots({ classId, onContinue }: Step3TimeSlotsProps) {
   // Filter time slots by duration matching hoursPerSession
   const filteredTimeSlots = useMemo(() => {
     const allSlots = timeSlotResponse?.data ?? []
-    
+
     if (!hoursPerSession) {
       return allSlots
     }
-    
+
     return allSlots.filter(slot => {
       const duration = calculateDurationHours(slot.startTime, slot.endTime)
       // Allow small tolerance for floating point comparison (0.01 hours = ~36 seconds)
@@ -230,15 +229,22 @@ export function Step3TimeSlots({ classId, onContinue }: Step3TimeSlotsProps) {
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center justify-between">
+      {/* Status - Button removed, save is handled via Wizard's "Tiếp theo" */}
+      <div className="flex items-center justify-end">
         <p className="text-sm text-muted-foreground">
           Đã chọn {assignedCount}/{sortedDays.length} ngày
+          {allAssigned && <span className="ml-2 text-green-600">✓ Sẵn sàng</span>}
         </p>
-        <Button onClick={handleSubmit} disabled={isSubmitting || !allAssigned}>
-          {isSubmitting ? 'Đang lưu...' : 'Lưu khung giờ'}
-        </Button>
       </div>
+
+      {/* Hidden submit button triggered by wizard */}
+      <button
+        id="step3-submit-btn"
+        type="button"
+        onClick={handleSubmit}
+        className="hidden"
+        disabled={isSubmitting || !allAssigned}
+      />
     </div>
   )
 }

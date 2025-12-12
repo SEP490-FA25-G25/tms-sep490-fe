@@ -436,65 +436,61 @@ export default function ManagerResourcesPage() {
         </div>
 
         {/* Pagination */}
-        {resourceTable.getPageCount() > 0 && (
-          <div className="flex items-center justify-between px-2">
-            <div className="text-sm text-muted-foreground">
-              Trang {resourceTable.getState().pagination.pageIndex + 1} /{" "}
-              {resourceTable.getPageCount()}
-            </div>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => resourceTable.previousPage()}
-                disabled={!resourceTable.getCanPreviousPage()}
-                className="inline-flex items-center rounded-md border bg-background px-2 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <ChevronLeft className="mr-1 h-4 w-4" />
-                Trước
-              </button>
-              {Array.from(
-                { length: resourceTable.getPageCount() },
-                (_, i) => i + 1,
-              )
-                .filter(
-                  (page) =>
-                    page === 1 ||
-                    page === resourceTable.getPageCount() ||
-                    Math.abs(
-                      page - (resourceTable.getState().pagination.pageIndex + 1),
-                    ) <= 1,
-                )
-                .map((page, idx, arr) => (
-                  <span key={page} className="flex items-center">
-                    {idx > 0 && arr[idx - 1] !== page - 1 && (
-                      <span className="px-2 text-muted-foreground">...</span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => resourceTable.setPageIndex(page - 1)}
-                      className={`inline-flex h-8 w-8 items-center justify-center rounded-md border text-xs ${
-                        resourceTable.getState().pagination.pageIndex + 1 ===
-                        page
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-background"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  </span>
-                ))}
-              <button
-                type="button"
-                onClick={() => resourceTable.nextPage()}
-                disabled={!resourceTable.getCanNextPage()}
-                className="inline-flex items-center rounded-md border bg-background px-2 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Sau
-                <ChevronRight className="ml-1 h-4 w-4" />
-              </button>
-            </div>
+        <div className="flex items-center justify-between pt-4 border-t">
+          <div className="text-sm text-muted-foreground">
+            Trang {resourceTable.getState().pagination.pageIndex + 1} / {Math.max(resourceTable.getPageCount(), 1)} · {filteredResources.length} tài nguyên
           </div>
-        )}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => resourceTable.previousPage()}
+              disabled={!resourceTable.getCanPreviousPage()}
+              aria-disabled={!resourceTable.getCanPreviousPage()}
+              className="inline-flex items-center rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <ChevronLeft className="mr-1 h-4 w-4" />
+              Trước
+            </button>
+            {Array.from({ length: Math.min(5, Math.max(resourceTable.getPageCount(), 1)) }, (_, i) => {
+              let pageNum = i;
+              const totalPages = resourceTable.getPageCount();
+              const currentPage = resourceTable.getState().pagination.pageIndex;
+              if (totalPages > 5) {
+                if (currentPage < 3) {
+                  pageNum = i;
+                } else if (currentPage > totalPages - 4) {
+                  pageNum = totalPages - 5 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+              }
+              return (
+                <button
+                  key={pageNum}
+                  type="button"
+                  onClick={() => resourceTable.setPageIndex(pageNum)}
+                  className={`inline-flex h-9 w-9 items-center justify-center rounded-md border text-sm ${
+                    resourceTable.getState().pagination.pageIndex === pageNum
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-background hover:bg-accent"
+                  }`}
+                >
+                  {pageNum + 1}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => resourceTable.nextPage()}
+              disabled={!resourceTable.getCanNextPage()}
+              aria-disabled={!resourceTable.getCanNextPage()}
+              className="inline-flex items-center rounded-md border bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Sau
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </button>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );

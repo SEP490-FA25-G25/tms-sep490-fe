@@ -28,7 +28,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Settings2 } from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Pagination,
   PaginationContent,
@@ -168,55 +167,65 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex flex-col gap-3 px-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center space-x-2">
-          <p className="text-sm font-medium">Số hàng mỗi trang</p>
-          <Select
-            value={`${table.getState().pagination.pageSize}`}
-            onValueChange={(value) => {
-              table.setPageSize(Number(value))
-            }}
-          >
-            <SelectTrigger className="h-8 w-[90px]">
-              <SelectValue placeholder={table.getState().pagination.pageSize} />
-            </SelectTrigger>
-            <SelectContent side="top">
-              {[10, 20, 30, 40, 50].map((pageSize) => (
-                <SelectItem key={pageSize} value={`${pageSize}`}>
-                  {pageSize}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="flex items-center justify-between pt-4 border-t">
+        <div className="text-sm text-muted-foreground">
+          Trang {table.getState().pagination.pageIndex + 1} / {Math.max(table.getPageCount(), 1)} · {table.getFilteredRowModel().rows.length} items
         </div>
-
         <Pagination>
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                className={!table.getCanPreviousPage() ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                onClick={() => table.previousPage()}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  table.previousPage();
+                }}
+                aria-disabled={!table.getCanPreviousPage()}
+                className={!table.getCanPreviousPage() ? "pointer-events-none opacity-50" : ""}
               />
             </PaginationItem>
-            {Array.from({ length: table.getPageCount() }, (_, index) => (
-              <PaginationItem key={index}>
-                <PaginationLink
-                  isActive={table.getState().pagination.pageIndex === index}
-                  className="cursor-pointer"
-                  onClick={() => table.setPageIndex(index)}
-                >
-                  {index + 1}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
+            {Array.from({ length: Math.min(5, Math.max(table.getPageCount(), 1)) }, (_, i) => {
+              let pageNum = i;
+              const totalPages = table.getPageCount();
+              const currentPage = table.getState().pagination.pageIndex;
+              if (totalPages > 5) {
+                if (currentPage < 3) {
+                  pageNum = i;
+                } else if (currentPage > totalPages - 4) {
+                  pageNum = totalPages - 5 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+              }
+              return (
+                <PaginationItem key={pageNum}>
+                  <PaginationLink
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      table.setPageIndex(pageNum);
+                    }}
+                    isActive={pageNum === table.getState().pagination.pageIndex}
+                  >
+                    {pageNum + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              );
+            })}
             <PaginationItem>
               <PaginationNext
-                className={!table.getCanNextPage() ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                onClick={() => table.nextPage()}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  table.nextPage();
+                }}
+                aria-disabled={!table.getCanNextPage()}
+                className={!table.getCanNextPage() ? "pointer-events-none opacity-50" : ""}
               />
             </PaginationItem>
           </PaginationContent>
         </Pagination>
+        <div className="w-[200px]"></div>
       </div>
     </div>
   )

@@ -304,19 +304,19 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({
                   className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
                 >
                   <div className="shrink-0 text-muted-foreground">
-                    {getMaterialIcon(material.materialType)}
+                    {getMaterialIcon(material.type)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium truncate">{material.title}</h4>
+                    <h4 className="font-medium truncate">{material.name}</h4>
                     <p className="text-sm text-muted-foreground">
-                      {getMaterialTypeLabel(material.materialType)}
+                      {getMaterialTypeLabel(material.type)}
                       {material.fileSize &&
                         ` • ${formatFileSize(material.fileSize)}`}
                     </p>
-                  </div>
+                  </div>1
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">
-                      {getMaterialTypeLabel(material.materialType)}
+                      {getMaterialTypeLabel(material.type)}
                     </Badge>
                     <div className="flex gap-1">
                       <Button
@@ -423,16 +423,16 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({
                               className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40"
                             >
                               <div className="shrink-0 text-muted-foreground">
-                                {getMaterialIcon(material.materialType)}
+                                {getMaterialIcon(material.type)}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
                                   <h6 className="font-medium text-sm truncate">
-                                    {material.title}
+                                    {material.name}
                                   </h6>
                                   <span className="text-xs text-muted-foreground">
                                     {getMaterialTypeLabel(
-                                      material.materialType
+                                      material.type
                                     )}
                                   </span>
                                 </div>
@@ -587,17 +587,17 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({
                                             >
                                               <div className="shrink-0 text-muted-foreground">
                                                 {getMaterialIcon(
-                                                  material.materialType
+                                                  material.type
                                                 )}
                                               </div>
                                               <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2">
                                                   <h6 className="font-medium text-sm truncate">
-                                                    {material.title}
+                                                    {material.name}
                                                   </h6>
                                                   <span className="text-xs text-muted-foreground">
                                                     {getMaterialTypeLabel(
-                                                      material.materialType
+                                                      material.type
                                                     )}
                                                   </span>
                                                 </div>

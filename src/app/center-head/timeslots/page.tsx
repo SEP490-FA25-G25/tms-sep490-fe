@@ -25,7 +25,15 @@ import {
     type SortingState,
     useReactTable,
 } from "@tanstack/react-table";
-import { Search, PlusCircleIcon, Clock, XIcon, ArrowUpDown, Power, PowerOff, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, PlusCircleIcon, Clock, XIcon, ArrowUpDown, Power, PowerOff, RotateCcw } from "lucide-react";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination";
 import {
     useGetTimeSlotsQuery,
     useDeleteTimeSlotMutation,
@@ -66,19 +74,7 @@ export default function CenterHeadTimeSlotsPage() {
     const navigate = useNavigate();
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
-    const { user, selectedBranchId } = useAuth();
-
-    // Initialize branch filter from selected branch in header
-    const [branchFilter, setBranchFilter] = useState<number | "ALL">(() => {
-        return selectedBranchId ?? "ALL";
-    });
-
-    // Update branch filter if selected branch changes
-    useEffect(() => {
-        if (selectedBranchId) {
-            setBranchFilter(selectedBranchId);
-        }
-    }, [selectedBranchId]);
+    const { selectedBranchId } = useAuth();
 
     // Sorting states
     const [timeSlotSorting, setTimeSlotSorting] = useState<SortingState>([]);
@@ -137,19 +133,10 @@ export default function CenterHeadTimeSlotsPage() {
     };
 
     // Fetch branches
-    const { data: branches } = useGetAllBranchesQuery();
-
-    // Auto-select branch if user has only one
-    useEffect(() => {
-        if (branches?.data?.length === 1 && branchFilter === "ALL") {
-            setBranchFilter(branches.data[0].id);
-        }
-    }, [branches, branchFilter]);
-
     // Fetch time slots (không filter search qua API, lọc local để tránh giật)
     const { data: timeSlots, isFetching: isFetchingTimeSlots } = useGetTimeSlotsQuery(
         {
-            branchId: branchFilter === "ALL" ? undefined : branchFilter,
+            branchId: selectedBranchId,
         }
     );
 
@@ -181,13 +168,9 @@ export default function CenterHeadTimeSlotsPage() {
     const handleClearFilters = () => {
         setSearch("");
         setStatusFilter("ALL");
-        // Only clear branch filter if it's not locked by user's branchId
-        if (!user?.branchId) {
-            setBranchFilter("ALL");
-        }
     };
 
-    const hasActiveFilters = search !== "" || statusFilter !== "ALL" || (branchFilter !== "ALL" && !user?.branchId);
+    const hasActiveFilters = search !== "" || statusFilter !== "ALL";
 
     // TimeSlot Columns
     const timeSlotColumns: ColumnDef<TimeSlot>[] = [
@@ -396,62 +379,47 @@ export default function CenterHeadTimeSlotsPage() {
                 </div>
 
                 {/* Filters */}
-                <div className="flex items-center gap-3 flex-wrap">
-                    <div className="relative w-[280px]">
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Tìm kiếm theo tên khung giờ..."
+                            placeholder="Tìm khung giờ..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="pl-9"
+                            className="pl-8 h-9 w-full"
                         />
                     </div>
 
-                    <Select
-                        value={statusFilter}
-                        onValueChange={(value) =>
-                            setStatusFilter(value as "ALL" | "ACTIVE" | "INACTIVE")
-                        }
-                    >
-                        <SelectTrigger className="w-[170px]">
-                            <SelectValue placeholder="Trạng thái" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {STATUS_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
-                    {!user?.branchId && (branches?.data?.length || 0) > 1 && (
+                    <div className="ml-auto flex items-center gap-2">
                         <Select
-                            value={branchFilter.toString()}
+                            value={statusFilter}
                             onValueChange={(value) =>
-                                setBranchFilter(value === "ALL" ? "ALL" : parseInt(value))
+                                setStatusFilter(value as "ALL" | "ACTIVE" | "INACTIVE")
                             }
-                            disabled={!!user?.branchId}
                         >
-                            <SelectTrigger className="w-[200px]">
-                                <SelectValue placeholder="Chi nhánh" />
+                            <SelectTrigger className="h-9 w-auto min-w-[170px]">
+                                <SelectValue placeholder="Trạng thái" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="ALL">Tất cả chi nhánh</SelectItem>
-                                {branches?.data?.map((branch) => (
-                                    <SelectItem key={branch.id} value={branch.id.toString()}>
-                                        {branch.name}
+                                {STATUS_OPTIONS.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
-                    )}
 
-                    {hasActiveFilters && (
-                        <Button variant="ghost" size="icon" onClick={handleClearFilters}>
-                            <XIcon className="h-4 w-4" />
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9 shrink-0"
+                            onClick={handleClearFilters}
+                            disabled={!hasActiveFilters}
+                            title="Xóa bộ lọc"
+                        >
+                            <RotateCcw className="h-4 w-4" />
                         </Button>
-                    )}
+                    </div>
                 </div>
 
                 {/* Time Slots Table */}
@@ -515,62 +483,81 @@ export default function CenterHeadTimeSlotsPage() {
                 </div>
 
                 {/* Pagination */}
-                {timeSlotTable.getPageCount() > 0 && (
-                    <div className="flex items-center justify-between px-2">
-                        <div className="text-sm text-muted-foreground">
-                            Trang {timeSlotTable.getState().pagination.pageIndex + 1} / {timeSlotTable.getPageCount()}
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => timeSlotTable.previousPage()}
-                                disabled={!timeSlotTable.getCanPreviousPage()}
-                            >
-                                <ChevronLeft className="h-4 w-4 mr-1" />
-                                Trước
-                            </Button>
-                            {Array.from({ length: timeSlotTable.getPageCount() }, (_, i) => i + 1)
-                                .filter(page =>
-                                    page === 1 ||
-                                    page === timeSlotTable.getPageCount() ||
-                                    Math.abs(page - (timeSlotTable.getState().pagination.pageIndex + 1)) <= 1
-                                )
-                                .map((page, idx, arr) => (
-                                    <span key={page} className="flex items-center">
-                                        {idx > 0 && arr[idx - 1] !== page - 1 && (
-                                            <span className="px-2 text-muted-foreground">...</span>
-                                        )}
-                                        <Button
-                                            variant={timeSlotTable.getState().pagination.pageIndex + 1 === page ? "default" : "outline"}
-                                            size="sm"
-                                            className="w-8 h-8 p-0"
-                                            onClick={() => timeSlotTable.setPageIndex(page - 1)}
-                                        >
-                                            {page}
-                                        </Button>
-                                    </span>
-                                ))}
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => timeSlotTable.nextPage()}
-                                disabled={!timeSlotTable.getCanNextPage()}
-                            >
-                                Sau
-                                <ChevronRight className="h-4 w-4 ml-1" />
-                            </Button>
-                        </div>
+                <div className="flex items-center justify-between pt-4 border-t">
+                    <div className="text-sm text-muted-foreground">
+                        Trang {timeSlotTable.getState().pagination.pageIndex + 1} / {Math.max(timeSlotTable.getPageCount(), 1)} · {filteredTimeSlots.length} khung giờ
                     </div>
-                )}
+                    <Pagination>
+                        <PaginationContent>
+                            <PaginationItem>
+                                <PaginationPrevious
+                                    href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        timeSlotTable.previousPage();
+                                    }}
+                                    aria-disabled={!timeSlotTable.getCanPreviousPage()}
+                                    className={
+                                        !timeSlotTable.getCanPreviousPage()
+                                            ? "pointer-events-none opacity-50"
+                                            : ""
+                                    }
+                                />
+                            </PaginationItem>
+                            {Array.from({ length: Math.min(5, Math.max(timeSlotTable.getPageCount(), 1)) }, (_, i) => {
+                                let pageNum = i;
+                                const totalPages = timeSlotTable.getPageCount();
+                                const currentPage = timeSlotTable.getState().pagination.pageIndex;
+                                if (totalPages > 5) {
+                                    if (currentPage < 3) {
+                                        pageNum = i;
+                                    } else if (currentPage > totalPages - 4) {
+                                        pageNum = totalPages - 5 + i;
+                                    } else {
+                                        pageNum = currentPage - 2 + i;
+                                    }
+                                }
+                                return (
+                                    <PaginationItem key={pageNum}>
+                                        <PaginationLink
+                                            href="#"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                timeSlotTable.setPageIndex(pageNum);
+                                            }}
+                                            isActive={pageNum === timeSlotTable.getState().pagination.pageIndex}
+                                        >
+                                            {pageNum + 1}
+                                        </PaginationLink>
+                                    </PaginationItem>
+                                );
+                            })}
+                            <PaginationItem>
+                                <PaginationNext
+                                    href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        timeSlotTable.nextPage();
+                                    }}
+                                    aria-disabled={!timeSlotTable.getCanNextPage()}
+                                    className={
+                                        !timeSlotTable.getCanNextPage()
+                                            ? "pointer-events-none opacity-50"
+                                            : ""
+                                    }
+                                />
+                            </PaginationItem>
+                        </PaginationContent>
+                    </Pagination>
+                </div>
 
                 {/* Dialogs */}
                 <TimeSlotDialog
                     open={timeSlotDialogOpen}
                     onOpenChange={setTimeSlotDialogOpen}
                     timeSlot={selectedTimeSlot}
-                    branchId={typeof branchFilter === "number" ? branchFilter : (selectedBranchId ?? 0)}
-                    branches={branches?.data || []}
+                    branchId={selectedBranchId ?? 0}
+                    branches={[]}
                 />
 
                 <AlertDialog open={!!timeSlotToDelete} onOpenChange={(open) => !open && setTimeSlotToDelete(null)}>

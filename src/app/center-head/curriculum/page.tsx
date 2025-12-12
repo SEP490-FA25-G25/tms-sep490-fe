@@ -32,7 +32,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Eye, BookOpen, GraduationCap, Layers } from "lucide-react";
+import { Search, Eye, BookOpen, GraduationCap, Layers, RotateCcw } from "lucide-react";
 import { useGetAllCoursesQuery, type CourseDTO } from "@/store/services/courseApi";
 import { useGetCurriculumsWithLevelsQuery, useGetLevelsQuery, type SubjectWithLevelsDTO, type LevelDTO } from "@/store/services/curriculumApi";
 
@@ -48,6 +48,17 @@ export default function CenterHeadCurriculumPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
+
+  const hasActiveFilters = useMemo(
+    () => search.trim() !== "" || (currentTab === "courses" && statusFilter !== "all"),
+    [search, currentTab, statusFilter]
+  );
+
+  const handleResetFilters = () => {
+    setSearch("");
+    setStatusFilter("all");
+    setCurrentPage(1);
+  };
 
   // Fetch data
   const { data: coursesData, isLoading: isLoadingCourses } = useGetAllCoursesQuery();
@@ -189,13 +200,13 @@ export default function CenterHeadCurriculumPage() {
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Tìm kiếm..."
+                  placeholder="Tìm khóa học..."
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="pl-8 w-[250px]"
+                  className="pl-8 h-9 w-full"
                 />
               </div>
               {currentTab === "courses" && (
@@ -206,7 +217,7 @@ export default function CenterHeadCurriculumPage() {
                     setCurrentPage(1);
                   }}
                 >
-                  <SelectTrigger className="w-[150px]">
+                  <SelectTrigger className="h-9 w-auto min-w-[150px]">
                     <SelectValue placeholder="Trạng thái" />
                   </SelectTrigger>
                   <SelectContent>
@@ -217,6 +228,16 @@ export default function CenterHeadCurriculumPage() {
                   </SelectContent>
                 </Select>
               )}
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 shrink-0"
+                onClick={handleResetFilters}
+                disabled={!hasActiveFilters}
+                title="Xóa bộ lọc"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
             </div>
           </div>
 
@@ -293,35 +314,63 @@ export default function CenterHeadCurriculumPage() {
             </div>
 
             {/* Pagination */}
-            {totalCoursePages > 1 && (
+            <div className="flex items-center justify-between pt-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                Trang {currentPage} / {Math.max(totalCoursePages, 1)} · {filteredCourses.length} khóa học
+              </div>
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
                     <PaginationPrevious
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentPage((p) => Math.max(1, p - 1));
+                      }}
+                      aria-disabled={currentPage === 1}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
                     />
                   </PaginationItem>
-                  {Array.from({ length: Math.min(totalCoursePages, 5) }, (_, i) => (
-                    <PaginationItem key={i + 1}>
-                      <PaginationLink
-                        onClick={() => setCurrentPage(i + 1)}
-                        isActive={currentPage === i + 1}
-                        className="cursor-pointer"
-                      >
-                        {i + 1}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
+                  {Array.from({ length: Math.min(5, Math.max(totalCoursePages, 1)) }, (_, i) => {
+                    let pageNum = i + 1;
+                    if (totalCoursePages > 5) {
+                      if (currentPage < 4) {
+                        pageNum = i + 1;
+                      } else if (currentPage > totalCoursePages - 3) {
+                        pageNum = totalCoursePages - 5 + i + 1;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                    }
+                    return (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage(pageNum);
+                          }}
+                          isActive={pageNum === currentPage}
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  })}
                   <PaginationItem>
                     <PaginationNext
-                      onClick={() => setCurrentPage((p) => Math.min(totalCoursePages, p + 1))}
-                      className={currentPage === totalCoursePages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentPage((p) => Math.min(Math.max(totalCoursePages, 1), p + 1));
+                      }}
+                      aria-disabled={currentPage >= Math.max(totalCoursePages, 1)}
+                      className={currentPage >= Math.max(totalCoursePages, 1) ? "pointer-events-none opacity-50" : ""}
                     />
                   </PaginationItem>
                 </PaginationContent>
               </Pagination>
-            )}
+            </div>
           </TabsContent>
 
           {/* Subjects Tab */}

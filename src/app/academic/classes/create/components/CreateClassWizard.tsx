@@ -14,7 +14,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ChevronRight, Save, Loader2, LogOut } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronRight, ChevronDown, Save, Loader2, LogOut } from "lucide-react";
 import { useDeleteClassMutation } from "@/store/services/classApi";
 import { useGetClassByIdQuery } from "@/store/services/classApi";
 import { useWizardNavigation } from "./hooks/useWizardNavigation";
@@ -32,24 +38,6 @@ const STEPS = [
   { id: 4, title: "Tài nguyên" },
   { id: 5, title: "Kiểm tra & Gửi duyệt" },
 ];
-
-// Dynamic action button config per step
-const STEP_ACTIONS: Record<number, { label: string; description: string }> = {
-  1: { label: "Tạo lớp", description: "Tạo lớp mới với thông tin cơ bản" },
-  2: {
-    label: "Xác nhận buổi học",
-    description: "Xác nhận các buổi học đã tạo",
-  },
-  3: { label: "Gán khung giờ", description: "Gán khung giờ cho các buổi học" },
-  4: {
-    label: "Gán tài nguyên",
-    description: "Gán phòng/tài khoản cho các buổi",
-  },
-  5: {
-    label: "Kiểm tra & Gửi",
-    description: "Kiểm tra và gửi lớp đi phê duyệt",
-  },
-};
 
 interface CreateClassWizardProps {
   classId?: number;
@@ -95,25 +83,64 @@ export function CreateClassWizard({
 
   const handleNext = () => {
     // Validate before proceeding to next step
-    if (currentStep === 1) {
-      // Step 1: Class must be created first (classId must exist)
-      if (!classId) {
-        toast.error(
-          'Vui lòng nhấn nút "Tạo lớp" để tạo lớp trước khi chuyển sang bước tiếp theo.'
-        );
-        return;
-      }
-    } else if (!classId) {
-      // For all other steps, classId is required
+    if (!classId && currentStep !== 1) {
+      // For all steps except 1, classId is required
       toast.error(
         "Không tìm thấy lớp học. Vui lòng quay lại bước 1 và tạo lớp."
       );
       return;
     }
 
-    if (currentStep < 5) {
-      markStepComplete(currentStep);
-      navigateToStep((currentStep + 1) as 1 | 2 | 3 | 4 | 5);
+    // Step-specific handling
+    switch (currentStep) {
+      case 1:
+        // Step 1: Always trigger form submission to save/update class data
+        {
+          const step1SubmitBtn = document.getElementById("step1-submit-btn");
+          if (step1SubmitBtn) {
+            step1SubmitBtn.click();
+          } else {
+            toast.error('Vui lòng nhấn nút "Tạo lớp" để tạo lớp trước');
+          }
+        }
+        break;
+
+      case 2:
+        // Step 2: Review only, just navigate
+        markStepComplete(2);
+        navigateToStep(3);
+        break;
+
+      case 3:
+        // Step 3: Always trigger time slot assignment to save/update
+        {
+          const step3SubmitBtn = document.getElementById("step3-submit-btn");
+          if (step3SubmitBtn) {
+            step3SubmitBtn.click();
+          } else {
+            // If button not found, just navigate (component may not be ready)
+            markStepComplete(3);
+            navigateToStep(4);
+          }
+        }
+        break;
+
+      case 4:
+        // Step 4: Always trigger resource assignment to save/update
+        {
+          const step4SubmitBtn = document.getElementById("step4-submit-btn");
+          if (step4SubmitBtn) {
+            step4SubmitBtn.click();
+          } else {
+            // If button not found, just navigate (component may not be ready)
+            markStepComplete(4);
+            navigateToStep(5);
+          }
+        }
+        break;
+
+      default:
+        break;
     }
   };
 
@@ -129,31 +156,40 @@ export function CreateClassWizard({
     navigateToStep(2, newClassId);
   };
 
-  // === Dynamic Step Action Handler ===
-  const handleStepAction = () => {
-    switch (currentStep) {
-      case 1: {
-        // Trigger Step 1 form submission
-        const step1SubmitBtn = document.getElementById("step1-submit-btn");
-        if (step1SubmitBtn) {
-          step1SubmitBtn.click();
-        }
-        break;
+  // === Save Draft Handler (like CourseWizard pattern) ===
+  const handleSaveDraft = async () => {
+    if (!classId) {
+      // If no class created yet, trigger Step 1 form submission
+      const step1SubmitBtn = document.getElementById("step1-submit-btn");
+      if (step1SubmitBtn) {
+        step1SubmitBtn.click();
+      } else {
+        toast.error('Vui lòng hoàn thành Bước 1 - Thông tin cơ bản trước');
       }
-      case 2:
-        // Step 2 is review only - mark complete and continue
-        markStepComplete(2);
-        handleNext();
-        break;
-      case 3:
-        toast.info("Gán khung giờ - Chức năng sẽ được triển khai sau");
-        break;
-      case 4:
-        toast.info("Gán tài nguyên - Chức năng sẽ được triển khai sau");
-        break;
-      default:
-        break;
+      return;
     }
+    // Class already exists - just show success (data is auto-saved per step)
+    toast.success('Bản nháp đã được lưu');
+  };
+
+  // === Save and Exit Handler ===
+  const handleSaveAndExit = async () => {
+    if (!classId) {
+      // If no class created yet, trigger Step 1 form submission first
+      const step1SubmitBtn = document.getElementById("step1-submit-btn");
+      if (step1SubmitBtn) {
+        step1SubmitBtn.click();
+        // Note: Navigation will happen after successful class creation in Step1BasicInfo
+        toast.info('Vui lòng đợi lớp được tạo xong...');
+      } else {
+        toast.error('Vui lòng hoàn thành Bước 1 - Thông tin cơ bản trước');
+      }
+      return;
+    }
+    // Class already exists - save and navigate away
+    toast.success('Bản nháp đã được lưu');
+    setIsBlocking(false);
+    navigate("/academic/classes");
   };
 
   // === Delete Handler ===
@@ -182,8 +218,8 @@ export function CreateClassWizard({
 
   return (
     <div className="bg-muted/30">
-      {/* Header */}
-      <div className="bg-background border-b shadow-sm">
+      {/* Header - Sticky */}
+      <div className="bg-background border-b shadow-sm sticky top-0 z-50">
         <div className="w-full px-6">
           <div className="flex items-center justify-between h-16">
             {/* Left Side: Exit/Back + Title */}
@@ -218,25 +254,46 @@ export function CreateClassWizard({
               </div>
             </div>
 
-            {/* Right Side: Action Buttons */}
+            {/* Right Side: Save Draft Split Button */}
             <div className="flex items-center gap-2">
-              {/* Dynamic Step Action Button - Simple button without dropdown */}
-              {currentStep < 7 && (
+              <div className="flex">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleStepAction}
+                  onClick={handleSaveDraft}
                   disabled={isLoading || isSubmitting}
+                  className="rounded-r-none border-r-0"
                 >
                   {isLoading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
                     <Save className="mr-2 h-4 w-4" />
                   )}
-                  {STEP_ACTIONS[currentStep]?.label || "Lưu"}
+                  Lưu nháp
                 </Button>
-              )}
-
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={isLoading || isSubmitting}
+                      className="rounded-l-none px-2"
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleSaveDraft}>
+                      <Save className="mr-2 h-4 w-4" />
+                      Lưu & Tiếp tục
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleSaveAndExit}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Lưu & Thoát
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
         </div>

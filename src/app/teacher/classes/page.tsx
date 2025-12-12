@@ -18,6 +18,8 @@ import {
   Calendar,
   MapPin,
   GraduationCap,
+  RefreshCw,
+  RotateCcw,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
@@ -29,7 +31,6 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-  PaginationEllipsis,
 } from "@/components/ui/pagination";
 import {
   Select,
@@ -307,17 +308,36 @@ export default function TeacherClassesPage() {
             </Tabs>
 
             {/* Search and Dropdown Filters */}
-            <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Tìm kiếm lớp học..."
+                  placeholder="Tìm lớp..."
                   value={filters.searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="pl-10"
+                  className="pl-8 h-9 w-full"
                 />
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+
+              <div className="ml-auto flex items-center gap-2">
+                <Select
+                  value={sortField}
+                  onValueChange={(value) => setSortField(value as SortField)}
+                >
+                  <SelectTrigger className="h-9 w-auto min-w-[180px]">
+                    <SelectValue placeholder="Sắp xếp theo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">Tên lớp</SelectItem>
+                    <SelectItem value="startDate">Ngày bắt đầu</SelectItem>
+                    <SelectItem value="attendanceRate">
+                      Tỷ lệ chuyên cần
+                    </SelectItem>
+                    <SelectItem value="totalSessions">Số buổi học</SelectItem>
+                    <SelectItem value="status">Trạng thái</SelectItem>
+                  </SelectContent>
+                </Select>
+
                 <Select
                   value={filters.modality}
                   onValueChange={(value) =>
@@ -327,7 +347,7 @@ export default function TeacherClassesPage() {
                     }))
                   }
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="h-9 w-auto min-w-[180px]">
                     <SelectValue placeholder="Hình thức" />
                   </SelectTrigger>
                   <SelectContent>
@@ -342,12 +362,37 @@ export default function TeacherClassesPage() {
                 </Select>
 
                 <Select
+                  value={filters.branchName}
+                  onValueChange={(value) =>
+                    setFilters((prev) => ({ ...prev, branchName: value }))
+                  }
+                >
+                  <SelectTrigger className="h-9 w-auto min-w-[180px]">
+                    <SelectValue placeholder="Chi nhánh" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Tất cả chi nhánh</SelectItem>
+                    {branchOptions.length > 0 ? (
+                      branchOptions.map((branch) => (
+                        <SelectItem key={branch.name} value={branch.name}>
+                          {branch.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="NO_DATA" disabled>
+                        Chưa có dữ liệu chi nhánh
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+
+                <Select
                   value={filters.subjectName}
                   onValueChange={(value) =>
                     setFilters((prev) => ({ ...prev, subjectName: value }))
                   }
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="h-9 w-auto min-w-[180px]">
                     <SelectValue placeholder="Môn học" />
                   </SelectTrigger>
                   <SelectContent>
@@ -365,6 +410,17 @@ export default function TeacherClassesPage() {
                     )}
                   </SelectContent>
                 </Select>
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 shrink-0"
+                  onClick={resetFilters}
+                  disabled={!hasActiveFilters}
+                  title="Xóa bộ lọc"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
               </div>
             </div>
 
@@ -459,24 +515,19 @@ export default function TeacherClassesPage() {
               </div>
 
               {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">
-                      Hiển thị {(currentPage - 1) * pageSize + 1} -{" "}
-                      {Math.min(currentPage * pageSize, sortedClasses.length)}{" "}
-                      trong tổng số {sortedClasses.length} lớp học
-                    </span>
-                  </div>
+              <div className="flex items-center justify-between pt-4 border-t">
+                <div className="text-sm text-muted-foreground">
+                  Trang {currentPage} / {Math.max(totalPages, 1)} · {sortedClasses.length} lớp học
+                </div>
 
-                  <div className="flex items-center gap-2">
-                    <Select
-                      value={pageSize.toString()}
-                      onValueChange={(value) => {
-                        setPageSize(Number(value));
-                        setCurrentPage(1);
-                      }}
-                    >
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={pageSize.toString()}
+                    onValueChange={(value) => {
+                      setPageSize(Number(value));
+                      setCurrentPage(1);
+                    }}
+                  >
                       <SelectTrigger className="w-[120px]">
                         <SelectValue />
                       </SelectTrigger>
@@ -492,70 +543,58 @@ export default function TeacherClassesPage() {
                       <PaginationContent>
                         <PaginationItem>
                           <PaginationPrevious
-                            onClick={() =>
-                              setCurrentPage((prev) => Math.max(1, prev - 1))
-                            }
-                            className={
-                              currentPage === 1
-                                ? "pointer-events-none opacity-50"
-                                : "cursor-pointer"
-                            }
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setCurrentPage((prev) => Math.max(1, prev - 1));
+                            }}
+                            aria-disabled={currentPage === 1}
+                            className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
                           />
                         </PaginationItem>
 
-                        {Array.from(
-                          { length: totalPages },
-                          (_, i) => i + 1
-                        ).map((page) => {
-                          // Show first page, last page, current page, and pages around current
-                          if (
-                            page === 1 ||
-                            page === totalPages ||
-                            (page >= currentPage - 1 && page <= currentPage + 1)
-                          ) {
-                            return (
-                              <PaginationItem key={page}>
-                                <PaginationLink
-                                  onClick={() => setCurrentPage(page)}
-                                  isActive={currentPage === page}
-                                  className="cursor-pointer"
-                                >
-                                  {page}
-                                </PaginationLink>
-                              </PaginationItem>
-                            );
-                          } else if (
-                            page === currentPage - 2 ||
-                            page === currentPage + 2
-                          ) {
-                            return (
-                              <PaginationItem key={page}>
-                                <PaginationEllipsis />
-                              </PaginationItem>
-                            );
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          let pageNum = i + 1;
+                          if (totalPages > 5) {
+                            if (currentPage < 4) {
+                              pageNum = i + 1;
+                            } else if (currentPage > totalPages - 3) {
+                              pageNum = totalPages - 5 + i + 1;
+                            } else {
+                              pageNum = currentPage - 2 + i;
+                            }
                           }
-                          return null;
+                          return (
+                            <PaginationItem key={pageNum}>
+                              <PaginationLink
+                                href="#"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setCurrentPage(pageNum);
+                                }}
+                                isActive={currentPage === pageNum}
+                              >
+                                {pageNum}
+                              </PaginationLink>
+                            </PaginationItem>
+                          );
                         })}
 
                         <PaginationItem>
                           <PaginationNext
-                            onClick={() =>
-                              setCurrentPage((prev) =>
-                                Math.min(totalPages, prev + 1)
-                              )
-                            }
-                            className={
-                              currentPage === totalPages
-                                ? "pointer-events-none opacity-50"
-                                : "cursor-pointer"
-                            }
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+                            }}
+                            aria-disabled={currentPage === totalPages}
+                            className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
                           />
                         </PaginationItem>
                       </PaginationContent>
                     </Pagination>
                   </div>
                 </div>
-              )}
             </>
           )}
         </div>

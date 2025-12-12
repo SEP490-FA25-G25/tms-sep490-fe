@@ -253,6 +253,39 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
     return null;
   };
 
+  // Validation: ngày bắt đầu phải sau ngày hiệu lực của môn học
+  const validateStartDateVsEffectiveDate = (
+    startDate: string | undefined,
+    subjectId: number | undefined
+  ): string | null => {
+    if (!startDate || !subjectId) return null;
+    const selectedSubject = courses.find((c) => c.id === subjectId);
+    if (!selectedSubject?.effectiveDate) return null;
+
+    const start = new Date(startDate);
+    const effective = new Date(selectedSubject.effectiveDate);
+    if (start <= effective) {
+      const formattedDate = effective.toLocaleDateString("vi-VN");
+      return `Ngày bắt đầu phải sau ngày hiệu lực của môn học (${formattedDate})`;
+    }
+    return null;
+  };
+
+  // Validation: số ngày học không vượt quá số buổi học
+  const validateScheduleDaysVsSessions = (
+    scheduleDays: number[],
+    subjectId: number | undefined
+  ): string | null => {
+    if (!scheduleDays || !subjectId) return null;
+    const selectedSubject = courses.find((c) => c.id === subjectId);
+    if (!selectedSubject?.numberOfSessions) return null;
+
+    if (scheduleDays.length > selectedSubject.numberOfSessions) {
+      return `Số ngày học (${scheduleDays.length}) vượt quá tổng số buổi học của môn (${selectedSubject.numberOfSessions})`;
+    }
+    return null;
+  };
+
   // Handle field changes with real-time validation
   const handleBranchChange = (val: string) => {
     const value = parseInt(val);
@@ -266,6 +299,18 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
     const value = parseInt(val);
     setValue("subjectId", value, { shouldValidate: true });
     setSubjectError(validateSubject(value));
+
+    // Real-time validation: re-validate startDate và scheduleDays khi subject thay đổi
+    const currentStartDate = watch("startDate");
+    const currentScheduleDays = watch("scheduleDays") || [];
+    setStartDateError(
+      validateStartDate(currentStartDate) ||
+      validateStartDateVsEffectiveDate(currentStartDate, value)
+    );
+    setScheduleDaysError(
+      validateScheduleDays(currentScheduleDays) ||
+      validateScheduleDaysVsSessions(currentScheduleDays, value)
+    );
   };
 
   const handleStartDateChange = (date: Date | undefined) => {
@@ -276,7 +321,13 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
       const day = String(date.getDate()).padStart(2, "0");
       const dateStr = `${year}-${month}-${day}`;
       setValue("startDate", dateStr, { shouldValidate: true });
-      setStartDateError(validateStartDate(dateStr));
+
+      // Real-time validation: validate với ngày hiệu lực của môn học
+      const currentSubjectId = watch("subjectId");
+      setStartDateError(
+        validateStartDate(dateStr) ||
+        validateStartDateVsEffectiveDate(dateStr, currentSubjectId)
+      );
     }
   };
 
@@ -331,7 +382,13 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
       : [...currentDays, dayValue].sort();
 
     setValue("scheduleDays", newDays, { shouldValidate: true });
-    setScheduleDaysError(validateScheduleDays(newDays));
+
+    // Real-time validation: validate với số buổi học của môn
+    const currentSubjectId = watch("subjectId");
+    setScheduleDaysError(
+      validateScheduleDays(newDays) ||
+      validateScheduleDaysVsSessions(newDays, currentSubjectId)
+    );
   };
 
   const onSubmit = async (data: FormData) => {
@@ -343,13 +400,24 @@ export function Step1BasicInfo({ classId, onSuccess }: Step1BasicInfoProps) {
     const nameErr = validateName(data.name);
     const daysErr = validateScheduleDays(data.scheduleDays);
 
-    if (branchErr || subjectErr || dateErr || capErr || nameErr || daysErr) {
+    // Validation mới: ngày bắt đầu vs ngày hiệu lực
+    const effectiveDateErr = validateStartDateVsEffectiveDate(
+      data.startDate,
+      data.subjectId
+    );
+    // Validation mới: số ngày học vs số buổi học
+    const sessionsErr = validateScheduleDaysVsSessions(
+      data.scheduleDays,
+      data.subjectId
+    );
+
+    if (branchErr || subjectErr || dateErr || capErr || nameErr || daysErr || effectiveDateErr || sessionsErr) {
       setBranchError(branchErr);
       setSubjectError(subjectErr);
-      setStartDateError(dateErr);
+      setStartDateError(dateErr || effectiveDateErr); // Hiển thị lỗi ngày vào cùng ô
       setCapacityError(capErr);
       setNameError(nameErr);
-      setScheduleDaysError(daysErr);
+      setScheduleDaysError(daysErr || sessionsErr); // Hiển thị lỗi ngày học vào cùng ô
       toast.error("Vui lòng điền đầy đủ thông tin hợp lệ");
       return;
     }

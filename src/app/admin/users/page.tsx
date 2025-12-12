@@ -125,6 +125,7 @@ export default function AdminUsersPage() {
   const pageData = usersResponse?.data;
   const users = pageData?.content || [];
   const totalPages = pageData?.totalPages || 0;
+  const totalElements = pageData?.totalElements || 0;
 
   // Reset page to 0 when filters change
   useEffect(() => {
@@ -192,87 +193,90 @@ export default function AdminUsersPage() {
                 </div>
 
                 {/* Filters */}
-                <div className="px-4 lg:px-6 space-y-3">
-                  <div className="flex flex-wrap gap-3">
-                    <div className="relative flex-1 min-w-[200px]">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <div className="px-4 lg:px-6">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                       <Input
-                        placeholder="Tìm kiếm theo tên, email, số điện thoại..."
+                        placeholder="Tìm người dùng..."
                         value={searchTerm}
                         onChange={(e) => {
                           setSearchTerm(e.target.value);
                           setPage(0);
                         }}
-                        className="pl-10"
+                        className="pl-8 h-9 w-full"
                       />
                     </div>
-                    <Select
-                      value={roleFilter}
-                      onValueChange={(value) => {
-                        setRoleFilter(value);
-                        setPage(0);
-                      }}
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Vai trò" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ROLE_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select
-                      value={statusFilter}
-                      onValueChange={(value) => {
-                        setStatusFilter(value);
-                        setPage(0);
-                      }}
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Trạng thái" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {STATUS_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {/* Branch Filter */}
-                    <Select
-                      value={branchFilter?.toString() || "ALL"}
-                      onValueChange={(value) => {
-                        setBranchFilter(value === "ALL" ? null : parseInt(value));
-                        setPage(0);
-                      }}
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Chi nhánh" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ALL">Tất cả chi nhánh</SelectItem>
-                        {branches.map((branch: { id: number; name: string }) => (
-                          <SelectItem key={branch.id} value={branch.id.toString()}>
-                            {branch.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {/* Nút Reset Filters */}
-                    {(searchTerm || roleFilter !== "ALL" || statusFilter !== "ALL" || branchFilter !== null) && (
+
+                    <div className="ml-auto flex items-center gap-2">
+                      <Select
+                        value={roleFilter}
+                        onValueChange={(value) => {
+                          setRoleFilter(value);
+                          setPage(0);
+                        }}
+                      >
+                        <SelectTrigger className="h-9 w-auto min-w-[180px]">
+                          <SelectValue placeholder="Vai trò" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ROLE_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        value={statusFilter}
+                        onValueChange={(value) => {
+                          setStatusFilter(value);
+                          setPage(0);
+                        }}
+                      >
+                        <SelectTrigger className="h-9 w-auto min-w-[180px]">
+                          <SelectValue placeholder="Trạng thái" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STATUS_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {/* Branch Filter */}
+                      <Select
+                        value={branchFilter?.toString() || "ALL"}
+                        onValueChange={(value) => {
+                          setBranchFilter(value === "ALL" ? null : parseInt(value));
+                          setPage(0);
+                        }}
+                      >
+                        <SelectTrigger className="h-9 w-auto min-w-[180px]">
+                          <SelectValue placeholder="Chi nhánh" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">Tất cả chi nhánh</SelectItem>
+                          {branches.map((branch: { id: number; name: string }) => (
+                            <SelectItem key={branch.id} value={branch.id.toString()}>
+                              {branch.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {/* Reset Filters Button */}
                       <Button
                         variant="outline"
                         size="icon"
+                        className="h-9 w-9 shrink-0"
                         onClick={resetFilters}
+                        disabled={!searchTerm && roleFilter === "ALL" && statusFilter === "ALL" && branchFilter === null}
                         title="Xóa bộ lọc"
                       >
                         <RotateCcw className="h-4 w-4" />
                       </Button>
-                    )}
+                    </div>
                   </div>
                 </div>
 
@@ -337,50 +341,63 @@ export default function AdminUsersPage() {
                       ) : (
                         <>
                           <DataTable columns={columns} data={users} />
-                          {totalPages > 1 && (
-                            <div className="mt-4">
-                              <Pagination>
-                                <PaginationContent>
-                                  <PaginationItem>
-                                    <PaginationPrevious
-                                      onClick={() =>
-                                        page > 0 && setPage(page - 1)
-                                      }
-                                      className={
-                                        page === 0
-                                          ? "pointer-events-none opacity-50"
-                                          : "cursor-pointer"
-                                      }
-                                    />
-                                  </PaginationItem>
-                                  {[...Array(totalPages)].map((_, i) => (
-                                    <PaginationItem key={i}>
+                          <div className="flex items-center justify-between pt-4 border-t mt-4">
+                            <div className="text-sm text-muted-foreground">
+                              Trang {page + 1} / {Math.max(totalPages, 1)} · {totalElements} người dùng
+                            </div>
+                            <Pagination>
+                              <PaginationContent>
+                                <PaginationItem>
+                                  <PaginationPrevious
+                                    href="#"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      if (page > 0) setPage(page - 1);
+                                    }}
+                                    aria-disabled={page === 0}
+                                    className={page === 0 ? "pointer-events-none opacity-50" : ""}
+                                  />
+                                </PaginationItem>
+                                {Array.from({ length: Math.min(5, Math.max(totalPages, 1)) }, (_, i) => {
+                                  let pageNum = i;
+                                  if (totalPages > 5) {
+                                    if (page < 3) {
+                                      pageNum = i;
+                                    } else if (page > totalPages - 4) {
+                                      pageNum = totalPages - 5 + i;
+                                    } else {
+                                      pageNum = page - 2 + i;
+                                    }
+                                  }
+                                  return (
+                                    <PaginationItem key={pageNum}>
                                       <PaginationLink
-                                        onClick={() => setPage(i)}
-                                        isActive={page === i}
-                                        className="cursor-pointer"
+                                        href="#"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          setPage(pageNum);
+                                        }}
+                                        isActive={page === pageNum}
                                       >
-                                        {i + 1}
+                                        {pageNum + 1}
                                       </PaginationLink>
                                     </PaginationItem>
-                                  ))}
-                                  <PaginationItem>
-                                    <PaginationNext
-                                      onClick={() =>
-                                        page < totalPages - 1 &&
-                                        setPage(page + 1)
-                                      }
-                                      className={
-                                        page >= totalPages - 1
-                                          ? "pointer-events-none opacity-50"
-                                          : "cursor-pointer"
-                                      }
-                                    />
-                                  </PaginationItem>
-                                </PaginationContent>
-                              </Pagination>
-                            </div>
-                          )}
+                                  );
+                                })}
+                                <PaginationItem>
+                                  <PaginationNext
+                                    href="#"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      if (page < totalPages - 1) setPage(page + 1);
+                                    }}
+                                    aria-disabled={page >= totalPages - 1}
+                                    className={page >= totalPages - 1 ? "pointer-events-none opacity-50" : ""}
+                                  />
+                                </PaginationItem>
+                              </PaginationContent>
+                            </Pagination>
+                          </div>
                         </>
                       )}
                     </CardContent>

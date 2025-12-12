@@ -36,6 +36,10 @@ export default function StudentPendingFeedbackPage() {
   const [selectedPhaseId, setSelectedPhaseId] = useState<string | undefined>()
   const [selectedFeedback, setSelectedFeedback] = useState<StudentFeedbackItem | null>(null)
 
+  // Get studentId from localStorage (set during login)
+  // const studentId = typeof window !== 'undefined' ?
+  //   JSON.parse(localStorage.getItem('user') || '{}')?.studentId : undefined
+
   // Fetch student's own classes for filter (no need to pass studentId)
   const { data: classesData } = useGetMyClassesQuery({
     enrollmentStatus: ['ENROLLED', 'COMPLETED'],
