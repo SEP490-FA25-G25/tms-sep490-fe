@@ -288,8 +288,8 @@ export default function QAStudentFeedbackPage() {
                 {/* Search & Filters - Below header border, only when class is selected */}
                 {selectedClassId && (
                   <div className="flex flex-wrap items-center gap-2 px-4 lg:px-6 py-4 border-b bg-background">
-                    {/* Search - chiếm hết không gian bên trái */}
-                    <div className="relative flex-1 min-w-[240px]">
+                    {/* Search - nằm gọn bên trái */}
+                    <div className="relative w-[320px]">
                       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                       <Input
                         placeholder="Tìm theo tên học viên..."
@@ -299,7 +299,7 @@ export default function QAStudentFeedbackPage() {
                       />
                     </div>
 
-                    {/* Filters - dồn sang bên phải */}
+                    {/* Filters - đẩy sang bên phải */}
                     <div className="ml-auto flex items-center gap-2">
                       {/* Phase Filter */}
                       <Select value={selectedPhase} onValueChange={setSelectedPhase}>

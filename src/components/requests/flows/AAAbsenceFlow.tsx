@@ -283,12 +283,44 @@ export default function AAAbsenceFlow({ onSuccess }: AAAbsenceFlowProps) {
                       setWeekCursor(null)
                     }}
                   >
-                    <p className="font-medium">
-                      {cls.classCode} · {cls.className}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {cls.branchName} · {cls.scheduleSummary}
-                    </p>
+                    <div className="space-y-2">
+                      <p className="font-medium">
+                        {cls.classCode} · {cls.className}
+                      </p>
+                      
+                      <div className="text-sm text-muted-foreground space-y-1.5">
+                        <div className="flex items-start gap-2">
+                          <MapPinIcon className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                          <div className="flex flex-col">
+                            <span className="font-medium text-foreground/90">{cls.branchName}</span>
+                            <span className="text-xs">{cls.branchAddress}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-foreground/80">Thời gian:</span>
+                          <span>
+                            {cls.startDate && format(parseISO(cls.startDate), 'dd/MM/yyyy')} 
+                            {' - '}
+                            {cls.plannedEndDate && format(parseISO(cls.plannedEndDate), 'dd/MM/yyyy')}
+                          </span>
+                        </div>
+
+                        {cls.scheduleDetails && cls.scheduleDetails.length > 0 ? (
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {cls.scheduleDetails.map((sch, idx) => (
+                              <div key={idx} className="flex items-center gap-1.5 text-xs bg-secondary/50 px-2 py-1 rounded-md border border-border/50">
+                                <span className="font-medium text-foreground">{sch.day}</span>
+                                <span className="text-muted-foreground">|</span>
+                                <span>{sch.startTime} - {sch.endTime}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p>{cls.scheduleSummary}</p>
+                        )}
+                      </div>
+                    </div>
                   </SelectionCard>
                 ))}
               </div>

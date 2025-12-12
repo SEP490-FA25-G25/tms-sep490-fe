@@ -11,15 +11,21 @@ export interface StudentClassDTO {
   // Branch information
   branchId: number
   branchName: string
+  branchAddress: string
 
   // Class details
   modality: 'ONLINE' | 'OFFLINE'
   status: string // ONGOING, SCHEDULED, etc.
   startDate: string
-  endDate: string
+  plannedEndDate: string
 
   // Schedule information
   scheduleSummary: string // e.g., "Mon, Wed, Fri | 09:00-11:00"
+  scheduleDetails: {
+    day: string
+    startTime: string
+    endTime: string
+  }[]
 
   // Enrollment information
   enrollmentId: number

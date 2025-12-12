@@ -4,17 +4,23 @@ import { useState, type CSSProperties } from 'react'
 import { useParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SiteHeader } from '@/components/site-header'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, ChevronDown, FileUp, UserPlus, Users } from 'lucide-react'
 import { useGetClassByIdQuery, useGetClassStudentsQuery } from '@/store/services/classApi'
 import { useGetStudentDetailQuery } from '@/store/services/studentApi'
 
 import { EnrollmentImportDialog } from './EnrollmentImportDialog'
 import { StudentSelectionDialog } from './StudentSelectionDialog'
 import { CreateStudentDialog } from '@/components/student'
-import { AAClassDetailHeader } from './components/AAClassDetailHeader'
+import { ClassInfoHeader } from '@/components/class/ClassInfoHeader'
 import { AAClassDetailHeaderSkeleton, AAClassDetailContentSkeleton } from './components/AAClassDetailSkeleton'
 import { OverviewTab } from './components/OverviewTab'
 import { StudentsTab } from './components/StudentsTab'
@@ -102,20 +108,32 @@ export default function ClassDetailPage() {
       )
     }
 
-    return (
-      <AAClassDetailHeader
-        classData={classData}
-        onEnrollFromExisting={
-          isAcademicAffair ? () => setStudentSelectionOpen(true) : undefined
-        }
-        onEnrollNewStudent={
-          isAcademicAffair ? () => setCreateStudentOpen(true) : undefined
-        }
-        onEnrollFromExcel={
-          isAcademicAffair ? () => setEnrollmentDialogOpen(true) : undefined
-        }
-      />
-    )
+    const aaActions = isAcademicAffair ? (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button>
+            Ghi danh Học viên
+            <ChevronDown className="ml-2 h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuItem onClick={() => setStudentSelectionOpen(true)}>
+            <Users className="mr-2 h-4 w-4" />
+            Chọn từ học viên có sẵn
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setCreateStudentOpen(true)}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Tạo học viên mới
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setEnrollmentDialogOpen(true)}>
+            <FileUp className="mr-2 h-4 w-4" />
+            Nhập từ Excel
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ) : undefined
+
+    return <ClassInfoHeader classData={classData} actions={aaActions} />
   }
 
   return (

@@ -28,6 +28,14 @@ import type { MakeupFlowProps } from '../UnifiedRequestFlow'
 // Fallback value if config API fails
 const DEFAULT_MAKEUP_LOOKBACK_WEEKS = 2
 
+// Helper function to get branch location based on modality
+const getBranchLocation = (classInfo: { modality?: string; branchAddress?: string; branchName?: string }) => {
+  if (classInfo.modality === 'ONLINE') {
+    return classInfo.branchName ?? 'Online'
+  }
+  return classInfo.branchAddress ?? classInfo.branchName ?? 'Địa chỉ đang cập nhật'
+}
+
 export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
   // Wizard State
   const [currentStep, setCurrentStep] = useState(1)
@@ -227,7 +235,7 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
                           Buổi {session.subjectSessionNumber}: {session.subjectSessionTitle}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {session.timeSlotInfo?.startTime} - {session.timeSlotInfo?.endTime} · {session.classInfo?.branchName}
+                          {session.timeSlotInfo?.startTime} - {session.timeSlotInfo?.endTime} · {getBranchLocation(session.classInfo)}
                         </p>
                         {session.classInfo?.resourceName && (
                           <p className="text-xs text-muted-foreground">
@@ -280,10 +288,6 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
             ) : (
               <div className="space-y-2">
                 {makeupOptions.map((option) => {
-                  const availableSlots = option.availableSlots ?? option.classInfo?.availableSlots ?? null
-                  const maxCapacity = option.maxCapacity ?? option.classInfo?.maxCapacity ?? null
-                  const branchAddress = option.classInfo.branchAddress ?? option.classInfo.branchName ?? 'Địa chỉ đang cập nhật'
-
                   return (
                     <SelectionCard
                       key={option.sessionId}
@@ -312,19 +316,13 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
                             Buổi {option.subjectSessionNumber}: {option.subjectSessionTitle}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {option.timeSlotInfo.startTime}-{option.timeSlotInfo.endTime} · {branchAddress}
+                            {option.timeSlotInfo.startTime}-{option.timeSlotInfo.endTime} · {getBranchLocation(option.classInfo)}
                           </p>
                           {option.classInfo?.resourceName && (
                             <p className="text-xs text-muted-foreground">
                               {option.classInfo.modality === 'ONLINE' ? '🔗' : '📍'} {option.classInfo.resourceName}
                             </p>
                           )}
-                          <p className="text-xs text-muted-foreground">
-                            {getCapacityText(
-                              maxCapacity != null && availableSlots != null ? maxCapacity - availableSlots : null,
-                              maxCapacity
-                            )}
-                          </p>
                         </div>
                       </div>
                     </SelectionCard>
@@ -360,7 +358,7 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
                     Buổi {selectedMissedSession!.subjectSessionNumber}: {selectedMissedSession!.subjectSessionTitle}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {selectedMissedSession!.timeSlotInfo?.startTime} - {selectedMissedSession!.timeSlotInfo?.endTime}
+                    {selectedMissedSession!.timeSlotInfo?.startTime} - {selectedMissedSession!.timeSlotInfo?.endTime} · {getBranchLocation(selectedMissedSession!.classInfo)}
                   </p>
                   {selectedMissedSession!.classInfo?.resourceName && (
                     <p className="text-xs text-muted-foreground">
@@ -389,10 +387,7 @@ export default function MakeupFlow({ onSuccess }: MakeupFlowProps) {
                     Buổi {selectedMakeupOption.subjectSessionNumber}: {selectedMakeupOption.subjectSessionTitle}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {selectedMakeupOption.timeSlotInfo.startTime}-{selectedMakeupOption.timeSlotInfo.endTime}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {selectedMakeupOption.classInfo.branchAddress ?? selectedMakeupOption.classInfo.branchName ?? 'Địa chỉ đang cập nhật'}
+                    {selectedMakeupOption.timeSlotInfo.startTime}-{selectedMakeupOption.timeSlotInfo.endTime} · {getBranchLocation(selectedMakeupOption.classInfo)}
                   </p>
                   {selectedMakeupOption.classInfo?.resourceName && (
                     <p className="text-xs text-muted-foreground">

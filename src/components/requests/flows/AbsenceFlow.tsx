@@ -1,9 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
-import { addDays, addMonths, addWeeks, format, parseISO, startOfToday } from 'date-fns'
+import { addDays, addWeeks, format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
 import { MapPinIcon, VideoIcon } from 'lucide-react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Calendar } from '@/components/ui/calendar'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -12,9 +10,7 @@ import {
   type SessionSummaryDTO
 } from '@/store/services/studentScheduleApi'
 import {
-  useGetAvailableSessionsByMonthQuery,
-  useSubmitStudentRequestMutation,
-  type StudentSessionOption
+  useSubmitStudentRequestMutation
 } from '@/store/services/studentRequestApi'
 import {
   BaseFlowComponent,
@@ -38,7 +34,7 @@ function parseSessionDateTime(dateStr: string, timeStr?: string) {
 }
 
 // Helper to check availability
-type CombinedSession = SessionSummaryDTO | StudentSessionOption
+type CombinedSession = SessionSummaryDTO
 
 function getSessionAvailability(session: CombinedSession, futureLimit: Date) {
   const dateStr = session.date
@@ -75,9 +71,6 @@ function getSessionAvailability(session: CombinedSession, futureLimit: Date) {
 export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
   // State
   const [currentStep, setCurrentStep] = useState(1)
-  const [activeTab, setActiveTab] = useState('upcoming')
-  const [selectedDate, setSelectedDate] = useState<Date>(startOfToday())
-  const [monthCursor, setMonthCursor] = useState<Date>(startOfToday())
   const [weekStartCursor, setWeekStartCursor] = useState<string | null>(null)
 
   // Selection State
@@ -95,9 +88,9 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
   const [reasonError, setReasonError] = useState<string | null>(null)
 
   // Data Fetching
-  const futureLimitDate = useMemo(() => addMonths(new Date(), 1), [])
+  const futureLimitDate = useMemo(() => addWeeks(new Date(), 4), [])
 
-  // 1. Upcoming Data (Weekly Schedule)
+  // Weekly Schedule
   const { data: currentWeekResponse } = useGetCurrentWeekQuery()
   const currentWeekStart = currentWeekResponse?.data
 
@@ -110,15 +103,6 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
   const { data: weeklyScheduleResponse, isFetching: isLoadingSchedule } = useGetWeeklyScheduleQuery(
     { weekStart: weekStartCursor ?? '' },
     { skip: !weekStartCursor }
-  )
-
-  // 2. Calendar Data (Available Sessions for Date)
-  const formattedDate = format(selectedDate, 'yyyy-MM-dd')
-
-  const monthKey = format(monthCursor, 'yyyy-MM')
-  const { data: monthSessionsResponse, isFetching: isLoadingMonth } = useGetAvailableSessionsByMonthQuery(
-    { month: monthKey, requestType: 'ABSENCE' },
-    { skip: activeTab !== 'calendar' || !monthKey }
   )
 
   const [submitRequest, { isLoading: isSubmitting }] = useSubmitStudentRequestMutation()
@@ -143,44 +127,13 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
         ...session,
         ...getSessionAvailability(session, futureLimitDate)
       }))
-      .filter(s => s.isSelectable) // Only show selectable in "Upcoming"
+      .filter(s => s.isSelectable) // Only show selectable sessions
       .sort((a, b) => {
         const dateA = parseSessionDateTime(a.date, a.startTime)
         const dateB = parseSessionDateTime(b.date, b.startTime)
         return dateA.getTime() - dateB.getTime()
       })
-      .slice(0, 5) // Take top 5
   }, [weeklyScheduleResponse, futureLimitDate])
-
-  // Process Calendar Sessions (from monthly data)
-  const calendarSessions = useMemo(() => {
-    if (!monthSessionsResponse?.data) return []
-    const today = startOfToday()
-    return monthSessionsResponse.data.flatMap(cls =>
-      cls.sessions.map(session => ({
-        ...session,
-        classId: cls.classId,
-        classCode: cls.classCode,
-        className: cls.className,
-        branchName: cls.branchName,
-        sessionId: session.sessionId,
-        date: session.date,
-        startTime: session.timeSlot.startTime,
-        endTime: session.timeSlot.endTime,
-        topic: session.courseSessionTitle,
-        isSelectable: (() => {
-          const sessionDate = parseISO(session.date)
-          return sessionDate >= today && sessionDate <= futureLimitDate
-        })()
-      }))
-    ).filter(session => session.isSelectable)
-  }, [monthSessionsResponse, futureLimitDate])
-
-  const calendarDatesWithSessions = useMemo(() => new Set(calendarSessions.map(s => s.date)), [calendarSessions])
-  const selectedDateSessions = useMemo(
-    () => calendarSessions.filter(session => session.date === formattedDate),
-    [calendarSessions, formattedDate]
-  )
 
   // Handlers
   const handleNext = () => {
@@ -268,29 +221,22 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
     >
       {currentStep === 1 && (
         <Section>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="upcoming">Gợi ý (Sắp tới)</TabsTrigger>
-              <TabsTrigger value="calendar">Chọn theo lịch</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="upcoming" className="mt-0">
-              <div className="flex items-center justify-between pb-2 border-b">
-                <p className="text-xs text-muted-foreground">
-                  Tuần {weekStartCursor ? `${format(parseISO(weekStartCursor), 'dd/MM')} - ${format(addDays(parseISO(weekStartCursor), 6), 'dd/MM')}` : '...'}
-                </p>
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" className="h-7 px-2" onClick={handlePrevWeek} disabled={isPrevWeekDisabled}>
-                    ← Trước
-                  </Button>
-                  <Button variant="ghost" size="sm" className="h-7 px-2" onClick={handleNextWeek} disabled={!weekStartCursor}>
-                    Sau →
-                  </Button>
-                </div>
-              </div>
-              <div className="min-h-[280px] space-y-2 pt-2">
-                {!isLoadingSchedule && upcomingSessions.length > 0 ? (
-                  upcomingSessions.map(session => (
+          <div className="flex items-center justify-between pb-2 border-b mb-3">
+            <p className="text-xs text-muted-foreground">
+              Tuần {weekStartCursor ? `${format(parseISO(weekStartCursor), 'dd/MM')} - ${format(addDays(parseISO(weekStartCursor), 6), 'dd/MM')}` : '...'}
+            </p>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="sm" className="h-7 px-2" onClick={handlePrevWeek} disabled={isPrevWeekDisabled}>
+                ← Trước
+              </Button>
+              <Button variant="ghost" size="sm" className="h-7 px-2" onClick={handleNextWeek} disabled={!weekStartCursor}>
+                Sau →
+              </Button>
+            </div>
+          </div>
+          <div className="min-h-[280px] space-y-2">
+            {!isLoadingSchedule && upcomingSessions.length > 0 ? (
+              upcomingSessions.map(session => (
                   <SelectionCard
                     key={session.sessionId}
                     item={session}
@@ -339,86 +285,14 @@ export default function AbsenceFlow({ onSuccess }: AbsenceFlowProps) {
               ) : (
                 <div className="flex min-h-[200px] flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center">
                   <p className="text-sm text-muted-foreground">
-                    Không có buổi học nào sắp tới trong tuần này.
+                    Không có buổi học nào trong tuần này.
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Vui lòng chuyển sang tab <b>Chọn theo lịch</b>.
+                    Vui lòng chọn tuần khác hoặc không có buổi nào có thể xin nghỉ.
                   </p>
                 </div>
               )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="calendar" className="mt-0">
-              <div className="flex flex-col sm:flex-row gap-3 min-h-[280px]">
-                <div className="rounded-lg border p-2 bg-background shrink-0">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => {
-                      if (date) {
-                        setSelectedDate(date)
-                        setMonthCursor(date)
-                      }
-                    }}
-                    onMonthChange={(date) => date && setMonthCursor(date)}
-                    locale={vi}
-                    className="mx-auto"
-                    disabled={(date) => !calendarDatesWithSessions.has(format(date, 'yyyy-MM-dd'))}
-                  />
-                </div>
-
-                <div className="flex-1 space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground border-b pb-2">
-                    Buổi học ngày {format(selectedDate, 'dd/MM/yyyy')}
-                  </p>
-
-                  {!isLoadingMonth && selectedDateSessions.length > 0 ? (
-                    selectedDateSessions.map(session => (
-                      <SelectionCard
-                        key={session.sessionId}
-                        item={session}
-                        isSelected={selectedSession?.sessionId === session.sessionId}
-                        onSelect={() => setSelectedSession({
-                          sessionId: session.sessionId,
-                          classId: session.classId,
-                          classCode: session.classCode,
-                          date: session.date,
-                          startTime: session.startTime,
-                          endTime: session.endTime,
-                          title: session.topic
-                        })}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="min-w-0 flex-1 space-y-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <Badge variant="outline" className="text-xs shrink-0">{session.classCode}</Badge>
-                              <span className="text-xs text-muted-foreground">
-                                {session.startTime}-{session.endTime}
-                              </span>
-                            </div>
-                            <p className="font-medium text-sm truncate">{session.topic}</p>
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <span>{session.branchName}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </SelectionCard>
-                    ))
-                  ) : (
-                    <div className="flex min-h-[180px] flex-col items-center justify-center rounded-lg border border-dashed p-4 text-center">
-                      <p className="text-sm text-muted-foreground">
-                        Không có buổi học nào trong ngày này.
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Chọn ngày khác trên lịch.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+          </div>
         </Section>
       )}
 

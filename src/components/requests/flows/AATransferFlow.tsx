@@ -266,34 +266,6 @@ export default function AATransferFlow({ onSuccess }: AATransferFlowProps) {
         {currentStep === 2 && selectedStudent && (
           <Section>
             <div className="min-h-[280px] space-y-4">
-              {/* Policy Info - AA View with Statistics */}
-              {eligibilityData && (
-                <div className="rounded-lg border bg-muted/30 p-3">
-                  <div className="flex items-start gap-2">
-                    <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                    <div className="space-y-2 text-xs flex-1">
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium text-foreground">Quy định chuyển lớp:</p>
-                      </div>
-
-                      <ul className="space-y-0.5 text-muted-foreground">
-                        <li className="flex items-start gap-1.5">
-                          <span className="text-muted-foreground mt-0.5">•</span>
-                          <span>Mỗi môn học: Tối đa <span className="font-medium text-foreground">{eligibilityData.policyInfo?.maxTransfersPerCourse ?? 1} lần chuyển</span></span>
-                        </li>
-                        <li className="flex items-start gap-1.5">
-                          <span className="text-muted-foreground mt-0.5">•</span>
-                          <span>AA có thể <span className="font-medium text-foreground">override sức chứa lớp</span> khi lớp mục tiêu đã đầy</span>
-                        </li>
-                        <li className="flex items-start gap-1.5">
-                          <span className="text-muted-foreground mt-0.5">•</span>
-                          <span>Hỗ trợ chuyển <span className="font-medium text-foreground">linh hoạt</span>: cơ sở, hình thức, lịch học</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {!isLoadingEligibility && eligibilityOptions.length === 0 ? (
                 <div className="border-t border-dashed py-8 text-center text-sm text-muted-foreground">

@@ -38,6 +38,14 @@ import {
 
 const DEFAULT_MAKEUP_LOOKBACK_WEEKS = 2
 
+// Helper function to get branch location based on modality
+const getBranchLocation = (classInfo: { modality?: string; branchAddress?: string; branchName?: string }) => {
+  if (classInfo.modality === 'ONLINE') {
+    return classInfo.branchName ?? 'Online'
+  }
+  return classInfo.branchAddress ?? classInfo.branchName ?? 'Địa chỉ đang cập nhật'
+}
+
 interface AAMakeupFlowProps {
   onSuccess: () => void
 }
@@ -316,7 +324,7 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
                           Buổi {session.subjectSessionNumber}: {session.subjectSessionTitle}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {session.timeSlotInfo.startTime} - {session.timeSlotInfo.endTime} · {session.classInfo.branchName}
+                          {session.timeSlotInfo.startTime} - {session.timeSlotInfo.endTime} · {getBranchLocation(session.classInfo)}
                         </p>
                         {session.classInfo.resourceName && (
                           <p className="text-xs text-muted-foreground">
@@ -374,7 +382,6 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
               <div className="space-y-2">
                 {makeupOptions.map((option) => {
                   const isOverCapacity = !option.matchScore?.capacityOk
-                  const branchAddress = option.classInfo.branchAddress ?? option.classInfo.branchName ?? 'Địa chỉ đang cập nhật'
                   return (
                     <SelectionCard
                       key={option.sessionId}
@@ -402,15 +409,14 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
                           <p className="text-sm text-muted-foreground">
                             {option.timeSlotInfo.startTime} - {option.timeSlotInfo.endTime}
                           </p>
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <span>{branchAddress}</span>
-                            {option.classInfo.resourceName && (
-                              <>
-                                <span>·</span>
-                                <span>{option.classInfo.modality === 'ONLINE' ? '🔗' : '📍'} {option.classInfo.resourceName}</span>
-                              </>
-                            )}
-                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {getBranchLocation(option.classInfo)}
+                          </p>
+                          {option.classInfo.resourceName && (
+                            <p className="text-xs text-muted-foreground">
+                              {option.classInfo.modality === 'ONLINE' ? '🔗' : '📍'} {option.classInfo.resourceName}
+                            </p>
+                          )}
                           <div className="flex items-center gap-2">
                             {isOverCapacity ? (
                               <Badge variant="destructive" className="gap-1">
@@ -459,7 +465,7 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
                     Buổi {selectedMissedSession.subjectSessionNumber}: {selectedMissedSession.subjectSessionTitle}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {selectedMissedSession.timeSlotInfo.startTime} - {selectedMissedSession.timeSlotInfo.endTime}
+                    {selectedMissedSession.timeSlotInfo.startTime} - {selectedMissedSession.timeSlotInfo.endTime} · {getBranchLocation(selectedMissedSession.classInfo)}
                   </p>
                   {selectedMissedSession.classInfo.resourceName && (
                     <p className="text-xs text-muted-foreground">
@@ -489,10 +495,7 @@ export default function AAMakeupFlow({ onSuccess }: AAMakeupFlowProps) {
                     Buổi {selectedMakeupOption.subjectSessionNumber}: {selectedMakeupOption.subjectSessionTitle}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {selectedMakeupOption.timeSlotInfo.startTime}-{selectedMakeupOption.timeSlotInfo.endTime}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {selectedMakeupOption.classInfo.branchAddress ?? selectedMakeupOption.classInfo.branchName ?? 'Địa chỉ đang cập nhật'}
+                    {selectedMakeupOption.timeSlotInfo.startTime}-{selectedMakeupOption.timeSlotInfo.endTime} · {getBranchLocation(selectedMakeupOption.classInfo)}
                   </p>
                   {selectedMakeupOption.classInfo.resourceName && (
                     <p className="text-xs text-muted-foreground">

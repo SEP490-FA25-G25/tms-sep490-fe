@@ -158,7 +158,7 @@ export function CalendarView({ scheduleData, onSessionClick, className }: Calend
 
       {/* Calendar Body (Scrollable) */}
       <div className="flex-1 overflow-y-auto min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        <div className="relative grid grid-cols-8 divide-x" style={{ height: `${(endHour - startHour + 1) * HOUR_HEIGHT}px` }}>
+        <div className="relative grid grid-cols-8 divide-x pt-4" style={{ height: `${(endHour - startHour + 1) * HOUR_HEIGHT + 16}px` }}>
 
           {/* Time Column */}
           <div className="relative border-r bg-muted/30">
@@ -166,7 +166,7 @@ export function CalendarView({ scheduleData, onSessionClick, className }: Calend
               <div
                 key={hour}
                 className="absolute w-full border-b border-dashed border-border/50 text-right pr-2 text-xs text-muted-foreground"
-                style={{ top: `${(hour - startHour) * HOUR_HEIGHT}px`, height: `${HOUR_HEIGHT}px` }}
+                style={{ top: `${(hour - startHour) * HOUR_HEIGHT + 16}px`, height: `${HOUR_HEIGHT}px` }}
               >
                 <span className="-translate-y-1/2 block pt-2">
                   {String(hour).padStart(2, '0')}:00
