@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 import { useEffect, useMemo, useState } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -8,8 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Search, RotateCcw } from 'lucide-react'
 import { useGetClassesQuery, useGetClassByIdQuery, type ClassListItemDTO, type ClassListRequest } from '@/store/services/classApi'
-import { useGetBranchesQuery } from '@/store/services/classCreationApi'
 import { ApprovalDetailDrawer } from './components/ApprovalDetailDrawer'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
@@ -120,11 +121,26 @@ const formatScheduleDaysFromNumbers = (days?: number[], fallback?: string) => {
 export default function CenterHeadApprovalsPage() {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [branchFilter, setBranchFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('SUBMITTED')
   const [approvalFilter, setApprovalFilter] = useState<ApprovalFilter>('PENDING')
   const [page, setPage] = useState(0)
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null)
+  const { selectedBranchId } = useAuth()
+
+  const hasActiveFilters = useMemo(
+    () =>
+      search.trim() !== '' ||
+      statusFilter !== 'all' ||
+      approvalFilter !== 'all',
+    [search, statusFilter, approvalFilter]
+  )
+
+  const handleResetFilters = () => {
+    setSearch('')
+    setStatusFilter('all')
+    setApprovalFilter('all')
+    setPage(0)
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 400)
@@ -138,15 +154,14 @@ export default function CenterHeadApprovalsPage() {
       search: debouncedSearch || undefined,
       status: statusFilter === 'all' ? undefined : statusFilter,
       approvalStatus: approvalFilter === 'all' ? undefined : approvalFilter,
-      branchIds: branchFilter === 'all' ? undefined : [Number(branchFilter)],
+      branchIds: selectedBranchId ? [selectedBranchId] : undefined,
       sort: 'submittedAt',
       sortDir: 'desc',
     }),
-    [page, debouncedSearch, statusFilter, approvalFilter, branchFilter]
+    [page, debouncedSearch, statusFilter, approvalFilter, selectedBranchId]
   )
 
   const { data: listResponse, isLoading, isFetching, refetch } = useGetClassesQuery(queryArgs)
-  const { data: branchesResponse } = useGetBranchesQuery()
 
   const { data: pendingSummary } = useGetClassesQuery({
     page: 0,
@@ -176,11 +191,6 @@ export default function CenterHeadApprovalsPage() {
   const classes = listResponse?.data?.content ?? []
   const pagination = listResponse?.data?.page
 
-  const branchOptions = [
-    { value: 'all', label: 'Tất cả chi nhánh' },
-    ...(branchesResponse?.data?.map((branch) => ({ value: branch.id.toString(), label: branch.name })) ?? []),
-  ]
-
   const metrics = [
     {
       label: 'Chờ duyệt',
@@ -198,11 +208,6 @@ export default function CenterHeadApprovalsPage() {
       description: 'Cần Academic Affairs chỉnh sửa',
     },
   ]
-
-  const handleChangeBranch = (value: string) => {
-    setBranchFilter(value)
-    setPage(0)
-  }
 
   const handleChangeStatus = (value: string) => {
     setStatusFilter(value as StatusFilter)
@@ -240,23 +245,20 @@ export default function CenterHeadApprovalsPage() {
           ))}
         </div>
 
-        <div className="rounded-xl border border-border/70 bg-card/80 p-4">
-          <div className="grid gap-3 md:grid-cols-4">
-            <Input placeholder="Tìm theo mã lớp, khóa học..." value={search} onChange={(event) => handleSearchSubmit(event.target.value)} />
-            <Select value={branchFilter} onValueChange={handleChangeBranch}>
-              <SelectTrigger>
-                <SelectValue placeholder="Chi nhánh" />
-              </SelectTrigger>
-              <SelectContent>
-                {branchOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Tìm lớp..."
+              value={search}
+              onChange={(event) => handleSearchSubmit(event.target.value)}
+              className="pl-8 h-9 w-full"
+            />
+          </div>
+
+          <div className="ml-auto flex items-center gap-2">
             <Select value={statusFilter} onValueChange={handleChangeStatus}>
-              <SelectTrigger>
+              <SelectTrigger className="h-9 w-auto min-w-[160px]">
                 <SelectValue placeholder="Trạng thái lớp" />
               </SelectTrigger>
               <SelectContent>
@@ -266,7 +268,7 @@ export default function CenterHeadApprovalsPage() {
               </SelectContent>
             </Select>
             <Select value={approvalFilter} onValueChange={handleChangeApproval}>
-              <SelectTrigger>
+              <SelectTrigger className="h-9 w-auto min-w-[160px]">
                 <SelectValue placeholder="Trạng thái duyệt" />
               </SelectTrigger>
               <SelectContent>
@@ -276,10 +278,15 @@ export default function CenterHeadApprovalsPage() {
                 <SelectItem value="REJECTED">Bị trả về</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-          <div className="mt-4 flex items-center justify-end gap-3">
-            <Button variant="outline" onClick={handleRefresh} disabled={isFetching}>
-              {isFetching ? 'Đang tải...' : 'Làm mới'}
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={handleResetFilters}
+              disabled={!hasActiveFilters}
+              title="Xóa bộ lọc"
+            >
+              <RotateCcw className="h-4 w-4" />
             </Button>
           </div>
         </div>

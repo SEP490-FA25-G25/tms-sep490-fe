@@ -156,13 +156,13 @@ export default function CenterHeadQAReportsPage() {
                 {/* Search & Filters */}
                 <div className="flex flex-wrap items-center gap-2">
                     {/* Search - Left */}
-                    <div className="relative w-64">
+                    <div className="relative">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Tìm theo mã lớp, người báo cáo..."
+                            placeholder="Tìm báo cáo..."
                             value={searchTerm}
                             onChange={(e) => handleSearchChange(e.target.value)}
-                            className="pl-8 h-9"
+                            className="pl-8 h-9 w-full"
                         />
                     </div>
 

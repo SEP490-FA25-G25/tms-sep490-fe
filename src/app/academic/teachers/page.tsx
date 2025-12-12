@@ -177,73 +177,58 @@ export default function AcademicTeachersPage() {
         </div>
 
         {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Bộ lọc</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-4 md:flex-row md:items-end">
-              <div className="flex-1">
-                <label className="text-sm font-medium mb-2 block">
-                  Tìm kiếm
-                </label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Tìm theo tên, email, mã nhân viên, số điện thoại..."
-                    value={filters.search}
-                    onChange={(e) =>
-                      handleFilterChange("search", e.target.value)
-                    }
-                    className="pl-9"
-                  />
-                </div>
-              </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Tìm giáo viên..."
+              value={filters.search}
+              onChange={(e) =>
+                handleFilterChange("search", e.target.value)
+              }
+              className="pl-8 h-9 w-full"
+            />
+          </div>
 
-              <div className="w-full md:w-[200px]">
-                <label className="text-sm font-medium mb-2 block">
-                  Trạng thái kỹ năng
-                </label>
-                <Select
-                  value={
-                    filters.hasSkills === undefined
-                      ? "all"
-                      : filters.hasSkills
-                      ? "has"
-                      : "none"
-                  }
-                  onValueChange={(value) => {
-                    if (value === "all") {
-                      handleFilterChange("hasSkills", undefined);
-                    } else {
-                      handleFilterChange("hasSkills", value === "has");
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Tất cả" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
-                    <SelectItem value="has">Có kỹ năng</SelectItem>
-                    <SelectItem value="none">Chưa có kỹ năng</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className="ml-auto flex items-center gap-2">
+            <Select
+              value={
+                filters.hasSkills === undefined
+                  ? "all"
+                  : filters.hasSkills
+                  ? "has"
+                  : "none"
+              }
+              onValueChange={(value) => {
+                if (value === "all") {
+                  handleFilterChange("hasSkills", undefined);
+                } else {
+                  handleFilterChange("hasSkills", value === "has");
+                }
+              }}
+            >
+              <SelectTrigger className="h-9 w-auto min-w-[200px]">
+                <SelectValue placeholder="Trạng thái kỹ năng" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="has">Có kỹ năng</SelectItem>
+                <SelectItem value="none">Chưa có kỹ năng</SelectItem>
+              </SelectContent>
+            </Select>
 
-              {hasActiveFilters && (
-                <Button
-                  variant="outline"
-                  onClick={resetFilters}
-                  className="w-full md:w-auto"
-                >
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                  Đặt lại
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={resetFilters}
+              disabled={!hasActiveFilters}
+              title="Xóa bộ lọc"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
 
         {/* Teachers Table */}
         <Card>

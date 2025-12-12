@@ -19,6 +19,7 @@ import {
   MapPin,
   GraduationCap,
   RefreshCw,
+  RotateCcw,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
@@ -319,22 +320,23 @@ export default function TeacherClassesPage() {
             </Tabs>
 
             {/* Search and Dropdown Filters */}
-            <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Tìm kiếm lớp học..."
+                  placeholder="Tìm lớp..."
                   value={filters.searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="pl-10"
+                  className="pl-8 h-9 w-full"
                 />
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+
+              <div className="ml-auto flex items-center gap-2">
                 <Select
                   value={sortField}
                   onValueChange={(value) => setSortField(value as SortField)}
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="h-9 w-auto min-w-[180px]">
                     <SelectValue placeholder="Sắp xếp theo" />
                   </SelectTrigger>
                   <SelectContent>
@@ -357,7 +359,7 @@ export default function TeacherClassesPage() {
                     }))
                   }
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="h-9 w-auto min-w-[180px]">
                     <SelectValue placeholder="Hình thức" />
                   </SelectTrigger>
                   <SelectContent>
@@ -377,7 +379,7 @@ export default function TeacherClassesPage() {
                     setFilters((prev) => ({ ...prev, branchName: value }))
                   }
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="h-9 w-auto min-w-[180px]">
                     <SelectValue placeholder="Chi nhánh" />
                   </SelectTrigger>
                   <SelectContent>
@@ -402,7 +404,7 @@ export default function TeacherClassesPage() {
                     setFilters((prev) => ({ ...prev, subjectName: value }))
                   }
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="h-9 w-auto min-w-[180px]">
                     <SelectValue placeholder="Môn học" />
                   </SelectTrigger>
                   <SelectContent>
@@ -423,13 +425,13 @@ export default function TeacherClassesPage() {
 
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
+                  className="h-9 w-9 shrink-0"
                   onClick={resetFilters}
-                  className="gap-2"
-                  title="Làm mới và đặt lại tất cả bộ lọc"
+                  disabled={!hasActiveFilters}
+                  title="Xóa bộ lọc"
                 >
-                  <RefreshCw className="h-4 w-4" />
-                  Làm mới
+                  <RotateCcw className="h-4 w-4" />
                 </Button>
               </div>
             </div>

@@ -193,87 +193,90 @@ export default function AdminUsersPage() {
                 </div>
 
                 {/* Filters */}
-                <div className="px-4 lg:px-6 space-y-3">
-                  <div className="flex flex-wrap gap-3">
-                    <div className="relative flex-1 min-w-[200px]">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <div className="px-4 lg:px-6">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                       <Input
-                        placeholder="Tìm kiếm theo tên, email, số điện thoại..."
+                        placeholder="Tìm người dùng..."
                         value={searchTerm}
                         onChange={(e) => {
                           setSearchTerm(e.target.value);
                           setPage(0);
                         }}
-                        className="pl-10"
+                        className="pl-8 h-9 w-full"
                       />
                     </div>
-                    <Select
-                      value={roleFilter}
-                      onValueChange={(value) => {
-                        setRoleFilter(value);
-                        setPage(0);
-                      }}
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Vai trò" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ROLE_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select
-                      value={statusFilter}
-                      onValueChange={(value) => {
-                        setStatusFilter(value);
-                        setPage(0);
-                      }}
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Trạng thái" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {STATUS_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {/* Branch Filter */}
-                    <Select
-                      value={branchFilter?.toString() || "ALL"}
-                      onValueChange={(value) => {
-                        setBranchFilter(value === "ALL" ? null : parseInt(value));
-                        setPage(0);
-                      }}
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Chi nhánh" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ALL">Tất cả chi nhánh</SelectItem>
-                        {branches.map((branch: { id: number; name: string }) => (
-                          <SelectItem key={branch.id} value={branch.id.toString()}>
-                            {branch.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {/* Nút Reset Filters */}
-                    {(searchTerm || roleFilter !== "ALL" || statusFilter !== "ALL" || branchFilter !== null) && (
+
+                    <div className="ml-auto flex items-center gap-2">
+                      <Select
+                        value={roleFilter}
+                        onValueChange={(value) => {
+                          setRoleFilter(value);
+                          setPage(0);
+                        }}
+                      >
+                        <SelectTrigger className="h-9 w-auto min-w-[180px]">
+                          <SelectValue placeholder="Vai trò" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ROLE_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        value={statusFilter}
+                        onValueChange={(value) => {
+                          setStatusFilter(value);
+                          setPage(0);
+                        }}
+                      >
+                        <SelectTrigger className="h-9 w-auto min-w-[180px]">
+                          <SelectValue placeholder="Trạng thái" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STATUS_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {/* Branch Filter */}
+                      <Select
+                        value={branchFilter?.toString() || "ALL"}
+                        onValueChange={(value) => {
+                          setBranchFilter(value === "ALL" ? null : parseInt(value));
+                          setPage(0);
+                        }}
+                      >
+                        <SelectTrigger className="h-9 w-auto min-w-[180px]">
+                          <SelectValue placeholder="Chi nhánh" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">Tất cả chi nhánh</SelectItem>
+                          {branches.map((branch: { id: number; name: string }) => (
+                            <SelectItem key={branch.id} value={branch.id.toString()}>
+                              {branch.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {/* Reset Filters Button */}
                       <Button
                         variant="outline"
                         size="icon"
+                        className="h-9 w-9 shrink-0"
                         onClick={resetFilters}
+                        disabled={!searchTerm && roleFilter === "ALL" && statusFilter === "ALL" && branchFilter === null}
                         title="Xóa bộ lọc"
                       >
                         <RotateCcw className="h-4 w-4" />
                       </Button>
-                    )}
+                    </div>
                   </div>
                 </div>
 

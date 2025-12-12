@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, Users, Eye } from "lucide-react";
+import { Calendar, Clock, Users, Eye, Search, RotateCcw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Pagination,
@@ -53,22 +53,25 @@ export default function CenterHeadTeacherSchedulesPage() {
 
   const { data: teacherResponse, isLoading: isLoadingTeachers } =
     useGetManagerTeachersQuery();
-  const { data: branchResponse } = useGetManagerBranchesQuery();
 
   const [search, setSearch] = useState("");
-  const [branchFilter, setBranchFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const branches = branchResponse?.data ?? [];
+  const hasActiveFilters = useMemo(
+    () =>
+      search.trim() !== "" || statusFilter !== "all",
+    [search, statusFilter]
+  );
+
+  const handleResetFilters = () => {
+    setSearch("");
+    setStatusFilter("all");
+    setCurrentPage(1);
+  };
 
   const filteredTeachers = useMemo(() => {
     let source = teacherResponse?.data ?? [];
-
-    // Filter by branch
-    if (branchFilter !== "all") {
-      source = source.filter((t) => t.branchNames?.includes(branchFilter));
-    }
 
     // Filter by status
     if (statusFilter !== "all") {
@@ -87,7 +90,7 @@ export default function CenterHeadTeacherSchedulesPage() {
     }
 
     return source;
-  }, [teacherResponse, search, branchFilter, statusFilter]);
+  }, [teacherResponse, search, statusFilter]);
 
   // Pagination
   const totalPages = Math.ceil(filteredTeachers.length / PAGE_SIZE);
@@ -157,51 +160,48 @@ export default function CenterHeadTeacherSchedulesPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <Input
-            placeholder="Tìm theo tên, email hoặc mã nhân viên..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="flex-1"
-          />
-          <Select
-            value={branchFilter}
-            onValueChange={(value) => {
-              setBranchFilter(value);
-              setCurrentPage(1);
-            }}
-          >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Tất cả chi nhánh" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả chi nhánh</SelectItem>
-              {branches.map((branch) => (
-                <SelectItem key={branch.id} value={branch.name}>
-                  {branch.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={statusFilter}
-            onValueChange={(value) => {
-              setStatusFilter(value);
-              setCurrentPage(1);
-            }}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Trạng thái" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="ACTIVE">Hoạt động</SelectItem>
-              <SelectItem value="INACTIVE">Ngưng hoạt động</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Tìm giáo viên..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="pl-8 h-9 w-full"
+            />
+          </div>
+
+          <div className="ml-auto flex items-center gap-2">
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value);
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="h-9 w-auto min-w-[160px]">
+                <SelectValue placeholder="Trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="ACTIVE">Hoạt động</SelectItem>
+                <SelectItem value="INACTIVE">Ngưng hoạt động</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={handleResetFilters}
+              disabled={!hasActiveFilters}
+              title="Xóa bộ lọc"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Teacher Table */}

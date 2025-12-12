@@ -63,6 +63,7 @@ import {
   Clock3,
   CheckCircle2,
   XCircle,
+  RotateCcw,
   UserCheck,
   MoreVertical,
   ChevronDownIcon,
@@ -567,33 +568,25 @@ export default function MyRequestsPage() {
   );
 
   const filterControls = (
-    <div className="flex items-center gap-4">
-      <div className="flex-1 relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="relative">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Tìm theo lớp, môn, lý do hoặc mã yêu cầu..."
+          placeholder="Tìm yêu cầu..."
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
-          className="pl-10 pr-10"
+          className="pl-8 h-9 w-full"
         />
-        {searchQuery && (
-          <button
-            type="button"
-            onClick={() => setSearchQuery("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
       </div>
-      <div className="flex items-center gap-2">
+
+      <div className="ml-auto flex items-center gap-2">
         <Select
           value={typeFilter}
           onValueChange={(value: "ALL" | RequestType) => {
             setTypeFilter(value);
           }}
         >
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="h-9 w-auto min-w-[200px]">
             <SelectValue placeholder="Tất cả loại yêu cầu" />
           </SelectTrigger>
           <SelectContent>
@@ -611,7 +604,7 @@ export default function MyRequestsPage() {
             setStatusFilter(value);
           }}
         >
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="h-9 w-auto min-w-[200px]">
             <SelectValue placeholder="Tất cả trạng thái" />
           </SelectTrigger>
           <SelectContent>
@@ -626,14 +619,17 @@ export default function MyRequestsPage() {
         <Button
           variant="outline"
           size="icon"
+          className="h-9 w-9 shrink-0"
           onClick={() => {
             setTypeFilter("ALL");
             setStatusFilter("ALL");
             setSearchQuery("");
             refetch();
           }}
+          disabled={typeFilter === "ALL" && statusFilter === "ALL" && searchQuery === ""}
+          title="Xóa bộ lọc"
         >
-          <RefreshCcw className="h-4 w-4" />
+          <RotateCcw className="h-4 w-4" />
         </Button>
       </div>
     </div>
