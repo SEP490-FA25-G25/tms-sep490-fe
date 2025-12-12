@@ -18,7 +18,6 @@ import {
   Calendar,
   MapPin,
   GraduationCap,
-  RefreshCw,
   RotateCcw,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -118,6 +117,18 @@ export default function TeacherClassesPage() {
     normalizedClasses.forEach((item) => {
       if (item.subjectName) {
         map.set(item.subjectName, item.subjectName);
+      }
+    });
+    return Array.from(map.entries())
+      .map(([name]) => ({ name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [normalizedClasses]);
+
+  const branchOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    normalizedClasses.forEach((item) => {
+      if (item.branchName) {
+        map.set(item.branchName, item.branchName);
       }
     });
     return Array.from(map.entries())

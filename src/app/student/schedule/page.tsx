@@ -717,8 +717,8 @@ function SessionDetailDialog({ sessionId, onClose }: SessionDetailDialogProps) {
                     const uploadedLabel = material.uploadedAt
                       ? `Cập nhật ${format(parseISO(material.uploadedAt), 'dd/MM/yyyy HH:mm', { locale: vi })}`
                       : 'Chưa có thời gian tải lên'
-                    const materialTypeLabel = material.type 
-                      ? (MATERIAL_TYPE_LABELS[material.type] ?? material.type)
+                    const materialTypeLabel = material.materialType 
+                      ? (MATERIAL_TYPE_LABELS[material.materialType] ?? material.materialType)
                       : typeMeta.label
                     return (
                       <li
@@ -726,7 +726,7 @@ function SessionDetailDialog({ sessionId, onClose }: SessionDetailDialogProps) {
                         className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border/60 bg-muted/20 px-3 py-2"
                       >
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-foreground">{material.name || material.fileName}</p>
+                          <p className="font-medium text-foreground">{material.title || material.fileName}</p>
                           {material.description && (
                             <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{material.description}</p>
                           )}

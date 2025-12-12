@@ -796,9 +796,10 @@ export function RequestFormStep({
                   selectedResourceId !== null &&
                   selectedResourceId !== undefined
                     ? String(selectedResourceId)
-                    : undefined
+                    : ""
                 }
                 onValueChange={(value) => {
+                  if (!value) return;
                   const rid = Number(value);
                   setSelectedResourceId(rid);
                   const r =
@@ -817,7 +818,20 @@ export function RequestFormStep({
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Chọn phòng học/phương tiện..." />
+                  <SelectValue placeholder="Chọn phòng học/phương tiện...">
+                    {selectedResourceId
+                      ? (() => {
+                          const selectedResource =
+                            rescheduleResources.find(
+                              (r) => (r.id ?? r.resourceId) === selectedResourceId
+                            ) ||
+                            modalityResources.find(
+                              (r) => (r.id ?? r.resourceId) === selectedResourceId
+                            );
+                          return selectedResource?.name || "";
+                        })()
+                      : undefined}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {rescheduleResources
@@ -841,6 +855,7 @@ export function RequestFormStep({
                           key={resourceId || resourceName}
                           value={String(resourceId)}
                         >
+                          <span className="sr-only">{resourceName}</span>
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center justify-between gap-2">
                               <span>{resourceName}</span>
@@ -928,19 +943,24 @@ export function RequestFormStep({
           onValueChange={(value) => {
             const rid = Number(value);
             setSelectedModalityResourceId(rid);
-            const r = modalityResources.find(
+            const r = filteredModalityResources.find(
               (item) => (item.id ?? item.resourceId) === (rid ?? 0)
             );
-            const label =
-              r?.name ||
-              r?.type ||
-              r?.resourceType ||
-              (rid ? `Phòng/phương tiện ${rid}` : undefined);
+            const label = r?.name || (rid ? `Phòng/phương tiện ${rid}` : undefined);
             setSelectedModalityResourceLabel(label);
           }}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Chọn phòng học/phương tiện..." />
+            <SelectValue placeholder="Chọn phòng học/phương tiện...">
+              {selectedModalityResourceId
+                ? (() => {
+                    const selectedResource = filteredModalityResources.find(
+                      (r) => (r.id ?? r.resourceId) === selectedModalityResourceId
+                    );
+                    return selectedResource?.name || "";
+                  })()
+                : undefined}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {filteredModalityResources.map((resource) => {
@@ -955,6 +975,7 @@ export function RequestFormStep({
                   key={resourceId || resourceName}
                   value={String(resourceId)}
                 >
+                  <span className="sr-only">{resourceName}</span>
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center justify-between gap-2">
                       <span>

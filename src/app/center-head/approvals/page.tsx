@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
@@ -172,20 +172,20 @@ export default function CenterHeadApprovalsPage() {
   // Data
   const pendingClasses = pendingResponse?.data?.content ?? [];
   const historyClasses = historyResponse?.data?.content ?? [];
-  const pendingPagination = pendingResponse?.data?.page;
-  const historyPagination = historyResponse?.data?.page;
+  const pendingPagination = pendingResponse?.data;
+  const historyPagination = historyResponse?.data;
 
   const pendingTotalPages = pendingPagination?.totalPages ?? 1;
   const historyTotalPages = historyPagination?.totalPages ?? 1;
 
   // Summary stats
   const summary = {
-    pending: pendingSummary?.data?.page?.totalElements ?? 0,
-    approved: approvedSummary?.data?.page?.totalElements ?? 0,
-    rejected: rejectedSummary?.data?.page?.totalElements ?? 0,
-    total: (pendingSummary?.data?.page?.totalElements ?? 0) +
-      (approvedSummary?.data?.page?.totalElements ?? 0) +
-      (rejectedSummary?.data?.page?.totalElements ?? 0),
+    pending: pendingSummary?.data?.totalElements ?? 0,
+    approved: approvedSummary?.data?.totalElements ?? 0,
+    rejected: rejectedSummary?.data?.totalElements ?? 0,
+    total: (pendingSummary?.data?.totalElements ?? 0) +
+      (approvedSummary?.data?.totalElements ?? 0) +
+      (rejectedSummary?.data?.totalElements ?? 0),
   };
 
   const branches = branchesResponse?.data ?? [];

@@ -38,7 +38,6 @@ const formatDateLabel = (dateString: string) => {
 
 export function SelectSessionStep({
   onSelect,
-  onBack,
 }: SelectSessionStepProps) {
   const [selectedSessionId, setSelectedSessionId] = useState<
     number | undefined
@@ -202,11 +201,7 @@ export function SelectSessionStep({
     <div className="space-y-4">
       {renderContent()}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t">
-        <div>
-          <Button variant="ghost" onClick={onBack}>
-            Quay lại
-          </Button>
-        </div>
+        <div></div>
         <div className="flex items-center gap-3">
           <Button onClick={handleContinue} disabled={!selectedSessionId}>
             Tiếp tục
@@ -216,5 +211,3 @@ export function SelectSessionStep({
     </div>
   );
 }
-
-

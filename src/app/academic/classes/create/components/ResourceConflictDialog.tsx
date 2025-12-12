@@ -18,7 +18,7 @@ import {
   useAssignSessionResourceMutation,
   useLazyGetSessionResourceSuggestionsQuery,
 } from '@/store/services/classCreationApi'
-import { AlertCircle, Check, ChevronDown, Loader2, RefreshCw, Wand2 } from 'lucide-react'
+import { AlertCircle, Check, Loader2, RefreshCw, Wand2 } from 'lucide-react'
 
 interface ResourceConflictDialogProps {
   open: boolean
@@ -203,7 +203,7 @@ export function ResourceConflictDialog({
         ...prev,
         [sessionId]: { ...prev[sessionId], status: 'loading', message: undefined },
       }))
-      const response = await assignSessionResource({
+      await assignSessionResource({
         classId,
         sessionId,
         data: { resourceId: selectedResource },
@@ -376,9 +376,6 @@ export function ResourceConflictDialog({
                         {dayConflicts.map((conflict) => {
                           const state = conflictStates[conflict.sessionId]
                           const isResolved = state?.status === 'success'
-                          const selectedSuggestion = state?.suggestions.find(
-                            (option) => option.id === state.selection
-                          )
 
                           return (
                             <div
