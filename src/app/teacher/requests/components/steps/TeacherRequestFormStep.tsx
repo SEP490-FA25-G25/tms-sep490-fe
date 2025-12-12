@@ -73,7 +73,6 @@ interface TeacherRequestFormStepProps {
   onBack: () => void;
 }
 
-// Helper function to format error messages
 const formatBackendError = (
   errorMessage?: string,
   defaultMessage?: string
@@ -114,12 +113,10 @@ export function TeacherRequestFormStep({
 }: TeacherRequestFormStepProps) {
   const sessionIdNumber = sessionIdProp;
 
-  // Form state
   const [reason, setReason] = useState("");
   const [reasonError, setReasonError] = useState<string | null>(null);
   const REASON_MIN_LENGTH = 10;
 
-  // RESCHEDULE state
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedTimeSlotId, setSelectedTimeSlotId] = useState<
     number | undefined
@@ -128,11 +125,9 @@ export function TeacherRequestFormStep({
     number | undefined
   >();
 
-  // REPLACEMENT state
   const [selectedReplacementTeacherId, setSelectedReplacementTeacherId] =
     useState<number | undefined>();
 
-  // MODALITY_CHANGE state
   const [selectedModalityResourceId, setSelectedModalityResourceId] = useState<
     number | undefined
   >();
@@ -142,7 +137,6 @@ export function TeacherRequestFormStep({
     string | undefined
   >();
 
-  // Hydrate from selectionState when provided (reason step)
   useEffect(() => {
     if (selectionState) {
       if (selectionState.selectedDate) setSelectedDate(selectionState.selectedDate);
@@ -165,7 +159,6 @@ export function TeacherRequestFormStep({
 
   const [createRequest, { isLoading }] = useCreateRequestMutation();
 
-  // Load session info
   const {
     data: sessionsResponse,
     isFetching: isFetchingSession,
@@ -181,7 +174,6 @@ export function TeacherRequestFormStep({
     });
   }, [sessionsResponse, sessionIdNumber]);
 
-  // Load resources for MODALITY_CHANGE
   const shouldLoadModalityResources =
     requestType === "MODALITY_CHANGE" &&
     Boolean(sessionIdNumber);
@@ -196,7 +188,6 @@ export function TeacherRequestFormStep({
     }
   );
 
-  // Load slots for RESCHEDULE
   const shouldLoadSlots =
     requestType === "RESCHEDULE" &&
     Boolean(sessionIdNumber) &&
@@ -218,7 +209,6 @@ export function TeacherRequestFormStep({
     }
   );
 
-  // Load resources for RESCHEDULE
   const shouldLoadRescheduleResources =
     requestType === "RESCHEDULE" &&
     Boolean(sessionIdNumber) &&
@@ -239,7 +229,6 @@ export function TeacherRequestFormStep({
     }
   );
 
-  // Load replacement candidates for REPLACEMENT
   const shouldLoadCandidates =
     requestType === "REPLACEMENT" &&
     Boolean(sessionIdNumber);
@@ -264,7 +253,6 @@ export function TeacherRequestFormStep({
   const rescheduleResources = rescheduleResourcesResponse?.data ?? [];
   const replacementCandidates = candidatesResponse?.data ?? [];
 
-  // Auto-select first resource for MODALITY_CHANGE if not selected yet
   useEffect(() => {
     if (
       requestType === "MODALITY_CHANGE" &&
@@ -334,7 +322,6 @@ export function TeacherRequestFormStep({
       baseSelection.selectedModalityResourceId ?? selectedModalityResourceId;
 
     if (mode === "reason") {
-      // Validate reason and required selections already gathered
       if (requestType === "REPLACEMENT" && !effectiveReplacementTeacherId) {
         toast.error("Vui lòng chọn giáo viên dạy thay");
         return;
@@ -406,7 +393,6 @@ export function TeacherRequestFormStep({
       return;
     }
 
-    // mode === "info": validate selections then go next
     if (requestType === "REPLACEMENT" && !selectedReplacementTeacherId) {
       toast.error("Vui lòng chọn giáo viên dạy thay");
       return;
@@ -432,7 +418,6 @@ export function TeacherRequestFormStep({
       return;
     }
 
-    // Capture labels for summary in next step
     const timeSlotLabel =
       requestType === "RESCHEDULE"
         ? selectedTimeSlotLabel || getSlotLabel(selectedTimeSlotId)

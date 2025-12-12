@@ -84,7 +84,6 @@ export function Step6Validation({ classId, onFinish }: Step6ValidationProps) {
   const classOverview = classDetail?.data;
   const overview = sessionsData?.data;
 
-  // Auto-validate on mount
   useEffect(() => {
     if (classId && !validationResult) {
       handleValidate();

@@ -41,7 +41,6 @@ export function CreateRequestDialog({
   const [selectionState, setSelectionState] = useState<RequestSelectionState>({});
 
   const handleClose = () => {
-    // Reset state when closing
     setCurrentStep("session");
     setSelectedRequestType(undefined);
     setSelectedSessionId(undefined);
@@ -49,7 +48,6 @@ export function CreateRequestDialog({
     onOpenChange(false);
   };
 
-  // Prefill type when opened from preset
   useEffect(() => {
     if (open) {
       if (initialRequestType) {
@@ -57,7 +55,6 @@ export function CreateRequestDialog({
       }
       setCurrentStep("session");
     } else {
-      // reset when closed
       setSelectedRequestType(undefined);
     }
   }, [open, initialRequestType]);
