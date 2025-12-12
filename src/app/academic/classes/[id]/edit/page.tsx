@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom'
 import { CreateClassWizard } from '../../create/components/CreateClassWizard'
 import { useGetClassByIdQuery } from '@/store/services/classApi'
+import { DashboardLayout } from '@/components/DashboardLayout'
 
 /**
  * Page: Edit Class
@@ -14,15 +15,27 @@ export default function EditClassPage() {
     const { data, isLoading, error } = useGetClassByIdQuery(classId!)
 
     if (!classId || isNaN(classId)) {
-        return <div>Invalid Class ID</div>
+        return (
+            <DashboardLayout>
+                <div>Invalid Class ID</div>
+            </DashboardLayout>
+        )
     }
 
     if (isLoading) {
-        return <div>Đang tải thông tin lớp...</div>
+        return (
+            <DashboardLayout>
+                <div>Đang tải thông tin lớp...</div>
+            </DashboardLayout>
+        )
     }
 
     if (error) {
-        return <div>Không tải được thông tin lớp. Vui lòng thử lại.</div>
+        return (
+            <DashboardLayout>
+                <div>Không tải được thông tin lớp. Vui lòng thử lại.</div>
+            </DashboardLayout>
+        )
     }
 
     const approvalStatus = data?.data?.approvalStatus
@@ -31,16 +44,22 @@ export default function EditClassPage() {
 
     if (notEditable) {
         return (
-            <div className="min-h-screen flex items-center justify-center px-4">
-                <div className="max-w-xl text-center space-y-4">
-                    <h1 className="text-2xl font-semibold">Không thể chỉnh sửa lớp này</h1>
-                    <p className="text-muted-foreground">
-                        Lớp đang ở trạng thái {approvalStatus === 'APPROVED' ? 'đã duyệt' : 'đang chờ duyệt'}. Chỉ các lớp nháp hoặc bị từ chối mới được chỉnh sửa.
-                    </p>
+            <DashboardLayout>
+                <div className="min-h-screen flex items-center justify-center px-4">
+                    <div className="max-w-xl text-center space-y-4">
+                        <h1 className="text-2xl font-semibold">Không thể chỉnh sửa lớp này</h1>
+                        <p className="text-muted-foreground">
+                            Lớp đang ở trạng thái {approvalStatus === 'APPROVED' ? 'đã duyệt' : 'đang chờ duyệt'}. Chỉ các lớp nháp hoặc bị từ chối mới được chỉnh sửa.
+                        </p>
+                    </div>
                 </div>
-            </div>
+            </DashboardLayout>
         )
     }
 
-    return <CreateClassWizard classId={classId} mode="edit" />
+    return (
+        <DashboardLayout>
+            <CreateClassWizard classId={classId} mode="edit" />
+        </DashboardLayout>
+    )
 }

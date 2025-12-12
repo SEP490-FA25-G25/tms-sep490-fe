@@ -4,7 +4,6 @@ import { useGetClassByIdQuery } from '@/store/services/classApi'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Button } from '@/components/ui/button'
 import { ResourceConflictDialog } from './ResourceConflictDialog'
 import { toast } from 'sonner'
 import { AlertCircle, Check } from 'lucide-react'
@@ -302,15 +301,22 @@ export function Step4Resources({ classId, onContinue }: Step4ResourcesProps) {
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center justify-between">
+      {/* Status - Button removed, save is handled via Wizard's "Tiếp theo" */}
+      <div className="flex items-center justify-end">
         <p className="text-sm text-muted-foreground">
           Đã chọn {assignedCount}/{sortedDays.length} ngày
+          {allAssigned && <span className="ml-2 text-green-600">✓ Sẵn sàng</span>}
         </p>
-        <Button onClick={handleSubmit} disabled={isSubmitting || !allAssigned}>
-          {isSubmitting ? 'Đang lưu...' : 'Lưu tài nguyên'}
-        </Button>
       </div>
+
+      {/* Hidden submit button triggered by wizard */}
+      <button
+        id="step4-submit-btn"
+        type="button"
+        onClick={handleSubmit}
+        className="hidden"
+        disabled={isSubmitting || !allAssigned}
+      />
 
       {/* Conflict Dialog */}
       {classId && conflicts.length > 0 && (

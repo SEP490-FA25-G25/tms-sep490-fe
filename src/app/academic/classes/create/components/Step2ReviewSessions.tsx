@@ -156,7 +156,7 @@ export function Step2ReviewSessions({ classId }: Step2ReviewSessionsProps) {
                   <TableRow key={session?.sessionId}>
                     <TableCell className="font-medium">{session?.sequenceNumber}</TableCell>
                     <TableCell>{formatDate(session?.date || '')}</TableCell>
-                    <TableCell>{session?.courseSessionName || '—'}</TableCell>
+                    <TableCell>{session?.subjectSessionName || session?.courseSessionName || '—'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

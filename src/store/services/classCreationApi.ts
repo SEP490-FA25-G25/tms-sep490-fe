@@ -44,10 +44,10 @@ export const classCreationApi = createApi({
     }),
 
     /**
-     * Get list of subjects for dropdown (previously called courses)
+     * Get list of subjects for dropdown (ACTIVE or PENDING_ACTIVATION only)
      */
     getCourses: builder.query<{ success: boolean; data: CourseOption[] }, void>({
-      query: () => '/subjects',
+      query: () => '/subjects?forClassCreation=true',
     }),
 
     /**

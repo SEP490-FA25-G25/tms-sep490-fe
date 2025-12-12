@@ -48,7 +48,10 @@ export interface GeneratedClassSession {
   sequenceNumber: number
   date: string
   dayOfWeek: string
-  courseSessionName: string
+  dayOfWeekNumber?: number
+  subjectSessionName?: string // New backend field
+  courseSessionName?: string // Deprecated, for backward compatibility
+  status?: string
   hasTimeSlot: boolean
   hasResource: boolean
   hasTeacher: boolean
@@ -428,4 +431,6 @@ export interface CourseOption {
   id: number
   name: string
   code: string
+  effectiveDate?: string // Ngày hiệu lực của môn học
+  numberOfSessions?: number // Tổng số buổi học
 }

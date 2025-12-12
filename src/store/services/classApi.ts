@@ -30,12 +30,12 @@ export interface ClassListItemDTO {
   startDate: string; // LocalDate from backend
   plannedEndDate: string; // LocalDate from backend
   status:
-    | "DRAFT"
-    | "SUBMITTED"
-    | "SCHEDULED"
-    | "ONGOING"
-    | "COMPLETED"
-    | "CANCELLED";
+  | "DRAFT"
+  | "SUBMITTED"
+  | "SCHEDULED"
+  | "ONGOING"
+  | "COMPLETED"
+  | "CANCELLED";
   approvalStatus?: "PENDING" | "APPROVED" | "REJECTED" | null;
   maxCapacity: number;
   currentEnrolled: number;
@@ -43,6 +43,7 @@ export interface ClassListItemDTO {
   utilizationRate: number;
   teachers: TeacherSummaryDTO[]; // Changed from teacherName to teachers array
   scheduleSummary?: string;
+  scheduleDays?: number[]; // Days of the week (0=Sun, 1=Mon, etc.)
   // Session progress
   completedSessions?: number;
   totalSessions?: number;
@@ -50,6 +51,10 @@ export interface ClassListItemDTO {
   enrollmentRestrictionReason?: string;
   subjectName: string;
   subjectCode: string;
+  // Approval workflow
+  submittedAt?: string; // ISO date string
+  decidedAt?: string; // ISO date string
+  rejectionReason?: string;
 }
 
 export interface Branch {
@@ -123,12 +128,12 @@ export interface ClassListRequest {
   branchIds?: number[]; // Backend expects list of branch IDs
   subjectId?: number; // Filter by subject (previously called courseId)
   status?:
-    | "DRAFT"
-    | "SUBMITTED"
-    | "SCHEDULED"
-    | "ONGOING"
-    | "COMPLETED"
-    | "CANCELLED"; // NEW: Filter by class status
+  | "DRAFT"
+  | "SUBMITTED"
+  | "SCHEDULED"
+  | "ONGOING"
+  | "COMPLETED"
+  | "CANCELLED"; // NEW: Filter by class status
   approvalStatus?: "PENDING" | "APPROVED" | "REJECTED"; // NEW: Filter by approval status
   modality?: "ONLINE" | "OFFLINE";
   search?: string;
@@ -246,12 +251,12 @@ export interface ClassDetailDTO {
   scheduleDays: number[]; // Short[] from backend
   maxCapacity: number;
   status:
-    | "DRAFT"
-    | "SUBMITTED"
-    | "SCHEDULED"
-    | "ONGOING"
-    | "COMPLETED"
-    | "CANCELLED";
+  | "DRAFT"
+  | "SUBMITTED"
+  | "SCHEDULED"
+  | "ONGOING"
+  | "COMPLETED"
+  | "CANCELLED";
   approvalStatus?: "PENDING" | "APPROVED" | "REJECTED" | null;
   rejectionReason?: string;
   submittedAt?: string | null; // LocalDate from backend

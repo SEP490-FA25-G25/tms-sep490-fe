@@ -155,6 +155,9 @@ const CenterHeadDashboardPage = lazy(
 const CenterHeadClassesPage = lazy(
   () => import("./app/center-head/classes/page")
 );
+const CenterHeadClassDetailPage = lazy(
+  () => import("./app/center-head/classes/[id]/page")
+);
 const CenterHeadApprovalsPage = lazy(
   () => import("./app/center-head/approvals/page")
 );
@@ -1141,6 +1144,14 @@ function App() {
                   element={
                     <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
                       <CenterHeadClassesPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/center-head/classes/:id"
+                  element={
+                    <ProtectedRoute requiredRoles={["CENTER_HEAD"]}>
+                      <CenterHeadClassDetailPage />
                     </ProtectedRoute>
                   }
                 />
