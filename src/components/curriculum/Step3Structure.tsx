@@ -107,7 +107,7 @@ export function validateStep3(data: CourseData): { isValid: boolean; errors: str
     // Check if course has at least 1 material (any scope: COURSE, PHASE, or SESSION)
     const totalMaterials = data.materials?.length || 0;
     if (totalMaterials === 0) {
-        errors.push("Vui lòng thêm ít nhất 1 tài liệu cho khóa học (tài liệu chung, giai đoạn hoặc buổi học).");
+        errors.push("Vui lòng thêm ít nhất 1 tài liệu cho môn học (tài liệu chung, giai đoạn hoặc buổi học).");
     }
 
     // Check CLO coverage - each CLO must be mapped to at least one session

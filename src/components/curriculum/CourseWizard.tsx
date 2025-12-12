@@ -329,7 +329,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
         } else {
             // Validate before submit
             if (!isCourseValid(formData)) {
-                toast.error("Vui lòng hoàn thiện các thông tin bắt buộc trước khi tạo khóa học.");
+                toast.error("Vui lòng hoàn thiện các thông tin bắt buộc trước khi tạo môn học.");
                 return;
             }
 
@@ -416,9 +416,9 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                 // If course is valid, submit for approval immediately
                 if (isCourseValid(formData)) {
                     await submitCourse(courseId).unwrap();
-                    toast.success("Đã gửi phê duyệt khóa học thành công!");
+                    toast.success("Đã gửi phê duyệt môn học thành công!");
                 } else {
-                    toast.success(isEditMode ? "Đã cập nhật khóa học thành công!" : "Đã tạo khóa học thành công!");
+                    toast.success(isEditMode ? "Đã cập nhật môn học thành công!" : "Đã tạo môn học thành công!");
                 }
 
                 setIsBlocking(false); // Disable blocking before navigation
@@ -510,7 +510,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
     const handleSaveAndContinue = async () => {
         // Validate minimum required fields
         if (!formData.basicInfo?.subjectId || !formData.basicInfo?.name || !formData.basicInfo?.code) {
-            toast.error("Vui lòng nhập Khung chương trình, Tên khóa học và Mã khóa học để lưu nháp.");
+            toast.error("Vui lòng nhập Khung chương trình, Tên môn học và Mã môn học để lưu nháp.");
             return;
         }
 
@@ -527,7 +527,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                 // Create new course
                 savedCourse = await createCourse(requestData).unwrap();
                 setCreatedCourseId(savedCourse.id); // Track for subsequent saves
-                toast.success("Đã lưu nháp khóa học thành công!");
+                toast.success("Đã lưu nháp môn học thành công!");
             }
 
             // Sync formData with response to get new IDs from database
@@ -540,7 +540,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
             // Stay on current page - don't navigate away
         } catch (error) {
             console.error("Failed to save course:", error);
-            toast.error(courseIdToUpdate ? "Cập nhật khóa học thất bại." : "Tạo khóa học thất bại. Vui lòng thử lại.");
+            toast.error(courseIdToUpdate ? "Cập nhật môn học thất bại." : "Tạo môn học thất bại. Vui lòng thử lại.");
         }
     };
 
@@ -548,7 +548,7 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
     const handleSaveAndExit = async () => {
         // Validate minimum required fields
         if (!formData.basicInfo?.subjectId || !formData.basicInfo?.name || !formData.basicInfo?.code) {
-            toast.error("Vui lòng nhập Khung chương trình, Tên khóa học và Mã khóa học để lưu nháp.");
+            toast.error("Vui lòng nhập Khung chương trình, Tên môn học và Mã môn học để lưu nháp.");
             return;
         }
 
@@ -563,13 +563,13 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
             } else {
                 // Create new course
                 await createCourse(requestData).unwrap();
-                toast.success("Đã lưu nháp khóa học thành công!");
+                toast.success("Đã lưu nháp môn học thành công!");
             }
             setIsBlocking(false); // Disable blocking before navigation
             navigate("/curriculum");
         } catch (error) {
             console.error("Failed to save course:", error);
-            toast.error(courseIdToUpdate ? "Cập nhật khóa học thất bại." : "Tạo khóa học thất bại. Vui lòng thử lại.");
+            toast.error(courseIdToUpdate ? "Cập nhật môn học thất bại." : "Tạo môn học thất bại. Vui lòng thử lại.");
         }
     };
 
@@ -648,8 +648,8 @@ export function CourseWizard({ initialData, isEditMode = false }: CourseWizardPr
                             <div>
                                 <h1 className="text-lg font-semibold">
                                     {isEditMode
-                                        ? (initialData?.status === 'DRAFT' ? "Tiếp tục tạo Khóa học" : "Chỉnh sửa Khóa học")
-                                        : "Tạo Khóa học Mới"}
+                                        ? (initialData?.status === 'DRAFT' ? "Tiếp tục tạo Môn học" : "Chỉnh sửa Môn học")
+                                        : "Tạo Môn học Mới"}
                                 </h1>
                                 <p className="text-xs text-muted-foreground">
                                     {formData.basicInfo?.name || "Chưa đặt tên"}

@@ -111,7 +111,7 @@ export default function CourseDetailPage() {
         if (!course?.id) return;
         try {
             await approveCourse(course.id).unwrap();
-            toast.success('Đã phê duyệt khóa học thành công');
+            toast.success('Đã phê duyệt môn học thành công');
             refetch();
         } catch {
             toast.error('Phê duyệt thất bại. Vui lòng thử lại.');
@@ -122,7 +122,7 @@ export default function CourseDetailPage() {
         if (!course?.id || !rejectReason.trim()) return;
         try {
             await rejectCourse({ id: course.id, reason: rejectReason }).unwrap();
-            toast.success('Đã từ chối khóa học');
+            toast.success('Đã từ chối môn học');
             setRejectDialogOpen(false);
             refetch();
         } catch {
@@ -180,7 +180,7 @@ export default function CourseDetailPage() {
                 <div className="border-b bg-background sticky top-0 z-20">
                     <div className="@container/main py-6">
                         <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-                            <p className="text-sm text-muted-foreground">Không thể tải thông tin khóa học</p>
+                            <p className="text-sm text-muted-foreground">Không thể tải thông tin môn học</p>
                         </div>
                     </div>
                 </div>
@@ -241,11 +241,6 @@ export default function CourseDetailPage() {
 
                             {/* Action buttons */}
                             <div className="flex flex-wrap items-center gap-2">
-                                {/* "Vào học" button - always visible */}
-                                <Button onClick={() => navigate(`/curriculum/courses/${id}/learn`)}>
-                                    <PlayCircle className="mr-2 h-4 w-4" />
-                                    Vào học
-                                </Button>
                                 {isSubjectLeader && (course.status === 'DRAFT' || course.approvalStatus === 'REJECTED') && (
                                     <Button variant="outline" onClick={() => navigate(`/curriculum/courses/${id}/edit`)}>
                                         <Edit className="mr-2 h-4 w-4" />
@@ -406,8 +401,8 @@ export default function CourseDetailPage() {
                                 {!isLoading && !course && (
                                     <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-destructive/40 bg-destructive/10 p-8 text-center">
                                         <AlertCircle className="h-8 w-8 text-destructive" />
-                                        <p className="text-base font-semibold text-foreground">Không tìm thấy khóa học</p>
-                                        <p className="text-sm text-muted-foreground">Khóa học không tồn tại hoặc đã bị xóa.</p>
+                                        <p className="text-base font-semibold text-foreground">Không tìm thấy môn học</p>
+                                        <p className="text-sm text-muted-foreground">Môn học không tồn tại hoặc đã bị xóa.</p>
                                         <Button onClick={() => navigate('/curriculum?tab=courses')}>
                                             Quay lại danh sách
                                         </Button>
@@ -438,13 +433,13 @@ export default function CourseDetailPage() {
                                             <div className="space-y-4">
                                                 <h3 className="text-xl font-semibold flex items-center gap-2">
                                                     <BookOpen className="h-5 w-5 text-primary" />
-                                                    Thông tin khóa học
+                                                    Thông tin môn học
                                                 </h3>
                                                 <Card>
                                                     <CardContent className="space-y-6">
                                                         {course.description && (
                                                             <div>
-                                                                <h4 className="text-sm font-medium text-muted-foreground mb-2">Mô tả khóa học</h4>
+                                                                <h4 className="text-sm font-medium text-muted-foreground mb-2">Mô tả môn học</h4>
                                                                 <p className="text-base text-foreground">{course.description}</p>
                                                             </div>
                                                         )}
@@ -472,7 +467,7 @@ export default function CourseDetailPage() {
                                                         )}
 
                                                         {!course.description && !course.prerequisites && !course.targetAudience && !course.teachingMethods && (
-                                                            <p className="text-muted-foreground text-center py-4">Chưa có thông tin chi tiết về khóa học.</p>
+                                                            <p className="text-muted-foreground text-center py-4">Chưa có thông tin chi tiết về môn học.</p>
                                                         )}
                                                     </CardContent>
                                                 </Card>
@@ -483,7 +478,7 @@ export default function CourseDetailPage() {
                                                 <div className="space-y-4">
                                                     <div className="flex items-center gap-3">
                                                         <FileText className="h-5 w-5 text-primary" />
-                                                        <h3 className="text-xl font-semibold">Tài liệu khóa học</h3>
+                                                        <h3 className="text-xl font-semibold">Tài liệu môn học</h3>
                                                         <Badge variant="secondary">{getCourseMaterials().length}</Badge>
                                                     </div>
                                                     {renderMaterialsList(getCourseMaterials(), false)}
@@ -662,7 +657,7 @@ export default function CourseDetailPage() {
                                             <div className="space-y-4">
                                                 <div className="flex items-center gap-3">
                                                     <Award className="h-5 w-5 text-primary" />
-                                                    <h3 className="text-xl font-semibold">Chuẩn đầu ra khóa học (CLOs)</h3>
+                                                    <h3 className="text-xl font-semibold">Chuẩn đầu ra môn học (CLOs)</h3>
                                                     <Badge variant="secondary">{course.clos?.length || 0}</Badge>
                                                 </div>
 
@@ -743,7 +738,7 @@ export default function CourseDetailPage() {
                                                             <h3 className="text-xl font-semibold">Ma trận CLO - PLO</h3>
                                                         </div>
                                                         <p className="text-sm text-muted-foreground">
-                                                            Ma trận thể hiện mối quan hệ giữa Chuẩn đầu ra khóa học (CLO) và Chuẩn đầu ra chương trình (PLO)
+                                                            Ma trận thể hiện mối quan hệ giữa Chuẩn đầu ra môn học (CLO) và Chuẩn đầu ra chương trình (PLO)
                                                         </p>
                                                         <Card className="overflow-x-auto py-0">
                                                             <Table>
@@ -885,7 +880,7 @@ export default function CourseDetailPage() {
             <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Từ chối phê duyệt khóa học</DialogTitle>
+                        <DialogTitle>Từ chối phê duyệt môn học</DialogTitle>
                         <DialogDescription>
                             Vui lòng nhập lý do từ chối để gửi phản hồi cho người tạo.
                         </DialogDescription>

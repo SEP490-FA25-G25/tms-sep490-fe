@@ -84,7 +84,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({
   if (!subject) {
     return (
       <div className="rounded-xl border border-border/60 bg-muted/20 p-6 text-sm text-muted-foreground">
-        Không tìm thấy thông tin môn học/khóa học.
+        Không tìm thấy thông tin môn học.
       </div>
     );
   }
@@ -186,13 +186,13 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({
       <div className="space-y-4">
         <h3 className="text-xl font-semibold flex items-center gap-2">
           <BookOpen className="h-5 w-5 text-primary" />
-          Tổng quan khóa học
+          Tổng quan môn học
         </h3>
         <Card>
           <CardContent className="space-y-6">
             <div>
               <h4 className="text-sm font-medium text-muted-foreground mb-2">
-                Tên khóa học
+                Tên môn học
               </h4>
               <p className="text-base font-semibold">{subject.name}</p>
               <p className="text-sm text-muted-foreground mt-1">
@@ -217,7 +217,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                   <Target className="h-4 w-4" />
-                  <span>Cấu trúc khóa học</span>
+                  <span>Cấu trúc môn học</span>
                 </div>
                 <p className="text-base text-foreground">
                   {courseSyllabus?.numberOfSessions || 0} buổi học
@@ -276,7 +276,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({
             {courseSyllabus?.description && (
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">
-                  Mô tả khóa học
+                  Mô tả môn học
                 </h4>
                 <p className="text-base text-foreground">
                   {courseSyllabus.description}
@@ -292,7 +292,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <BookOpen className="h-5 w-5 text-primary" />
-            <h3 className="text-xl font-semibold">Tài liệu khóa học</h3>
+            <h3 className="text-xl font-semibold">Tài liệu môn học</h3>
             <Badge variant="secondary">{courseMaterials.length}</Badge>
           </div>
 
@@ -775,7 +775,7 @@ const SyllabusTab: React.FC<SyllabusTabProps> = ({
                         colSpan={5}
                         className="text-center text-muted-foreground py-6"
                       >
-                        Chưa có cơ cấu điểm cho khóa học này
+                        Chưa có cơ cấu điểm cho môn học này
                       </TableCell>
                     </TableRow>
                   )}

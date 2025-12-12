@@ -111,14 +111,14 @@ export function Step6Review({ data }: Step6Props) {
                         <div className="space-y-1">
                             <p className="text-sm text-muted-foreground flex items-center gap-1.5">
                                 <BookOpen className="h-3.5 w-3.5" />
-                                Tên khóa học
+                                Tên môn học
                             </p>
                             <p className="font-medium">{data.basicInfo?.name || <span className="text-muted-foreground italic">Chưa nhập</span>}</p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-sm text-muted-foreground flex items-center gap-1.5">
                                 <FileText className="h-3.5 w-3.5" />
-                                Mã khóa học
+                                Mã môn học
                             </p>
                             <p className="font-medium">{data.basicInfo?.code || <span className="text-muted-foreground italic">Chưa nhập</span>}</p>
                         </div>
@@ -371,11 +371,11 @@ export function Step6Review({ data }: Step6Props) {
                 )}
             </div>
 
-            {/* Section 3: Tài liệu khóa học */}
+            {/* Section 3: Tài liệu môn học */}
             {courseMaterials.length > 0 && (
                 <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-medium">Tài liệu khóa học</h3>
+                        <h3 className="text-lg font-medium">Tài liệu môn học</h3>
                         <Badge variant="secondary">{courseMaterials.length} tài liệu</Badge>
                     </div>
 
@@ -410,7 +410,7 @@ export function Step6Review({ data }: Step6Props) {
                 </div>
             )}
 
-            {/* Section 4: Cấu trúc khóa học */}
+            {/* Section 4: Cấu trúc môn học */}
             <div className="space-y-4">
                 <div className="flex justify-between items-center">
                     <h3 className="text-lg font-medium">Cấu trúc chương trình</h3>

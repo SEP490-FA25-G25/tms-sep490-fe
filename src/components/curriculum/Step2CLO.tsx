@@ -196,7 +196,7 @@ export function Step2CLO({ data, setData }: Step2Props) {
             {/* Left: CLO List */}
             <div className="col-span-7 space-y-4 border-r pr-6">
                 <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium">Chuẩn đầu ra khóa học (CLO)</h3>
+                    <h3 className="text-lg font-medium">Chuẩn đầu ra môn học (CLO)</h3>
                     <Button size="sm" onClick={addClo}>
                         <Plus className="w-4 h-4 mr-2" />
                         Thêm CLO

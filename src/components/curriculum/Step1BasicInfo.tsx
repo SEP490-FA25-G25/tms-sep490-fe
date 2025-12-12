@@ -20,7 +20,7 @@ interface Step1Props {
     data: CourseData;
     setData: React.Dispatch<React.SetStateAction<CourseData>>;
     courseStatus?: string;
-    courseId?: number; // ID của khóa học đang edit (nếu có)
+    courseId?: number; // ID của môn học đang edit (nếu có)
 }
 
 // Validation error interface
@@ -91,29 +91,29 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
 
     const validateName = useCallback((value: string): string | null => {
         if (!value || value.trim() === "") {
-            return "Tên khóa học không được để trống";
+            return "Tên môn học không được để trống";
         }
         if (value.trim().length < 3) {
-            return "Tên khóa học phải có ít nhất 3 ký tự";
+            return "Tên môn học phải có ít nhất 3 ký tự";
         }
         return null;
     }, []);
 
     const validateCode = useCallback((value: string): string | null => {
         if (!value || value.trim() === "") {
-            return "Mã khóa học không được để trống";
+            return "Mã môn học không được để trống";
         }
 
-        // Check trùng lặp mã khóa học
+        // Check trùng lặp mã môn học
         const trimmedValue = value.trim().toLowerCase();
         const isDuplicate = existingCourses?.some(
             (course) =>
                 course.code.toLowerCase() === trimmedValue &&
-                course.id !== courseId // Loại trừ khóa học đang edit
+                course.id !== courseId // Loại trừ môn học đang edit
         );
 
         if (isDuplicate) {
-            return "Mã khóa học đã tồn tại";
+            return "Mã môn học đã tồn tại";
         }
         return null;
     }, [existingCourses, courseId]);
@@ -416,7 +416,7 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
 
             <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    <Label>Tên khóa học <span className="text-rose-500">*</span></Label>
+                    <Label>Tên môn học <span className="text-rose-500">*</span></Label>
                     <Input
                         placeholder="VD: Tiếng Anh Giao tiếp A1 - 2024"
                         value={data.basicInfo?.name || ""}
@@ -426,7 +426,7 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
                     {errors.name && <p className="text-sm text-rose-500">{errors.name}</p>}
                 </div>
                 <div className="space-y-2">
-                    <Label>Mã khóa học <span className="text-rose-500">*</span></Label>
+                    <Label>Mã môn học <span className="text-rose-500">*</span></Label>
                     <Input
                         placeholder="VD: ENG-A1-2024"
                         value={data.basicInfo?.code || ""}
@@ -528,7 +528,7 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
             <div className="space-y-2">
                 <Label>Mô tả</Label>
                 <Textarea
-                    placeholder="Nhập mô tả khóa học..."
+                    placeholder="Nhập mô tả môn học..."
                     className={`min-h-[100px] ${errors.description ? "border-rose-500" : ""}`}
                     value={data.basicInfo?.description || ""}
                     onChange={(e) => handleChange("description", e.target.value)}
@@ -549,14 +549,14 @@ export function Step1BasicInfo({ data, setData, courseStatus, courseId }: Step1P
 
             {/* Thumbnail Upload */}
             <div className="space-y-2">
-                <Label>Ảnh bìa khóa học <span className="text-rose-500">*</span></Label>
+                <Label>Ảnh bìa môn học <span className="text-rose-500">*</span></Label>
                 <div className="flex items-start gap-4">
                     {/* Thumbnail Preview */}
                     {data.basicInfo?.thumbnailUrl ? (
                         <div className="relative group">
                             <img
                                 src={data.basicInfo.thumbnailUrl}
-                                alt="Ảnh bìa khóa học"
+                                alt="Ảnh bìa môn học"
                                 className="w-48 h-32 object-cover rounded-lg border"
                             />
                             <button
@@ -611,19 +611,19 @@ export function validateStep1(data: CourseData, existingCourses: { id: number; c
         validationErrors.push("Vui lòng chọn cấp độ");
     }
     if (!data.basicInfo?.name?.trim()) {
-        validationErrors.push("Tên khóa học không được để trống");
+        validationErrors.push("Tên môn học không được để trống");
     } else if (data.basicInfo.name.trim().length < 3) {
-        validationErrors.push("Tên khóa học phải có ít nhất 3 ký tự");
+        validationErrors.push("Tên môn học phải có ít nhất 3 ký tự");
     }
     if (!data.basicInfo?.code?.trim()) {
-        validationErrors.push("Mã khóa học không được để trống");
+        validationErrors.push("Mã môn học không được để trống");
     } else {
         // Check duplicate
         const isDuplicate = existingCourses.some(
             course => course.code.toLowerCase() === data.basicInfo?.code?.trim().toLowerCase() && course.id !== courseId
         );
         if (isDuplicate) {
-            validationErrors.push("Mã khóa học đã tồn tại");
+            validationErrors.push("Mã môn học đã tồn tại");
         }
     }
     if (!data.basicInfo?.numberOfSessions || data.basicInfo.numberOfSessions <= 0) {
@@ -633,7 +633,7 @@ export function validateStep1(data: CourseData, existingCourses: { id: number; c
         validationErrors.push("Vui lòng chọn số giờ/buổi");
     }
     if (!data.basicInfo?.thumbnailUrl?.trim()) {
-        validationErrors.push("Vui lòng tải lên ảnh bìa khóa học");
+        validationErrors.push("Vui lòng tải lên ảnh bìa môn học");
     }
 
     // Optional but validate if provided

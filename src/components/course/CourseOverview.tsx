@@ -9,7 +9,7 @@ export function CourseOverview({ course }: CourseOverviewProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold mb-4">Tổng quan khóa học</h2>
+        <h2 className="text-2xl font-semibold mb-4">Tổng quan môn học</h2>
       </div>
 
       {/* Key Information Grid */}
@@ -129,11 +129,11 @@ export function CourseOverview({ course }: CourseOverviewProps) {
       <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
         <div className="flex items-center gap-3 mb-4">
           <Target className="h-6 w-6 text-blue-600" />
-          <h3 className="text-lg font-semibold text-blue-900">Mục tiêu khóa học</h3>
+          <h3 className="text-lg font-semibold text-blue-900">Mục tiêu môn học</h3>
         </div>
         <p className="text-blue-800">
-          Khóa học này được thiết kế để giúp sinh viên nắm vững kiến thức nền tảng và kỹ năng thực hành
-          trong lĩnh vực {course.subjectName?.toLowerCase()}. Sau khi hoàn thành khóa học, sinh viên sẽ
+          Môn học này được thiết kế để giúp sinh viên nắm vững kiến thức nền tảng và kỹ năng thực hành
+          trong lĩnh vực {course.subjectName?.toLowerCase()}. Sau khi hoàn thành môn học, sinh viên sẽ
           có khả năng áp dụng các kiến thức đã học vào thực tế và phát triển chuyên môn một cách toàn diện.
         </p>
       </div>

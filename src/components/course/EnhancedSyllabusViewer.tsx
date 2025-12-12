@@ -141,7 +141,7 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
     <div className="space-y-8">
       {/* Header */}
       <div className="space-y-2">
-        <h2 className="text-2xl font-semibold">Giáo trình khóa học</h2>
+        <h2 className="text-2xl font-semibold">Giáo trình môn học</h2>
         <p className="text-muted-foreground">
           {phases.length} giai đoạn • {phases.reduce((total, phase) => total + (phase.totalSessions || 0), 0)} buổi học
           {materials && ` • ${materials.totalMaterials} tài liệu`}
@@ -153,7 +153,7 @@ export function EnhancedSyllabusViewer({ phases, materials, assessments }: Enhan
         <div className="space-y-3" id="tai-lieu-khoa-hoc">
           <div className="flex items-center gap-3">
             <BookOpen className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold">Tài liệu khóa học</h3>
+            <h3 className="text-lg font-semibold">Tài liệu môn học</h3>
             <Badge variant="secondary">{materials.courseLevel.length}</Badge>
           </div>
           <div className="rounded-lg border divide-y overflow-hidden bg-white">

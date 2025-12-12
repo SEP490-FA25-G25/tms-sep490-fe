@@ -186,7 +186,7 @@ export function AssessmentTracker({ assessments, assessmentProgress }: Assessmen
             <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Chưa có bài tập nào</h3>
             <p className="text-gray-600">
-              Hiện tại chưa có bài tập hoặc đánh giá nào cho khóa học này.
+              Hiện tại chưa có bài tập hoặc đánh giá nào cho môn học này.
             </p>
           </CardContent>
         </Card>

@@ -109,7 +109,7 @@ export function MaterialsLibrary({ materials }: MaterialsLibraryProps) {
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-blue-600" />
-            <h3 className="text-lg font-semibold">📚 Tài liệu khóa học</h3>
+            <h3 className="text-lg font-semibold">📚 Tài liệu môn học</h3>
             <Badge variant="secondary">{filteredCourseLevelMaterials.length}</Badge>
           </div>
 
@@ -226,7 +226,7 @@ export function MaterialsLibrary({ materials }: MaterialsLibraryProps) {
             <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Không có tài liệu nào</h3>
             <p className="text-gray-600">
-              Không tìm thấy tài liệu loại "{activeFilter}" cho khóa học này.
+              Không tìm thấy tài liệu loại "{activeFilter}" cho môn học này.
             </p>
           </CardContent>
         </Card>

@@ -147,7 +147,7 @@ export default function CourseLearningPage() {
     if (!course) {
         return (
             <div className="flex h-screen flex-col items-center justify-center gap-4">
-                <h2 className="text-xl font-semibold">Không tìm thấy khóa học</h2>
+                <h2 className="text-xl font-semibold">Không tìm thấy môn học</h2>
                 <Button onClick={() => navigate("/curriculum")}>Quay lại</Button>
             </div>
         );
@@ -303,7 +303,7 @@ export default function CourseLearningPage() {
                 {/* Clean Sidebar */}
                 <div className="w-96 border-l flex flex-col bg-card shrink-0">
                     <div className="p-4 border-b">
-                        <h3 className="font-semibold">Nội dung khóa học</h3>
+                        <h3 className="font-semibold">Nội dung môn học</h3>
                     </div>
 
                     <ScrollArea className="flex-1 h-full [&>div>div]:!block">

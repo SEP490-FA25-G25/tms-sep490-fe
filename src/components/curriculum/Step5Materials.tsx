@@ -73,7 +73,7 @@ export function Step5Materials({ data, setData }: Step5Props) {
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">Tài liệu khóa học</h3>
+                <h3 className="text-lg font-medium">Tài liệu môn học</h3>
                 <Button size="sm" onClick={addMaterial}>
                     <Plus className="w-4 h-4 mr-2" />
                     Thêm Tài liệu
@@ -179,7 +179,7 @@ export function Step5Materials({ data, setData }: Step5Props) {
                                     >
                                         <div className="flex items-center space-x-2 cursor-pointer" onClick={() => updateMaterial(index, "scope", "COURSE")}>
                                             <RadioGroupItem value="COURSE" id={`scope-course-${index}`} className="cursor-pointer" />
-                                            <Label htmlFor={`scope-course-${index}`} className="font-normal cursor-pointer text-base">Toàn khóa học</Label>
+                                            <Label htmlFor={`scope-course-${index}`} className="font-normal cursor-pointer text-base">Toàn môn học</Label>
                                         </div>
                                         <div className="flex items-center space-x-2 cursor-pointer" onClick={() => updateMaterial(index, "scope", "PHASE")}>
                                             <RadioGroupItem value="PHASE" id={`scope-phase-${index}`} className="cursor-pointer" />
