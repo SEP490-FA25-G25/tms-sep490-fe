@@ -918,15 +918,6 @@ export default function MyRequestsPage() {
 
       <div className="flex flex-1 flex-col gap-6 px-6 py-6">
         {summaryCards}
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-sky-100 bg-sky-50/70 px-3 py-2 text-sm text-sky-700">
-          <span>
-            Chờ xác nhận từ giáo viên dạy thay:{" "}
-            <span className="font-semibold">{summary.waitingConfirm}</span>
-          </span>
-          <span className="text-xs text-sky-600">
-            Số lượng này sẽ giảm khi giáo viên xác nhận.
-          </span>
-        </div>
         {filterControls}
         {renderRequestList()}
         {displayedRequests.length > 0 && (

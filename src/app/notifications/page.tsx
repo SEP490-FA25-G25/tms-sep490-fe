@@ -29,11 +29,19 @@ export default function NotificationsPage() {
     isLoading,
     error,
     refetch,
-  } = useGetNotificationsQuery(filters)
+  } = useGetNotificationsQuery(filters, {
+    pollingInterval: 30000, // Poll every 30 seconds
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+  })
 
   const {
     data: stats,
-  } = useGetNotificationStatsQuery()
+  } = useGetNotificationStatsQuery(undefined, {
+    pollingInterval: 30000, // Poll every 30 seconds
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+  })
 
   const [markAllAsRead] = useMarkAllAsReadMutation()
 
