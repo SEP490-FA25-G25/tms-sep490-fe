@@ -355,11 +355,6 @@ const roleBasedNav = {
         url: "/academic/teacher-registrations",
         icon: UsersIcon,
       },
-      {
-        title: "Quản lý đợt cập nhật lịch dạy",
-        url: "/academic/teacher-availability",
-        icon: CalendarIcon,
-      },
     ],
   },
 };
